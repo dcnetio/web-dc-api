@@ -1,0 +1,32 @@
+{
+  "name": "dcapi-web",
+  "version": "0.0.1",
+  "description": "dcapi web",
+  "main": "lib/index.ts",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "keywords": [],
+  "dependencies": {
+    "google-protobuf": "~3.21.2",
+    "grpc-web": "~1.5.0",
+    "lodash": "~4.17.0",
+    "@grpc/grpc-js": "~1.10.8",
+    "@grpc/proto-loader": "~0.7.13",
+    "@helia/strings": "^3.0.4",
+    "@helia/unixfs": "^3.0.6",
+    "@improbable-eng/grpc-web": "^0.15.0",
+    "@multiformats/multiaddr": "^12.2.3",
+    "@polkadot/api": "11.0.3",
+    "@textile/multiaddr": "^0.6.1",
+    "helia": "^4.2.1",
+    "it-to-buffer": "^4.0.7",
+    "jscrypto": "^1.0.3",
+    "multiformats": "^13.1.0"
+  },
+  "directories": {
+    "lib": "lib"
+  }
+}
