@@ -1,6 +1,6 @@
 {
   "name": "dcapi-web",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "dcapi web",
   "main": "lib/index.ts",
   "scripts": {
