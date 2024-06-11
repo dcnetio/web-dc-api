@@ -24,7 +24,8 @@
     "helia": "^4.2.1",
     "it-to-buffer": "^4.0.7",
     "jscrypto": "^1.0.3",
-    "multiformats": "^13.1.0"
+    "multiformats": "^13.1.0",
+    "crypto-js": "^4.2.0"
   },
   "directories": {
     "lib": "lib"
