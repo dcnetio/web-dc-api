@@ -64,11 +64,15 @@ export class DcUtil {
 
   // 从dc网络获取指定文件
   getFileFromDc = async (cid: string, decryptKey: string) => {
+    console.log("first 11111")
     const res = await this._connectToObjNodes(cid)
     if(!res){
+      console.log("return nulllllllll")
       return null;
     }
+    console.log("first 2")
     const fs = unixfs(this.dcNodeClient)
+    console.log("first 3")
     let headDealed = false
     let waitBuffer = new Uint8Array(0)
     let fileContent = new Uint8Array(0)
@@ -85,6 +89,7 @@ export class DcUtil {
         if (!headDealed) {
           //处理文件头
           const headBuf = await toBuffer(fs.cat(CID.parse(cid), catOptions))
+          console.log("first 4")
           readCount += headBuf.length
           if (headBuf.length > 0) {
             waitBuffer = mergeUInt8Arrays(waitBuffer, headBuf)
@@ -218,7 +223,10 @@ export class DcUtil {
   // 连接到所有文件存储节点
   _connectToObjNodes = async (cid: string) => {
     const fileInfo = (await this.dcchainapi?.query.dcNode.files(cid)) || null
+    console.log("new first 1")
     const fileInfoJSON = fileInfo?.toJSON()
+    
+    console.log("fileInfoJSON",fileInfoJSON)
     if (
       !fileInfoJSON ||
       typeof fileInfoJSON !== 'object' ||
@@ -228,31 +236,53 @@ export class DcUtil {
       return
     }
     const res = await this._connectPeer(fileInfoJSON as { peers: any[] })
+    console.log("new first 2")
     console.log(res)
     return res;
   }
   _connectPeer = (fileInfoJSON: { peers: any[] }) => {
     return new Promise((reslove, reject) => {
       const _this = this
+      const len = (fileInfoJSON as { peers: any[] }).peers.length;
+
+      let num = 0;
 
       async function dialNodeAddr(i: number) {
         const nodeAddr = await _this._getDcNodeAddr((fileInfoJSON as { peers: any[] }).peers[i])
+        console.log("nodeAddr",nodeAddr)
         if (!nodeAddr) {
-          reslove(false)
+          console.log("nodeAddr return")
+          num++;
+          if(num >= len){
+            reslove(false)
+          }
           return
         }
+        
         try {
           const res = await _this.dcNodeClient.libp2p.dial(nodeAddr)
+          console.log("nodeAddr try return")
           console.log(res)
-          reslove(res)
+          if(res){
+            reslove(res)
+          }else {
+            num++;
+            if(num >= len){
+              reslove(false)
+            }
+          }
         } catch (error) {
-          reslove(false)
+          console.log("nodeAddr catch return",error)
+          num++;
+          if(num >= len){
+            reslove(false)
+          }
         }
       }
 
 
       // 遍历传进来的promise数组
-      for (let i = 0; i < (fileInfoJSON as { peers: any[] }).peers.length; i++) {
+      for (let i = 0; i < len; i++) {
         dialNodeAddr(i)
       }
     })
@@ -289,6 +319,7 @@ export class DcUtil {
       }
     }
     const addr = multiaddr(newNodeAddr)
+    console.log("newNodeAddr",newNodeAddr)
     return addr
   }
   _getCacheV = async (
