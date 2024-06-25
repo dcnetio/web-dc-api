@@ -294,9 +294,13 @@ export class DcUtil {
           }
         } catch (error) {
           console.log("nodeAddr catch return", error);
-          num++;
-          if (num >= len) {
-            reslove(false);
+          if(error.indexOf('.throwIfAborted is not a function') != -1){
+            reslove(true);
+          }else{
+            num++;
+            if (num >= len) {
+              reslove(false);
+            }
           }
         }
       }
