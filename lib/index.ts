@@ -86,7 +86,7 @@ export class DcUtil {
     const catOptions = {
       offset: 0,
       length: 32,
-      signal: AbortSignal.timeout(5000),
+      // signal: AbortSignal.timeout(5000),
     };
     let readCount = 0;
     try {
@@ -294,13 +294,9 @@ export class DcUtil {
           }
         } catch (error) {
           console.log("nodeAddr catch return", error);
-          if(error.indexOf('.throwIfAborted is not a function') != -1){
-            reslove(true);
-          }else{
-            num++;
-            if (num >= len) {
-              reslove(false);
-            }
+          num++;
+          if (num >= len) {
+            reslove(false);
           }
         }
       }
