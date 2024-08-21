@@ -320,10 +320,12 @@ export class DcUtil {
       console.log("no ip address found for peer: ", peerid);
       return;
     }
-    const nodeAddr = Buffer.from(
+    let nodeAddr = Buffer.from(
       (peerInfoJson as { ipAddress: string }).ipAddress.slice(2),
       "hex"
     ).toString("utf8");
+   let addrParts = nodeAddr.split(",");
+    nodeAddr = addrParts[0]
     //节点ws监听端口号在原来的tcp监听的基础上加10
     let newNodeAddr = "";
     const parts = nodeAddr.split("/");
