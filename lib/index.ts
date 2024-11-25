@@ -3,21 +3,17 @@
 import { ApiPromise, WsProvider } from "@polkadot/api";
 import { MemoryBlockstore } from "blockstore-core";
 import { MemoryDatastore } from "datastore-core";
-import { webSockets } from "@libp2p/websockets";
-import * as Filters from "@libp2p/websockets/filters";
-import {
-  createHelia,
-  libp2pDefaults,
-  type DefaultLibp2pServices,
-  type HeliaLibp2p,
-} from "helia";
+import { circuitRelayTransport } from '@libp2p/circuit-relay-v2'  
+import { webRTCDirect } from '@libp2p/webrtc' 
+import {KeyManager} from "./dc-key/keyManager"
+import { keys } from '@libp2p/crypto' 
+
+import {createHelia} from "helia";
 import { createLibp2p } from "libp2p";
 import { identify } from "@libp2p/identify";
-import { bootstrap } from "@libp2p/bootstrap";
 import { CID } from "multiformats";
 import { unixfs } from "@helia/unixfs";
 import { base32 } from "multiformats/bases/base32";
-import { ServiceClient } from "./DcnetServiceClientPb";
 
 import { yamux } from "@chainsafe/libp2p-yamux";
 import { isName, multiaddr } from "@multiformats/multiaddr";
@@ -25,47 +21,37 @@ import toBuffer from "it-to-buffer";
 import * as JsCrypto from "jscrypto/es6";
 import * as buffer from "buffer/";
 import { noise } from "@chainsafe/libp2p-noise";
-import dcnet_pb from "./dcnet_pb"; // proto import: "dcnet.proto"
+import {DCClient} from "./dcapi"
+
 const { Buffer } = buffer;
 const { Word32Array, AES, pad, mode, Base64 } = JsCrypto;
 const NonceBytes = 12;
 const TagBytes = 16;
-//const ALGORITHM = 'aes-256-gcm'
-// const BlockChainAddr = 'ws://127.0.0.1:9944'
-// const BootAddrs = [
-//   '/ip4/192.168.31.150/tcp/4021/ws/p2p/12D3KooWH5cjmz7jH7VcgLQtiVW5dyofYy6emNWsFF7DhMukX1im'
-//   // '/ip4/192.168.31.150/tcp/4006/ws/p2p/12D3KooWNr1ERkUSdUQjGtmtWPB8AtWGVuDVhcoZSH4UkudU2in9',
-//   // '/ip4/192.168.31.150/tcp/4007/ws/p2p/12D3KooW9uTxgK7nFzg4mENPWCxJiJbs8dzY2juv72UBnj3SN4rG',
-//   // '/ip4/192.168.31.150/tcp/4008/ws/p2p/12D3KooWAQjZAZ9fEuP6xJ4DJ1yeaKXPQqP2DTPrXvx9PSM1gnjW',
-//   // '/ip4/192.168.31.150/tcp/4009/ws/p2p/12D3KooWEGzh4AcbJrfZMfQb63wncBUpscMEEyiMemSWzEnjVCPf',
-//   // '/ip4/192.168.31.150/tcp/4010/ws/p2p/12D3KooWNogPyxPxFYmKWoEYCEHmWQ3k2HarS8KjKGm6Misv41kW'
-//   // '/ip4/192.168.31.150/tcp/4012/ws/p2p/12D3KooWH5cjmz7jH7VcgLQtiVW5dyofYy6emNWsFF7DhMukX1im',
-//   // '/ip4/192.168.31.150/tcp/4006/ws/p2p/12D3KooWNr1ERkUSdUQjGtmtWPB8AtWGVuDVhcoZSH4UkudU2in9',
-//   // '/ip4/192.168.31.150/tcp/4007/ws/p2p/12D3KooW9uTxgK7nFzg4mENPWCxJiJbs8dzY2juv72UBnj3SN4rG',
-//   // '/ip4/192.168.31.150/tcp/4008/ws/p2p/12D3KooWAQjZAZ9fEuP6xJ4DJ1yeaKXPQqP2DTPrXvx9PSM1gnjW',
-//   // '/ip4/192.168.31.150/tcp/4009/ws/p2p/12D3KooWEGzh4AcbJrfZMfQb63wncBUpscMEEyiMemSWzEnjVCPf',
-//   // '/ip4/192.168.31.150/tcp/4010/ws/p2p/12D3KooWNogPyxPxFYmKWoEYCEHmWQ3k2HarS8KjKGm6Misv41kW'
-// ]
+alert("dddd")
+const protocol = '/dc/thread/0.0.1'
 export class DcUtil {
   blockChainAddr: string;
-  bootAddrs: string[];
   dcchainapi: ApiPromise | undefined;
   dcNodeClient: any | undefined; // 什么类型？
 
-  constructor(blockChainAddr: string, bootAddrs: string[]) {
+  constructor(blockChainAddr: string) {
     this.blockChainAddr = blockChainAddr;
-    this.bootAddrs = bootAddrs.map((p2pAddr) => {
-      return this._p2pAddrToWsAddr(p2pAddr);
-    });
   }
 
+  
   // 初始化
   init = async () => {
     const chainProvider = new WsProvider(this.blockChainAddr);
     // 创建一个ApiPromise实例，并等待其初始化完成
     this.dcchainapi = await ApiPromise.create({ provider: chainProvider });
+    if (!this.dcchainapi) {
+      console.log("dcchainapi init failed");
+      return;
+    }
     this.dcNodeClient = await this._createHeliaNode();
+   
   };
+
 
   // 从dc网络获取指定文件
   getFileFromDc = async (cid: string, decryptKey: string) => {
@@ -175,18 +161,24 @@ export class DcUtil {
     }
   };
 
+
+  
+
+  
   /// <reference path = "dcnet_pb.d.ts" />
   // 从dc网络获取缓存值
   getCacheValueFromDc = async (key: string) => {
+
     //解析出peerid与cachekey
-    const keys = key.split("/");
-    if (keys.length != 2) {
+    const pkeys = key.split("/");
+    if (pkeys.length != 2) {
       console.log("key format error!");
       return;
     }
-    const peerid = keys[0];
-    const cacheKey = keys[1];
-    let nodeAddr = await this._getDcNodeAddr(peerid);
+   // const peerid = pkeys[0];
+    const cacheKey = pkeys[1];
+    const peerid = "12D3KooWNr1ERkUSdUQjGtmtWPB8AtWGVuDVhcoZSH4UkudU2in9"
+    let nodeAddr = await this._getDcNodeWebrtcDirectAddr(peerid);
     if (!nodeAddr) {
       console.log("no node address found for peer: ", peerid);
       return;
@@ -195,49 +187,35 @@ export class DcUtil {
       const addrs = await nodeAddr.resolve();
       nodeAddr = addrs[0];
     }
-    // 转化为grpc请求地址(端口号在地址的基础上再加10,相比原始tcp监听端口已经加20)
-    const resovledNodeAddr = nodeAddr.nodeAddress();
-
-    const request = new dcnet_pb.GetCacheValueRequest();
-    request.setKey(Buffer.from(cacheKey));
-
-    const client = new ServiceClient(
-      "http://" + resovledNodeAddr.address + ":" + (resovledNodeAddr.port + 10),
-      null,
-      {
-        withCredentials: false,
-      }
-    );
-    let resValue = "";
-
-    const res = await this._getCacheV(client, request);
-    if (res.err) {
-      console.log("getCacheValueFromDc", res.err);
-    } else {
-      resValue = res.value;
+    console.log("nodeAddr", nodeAddr.toString());
+    const dcClient = new DCClient(this.dcNodeClient.libp2p,nodeAddr, protocol);
+     const getHostIdreply = await dcClient.getHostID();
+    console.log("getHostIdreply:", getHostIdreply);
+    try {
+      const getCacheValuereply = await dcClient.GetCacheValue(nodeAddr,"ua31dpQneAD2sv8r2zX3gWg");
+      console.log('GetCacheValueReply reply:', getCacheValuereply)
+    }catch (err) {
+      console.log("getCacheValue error:", err);
     }
-    return resValue;
+   
+    //生成助记词
+     const mnemonic = KeyManager.generateMnemonic();
+     //生成私钥
+    const privKey = KeyManager.getEd25519KeyFromMnemonic(mnemonic);
+    const pubKey = privKey.publicKey;
+    //获取token
+    const token = await dcClient.GetToken( pubKey.string(),(payload: Uint8Array): Uint8Array => {
+      // Implement your signCallback logic here
+      const signature =  privKey.sign(payload);
+      return signature; 
+    });
+    console.log('GetToken reply:', token)
+    const prikey = await dcClient.AccountLogin("JxJtBntOkOnisICyiDEqIdyLWjIgph", "123456","000000",nodeAddr);
+    console.log('AccountLogin success:', prikey)
+
+    return "";
   };
-  _p2pAddrToWsAddr = (nodeAddr: string) => {
-    if (nodeAddr.indexOf("/ws") != -1) {
-      return nodeAddr;
-    }
-    //节点ws监听端口号在原来的tcp监听的基础上加10
-    let newNodeAddr = "";
-    const parts = nodeAddr.split("/");
-    for (let i = 0; i < parts.length; i++) {
-      if (parts[i] == "tcp" && i < parts.length - 1) {
-        const newPort = parseInt(parts[i + 1]) + 10;
-        newNodeAddr += parts[i] + "/" + newPort + "/";
-        i++;
-      } else if (parts[i] == "p2p") {
-        newNodeAddr += "ws/" + parts[i] + "/";
-      } else {
-        newNodeAddr += parts[i] + "/";
-      }
-    }
-    return newNodeAddr;
-  };
+
 
   // 连接到所有文件存储节点
   _connectToObjNodes = async (cid: string) => {
@@ -281,7 +259,7 @@ export class DcUtil {
         }
 
         try {
-          const res = await _this.dcNodeClient.libp2p.dial(nodeAddr);
+          const res = await _this.dcNodeClient.dial(nodeAddr);
           console.log("nodeAddr try return");
           console.log(res);
           if (res) {
@@ -344,25 +322,35 @@ export class DcUtil {
     console.log("newNodeAddr", newNodeAddr);
     return addr;
   };
-  _getCacheV = async (
-    client: ServiceClient,
-    request: dcnet_pb.GetCacheValueRequest
-  ): Promise<any> => {
-    return new Promise((resolve) => {
-      // const credentials = getChannelCredentials()
-      const metadata = {
-        authorization: "Bearer TOKEN",
-        contenttype: "application/grpc-web-text; charset=utf-8",
-      };
-      client.getCacheValue(request, metadata, (err, response) => {
-        if (!err) {
-          resolve({ value: response.getValue() });
-        } else {
-          resolve({ err });
-        }
-      });
-    });
+
+
+  // 链上查询节点webrtc direct的地址信息
+  _getDcNodeWebrtcDirectAddr = async (peerid: string) => {
+    const peerInfo = await this.dcchainapi?.query.dcNode.peers(peerid);
+    const peerInfoJson = peerInfo?.toJSON();
+    if (
+      !peerInfoJson ||
+      typeof peerInfoJson !== "object" ||
+      (peerInfoJson as { ipAddress: string }).ipAddress == ""
+    ) {
+      console.log("no ip address found for peer: ", peerid);
+      return;
+    }
+    let nodeAddr = Buffer.from(
+      (peerInfoJson as { ipAddress: string }).ipAddress.slice(2),
+      "hex"
+    ).toString("utf8");
+   let addrParts = nodeAddr.split(",");
+   if (addrParts.length < 2) {
+     return ;
+    }
+
+    console.log("nodeAddr", addrParts[1]);
+    const addr = multiaddr(addrParts[1]);
+    return addr;
   };
+
+
 
   _createHeliaNode = async () => {
     // the blockstore is where we store the blocks that make up files
@@ -370,16 +358,18 @@ export class DcUtil {
 
     // application-specific data lives in the datastore
     const datastore = new MemoryDatastore();
+    // 创建或导入私钥  
+    const keyPair = await keys.generateKeyPair('Ed25519')  
 
     // libp2p is the networking layer that underpins Helia
     const libp2p = await createLibp2p({
+      privateKey: keyPair,
       datastore,
       transports: [
-        webSockets({
-          filter: Filters.all, // this is necessary to dial insecure websockets
-        }),
+        webRTCDirect(),
+        circuitRelayTransport(),     
       ],
-      connectionEncryption: [noise()],
+      connectionEncrypters: [noise()],
       connectionGater: {
         denyDialMultiaddr: () => false, // this is necessary to dial local addresses at all
       },
@@ -387,13 +377,12 @@ export class DcUtil {
       services: {
         identify: identify(),
       },
-      peerDiscovery: [
-        bootstrap({
-          list: this.bootAddrs || [],
-        }),
-      ],
     });
-
+  
+    // libp2p.handle("/dc/thread/0.0.1", async ({ stream, connection }) => {  
+    //   // 处理入站流  
+    //   this.handleIncomingStream(stream);  
+    // });
     return await createHelia({
       datastore,
       blockstore,

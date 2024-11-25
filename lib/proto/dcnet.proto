@@ -1,0 +1,1336 @@
+syntax = "proto3";
+package dcnet.pb;
+
+message StoreThreadRequest {
+    bytes  threadId = 1;  
+    bytes userPubkey = 2 ;
+    bytes serviceKeyEncrypt = 3 ;
+}
+
+message StoreThreadReply {
+  int32 status = 1; 
+}
+
+
+message StroeFileToPeerRequest {
+    bytes cid = 1 ;
+    uint64 size =2;
+    bytes userPubkey = 3;
+
+}
+
+message StroeFileToPeerReply {
+    int32 status = 1; 
+    int64 receivesize = 2;
+
+}
+
+
+
+message OnlineStatusCheckRequest {
+    bytes challenge = 1; //随机挑战数据
+}
+
+
+message OnlineStatusCheckReply {
+    bytes teereport = 1; //根据挑战生成的tee报告
+}
+
+message CheckPeerStatusRequest{
+    oneof payload {
+        Sreq sreq =1;
+        bytes teereport = 2;//确认有效请求身份
+    }
+    message Sreq {
+        bytes pubkey = 1 ; //发起请求节点本身的pubkey
+        bytes peerid = 2 ; //需要协助检查的peerid
+    }
+}
+
+    
+
+message CheckPeerStatusReply{
+    oneof payload {
+        bytes challenge = 1;
+        Body body = 2;//teereport里面包含被检查peerid
+    }
+    message Body {
+        bytes peerid = 1 ;
+        int32 status = 2; //0:节点在线 1:节点不在线 2:节点链上状态已离线，无需检查
+        bytes teereport = 3;
+    }
+}
+
+
+
+
+
+message LocalFileCheckRequest {
+   repeated string  keys = 1 ;
+}
+
+
+message LocalFileCheckReply {
+    int32  flag = 1; //文件是否存在  0:存在 1:文件丢失 2:链上不存在对应备份信息
+    string failkey =2;//检查出错的key
+    bytes teereport = 3; //对请求的keys+failkey进行签名的teereport
+}
+
+
+message LocalAccountInfoCheckRequest {
+    repeated bytes  accounthashs = 1 ;
+}
+
+
+
+message LocalAccountInfoCheckReply {
+    int32  flag = 1; //账号对应的信息是否存在  0:存在 1:丢失 2:链上不存在对应备份信息 3:账号登录信息在两个节点间不一致（需要对应的节点发起备份请求）4、检查节点无权检查
+    bytes failkey =2;//检查出错的accounthash
+    bytes teereport = 3; //对请求的accounthashs+failkey进行签名作为数据的teereport
+}
+
+
+
+message AccountInfoSyncRequest {
+    bytes  accounthash = 1 ;
+    uint32 blockheight =2;
+    bytes prikeyencrypthash =3;
+
+}
+
+
+
+message AccountInfoSyncReply {
+}
+
+message SetEncryptKeyWithScanRequest {
+    bytes  encryptPrivkey = 1 ;
+    bytes  mapkey = 2 ; //用于标记加密key的key
+}
+
+
+message SetEncryptKeyWithScanReply {
+}
+
+message GetEncryptKeyWithScanRequest {
+    bytes  mapkey = 1 ; //用于标记加密key的key
+}
+
+
+message GetEncryptKeyWithScanReply {
+    bytes  encryptPrivkey = 1 ;
+}
+
+
+
+
+
+message RequestRandEncryptKeyRequest {
+    bytes  enclaveid = 1 ; //关联的enclaveid，本enclaveid必须是技术委员会签发的
+}
+
+
+message RequestRandEncryptKeyReply {
+    bytes encryptKey = 1;//用请求节点的pubkey对key进行加密后的数据
+    bytes signature =2; //处理节点私钥对key的签名sign(key)
+}
+
+
+message GetEncryptKeyRequest {
+    bytes  peerId = 1 ; //节点真实的peerid
+    bytes  teereport =2 ; //请求节点的teereport，reportdata为 发起请求时节点临时peerid关联的pubkey
+}
+
+
+message GetEncryptKeyReply {
+    bytes encryptKey = 1;//用请求节点的pubkey对key进行加密后的数据
+    bytes signature =2; //处理节点私钥对key的签名sign(key)
+}
+
+
+
+message GetPeersWithSidRequest {
+    string  sid = 1 ;
+}
+
+message GetPeersWithSidReply {
+   repeated string peerids = 1 ; //存储了对应文件的peerid列表
+}
+
+
+message GetPeersWithAccountHashRequest {
+    bytes  accounthash = 1 ;
+}
+
+message GetPeersWithAccountHashReply {
+   repeated string peerids = 1 ; //存储了对应账号登录信息的peerid列表
+}
+
+
+
+
+
+
+message AccountDealBackupRequest {
+    bytes  pubkey   =1 ; //发起操作请求的pubkey
+     bytes  accountencrypt = 2; //账号值用用户自身pubkey加密，防止链上账号与pubkey的关联信息被泄露
+    bytes  accounthashencrypt = 3; //账号hash值用接收节点pubkey加密，主要防止传输过程中数据泄露
+    bytes  prikeyencrypt2 = 4; //双重加密后的数据，首先用（密码hash后采用Bcrypt加密后的hash值（盐值为密码hash后22个字符）+账号）hash值加密账号绑定的用户私钥生成prikeyencrypt，然后再用接收节点pubkey加密prikeyencrypt生成prikeyencrypt2
+    uint32 blockheight = 5;
+     bytes  randkeyencrypt = 6; 
+    bytes  loginkeyrandencrypt = 7;//（账号hash+密码前两位取hash后的后两位） 组合后的hash值loginkey+randkeyhash，再用节点pubkey加密，
+                               //解密出来后登录时用，主要防止传输过程中数据泄露（解析过程：1、用节点私钥从randencrpt中解密出rand，2、用节点私钥解密loginkeyrandencrypt生成 loginkeyrand 3、从loginkeyrand中去掉rand，生成loginkey）
+    bytes  peerid = 8 ;
+    bytes signature = 9;//sign(accounthash+prikeyencrypthash+blockheight+peerid)
+}
+
+message AccountDealBackupReply {
+}
+
+//供sdk调用的接口定义
+
+message GetHostIDRequest {}
+
+message GetHostIDReply {
+    bytes peerID = 1;
+    bytes reqAddr =2; //发起请求节点的节点地址信息
+}
+
+message ReportLocalMultilAddrRequest{
+    string addr = 1;
+}
+
+message ReportLocalMultilAddrReply{
+}
+
+message GetTokenRequest {
+    oneof payload {
+        string key = 1;
+        bytes signature = 2;
+    }
+}
+
+message GetTokenReply {
+    oneof payload {
+        bytes challenge = 1;
+        string token = 2;
+    }
+}
+
+message CreateThreadRequest {
+    bytes threadID = 1;
+    Keys keys=2;
+    uint32 blockheight = 3;
+    bytes signature = 4;//sign(threadid+threadKey+logkey+blockheight+otype(2)+peerid)
+}
+
+message Keys {
+    bytes threadKeyEncrpt = 1;  //用接收节点的pubkey加密
+    bytes logKeyEncrpt = 2; //用接收节点的pubkey加密
+}
+
+message ThreadInfoReply {
+    bytes threadID = 1;
+    repeated LogInfo logs = 3;
+    repeated bytes addrs = 4;
+}
+
+message LogInfo {
+    bytes ID = 1;
+    bytes pubKey = 2;
+    bytes privKey = 3;
+    repeated bytes addrs = 4;
+    bytes head = 5;
+    bytes counter = 6;
+}
+
+
+message ThreadIDRequest {
+}
+
+message ThreadIDReply {
+     bytes threadID = 1;
+
+}
+
+
+message AddThreadToPeerRequest {
+    bytes threadID = 1;
+    uint32 blockheight = 2;
+    Keys keys = 3;
+    bytes signature = 4;//sign("addthread"+threadid+blockheight+peerid)
+}
+
+
+message AddThreadToPeerReply{
+    int32 status = 1; 
+    int64 count = 2;
+}
+
+
+
+message GetThreadRequest {
+    bytes threadID = 1;
+}
+
+message DeleteThreadRequest {
+    bytes threadID = 1;
+    uint32 blockheight = 2;
+    bytes signature = 3;//sign(threadid+blockheight+otype(2)+peerid)
+}
+
+message DeleteThreadReply {}
+
+
+
+
+
+message StroeFileRequest {
+    bytes cid = 1;
+    uint64 filesize = 2;
+    uint32 blockheight = 3;
+    bytes signature = 4; //sign(cid+filesize+blockheight+file_type(1)+peerid)
+    bytes vaccount = 5 ; //虚拟账号,可选,如果有虚拟账号
+}
+
+message StroeFileReply {
+    int32 status = 1; 
+    uint64 receivesize = 2;
+
+}
+
+
+
+
+
+message DeleteFileRequest {
+    bytes  cid = 1;
+    uint32 blockheight = 2;
+    bytes signature = 3;//sign(cid+blockheight+otype(2)+peerid)    
+}
+
+message DeleteFileReply {
+    bool  flag = 1;
+}
+
+
+message StoreFolderRequest {
+    bytes cid = 1;
+    uint64 foldersize = 2;
+    uint32 filecount = 3;
+    uint32 blockheight = 4;
+    bytes signature = 5; //sign(cid+foldersize+blockheight+file_type(2)+peerid) 为了与文件存储一致，fileconunt不参与签名
+    bytes vaccount = 6 ; //虚拟账号,可选,如果有虚拟账号
+}
+
+message StoreFolderReply {
+    int32 status = 1; 
+    uint32 receivecount = 2; //已经接收完成的文件数量
+}
+
+
+
+
+
+message AccountDealRequest {
+    bytes  accountencrypt = 1; //账号值用账号绑定的user pubkey加密，这样账号信息在链上也无法被其他人解密
+     bytes  accounthashencrypt = 2; //账号值用账号绑定的user pubkey加密，这样账号信息在链上也无法被其他人解密
+    bytes  prikeyencrypt2 = 3; //双重加密后的数据，首先用（密码hash后采用Bcrypt加密后的hash值（盐值为密码hash后22个字节）+账号）hash值为密钥采用aes加密账号绑定的用户私钥生成prikeyencrypt，然后再用节点pubkey加密prikeyencrypt生成prikeyencrypt2（保证传输安全）
+    uint32 blockheight = 4;
+    bytes  loginkeyrandencrypt = 5;//账号hash+密码后两位组合后的hash值loginkey+randkeyhash，再用节点pubkey加密，
+                               //解密出来后登录时用，主要防止传输过程中数据泄露（解析过程：1、用节点私钥从randencrpt中解密出rand，2、用节点私钥解密loginkeyrandencrypt生成 loginkeyrand 3、从loginkeyrand中去掉rand，生成loginkey）
+    bytes  peerid = 6; //允许发起上链请求的peerid
+    bytes signature = 7;//sign(accounthash+prikeyencrypthash+blockheight)
+    bytes vaccount = 8 ; //虚拟账号,可选,如果有虚拟账号
+}
+
+message AccountDealReply {
+}
+
+
+message AccountLoginRequest {
+    bytes  accounthashencrypt =1; //账号hash值用节点pubkey加密，主要防止传输过程中数据泄露
+    bytes  pubkeyencrypt = 2; //临时生成的发起请求用的pubkey，用节点的pubkey进行加密
+    bytes  loginkeyrandencrypt = 3;//账号hash+密码后两位组合后的hash值loginkey+randkeyhash，再用节点pubkey加密，
+                               //解密出来后登录时用，主要防止传输过程中数据泄露（解析过程：1、用节点私钥从randencrpt中解密出rand，2、用节点私钥解密loginkeyrandencrypt生成 loginkeyrand 3、从loginkeyrand中去掉rand，生成loginkey）
+}
+
+message AccountLoginReply {
+    bytes prikeyencrypt2 = 1;//用（密码hash后采用Bcrypt加密后的hash值（盐值为密码hash后16个字节）+账号）hash值加密账号绑定的用户私钥生成prikeyencrypt，再用发起请求的pubkey加密 客户端取得数据后，还需要进行两次解密（1、临时私钥解密 2、账号密码组合成密码后解密）
+}
+
+
+message TransferAccountRequest {
+    bytes  accounthashencrypt = 1; //账号hash值用节点pubkey加密，主要防止传输过程中数据泄露
+    bytes  recvpubkey =2;//接收账号的pubkey
+    uint32 blockheight = 3;
+    bytes  peerid = 4; //允许发起上链请求的peerid
+    bytes signature = 5;//sign(accounthash+recvpubkey+blockheight+peerid)
+}
+
+message TransferAccountReply {
+}
+
+
+
+
+message SetUserDefaultDBRequest{
+     bytes dbinfocrypt = 1;
+     uint32 blockheight = 2;
+     bytes  peerid = 3; //允许发起上链请求的peerid
+     bytes signature = 4;//sign(dbinfocrypt+blockheight+peerid)
+}
+
+message SetUserDefaultDBReply{
+}
+
+
+message AddSubPubkeyRequest{
+     bytes subpubkey = 1;
+     uint32 blockheight = 2;
+     bytes  peerid = 3; //允许发起上链请求的peerid
+     bytes signature = 4;//sign(subpubkey+blockheight+peerid)
+}
+
+message AddSubPubkeyReply{
+     
+}
+
+message DeleteSubPubkeyRequest{
+        bytes subpubkey = 1;
+        uint32 blockheight = 2;
+        bytes  peerid = 3; //允许发起上链请求的peerid
+        bytes signature = 4;//sign(subpubkey+blockheight+peerid)
+}
+
+message DeleteSubPubkeyReply{
+     
+}
+
+message BindAccessPeerToUserRequest{
+     uint32 blockheight = 1;
+     bytes signature = 2;//sign("add_request_peer_id_to_user"+blockheight+接入peerid)
+}
+
+message BindAccessPeerToUserReply{
+
+}
+
+message ValidTokenRequest{
+
+}
+
+message ValidTokenReply{
+
+}
+
+message AddLogToThreadRequest{
+     bytes threadID = 1 ;
+     bytes logID = 2 ;
+     uint32 blockheight = 3;
+     bytes  peerid = 4; //允许发起上链请求的peerid
+     bytes signature = 5;//sign(threadID+logID+blockheight+peerid)
+
+}
+
+message AddLogToThreadReply{
+     
+}
+
+message AddThreadSpaceRequest{
+     bytes threadID = 1 ;
+     uint32 blockheight = 2;
+     uint32  space = 3; //要增加的空间
+     bytes signature = 4;//sign(threadID+blockheight+peerid+space)
+}
+
+message AddThreadSpaceReply{
+     
+}
+
+message GetThreadUsedSpaceRequest{
+     bytes threadID = 1 ;
+     int64 randnum = 2;//请求随机数据
+}
+
+message GetThreadUsedSpaceReply{
+       uint64 usedsize = 1;
+       bytes signature = 2;//sign(threadID+randnum+usedsize)
+}
+
+
+
+message TeeReportVerifyRequest{
+  bytes  teereport =1; //需要协助验证的teereport数据
+}
+
+message TeeReportVerifyReply{
+    bytes  report = 1; //attestation.Report数据序列化
+    bytes  signature =2;//节点私钥对report加发起请求的peerid的签名sign(report+reqPeerid)
+}
+
+message SendMsgToUserBoxRequest {
+  UserMsg msg = 1; //消息
+  bytes AuthSignature =2;//来自发送用户账号备份节点的发送消息授权签名
+  bytes PeerId = 3;//生成签名的发送用户账号备份节点的peerid
+}
+
+message SendMsgToUserBoxReply {
+    uint32 flag = 1;//离线消息发送反馈 0:成功 1:用户信息在委托节点不存在,拒绝发送 2:对端收件箱离线，发送失败
+}
+
+message GetToUserBoxAuthRequest {
+    bytes msgSignature = 1; //要发送的消息签名
+}
+
+message GetToUserBoxAuthReply {
+    bytes signature = 1; //对用户要发送消息签名的签名
+
+}
+
+message GetMaxKeyFromUserBoxRequest{
+    bytes appId = 1; //应用标志
+}
+
+message GetMaxKeyFromUserBoxReply{
+   bytes maxkey = 1;//返回的最大seekkey
+}
+
+
+message GetMsgFromUserBoxRequest{
+    bytes appId = 1; //应用标志
+    uint32 blockheight = 2; //获取消息的起始高度
+    bytes seekKey = 3; //获取消息的起始key
+    uint32 limit = 4; //获取的最大消息数量
+}
+
+message GetMsgFromUserBoxReply{
+   repeated UserMsg msgs = 1;//返回的消息列表
+}
+
+
+
+message UserMsg {
+    bytes messageId = 1; //消息ID
+    bytes senderPubkey  = 2; //发送者公钥
+    bytes receiverPubkey = 3; //接收者公钥
+    bytes appId = 4; //应用标志
+    uint32 blockheight = 5; //发送消息时的区块高度
+    bytes encryptMsg =6 ;//接收者公钥加密的数据
+    bytes signature =7 ; //发送者私钥对（messageId+receiverPubkey+appId+blockheight+encryptMsg)的签名
+}
+
+message ReportSpamMsgRequest{
+    UserMsg msg = 1; //被举报的消息
+    uint32 blockheight = 2; //举报时的区块高度
+    bytes signature = 3; //当次举报的签名 sign(messageId+senderPubkey+blockheight)
+    bytes vaccount = 4 ; //虚拟账号,可选,如果有虚拟账号
+}
+
+message ReportSpamMsgReply{
+}
+
+
+
+
+message GetUserClientPeersRequest{
+    bytes userPubkey = 1 ;//要请求的用户pubkey
+}
+
+message GetUserClientPeersReply{
+  repeated string peers = 1 ;//用户绑定的peer 地址列表
+}
+
+
+message AddThemeObjRequest{
+    bytes theme = 1; //主题CID
+    bytes appId = 2; //应用标志
+    uint32 blockheight = 3; //发送请求时的区块高度
+    uint32 commentSpace = 4; //评论可使用的空间
+    uint32 allowSpace = 5; //允许评论占有的最大空间大小，不参与签名，因为本字段值会随着新增评论空间而调整，默认等于commentspace 
+    bytes userPubkey  = 6; //添加对象用户公钥
+    uint32 openFlag  = 7; //是否公开评论 true：用户评论后立马显示，任何人都可以查看  false：用户评论后，评论的状态直接设置为私密
+    bytes signature =8; //发送者私钥对（objCid+appId+blockheight+commentspace+openFlag)的签名
+    uint32 CCount  = 9;     //被评论数量
+ 	uint32 UpCount  = 10;    //顶或赞梳理
+ 	uint32 DownCount  = 11;    //踩数量
+    uint32 TCount  = 12;    //推荐数量
+    bytes vaccount = 13 ; //虚拟账号,可选,如果有虚拟账号
+}
+
+message AddThemeObjReply{
+    uint32 flag = 1; //0:成功 1:评论空间没有配置 2:评论空间不足 3:评论数据同步中
+}
+
+
+message AddThemeSpaceRequest{
+    bytes theme = 1; //要调整的主题CID
+    bytes appId = 2; //应用标志
+    uint32 blockheight = 3; //发送请求时的区块高度
+    uint32 addspace = 4; //增加的评论空间
+    bytes userPubkey  = 5; //添加对象用户公钥
+    bytes signature =6 ; //发送者私钥对（objCid+appId+blockheight+addspace)的签名
+    bytes vaccount = 7 ; //虚拟账号,可选,如果有虚拟账号
+}
+
+message AddThemeSpaceReply{
+    uint32 flag = 1; //0:成功 1:评论空间没有配置 2:评论空间不足 3:评论数据同步中
+
+}
+
+
+message SetCacheKeyRequest{
+     uint32 expire = 1; // 过期的时间,单位为秒,最大为1年,即 31536000 秒
+     uint32 blockheight = 2; //发送请求时的区块高度
+     bytes value = 3; //要存储的内容
+     bytes signature = 4; //发送者私钥对（expire+blockheight+value)的签名
+}
+
+message SetCacheKeyReply{
+    uint32 flag = 1; //0:成功 1:评论空间没有配置 2:评论空间不足 3:评论数据同步中
+    bytes cacheKey = 2 ; // 根据算法生成的随机不重复的key,该key包含了peeid信息
+}
+
+message GetCacheValueRequest{
+     bytes key = 1; //要存储的内容
+}
+message GetCacheValueReply{
+    bytes value = 1 ; // 获取的值
+}
+
+message GetThemeSpaceRequest{
+    bytes theme = 1; //要调整的主题CID
+    bytes appId = 2; //应用标志
+    uint32 blockheight = 3; //发送请求时的区块高度
+    bytes userPubkey  = 4; //对象用户公钥,只有对象用户才能获取评论空间大小
+    bytes signature =5 ; //发送者私钥对（objCid+appId+blockheight)的签名
+    bytes vaccount = 6 ; //虚拟账号,可选,如果有虚拟账号
+}
+
+message GetThemeSpaceReply{
+    uint32 space = 1; //评论空间大小
+}
+
+message DeleteThemeObjRequest{
+    bytes theme = 1; //要删除的主题CID
+    bytes appId = 2; //应用标志
+    uint32 blockheight = 3; //发送请求时的区块高度
+    bytes userPubkey  = 4; //对象用户公钥
+    bytes signature = 5 ; //发送者私钥对（objCid+appId+blockheight)的签名
+}
+
+message DeleteThemeObjReply{
+  uint32 flag = 1; //0:成功 1:评论空间没有配置 2:评论空间不足 3:评论数据同步中
+}
+
+
+message PublishCommentToThemeRequest{
+    bytes theme = 1; //主题CID
+    bytes appId = 2; //应用标志
+    bytes themeAuthor = 3;//发布主题的的作者pubkey
+    uint32 blockheight = 4; //发送请求时的区块高度
+    bytes userPubkey  = 5; //发布评论的用户
+    bytes  commentCid = 6; //发布的评论CID(接收节点需要校验commentCId与comment是否一致)
+    bytes  comment = 7; //发布的评论
+    uint32 commentSize = 8; //评论的大小
+    uint32 status = 9; //评论状态（0:公开 1:私密 )
+    bytes  refercommentkey=10; //评论引用的另外一个评论的key
+    uint32 CCount  = 11;     //被评论数量
+ 	uint32 UpCount  = 12;    //顶或赞梳理
+ 	uint32 DownCount  = 13;    //踩数量
+    uint32 TCount  = 14;    //推荐数量
+    uint32 type = 15; //评论的类型 0:普通评论 1:点赞 2:推荐 3:踩
+    bytes signature = 16 ; //发送者私钥对sign(theme+appId+themeAuthor+blockheight+commentCid+Refercommentkey+type)的签名
+    bytes vaccount = 17 ; //虚拟账号,可选,如果有虚拟账号
+}
+
+message PublishCommentToThemeReply{
+    uint32 flag =1; //0:成功 1:评论空间没有配置 2:评论空间不足
+}
+
+
+ message SetKeyValueRequest{
+    bytes theme = 1; //主题CID
+    bytes appId = 2; //应用标志
+    bytes themeAuthor = 3;//发布主题的的作者pubkey
+    uint32 blockheight = 4; //发送请求时的区块高度
+    bytes userPubkey  = 5; //设置keyvalue的用户
+    bytes  contentCid = 6; //keyvalue内容的CID(接收节点需要校验contentCid与content是否一致)
+    bytes  content = 7; //keyvalue内容
+    uint32 contentSize = 8; //keyvalue内容大小
+    uint32 type = 9; //CommentType_KeyValue 4
+    bytes signature = 10 ; //发送者私钥对sign(theme+appId+themeAuthor+blockheight+contentCid+type)的签名
+}
+
+
+message SetKeyValueReply{
+    uint32 flag =1; //0:成功 1:空间没有配置 2:keyvalue空间不足
+}
+
+
+message ConfigThemeObjAuthRequest{
+    bytes theme = 1; //主题CID
+    bytes appId = 2; //应用标志
+    bytes themeAuthor = 3;//发布主题的的作者pubkey
+    uint32 blockheight = 4; //发送请求时的区块高度
+    bytes userPubkey  = 5; //操作的用户
+    bytes  contentCid = 6; //权限内容的hash值(接收节点需要校验contentCid与content是否一致)
+    bytes  content = 7; //配置的授权内容格式: userpubkey:permission:remark(remark可选,存放应用自定义的任何信息),userpubkey为用户的公钥16进制表示(all为特殊情况)，permission为用户的权限，remark为备注信息
+    uint32 contentSize = 8; //评论的大小
+    uint32 type = 9; // 必须为0
+    bytes signature = 10 ; //发送者私钥对sign(theme+appId+themeAuthor+blockheight+contentCid+type)的签名
+}
+
+
+message ConfigThemeObjAuthReply{
+    uint32 flag =1; //0:成功 1:空间没有配置 2:keyvalue空间不足
+}
+
+
+
+message AddUserOffChainSpaceRequest{
+   bytes userPubkey  = 1; //要新增用户对外评论空间的用户
+   uint32 blockheight = 2; //发送请求时的区块高度
+   bytes  peerid = 3; //允许发起上链请求的peerid
+   bytes signature = 4 ; //发送者私钥对（blockheight+peerid)的签名
+   bytes vaccount = 5 ; //虚拟账号,可选,如果有虚拟账号
+}
+
+message AddUserOffChainSpaceReply{
+}
+
+
+
+
+
+
+message ReportMaliciousCommentRequest{
+    bytes theme = 1; //主题CID
+    bytes appId = 2; //应用标志
+    bytes themeAuthor = 3;//发布评论对象的作者pubkey
+    uint32 blockheight = 4; //请求操作时的区块高度
+    uint32 commentBlockheight = 5; //添加评论时的区块高度
+    bytes commentCid  = 6; //发布的评论CID
+    bytes signature = 7 ; //发送者私钥对（objCid+appId+themeAuthor+blockheight+commentCid)的签名
+    bytes vaccount = 8 ; //虚拟账号,可选,如果有虚拟账号，
+}
+
+
+
+message ReportMaliciousCommentReply{
+    uint32 flag = 1; //0:成功 1:评论空间没有配置 2:评论空间不足 3:评论数据同步中
+}
+
+
+message SetObjCommentPublicRequest{
+    bytes theme = 1; //主题CID
+    bytes appId = 2; //应用标志
+    bytes themeAuthor = 3;//发布评论对象的作者pubkey
+    uint32 blockheight = 4; //请求操作时的区块高度
+    uint32 commentBlockheight = 5; //添加评论时的区块高度
+    bytes commentCid  = 6; //发布的评论CID
+    bytes signature = 7 ; //发送者私钥对（objCid+appId+themeAuthor+blockheight+commentCid)的签名
+    bytes vaccount = 8 ; //虚拟账号,可选,如果有虚拟账号
+}
+
+
+
+message SetObjCommentPublicReply{
+    uint32 flag = 1; //0:成功 1:评论空间没有配置 2:评论空间不足 3:评论数据同步中
+}
+
+
+
+
+message DeleteSelfCommentRequest{
+    bytes theme = 1; //主题CID
+    bytes appId = 2; //应用标志
+    bytes userPubkey  = 3; //发布评论的用户
+    bytes themeAuthor = 4;//发布主题的作者pubkey
+    uint32 blockheight = 5; //发送请求时的区块高度
+    uint32 commentBlockheight = 6; //添加评论时的区块高度
+    bytes commentCid  = 7; //发布的评论CID
+    bytes signature = 8; //发送者私钥对（objCid+appId+themeAuthor+blockheight+commentCid)的签名
+}
+
+
+
+message DeleteSelfCommentReply{
+ uint32 flag = 1; //0:成功 1:评论空间没有配置 2:评论空间不足 3:评论数据同步中
+}
+
+message DeleteCommentToObjRequest{
+    bytes theme = 1; //主题CID
+    bytes appId = 2; //应用标志
+    bytes userPubkey  = 3; //发布评论的用户
+    bytes themeAuthor = 4;//发布主题的作者pubkey
+    uint32 blockheight = 5; //发送请求时的区块高度
+    uint32 commentBlockheight = 6; //添加评论时的区块高度
+    bytes commentCid  = 7; //发布的评论CID
+    bytes signature = 8; //发送者私钥对（objCid+appId+themeAuthor+blockheight+commentCid)的签名
+}
+
+
+
+message DeleteCommentToObjReply{
+ uint32 flag = 1; //0:成功 1:评论空间没有配置 2:评论空间不足 3:评论数据同步中
+}
+
+
+
+
+
+
+message GetThemeObjRequest{
+    bytes appId = 1; //应用标志
+    bytes themeAuthor = 2;//发布评论对象的作者pubkey
+    uint32 startHeight = 3; //开始的区块高度
+    uint32  direction = 4;//遍历方向 0:正向  1:逆向
+    uint32 offset = 5; //偏移量，以开始的区块高度的第一条记录开始计数
+    uint32 limit = 6; //返回的记录条数，最多为1000
+    bytes  seekKey = 7; //起始key，如果设置了seekKey，忽略startHeight seekKey格式： commentableobjcid  
+}
+
+
+
+
+
+message GetThemeObjReply{
+    uint32 flag = 1;//处理结果
+    bytes objsCid = 2; //获取的评论列表结果集，存入ipfs网络中后反馈的cid，客户端再通过 getFile获取，结果集是每行一个AddThemeObjRequest通过json序列化后的字符串
+}
+
+
+   
+
+
+
+message GetThemeCommentsRequest{
+    bytes theme = 1; //主题CID
+    bytes appId = 2; //应用标志
+    bytes themeAuthor = 3;//发布评论对象的作者pubkey
+    uint32 startHeight = 4; //开始的区块高度
+    uint32  direction = 5;//遍历方向 0:正向  1:逆向
+    uint32 offset = 6; //偏移量，以开始的区块高度的第一条记录开始计数
+    uint32 limit = 7; //返回的记录条数，最多为100
+     bytes  seekKey = 8; //起始key，如果设置了seekKey，忽略startHeight (seekKey格式 blockheight/commentcid）
+}
+
+message GetThemeCommentsReply{
+    uint32 flag = 1;//获取结果
+    bytes commentsCid = 2; //获取的评论列表结果集，存入ipfs网络中后反馈的cid，客户端再通过 getFile获取，结果集是PublishCommentToThemeRequest的数组 json序列化
+}
+
+
+message GetThemeAuthListRequest{
+    bytes theme = 1; //主题CID
+    bytes appId = 2; //应用标志
+    bytes themeAuthor = 3;//发布主题的作者pubkey
+    uint32 startHeight = 4; //开始的区块高度
+    uint32  direction = 5;//遍历方向 0:正向  1:逆向
+    uint32 offset = 6; //偏移量，以开始的区块高度的第一条记录开始计数
+    uint32 limit = 7; //返回的记录条数，最多为100
+    bytes  seekKey = 8; //起始key，如果设置了seekKey，忽略startHeight (seekKey格式 blockheight/commentcid）
+}
+
+message GetThemeAuthListReply{
+    uint32 flag = 1;//获取结果
+    bytes authListCid = 2; //获取的授权列表结果集存入ipfs网络中后反馈的cid,客户端再通过 getFile获取，结果集是PublishCommentToThemeRequest的数组 json序列化
+}
+
+message GetUserCommentsRequest{
+    bytes appId = 1; //应用标志
+    bytes UserPubkey = 2;//发布评论的用户pubkey
+    uint32 startHeight = 3; //开始的区块高度
+    uint32  direction = 4;//遍历方向 0:正向  1:逆向
+    uint32 offset = 5; //偏移量，以开始的区块高度的第一条记录开始计数
+    uint32 limit = 6; //返回的记录条数，最多为1000
+    bytes  seekKey = 7; //起始key，如果设置了seekKey，忽略startHeight  (seekKey格式 objcid/blockheight/commentcid）
+}
+
+message GetUserCommentsReply{
+    uint32 flag = 1;//获取结果
+    bytes commentsCid = 2; //获取的评论列表结果集，存入ipfs网络中后反馈的cid，客户端再通过 getFile获取，结果集是PublishCommentToThemeRequest的数组 json序列化
+}
+
+
+message GetValueWithKeyRequest{
+    bytes theme = 1; //主题CID
+    bytes appId = 2; //应用标志
+    bytes themeAuthor = 3;//发布评论对象的作者pubkey
+    bytes UserPubkey = 4;//对应用户pubkey命名空间
+    bytes Key = 5; //要获取的key
+}
+
+message GetValueWithKeyReply{
+    uint32 flag = 1;//获取结果
+     bytes value = 2; //获取的值
+}
+
+message GetValuesWithKeysRequest{
+    bytes theme = 1; //主题CID
+    bytes appId = 2; //应用标志
+    bytes themeAuthor = 3;//发布评论对象的作者pubkey
+    bytes UserPubkey = 4;//对应用户pubkey命名空间
+    bytes Keys = 5; //要获取的key列表,最多100个,逗号分隔
+}
+
+message GetValuesWithKeysReply{
+    uint32 flag = 1;//获取结果
+    bytes keyValues = 2; //获取的值,是个数组,[{key1:value1},{key2:value2}]
+}
+
+
+message PushThemeFunOptRequest{
+    CommentFunOpt opt = 1;
+}
+
+message PushThemeFunOptReply{
+}
+
+
+message PullCommentFunOptsRequest{
+    bytes userPubkey = 1; //用户pubkey 
+    uint32 limit = 2; //获取的记录数量限制 
+    repeated peerSeqno seqs = 3; //对应在各节点的起始序号
+    
+}
+
+message peerSeqno {
+   bytes peerid =1; //对应的peerid
+   uint64 seqno = 2; //拉取操作对应peerid的起始操作序列号
+ 
+}
+
+message PullCommentFunOptsReply{
+    uint32 flag = 1;//获取结果 0:成功  1:失败  2:需要重新初始化（出现节点 seqno 不连贯）
+    bytes funcOptsCid = 2; //获取的评论相关操作的结果集，存入ipfs网络中后反馈的cid，再通过 getFile获取，结果集是CommentFunOpt的数组 json序列化
+}
+
+message CommentFunOpt {
+  bytes userPubkey = 1; //用户pubkey 
+  uint64 seqno = 2; //对应节点上的操作序号
+  bytes peerid = 3; //对应的节点ID
+  uint32 opType = 4; //操作类型：0:配置评论空间 1:开通对象评论功能 2:关闭对象评论功能 3:给开通评论功能的对象增加空间 4:为评论对象添加评论 5:为评论对象删除评论  6、用户添加本地评论 7、用户删除本地评论
+  bytes opReq = 5;//具体操作请求
+}
+
+
+message ExchangeThemeEdgesRequest{
+    repeated UserCommentSeqEdge userSeqEdges = 1;
+}
+
+message ExchangeThemeEdgesReply{
+    repeated UserCommentSeqEdge userSeqEdges = 1;
+}
+
+
+message UserCommentSeqEdge {
+    bytes userPubkey = 1 ;
+    uint64 seqedge = 2;
+}
+
+
+message DownloadUserCommentsRequest{
+    bytes userPubkey = 1;//对应的用户
+    uint32 blockheight = 2; //发起请求时的blockheight
+    bytes  teereport = 4;//tee请求包，reportdata：发起评论下载请求的节点私钥签名 sign(userPubkey+blockheight)
+}
+
+
+message DownloadUserCommentsReply{
+    uint32 flag = 1; //0:成功 1:评论空间没有配置 
+}
+
+
+
+
+message UserCommentsDownloadReadyRequest{
+    bytes userPubkey = 1;//针对的用户相关
+    bytes commentsCid = 2; //所有用户评论相关数据内容记录的集合的cid
+    uint32 blockheight = 3; //发起请求时的blockheight
+    bytes  teereport = 4;//tee请求包，reportdata：请求的节点私钥签名 sign(userPubkey+commentsCid+blockheight)
+}
+
+
+message UserCommentsDownloadReadyReply{
+}
+
+
+message DeviceStatusReportRequest{
+    uint32 seqno = 1;//状态序号,不重复
+    bytes deviceID = 2; //设备ID
+    bytes theme = 3; //状态收集主题对象
+    bytes appId = 4; //应用标志
+    bytes themeAuthor = 5;//发布主题的的作者pubkey
+    bytes userPubkey  = 6; //发布评论的用户
+    uint32 type = 7; //状态类型 0:设备状态 1:设备事件 2:设备告警 3:设备故障 4:指令执行
+    bytes contentHash = 8; //状态数据的hash(接收节点需要校验contentHash与content是否一致)
+    bytes content  = 9; //状态数据,应用自定义,长度最多不超过10k
+    uint32 contentSize = 10; //数据大小
+    uint32 blockheight = 11; //发起请求时的blockheight
+    bytes  groups  = 12; //设备的分组,逗分隔
+    bytes  signature = 13;// 发送设备的签名  sign(deviceID+theme+appId+seqno+themeAuthor+type+contentCid+groups+blockheight)
+    bytes rawReq = 14; //原始请求数据
+    uint32 resendcount = 15; //重发次数 客户端不用处理
+}
+
+message DeviceStatusReportReply{
+  uint32 flag = 1; //0:成功 1:链下空间没有配置 
+}
+
+message GetThemeDevicesStatusRequest{
+    bytes theme = 1; //状态汇聚主题
+    bytes appId = 2; //应用标志
+    bytes themeAuthor = 3;//发布状态汇聚对象的的pubkey
+    uint32  direction = 4;//遍历方向 0:正向  1:逆向
+    uint32 offset = 5; //偏移量，以开始的区块高度的第一条记录开始计数
+    uint32 limit = 6; //返回的记录条数，最多为1000
+    bytes  seekKey = 7; //起始key，如果设置了seekKey，忽略seqno (seekKey格式 deviceid/appid)
+    bytes groups = 8; //设备的分组,逗分隔
+}
+
+message GetThemeDevicesStatusReply{
+    uint32 flag = 1;//获取结果
+    bytes statuslistCid = 2; //获取的状态列表结果集，存入ipfs网络中后反馈的cid，客户端再通过 getFile获取，结果集是DeviceStatusReportRequest的数组 json序列化
+}
+
+
+message GetDeviceAuthRequest{
+    bytes theme = 1; //状态汇聚主题
+    bytes appId = 2; //应用标志
+    bytes themeAuthor = 3;//发布状态汇聚对象的的pubkey
+}
+
+message GetDeviceAuthReply{
+    uint32 flag = 1;//获取结果 0:成功 1:主题不存在 2:其他失败
+    uint32 blockheight =2;
+    bytes  authGroups = 3; //授权给请求用户的设备的分组权限,逗号分隔
+    bytes signature = 4; //取得的授权签名,由接收请求方的节点签发(签名内容：theme+appId+themeAuthor+reqUser+groupspermission+blockheight)
+}
+
+
+message GetDeviceStatusListRequest{
+    bytes theme = 1; //状态汇聚对象CID
+    bytes appId = 2; //应用标志
+    bytes deviceId = 3; //设备ID
+    bytes themeAuthor = 4;//发布状态汇聚对象的的pubkey
+    bytes UserPubkey = 5;//发布评论的用户pubkey
+    uint32 seqno = 6; //开始的序号
+    uint32 startHeight = 7; //开始的区块高度
+    uint32  direction = 8;//遍历方向 0:正向  1:逆向
+    uint32 offset = 9; //偏移量，以开始的区块高度的第一条记录开始计数
+    uint32 limit = 10; //返回的记录条数，最多为1000
+    bytes  seekKey = 11; //起始key，如果设置了seekKey，忽略seqno (seekKey格式 blockheight/commentcid）
+    bytes authgroupspermission = 12; //授权给请求用户的设备的分组权限,逗号分隔
+    uint32 authBlockheight = 13; //授权时的区块高度
+    bytes  authPeerid = 14; //授权的节点peerid
+    bytes  authSignature = 15; //授权的节点签名
+}
+
+
+message GetDeviceStatusListReply{
+    uint32 flag = 1;//获取结果 0:成功 1:权限不足 2:获取失败
+    bytes statuslistCid = 2; //获取的状态列表结果集，存入ipfs网络中后反馈的cid，客户端再通过 getFile获取，结果集是DeviceStatusReportRequest的数组 json序列化
+}
+
+
+message ReEncryptFileRequest{
+    bytes cid = 1; //要重新加密的文件的cid
+    bytes encDecryptKey = 2; //用接收节点加密后原始文件的解密key
+    bytes  encSecretkey = 3; //用接收节点加密后的加密key(用于重新加密文件)
+    uint32 blockheight = 4; //发起请求时的blockheight
+    bytes  signature = 5;// 发送设备的签名 sign(cid+encDecryptKey+encSecketkey+blockheight)
+}
+
+message ReEncryptFileReply{
+    bytes cid = 1; //重新加密后的文件的cid
+    uint64 fileSize = 2; //重新加密后的文件的大小
+}
+
+message RequestRandDataRequest{
+    bytes userPubkey = 1; //申请随机数的用户pubkey
+    uint32 blockheight = 2; //发起请求时的blockheight
+    bytes extradata = 3 ; //附加数据
+    bytes  signature = 5;// 发送设备的签名 sign(userPubkey+blockheight+extradata)
+}
+
+message RequestRandDataReply{
+    bytes userPubkey = 1; //申请随机数的用户pubkey
+    bytes randdata = 2; //获取的随机数,32字节
+    uint32 blockheight = 3; //发起请求时的blockheight
+    bytes extradata = 4 ; //附加数据(与请求时的一致)
+    bytes  signature = 5;// 发送设备的签名 sign(userpubkey+randdata+extradata+blockheight)
+}
+
+
+message DeductUserOffChainOpTimesRequest {
+    bytes userPubkey  = 1; 
+    uint32 blockheight = 2; //发送请求时的区块高度
+    uint32 deductType = 3; //扣除的类型 1:文件转存 其他的后续定义
+    bytes rawReq = 4 ; // 用户发起的原始请求数据
+}
+
+message DeductUserOffChainOpTimesReply {
+    uint32 flag = 1; //0:成功 1:链下操作次数不足 2:其他失败
+}
+   
+
+message ArchiveDeviceStatusRequest{
+    bytes deviceID = 1; //设备ID
+    bytes themeAuthor = 2;//发布状态汇聚对象的的pubkey
+    bytes theme = 3; //状态收集主题
+    bytes appId = 4; //应用标志
+    uint32 startSeqno = 5; //归档的状态数据起始序号
+    uint32 endSeqno = 6; //归档的状态数据结束序号
+    uint32 blockheight = 7; //发起请求时的blockheight
+    bytes  encSecretkey = 8; //用接收节点加密后的加密key(用于加密状态数据)
+    bytes  signature = 9;// 发送设备的签名 sign(deviceID+themeAuthor+theme+appId+startSeqno+endSeqno+blockheight+encSecketkey)
+    
+}
+
+message ArchiveDeviceStatusReply{
+    uint32 flag = 1;//获取结果 0:成功 1:非状态备份节点 2:链下操作次数不足
+    bytes statusCid = 2; //状态数据归档后的cid
+    uint32 statusCount = 3; //归档的状态数据数量
+    uint64 statusSize = 4; //归档的状态数据大小
+    uint32 blockheight = 5; 
+    bytes  signature = 6;// 发送设备的签名 sign(flag+statusCid+statusCount+statusSize+blockheight)
+}
+
+
+
+message AddUserOffChainOpTimesRequest{
+    bytes userPubkey  = 1; 
+    uint32 blockheight = 2; //发送请求时的区块高度
+    bytes  peerid = 3; //允许发起上链请求的peerid
+    uint32 times = 4; //增加的操作次数
+    bytes signature = 5 ; //发送者私钥对（blockheight+peerid+times)的签名
+    bytes vaccount = 6 ; //虚拟账号,可选,如果有虚拟账号
+}
+
+message AddUserOffChainOpTimesReply{
+    uint32 flag = 1; //0:成功 1:空间不足 2:其他失败
+}
+
+message GetUserOffChainOpTimesRequest{
+    bytes userPubkey  = 1; 
+}
+
+message GetUserOffChainOpTimesReply{
+    uint32 usedtimes = 1; //用户已经使用的链下操作次数
+}
+
+message GetUserOffChainUsedInfoRequest{
+    bytes vaccount = 1; //关联的虚拟账号,可选
+}
+
+
+message GetUserOffChainUsedInfoReply{
+    uint32 usedtimes = 1; //用户已经使用的链下操作次数
+    uint64 usedspace =2; //用户已经使用的链下操作空间
+}
+
+
+
+
+// Service is the peer-to-peer network API for thread orchestration.
+service Service {
+    //AddThread to a peer
+    rpc StoreThreadToPeer(StoreThreadRequest) returns (StoreThreadReply) {}//ok
+    // StoreFile to a peer
+    rpc StoreFileToPeer(StroeFileToPeerRequest) returns (StroeFileToPeerReply) {} //ok
+    rpc AccountBindBackup(AccountDealBackupRequest) returns (AccountDealBackupReply){} //ok申请账号绑定（账号和用户pubkey进行绑定，允许用户用账号密码登录）
+    rpc AccountInfoModifyBackup(AccountDealBackupRequest) returns (AccountDealBackupReply){} //ok修改账号信息
+    //节点间在线状态检查
+    rpc OnlineStatusCheck(OnlineStatusCheckRequest) returns (OnlineStatusCheckReply) {} //
+    //申请协助teereport验证
+     rpc TeeReportVerify(TeeReportVerifyRequest) returns (TeeReportVerifyReply) {} 
+    //请求协助确认指定节点是否在线
+	rpc CheckPeerStatus(stream CheckPeerStatusRequest) returns (stream CheckPeerStatusReply){}//
+    //请求节点检查本地文件是否存在（要求对方已teereport方式返回）
+    rpc LocalFileCheck(LocalFileCheckRequest) returns (LocalFileCheckReply) {} //ok 
+    //获取指定文件的存储节点列表（防止本地数据未及时同步，借助其他节点链数据进行综合判断）
+    rpc GetPeersWithSid(GetPeersWithSidRequest) returns (GetPeersWithSidReply) {} //ok
+     //获取指定nft账号信息的存储节点列表（防止本地数据未及时同步，借助其他节点链数据进行综合判断）
+    rpc GetPeersWithAccountHash(GetPeersWithAccountHashRequest) returns (GetPeersWithAccountHashReply) {} //ok
+    //请求节点检查本地对应账号信息是否存在（要求对方以teereport方式返回）
+    rpc LocalAccountInfoCheck(LocalAccountInfoCheckRequest) returns (LocalAccountInfoCheckReply) {} //ok 
+    ////发送申请从远端节点同步备份账号登录信息的请求
+    rpc AccountInfoSync(AccountInfoSyncRequest) returns (AccountInfoSyncReply) {} //ok 
+
+    //扫码登录相关接口
+    // 设置扫码后需要设置的加密后的私钥信息，每个用户一台设备上只保留最新的一条记录
+    rpc SetEncryptKeyWithScan(SetEncryptKeyWithScanRequest) returns (SetEncryptKeyWithScanReply) {} //ok
+    // 获取加密后的私钥信息，由被扫码的应用定期调用
+    rpc GetEncryptKeyWithScan(GetEncryptKeyWithScanRequest) returns (GetEncryptKeyWithScanReply) {} //ok
+
+
+    //升级过程调用接口
+    //申请随机加密密码
+    rpc RequestRandEncryptKey(RequestRandEncryptKeyRequest) returns (RequestRandEncryptKeyReply){}
+    //获取指定key的随机加密密码
+    rpc GetEncryptKey(GetEncryptKeyRequest) returns (GetEncryptKeyReply){}
+
+    //供sdk调用的接口定义
+    rpc ReportLocalMultilAddr(ReportLocalMultilAddrRequest) returns (ReportLocalMultilAddrReply) {} //上报终端的局域网内节点地址
+    rpc GetHostID(GetHostIDRequest) returns (GetHostIDReply) {}//ok//获取当前访问的节点ID
+    rpc GetToken(stream GetTokenRequest) returns (stream GetTokenReply) {}//ok //申请当前访问节点的token
+    rpc CreateThread(CreateThreadRequest) returns (ThreadInfoReply) {}//ok 创建threaddb
+    rpc RequestThreadID(ThreadIDRequest) returns (ThreadIDReply) {}//ok  申请threaddb id
+    //建立logid与thread ID的绑定关系 //ok
+    rpc AddLogToThread(AddLogToThreadRequest) returns (AddLogToThreadReply) {} 
+     // 获取指定threaddb的已使用空间大小
+    rpc GetThreadUsedSpace(GetThreadUsedSpaceRequest) returns (GetThreadUsedSpaceReply){}
+    rpc AddThreadToPeer(AddThreadToPeerRequest) returns (stream AddThreadToPeerReply) {}//ok 添加threaddb 到对应节
+    rpc GetThread(GetThreadRequest) returns (ThreadInfoReply) {}//ok 获取指定threaddb的相关信息
+    rpc DeleteThread(DeleteThreadRequest) returns (DeleteThreadReply) {}//ok 删除threaddb
+     // 为指定的threaddb添加可用空间
+	rpc AddThreadSpace(AddThreadSpaceRequest) returns(AddThreadSpaceReply) {}
+    rpc StoreFile(StroeFileRequest) returns (stream StroeFileReply) {} //ok //存储文件
+    rpc StoreFolder(StoreFolderRequest) returns (stream StoreFolderReply){} //存储文件夹
+   
+    rpc DeleteFile(DeleteFileRequest) returns (DeleteFileReply) {}//ok //删除文件或文件夹
+    rpc AccountBind(AccountDealRequest) returns (AccountDealReply){} //ok 申请账号绑定（账号和用户pubkey进行绑定，允许用户用账号密码登录）操作者消耗存储有效期
+    rpc AccountInfoModify(AccountDealRequest) returns (AccountDealReply){} //ok 修改账号信息，要同时修改loginkey，pubkey，prikeyencrypt以及时间戳）,操作者消耗存储有效期
+    rpc AccountLogin(AccountLoginRequest) returns (AccountLoginReply){}//ok 用户登录
+    rpc TransferAccount(TransferAccountRequest) returns(TransferAccountReply){} //ok账号转让，将自身绑定的账号转给另外一个用户（需要修改区块链中accounthash对应的pubkey值，以及将pubkey对应的accounthash设置为空），每次操作会根据区块链忙碌情况，扣除用户一定时长的有效存储期限，越忙碌，扣除的就越多，建议闲时操作
+    //添加子账号,如果子账号在链上已经存在，则会创建失败 //ok
+    rpc AddSubPubkey(AddSubPubkeyRequest) returns (AddSubPubkeyReply) {} 
+    //删除子账号 //ok
+    rpc DeleteSubPubkey(DeleteSubPubkeyRequest) returns (DeleteSubPubkeyReply) {}
+    // 将当前接入节点ID绑定给用户（如果用户已经绑定的节点超过了5个，本操作会消耗用户20m永久空间）
+    rpc BindAccessPeerToUser(BindAccessPeerToUserRequest)  returns (BindAccessPeerToUserReply) {}
+    //设置用户默认个体库信息 //ok
+    rpc SetUserDefaultDB(SetUserDefaultDBRequest) returns (SetUserDefaultDBReply) {}//更新用户个体库信息（threadid|sk|rk)
+     //发送消息到用户的收件箱 //ok
+    rpc SendMsgToUserBox(SendMsgToUserBoxRequest) returns (SendMsgToUserBoxReply){}
+    //向备份了发送消息的用户账号信息的节点，获取发送消息到用户收件箱授权,每次授权会扣除1K的评论空间
+    rpc GetToUserBoxAuth(GetToUserBoxAuthRequest) returns (GetToUserBoxAuthReply){}
+     //获取用户收件箱的最大key //ok
+    rpc GetMaxKeyFromUserBox(GetMaxKeyFromUserBoxRequest) returns (GetMaxKeyFromUserBoxReply){}
+    //获取用户收件箱消息（只有用户本身才能获取消息） //ok
+    rpc GetMsgFromUserBox(GetMsgFromUserBoxRequest) returns (GetMsgFromUserBoxReply){}
+    //举报垃圾消息(举报过程中先判断链上针对该用户状态，如果已经被冻结则不再举报) 
+    rpc ReportSpamMsg(ReportSpamMsgRequest) returns (ReportSpamMsgReply){}
+    
+    //token 是否有效验证，主要为了给流式访问接口确认token是否正常 //ok
+    rpc ValidToken(ValidTokenRequest) returns (ValidTokenReply) {} 
+    //获取指定用户的客户端接入peerId //ok
+    rpc GetUserClientPeers(GetUserClientPeersRequest) returns (GetUserClientPeersReply){}
+
+    // 设置缓存及中转key接口,主要为用户缓存一些公共的可供其他人查询的数据,每次操作扣减1M空间,value+key的大小最多为100k
+    rpc SetCacheKey(SetCacheKeyRequest) returns (SetCacheKeyReply){}
+    // 获取缓存key接口
+    rpc GetCacheValue(GetCacheValueRequest) returns(GetCacheValueReply){}
+
+
+    //主题相关接口
+    //为指定对象开通评论功能 //ok
+    rpc AddThemeObj(AddThemeObjRequest) returns (AddThemeObjReply){}
+
+    //为已开通评论对象增加评论空间//ok
+    rpc AddThemeSpace(AddThemeSpaceRequest) returns (AddThemeSpaceReply){}
+
+    //获取指定对象的剩余可用评论空间//ok
+    rpc GetThemeSpace(GetThemeSpaceRequest) returns (GetThemeSpaceReply){}
+
+
+    //删除一个已开通评论对象//ok
+     rpc DeleteThemeObj(DeleteThemeObjRequest) returns (DeleteThemeObjReply){}
+
+    //开通评论对象用户举报评论对象下的某条恶意评论//ok
+    rpc ReportMaliciousComment(ReportMaliciousCommentRequest) returns (ReportMaliciousCommentReply){}
+
+    //开通评论对象用户将某一条评论精选可见//ok
+    rpc SetObjCommentPublic(SetObjCommentPublicRequest) returns (SetObjCommentPublicReply){}
+    //用户添加对外评论的空间（当用户需要使用评论功能时，需要先调用本接口预分配评论区空间，否则无法进行评论，当评论空间满时，需要继续调用本接口，每次操作会根据区块链忙碌情况，扣除用户一定时长的有效存储期限，越忙碌，扣除的就越多，建议闲时操作）//ok
+    rpc AddUserOffChainSpace(AddUserOffChainSpaceRequest) returns (AddUserOffChainSpaceReply){}
+
+    //用户对评论对象发表评论//ok
+     rpc PublishCommentToTheme(PublishCommentToThemeRequest) returns (PublishCommentToThemeReply){}
+    
+     //评论主题对象权限配置//ok
+    rpc ConfigThemeObjAuth(ConfigThemeObjAuthRequest) returns (ConfigThemeObjAuthReply){}
+
+     //keyvalue设置
+    rpc SetKeyValue(SetKeyValueRequest) returns (SetKeyValueReply){}
+
+    //用户删除自身的某条评论（请求发往发表评论用户自身备份账号信息的节点）//ok
+    rpc DeleteSelfComment(DeleteSelfCommentRequest) returns (DeleteSelfCommentReply){}
+
+     //用户删除已开通评论对象下的用户发表的某条评论（请求发往发表主题所在节点）//ok
+    rpc DeleteCommentToObj(DeleteCommentToObjRequest) returns (DeleteCommentToObjReply){}
+
+
+    //获取已开通评论的对象列表//ok
+    rpc GetThemeObj(GetThemeObjRequest) returns (GetThemeObjReply){}
+
+    //获取指定已开通对象的评论列表//ok
+    rpc GetThemeComments(GetThemeCommentsRequest) returns (GetThemeCommentsReply){}
+
+     //获取指定已开通对象的权限列表(对GetThemeComments进行包装，增加权限判断)//ok
+     rpc GetThemeAuthList(GetThemeAuthListRequest) returns (GetThemeAuthListReply){}
+
+    //获取用户所有已经发布的评论//ok
+    rpc GetUserComments(GetUserCommentsRequest) returns (GetUserCommentsReply){}
+
+    //获取指定key的值//ok
+    rpc GetValueWithKey(GetValueWithKeyRequest) returns (GetValueWithKeyReply){}
+    
+    //批量获取key的值,返回对象列表//ok
+    rpc GetValuesWithKeys(GetValuesWithKeysRequest) returns (GetValuesWithKeysReply){}
+ 
+    //评论相关节点间同步接口
+   //将用户的评论发送到对应的节点（放置了开放评论对象的DC节点）//ok
+   rpc SendCommentToPeer(PublishCommentToThemeRequest) returns (PublishCommentToThemeReply){}
+   
+   //推送评论功能相关的最新操作给其他节点//ok
+   rpc PushThemeFunOpt(PushThemeFunOptRequest) returns (PushThemeFunOptReply){}
+  
+
+  //从其他节点拉取最新指令操作到本地//ok
+   rpc PullCommentFunOpts(PullCommentFunOptsRequest) returns (PullCommentFunOptsReply){}
+  
+   //评论相关数据节点间交换//ok
+   rpc ExchangeThemeEdges(ExchangeThemeEdgesRequest) returns (ExchangeThemeEdgesReply){}
+
+   //请求下载用户所有评论相关数据，如果被请求准备完成数据，通过UserCommentsDownloadReady通知发起请求的用户下载，本节点在请求节点初次处理用户评论相关数据。//ok
+   rpc DownloadUserComments(DownloadUserCommentsRequest) returns (DownloadUserCommentsReply){}
+
+   //节点中用户评论相关数据打包完成通知//ok
+   rpc UserCommentsDownloadReady(UserCommentsDownloadReadyRequest) returns (UserCommentsDownloadReadyReply){}
+
+
+   //物联网 管理平台需要最少建立三个主题,一个是上报主题管理(主要用来确定每个设备状态向哪个主题上报),一个是归档状态汇聚主题(由上报主题管理指定,多节点备份,后续分析使用),一个是设备状态主题(由上报主题管理指定,单接到备份,供查看实时状态使用)
+   //物联网设备状态上报接口,每个设备每次上报状态，只能保留最新的100000个状态,设备测应该每50000个状态打包成一个文件，然后上传到DC网络中,并将文件的CID等信息上报到汇聚主题所在的节点
+   rpc DeviceStatusReport(DeviceStatusReportRequest) returns (DeviceStatusReportReply) {}
+   // 归档设备状态,设备侧可以发送请求,将数据状态进行归档,数据归档后应该将归档数据的信息发送给汇聚主题所在的节点,这样汇聚主题所在的节点就可以获取到设备的历史状态
+   rpc ArchiveDeviceStatus(ArchiveDeviceStatusRequest) returns (ArchiveDeviceStatusReply) {}
+   // 将设备状态发送到汇聚主题所在的节点,汇聚主题所在的节点将保留每个设备的最新状态
+   rpc SendDeviceStatusToPeer(DeviceStatusReportRequest) returns (DeviceStatusReportReply) {}
+   // 获取指定汇聚主题的中设备列表的状态,只有汇聚主题所在的节点才能获取
+   rpc GetThemeDevicesStatus(GetThemeDevicesStatusRequest) returns (GetThemeDevicesStatusReply) {}
+    // 向指定汇聚主题的所所在的节点申请设备操作权限的授权(dcnode取出用户的权限信息,并进行签名,具体权限内容由应用自身确定),获取授权后,用户才可以进行对应操作,包括调用GetDeviceStatusList方法以及操控设备,授权时长1小时
+   rpc GetDeviceAuth(GetDeviceAuthRequest) returns (GetDeviceAuthReply) {}
+   // 获取指定设备的状态列表,只有从备份了在设备上登录的用户的节点才能获取,调用时需要先获取授权
+   rpc GetDeviceStatusList(GetDeviceStatusListRequest) returns (GetDeviceStatusListReply) {}
+   // 购买链下操作次数
+   rpc AddUserOffChainOpTimes(AddUserOffChainOpTimesRequest) returns (AddUserOffChainOpTimesReply) {}
+    // 获取指定用户的链下操作次数
+   rpc GetUserOffChainOpTimes(GetUserOffChainOpTimesRequest) returns (GetUserOffChainOpTimesReply) {}
+
+   // 获取指定用户的链下数据使用信息,包括链下操作次数以及链下存储空间的信息
+   rpc GetUserOffChainUsedInfo(GetUserOffChainUsedInfoRequest) returns (GetUserOffChainUsedInfoReply) {}
+  
+   //文件功能补充(相当于用户不用取回文件,就能为文件用新密码加密,并返回新的CID,加密完成后,用户应该再次调用StoreFileTo接口,存储新加密完成的文件)
+   // 用新密码来加密文件,返回新加密后的文件CID
+   rpc ReEncryptFile(ReEncryptFileRequest) returns (ReEncryptFileReply) {}
+
+   // 申请真随机数
+    rpc RequestRandData(RequestRandDataRequest) returns (RequestRandDataReply) {}
+
+
+   // 申请扣除用户的链下操作次数
+   rpc DeductUserOffChainOpTimes(DeductUserOffChainOpTimesRequest) returns (DeductUserOffChainOpTimesReply) {}
+}

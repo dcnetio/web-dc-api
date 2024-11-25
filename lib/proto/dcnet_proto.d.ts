@@ -1,0 +1,19683 @@
+import * as $protobuf from "protobufjs";
+import Long = require("long");
+/** Namespace dcnet. */
+export namespace dcnet {
+
+    /** Namespace pb. */
+    namespace pb {
+
+        /** Properties of a StoreThreadRequest. */
+        interface IStoreThreadRequest {
+
+            /** StoreThreadRequest threadId */
+            threadId?: (Uint8Array|null);
+
+            /** StoreThreadRequest userPubkey */
+            userPubkey?: (Uint8Array|null);
+
+            /** StoreThreadRequest serviceKeyEncrypt */
+            serviceKeyEncrypt?: (Uint8Array|null);
+        }
+
+        /** Represents a StoreThreadRequest. */
+        class StoreThreadRequest implements IStoreThreadRequest {
+
+            /**
+             * Constructs a new StoreThreadRequest.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: dcnet.pb.IStoreThreadRequest);
+
+            /** StoreThreadRequest threadId. */
+            public threadId: Uint8Array;
+
+            /** StoreThreadRequest userPubkey. */
+            public userPubkey: Uint8Array;
+
+            /** StoreThreadRequest serviceKeyEncrypt. */
+            public serviceKeyEncrypt: Uint8Array;
+
+            /**
+             * Creates a new StoreThreadRequest instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns StoreThreadRequest instance
+             */
+            public static create(properties?: dcnet.pb.IStoreThreadRequest): dcnet.pb.StoreThreadRequest;
+
+            /**
+             * Encodes the specified StoreThreadRequest message. Does not implicitly {@link dcnet.pb.StoreThreadRequest.verify|verify} messages.
+             * @param message StoreThreadRequest message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: dcnet.pb.IStoreThreadRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified StoreThreadRequest message, length delimited. Does not implicitly {@link dcnet.pb.StoreThreadRequest.verify|verify} messages.
+             * @param message StoreThreadRequest message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: dcnet.pb.IStoreThreadRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes a StoreThreadRequest message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns StoreThreadRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): dcnet.pb.StoreThreadRequest;
+
+            /**
+             * Decodes a StoreThreadRequest message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns StoreThreadRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): dcnet.pb.StoreThreadRequest;
+
+            /**
+             * Verifies a StoreThreadRequest message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates a StoreThreadRequest message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns StoreThreadRequest
+             */
+            public static fromObject(object: { [k: string]: any }): dcnet.pb.StoreThreadRequest;
+
+            /**
+             * Creates a plain object from a StoreThreadRequest message. Also converts values to other types if specified.
+             * @param message StoreThreadRequest
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: dcnet.pb.StoreThreadRequest, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this StoreThreadRequest to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for StoreThreadRequest
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** Properties of a StoreThreadReply. */
+        interface IStoreThreadReply {
+
+            /** StoreThreadReply status */
+            status?: (number|null);
+        }
+
+        /** Represents a StoreThreadReply. */
+        class StoreThreadReply implements IStoreThreadReply {
+
+            /**
+             * Constructs a new StoreThreadReply.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: dcnet.pb.IStoreThreadReply);
+
+            /** StoreThreadReply status. */
+            public status: number;
+
+            /**
+             * Creates a new StoreThreadReply instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns StoreThreadReply instance
+             */
+            public static create(properties?: dcnet.pb.IStoreThreadReply): dcnet.pb.StoreThreadReply;
+
+            /**
+             * Encodes the specified StoreThreadReply message. Does not implicitly {@link dcnet.pb.StoreThreadReply.verify|verify} messages.
+             * @param message StoreThreadReply message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: dcnet.pb.IStoreThreadReply, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified StoreThreadReply message, length delimited. Does not implicitly {@link dcnet.pb.StoreThreadReply.verify|verify} messages.
+             * @param message StoreThreadReply message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: dcnet.pb.IStoreThreadReply, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes a StoreThreadReply message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns StoreThreadReply
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): dcnet.pb.StoreThreadReply;
+
+            /**
+             * Decodes a StoreThreadReply message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns StoreThreadReply
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): dcnet.pb.StoreThreadReply;
+
+            /**
+             * Verifies a StoreThreadReply message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates a StoreThreadReply message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns StoreThreadReply
+             */
+            public static fromObject(object: { [k: string]: any }): dcnet.pb.StoreThreadReply;
+
+            /**
+             * Creates a plain object from a StoreThreadReply message. Also converts values to other types if specified.
+             * @param message StoreThreadReply
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: dcnet.pb.StoreThreadReply, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this StoreThreadReply to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for StoreThreadReply
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** Properties of a StroeFileToPeerRequest. */
+        interface IStroeFileToPeerRequest {
+
+            /** StroeFileToPeerRequest cid */
+            cid?: (Uint8Array|null);
+
+            /** StroeFileToPeerRequest size */
+            size?: (number|Long|null);
+
+            /** StroeFileToPeerRequest userPubkey */
+            userPubkey?: (Uint8Array|null);
+        }
+
+        /** Represents a StroeFileToPeerRequest. */
+        class StroeFileToPeerRequest implements IStroeFileToPeerRequest {
+
+            /**
+             * Constructs a new StroeFileToPeerRequest.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: dcnet.pb.IStroeFileToPeerRequest);
+
+            /** StroeFileToPeerRequest cid. */
+            public cid: Uint8Array;
+
+            /** StroeFileToPeerRequest size. */
+            public size: (number|Long);
+
+            /** StroeFileToPeerRequest userPubkey. */
+            public userPubkey: Uint8Array;
+
+            /**
+             * Creates a new StroeFileToPeerRequest instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns StroeFileToPeerRequest instance
+             */
+            public static create(properties?: dcnet.pb.IStroeFileToPeerRequest): dcnet.pb.StroeFileToPeerRequest;
+
+            /**
+             * Encodes the specified StroeFileToPeerRequest message. Does not implicitly {@link dcnet.pb.StroeFileToPeerRequest.verify|verify} messages.
+             * @param message StroeFileToPeerRequest message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: dcnet.pb.IStroeFileToPeerRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified StroeFileToPeerRequest message, length delimited. Does not implicitly {@link dcnet.pb.StroeFileToPeerRequest.verify|verify} messages.
+             * @param message StroeFileToPeerRequest message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: dcnet.pb.IStroeFileToPeerRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes a StroeFileToPeerRequest message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns StroeFileToPeerRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): dcnet.pb.StroeFileToPeerRequest;
+
+            /**
+             * Decodes a StroeFileToPeerRequest message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns StroeFileToPeerRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): dcnet.pb.StroeFileToPeerRequest;
+
+            /**
+             * Verifies a StroeFileToPeerRequest message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates a StroeFileToPeerRequest message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns StroeFileToPeerRequest
+             */
+            public static fromObject(object: { [k: string]: any }): dcnet.pb.StroeFileToPeerRequest;
+
+            /**
+             * Creates a plain object from a StroeFileToPeerRequest message. Also converts values to other types if specified.
+             * @param message StroeFileToPeerRequest
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: dcnet.pb.StroeFileToPeerRequest, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this StroeFileToPeerRequest to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for StroeFileToPeerRequest
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** Properties of a StroeFileToPeerReply. */
+        interface IStroeFileToPeerReply {
+
+            /** StroeFileToPeerReply status */
+            status?: (number|null);
+
+            /** StroeFileToPeerReply receivesize */
+            receivesize?: (number|Long|null);
+        }
+
+        /** Represents a StroeFileToPeerReply. */
+        class StroeFileToPeerReply implements IStroeFileToPeerReply {
+
+            /**
+             * Constructs a new StroeFileToPeerReply.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: dcnet.pb.IStroeFileToPeerReply);
+
+            /** StroeFileToPeerReply status. */
+            public status: number;
+
+            /** StroeFileToPeerReply receivesize. */
+            public receivesize: (number|Long);
+
+            /**
+             * Creates a new StroeFileToPeerReply instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns StroeFileToPeerReply instance
+             */
+            public static create(properties?: dcnet.pb.IStroeFileToPeerReply): dcnet.pb.StroeFileToPeerReply;
+
+            /**
+             * Encodes the specified StroeFileToPeerReply message. Does not implicitly {@link dcnet.pb.StroeFileToPeerReply.verify|verify} messages.
+             * @param message StroeFileToPeerReply message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: dcnet.pb.IStroeFileToPeerReply, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified StroeFileToPeerReply message, length delimited. Does not implicitly {@link dcnet.pb.StroeFileToPeerReply.verify|verify} messages.
+             * @param message StroeFileToPeerReply message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: dcnet.pb.IStroeFileToPeerReply, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes a StroeFileToPeerReply message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns StroeFileToPeerReply
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): dcnet.pb.StroeFileToPeerReply;
+
+            /**
+             * Decodes a StroeFileToPeerReply message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns StroeFileToPeerReply
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): dcnet.pb.StroeFileToPeerReply;
+
+            /**
+             * Verifies a StroeFileToPeerReply message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates a StroeFileToPeerReply message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns StroeFileToPeerReply
+             */
+            public static fromObject(object: { [k: string]: any }): dcnet.pb.StroeFileToPeerReply;
+
+            /**
+             * Creates a plain object from a StroeFileToPeerReply message. Also converts values to other types if specified.
+             * @param message StroeFileToPeerReply
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: dcnet.pb.StroeFileToPeerReply, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this StroeFileToPeerReply to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for StroeFileToPeerReply
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** Properties of an OnlineStatusCheckRequest. */
+        interface IOnlineStatusCheckRequest {
+
+            /** OnlineStatusCheckRequest challenge */
+            challenge?: (Uint8Array|null);
+        }
+
+        /** Represents an OnlineStatusCheckRequest. */
+        class OnlineStatusCheckRequest implements IOnlineStatusCheckRequest {
+
+            /**
+             * Constructs a new OnlineStatusCheckRequest.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: dcnet.pb.IOnlineStatusCheckRequest);
+
+            /** OnlineStatusCheckRequest challenge. */
+            public challenge: Uint8Array;
+
+            /**
+             * Creates a new OnlineStatusCheckRequest instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns OnlineStatusCheckRequest instance
+             */
+            public static create(properties?: dcnet.pb.IOnlineStatusCheckRequest): dcnet.pb.OnlineStatusCheckRequest;
+
+            /**
+             * Encodes the specified OnlineStatusCheckRequest message. Does not implicitly {@link dcnet.pb.OnlineStatusCheckRequest.verify|verify} messages.
+             * @param message OnlineStatusCheckRequest message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: dcnet.pb.IOnlineStatusCheckRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified OnlineStatusCheckRequest message, length delimited. Does not implicitly {@link dcnet.pb.OnlineStatusCheckRequest.verify|verify} messages.
+             * @param message OnlineStatusCheckRequest message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: dcnet.pb.IOnlineStatusCheckRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes an OnlineStatusCheckRequest message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns OnlineStatusCheckRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): dcnet.pb.OnlineStatusCheckRequest;
+
+            /**
+             * Decodes an OnlineStatusCheckRequest message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns OnlineStatusCheckRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): dcnet.pb.OnlineStatusCheckRequest;
+
+            /**
+             * Verifies an OnlineStatusCheckRequest message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates an OnlineStatusCheckRequest message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns OnlineStatusCheckRequest
+             */
+            public static fromObject(object: { [k: string]: any }): dcnet.pb.OnlineStatusCheckRequest;
+
+            /**
+             * Creates a plain object from an OnlineStatusCheckRequest message. Also converts values to other types if specified.
+             * @param message OnlineStatusCheckRequest
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: dcnet.pb.OnlineStatusCheckRequest, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this OnlineStatusCheckRequest to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for OnlineStatusCheckRequest
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** Properties of an OnlineStatusCheckReply. */
+        interface IOnlineStatusCheckReply {
+
+            /** OnlineStatusCheckReply teereport */
+            teereport?: (Uint8Array|null);
+        }
+
+        /** Represents an OnlineStatusCheckReply. */
+        class OnlineStatusCheckReply implements IOnlineStatusCheckReply {
+
+            /**
+             * Constructs a new OnlineStatusCheckReply.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: dcnet.pb.IOnlineStatusCheckReply);
+
+            /** OnlineStatusCheckReply teereport. */
+            public teereport: Uint8Array;
+
+            /**
+             * Creates a new OnlineStatusCheckReply instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns OnlineStatusCheckReply instance
+             */
+            public static create(properties?: dcnet.pb.IOnlineStatusCheckReply): dcnet.pb.OnlineStatusCheckReply;
+
+            /**
+             * Encodes the specified OnlineStatusCheckReply message. Does not implicitly {@link dcnet.pb.OnlineStatusCheckReply.verify|verify} messages.
+             * @param message OnlineStatusCheckReply message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: dcnet.pb.IOnlineStatusCheckReply, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified OnlineStatusCheckReply message, length delimited. Does not implicitly {@link dcnet.pb.OnlineStatusCheckReply.verify|verify} messages.
+             * @param message OnlineStatusCheckReply message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: dcnet.pb.IOnlineStatusCheckReply, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes an OnlineStatusCheckReply message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns OnlineStatusCheckReply
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): dcnet.pb.OnlineStatusCheckReply;
+
+            /**
+             * Decodes an OnlineStatusCheckReply message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns OnlineStatusCheckReply
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): dcnet.pb.OnlineStatusCheckReply;
+
+            /**
+             * Verifies an OnlineStatusCheckReply message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates an OnlineStatusCheckReply message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns OnlineStatusCheckReply
+             */
+            public static fromObject(object: { [k: string]: any }): dcnet.pb.OnlineStatusCheckReply;
+
+            /**
+             * Creates a plain object from an OnlineStatusCheckReply message. Also converts values to other types if specified.
+             * @param message OnlineStatusCheckReply
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: dcnet.pb.OnlineStatusCheckReply, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this OnlineStatusCheckReply to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for OnlineStatusCheckReply
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** Properties of a CheckPeerStatusRequest. */
+        interface ICheckPeerStatusRequest {
+
+            /** CheckPeerStatusRequest sreq */
+            sreq?: (dcnet.pb.CheckPeerStatusRequest.ISreq|null);
+
+            /** CheckPeerStatusRequest teereport */
+            teereport?: (Uint8Array|null);
+        }
+
+        /** Represents a CheckPeerStatusRequest. */
+        class CheckPeerStatusRequest implements ICheckPeerStatusRequest {
+
+            /**
+             * Constructs a new CheckPeerStatusRequest.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: dcnet.pb.ICheckPeerStatusRequest);
+
+            /** CheckPeerStatusRequest sreq. */
+            public sreq?: (dcnet.pb.CheckPeerStatusRequest.ISreq|null);
+
+            /** CheckPeerStatusRequest teereport. */
+            public teereport?: (Uint8Array|null);
+
+            /** CheckPeerStatusRequest payload. */
+            public payload?: ("sreq"|"teereport");
+
+            /**
+             * Creates a new CheckPeerStatusRequest instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns CheckPeerStatusRequest instance
+             */
+            public static create(properties?: dcnet.pb.ICheckPeerStatusRequest): dcnet.pb.CheckPeerStatusRequest;
+
+            /**
+             * Encodes the specified CheckPeerStatusRequest message. Does not implicitly {@link dcnet.pb.CheckPeerStatusRequest.verify|verify} messages.
+             * @param message CheckPeerStatusRequest message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: dcnet.pb.ICheckPeerStatusRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified CheckPeerStatusRequest message, length delimited. Does not implicitly {@link dcnet.pb.CheckPeerStatusRequest.verify|verify} messages.
+             * @param message CheckPeerStatusRequest message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: dcnet.pb.ICheckPeerStatusRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes a CheckPeerStatusRequest message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns CheckPeerStatusRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): dcnet.pb.CheckPeerStatusRequest;
+
+            /**
+             * Decodes a CheckPeerStatusRequest message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns CheckPeerStatusRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): dcnet.pb.CheckPeerStatusRequest;
+
+            /**
+             * Verifies a CheckPeerStatusRequest message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates a CheckPeerStatusRequest message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns CheckPeerStatusRequest
+             */
+            public static fromObject(object: { [k: string]: any }): dcnet.pb.CheckPeerStatusRequest;
+
+            /**
+             * Creates a plain object from a CheckPeerStatusRequest message. Also converts values to other types if specified.
+             * @param message CheckPeerStatusRequest
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: dcnet.pb.CheckPeerStatusRequest, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this CheckPeerStatusRequest to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for CheckPeerStatusRequest
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        namespace CheckPeerStatusRequest {
+
+            /** Properties of a Sreq. */
+            interface ISreq {
+
+                /** Sreq pubkey */
+                pubkey?: (Uint8Array|null);
+
+                /** Sreq peerid */
+                peerid?: (Uint8Array|null);
+            }
+
+            /** Represents a Sreq. */
+            class Sreq implements ISreq {
+
+                /**
+                 * Constructs a new Sreq.
+                 * @param [properties] Properties to set
+                 */
+                constructor(properties?: dcnet.pb.CheckPeerStatusRequest.ISreq);
+
+                /** Sreq pubkey. */
+                public pubkey: Uint8Array;
+
+                /** Sreq peerid. */
+                public peerid: Uint8Array;
+
+                /**
+                 * Creates a new Sreq instance using the specified properties.
+                 * @param [properties] Properties to set
+                 * @returns Sreq instance
+                 */
+                public static create(properties?: dcnet.pb.CheckPeerStatusRequest.ISreq): dcnet.pb.CheckPeerStatusRequest.Sreq;
+
+                /**
+                 * Encodes the specified Sreq message. Does not implicitly {@link dcnet.pb.CheckPeerStatusRequest.Sreq.verify|verify} messages.
+                 * @param message Sreq message or plain object to encode
+                 * @param [writer] Writer to encode to
+                 * @returns Writer
+                 */
+                public static encode(message: dcnet.pb.CheckPeerStatusRequest.ISreq, writer?: $protobuf.Writer): $protobuf.Writer;
+
+                /**
+                 * Encodes the specified Sreq message, length delimited. Does not implicitly {@link dcnet.pb.CheckPeerStatusRequest.Sreq.verify|verify} messages.
+                 * @param message Sreq message or plain object to encode
+                 * @param [writer] Writer to encode to
+                 * @returns Writer
+                 */
+                public static encodeDelimited(message: dcnet.pb.CheckPeerStatusRequest.ISreq, writer?: $protobuf.Writer): $protobuf.Writer;
+
+                /**
+                 * Decodes a Sreq message from the specified reader or buffer.
+                 * @param reader Reader or buffer to decode from
+                 * @param [length] Message length if known beforehand
+                 * @returns Sreq
+                 * @throws {Error} If the payload is not a reader or valid buffer
+                 * @throws {$protobuf.util.ProtocolError} If required fields are missing
+                 */
+                public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): dcnet.pb.CheckPeerStatusRequest.Sreq;
+
+                /**
+                 * Decodes a Sreq message from the specified reader or buffer, length delimited.
+                 * @param reader Reader or buffer to decode from
+                 * @returns Sreq
+                 * @throws {Error} If the payload is not a reader or valid buffer
+                 * @throws {$protobuf.util.ProtocolError} If required fields are missing
+                 */
+                public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): dcnet.pb.CheckPeerStatusRequest.Sreq;
+
+                /**
+                 * Verifies a Sreq message.
+                 * @param message Plain object to verify
+                 * @returns `null` if valid, otherwise the reason why it is not
+                 */
+                public static verify(message: { [k: string]: any }): (string|null);
+
+                /**
+                 * Creates a Sreq message from a plain object. Also converts values to their respective internal types.
+                 * @param object Plain object
+                 * @returns Sreq
+                 */
+                public static fromObject(object: { [k: string]: any }): dcnet.pb.CheckPeerStatusRequest.Sreq;
+
+                /**
+                 * Creates a plain object from a Sreq message. Also converts values to other types if specified.
+                 * @param message Sreq
+                 * @param [options] Conversion options
+                 * @returns Plain object
+                 */
+                public static toObject(message: dcnet.pb.CheckPeerStatusRequest.Sreq, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+                /**
+                 * Converts this Sreq to JSON.
+                 * @returns JSON object
+                 */
+                public toJSON(): { [k: string]: any };
+
+                /**
+                 * Gets the default type url for Sreq
+                 * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+                 * @returns The default type url
+                 */
+                public static getTypeUrl(typeUrlPrefix?: string): string;
+            }
+        }
+
+        /** Properties of a CheckPeerStatusReply. */
+        interface ICheckPeerStatusReply {
+
+            /** CheckPeerStatusReply challenge */
+            challenge?: (Uint8Array|null);
+
+            /** CheckPeerStatusReply body */
+            body?: (dcnet.pb.CheckPeerStatusReply.IBody|null);
+        }
+
+        /** Represents a CheckPeerStatusReply. */
+        class CheckPeerStatusReply implements ICheckPeerStatusReply {
+
+            /**
+             * Constructs a new CheckPeerStatusReply.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: dcnet.pb.ICheckPeerStatusReply);
+
+            /** CheckPeerStatusReply challenge. */
+            public challenge?: (Uint8Array|null);
+
+            /** CheckPeerStatusReply body. */
+            public body?: (dcnet.pb.CheckPeerStatusReply.IBody|null);
+
+            /** CheckPeerStatusReply payload. */
+            public payload?: ("challenge"|"body");
+
+            /**
+             * Creates a new CheckPeerStatusReply instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns CheckPeerStatusReply instance
+             */
+            public static create(properties?: dcnet.pb.ICheckPeerStatusReply): dcnet.pb.CheckPeerStatusReply;
+
+            /**
+             * Encodes the specified CheckPeerStatusReply message. Does not implicitly {@link dcnet.pb.CheckPeerStatusReply.verify|verify} messages.
+             * @param message CheckPeerStatusReply message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: dcnet.pb.ICheckPeerStatusReply, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified CheckPeerStatusReply message, length delimited. Does not implicitly {@link dcnet.pb.CheckPeerStatusReply.verify|verify} messages.
+             * @param message CheckPeerStatusReply message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: dcnet.pb.ICheckPeerStatusReply, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes a CheckPeerStatusReply message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns CheckPeerStatusReply
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): dcnet.pb.CheckPeerStatusReply;
+
+            /**
+             * Decodes a CheckPeerStatusReply message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns CheckPeerStatusReply
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): dcnet.pb.CheckPeerStatusReply;
+
+            /**
+             * Verifies a CheckPeerStatusReply message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates a CheckPeerStatusReply message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns CheckPeerStatusReply
+             */
+            public static fromObject(object: { [k: string]: any }): dcnet.pb.CheckPeerStatusReply;
+
+            /**
+             * Creates a plain object from a CheckPeerStatusReply message. Also converts values to other types if specified.
+             * @param message CheckPeerStatusReply
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: dcnet.pb.CheckPeerStatusReply, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this CheckPeerStatusReply to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for CheckPeerStatusReply
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        namespace CheckPeerStatusReply {
+
+            /** Properties of a Body. */
+            interface IBody {
+
+                /** Body peerid */
+                peerid?: (Uint8Array|null);
+
+                /** Body status */
+                status?: (number|null);
+
+                /** Body teereport */
+                teereport?: (Uint8Array|null);
+            }
+
+            /** Represents a Body. */
+            class Body implements IBody {
+
+                /**
+                 * Constructs a new Body.
+                 * @param [properties] Properties to set
+                 */
+                constructor(properties?: dcnet.pb.CheckPeerStatusReply.IBody);
+
+                /** Body peerid. */
+                public peerid: Uint8Array;
+
+                /** Body status. */
+                public status: number;
+
+                /** Body teereport. */
+                public teereport: Uint8Array;
+
+                /**
+                 * Creates a new Body instance using the specified properties.
+                 * @param [properties] Properties to set
+                 * @returns Body instance
+                 */
+                public static create(properties?: dcnet.pb.CheckPeerStatusReply.IBody): dcnet.pb.CheckPeerStatusReply.Body;
+
+                /**
+                 * Encodes the specified Body message. Does not implicitly {@link dcnet.pb.CheckPeerStatusReply.Body.verify|verify} messages.
+                 * @param message Body message or plain object to encode
+                 * @param [writer] Writer to encode to
+                 * @returns Writer
+                 */
+                public static encode(message: dcnet.pb.CheckPeerStatusReply.IBody, writer?: $protobuf.Writer): $protobuf.Writer;
+
+                /**
+                 * Encodes the specified Body message, length delimited. Does not implicitly {@link dcnet.pb.CheckPeerStatusReply.Body.verify|verify} messages.
+                 * @param message Body message or plain object to encode
+                 * @param [writer] Writer to encode to
+                 * @returns Writer
+                 */
+                public static encodeDelimited(message: dcnet.pb.CheckPeerStatusReply.IBody, writer?: $protobuf.Writer): $protobuf.Writer;
+
+                /**
+                 * Decodes a Body message from the specified reader or buffer.
+                 * @param reader Reader or buffer to decode from
+                 * @param [length] Message length if known beforehand
+                 * @returns Body
+                 * @throws {Error} If the payload is not a reader or valid buffer
+                 * @throws {$protobuf.util.ProtocolError} If required fields are missing
+                 */
+                public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): dcnet.pb.CheckPeerStatusReply.Body;
+
+                /**
+                 * Decodes a Body message from the specified reader or buffer, length delimited.
+                 * @param reader Reader or buffer to decode from
+                 * @returns Body
+                 * @throws {Error} If the payload is not a reader or valid buffer
+                 * @throws {$protobuf.util.ProtocolError} If required fields are missing
+                 */
+                public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): dcnet.pb.CheckPeerStatusReply.Body;
+
+                /**
+                 * Verifies a Body message.
+                 * @param message Plain object to verify
+                 * @returns `null` if valid, otherwise the reason why it is not
+                 */
+                public static verify(message: { [k: string]: any }): (string|null);
+
+                /**
+                 * Creates a Body message from a plain object. Also converts values to their respective internal types.
+                 * @param object Plain object
+                 * @returns Body
+                 */
+                public static fromObject(object: { [k: string]: any }): dcnet.pb.CheckPeerStatusReply.Body;
+
+                /**
+                 * Creates a plain object from a Body message. Also converts values to other types if specified.
+                 * @param message Body
+                 * @param [options] Conversion options
+                 * @returns Plain object
+                 */
+                public static toObject(message: dcnet.pb.CheckPeerStatusReply.Body, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+                /**
+                 * Converts this Body to JSON.
+                 * @returns JSON object
+                 */
+                public toJSON(): { [k: string]: any };
+
+                /**
+                 * Gets the default type url for Body
+                 * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+                 * @returns The default type url
+                 */
+                public static getTypeUrl(typeUrlPrefix?: string): string;
+            }
+        }
+
+        /** Properties of a LocalFileCheckRequest. */
+        interface ILocalFileCheckRequest {
+
+            /** LocalFileCheckRequest keys */
+            keys?: (string[]|null);
+        }
+
+        /** Represents a LocalFileCheckRequest. */
+        class LocalFileCheckRequest implements ILocalFileCheckRequest {
+
+            /**
+             * Constructs a new LocalFileCheckRequest.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: dcnet.pb.ILocalFileCheckRequest);
+
+            /** LocalFileCheckRequest keys. */
+            public keys: string[];
+
+            /**
+             * Creates a new LocalFileCheckRequest instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns LocalFileCheckRequest instance
+             */
+            public static create(properties?: dcnet.pb.ILocalFileCheckRequest): dcnet.pb.LocalFileCheckRequest;
+
+            /**
+             * Encodes the specified LocalFileCheckRequest message. Does not implicitly {@link dcnet.pb.LocalFileCheckRequest.verify|verify} messages.
+             * @param message LocalFileCheckRequest message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: dcnet.pb.ILocalFileCheckRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified LocalFileCheckRequest message, length delimited. Does not implicitly {@link dcnet.pb.LocalFileCheckRequest.verify|verify} messages.
+             * @param message LocalFileCheckRequest message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: dcnet.pb.ILocalFileCheckRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes a LocalFileCheckRequest message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns LocalFileCheckRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): dcnet.pb.LocalFileCheckRequest;
+
+            /**
+             * Decodes a LocalFileCheckRequest message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns LocalFileCheckRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): dcnet.pb.LocalFileCheckRequest;
+
+            /**
+             * Verifies a LocalFileCheckRequest message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates a LocalFileCheckRequest message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns LocalFileCheckRequest
+             */
+            public static fromObject(object: { [k: string]: any }): dcnet.pb.LocalFileCheckRequest;
+
+            /**
+             * Creates a plain object from a LocalFileCheckRequest message. Also converts values to other types if specified.
+             * @param message LocalFileCheckRequest
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: dcnet.pb.LocalFileCheckRequest, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this LocalFileCheckRequest to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for LocalFileCheckRequest
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** Properties of a LocalFileCheckReply. */
+        interface ILocalFileCheckReply {
+
+            /** LocalFileCheckReply flag */
+            flag?: (number|null);
+
+            /** LocalFileCheckReply failkey */
+            failkey?: (string|null);
+
+            /** LocalFileCheckReply teereport */
+            teereport?: (Uint8Array|null);
+        }
+
+        /** Represents a LocalFileCheckReply. */
+        class LocalFileCheckReply implements ILocalFileCheckReply {
+
+            /**
+             * Constructs a new LocalFileCheckReply.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: dcnet.pb.ILocalFileCheckReply);
+
+            /** LocalFileCheckReply flag. */
+            public flag: number;
+
+            /** LocalFileCheckReply failkey. */
+            public failkey: string;
+
+            /** LocalFileCheckReply teereport. */
+            public teereport: Uint8Array;
+
+            /**
+             * Creates a new LocalFileCheckReply instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns LocalFileCheckReply instance
+             */
+            public static create(properties?: dcnet.pb.ILocalFileCheckReply): dcnet.pb.LocalFileCheckReply;
+
+            /**
+             * Encodes the specified LocalFileCheckReply message. Does not implicitly {@link dcnet.pb.LocalFileCheckReply.verify|verify} messages.
+             * @param message LocalFileCheckReply message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: dcnet.pb.ILocalFileCheckReply, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified LocalFileCheckReply message, length delimited. Does not implicitly {@link dcnet.pb.LocalFileCheckReply.verify|verify} messages.
+             * @param message LocalFileCheckReply message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: dcnet.pb.ILocalFileCheckReply, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes a LocalFileCheckReply message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns LocalFileCheckReply
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): dcnet.pb.LocalFileCheckReply;
+
+            /**
+             * Decodes a LocalFileCheckReply message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns LocalFileCheckReply
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): dcnet.pb.LocalFileCheckReply;
+
+            /**
+             * Verifies a LocalFileCheckReply message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates a LocalFileCheckReply message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns LocalFileCheckReply
+             */
+            public static fromObject(object: { [k: string]: any }): dcnet.pb.LocalFileCheckReply;
+
+            /**
+             * Creates a plain object from a LocalFileCheckReply message. Also converts values to other types if specified.
+             * @param message LocalFileCheckReply
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: dcnet.pb.LocalFileCheckReply, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this LocalFileCheckReply to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for LocalFileCheckReply
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** Properties of a LocalAccountInfoCheckRequest. */
+        interface ILocalAccountInfoCheckRequest {
+
+            /** LocalAccountInfoCheckRequest accounthashs */
+            accounthashs?: (Uint8Array[]|null);
+        }
+
+        /** Represents a LocalAccountInfoCheckRequest. */
+        class LocalAccountInfoCheckRequest implements ILocalAccountInfoCheckRequest {
+
+            /**
+             * Constructs a new LocalAccountInfoCheckRequest.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: dcnet.pb.ILocalAccountInfoCheckRequest);
+
+            /** LocalAccountInfoCheckRequest accounthashs. */
+            public accounthashs: Uint8Array[];
+
+            /**
+             * Creates a new LocalAccountInfoCheckRequest instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns LocalAccountInfoCheckRequest instance
+             */
+            public static create(properties?: dcnet.pb.ILocalAccountInfoCheckRequest): dcnet.pb.LocalAccountInfoCheckRequest;
+
+            /**
+             * Encodes the specified LocalAccountInfoCheckRequest message. Does not implicitly {@link dcnet.pb.LocalAccountInfoCheckRequest.verify|verify} messages.
+             * @param message LocalAccountInfoCheckRequest message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: dcnet.pb.ILocalAccountInfoCheckRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified LocalAccountInfoCheckRequest message, length delimited. Does not implicitly {@link dcnet.pb.LocalAccountInfoCheckRequest.verify|verify} messages.
+             * @param message LocalAccountInfoCheckRequest message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: dcnet.pb.ILocalAccountInfoCheckRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes a LocalAccountInfoCheckRequest message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns LocalAccountInfoCheckRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): dcnet.pb.LocalAccountInfoCheckRequest;
+
+            /**
+             * Decodes a LocalAccountInfoCheckRequest message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns LocalAccountInfoCheckRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): dcnet.pb.LocalAccountInfoCheckRequest;
+
+            /**
+             * Verifies a LocalAccountInfoCheckRequest message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates a LocalAccountInfoCheckRequest message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns LocalAccountInfoCheckRequest
+             */
+            public static fromObject(object: { [k: string]: any }): dcnet.pb.LocalAccountInfoCheckRequest;
+
+            /**
+             * Creates a plain object from a LocalAccountInfoCheckRequest message. Also converts values to other types if specified.
+             * @param message LocalAccountInfoCheckRequest
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: dcnet.pb.LocalAccountInfoCheckRequest, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this LocalAccountInfoCheckRequest to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for LocalAccountInfoCheckRequest
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** Properties of a LocalAccountInfoCheckReply. */
+        interface ILocalAccountInfoCheckReply {
+
+            /** LocalAccountInfoCheckReply flag */
+            flag?: (number|null);
+
+            /** LocalAccountInfoCheckReply failkey */
+            failkey?: (Uint8Array|null);
+
+            /** LocalAccountInfoCheckReply teereport */
+            teereport?: (Uint8Array|null);
+        }
+
+        /** Represents a LocalAccountInfoCheckReply. */
+        class LocalAccountInfoCheckReply implements ILocalAccountInfoCheckReply {
+
+            /**
+             * Constructs a new LocalAccountInfoCheckReply.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: dcnet.pb.ILocalAccountInfoCheckReply);
+
+            /** LocalAccountInfoCheckReply flag. */
+            public flag: number;
+
+            /** LocalAccountInfoCheckReply failkey. */
+            public failkey: Uint8Array;
+
+            /** LocalAccountInfoCheckReply teereport. */
+            public teereport: Uint8Array;
+
+            /**
+             * Creates a new LocalAccountInfoCheckReply instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns LocalAccountInfoCheckReply instance
+             */
+            public static create(properties?: dcnet.pb.ILocalAccountInfoCheckReply): dcnet.pb.LocalAccountInfoCheckReply;
+
+            /**
+             * Encodes the specified LocalAccountInfoCheckReply message. Does not implicitly {@link dcnet.pb.LocalAccountInfoCheckReply.verify|verify} messages.
+             * @param message LocalAccountInfoCheckReply message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: dcnet.pb.ILocalAccountInfoCheckReply, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified LocalAccountInfoCheckReply message, length delimited. Does not implicitly {@link dcnet.pb.LocalAccountInfoCheckReply.verify|verify} messages.
+             * @param message LocalAccountInfoCheckReply message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: dcnet.pb.ILocalAccountInfoCheckReply, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes a LocalAccountInfoCheckReply message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns LocalAccountInfoCheckReply
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): dcnet.pb.LocalAccountInfoCheckReply;
+
+            /**
+             * Decodes a LocalAccountInfoCheckReply message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns LocalAccountInfoCheckReply
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): dcnet.pb.LocalAccountInfoCheckReply;
+
+            /**
+             * Verifies a LocalAccountInfoCheckReply message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates a LocalAccountInfoCheckReply message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns LocalAccountInfoCheckReply
+             */
+            public static fromObject(object: { [k: string]: any }): dcnet.pb.LocalAccountInfoCheckReply;
+
+            /**
+             * Creates a plain object from a LocalAccountInfoCheckReply message. Also converts values to other types if specified.
+             * @param message LocalAccountInfoCheckReply
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: dcnet.pb.LocalAccountInfoCheckReply, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this LocalAccountInfoCheckReply to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for LocalAccountInfoCheckReply
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** Properties of an AccountInfoSyncRequest. */
+        interface IAccountInfoSyncRequest {
+
+            /** AccountInfoSyncRequest accounthash */
+            accounthash?: (Uint8Array|null);
+
+            /** AccountInfoSyncRequest blockheight */
+            blockheight?: (number|null);
+
+            /** AccountInfoSyncRequest prikeyencrypthash */
+            prikeyencrypthash?: (Uint8Array|null);
+        }
+
+        /** Represents an AccountInfoSyncRequest. */
+        class AccountInfoSyncRequest implements IAccountInfoSyncRequest {
+
+            /**
+             * Constructs a new AccountInfoSyncRequest.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: dcnet.pb.IAccountInfoSyncRequest);
+
+            /** AccountInfoSyncRequest accounthash. */
+            public accounthash: Uint8Array;
+
+            /** AccountInfoSyncRequest blockheight. */
+            public blockheight: number;
+
+            /** AccountInfoSyncRequest prikeyencrypthash. */
+            public prikeyencrypthash: Uint8Array;
+
+            /**
+             * Creates a new AccountInfoSyncRequest instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns AccountInfoSyncRequest instance
+             */
+            public static create(properties?: dcnet.pb.IAccountInfoSyncRequest): dcnet.pb.AccountInfoSyncRequest;
+
+            /**
+             * Encodes the specified AccountInfoSyncRequest message. Does not implicitly {@link dcnet.pb.AccountInfoSyncRequest.verify|verify} messages.
+             * @param message AccountInfoSyncRequest message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: dcnet.pb.IAccountInfoSyncRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified AccountInfoSyncRequest message, length delimited. Does not implicitly {@link dcnet.pb.AccountInfoSyncRequest.verify|verify} messages.
+             * @param message AccountInfoSyncRequest message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: dcnet.pb.IAccountInfoSyncRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes an AccountInfoSyncRequest message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns AccountInfoSyncRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): dcnet.pb.AccountInfoSyncRequest;
+
+            /**
+             * Decodes an AccountInfoSyncRequest message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns AccountInfoSyncRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): dcnet.pb.AccountInfoSyncRequest;
+
+            /**
+             * Verifies an AccountInfoSyncRequest message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates an AccountInfoSyncRequest message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns AccountInfoSyncRequest
+             */
+            public static fromObject(object: { [k: string]: any }): dcnet.pb.AccountInfoSyncRequest;
+
+            /**
+             * Creates a plain object from an AccountInfoSyncRequest message. Also converts values to other types if specified.
+             * @param message AccountInfoSyncRequest
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: dcnet.pb.AccountInfoSyncRequest, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this AccountInfoSyncRequest to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for AccountInfoSyncRequest
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** Properties of an AccountInfoSyncReply. */
+        interface IAccountInfoSyncReply {
+        }
+
+        /** Represents an AccountInfoSyncReply. */
+        class AccountInfoSyncReply implements IAccountInfoSyncReply {
+
+            /**
+             * Constructs a new AccountInfoSyncReply.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: dcnet.pb.IAccountInfoSyncReply);
+
+            /**
+             * Creates a new AccountInfoSyncReply instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns AccountInfoSyncReply instance
+             */
+            public static create(properties?: dcnet.pb.IAccountInfoSyncReply): dcnet.pb.AccountInfoSyncReply;
+
+            /**
+             * Encodes the specified AccountInfoSyncReply message. Does not implicitly {@link dcnet.pb.AccountInfoSyncReply.verify|verify} messages.
+             * @param message AccountInfoSyncReply message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: dcnet.pb.IAccountInfoSyncReply, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified AccountInfoSyncReply message, length delimited. Does not implicitly {@link dcnet.pb.AccountInfoSyncReply.verify|verify} messages.
+             * @param message AccountInfoSyncReply message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: dcnet.pb.IAccountInfoSyncReply, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes an AccountInfoSyncReply message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns AccountInfoSyncReply
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): dcnet.pb.AccountInfoSyncReply;
+
+            /**
+             * Decodes an AccountInfoSyncReply message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns AccountInfoSyncReply
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): dcnet.pb.AccountInfoSyncReply;
+
+            /**
+             * Verifies an AccountInfoSyncReply message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates an AccountInfoSyncReply message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns AccountInfoSyncReply
+             */
+            public static fromObject(object: { [k: string]: any }): dcnet.pb.AccountInfoSyncReply;
+
+            /**
+             * Creates a plain object from an AccountInfoSyncReply message. Also converts values to other types if specified.
+             * @param message AccountInfoSyncReply
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: dcnet.pb.AccountInfoSyncReply, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this AccountInfoSyncReply to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for AccountInfoSyncReply
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** Properties of a SetEncryptKeyWithScanRequest. */
+        interface ISetEncryptKeyWithScanRequest {
+
+            /** SetEncryptKeyWithScanRequest encryptPrivkey */
+            encryptPrivkey?: (Uint8Array|null);
+
+            /** SetEncryptKeyWithScanRequest mapkey */
+            mapkey?: (Uint8Array|null);
+        }
+
+        /** Represents a SetEncryptKeyWithScanRequest. */
+        class SetEncryptKeyWithScanRequest implements ISetEncryptKeyWithScanRequest {
+
+            /**
+             * Constructs a new SetEncryptKeyWithScanRequest.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: dcnet.pb.ISetEncryptKeyWithScanRequest);
+
+            /** SetEncryptKeyWithScanRequest encryptPrivkey. */
+            public encryptPrivkey: Uint8Array;
+
+            /** SetEncryptKeyWithScanRequest mapkey. */
+            public mapkey: Uint8Array;
+
+            /**
+             * Creates a new SetEncryptKeyWithScanRequest instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns SetEncryptKeyWithScanRequest instance
+             */
+            public static create(properties?: dcnet.pb.ISetEncryptKeyWithScanRequest): dcnet.pb.SetEncryptKeyWithScanRequest;
+
+            /**
+             * Encodes the specified SetEncryptKeyWithScanRequest message. Does not implicitly {@link dcnet.pb.SetEncryptKeyWithScanRequest.verify|verify} messages.
+             * @param message SetEncryptKeyWithScanRequest message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: dcnet.pb.ISetEncryptKeyWithScanRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified SetEncryptKeyWithScanRequest message, length delimited. Does not implicitly {@link dcnet.pb.SetEncryptKeyWithScanRequest.verify|verify} messages.
+             * @param message SetEncryptKeyWithScanRequest message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: dcnet.pb.ISetEncryptKeyWithScanRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes a SetEncryptKeyWithScanRequest message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns SetEncryptKeyWithScanRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): dcnet.pb.SetEncryptKeyWithScanRequest;
+
+            /**
+             * Decodes a SetEncryptKeyWithScanRequest message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns SetEncryptKeyWithScanRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): dcnet.pb.SetEncryptKeyWithScanRequest;
+
+            /**
+             * Verifies a SetEncryptKeyWithScanRequest message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates a SetEncryptKeyWithScanRequest message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns SetEncryptKeyWithScanRequest
+             */
+            public static fromObject(object: { [k: string]: any }): dcnet.pb.SetEncryptKeyWithScanRequest;
+
+            /**
+             * Creates a plain object from a SetEncryptKeyWithScanRequest message. Also converts values to other types if specified.
+             * @param message SetEncryptKeyWithScanRequest
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: dcnet.pb.SetEncryptKeyWithScanRequest, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this SetEncryptKeyWithScanRequest to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for SetEncryptKeyWithScanRequest
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** Properties of a SetEncryptKeyWithScanReply. */
+        interface ISetEncryptKeyWithScanReply {
+        }
+
+        /** Represents a SetEncryptKeyWithScanReply. */
+        class SetEncryptKeyWithScanReply implements ISetEncryptKeyWithScanReply {
+
+            /**
+             * Constructs a new SetEncryptKeyWithScanReply.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: dcnet.pb.ISetEncryptKeyWithScanReply);
+
+            /**
+             * Creates a new SetEncryptKeyWithScanReply instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns SetEncryptKeyWithScanReply instance
+             */
+            public static create(properties?: dcnet.pb.ISetEncryptKeyWithScanReply): dcnet.pb.SetEncryptKeyWithScanReply;
+
+            /**
+             * Encodes the specified SetEncryptKeyWithScanReply message. Does not implicitly {@link dcnet.pb.SetEncryptKeyWithScanReply.verify|verify} messages.
+             * @param message SetEncryptKeyWithScanReply message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: dcnet.pb.ISetEncryptKeyWithScanReply, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified SetEncryptKeyWithScanReply message, length delimited. Does not implicitly {@link dcnet.pb.SetEncryptKeyWithScanReply.verify|verify} messages.
+             * @param message SetEncryptKeyWithScanReply message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: dcnet.pb.ISetEncryptKeyWithScanReply, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes a SetEncryptKeyWithScanReply message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns SetEncryptKeyWithScanReply
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): dcnet.pb.SetEncryptKeyWithScanReply;
+
+            /**
+             * Decodes a SetEncryptKeyWithScanReply message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns SetEncryptKeyWithScanReply
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): dcnet.pb.SetEncryptKeyWithScanReply;
+
+            /**
+             * Verifies a SetEncryptKeyWithScanReply message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates a SetEncryptKeyWithScanReply message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns SetEncryptKeyWithScanReply
+             */
+            public static fromObject(object: { [k: string]: any }): dcnet.pb.SetEncryptKeyWithScanReply;
+
+            /**
+             * Creates a plain object from a SetEncryptKeyWithScanReply message. Also converts values to other types if specified.
+             * @param message SetEncryptKeyWithScanReply
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: dcnet.pb.SetEncryptKeyWithScanReply, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this SetEncryptKeyWithScanReply to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for SetEncryptKeyWithScanReply
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** Properties of a GetEncryptKeyWithScanRequest. */
+        interface IGetEncryptKeyWithScanRequest {
+
+            /** GetEncryptKeyWithScanRequest mapkey */
+            mapkey?: (Uint8Array|null);
+        }
+
+        /** Represents a GetEncryptKeyWithScanRequest. */
+        class GetEncryptKeyWithScanRequest implements IGetEncryptKeyWithScanRequest {
+
+            /**
+             * Constructs a new GetEncryptKeyWithScanRequest.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: dcnet.pb.IGetEncryptKeyWithScanRequest);
+
+            /** GetEncryptKeyWithScanRequest mapkey. */
+            public mapkey: Uint8Array;
+
+            /**
+             * Creates a new GetEncryptKeyWithScanRequest instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns GetEncryptKeyWithScanRequest instance
+             */
+            public static create(properties?: dcnet.pb.IGetEncryptKeyWithScanRequest): dcnet.pb.GetEncryptKeyWithScanRequest;
+
+            /**
+             * Encodes the specified GetEncryptKeyWithScanRequest message. Does not implicitly {@link dcnet.pb.GetEncryptKeyWithScanRequest.verify|verify} messages.
+             * @param message GetEncryptKeyWithScanRequest message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: dcnet.pb.IGetEncryptKeyWithScanRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified GetEncryptKeyWithScanRequest message, length delimited. Does not implicitly {@link dcnet.pb.GetEncryptKeyWithScanRequest.verify|verify} messages.
+             * @param message GetEncryptKeyWithScanRequest message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: dcnet.pb.IGetEncryptKeyWithScanRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes a GetEncryptKeyWithScanRequest message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns GetEncryptKeyWithScanRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): dcnet.pb.GetEncryptKeyWithScanRequest;
+
+            /**
+             * Decodes a GetEncryptKeyWithScanRequest message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns GetEncryptKeyWithScanRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): dcnet.pb.GetEncryptKeyWithScanRequest;
+
+            /**
+             * Verifies a GetEncryptKeyWithScanRequest message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates a GetEncryptKeyWithScanRequest message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns GetEncryptKeyWithScanRequest
+             */
+            public static fromObject(object: { [k: string]: any }): dcnet.pb.GetEncryptKeyWithScanRequest;
+
+            /**
+             * Creates a plain object from a GetEncryptKeyWithScanRequest message. Also converts values to other types if specified.
+             * @param message GetEncryptKeyWithScanRequest
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: dcnet.pb.GetEncryptKeyWithScanRequest, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this GetEncryptKeyWithScanRequest to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for GetEncryptKeyWithScanRequest
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** Properties of a GetEncryptKeyWithScanReply. */
+        interface IGetEncryptKeyWithScanReply {
+
+            /** GetEncryptKeyWithScanReply encryptPrivkey */
+            encryptPrivkey?: (Uint8Array|null);
+        }
+
+        /** Represents a GetEncryptKeyWithScanReply. */
+        class GetEncryptKeyWithScanReply implements IGetEncryptKeyWithScanReply {
+
+            /**
+             * Constructs a new GetEncryptKeyWithScanReply.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: dcnet.pb.IGetEncryptKeyWithScanReply);
+
+            /** GetEncryptKeyWithScanReply encryptPrivkey. */
+            public encryptPrivkey: Uint8Array;
+
+            /**
+             * Creates a new GetEncryptKeyWithScanReply instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns GetEncryptKeyWithScanReply instance
+             */
+            public static create(properties?: dcnet.pb.IGetEncryptKeyWithScanReply): dcnet.pb.GetEncryptKeyWithScanReply;
+
+            /**
+             * Encodes the specified GetEncryptKeyWithScanReply message. Does not implicitly {@link dcnet.pb.GetEncryptKeyWithScanReply.verify|verify} messages.
+             * @param message GetEncryptKeyWithScanReply message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: dcnet.pb.IGetEncryptKeyWithScanReply, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified GetEncryptKeyWithScanReply message, length delimited. Does not implicitly {@link dcnet.pb.GetEncryptKeyWithScanReply.verify|verify} messages.
+             * @param message GetEncryptKeyWithScanReply message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: dcnet.pb.IGetEncryptKeyWithScanReply, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes a GetEncryptKeyWithScanReply message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns GetEncryptKeyWithScanReply
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): dcnet.pb.GetEncryptKeyWithScanReply;
+
+            /**
+             * Decodes a GetEncryptKeyWithScanReply message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns GetEncryptKeyWithScanReply
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): dcnet.pb.GetEncryptKeyWithScanReply;
+
+            /**
+             * Verifies a GetEncryptKeyWithScanReply message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates a GetEncryptKeyWithScanReply message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns GetEncryptKeyWithScanReply
+             */
+            public static fromObject(object: { [k: string]: any }): dcnet.pb.GetEncryptKeyWithScanReply;
+
+            /**
+             * Creates a plain object from a GetEncryptKeyWithScanReply message. Also converts values to other types if specified.
+             * @param message GetEncryptKeyWithScanReply
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: dcnet.pb.GetEncryptKeyWithScanReply, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this GetEncryptKeyWithScanReply to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for GetEncryptKeyWithScanReply
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** Properties of a RequestRandEncryptKeyRequest. */
+        interface IRequestRandEncryptKeyRequest {
+
+            /** RequestRandEncryptKeyRequest enclaveid */
+            enclaveid?: (Uint8Array|null);
+        }
+
+        /** Represents a RequestRandEncryptKeyRequest. */
+        class RequestRandEncryptKeyRequest implements IRequestRandEncryptKeyRequest {
+
+            /**
+             * Constructs a new RequestRandEncryptKeyRequest.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: dcnet.pb.IRequestRandEncryptKeyRequest);
+
+            /** RequestRandEncryptKeyRequest enclaveid. */
+            public enclaveid: Uint8Array;
+
+            /**
+             * Creates a new RequestRandEncryptKeyRequest instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns RequestRandEncryptKeyRequest instance
+             */
+            public static create(properties?: dcnet.pb.IRequestRandEncryptKeyRequest): dcnet.pb.RequestRandEncryptKeyRequest;
+
+            /**
+             * Encodes the specified RequestRandEncryptKeyRequest message. Does not implicitly {@link dcnet.pb.RequestRandEncryptKeyRequest.verify|verify} messages.
+             * @param message RequestRandEncryptKeyRequest message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: dcnet.pb.IRequestRandEncryptKeyRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified RequestRandEncryptKeyRequest message, length delimited. Does not implicitly {@link dcnet.pb.RequestRandEncryptKeyRequest.verify|verify} messages.
+             * @param message RequestRandEncryptKeyRequest message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: dcnet.pb.IRequestRandEncryptKeyRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes a RequestRandEncryptKeyRequest message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns RequestRandEncryptKeyRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): dcnet.pb.RequestRandEncryptKeyRequest;
+
+            /**
+             * Decodes a RequestRandEncryptKeyRequest message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns RequestRandEncryptKeyRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): dcnet.pb.RequestRandEncryptKeyRequest;
+
+            /**
+             * Verifies a RequestRandEncryptKeyRequest message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates a RequestRandEncryptKeyRequest message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns RequestRandEncryptKeyRequest
+             */
+            public static fromObject(object: { [k: string]: any }): dcnet.pb.RequestRandEncryptKeyRequest;
+
+            /**
+             * Creates a plain object from a RequestRandEncryptKeyRequest message. Also converts values to other types if specified.
+             * @param message RequestRandEncryptKeyRequest
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: dcnet.pb.RequestRandEncryptKeyRequest, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this RequestRandEncryptKeyRequest to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for RequestRandEncryptKeyRequest
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** Properties of a RequestRandEncryptKeyReply. */
+        interface IRequestRandEncryptKeyReply {
+
+            /** RequestRandEncryptKeyReply encryptKey */
+            encryptKey?: (Uint8Array|null);
+
+            /** RequestRandEncryptKeyReply signature */
+            signature?: (Uint8Array|null);
+        }
+
+        /** Represents a RequestRandEncryptKeyReply. */
+        class RequestRandEncryptKeyReply implements IRequestRandEncryptKeyReply {
+
+            /**
+             * Constructs a new RequestRandEncryptKeyReply.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: dcnet.pb.IRequestRandEncryptKeyReply);
+
+            /** RequestRandEncryptKeyReply encryptKey. */
+            public encryptKey: Uint8Array;
+
+            /** RequestRandEncryptKeyReply signature. */
+            public signature: Uint8Array;
+
+            /**
+             * Creates a new RequestRandEncryptKeyReply instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns RequestRandEncryptKeyReply instance
+             */
+            public static create(properties?: dcnet.pb.IRequestRandEncryptKeyReply): dcnet.pb.RequestRandEncryptKeyReply;
+
+            /**
+             * Encodes the specified RequestRandEncryptKeyReply message. Does not implicitly {@link dcnet.pb.RequestRandEncryptKeyReply.verify|verify} messages.
+             * @param message RequestRandEncryptKeyReply message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: dcnet.pb.IRequestRandEncryptKeyReply, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified RequestRandEncryptKeyReply message, length delimited. Does not implicitly {@link dcnet.pb.RequestRandEncryptKeyReply.verify|verify} messages.
+             * @param message RequestRandEncryptKeyReply message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: dcnet.pb.IRequestRandEncryptKeyReply, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes a RequestRandEncryptKeyReply message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns RequestRandEncryptKeyReply
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): dcnet.pb.RequestRandEncryptKeyReply;
+
+            /**
+             * Decodes a RequestRandEncryptKeyReply message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns RequestRandEncryptKeyReply
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): dcnet.pb.RequestRandEncryptKeyReply;
+
+            /**
+             * Verifies a RequestRandEncryptKeyReply message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates a RequestRandEncryptKeyReply message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns RequestRandEncryptKeyReply
+             */
+            public static fromObject(object: { [k: string]: any }): dcnet.pb.RequestRandEncryptKeyReply;
+
+            /**
+             * Creates a plain object from a RequestRandEncryptKeyReply message. Also converts values to other types if specified.
+             * @param message RequestRandEncryptKeyReply
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: dcnet.pb.RequestRandEncryptKeyReply, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this RequestRandEncryptKeyReply to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for RequestRandEncryptKeyReply
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** Properties of a GetEncryptKeyRequest. */
+        interface IGetEncryptKeyRequest {
+
+            /** GetEncryptKeyRequest peerId */
+            peerId?: (Uint8Array|null);
+
+            /** GetEncryptKeyRequest teereport */
+            teereport?: (Uint8Array|null);
+        }
+
+        /** Represents a GetEncryptKeyRequest. */
+        class GetEncryptKeyRequest implements IGetEncryptKeyRequest {
+
+            /**
+             * Constructs a new GetEncryptKeyRequest.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: dcnet.pb.IGetEncryptKeyRequest);
+
+            /** GetEncryptKeyRequest peerId. */
+            public peerId: Uint8Array;
+
+            /** GetEncryptKeyRequest teereport. */
+            public teereport: Uint8Array;
+
+            /**
+             * Creates a new GetEncryptKeyRequest instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns GetEncryptKeyRequest instance
+             */
+            public static create(properties?: dcnet.pb.IGetEncryptKeyRequest): dcnet.pb.GetEncryptKeyRequest;
+
+            /**
+             * Encodes the specified GetEncryptKeyRequest message. Does not implicitly {@link dcnet.pb.GetEncryptKeyRequest.verify|verify} messages.
+             * @param message GetEncryptKeyRequest message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: dcnet.pb.IGetEncryptKeyRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified GetEncryptKeyRequest message, length delimited. Does not implicitly {@link dcnet.pb.GetEncryptKeyRequest.verify|verify} messages.
+             * @param message GetEncryptKeyRequest message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: dcnet.pb.IGetEncryptKeyRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes a GetEncryptKeyRequest message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns GetEncryptKeyRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): dcnet.pb.GetEncryptKeyRequest;
+
+            /**
+             * Decodes a GetEncryptKeyRequest message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns GetEncryptKeyRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): dcnet.pb.GetEncryptKeyRequest;
+
+            /**
+             * Verifies a GetEncryptKeyRequest message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates a GetEncryptKeyRequest message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns GetEncryptKeyRequest
+             */
+            public static fromObject(object: { [k: string]: any }): dcnet.pb.GetEncryptKeyRequest;
+
+            /**
+             * Creates a plain object from a GetEncryptKeyRequest message. Also converts values to other types if specified.
+             * @param message GetEncryptKeyRequest
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: dcnet.pb.GetEncryptKeyRequest, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this GetEncryptKeyRequest to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for GetEncryptKeyRequest
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** Properties of a GetEncryptKeyReply. */
+        interface IGetEncryptKeyReply {
+
+            /** GetEncryptKeyReply encryptKey */
+            encryptKey?: (Uint8Array|null);
+
+            /** GetEncryptKeyReply signature */
+            signature?: (Uint8Array|null);
+        }
+
+        /** Represents a GetEncryptKeyReply. */
+        class GetEncryptKeyReply implements IGetEncryptKeyReply {
+
+            /**
+             * Constructs a new GetEncryptKeyReply.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: dcnet.pb.IGetEncryptKeyReply);
+
+            /** GetEncryptKeyReply encryptKey. */
+            public encryptKey: Uint8Array;
+
+            /** GetEncryptKeyReply signature. */
+            public signature: Uint8Array;
+
+            /**
+             * Creates a new GetEncryptKeyReply instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns GetEncryptKeyReply instance
+             */
+            public static create(properties?: dcnet.pb.IGetEncryptKeyReply): dcnet.pb.GetEncryptKeyReply;
+
+            /**
+             * Encodes the specified GetEncryptKeyReply message. Does not implicitly {@link dcnet.pb.GetEncryptKeyReply.verify|verify} messages.
+             * @param message GetEncryptKeyReply message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: dcnet.pb.IGetEncryptKeyReply, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified GetEncryptKeyReply message, length delimited. Does not implicitly {@link dcnet.pb.GetEncryptKeyReply.verify|verify} messages.
+             * @param message GetEncryptKeyReply message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: dcnet.pb.IGetEncryptKeyReply, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes a GetEncryptKeyReply message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns GetEncryptKeyReply
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): dcnet.pb.GetEncryptKeyReply;
+
+            /**
+             * Decodes a GetEncryptKeyReply message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns GetEncryptKeyReply
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): dcnet.pb.GetEncryptKeyReply;
+
+            /**
+             * Verifies a GetEncryptKeyReply message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates a GetEncryptKeyReply message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns GetEncryptKeyReply
+             */
+            public static fromObject(object: { [k: string]: any }): dcnet.pb.GetEncryptKeyReply;
+
+            /**
+             * Creates a plain object from a GetEncryptKeyReply message. Also converts values to other types if specified.
+             * @param message GetEncryptKeyReply
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: dcnet.pb.GetEncryptKeyReply, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this GetEncryptKeyReply to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for GetEncryptKeyReply
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** Properties of a GetPeersWithSidRequest. */
+        interface IGetPeersWithSidRequest {
+
+            /** GetPeersWithSidRequest sid */
+            sid?: (string|null);
+        }
+
+        /** Represents a GetPeersWithSidRequest. */
+        class GetPeersWithSidRequest implements IGetPeersWithSidRequest {
+
+            /**
+             * Constructs a new GetPeersWithSidRequest.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: dcnet.pb.IGetPeersWithSidRequest);
+
+            /** GetPeersWithSidRequest sid. */
+            public sid: string;
+
+            /**
+             * Creates a new GetPeersWithSidRequest instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns GetPeersWithSidRequest instance
+             */
+            public static create(properties?: dcnet.pb.IGetPeersWithSidRequest): dcnet.pb.GetPeersWithSidRequest;
+
+            /**
+             * Encodes the specified GetPeersWithSidRequest message. Does not implicitly {@link dcnet.pb.GetPeersWithSidRequest.verify|verify} messages.
+             * @param message GetPeersWithSidRequest message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: dcnet.pb.IGetPeersWithSidRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified GetPeersWithSidRequest message, length delimited. Does not implicitly {@link dcnet.pb.GetPeersWithSidRequest.verify|verify} messages.
+             * @param message GetPeersWithSidRequest message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: dcnet.pb.IGetPeersWithSidRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes a GetPeersWithSidRequest message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns GetPeersWithSidRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): dcnet.pb.GetPeersWithSidRequest;
+
+            /**
+             * Decodes a GetPeersWithSidRequest message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns GetPeersWithSidRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): dcnet.pb.GetPeersWithSidRequest;
+
+            /**
+             * Verifies a GetPeersWithSidRequest message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates a GetPeersWithSidRequest message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns GetPeersWithSidRequest
+             */
+            public static fromObject(object: { [k: string]: any }): dcnet.pb.GetPeersWithSidRequest;
+
+            /**
+             * Creates a plain object from a GetPeersWithSidRequest message. Also converts values to other types if specified.
+             * @param message GetPeersWithSidRequest
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: dcnet.pb.GetPeersWithSidRequest, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this GetPeersWithSidRequest to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for GetPeersWithSidRequest
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** Properties of a GetPeersWithSidReply. */
+        interface IGetPeersWithSidReply {
+
+            /** GetPeersWithSidReply peerids */
+            peerids?: (string[]|null);
+        }
+
+        /** Represents a GetPeersWithSidReply. */
+        class GetPeersWithSidReply implements IGetPeersWithSidReply {
+
+            /**
+             * Constructs a new GetPeersWithSidReply.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: dcnet.pb.IGetPeersWithSidReply);
+
+            /** GetPeersWithSidReply peerids. */
+            public peerids: string[];
+
+            /**
+             * Creates a new GetPeersWithSidReply instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns GetPeersWithSidReply instance
+             */
+            public static create(properties?: dcnet.pb.IGetPeersWithSidReply): dcnet.pb.GetPeersWithSidReply;
+
+            /**
+             * Encodes the specified GetPeersWithSidReply message. Does not implicitly {@link dcnet.pb.GetPeersWithSidReply.verify|verify} messages.
+             * @param message GetPeersWithSidReply message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: dcnet.pb.IGetPeersWithSidReply, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified GetPeersWithSidReply message, length delimited. Does not implicitly {@link dcnet.pb.GetPeersWithSidReply.verify|verify} messages.
+             * @param message GetPeersWithSidReply message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: dcnet.pb.IGetPeersWithSidReply, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes a GetPeersWithSidReply message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns GetPeersWithSidReply
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): dcnet.pb.GetPeersWithSidReply;
+
+            /**
+             * Decodes a GetPeersWithSidReply message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns GetPeersWithSidReply
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): dcnet.pb.GetPeersWithSidReply;
+
+            /**
+             * Verifies a GetPeersWithSidReply message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates a GetPeersWithSidReply message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns GetPeersWithSidReply
+             */
+            public static fromObject(object: { [k: string]: any }): dcnet.pb.GetPeersWithSidReply;
+
+            /**
+             * Creates a plain object from a GetPeersWithSidReply message. Also converts values to other types if specified.
+             * @param message GetPeersWithSidReply
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: dcnet.pb.GetPeersWithSidReply, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this GetPeersWithSidReply to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for GetPeersWithSidReply
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** Properties of a GetPeersWithAccountHashRequest. */
+        interface IGetPeersWithAccountHashRequest {
+
+            /** GetPeersWithAccountHashRequest accounthash */
+            accounthash?: (Uint8Array|null);
+        }
+
+        /** Represents a GetPeersWithAccountHashRequest. */
+        class GetPeersWithAccountHashRequest implements IGetPeersWithAccountHashRequest {
+
+            /**
+             * Constructs a new GetPeersWithAccountHashRequest.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: dcnet.pb.IGetPeersWithAccountHashRequest);
+
+            /** GetPeersWithAccountHashRequest accounthash. */
+            public accounthash: Uint8Array;
+
+            /**
+             * Creates a new GetPeersWithAccountHashRequest instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns GetPeersWithAccountHashRequest instance
+             */
+            public static create(properties?: dcnet.pb.IGetPeersWithAccountHashRequest): dcnet.pb.GetPeersWithAccountHashRequest;
+
+            /**
+             * Encodes the specified GetPeersWithAccountHashRequest message. Does not implicitly {@link dcnet.pb.GetPeersWithAccountHashRequest.verify|verify} messages.
+             * @param message GetPeersWithAccountHashRequest message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: dcnet.pb.IGetPeersWithAccountHashRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified GetPeersWithAccountHashRequest message, length delimited. Does not implicitly {@link dcnet.pb.GetPeersWithAccountHashRequest.verify|verify} messages.
+             * @param message GetPeersWithAccountHashRequest message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: dcnet.pb.IGetPeersWithAccountHashRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes a GetPeersWithAccountHashRequest message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns GetPeersWithAccountHashRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): dcnet.pb.GetPeersWithAccountHashRequest;
+
+            /**
+             * Decodes a GetPeersWithAccountHashRequest message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns GetPeersWithAccountHashRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): dcnet.pb.GetPeersWithAccountHashRequest;
+
+            /**
+             * Verifies a GetPeersWithAccountHashRequest message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates a GetPeersWithAccountHashRequest message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns GetPeersWithAccountHashRequest
+             */
+            public static fromObject(object: { [k: string]: any }): dcnet.pb.GetPeersWithAccountHashRequest;
+
+            /**
+             * Creates a plain object from a GetPeersWithAccountHashRequest message. Also converts values to other types if specified.
+             * @param message GetPeersWithAccountHashRequest
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: dcnet.pb.GetPeersWithAccountHashRequest, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this GetPeersWithAccountHashRequest to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for GetPeersWithAccountHashRequest
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** Properties of a GetPeersWithAccountHashReply. */
+        interface IGetPeersWithAccountHashReply {
+
+            /** GetPeersWithAccountHashReply peerids */
+            peerids?: (string[]|null);
+        }
+
+        /** Represents a GetPeersWithAccountHashReply. */
+        class GetPeersWithAccountHashReply implements IGetPeersWithAccountHashReply {
+
+            /**
+             * Constructs a new GetPeersWithAccountHashReply.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: dcnet.pb.IGetPeersWithAccountHashReply);
+
+            /** GetPeersWithAccountHashReply peerids. */
+            public peerids: string[];
+
+            /**
+             * Creates a new GetPeersWithAccountHashReply instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns GetPeersWithAccountHashReply instance
+             */
+            public static create(properties?: dcnet.pb.IGetPeersWithAccountHashReply): dcnet.pb.GetPeersWithAccountHashReply;
+
+            /**
+             * Encodes the specified GetPeersWithAccountHashReply message. Does not implicitly {@link dcnet.pb.GetPeersWithAccountHashReply.verify|verify} messages.
+             * @param message GetPeersWithAccountHashReply message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: dcnet.pb.IGetPeersWithAccountHashReply, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified GetPeersWithAccountHashReply message, length delimited. Does not implicitly {@link dcnet.pb.GetPeersWithAccountHashReply.verify|verify} messages.
+             * @param message GetPeersWithAccountHashReply message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: dcnet.pb.IGetPeersWithAccountHashReply, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes a GetPeersWithAccountHashReply message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns GetPeersWithAccountHashReply
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): dcnet.pb.GetPeersWithAccountHashReply;
+
+            /**
+             * Decodes a GetPeersWithAccountHashReply message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns GetPeersWithAccountHashReply
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): dcnet.pb.GetPeersWithAccountHashReply;
+
+            /**
+             * Verifies a GetPeersWithAccountHashReply message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates a GetPeersWithAccountHashReply message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns GetPeersWithAccountHashReply
+             */
+            public static fromObject(object: { [k: string]: any }): dcnet.pb.GetPeersWithAccountHashReply;
+
+            /**
+             * Creates a plain object from a GetPeersWithAccountHashReply message. Also converts values to other types if specified.
+             * @param message GetPeersWithAccountHashReply
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: dcnet.pb.GetPeersWithAccountHashReply, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this GetPeersWithAccountHashReply to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for GetPeersWithAccountHashReply
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** Properties of an AccountDealBackupRequest. */
+        interface IAccountDealBackupRequest {
+
+            /** AccountDealBackupRequest pubkey */
+            pubkey?: (Uint8Array|null);
+
+            /** AccountDealBackupRequest accountencrypt */
+            accountencrypt?: (Uint8Array|null);
+
+            /** AccountDealBackupRequest accounthashencrypt */
+            accounthashencrypt?: (Uint8Array|null);
+
+            /** AccountDealBackupRequest prikeyencrypt2 */
+            prikeyencrypt2?: (Uint8Array|null);
+
+            /** AccountDealBackupRequest blockheight */
+            blockheight?: (number|null);
+
+            /** AccountDealBackupRequest randkeyencrypt */
+            randkeyencrypt?: (Uint8Array|null);
+
+            /** AccountDealBackupRequest loginkeyrandencrypt */
+            loginkeyrandencrypt?: (Uint8Array|null);
+
+            /** AccountDealBackupRequest peerid */
+            peerid?: (Uint8Array|null);
+
+            /** AccountDealBackupRequest signature */
+            signature?: (Uint8Array|null);
+        }
+
+        /** Represents an AccountDealBackupRequest. */
+        class AccountDealBackupRequest implements IAccountDealBackupRequest {
+
+            /**
+             * Constructs a new AccountDealBackupRequest.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: dcnet.pb.IAccountDealBackupRequest);
+
+            /** AccountDealBackupRequest pubkey. */
+            public pubkey: Uint8Array;
+
+            /** AccountDealBackupRequest accountencrypt. */
+            public accountencrypt: Uint8Array;
+
+            /** AccountDealBackupRequest accounthashencrypt. */
+            public accounthashencrypt: Uint8Array;
+
+            /** AccountDealBackupRequest prikeyencrypt2. */
+            public prikeyencrypt2: Uint8Array;
+
+            /** AccountDealBackupRequest blockheight. */
+            public blockheight: number;
+
+            /** AccountDealBackupRequest randkeyencrypt. */
+            public randkeyencrypt: Uint8Array;
+
+            /** AccountDealBackupRequest loginkeyrandencrypt. */
+            public loginkeyrandencrypt: Uint8Array;
+
+            /** AccountDealBackupRequest peerid. */
+            public peerid: Uint8Array;
+
+            /** AccountDealBackupRequest signature. */
+            public signature: Uint8Array;
+
+            /**
+             * Creates a new AccountDealBackupRequest instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns AccountDealBackupRequest instance
+             */
+            public static create(properties?: dcnet.pb.IAccountDealBackupRequest): dcnet.pb.AccountDealBackupRequest;
+
+            /**
+             * Encodes the specified AccountDealBackupRequest message. Does not implicitly {@link dcnet.pb.AccountDealBackupRequest.verify|verify} messages.
+             * @param message AccountDealBackupRequest message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: dcnet.pb.IAccountDealBackupRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified AccountDealBackupRequest message, length delimited. Does not implicitly {@link dcnet.pb.AccountDealBackupRequest.verify|verify} messages.
+             * @param message AccountDealBackupRequest message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: dcnet.pb.IAccountDealBackupRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes an AccountDealBackupRequest message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns AccountDealBackupRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): dcnet.pb.AccountDealBackupRequest;
+
+            /**
+             * Decodes an AccountDealBackupRequest message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns AccountDealBackupRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): dcnet.pb.AccountDealBackupRequest;
+
+            /**
+             * Verifies an AccountDealBackupRequest message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates an AccountDealBackupRequest message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns AccountDealBackupRequest
+             */
+            public static fromObject(object: { [k: string]: any }): dcnet.pb.AccountDealBackupRequest;
+
+            /**
+             * Creates a plain object from an AccountDealBackupRequest message. Also converts values to other types if specified.
+             * @param message AccountDealBackupRequest
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: dcnet.pb.AccountDealBackupRequest, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this AccountDealBackupRequest to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for AccountDealBackupRequest
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** Properties of an AccountDealBackupReply. */
+        interface IAccountDealBackupReply {
+        }
+
+        /** Represents an AccountDealBackupReply. */
+        class AccountDealBackupReply implements IAccountDealBackupReply {
+
+            /**
+             * Constructs a new AccountDealBackupReply.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: dcnet.pb.IAccountDealBackupReply);
+
+            /**
+             * Creates a new AccountDealBackupReply instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns AccountDealBackupReply instance
+             */
+            public static create(properties?: dcnet.pb.IAccountDealBackupReply): dcnet.pb.AccountDealBackupReply;
+
+            /**
+             * Encodes the specified AccountDealBackupReply message. Does not implicitly {@link dcnet.pb.AccountDealBackupReply.verify|verify} messages.
+             * @param message AccountDealBackupReply message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: dcnet.pb.IAccountDealBackupReply, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified AccountDealBackupReply message, length delimited. Does not implicitly {@link dcnet.pb.AccountDealBackupReply.verify|verify} messages.
+             * @param message AccountDealBackupReply message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: dcnet.pb.IAccountDealBackupReply, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes an AccountDealBackupReply message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns AccountDealBackupReply
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): dcnet.pb.AccountDealBackupReply;
+
+            /**
+             * Decodes an AccountDealBackupReply message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns AccountDealBackupReply
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): dcnet.pb.AccountDealBackupReply;
+
+            /**
+             * Verifies an AccountDealBackupReply message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates an AccountDealBackupReply message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns AccountDealBackupReply
+             */
+            public static fromObject(object: { [k: string]: any }): dcnet.pb.AccountDealBackupReply;
+
+            /**
+             * Creates a plain object from an AccountDealBackupReply message. Also converts values to other types if specified.
+             * @param message AccountDealBackupReply
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: dcnet.pb.AccountDealBackupReply, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this AccountDealBackupReply to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for AccountDealBackupReply
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** Properties of a GetHostIDRequest. */
+        interface IGetHostIDRequest {
+        }
+
+        /** Represents a GetHostIDRequest. */
+        class GetHostIDRequest implements IGetHostIDRequest {
+
+            /**
+             * Constructs a new GetHostIDRequest.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: dcnet.pb.IGetHostIDRequest);
+
+            /**
+             * Creates a new GetHostIDRequest instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns GetHostIDRequest instance
+             */
+            public static create(properties?: dcnet.pb.IGetHostIDRequest): dcnet.pb.GetHostIDRequest;
+
+            /**
+             * Encodes the specified GetHostIDRequest message. Does not implicitly {@link dcnet.pb.GetHostIDRequest.verify|verify} messages.
+             * @param message GetHostIDRequest message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: dcnet.pb.IGetHostIDRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified GetHostIDRequest message, length delimited. Does not implicitly {@link dcnet.pb.GetHostIDRequest.verify|verify} messages.
+             * @param message GetHostIDRequest message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: dcnet.pb.IGetHostIDRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes a GetHostIDRequest message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns GetHostIDRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): dcnet.pb.GetHostIDRequest;
+
+            /**
+             * Decodes a GetHostIDRequest message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns GetHostIDRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): dcnet.pb.GetHostIDRequest;
+
+            /**
+             * Verifies a GetHostIDRequest message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates a GetHostIDRequest message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns GetHostIDRequest
+             */
+            public static fromObject(object: { [k: string]: any }): dcnet.pb.GetHostIDRequest;
+
+            /**
+             * Creates a plain object from a GetHostIDRequest message. Also converts values to other types if specified.
+             * @param message GetHostIDRequest
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: dcnet.pb.GetHostIDRequest, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this GetHostIDRequest to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for GetHostIDRequest
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** Properties of a GetHostIDReply. */
+        interface IGetHostIDReply {
+
+            /** GetHostIDReply peerID */
+            peerID?: (Uint8Array|null);
+
+            /** GetHostIDReply reqAddr */
+            reqAddr?: (Uint8Array|null);
+        }
+
+        /** Represents a GetHostIDReply. */
+        class GetHostIDReply implements IGetHostIDReply {
+
+            /**
+             * Constructs a new GetHostIDReply.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: dcnet.pb.IGetHostIDReply);
+
+            /** GetHostIDReply peerID. */
+            public peerID: Uint8Array;
+
+            /** GetHostIDReply reqAddr. */
+            public reqAddr: Uint8Array;
+
+            /**
+             * Creates a new GetHostIDReply instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns GetHostIDReply instance
+             */
+            public static create(properties?: dcnet.pb.IGetHostIDReply): dcnet.pb.GetHostIDReply;
+
+            /**
+             * Encodes the specified GetHostIDReply message. Does not implicitly {@link dcnet.pb.GetHostIDReply.verify|verify} messages.
+             * @param message GetHostIDReply message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: dcnet.pb.IGetHostIDReply, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified GetHostIDReply message, length delimited. Does not implicitly {@link dcnet.pb.GetHostIDReply.verify|verify} messages.
+             * @param message GetHostIDReply message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: dcnet.pb.IGetHostIDReply, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes a GetHostIDReply message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns GetHostIDReply
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): dcnet.pb.GetHostIDReply;
+
+            /**
+             * Decodes a GetHostIDReply message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns GetHostIDReply
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): dcnet.pb.GetHostIDReply;
+
+            /**
+             * Verifies a GetHostIDReply message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates a GetHostIDReply message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns GetHostIDReply
+             */
+            public static fromObject(object: { [k: string]: any }): dcnet.pb.GetHostIDReply;
+
+            /**
+             * Creates a plain object from a GetHostIDReply message. Also converts values to other types if specified.
+             * @param message GetHostIDReply
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: dcnet.pb.GetHostIDReply, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this GetHostIDReply to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for GetHostIDReply
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** Properties of a ReportLocalMultilAddrRequest. */
+        interface IReportLocalMultilAddrRequest {
+
+            /** ReportLocalMultilAddrRequest addr */
+            addr?: (string|null);
+        }
+
+        /** Represents a ReportLocalMultilAddrRequest. */
+        class ReportLocalMultilAddrRequest implements IReportLocalMultilAddrRequest {
+
+            /**
+             * Constructs a new ReportLocalMultilAddrRequest.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: dcnet.pb.IReportLocalMultilAddrRequest);
+
+            /** ReportLocalMultilAddrRequest addr. */
+            public addr: string;
+
+            /**
+             * Creates a new ReportLocalMultilAddrRequest instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns ReportLocalMultilAddrRequest instance
+             */
+            public static create(properties?: dcnet.pb.IReportLocalMultilAddrRequest): dcnet.pb.ReportLocalMultilAddrRequest;
+
+            /**
+             * Encodes the specified ReportLocalMultilAddrRequest message. Does not implicitly {@link dcnet.pb.ReportLocalMultilAddrRequest.verify|verify} messages.
+             * @param message ReportLocalMultilAddrRequest message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: dcnet.pb.IReportLocalMultilAddrRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified ReportLocalMultilAddrRequest message, length delimited. Does not implicitly {@link dcnet.pb.ReportLocalMultilAddrRequest.verify|verify} messages.
+             * @param message ReportLocalMultilAddrRequest message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: dcnet.pb.IReportLocalMultilAddrRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes a ReportLocalMultilAddrRequest message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns ReportLocalMultilAddrRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): dcnet.pb.ReportLocalMultilAddrRequest;
+
+            /**
+             * Decodes a ReportLocalMultilAddrRequest message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns ReportLocalMultilAddrRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): dcnet.pb.ReportLocalMultilAddrRequest;
+
+            /**
+             * Verifies a ReportLocalMultilAddrRequest message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates a ReportLocalMultilAddrRequest message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns ReportLocalMultilAddrRequest
+             */
+            public static fromObject(object: { [k: string]: any }): dcnet.pb.ReportLocalMultilAddrRequest;
+
+            /**
+             * Creates a plain object from a ReportLocalMultilAddrRequest message. Also converts values to other types if specified.
+             * @param message ReportLocalMultilAddrRequest
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: dcnet.pb.ReportLocalMultilAddrRequest, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this ReportLocalMultilAddrRequest to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for ReportLocalMultilAddrRequest
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** Properties of a ReportLocalMultilAddrReply. */
+        interface IReportLocalMultilAddrReply {
+        }
+
+        /** Represents a ReportLocalMultilAddrReply. */
+        class ReportLocalMultilAddrReply implements IReportLocalMultilAddrReply {
+
+            /**
+             * Constructs a new ReportLocalMultilAddrReply.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: dcnet.pb.IReportLocalMultilAddrReply);
+
+            /**
+             * Creates a new ReportLocalMultilAddrReply instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns ReportLocalMultilAddrReply instance
+             */
+            public static create(properties?: dcnet.pb.IReportLocalMultilAddrReply): dcnet.pb.ReportLocalMultilAddrReply;
+
+            /**
+             * Encodes the specified ReportLocalMultilAddrReply message. Does not implicitly {@link dcnet.pb.ReportLocalMultilAddrReply.verify|verify} messages.
+             * @param message ReportLocalMultilAddrReply message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: dcnet.pb.IReportLocalMultilAddrReply, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified ReportLocalMultilAddrReply message, length delimited. Does not implicitly {@link dcnet.pb.ReportLocalMultilAddrReply.verify|verify} messages.
+             * @param message ReportLocalMultilAddrReply message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: dcnet.pb.IReportLocalMultilAddrReply, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes a ReportLocalMultilAddrReply message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns ReportLocalMultilAddrReply
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): dcnet.pb.ReportLocalMultilAddrReply;
+
+            /**
+             * Decodes a ReportLocalMultilAddrReply message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns ReportLocalMultilAddrReply
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): dcnet.pb.ReportLocalMultilAddrReply;
+
+            /**
+             * Verifies a ReportLocalMultilAddrReply message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates a ReportLocalMultilAddrReply message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns ReportLocalMultilAddrReply
+             */
+            public static fromObject(object: { [k: string]: any }): dcnet.pb.ReportLocalMultilAddrReply;
+
+            /**
+             * Creates a plain object from a ReportLocalMultilAddrReply message. Also converts values to other types if specified.
+             * @param message ReportLocalMultilAddrReply
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: dcnet.pb.ReportLocalMultilAddrReply, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this ReportLocalMultilAddrReply to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for ReportLocalMultilAddrReply
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** Properties of a GetTokenRequest. */
+        interface IGetTokenRequest {
+
+            /** GetTokenRequest key */
+            key?: (string|null);
+
+            /** GetTokenRequest signature */
+            signature?: (Uint8Array|null);
+        }
+
+        /** Represents a GetTokenRequest. */
+        class GetTokenRequest implements IGetTokenRequest {
+
+            /**
+             * Constructs a new GetTokenRequest.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: dcnet.pb.IGetTokenRequest);
+
+            /** GetTokenRequest key. */
+            public key?: (string|null);
+
+            /** GetTokenRequest signature. */
+            public signature?: (Uint8Array|null);
+
+            /** GetTokenRequest payload. */
+            public payload?: ("key"|"signature");
+
+            /**
+             * Creates a new GetTokenRequest instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns GetTokenRequest instance
+             */
+            public static create(properties?: dcnet.pb.IGetTokenRequest): dcnet.pb.GetTokenRequest;
+
+            /**
+             * Encodes the specified GetTokenRequest message. Does not implicitly {@link dcnet.pb.GetTokenRequest.verify|verify} messages.
+             * @param message GetTokenRequest message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: dcnet.pb.IGetTokenRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified GetTokenRequest message, length delimited. Does not implicitly {@link dcnet.pb.GetTokenRequest.verify|verify} messages.
+             * @param message GetTokenRequest message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: dcnet.pb.IGetTokenRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes a GetTokenRequest message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns GetTokenRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): dcnet.pb.GetTokenRequest;
+
+            /**
+             * Decodes a GetTokenRequest message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns GetTokenRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): dcnet.pb.GetTokenRequest;
+
+            /**
+             * Verifies a GetTokenRequest message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates a GetTokenRequest message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns GetTokenRequest
+             */
+            public static fromObject(object: { [k: string]: any }): dcnet.pb.GetTokenRequest;
+
+            /**
+             * Creates a plain object from a GetTokenRequest message. Also converts values to other types if specified.
+             * @param message GetTokenRequest
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: dcnet.pb.GetTokenRequest, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this GetTokenRequest to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for GetTokenRequest
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** Properties of a GetTokenReply. */
+        interface IGetTokenReply {
+
+            /** GetTokenReply challenge */
+            challenge?: (Uint8Array|null);
+
+            /** GetTokenReply token */
+            token?: (string|null);
+        }
+
+        /** Represents a GetTokenReply. */
+        class GetTokenReply implements IGetTokenReply {
+
+            /**
+             * Constructs a new GetTokenReply.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: dcnet.pb.IGetTokenReply);
+
+            /** GetTokenReply challenge. */
+            public challenge?: (Uint8Array|null);
+
+            /** GetTokenReply token. */
+            public token?: (string|null);
+
+            /** GetTokenReply payload. */
+            public payload?: ("challenge"|"token");
+
+            /**
+             * Creates a new GetTokenReply instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns GetTokenReply instance
+             */
+            public static create(properties?: dcnet.pb.IGetTokenReply): dcnet.pb.GetTokenReply;
+
+            /**
+             * Encodes the specified GetTokenReply message. Does not implicitly {@link dcnet.pb.GetTokenReply.verify|verify} messages.
+             * @param message GetTokenReply message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: dcnet.pb.IGetTokenReply, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified GetTokenReply message, length delimited. Does not implicitly {@link dcnet.pb.GetTokenReply.verify|verify} messages.
+             * @param message GetTokenReply message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: dcnet.pb.IGetTokenReply, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes a GetTokenReply message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns GetTokenReply
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): dcnet.pb.GetTokenReply;
+
+            /**
+             * Decodes a GetTokenReply message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns GetTokenReply
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): dcnet.pb.GetTokenReply;
+
+            /**
+             * Verifies a GetTokenReply message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates a GetTokenReply message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns GetTokenReply
+             */
+            public static fromObject(object: { [k: string]: any }): dcnet.pb.GetTokenReply;
+
+            /**
+             * Creates a plain object from a GetTokenReply message. Also converts values to other types if specified.
+             * @param message GetTokenReply
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: dcnet.pb.GetTokenReply, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this GetTokenReply to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for GetTokenReply
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** Properties of a CreateThreadRequest. */
+        interface ICreateThreadRequest {
+
+            /** CreateThreadRequest threadID */
+            threadID?: (Uint8Array|null);
+
+            /** CreateThreadRequest keys */
+            keys?: (dcnet.pb.IKeys|null);
+
+            /** CreateThreadRequest blockheight */
+            blockheight?: (number|null);
+
+            /** CreateThreadRequest signature */
+            signature?: (Uint8Array|null);
+        }
+
+        /** Represents a CreateThreadRequest. */
+        class CreateThreadRequest implements ICreateThreadRequest {
+
+            /**
+             * Constructs a new CreateThreadRequest.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: dcnet.pb.ICreateThreadRequest);
+
+            /** CreateThreadRequest threadID. */
+            public threadID: Uint8Array;
+
+            /** CreateThreadRequest keys. */
+            public keys?: (dcnet.pb.IKeys|null);
+
+            /** CreateThreadRequest blockheight. */
+            public blockheight: number;
+
+            /** CreateThreadRequest signature. */
+            public signature: Uint8Array;
+
+            /**
+             * Creates a new CreateThreadRequest instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns CreateThreadRequest instance
+             */
+            public static create(properties?: dcnet.pb.ICreateThreadRequest): dcnet.pb.CreateThreadRequest;
+
+            /**
+             * Encodes the specified CreateThreadRequest message. Does not implicitly {@link dcnet.pb.CreateThreadRequest.verify|verify} messages.
+             * @param message CreateThreadRequest message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: dcnet.pb.ICreateThreadRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified CreateThreadRequest message, length delimited. Does not implicitly {@link dcnet.pb.CreateThreadRequest.verify|verify} messages.
+             * @param message CreateThreadRequest message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: dcnet.pb.ICreateThreadRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes a CreateThreadRequest message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns CreateThreadRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): dcnet.pb.CreateThreadRequest;
+
+            /**
+             * Decodes a CreateThreadRequest message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns CreateThreadRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): dcnet.pb.CreateThreadRequest;
+
+            /**
+             * Verifies a CreateThreadRequest message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates a CreateThreadRequest message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns CreateThreadRequest
+             */
+            public static fromObject(object: { [k: string]: any }): dcnet.pb.CreateThreadRequest;
+
+            /**
+             * Creates a plain object from a CreateThreadRequest message. Also converts values to other types if specified.
+             * @param message CreateThreadRequest
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: dcnet.pb.CreateThreadRequest, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this CreateThreadRequest to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for CreateThreadRequest
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** Properties of a Keys. */
+        interface IKeys {
+
+            /** Keys threadKeyEncrpt */
+            threadKeyEncrpt?: (Uint8Array|null);
+
+            /** Keys logKeyEncrpt */
+            logKeyEncrpt?: (Uint8Array|null);
+        }
+
+        /** Represents a Keys. */
+        class Keys implements IKeys {
+
+            /**
+             * Constructs a new Keys.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: dcnet.pb.IKeys);
+
+            /** Keys threadKeyEncrpt. */
+            public threadKeyEncrpt: Uint8Array;
+
+            /** Keys logKeyEncrpt. */
+            public logKeyEncrpt: Uint8Array;
+
+            /**
+             * Creates a new Keys instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns Keys instance
+             */
+            public static create(properties?: dcnet.pb.IKeys): dcnet.pb.Keys;
+
+            /**
+             * Encodes the specified Keys message. Does not implicitly {@link dcnet.pb.Keys.verify|verify} messages.
+             * @param message Keys message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: dcnet.pb.IKeys, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified Keys message, length delimited. Does not implicitly {@link dcnet.pb.Keys.verify|verify} messages.
+             * @param message Keys message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: dcnet.pb.IKeys, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes a Keys message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns Keys
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): dcnet.pb.Keys;
+
+            /**
+             * Decodes a Keys message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns Keys
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): dcnet.pb.Keys;
+
+            /**
+             * Verifies a Keys message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates a Keys message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns Keys
+             */
+            public static fromObject(object: { [k: string]: any }): dcnet.pb.Keys;
+
+            /**
+             * Creates a plain object from a Keys message. Also converts values to other types if specified.
+             * @param message Keys
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: dcnet.pb.Keys, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this Keys to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for Keys
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** Properties of a ThreadInfoReply. */
+        interface IThreadInfoReply {
+
+            /** ThreadInfoReply threadID */
+            threadID?: (Uint8Array|null);
+
+            /** ThreadInfoReply logs */
+            logs?: (dcnet.pb.ILogInfo[]|null);
+
+            /** ThreadInfoReply addrs */
+            addrs?: (Uint8Array[]|null);
+        }
+
+        /** Represents a ThreadInfoReply. */
+        class ThreadInfoReply implements IThreadInfoReply {
+
+            /**
+             * Constructs a new ThreadInfoReply.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: dcnet.pb.IThreadInfoReply);
+
+            /** ThreadInfoReply threadID. */
+            public threadID: Uint8Array;
+
+            /** ThreadInfoReply logs. */
+            public logs: dcnet.pb.ILogInfo[];
+
+            /** ThreadInfoReply addrs. */
+            public addrs: Uint8Array[];
+
+            /**
+             * Creates a new ThreadInfoReply instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns ThreadInfoReply instance
+             */
+            public static create(properties?: dcnet.pb.IThreadInfoReply): dcnet.pb.ThreadInfoReply;
+
+            /**
+             * Encodes the specified ThreadInfoReply message. Does not implicitly {@link dcnet.pb.ThreadInfoReply.verify|verify} messages.
+             * @param message ThreadInfoReply message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: dcnet.pb.IThreadInfoReply, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified ThreadInfoReply message, length delimited. Does not implicitly {@link dcnet.pb.ThreadInfoReply.verify|verify} messages.
+             * @param message ThreadInfoReply message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: dcnet.pb.IThreadInfoReply, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes a ThreadInfoReply message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns ThreadInfoReply
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): dcnet.pb.ThreadInfoReply;
+
+            /**
+             * Decodes a ThreadInfoReply message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns ThreadInfoReply
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): dcnet.pb.ThreadInfoReply;
+
+            /**
+             * Verifies a ThreadInfoReply message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates a ThreadInfoReply message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns ThreadInfoReply
+             */
+            public static fromObject(object: { [k: string]: any }): dcnet.pb.ThreadInfoReply;
+
+            /**
+             * Creates a plain object from a ThreadInfoReply message. Also converts values to other types if specified.
+             * @param message ThreadInfoReply
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: dcnet.pb.ThreadInfoReply, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this ThreadInfoReply to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for ThreadInfoReply
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** Properties of a LogInfo. */
+        interface ILogInfo {
+
+            /** LogInfo ID */
+            ID?: (Uint8Array|null);
+
+            /** LogInfo pubKey */
+            pubKey?: (Uint8Array|null);
+
+            /** LogInfo privKey */
+            privKey?: (Uint8Array|null);
+
+            /** LogInfo addrs */
+            addrs?: (Uint8Array[]|null);
+
+            /** LogInfo head */
+            head?: (Uint8Array|null);
+
+            /** LogInfo counter */
+            counter?: (Uint8Array|null);
+        }
+
+        /** Represents a LogInfo. */
+        class LogInfo implements ILogInfo {
+
+            /**
+             * Constructs a new LogInfo.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: dcnet.pb.ILogInfo);
+
+            /** LogInfo ID. */
+            public ID: Uint8Array;
+
+            /** LogInfo pubKey. */
+            public pubKey: Uint8Array;
+
+            /** LogInfo privKey. */
+            public privKey: Uint8Array;
+
+            /** LogInfo addrs. */
+            public addrs: Uint8Array[];
+
+            /** LogInfo head. */
+            public head: Uint8Array;
+
+            /** LogInfo counter. */
+            public counter: Uint8Array;
+
+            /**
+             * Creates a new LogInfo instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns LogInfo instance
+             */
+            public static create(properties?: dcnet.pb.ILogInfo): dcnet.pb.LogInfo;
+
+            /**
+             * Encodes the specified LogInfo message. Does not implicitly {@link dcnet.pb.LogInfo.verify|verify} messages.
+             * @param message LogInfo message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: dcnet.pb.ILogInfo, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified LogInfo message, length delimited. Does not implicitly {@link dcnet.pb.LogInfo.verify|verify} messages.
+             * @param message LogInfo message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: dcnet.pb.ILogInfo, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes a LogInfo message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns LogInfo
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): dcnet.pb.LogInfo;
+
+            /**
+             * Decodes a LogInfo message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns LogInfo
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): dcnet.pb.LogInfo;
+
+            /**
+             * Verifies a LogInfo message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates a LogInfo message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns LogInfo
+             */
+            public static fromObject(object: { [k: string]: any }): dcnet.pb.LogInfo;
+
+            /**
+             * Creates a plain object from a LogInfo message. Also converts values to other types if specified.
+             * @param message LogInfo
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: dcnet.pb.LogInfo, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this LogInfo to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for LogInfo
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** Properties of a ThreadIDRequest. */
+        interface IThreadIDRequest {
+        }
+
+        /** Represents a ThreadIDRequest. */
+        class ThreadIDRequest implements IThreadIDRequest {
+
+            /**
+             * Constructs a new ThreadIDRequest.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: dcnet.pb.IThreadIDRequest);
+
+            /**
+             * Creates a new ThreadIDRequest instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns ThreadIDRequest instance
+             */
+            public static create(properties?: dcnet.pb.IThreadIDRequest): dcnet.pb.ThreadIDRequest;
+
+            /**
+             * Encodes the specified ThreadIDRequest message. Does not implicitly {@link dcnet.pb.ThreadIDRequest.verify|verify} messages.
+             * @param message ThreadIDRequest message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: dcnet.pb.IThreadIDRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified ThreadIDRequest message, length delimited. Does not implicitly {@link dcnet.pb.ThreadIDRequest.verify|verify} messages.
+             * @param message ThreadIDRequest message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: dcnet.pb.IThreadIDRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes a ThreadIDRequest message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns ThreadIDRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): dcnet.pb.ThreadIDRequest;
+
+            /**
+             * Decodes a ThreadIDRequest message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns ThreadIDRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): dcnet.pb.ThreadIDRequest;
+
+            /**
+             * Verifies a ThreadIDRequest message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates a ThreadIDRequest message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns ThreadIDRequest
+             */
+            public static fromObject(object: { [k: string]: any }): dcnet.pb.ThreadIDRequest;
+
+            /**
+             * Creates a plain object from a ThreadIDRequest message. Also converts values to other types if specified.
+             * @param message ThreadIDRequest
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: dcnet.pb.ThreadIDRequest, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this ThreadIDRequest to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for ThreadIDRequest
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** Properties of a ThreadIDReply. */
+        interface IThreadIDReply {
+
+            /** ThreadIDReply threadID */
+            threadID?: (Uint8Array|null);
+        }
+
+        /** Represents a ThreadIDReply. */
+        class ThreadIDReply implements IThreadIDReply {
+
+            /**
+             * Constructs a new ThreadIDReply.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: dcnet.pb.IThreadIDReply);
+
+            /** ThreadIDReply threadID. */
+            public threadID: Uint8Array;
+
+            /**
+             * Creates a new ThreadIDReply instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns ThreadIDReply instance
+             */
+            public static create(properties?: dcnet.pb.IThreadIDReply): dcnet.pb.ThreadIDReply;
+
+            /**
+             * Encodes the specified ThreadIDReply message. Does not implicitly {@link dcnet.pb.ThreadIDReply.verify|verify} messages.
+             * @param message ThreadIDReply message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: dcnet.pb.IThreadIDReply, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified ThreadIDReply message, length delimited. Does not implicitly {@link dcnet.pb.ThreadIDReply.verify|verify} messages.
+             * @param message ThreadIDReply message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: dcnet.pb.IThreadIDReply, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes a ThreadIDReply message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns ThreadIDReply
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): dcnet.pb.ThreadIDReply;
+
+            /**
+             * Decodes a ThreadIDReply message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns ThreadIDReply
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): dcnet.pb.ThreadIDReply;
+
+            /**
+             * Verifies a ThreadIDReply message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates a ThreadIDReply message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns ThreadIDReply
+             */
+            public static fromObject(object: { [k: string]: any }): dcnet.pb.ThreadIDReply;
+
+            /**
+             * Creates a plain object from a ThreadIDReply message. Also converts values to other types if specified.
+             * @param message ThreadIDReply
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: dcnet.pb.ThreadIDReply, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this ThreadIDReply to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for ThreadIDReply
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** Properties of an AddThreadToPeerRequest. */
+        interface IAddThreadToPeerRequest {
+
+            /** AddThreadToPeerRequest threadID */
+            threadID?: (Uint8Array|null);
+
+            /** AddThreadToPeerRequest blockheight */
+            blockheight?: (number|null);
+
+            /** AddThreadToPeerRequest keys */
+            keys?: (dcnet.pb.IKeys|null);
+
+            /** AddThreadToPeerRequest signature */
+            signature?: (Uint8Array|null);
+        }
+
+        /** Represents an AddThreadToPeerRequest. */
+        class AddThreadToPeerRequest implements IAddThreadToPeerRequest {
+
+            /**
+             * Constructs a new AddThreadToPeerRequest.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: dcnet.pb.IAddThreadToPeerRequest);
+
+            /** AddThreadToPeerRequest threadID. */
+            public threadID: Uint8Array;
+
+            /** AddThreadToPeerRequest blockheight. */
+            public blockheight: number;
+
+            /** AddThreadToPeerRequest keys. */
+            public keys?: (dcnet.pb.IKeys|null);
+
+            /** AddThreadToPeerRequest signature. */
+            public signature: Uint8Array;
+
+            /**
+             * Creates a new AddThreadToPeerRequest instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns AddThreadToPeerRequest instance
+             */
+            public static create(properties?: dcnet.pb.IAddThreadToPeerRequest): dcnet.pb.AddThreadToPeerRequest;
+
+            /**
+             * Encodes the specified AddThreadToPeerRequest message. Does not implicitly {@link dcnet.pb.AddThreadToPeerRequest.verify|verify} messages.
+             * @param message AddThreadToPeerRequest message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: dcnet.pb.IAddThreadToPeerRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified AddThreadToPeerRequest message, length delimited. Does not implicitly {@link dcnet.pb.AddThreadToPeerRequest.verify|verify} messages.
+             * @param message AddThreadToPeerRequest message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: dcnet.pb.IAddThreadToPeerRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes an AddThreadToPeerRequest message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns AddThreadToPeerRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): dcnet.pb.AddThreadToPeerRequest;
+
+            /**
+             * Decodes an AddThreadToPeerRequest message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns AddThreadToPeerRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): dcnet.pb.AddThreadToPeerRequest;
+
+            /**
+             * Verifies an AddThreadToPeerRequest message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates an AddThreadToPeerRequest message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns AddThreadToPeerRequest
+             */
+            public static fromObject(object: { [k: string]: any }): dcnet.pb.AddThreadToPeerRequest;
+
+            /**
+             * Creates a plain object from an AddThreadToPeerRequest message. Also converts values to other types if specified.
+             * @param message AddThreadToPeerRequest
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: dcnet.pb.AddThreadToPeerRequest, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this AddThreadToPeerRequest to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for AddThreadToPeerRequest
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** Properties of an AddThreadToPeerReply. */
+        interface IAddThreadToPeerReply {
+
+            /** AddThreadToPeerReply status */
+            status?: (number|null);
+
+            /** AddThreadToPeerReply count */
+            count?: (number|Long|null);
+        }
+
+        /** Represents an AddThreadToPeerReply. */
+        class AddThreadToPeerReply implements IAddThreadToPeerReply {
+
+            /**
+             * Constructs a new AddThreadToPeerReply.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: dcnet.pb.IAddThreadToPeerReply);
+
+            /** AddThreadToPeerReply status. */
+            public status: number;
+
+            /** AddThreadToPeerReply count. */
+            public count: (number|Long);
+
+            /**
+             * Creates a new AddThreadToPeerReply instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns AddThreadToPeerReply instance
+             */
+            public static create(properties?: dcnet.pb.IAddThreadToPeerReply): dcnet.pb.AddThreadToPeerReply;
+
+            /**
+             * Encodes the specified AddThreadToPeerReply message. Does not implicitly {@link dcnet.pb.AddThreadToPeerReply.verify|verify} messages.
+             * @param message AddThreadToPeerReply message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: dcnet.pb.IAddThreadToPeerReply, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified AddThreadToPeerReply message, length delimited. Does not implicitly {@link dcnet.pb.AddThreadToPeerReply.verify|verify} messages.
+             * @param message AddThreadToPeerReply message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: dcnet.pb.IAddThreadToPeerReply, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes an AddThreadToPeerReply message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns AddThreadToPeerReply
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): dcnet.pb.AddThreadToPeerReply;
+
+            /**
+             * Decodes an AddThreadToPeerReply message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns AddThreadToPeerReply
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): dcnet.pb.AddThreadToPeerReply;
+
+            /**
+             * Verifies an AddThreadToPeerReply message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates an AddThreadToPeerReply message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns AddThreadToPeerReply
+             */
+            public static fromObject(object: { [k: string]: any }): dcnet.pb.AddThreadToPeerReply;
+
+            /**
+             * Creates a plain object from an AddThreadToPeerReply message. Also converts values to other types if specified.
+             * @param message AddThreadToPeerReply
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: dcnet.pb.AddThreadToPeerReply, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this AddThreadToPeerReply to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for AddThreadToPeerReply
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** Properties of a GetThreadRequest. */
+        interface IGetThreadRequest {
+
+            /** GetThreadRequest threadID */
+            threadID?: (Uint8Array|null);
+        }
+
+        /** Represents a GetThreadRequest. */
+        class GetThreadRequest implements IGetThreadRequest {
+
+            /**
+             * Constructs a new GetThreadRequest.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: dcnet.pb.IGetThreadRequest);
+
+            /** GetThreadRequest threadID. */
+            public threadID: Uint8Array;
+
+            /**
+             * Creates a new GetThreadRequest instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns GetThreadRequest instance
+             */
+            public static create(properties?: dcnet.pb.IGetThreadRequest): dcnet.pb.GetThreadRequest;
+
+            /**
+             * Encodes the specified GetThreadRequest message. Does not implicitly {@link dcnet.pb.GetThreadRequest.verify|verify} messages.
+             * @param message GetThreadRequest message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: dcnet.pb.IGetThreadRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified GetThreadRequest message, length delimited. Does not implicitly {@link dcnet.pb.GetThreadRequest.verify|verify} messages.
+             * @param message GetThreadRequest message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: dcnet.pb.IGetThreadRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes a GetThreadRequest message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns GetThreadRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): dcnet.pb.GetThreadRequest;
+
+            /**
+             * Decodes a GetThreadRequest message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns GetThreadRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): dcnet.pb.GetThreadRequest;
+
+            /**
+             * Verifies a GetThreadRequest message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates a GetThreadRequest message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns GetThreadRequest
+             */
+            public static fromObject(object: { [k: string]: any }): dcnet.pb.GetThreadRequest;
+
+            /**
+             * Creates a plain object from a GetThreadRequest message. Also converts values to other types if specified.
+             * @param message GetThreadRequest
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: dcnet.pb.GetThreadRequest, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this GetThreadRequest to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for GetThreadRequest
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** Properties of a DeleteThreadRequest. */
+        interface IDeleteThreadRequest {
+
+            /** DeleteThreadRequest threadID */
+            threadID?: (Uint8Array|null);
+
+            /** DeleteThreadRequest blockheight */
+            blockheight?: (number|null);
+
+            /** DeleteThreadRequest signature */
+            signature?: (Uint8Array|null);
+        }
+
+        /** Represents a DeleteThreadRequest. */
+        class DeleteThreadRequest implements IDeleteThreadRequest {
+
+            /**
+             * Constructs a new DeleteThreadRequest.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: dcnet.pb.IDeleteThreadRequest);
+
+            /** DeleteThreadRequest threadID. */
+            public threadID: Uint8Array;
+
+            /** DeleteThreadRequest blockheight. */
+            public blockheight: number;
+
+            /** DeleteThreadRequest signature. */
+            public signature: Uint8Array;
+
+            /**
+             * Creates a new DeleteThreadRequest instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns DeleteThreadRequest instance
+             */
+            public static create(properties?: dcnet.pb.IDeleteThreadRequest): dcnet.pb.DeleteThreadRequest;
+
+            /**
+             * Encodes the specified DeleteThreadRequest message. Does not implicitly {@link dcnet.pb.DeleteThreadRequest.verify|verify} messages.
+             * @param message DeleteThreadRequest message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: dcnet.pb.IDeleteThreadRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified DeleteThreadRequest message, length delimited. Does not implicitly {@link dcnet.pb.DeleteThreadRequest.verify|verify} messages.
+             * @param message DeleteThreadRequest message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: dcnet.pb.IDeleteThreadRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes a DeleteThreadRequest message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns DeleteThreadRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): dcnet.pb.DeleteThreadRequest;
+
+            /**
+             * Decodes a DeleteThreadRequest message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns DeleteThreadRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): dcnet.pb.DeleteThreadRequest;
+
+            /**
+             * Verifies a DeleteThreadRequest message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates a DeleteThreadRequest message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns DeleteThreadRequest
+             */
+            public static fromObject(object: { [k: string]: any }): dcnet.pb.DeleteThreadRequest;
+
+            /**
+             * Creates a plain object from a DeleteThreadRequest message. Also converts values to other types if specified.
+             * @param message DeleteThreadRequest
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: dcnet.pb.DeleteThreadRequest, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this DeleteThreadRequest to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for DeleteThreadRequest
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** Properties of a DeleteThreadReply. */
+        interface IDeleteThreadReply {
+        }
+
+        /** Represents a DeleteThreadReply. */
+        class DeleteThreadReply implements IDeleteThreadReply {
+
+            /**
+             * Constructs a new DeleteThreadReply.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: dcnet.pb.IDeleteThreadReply);
+
+            /**
+             * Creates a new DeleteThreadReply instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns DeleteThreadReply instance
+             */
+            public static create(properties?: dcnet.pb.IDeleteThreadReply): dcnet.pb.DeleteThreadReply;
+
+            /**
+             * Encodes the specified DeleteThreadReply message. Does not implicitly {@link dcnet.pb.DeleteThreadReply.verify|verify} messages.
+             * @param message DeleteThreadReply message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: dcnet.pb.IDeleteThreadReply, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified DeleteThreadReply message, length delimited. Does not implicitly {@link dcnet.pb.DeleteThreadReply.verify|verify} messages.
+             * @param message DeleteThreadReply message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: dcnet.pb.IDeleteThreadReply, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes a DeleteThreadReply message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns DeleteThreadReply
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): dcnet.pb.DeleteThreadReply;
+
+            /**
+             * Decodes a DeleteThreadReply message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns DeleteThreadReply
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): dcnet.pb.DeleteThreadReply;
+
+            /**
+             * Verifies a DeleteThreadReply message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates a DeleteThreadReply message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns DeleteThreadReply
+             */
+            public static fromObject(object: { [k: string]: any }): dcnet.pb.DeleteThreadReply;
+
+            /**
+             * Creates a plain object from a DeleteThreadReply message. Also converts values to other types if specified.
+             * @param message DeleteThreadReply
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: dcnet.pb.DeleteThreadReply, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this DeleteThreadReply to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for DeleteThreadReply
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** Properties of a StroeFileRequest. */
+        interface IStroeFileRequest {
+
+            /** StroeFileRequest cid */
+            cid?: (Uint8Array|null);
+
+            /** StroeFileRequest filesize */
+            filesize?: (number|Long|null);
+
+            /** StroeFileRequest blockheight */
+            blockheight?: (number|null);
+
+            /** StroeFileRequest signature */
+            signature?: (Uint8Array|null);
+
+            /** StroeFileRequest vaccount */
+            vaccount?: (Uint8Array|null);
+        }
+
+        /** Represents a StroeFileRequest. */
+        class StroeFileRequest implements IStroeFileRequest {
+
+            /**
+             * Constructs a new StroeFileRequest.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: dcnet.pb.IStroeFileRequest);
+
+            /** StroeFileRequest cid. */
+            public cid: Uint8Array;
+
+            /** StroeFileRequest filesize. */
+            public filesize: (number|Long);
+
+            /** StroeFileRequest blockheight. */
+            public blockheight: number;
+
+            /** StroeFileRequest signature. */
+            public signature: Uint8Array;
+
+            /** StroeFileRequest vaccount. */
+            public vaccount: Uint8Array;
+
+            /**
+             * Creates a new StroeFileRequest instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns StroeFileRequest instance
+             */
+            public static create(properties?: dcnet.pb.IStroeFileRequest): dcnet.pb.StroeFileRequest;
+
+            /**
+             * Encodes the specified StroeFileRequest message. Does not implicitly {@link dcnet.pb.StroeFileRequest.verify|verify} messages.
+             * @param message StroeFileRequest message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: dcnet.pb.IStroeFileRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified StroeFileRequest message, length delimited. Does not implicitly {@link dcnet.pb.StroeFileRequest.verify|verify} messages.
+             * @param message StroeFileRequest message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: dcnet.pb.IStroeFileRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes a StroeFileRequest message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns StroeFileRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): dcnet.pb.StroeFileRequest;
+
+            /**
+             * Decodes a StroeFileRequest message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns StroeFileRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): dcnet.pb.StroeFileRequest;
+
+            /**
+             * Verifies a StroeFileRequest message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates a StroeFileRequest message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns StroeFileRequest
+             */
+            public static fromObject(object: { [k: string]: any }): dcnet.pb.StroeFileRequest;
+
+            /**
+             * Creates a plain object from a StroeFileRequest message. Also converts values to other types if specified.
+             * @param message StroeFileRequest
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: dcnet.pb.StroeFileRequest, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this StroeFileRequest to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for StroeFileRequest
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** Properties of a StroeFileReply. */
+        interface IStroeFileReply {
+
+            /** StroeFileReply status */
+            status?: (number|null);
+
+            /** StroeFileReply receivesize */
+            receivesize?: (number|Long|null);
+        }
+
+        /** Represents a StroeFileReply. */
+        class StroeFileReply implements IStroeFileReply {
+
+            /**
+             * Constructs a new StroeFileReply.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: dcnet.pb.IStroeFileReply);
+
+            /** StroeFileReply status. */
+            public status: number;
+
+            /** StroeFileReply receivesize. */
+            public receivesize: (number|Long);
+
+            /**
+             * Creates a new StroeFileReply instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns StroeFileReply instance
+             */
+            public static create(properties?: dcnet.pb.IStroeFileReply): dcnet.pb.StroeFileReply;
+
+            /**
+             * Encodes the specified StroeFileReply message. Does not implicitly {@link dcnet.pb.StroeFileReply.verify|verify} messages.
+             * @param message StroeFileReply message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: dcnet.pb.IStroeFileReply, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified StroeFileReply message, length delimited. Does not implicitly {@link dcnet.pb.StroeFileReply.verify|verify} messages.
+             * @param message StroeFileReply message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: dcnet.pb.IStroeFileReply, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes a StroeFileReply message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns StroeFileReply
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): dcnet.pb.StroeFileReply;
+
+            /**
+             * Decodes a StroeFileReply message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns StroeFileReply
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): dcnet.pb.StroeFileReply;
+
+            /**
+             * Verifies a StroeFileReply message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates a StroeFileReply message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns StroeFileReply
+             */
+            public static fromObject(object: { [k: string]: any }): dcnet.pb.StroeFileReply;
+
+            /**
+             * Creates a plain object from a StroeFileReply message. Also converts values to other types if specified.
+             * @param message StroeFileReply
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: dcnet.pb.StroeFileReply, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this StroeFileReply to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for StroeFileReply
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** Properties of a DeleteFileRequest. */
+        interface IDeleteFileRequest {
+
+            /** DeleteFileRequest cid */
+            cid?: (Uint8Array|null);
+
+            /** DeleteFileRequest blockheight */
+            blockheight?: (number|null);
+
+            /** DeleteFileRequest signature */
+            signature?: (Uint8Array|null);
+        }
+
+        /** Represents a DeleteFileRequest. */
+        class DeleteFileRequest implements IDeleteFileRequest {
+
+            /**
+             * Constructs a new DeleteFileRequest.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: dcnet.pb.IDeleteFileRequest);
+
+            /** DeleteFileRequest cid. */
+            public cid: Uint8Array;
+
+            /** DeleteFileRequest blockheight. */
+            public blockheight: number;
+
+            /** DeleteFileRequest signature. */
+            public signature: Uint8Array;
+
+            /**
+             * Creates a new DeleteFileRequest instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns DeleteFileRequest instance
+             */
+            public static create(properties?: dcnet.pb.IDeleteFileRequest): dcnet.pb.DeleteFileRequest;
+
+            /**
+             * Encodes the specified DeleteFileRequest message. Does not implicitly {@link dcnet.pb.DeleteFileRequest.verify|verify} messages.
+             * @param message DeleteFileRequest message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: dcnet.pb.IDeleteFileRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified DeleteFileRequest message, length delimited. Does not implicitly {@link dcnet.pb.DeleteFileRequest.verify|verify} messages.
+             * @param message DeleteFileRequest message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: dcnet.pb.IDeleteFileRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes a DeleteFileRequest message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns DeleteFileRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): dcnet.pb.DeleteFileRequest;
+
+            /**
+             * Decodes a DeleteFileRequest message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns DeleteFileRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): dcnet.pb.DeleteFileRequest;
+
+            /**
+             * Verifies a DeleteFileRequest message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates a DeleteFileRequest message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns DeleteFileRequest
+             */
+            public static fromObject(object: { [k: string]: any }): dcnet.pb.DeleteFileRequest;
+
+            /**
+             * Creates a plain object from a DeleteFileRequest message. Also converts values to other types if specified.
+             * @param message DeleteFileRequest
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: dcnet.pb.DeleteFileRequest, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this DeleteFileRequest to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for DeleteFileRequest
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** Properties of a DeleteFileReply. */
+        interface IDeleteFileReply {
+
+            /** DeleteFileReply flag */
+            flag?: (boolean|null);
+        }
+
+        /** Represents a DeleteFileReply. */
+        class DeleteFileReply implements IDeleteFileReply {
+
+            /**
+             * Constructs a new DeleteFileReply.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: dcnet.pb.IDeleteFileReply);
+
+            /** DeleteFileReply flag. */
+            public flag: boolean;
+
+            /**
+             * Creates a new DeleteFileReply instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns DeleteFileReply instance
+             */
+            public static create(properties?: dcnet.pb.IDeleteFileReply): dcnet.pb.DeleteFileReply;
+
+            /**
+             * Encodes the specified DeleteFileReply message. Does not implicitly {@link dcnet.pb.DeleteFileReply.verify|verify} messages.
+             * @param message DeleteFileReply message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: dcnet.pb.IDeleteFileReply, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified DeleteFileReply message, length delimited. Does not implicitly {@link dcnet.pb.DeleteFileReply.verify|verify} messages.
+             * @param message DeleteFileReply message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: dcnet.pb.IDeleteFileReply, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes a DeleteFileReply message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns DeleteFileReply
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): dcnet.pb.DeleteFileReply;
+
+            /**
+             * Decodes a DeleteFileReply message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns DeleteFileReply
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): dcnet.pb.DeleteFileReply;
+
+            /**
+             * Verifies a DeleteFileReply message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates a DeleteFileReply message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns DeleteFileReply
+             */
+            public static fromObject(object: { [k: string]: any }): dcnet.pb.DeleteFileReply;
+
+            /**
+             * Creates a plain object from a DeleteFileReply message. Also converts values to other types if specified.
+             * @param message DeleteFileReply
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: dcnet.pb.DeleteFileReply, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this DeleteFileReply to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for DeleteFileReply
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** Properties of a StoreFolderRequest. */
+        interface IStoreFolderRequest {
+
+            /** StoreFolderRequest cid */
+            cid?: (Uint8Array|null);
+
+            /** StoreFolderRequest foldersize */
+            foldersize?: (number|Long|null);
+
+            /** StoreFolderRequest filecount */
+            filecount?: (number|null);
+
+            /** StoreFolderRequest blockheight */
+            blockheight?: (number|null);
+
+            /** StoreFolderRequest signature */
+            signature?: (Uint8Array|null);
+
+            /** StoreFolderRequest vaccount */
+            vaccount?: (Uint8Array|null);
+        }
+
+        /** Represents a StoreFolderRequest. */
+        class StoreFolderRequest implements IStoreFolderRequest {
+
+            /**
+             * Constructs a new StoreFolderRequest.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: dcnet.pb.IStoreFolderRequest);
+
+            /** StoreFolderRequest cid. */
+            public cid: Uint8Array;
+
+            /** StoreFolderRequest foldersize. */
+            public foldersize: (number|Long);
+
+            /** StoreFolderRequest filecount. */
+            public filecount: number;
+
+            /** StoreFolderRequest blockheight. */
+            public blockheight: number;
+
+            /** StoreFolderRequest signature. */
+            public signature: Uint8Array;
+
+            /** StoreFolderRequest vaccount. */
+            public vaccount: Uint8Array;
+
+            /**
+             * Creates a new StoreFolderRequest instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns StoreFolderRequest instance
+             */
+            public static create(properties?: dcnet.pb.IStoreFolderRequest): dcnet.pb.StoreFolderRequest;
+
+            /**
+             * Encodes the specified StoreFolderRequest message. Does not implicitly {@link dcnet.pb.StoreFolderRequest.verify|verify} messages.
+             * @param message StoreFolderRequest message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: dcnet.pb.IStoreFolderRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified StoreFolderRequest message, length delimited. Does not implicitly {@link dcnet.pb.StoreFolderRequest.verify|verify} messages.
+             * @param message StoreFolderRequest message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: dcnet.pb.IStoreFolderRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes a StoreFolderRequest message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns StoreFolderRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): dcnet.pb.StoreFolderRequest;
+
+            /**
+             * Decodes a StoreFolderRequest message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns StoreFolderRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): dcnet.pb.StoreFolderRequest;
+
+            /**
+             * Verifies a StoreFolderRequest message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates a StoreFolderRequest message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns StoreFolderRequest
+             */
+            public static fromObject(object: { [k: string]: any }): dcnet.pb.StoreFolderRequest;
+
+            /**
+             * Creates a plain object from a StoreFolderRequest message. Also converts values to other types if specified.
+             * @param message StoreFolderRequest
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: dcnet.pb.StoreFolderRequest, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this StoreFolderRequest to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for StoreFolderRequest
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** Properties of a StoreFolderReply. */
+        interface IStoreFolderReply {
+
+            /** StoreFolderReply status */
+            status?: (number|null);
+
+            /** StoreFolderReply receivecount */
+            receivecount?: (number|null);
+        }
+
+        /** Represents a StoreFolderReply. */
+        class StoreFolderReply implements IStoreFolderReply {
+
+            /**
+             * Constructs a new StoreFolderReply.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: dcnet.pb.IStoreFolderReply);
+
+            /** StoreFolderReply status. */
+            public status: number;
+
+            /** StoreFolderReply receivecount. */
+            public receivecount: number;
+
+            /**
+             * Creates a new StoreFolderReply instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns StoreFolderReply instance
+             */
+            public static create(properties?: dcnet.pb.IStoreFolderReply): dcnet.pb.StoreFolderReply;
+
+            /**
+             * Encodes the specified StoreFolderReply message. Does not implicitly {@link dcnet.pb.StoreFolderReply.verify|verify} messages.
+             * @param message StoreFolderReply message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: dcnet.pb.IStoreFolderReply, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified StoreFolderReply message, length delimited. Does not implicitly {@link dcnet.pb.StoreFolderReply.verify|verify} messages.
+             * @param message StoreFolderReply message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: dcnet.pb.IStoreFolderReply, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes a StoreFolderReply message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns StoreFolderReply
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): dcnet.pb.StoreFolderReply;
+
+            /**
+             * Decodes a StoreFolderReply message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns StoreFolderReply
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): dcnet.pb.StoreFolderReply;
+
+            /**
+             * Verifies a StoreFolderReply message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates a StoreFolderReply message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns StoreFolderReply
+             */
+            public static fromObject(object: { [k: string]: any }): dcnet.pb.StoreFolderReply;
+
+            /**
+             * Creates a plain object from a StoreFolderReply message. Also converts values to other types if specified.
+             * @param message StoreFolderReply
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: dcnet.pb.StoreFolderReply, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this StoreFolderReply to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for StoreFolderReply
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** Properties of an AccountDealRequest. */
+        interface IAccountDealRequest {
+
+            /** AccountDealRequest accountencrypt */
+            accountencrypt?: (Uint8Array|null);
+
+            /** AccountDealRequest accounthashencrypt */
+            accounthashencrypt?: (Uint8Array|null);
+
+            /** AccountDealRequest prikeyencrypt2 */
+            prikeyencrypt2?: (Uint8Array|null);
+
+            /** AccountDealRequest blockheight */
+            blockheight?: (number|null);
+
+            /** AccountDealRequest loginkeyrandencrypt */
+            loginkeyrandencrypt?: (Uint8Array|null);
+
+            /** AccountDealRequest peerid */
+            peerid?: (Uint8Array|null);
+
+            /** AccountDealRequest signature */
+            signature?: (Uint8Array|null);
+
+            /** AccountDealRequest vaccount */
+            vaccount?: (Uint8Array|null);
+        }
+
+        /** Represents an AccountDealRequest. */
+        class AccountDealRequest implements IAccountDealRequest {
+
+            /**
+             * Constructs a new AccountDealRequest.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: dcnet.pb.IAccountDealRequest);
+
+            /** AccountDealRequest accountencrypt. */
+            public accountencrypt: Uint8Array;
+
+            /** AccountDealRequest accounthashencrypt. */
+            public accounthashencrypt: Uint8Array;
+
+            /** AccountDealRequest prikeyencrypt2. */
+            public prikeyencrypt2: Uint8Array;
+
+            /** AccountDealRequest blockheight. */
+            public blockheight: number;
+
+            /** AccountDealRequest loginkeyrandencrypt. */
+            public loginkeyrandencrypt: Uint8Array;
+
+            /** AccountDealRequest peerid. */
+            public peerid: Uint8Array;
+
+            /** AccountDealRequest signature. */
+            public signature: Uint8Array;
+
+            /** AccountDealRequest vaccount. */
+            public vaccount: Uint8Array;
+
+            /**
+             * Creates a new AccountDealRequest instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns AccountDealRequest instance
+             */
+            public static create(properties?: dcnet.pb.IAccountDealRequest): dcnet.pb.AccountDealRequest;
+
+            /**
+             * Encodes the specified AccountDealRequest message. Does not implicitly {@link dcnet.pb.AccountDealRequest.verify|verify} messages.
+             * @param message AccountDealRequest message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: dcnet.pb.IAccountDealRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified AccountDealRequest message, length delimited. Does not implicitly {@link dcnet.pb.AccountDealRequest.verify|verify} messages.
+             * @param message AccountDealRequest message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: dcnet.pb.IAccountDealRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes an AccountDealRequest message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns AccountDealRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): dcnet.pb.AccountDealRequest;
+
+            /**
+             * Decodes an AccountDealRequest message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns AccountDealRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): dcnet.pb.AccountDealRequest;
+
+            /**
+             * Verifies an AccountDealRequest message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates an AccountDealRequest message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns AccountDealRequest
+             */
+            public static fromObject(object: { [k: string]: any }): dcnet.pb.AccountDealRequest;
+
+            /**
+             * Creates a plain object from an AccountDealRequest message. Also converts values to other types if specified.
+             * @param message AccountDealRequest
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: dcnet.pb.AccountDealRequest, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this AccountDealRequest to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for AccountDealRequest
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** Properties of an AccountDealReply. */
+        interface IAccountDealReply {
+        }
+
+        /** Represents an AccountDealReply. */
+        class AccountDealReply implements IAccountDealReply {
+
+            /**
+             * Constructs a new AccountDealReply.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: dcnet.pb.IAccountDealReply);
+
+            /**
+             * Creates a new AccountDealReply instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns AccountDealReply instance
+             */
+            public static create(properties?: dcnet.pb.IAccountDealReply): dcnet.pb.AccountDealReply;
+
+            /**
+             * Encodes the specified AccountDealReply message. Does not implicitly {@link dcnet.pb.AccountDealReply.verify|verify} messages.
+             * @param message AccountDealReply message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: dcnet.pb.IAccountDealReply, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified AccountDealReply message, length delimited. Does not implicitly {@link dcnet.pb.AccountDealReply.verify|verify} messages.
+             * @param message AccountDealReply message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: dcnet.pb.IAccountDealReply, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes an AccountDealReply message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns AccountDealReply
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): dcnet.pb.AccountDealReply;
+
+            /**
+             * Decodes an AccountDealReply message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns AccountDealReply
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): dcnet.pb.AccountDealReply;
+
+            /**
+             * Verifies an AccountDealReply message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates an AccountDealReply message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns AccountDealReply
+             */
+            public static fromObject(object: { [k: string]: any }): dcnet.pb.AccountDealReply;
+
+            /**
+             * Creates a plain object from an AccountDealReply message. Also converts values to other types if specified.
+             * @param message AccountDealReply
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: dcnet.pb.AccountDealReply, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this AccountDealReply to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for AccountDealReply
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** Properties of an AccountLoginRequest. */
+        interface IAccountLoginRequest {
+
+            /** AccountLoginRequest accounthashencrypt */
+            accounthashencrypt?: (Uint8Array|null);
+
+            /** AccountLoginRequest pubkeyencrypt */
+            pubkeyencrypt?: (Uint8Array|null);
+
+            /** AccountLoginRequest loginkeyrandencrypt */
+            loginkeyrandencrypt?: (Uint8Array|null);
+        }
+
+        /** Represents an AccountLoginRequest. */
+        class AccountLoginRequest implements IAccountLoginRequest {
+
+            /**
+             * Constructs a new AccountLoginRequest.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: dcnet.pb.IAccountLoginRequest);
+
+            /** AccountLoginRequest accounthashencrypt. */
+            public accounthashencrypt: Uint8Array;
+
+            /** AccountLoginRequest pubkeyencrypt. */
+            public pubkeyencrypt: Uint8Array;
+
+            /** AccountLoginRequest loginkeyrandencrypt. */
+            public loginkeyrandencrypt: Uint8Array;
+
+            /**
+             * Creates a new AccountLoginRequest instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns AccountLoginRequest instance
+             */
+            public static create(properties?: dcnet.pb.IAccountLoginRequest): dcnet.pb.AccountLoginRequest;
+
+            /**
+             * Encodes the specified AccountLoginRequest message. Does not implicitly {@link dcnet.pb.AccountLoginRequest.verify|verify} messages.
+             * @param message AccountLoginRequest message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: dcnet.pb.IAccountLoginRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified AccountLoginRequest message, length delimited. Does not implicitly {@link dcnet.pb.AccountLoginRequest.verify|verify} messages.
+             * @param message AccountLoginRequest message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: dcnet.pb.IAccountLoginRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes an AccountLoginRequest message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns AccountLoginRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): dcnet.pb.AccountLoginRequest;
+
+            /**
+             * Decodes an AccountLoginRequest message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns AccountLoginRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): dcnet.pb.AccountLoginRequest;
+
+            /**
+             * Verifies an AccountLoginRequest message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates an AccountLoginRequest message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns AccountLoginRequest
+             */
+            public static fromObject(object: { [k: string]: any }): dcnet.pb.AccountLoginRequest;
+
+            /**
+             * Creates a plain object from an AccountLoginRequest message. Also converts values to other types if specified.
+             * @param message AccountLoginRequest
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: dcnet.pb.AccountLoginRequest, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this AccountLoginRequest to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for AccountLoginRequest
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** Properties of an AccountLoginReply. */
+        interface IAccountLoginReply {
+
+            /** AccountLoginReply prikeyencrypt2 */
+            prikeyencrypt2?: (Uint8Array|null);
+        }
+
+        /** Represents an AccountLoginReply. */
+        class AccountLoginReply implements IAccountLoginReply {
+
+            /**
+             * Constructs a new AccountLoginReply.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: dcnet.pb.IAccountLoginReply);
+
+            /** AccountLoginReply prikeyencrypt2. */
+            public prikeyencrypt2: Uint8Array;
+
+            /**
+             * Creates a new AccountLoginReply instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns AccountLoginReply instance
+             */
+            public static create(properties?: dcnet.pb.IAccountLoginReply): dcnet.pb.AccountLoginReply;
+
+            /**
+             * Encodes the specified AccountLoginReply message. Does not implicitly {@link dcnet.pb.AccountLoginReply.verify|verify} messages.
+             * @param message AccountLoginReply message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: dcnet.pb.IAccountLoginReply, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified AccountLoginReply message, length delimited. Does not implicitly {@link dcnet.pb.AccountLoginReply.verify|verify} messages.
+             * @param message AccountLoginReply message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: dcnet.pb.IAccountLoginReply, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes an AccountLoginReply message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns AccountLoginReply
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): dcnet.pb.AccountLoginReply;
+
+            /**
+             * Decodes an AccountLoginReply message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns AccountLoginReply
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): dcnet.pb.AccountLoginReply;
+
+            /**
+             * Verifies an AccountLoginReply message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates an AccountLoginReply message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns AccountLoginReply
+             */
+            public static fromObject(object: { [k: string]: any }): dcnet.pb.AccountLoginReply;
+
+            /**
+             * Creates a plain object from an AccountLoginReply message. Also converts values to other types if specified.
+             * @param message AccountLoginReply
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: dcnet.pb.AccountLoginReply, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this AccountLoginReply to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for AccountLoginReply
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** Properties of a TransferAccountRequest. */
+        interface ITransferAccountRequest {
+
+            /** TransferAccountRequest accounthashencrypt */
+            accounthashencrypt?: (Uint8Array|null);
+
+            /** TransferAccountRequest recvpubkey */
+            recvpubkey?: (Uint8Array|null);
+
+            /** TransferAccountRequest blockheight */
+            blockheight?: (number|null);
+
+            /** TransferAccountRequest peerid */
+            peerid?: (Uint8Array|null);
+
+            /** TransferAccountRequest signature */
+            signature?: (Uint8Array|null);
+        }
+
+        /** Represents a TransferAccountRequest. */
+        class TransferAccountRequest implements ITransferAccountRequest {
+
+            /**
+             * Constructs a new TransferAccountRequest.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: dcnet.pb.ITransferAccountRequest);
+
+            /** TransferAccountRequest accounthashencrypt. */
+            public accounthashencrypt: Uint8Array;
+
+            /** TransferAccountRequest recvpubkey. */
+            public recvpubkey: Uint8Array;
+
+            /** TransferAccountRequest blockheight. */
+            public blockheight: number;
+
+            /** TransferAccountRequest peerid. */
+            public peerid: Uint8Array;
+
+            /** TransferAccountRequest signature. */
+            public signature: Uint8Array;
+
+            /**
+             * Creates a new TransferAccountRequest instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns TransferAccountRequest instance
+             */
+            public static create(properties?: dcnet.pb.ITransferAccountRequest): dcnet.pb.TransferAccountRequest;
+
+            /**
+             * Encodes the specified TransferAccountRequest message. Does not implicitly {@link dcnet.pb.TransferAccountRequest.verify|verify} messages.
+             * @param message TransferAccountRequest message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: dcnet.pb.ITransferAccountRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified TransferAccountRequest message, length delimited. Does not implicitly {@link dcnet.pb.TransferAccountRequest.verify|verify} messages.
+             * @param message TransferAccountRequest message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: dcnet.pb.ITransferAccountRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes a TransferAccountRequest message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns TransferAccountRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): dcnet.pb.TransferAccountRequest;
+
+            /**
+             * Decodes a TransferAccountRequest message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns TransferAccountRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): dcnet.pb.TransferAccountRequest;
+
+            /**
+             * Verifies a TransferAccountRequest message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates a TransferAccountRequest message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns TransferAccountRequest
+             */
+            public static fromObject(object: { [k: string]: any }): dcnet.pb.TransferAccountRequest;
+
+            /**
+             * Creates a plain object from a TransferAccountRequest message. Also converts values to other types if specified.
+             * @param message TransferAccountRequest
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: dcnet.pb.TransferAccountRequest, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this TransferAccountRequest to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for TransferAccountRequest
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** Properties of a TransferAccountReply. */
+        interface ITransferAccountReply {
+        }
+
+        /** Represents a TransferAccountReply. */
+        class TransferAccountReply implements ITransferAccountReply {
+
+            /**
+             * Constructs a new TransferAccountReply.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: dcnet.pb.ITransferAccountReply);
+
+            /**
+             * Creates a new TransferAccountReply instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns TransferAccountReply instance
+             */
+            public static create(properties?: dcnet.pb.ITransferAccountReply): dcnet.pb.TransferAccountReply;
+
+            /**
+             * Encodes the specified TransferAccountReply message. Does not implicitly {@link dcnet.pb.TransferAccountReply.verify|verify} messages.
+             * @param message TransferAccountReply message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: dcnet.pb.ITransferAccountReply, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified TransferAccountReply message, length delimited. Does not implicitly {@link dcnet.pb.TransferAccountReply.verify|verify} messages.
+             * @param message TransferAccountReply message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: dcnet.pb.ITransferAccountReply, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes a TransferAccountReply message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns TransferAccountReply
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): dcnet.pb.TransferAccountReply;
+
+            /**
+             * Decodes a TransferAccountReply message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns TransferAccountReply
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): dcnet.pb.TransferAccountReply;
+
+            /**
+             * Verifies a TransferAccountReply message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates a TransferAccountReply message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns TransferAccountReply
+             */
+            public static fromObject(object: { [k: string]: any }): dcnet.pb.TransferAccountReply;
+
+            /**
+             * Creates a plain object from a TransferAccountReply message. Also converts values to other types if specified.
+             * @param message TransferAccountReply
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: dcnet.pb.TransferAccountReply, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this TransferAccountReply to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for TransferAccountReply
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** Properties of a SetUserDefaultDBRequest. */
+        interface ISetUserDefaultDBRequest {
+
+            /** SetUserDefaultDBRequest dbinfocrypt */
+            dbinfocrypt?: (Uint8Array|null);
+
+            /** SetUserDefaultDBRequest blockheight */
+            blockheight?: (number|null);
+
+            /** SetUserDefaultDBRequest peerid */
+            peerid?: (Uint8Array|null);
+
+            /** SetUserDefaultDBRequest signature */
+            signature?: (Uint8Array|null);
+        }
+
+        /** Represents a SetUserDefaultDBRequest. */
+        class SetUserDefaultDBRequest implements ISetUserDefaultDBRequest {
+
+            /**
+             * Constructs a new SetUserDefaultDBRequest.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: dcnet.pb.ISetUserDefaultDBRequest);
+
+            /** SetUserDefaultDBRequest dbinfocrypt. */
+            public dbinfocrypt: Uint8Array;
+
+            /** SetUserDefaultDBRequest blockheight. */
+            public blockheight: number;
+
+            /** SetUserDefaultDBRequest peerid. */
+            public peerid: Uint8Array;
+
+            /** SetUserDefaultDBRequest signature. */
+            public signature: Uint8Array;
+
+            /**
+             * Creates a new SetUserDefaultDBRequest instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns SetUserDefaultDBRequest instance
+             */
+            public static create(properties?: dcnet.pb.ISetUserDefaultDBRequest): dcnet.pb.SetUserDefaultDBRequest;
+
+            /**
+             * Encodes the specified SetUserDefaultDBRequest message. Does not implicitly {@link dcnet.pb.SetUserDefaultDBRequest.verify|verify} messages.
+             * @param message SetUserDefaultDBRequest message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: dcnet.pb.ISetUserDefaultDBRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified SetUserDefaultDBRequest message, length delimited. Does not implicitly {@link dcnet.pb.SetUserDefaultDBRequest.verify|verify} messages.
+             * @param message SetUserDefaultDBRequest message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: dcnet.pb.ISetUserDefaultDBRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes a SetUserDefaultDBRequest message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns SetUserDefaultDBRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): dcnet.pb.SetUserDefaultDBRequest;
+
+            /**
+             * Decodes a SetUserDefaultDBRequest message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns SetUserDefaultDBRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): dcnet.pb.SetUserDefaultDBRequest;
+
+            /**
+             * Verifies a SetUserDefaultDBRequest message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates a SetUserDefaultDBRequest message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns SetUserDefaultDBRequest
+             */
+            public static fromObject(object: { [k: string]: any }): dcnet.pb.SetUserDefaultDBRequest;
+
+            /**
+             * Creates a plain object from a SetUserDefaultDBRequest message. Also converts values to other types if specified.
+             * @param message SetUserDefaultDBRequest
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: dcnet.pb.SetUserDefaultDBRequest, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this SetUserDefaultDBRequest to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for SetUserDefaultDBRequest
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** Properties of a SetUserDefaultDBReply. */
+        interface ISetUserDefaultDBReply {
+        }
+
+        /** Represents a SetUserDefaultDBReply. */
+        class SetUserDefaultDBReply implements ISetUserDefaultDBReply {
+
+            /**
+             * Constructs a new SetUserDefaultDBReply.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: dcnet.pb.ISetUserDefaultDBReply);
+
+            /**
+             * Creates a new SetUserDefaultDBReply instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns SetUserDefaultDBReply instance
+             */
+            public static create(properties?: dcnet.pb.ISetUserDefaultDBReply): dcnet.pb.SetUserDefaultDBReply;
+
+            /**
+             * Encodes the specified SetUserDefaultDBReply message. Does not implicitly {@link dcnet.pb.SetUserDefaultDBReply.verify|verify} messages.
+             * @param message SetUserDefaultDBReply message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: dcnet.pb.ISetUserDefaultDBReply, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified SetUserDefaultDBReply message, length delimited. Does not implicitly {@link dcnet.pb.SetUserDefaultDBReply.verify|verify} messages.
+             * @param message SetUserDefaultDBReply message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: dcnet.pb.ISetUserDefaultDBReply, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes a SetUserDefaultDBReply message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns SetUserDefaultDBReply
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): dcnet.pb.SetUserDefaultDBReply;
+
+            /**
+             * Decodes a SetUserDefaultDBReply message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns SetUserDefaultDBReply
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): dcnet.pb.SetUserDefaultDBReply;
+
+            /**
+             * Verifies a SetUserDefaultDBReply message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates a SetUserDefaultDBReply message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns SetUserDefaultDBReply
+             */
+            public static fromObject(object: { [k: string]: any }): dcnet.pb.SetUserDefaultDBReply;
+
+            /**
+             * Creates a plain object from a SetUserDefaultDBReply message. Also converts values to other types if specified.
+             * @param message SetUserDefaultDBReply
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: dcnet.pb.SetUserDefaultDBReply, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this SetUserDefaultDBReply to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for SetUserDefaultDBReply
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** Properties of an AddSubPubkeyRequest. */
+        interface IAddSubPubkeyRequest {
+
+            /** AddSubPubkeyRequest subpubkey */
+            subpubkey?: (Uint8Array|null);
+
+            /** AddSubPubkeyRequest blockheight */
+            blockheight?: (number|null);
+
+            /** AddSubPubkeyRequest peerid */
+            peerid?: (Uint8Array|null);
+
+            /** AddSubPubkeyRequest signature */
+            signature?: (Uint8Array|null);
+        }
+
+        /** Represents an AddSubPubkeyRequest. */
+        class AddSubPubkeyRequest implements IAddSubPubkeyRequest {
+
+            /**
+             * Constructs a new AddSubPubkeyRequest.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: dcnet.pb.IAddSubPubkeyRequest);
+
+            /** AddSubPubkeyRequest subpubkey. */
+            public subpubkey: Uint8Array;
+
+            /** AddSubPubkeyRequest blockheight. */
+            public blockheight: number;
+
+            /** AddSubPubkeyRequest peerid. */
+            public peerid: Uint8Array;
+
+            /** AddSubPubkeyRequest signature. */
+            public signature: Uint8Array;
+
+            /**
+             * Creates a new AddSubPubkeyRequest instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns AddSubPubkeyRequest instance
+             */
+            public static create(properties?: dcnet.pb.IAddSubPubkeyRequest): dcnet.pb.AddSubPubkeyRequest;
+
+            /**
+             * Encodes the specified AddSubPubkeyRequest message. Does not implicitly {@link dcnet.pb.AddSubPubkeyRequest.verify|verify} messages.
+             * @param message AddSubPubkeyRequest message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: dcnet.pb.IAddSubPubkeyRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified AddSubPubkeyRequest message, length delimited. Does not implicitly {@link dcnet.pb.AddSubPubkeyRequest.verify|verify} messages.
+             * @param message AddSubPubkeyRequest message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: dcnet.pb.IAddSubPubkeyRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes an AddSubPubkeyRequest message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns AddSubPubkeyRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): dcnet.pb.AddSubPubkeyRequest;
+
+            /**
+             * Decodes an AddSubPubkeyRequest message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns AddSubPubkeyRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): dcnet.pb.AddSubPubkeyRequest;
+
+            /**
+             * Verifies an AddSubPubkeyRequest message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates an AddSubPubkeyRequest message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns AddSubPubkeyRequest
+             */
+            public static fromObject(object: { [k: string]: any }): dcnet.pb.AddSubPubkeyRequest;
+
+            /**
+             * Creates a plain object from an AddSubPubkeyRequest message. Also converts values to other types if specified.
+             * @param message AddSubPubkeyRequest
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: dcnet.pb.AddSubPubkeyRequest, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this AddSubPubkeyRequest to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for AddSubPubkeyRequest
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** Properties of an AddSubPubkeyReply. */
+        interface IAddSubPubkeyReply {
+        }
+
+        /** Represents an AddSubPubkeyReply. */
+        class AddSubPubkeyReply implements IAddSubPubkeyReply {
+
+            /**
+             * Constructs a new AddSubPubkeyReply.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: dcnet.pb.IAddSubPubkeyReply);
+
+            /**
+             * Creates a new AddSubPubkeyReply instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns AddSubPubkeyReply instance
+             */
+            public static create(properties?: dcnet.pb.IAddSubPubkeyReply): dcnet.pb.AddSubPubkeyReply;
+
+            /**
+             * Encodes the specified AddSubPubkeyReply message. Does not implicitly {@link dcnet.pb.AddSubPubkeyReply.verify|verify} messages.
+             * @param message AddSubPubkeyReply message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: dcnet.pb.IAddSubPubkeyReply, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified AddSubPubkeyReply message, length delimited. Does not implicitly {@link dcnet.pb.AddSubPubkeyReply.verify|verify} messages.
+             * @param message AddSubPubkeyReply message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: dcnet.pb.IAddSubPubkeyReply, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes an AddSubPubkeyReply message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns AddSubPubkeyReply
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): dcnet.pb.AddSubPubkeyReply;
+
+            /**
+             * Decodes an AddSubPubkeyReply message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns AddSubPubkeyReply
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): dcnet.pb.AddSubPubkeyReply;
+
+            /**
+             * Verifies an AddSubPubkeyReply message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates an AddSubPubkeyReply message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns AddSubPubkeyReply
+             */
+            public static fromObject(object: { [k: string]: any }): dcnet.pb.AddSubPubkeyReply;
+
+            /**
+             * Creates a plain object from an AddSubPubkeyReply message. Also converts values to other types if specified.
+             * @param message AddSubPubkeyReply
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: dcnet.pb.AddSubPubkeyReply, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this AddSubPubkeyReply to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for AddSubPubkeyReply
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** Properties of a DeleteSubPubkeyRequest. */
+        interface IDeleteSubPubkeyRequest {
+
+            /** DeleteSubPubkeyRequest subpubkey */
+            subpubkey?: (Uint8Array|null);
+
+            /** DeleteSubPubkeyRequest blockheight */
+            blockheight?: (number|null);
+
+            /** DeleteSubPubkeyRequest peerid */
+            peerid?: (Uint8Array|null);
+
+            /** DeleteSubPubkeyRequest signature */
+            signature?: (Uint8Array|null);
+        }
+
+        /** Represents a DeleteSubPubkeyRequest. */
+        class DeleteSubPubkeyRequest implements IDeleteSubPubkeyRequest {
+
+            /**
+             * Constructs a new DeleteSubPubkeyRequest.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: dcnet.pb.IDeleteSubPubkeyRequest);
+
+            /** DeleteSubPubkeyRequest subpubkey. */
+            public subpubkey: Uint8Array;
+
+            /** DeleteSubPubkeyRequest blockheight. */
+            public blockheight: number;
+
+            /** DeleteSubPubkeyRequest peerid. */
+            public peerid: Uint8Array;
+
+            /** DeleteSubPubkeyRequest signature. */
+            public signature: Uint8Array;
+
+            /**
+             * Creates a new DeleteSubPubkeyRequest instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns DeleteSubPubkeyRequest instance
+             */
+            public static create(properties?: dcnet.pb.IDeleteSubPubkeyRequest): dcnet.pb.DeleteSubPubkeyRequest;
+
+            /**
+             * Encodes the specified DeleteSubPubkeyRequest message. Does not implicitly {@link dcnet.pb.DeleteSubPubkeyRequest.verify|verify} messages.
+             * @param message DeleteSubPubkeyRequest message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: dcnet.pb.IDeleteSubPubkeyRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified DeleteSubPubkeyRequest message, length delimited. Does not implicitly {@link dcnet.pb.DeleteSubPubkeyRequest.verify|verify} messages.
+             * @param message DeleteSubPubkeyRequest message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: dcnet.pb.IDeleteSubPubkeyRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes a DeleteSubPubkeyRequest message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns DeleteSubPubkeyRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): dcnet.pb.DeleteSubPubkeyRequest;
+
+            /**
+             * Decodes a DeleteSubPubkeyRequest message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns DeleteSubPubkeyRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): dcnet.pb.DeleteSubPubkeyRequest;
+
+            /**
+             * Verifies a DeleteSubPubkeyRequest message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates a DeleteSubPubkeyRequest message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns DeleteSubPubkeyRequest
+             */
+            public static fromObject(object: { [k: string]: any }): dcnet.pb.DeleteSubPubkeyRequest;
+
+            /**
+             * Creates a plain object from a DeleteSubPubkeyRequest message. Also converts values to other types if specified.
+             * @param message DeleteSubPubkeyRequest
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: dcnet.pb.DeleteSubPubkeyRequest, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this DeleteSubPubkeyRequest to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for DeleteSubPubkeyRequest
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** Properties of a DeleteSubPubkeyReply. */
+        interface IDeleteSubPubkeyReply {
+        }
+
+        /** Represents a DeleteSubPubkeyReply. */
+        class DeleteSubPubkeyReply implements IDeleteSubPubkeyReply {
+
+            /**
+             * Constructs a new DeleteSubPubkeyReply.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: dcnet.pb.IDeleteSubPubkeyReply);
+
+            /**
+             * Creates a new DeleteSubPubkeyReply instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns DeleteSubPubkeyReply instance
+             */
+            public static create(properties?: dcnet.pb.IDeleteSubPubkeyReply): dcnet.pb.DeleteSubPubkeyReply;
+
+            /**
+             * Encodes the specified DeleteSubPubkeyReply message. Does not implicitly {@link dcnet.pb.DeleteSubPubkeyReply.verify|verify} messages.
+             * @param message DeleteSubPubkeyReply message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: dcnet.pb.IDeleteSubPubkeyReply, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified DeleteSubPubkeyReply message, length delimited. Does not implicitly {@link dcnet.pb.DeleteSubPubkeyReply.verify|verify} messages.
+             * @param message DeleteSubPubkeyReply message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: dcnet.pb.IDeleteSubPubkeyReply, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes a DeleteSubPubkeyReply message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns DeleteSubPubkeyReply
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): dcnet.pb.DeleteSubPubkeyReply;
+
+            /**
+             * Decodes a DeleteSubPubkeyReply message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns DeleteSubPubkeyReply
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): dcnet.pb.DeleteSubPubkeyReply;
+
+            /**
+             * Verifies a DeleteSubPubkeyReply message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates a DeleteSubPubkeyReply message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns DeleteSubPubkeyReply
+             */
+            public static fromObject(object: { [k: string]: any }): dcnet.pb.DeleteSubPubkeyReply;
+
+            /**
+             * Creates a plain object from a DeleteSubPubkeyReply message. Also converts values to other types if specified.
+             * @param message DeleteSubPubkeyReply
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: dcnet.pb.DeleteSubPubkeyReply, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this DeleteSubPubkeyReply to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for DeleteSubPubkeyReply
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** Properties of a BindAccessPeerToUserRequest. */
+        interface IBindAccessPeerToUserRequest {
+
+            /** BindAccessPeerToUserRequest blockheight */
+            blockheight?: (number|null);
+
+            /** BindAccessPeerToUserRequest signature */
+            signature?: (Uint8Array|null);
+        }
+
+        /** Represents a BindAccessPeerToUserRequest. */
+        class BindAccessPeerToUserRequest implements IBindAccessPeerToUserRequest {
+
+            /**
+             * Constructs a new BindAccessPeerToUserRequest.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: dcnet.pb.IBindAccessPeerToUserRequest);
+
+            /** BindAccessPeerToUserRequest blockheight. */
+            public blockheight: number;
+
+            /** BindAccessPeerToUserRequest signature. */
+            public signature: Uint8Array;
+
+            /**
+             * Creates a new BindAccessPeerToUserRequest instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns BindAccessPeerToUserRequest instance
+             */
+            public static create(properties?: dcnet.pb.IBindAccessPeerToUserRequest): dcnet.pb.BindAccessPeerToUserRequest;
+
+            /**
+             * Encodes the specified BindAccessPeerToUserRequest message. Does not implicitly {@link dcnet.pb.BindAccessPeerToUserRequest.verify|verify} messages.
+             * @param message BindAccessPeerToUserRequest message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: dcnet.pb.IBindAccessPeerToUserRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified BindAccessPeerToUserRequest message, length delimited. Does not implicitly {@link dcnet.pb.BindAccessPeerToUserRequest.verify|verify} messages.
+             * @param message BindAccessPeerToUserRequest message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: dcnet.pb.IBindAccessPeerToUserRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes a BindAccessPeerToUserRequest message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns BindAccessPeerToUserRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): dcnet.pb.BindAccessPeerToUserRequest;
+
+            /**
+             * Decodes a BindAccessPeerToUserRequest message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns BindAccessPeerToUserRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): dcnet.pb.BindAccessPeerToUserRequest;
+
+            /**
+             * Verifies a BindAccessPeerToUserRequest message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates a BindAccessPeerToUserRequest message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns BindAccessPeerToUserRequest
+             */
+            public static fromObject(object: { [k: string]: any }): dcnet.pb.BindAccessPeerToUserRequest;
+
+            /**
+             * Creates a plain object from a BindAccessPeerToUserRequest message. Also converts values to other types if specified.
+             * @param message BindAccessPeerToUserRequest
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: dcnet.pb.BindAccessPeerToUserRequest, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this BindAccessPeerToUserRequest to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for BindAccessPeerToUserRequest
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** Properties of a BindAccessPeerToUserReply. */
+        interface IBindAccessPeerToUserReply {
+        }
+
+        /** Represents a BindAccessPeerToUserReply. */
+        class BindAccessPeerToUserReply implements IBindAccessPeerToUserReply {
+
+            /**
+             * Constructs a new BindAccessPeerToUserReply.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: dcnet.pb.IBindAccessPeerToUserReply);
+
+            /**
+             * Creates a new BindAccessPeerToUserReply instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns BindAccessPeerToUserReply instance
+             */
+            public static create(properties?: dcnet.pb.IBindAccessPeerToUserReply): dcnet.pb.BindAccessPeerToUserReply;
+
+            /**
+             * Encodes the specified BindAccessPeerToUserReply message. Does not implicitly {@link dcnet.pb.BindAccessPeerToUserReply.verify|verify} messages.
+             * @param message BindAccessPeerToUserReply message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: dcnet.pb.IBindAccessPeerToUserReply, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified BindAccessPeerToUserReply message, length delimited. Does not implicitly {@link dcnet.pb.BindAccessPeerToUserReply.verify|verify} messages.
+             * @param message BindAccessPeerToUserReply message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: dcnet.pb.IBindAccessPeerToUserReply, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes a BindAccessPeerToUserReply message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns BindAccessPeerToUserReply
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): dcnet.pb.BindAccessPeerToUserReply;
+
+            /**
+             * Decodes a BindAccessPeerToUserReply message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns BindAccessPeerToUserReply
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): dcnet.pb.BindAccessPeerToUserReply;
+
+            /**
+             * Verifies a BindAccessPeerToUserReply message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates a BindAccessPeerToUserReply message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns BindAccessPeerToUserReply
+             */
+            public static fromObject(object: { [k: string]: any }): dcnet.pb.BindAccessPeerToUserReply;
+
+            /**
+             * Creates a plain object from a BindAccessPeerToUserReply message. Also converts values to other types if specified.
+             * @param message BindAccessPeerToUserReply
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: dcnet.pb.BindAccessPeerToUserReply, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this BindAccessPeerToUserReply to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for BindAccessPeerToUserReply
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** Properties of a ValidTokenRequest. */
+        interface IValidTokenRequest {
+        }
+
+        /** Represents a ValidTokenRequest. */
+        class ValidTokenRequest implements IValidTokenRequest {
+
+            /**
+             * Constructs a new ValidTokenRequest.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: dcnet.pb.IValidTokenRequest);
+
+            /**
+             * Creates a new ValidTokenRequest instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns ValidTokenRequest instance
+             */
+            public static create(properties?: dcnet.pb.IValidTokenRequest): dcnet.pb.ValidTokenRequest;
+
+            /**
+             * Encodes the specified ValidTokenRequest message. Does not implicitly {@link dcnet.pb.ValidTokenRequest.verify|verify} messages.
+             * @param message ValidTokenRequest message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: dcnet.pb.IValidTokenRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified ValidTokenRequest message, length delimited. Does not implicitly {@link dcnet.pb.ValidTokenRequest.verify|verify} messages.
+             * @param message ValidTokenRequest message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: dcnet.pb.IValidTokenRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes a ValidTokenRequest message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns ValidTokenRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): dcnet.pb.ValidTokenRequest;
+
+            /**
+             * Decodes a ValidTokenRequest message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns ValidTokenRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): dcnet.pb.ValidTokenRequest;
+
+            /**
+             * Verifies a ValidTokenRequest message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates a ValidTokenRequest message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns ValidTokenRequest
+             */
+            public static fromObject(object: { [k: string]: any }): dcnet.pb.ValidTokenRequest;
+
+            /**
+             * Creates a plain object from a ValidTokenRequest message. Also converts values to other types if specified.
+             * @param message ValidTokenRequest
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: dcnet.pb.ValidTokenRequest, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this ValidTokenRequest to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for ValidTokenRequest
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** Properties of a ValidTokenReply. */
+        interface IValidTokenReply {
+        }
+
+        /** Represents a ValidTokenReply. */
+        class ValidTokenReply implements IValidTokenReply {
+
+            /**
+             * Constructs a new ValidTokenReply.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: dcnet.pb.IValidTokenReply);
+
+            /**
+             * Creates a new ValidTokenReply instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns ValidTokenReply instance
+             */
+            public static create(properties?: dcnet.pb.IValidTokenReply): dcnet.pb.ValidTokenReply;
+
+            /**
+             * Encodes the specified ValidTokenReply message. Does not implicitly {@link dcnet.pb.ValidTokenReply.verify|verify} messages.
+             * @param message ValidTokenReply message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: dcnet.pb.IValidTokenReply, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified ValidTokenReply message, length delimited. Does not implicitly {@link dcnet.pb.ValidTokenReply.verify|verify} messages.
+             * @param message ValidTokenReply message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: dcnet.pb.IValidTokenReply, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes a ValidTokenReply message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns ValidTokenReply
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): dcnet.pb.ValidTokenReply;
+
+            /**
+             * Decodes a ValidTokenReply message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns ValidTokenReply
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): dcnet.pb.ValidTokenReply;
+
+            /**
+             * Verifies a ValidTokenReply message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates a ValidTokenReply message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns ValidTokenReply
+             */
+            public static fromObject(object: { [k: string]: any }): dcnet.pb.ValidTokenReply;
+
+            /**
+             * Creates a plain object from a ValidTokenReply message. Also converts values to other types if specified.
+             * @param message ValidTokenReply
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: dcnet.pb.ValidTokenReply, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this ValidTokenReply to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for ValidTokenReply
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** Properties of an AddLogToThreadRequest. */
+        interface IAddLogToThreadRequest {
+
+            /** AddLogToThreadRequest threadID */
+            threadID?: (Uint8Array|null);
+
+            /** AddLogToThreadRequest logID */
+            logID?: (Uint8Array|null);
+
+            /** AddLogToThreadRequest blockheight */
+            blockheight?: (number|null);
+
+            /** AddLogToThreadRequest peerid */
+            peerid?: (Uint8Array|null);
+
+            /** AddLogToThreadRequest signature */
+            signature?: (Uint8Array|null);
+        }
+
+        /** Represents an AddLogToThreadRequest. */
+        class AddLogToThreadRequest implements IAddLogToThreadRequest {
+
+            /**
+             * Constructs a new AddLogToThreadRequest.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: dcnet.pb.IAddLogToThreadRequest);
+
+            /** AddLogToThreadRequest threadID. */
+            public threadID: Uint8Array;
+
+            /** AddLogToThreadRequest logID. */
+            public logID: Uint8Array;
+
+            /** AddLogToThreadRequest blockheight. */
+            public blockheight: number;
+
+            /** AddLogToThreadRequest peerid. */
+            public peerid: Uint8Array;
+
+            /** AddLogToThreadRequest signature. */
+            public signature: Uint8Array;
+
+            /**
+             * Creates a new AddLogToThreadRequest instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns AddLogToThreadRequest instance
+             */
+            public static create(properties?: dcnet.pb.IAddLogToThreadRequest): dcnet.pb.AddLogToThreadRequest;
+
+            /**
+             * Encodes the specified AddLogToThreadRequest message. Does not implicitly {@link dcnet.pb.AddLogToThreadRequest.verify|verify} messages.
+             * @param message AddLogToThreadRequest message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: dcnet.pb.IAddLogToThreadRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified AddLogToThreadRequest message, length delimited. Does not implicitly {@link dcnet.pb.AddLogToThreadRequest.verify|verify} messages.
+             * @param message AddLogToThreadRequest message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: dcnet.pb.IAddLogToThreadRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes an AddLogToThreadRequest message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns AddLogToThreadRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): dcnet.pb.AddLogToThreadRequest;
+
+            /**
+             * Decodes an AddLogToThreadRequest message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns AddLogToThreadRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): dcnet.pb.AddLogToThreadRequest;
+
+            /**
+             * Verifies an AddLogToThreadRequest message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates an AddLogToThreadRequest message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns AddLogToThreadRequest
+             */
+            public static fromObject(object: { [k: string]: any }): dcnet.pb.AddLogToThreadRequest;
+
+            /**
+             * Creates a plain object from an AddLogToThreadRequest message. Also converts values to other types if specified.
+             * @param message AddLogToThreadRequest
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: dcnet.pb.AddLogToThreadRequest, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this AddLogToThreadRequest to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for AddLogToThreadRequest
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** Properties of an AddLogToThreadReply. */
+        interface IAddLogToThreadReply {
+        }
+
+        /** Represents an AddLogToThreadReply. */
+        class AddLogToThreadReply implements IAddLogToThreadReply {
+
+            /**
+             * Constructs a new AddLogToThreadReply.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: dcnet.pb.IAddLogToThreadReply);
+
+            /**
+             * Creates a new AddLogToThreadReply instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns AddLogToThreadReply instance
+             */
+            public static create(properties?: dcnet.pb.IAddLogToThreadReply): dcnet.pb.AddLogToThreadReply;
+
+            /**
+             * Encodes the specified AddLogToThreadReply message. Does not implicitly {@link dcnet.pb.AddLogToThreadReply.verify|verify} messages.
+             * @param message AddLogToThreadReply message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: dcnet.pb.IAddLogToThreadReply, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified AddLogToThreadReply message, length delimited. Does not implicitly {@link dcnet.pb.AddLogToThreadReply.verify|verify} messages.
+             * @param message AddLogToThreadReply message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: dcnet.pb.IAddLogToThreadReply, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes an AddLogToThreadReply message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns AddLogToThreadReply
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): dcnet.pb.AddLogToThreadReply;
+
+            /**
+             * Decodes an AddLogToThreadReply message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns AddLogToThreadReply
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): dcnet.pb.AddLogToThreadReply;
+
+            /**
+             * Verifies an AddLogToThreadReply message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates an AddLogToThreadReply message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns AddLogToThreadReply
+             */
+            public static fromObject(object: { [k: string]: any }): dcnet.pb.AddLogToThreadReply;
+
+            /**
+             * Creates a plain object from an AddLogToThreadReply message. Also converts values to other types if specified.
+             * @param message AddLogToThreadReply
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: dcnet.pb.AddLogToThreadReply, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this AddLogToThreadReply to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for AddLogToThreadReply
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** Properties of an AddThreadSpaceRequest. */
+        interface IAddThreadSpaceRequest {
+
+            /** AddThreadSpaceRequest threadID */
+            threadID?: (Uint8Array|null);
+
+            /** AddThreadSpaceRequest blockheight */
+            blockheight?: (number|null);
+
+            /** AddThreadSpaceRequest space */
+            space?: (number|null);
+
+            /** AddThreadSpaceRequest signature */
+            signature?: (Uint8Array|null);
+        }
+
+        /** Represents an AddThreadSpaceRequest. */
+        class AddThreadSpaceRequest implements IAddThreadSpaceRequest {
+
+            /**
+             * Constructs a new AddThreadSpaceRequest.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: dcnet.pb.IAddThreadSpaceRequest);
+
+            /** AddThreadSpaceRequest threadID. */
+            public threadID: Uint8Array;
+
+            /** AddThreadSpaceRequest blockheight. */
+            public blockheight: number;
+
+            /** AddThreadSpaceRequest space. */
+            public space: number;
+
+            /** AddThreadSpaceRequest signature. */
+            public signature: Uint8Array;
+
+            /**
+             * Creates a new AddThreadSpaceRequest instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns AddThreadSpaceRequest instance
+             */
+            public static create(properties?: dcnet.pb.IAddThreadSpaceRequest): dcnet.pb.AddThreadSpaceRequest;
+
+            /**
+             * Encodes the specified AddThreadSpaceRequest message. Does not implicitly {@link dcnet.pb.AddThreadSpaceRequest.verify|verify} messages.
+             * @param message AddThreadSpaceRequest message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: dcnet.pb.IAddThreadSpaceRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified AddThreadSpaceRequest message, length delimited. Does not implicitly {@link dcnet.pb.AddThreadSpaceRequest.verify|verify} messages.
+             * @param message AddThreadSpaceRequest message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: dcnet.pb.IAddThreadSpaceRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes an AddThreadSpaceRequest message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns AddThreadSpaceRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): dcnet.pb.AddThreadSpaceRequest;
+
+            /**
+             * Decodes an AddThreadSpaceRequest message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns AddThreadSpaceRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): dcnet.pb.AddThreadSpaceRequest;
+
+            /**
+             * Verifies an AddThreadSpaceRequest message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates an AddThreadSpaceRequest message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns AddThreadSpaceRequest
+             */
+            public static fromObject(object: { [k: string]: any }): dcnet.pb.AddThreadSpaceRequest;
+
+            /**
+             * Creates a plain object from an AddThreadSpaceRequest message. Also converts values to other types if specified.
+             * @param message AddThreadSpaceRequest
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: dcnet.pb.AddThreadSpaceRequest, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this AddThreadSpaceRequest to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for AddThreadSpaceRequest
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** Properties of an AddThreadSpaceReply. */
+        interface IAddThreadSpaceReply {
+        }
+
+        /** Represents an AddThreadSpaceReply. */
+        class AddThreadSpaceReply implements IAddThreadSpaceReply {
+
+            /**
+             * Constructs a new AddThreadSpaceReply.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: dcnet.pb.IAddThreadSpaceReply);
+
+            /**
+             * Creates a new AddThreadSpaceReply instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns AddThreadSpaceReply instance
+             */
+            public static create(properties?: dcnet.pb.IAddThreadSpaceReply): dcnet.pb.AddThreadSpaceReply;
+
+            /**
+             * Encodes the specified AddThreadSpaceReply message. Does not implicitly {@link dcnet.pb.AddThreadSpaceReply.verify|verify} messages.
+             * @param message AddThreadSpaceReply message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: dcnet.pb.IAddThreadSpaceReply, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified AddThreadSpaceReply message, length delimited. Does not implicitly {@link dcnet.pb.AddThreadSpaceReply.verify|verify} messages.
+             * @param message AddThreadSpaceReply message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: dcnet.pb.IAddThreadSpaceReply, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes an AddThreadSpaceReply message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns AddThreadSpaceReply
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): dcnet.pb.AddThreadSpaceReply;
+
+            /**
+             * Decodes an AddThreadSpaceReply message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns AddThreadSpaceReply
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): dcnet.pb.AddThreadSpaceReply;
+
+            /**
+             * Verifies an AddThreadSpaceReply message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates an AddThreadSpaceReply message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns AddThreadSpaceReply
+             */
+            public static fromObject(object: { [k: string]: any }): dcnet.pb.AddThreadSpaceReply;
+
+            /**
+             * Creates a plain object from an AddThreadSpaceReply message. Also converts values to other types if specified.
+             * @param message AddThreadSpaceReply
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: dcnet.pb.AddThreadSpaceReply, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this AddThreadSpaceReply to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for AddThreadSpaceReply
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** Properties of a GetThreadUsedSpaceRequest. */
+        interface IGetThreadUsedSpaceRequest {
+
+            /** GetThreadUsedSpaceRequest threadID */
+            threadID?: (Uint8Array|null);
+
+            /** GetThreadUsedSpaceRequest randnum */
+            randnum?: (number|Long|null);
+        }
+
+        /** Represents a GetThreadUsedSpaceRequest. */
+        class GetThreadUsedSpaceRequest implements IGetThreadUsedSpaceRequest {
+
+            /**
+             * Constructs a new GetThreadUsedSpaceRequest.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: dcnet.pb.IGetThreadUsedSpaceRequest);
+
+            /** GetThreadUsedSpaceRequest threadID. */
+            public threadID: Uint8Array;
+
+            /** GetThreadUsedSpaceRequest randnum. */
+            public randnum: (number|Long);
+
+            /**
+             * Creates a new GetThreadUsedSpaceRequest instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns GetThreadUsedSpaceRequest instance
+             */
+            public static create(properties?: dcnet.pb.IGetThreadUsedSpaceRequest): dcnet.pb.GetThreadUsedSpaceRequest;
+
+            /**
+             * Encodes the specified GetThreadUsedSpaceRequest message. Does not implicitly {@link dcnet.pb.GetThreadUsedSpaceRequest.verify|verify} messages.
+             * @param message GetThreadUsedSpaceRequest message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: dcnet.pb.IGetThreadUsedSpaceRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified GetThreadUsedSpaceRequest message, length delimited. Does not implicitly {@link dcnet.pb.GetThreadUsedSpaceRequest.verify|verify} messages.
+             * @param message GetThreadUsedSpaceRequest message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: dcnet.pb.IGetThreadUsedSpaceRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes a GetThreadUsedSpaceRequest message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns GetThreadUsedSpaceRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): dcnet.pb.GetThreadUsedSpaceRequest;
+
+            /**
+             * Decodes a GetThreadUsedSpaceRequest message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns GetThreadUsedSpaceRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): dcnet.pb.GetThreadUsedSpaceRequest;
+
+            /**
+             * Verifies a GetThreadUsedSpaceRequest message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates a GetThreadUsedSpaceRequest message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns GetThreadUsedSpaceRequest
+             */
+            public static fromObject(object: { [k: string]: any }): dcnet.pb.GetThreadUsedSpaceRequest;
+
+            /**
+             * Creates a plain object from a GetThreadUsedSpaceRequest message. Also converts values to other types if specified.
+             * @param message GetThreadUsedSpaceRequest
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: dcnet.pb.GetThreadUsedSpaceRequest, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this GetThreadUsedSpaceRequest to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for GetThreadUsedSpaceRequest
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** Properties of a GetThreadUsedSpaceReply. */
+        interface IGetThreadUsedSpaceReply {
+
+            /** GetThreadUsedSpaceReply usedsize */
+            usedsize?: (number|Long|null);
+
+            /** GetThreadUsedSpaceReply signature */
+            signature?: (Uint8Array|null);
+        }
+
+        /** Represents a GetThreadUsedSpaceReply. */
+        class GetThreadUsedSpaceReply implements IGetThreadUsedSpaceReply {
+
+            /**
+             * Constructs a new GetThreadUsedSpaceReply.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: dcnet.pb.IGetThreadUsedSpaceReply);
+
+            /** GetThreadUsedSpaceReply usedsize. */
+            public usedsize: (number|Long);
+
+            /** GetThreadUsedSpaceReply signature. */
+            public signature: Uint8Array;
+
+            /**
+             * Creates a new GetThreadUsedSpaceReply instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns GetThreadUsedSpaceReply instance
+             */
+            public static create(properties?: dcnet.pb.IGetThreadUsedSpaceReply): dcnet.pb.GetThreadUsedSpaceReply;
+
+            /**
+             * Encodes the specified GetThreadUsedSpaceReply message. Does not implicitly {@link dcnet.pb.GetThreadUsedSpaceReply.verify|verify} messages.
+             * @param message GetThreadUsedSpaceReply message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: dcnet.pb.IGetThreadUsedSpaceReply, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified GetThreadUsedSpaceReply message, length delimited. Does not implicitly {@link dcnet.pb.GetThreadUsedSpaceReply.verify|verify} messages.
+             * @param message GetThreadUsedSpaceReply message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: dcnet.pb.IGetThreadUsedSpaceReply, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes a GetThreadUsedSpaceReply message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns GetThreadUsedSpaceReply
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): dcnet.pb.GetThreadUsedSpaceReply;
+
+            /**
+             * Decodes a GetThreadUsedSpaceReply message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns GetThreadUsedSpaceReply
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): dcnet.pb.GetThreadUsedSpaceReply;
+
+            /**
+             * Verifies a GetThreadUsedSpaceReply message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates a GetThreadUsedSpaceReply message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns GetThreadUsedSpaceReply
+             */
+            public static fromObject(object: { [k: string]: any }): dcnet.pb.GetThreadUsedSpaceReply;
+
+            /**
+             * Creates a plain object from a GetThreadUsedSpaceReply message. Also converts values to other types if specified.
+             * @param message GetThreadUsedSpaceReply
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: dcnet.pb.GetThreadUsedSpaceReply, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this GetThreadUsedSpaceReply to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for GetThreadUsedSpaceReply
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** Properties of a TeeReportVerifyRequest. */
+        interface ITeeReportVerifyRequest {
+
+            /** TeeReportVerifyRequest teereport */
+            teereport?: (Uint8Array|null);
+        }
+
+        /** Represents a TeeReportVerifyRequest. */
+        class TeeReportVerifyRequest implements ITeeReportVerifyRequest {
+
+            /**
+             * Constructs a new TeeReportVerifyRequest.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: dcnet.pb.ITeeReportVerifyRequest);
+
+            /** TeeReportVerifyRequest teereport. */
+            public teereport: Uint8Array;
+
+            /**
+             * Creates a new TeeReportVerifyRequest instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns TeeReportVerifyRequest instance
+             */
+            public static create(properties?: dcnet.pb.ITeeReportVerifyRequest): dcnet.pb.TeeReportVerifyRequest;
+
+            /**
+             * Encodes the specified TeeReportVerifyRequest message. Does not implicitly {@link dcnet.pb.TeeReportVerifyRequest.verify|verify} messages.
+             * @param message TeeReportVerifyRequest message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: dcnet.pb.ITeeReportVerifyRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified TeeReportVerifyRequest message, length delimited. Does not implicitly {@link dcnet.pb.TeeReportVerifyRequest.verify|verify} messages.
+             * @param message TeeReportVerifyRequest message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: dcnet.pb.ITeeReportVerifyRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes a TeeReportVerifyRequest message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns TeeReportVerifyRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): dcnet.pb.TeeReportVerifyRequest;
+
+            /**
+             * Decodes a TeeReportVerifyRequest message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns TeeReportVerifyRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): dcnet.pb.TeeReportVerifyRequest;
+
+            /**
+             * Verifies a TeeReportVerifyRequest message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates a TeeReportVerifyRequest message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns TeeReportVerifyRequest
+             */
+            public static fromObject(object: { [k: string]: any }): dcnet.pb.TeeReportVerifyRequest;
+
+            /**
+             * Creates a plain object from a TeeReportVerifyRequest message. Also converts values to other types if specified.
+             * @param message TeeReportVerifyRequest
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: dcnet.pb.TeeReportVerifyRequest, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this TeeReportVerifyRequest to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for TeeReportVerifyRequest
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** Properties of a TeeReportVerifyReply. */
+        interface ITeeReportVerifyReply {
+
+            /** TeeReportVerifyReply report */
+            report?: (Uint8Array|null);
+
+            /** TeeReportVerifyReply signature */
+            signature?: (Uint8Array|null);
+        }
+
+        /** Represents a TeeReportVerifyReply. */
+        class TeeReportVerifyReply implements ITeeReportVerifyReply {
+
+            /**
+             * Constructs a new TeeReportVerifyReply.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: dcnet.pb.ITeeReportVerifyReply);
+
+            /** TeeReportVerifyReply report. */
+            public report: Uint8Array;
+
+            /** TeeReportVerifyReply signature. */
+            public signature: Uint8Array;
+
+            /**
+             * Creates a new TeeReportVerifyReply instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns TeeReportVerifyReply instance
+             */
+            public static create(properties?: dcnet.pb.ITeeReportVerifyReply): dcnet.pb.TeeReportVerifyReply;
+
+            /**
+             * Encodes the specified TeeReportVerifyReply message. Does not implicitly {@link dcnet.pb.TeeReportVerifyReply.verify|verify} messages.
+             * @param message TeeReportVerifyReply message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: dcnet.pb.ITeeReportVerifyReply, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified TeeReportVerifyReply message, length delimited. Does not implicitly {@link dcnet.pb.TeeReportVerifyReply.verify|verify} messages.
+             * @param message TeeReportVerifyReply message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: dcnet.pb.ITeeReportVerifyReply, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes a TeeReportVerifyReply message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns TeeReportVerifyReply
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): dcnet.pb.TeeReportVerifyReply;
+
+            /**
+             * Decodes a TeeReportVerifyReply message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns TeeReportVerifyReply
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): dcnet.pb.TeeReportVerifyReply;
+
+            /**
+             * Verifies a TeeReportVerifyReply message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates a TeeReportVerifyReply message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns TeeReportVerifyReply
+             */
+            public static fromObject(object: { [k: string]: any }): dcnet.pb.TeeReportVerifyReply;
+
+            /**
+             * Creates a plain object from a TeeReportVerifyReply message. Also converts values to other types if specified.
+             * @param message TeeReportVerifyReply
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: dcnet.pb.TeeReportVerifyReply, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this TeeReportVerifyReply to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for TeeReportVerifyReply
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** Properties of a SendMsgToUserBoxRequest. */
+        interface ISendMsgToUserBoxRequest {
+
+            /** SendMsgToUserBoxRequest msg */
+            msg?: (dcnet.pb.IUserMsg|null);
+
+            /** SendMsgToUserBoxRequest AuthSignature */
+            AuthSignature?: (Uint8Array|null);
+
+            /** SendMsgToUserBoxRequest PeerId */
+            PeerId?: (Uint8Array|null);
+        }
+
+        /** Represents a SendMsgToUserBoxRequest. */
+        class SendMsgToUserBoxRequest implements ISendMsgToUserBoxRequest {
+
+            /**
+             * Constructs a new SendMsgToUserBoxRequest.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: dcnet.pb.ISendMsgToUserBoxRequest);
+
+            /** SendMsgToUserBoxRequest msg. */
+            public msg?: (dcnet.pb.IUserMsg|null);
+
+            /** SendMsgToUserBoxRequest AuthSignature. */
+            public AuthSignature: Uint8Array;
+
+            /** SendMsgToUserBoxRequest PeerId. */
+            public PeerId: Uint8Array;
+
+            /**
+             * Creates a new SendMsgToUserBoxRequest instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns SendMsgToUserBoxRequest instance
+             */
+            public static create(properties?: dcnet.pb.ISendMsgToUserBoxRequest): dcnet.pb.SendMsgToUserBoxRequest;
+
+            /**
+             * Encodes the specified SendMsgToUserBoxRequest message. Does not implicitly {@link dcnet.pb.SendMsgToUserBoxRequest.verify|verify} messages.
+             * @param message SendMsgToUserBoxRequest message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: dcnet.pb.ISendMsgToUserBoxRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified SendMsgToUserBoxRequest message, length delimited. Does not implicitly {@link dcnet.pb.SendMsgToUserBoxRequest.verify|verify} messages.
+             * @param message SendMsgToUserBoxRequest message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: dcnet.pb.ISendMsgToUserBoxRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes a SendMsgToUserBoxRequest message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns SendMsgToUserBoxRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): dcnet.pb.SendMsgToUserBoxRequest;
+
+            /**
+             * Decodes a SendMsgToUserBoxRequest message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns SendMsgToUserBoxRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): dcnet.pb.SendMsgToUserBoxRequest;
+
+            /**
+             * Verifies a SendMsgToUserBoxRequest message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates a SendMsgToUserBoxRequest message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns SendMsgToUserBoxRequest
+             */
+            public static fromObject(object: { [k: string]: any }): dcnet.pb.SendMsgToUserBoxRequest;
+
+            /**
+             * Creates a plain object from a SendMsgToUserBoxRequest message. Also converts values to other types if specified.
+             * @param message SendMsgToUserBoxRequest
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: dcnet.pb.SendMsgToUserBoxRequest, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this SendMsgToUserBoxRequest to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for SendMsgToUserBoxRequest
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** Properties of a SendMsgToUserBoxReply. */
+        interface ISendMsgToUserBoxReply {
+
+            /** SendMsgToUserBoxReply flag */
+            flag?: (number|null);
+        }
+
+        /** Represents a SendMsgToUserBoxReply. */
+        class SendMsgToUserBoxReply implements ISendMsgToUserBoxReply {
+
+            /**
+             * Constructs a new SendMsgToUserBoxReply.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: dcnet.pb.ISendMsgToUserBoxReply);
+
+            /** SendMsgToUserBoxReply flag. */
+            public flag: number;
+
+            /**
+             * Creates a new SendMsgToUserBoxReply instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns SendMsgToUserBoxReply instance
+             */
+            public static create(properties?: dcnet.pb.ISendMsgToUserBoxReply): dcnet.pb.SendMsgToUserBoxReply;
+
+            /**
+             * Encodes the specified SendMsgToUserBoxReply message. Does not implicitly {@link dcnet.pb.SendMsgToUserBoxReply.verify|verify} messages.
+             * @param message SendMsgToUserBoxReply message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: dcnet.pb.ISendMsgToUserBoxReply, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified SendMsgToUserBoxReply message, length delimited. Does not implicitly {@link dcnet.pb.SendMsgToUserBoxReply.verify|verify} messages.
+             * @param message SendMsgToUserBoxReply message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: dcnet.pb.ISendMsgToUserBoxReply, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes a SendMsgToUserBoxReply message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns SendMsgToUserBoxReply
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): dcnet.pb.SendMsgToUserBoxReply;
+
+            /**
+             * Decodes a SendMsgToUserBoxReply message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns SendMsgToUserBoxReply
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): dcnet.pb.SendMsgToUserBoxReply;
+
+            /**
+             * Verifies a SendMsgToUserBoxReply message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates a SendMsgToUserBoxReply message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns SendMsgToUserBoxReply
+             */
+            public static fromObject(object: { [k: string]: any }): dcnet.pb.SendMsgToUserBoxReply;
+
+            /**
+             * Creates a plain object from a SendMsgToUserBoxReply message. Also converts values to other types if specified.
+             * @param message SendMsgToUserBoxReply
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: dcnet.pb.SendMsgToUserBoxReply, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this SendMsgToUserBoxReply to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for SendMsgToUserBoxReply
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** Properties of a GetToUserBoxAuthRequest. */
+        interface IGetToUserBoxAuthRequest {
+
+            /** GetToUserBoxAuthRequest msgSignature */
+            msgSignature?: (Uint8Array|null);
+        }
+
+        /** Represents a GetToUserBoxAuthRequest. */
+        class GetToUserBoxAuthRequest implements IGetToUserBoxAuthRequest {
+
+            /**
+             * Constructs a new GetToUserBoxAuthRequest.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: dcnet.pb.IGetToUserBoxAuthRequest);
+
+            /** GetToUserBoxAuthRequest msgSignature. */
+            public msgSignature: Uint8Array;
+
+            /**
+             * Creates a new GetToUserBoxAuthRequest instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns GetToUserBoxAuthRequest instance
+             */
+            public static create(properties?: dcnet.pb.IGetToUserBoxAuthRequest): dcnet.pb.GetToUserBoxAuthRequest;
+
+            /**
+             * Encodes the specified GetToUserBoxAuthRequest message. Does not implicitly {@link dcnet.pb.GetToUserBoxAuthRequest.verify|verify} messages.
+             * @param message GetToUserBoxAuthRequest message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: dcnet.pb.IGetToUserBoxAuthRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified GetToUserBoxAuthRequest message, length delimited. Does not implicitly {@link dcnet.pb.GetToUserBoxAuthRequest.verify|verify} messages.
+             * @param message GetToUserBoxAuthRequest message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: dcnet.pb.IGetToUserBoxAuthRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes a GetToUserBoxAuthRequest message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns GetToUserBoxAuthRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): dcnet.pb.GetToUserBoxAuthRequest;
+
+            /**
+             * Decodes a GetToUserBoxAuthRequest message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns GetToUserBoxAuthRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): dcnet.pb.GetToUserBoxAuthRequest;
+
+            /**
+             * Verifies a GetToUserBoxAuthRequest message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates a GetToUserBoxAuthRequest message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns GetToUserBoxAuthRequest
+             */
+            public static fromObject(object: { [k: string]: any }): dcnet.pb.GetToUserBoxAuthRequest;
+
+            /**
+             * Creates a plain object from a GetToUserBoxAuthRequest message. Also converts values to other types if specified.
+             * @param message GetToUserBoxAuthRequest
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: dcnet.pb.GetToUserBoxAuthRequest, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this GetToUserBoxAuthRequest to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for GetToUserBoxAuthRequest
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** Properties of a GetToUserBoxAuthReply. */
+        interface IGetToUserBoxAuthReply {
+
+            /** GetToUserBoxAuthReply signature */
+            signature?: (Uint8Array|null);
+        }
+
+        /** Represents a GetToUserBoxAuthReply. */
+        class GetToUserBoxAuthReply implements IGetToUserBoxAuthReply {
+
+            /**
+             * Constructs a new GetToUserBoxAuthReply.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: dcnet.pb.IGetToUserBoxAuthReply);
+
+            /** GetToUserBoxAuthReply signature. */
+            public signature: Uint8Array;
+
+            /**
+             * Creates a new GetToUserBoxAuthReply instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns GetToUserBoxAuthReply instance
+             */
+            public static create(properties?: dcnet.pb.IGetToUserBoxAuthReply): dcnet.pb.GetToUserBoxAuthReply;
+
+            /**
+             * Encodes the specified GetToUserBoxAuthReply message. Does not implicitly {@link dcnet.pb.GetToUserBoxAuthReply.verify|verify} messages.
+             * @param message GetToUserBoxAuthReply message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: dcnet.pb.IGetToUserBoxAuthReply, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified GetToUserBoxAuthReply message, length delimited. Does not implicitly {@link dcnet.pb.GetToUserBoxAuthReply.verify|verify} messages.
+             * @param message GetToUserBoxAuthReply message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: dcnet.pb.IGetToUserBoxAuthReply, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes a GetToUserBoxAuthReply message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns GetToUserBoxAuthReply
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): dcnet.pb.GetToUserBoxAuthReply;
+
+            /**
+             * Decodes a GetToUserBoxAuthReply message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns GetToUserBoxAuthReply
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): dcnet.pb.GetToUserBoxAuthReply;
+
+            /**
+             * Verifies a GetToUserBoxAuthReply message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates a GetToUserBoxAuthReply message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns GetToUserBoxAuthReply
+             */
+            public static fromObject(object: { [k: string]: any }): dcnet.pb.GetToUserBoxAuthReply;
+
+            /**
+             * Creates a plain object from a GetToUserBoxAuthReply message. Also converts values to other types if specified.
+             * @param message GetToUserBoxAuthReply
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: dcnet.pb.GetToUserBoxAuthReply, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this GetToUserBoxAuthReply to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for GetToUserBoxAuthReply
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** Properties of a GetMaxKeyFromUserBoxRequest. */
+        interface IGetMaxKeyFromUserBoxRequest {
+
+            /** GetMaxKeyFromUserBoxRequest appId */
+            appId?: (Uint8Array|null);
+        }
+
+        /** Represents a GetMaxKeyFromUserBoxRequest. */
+        class GetMaxKeyFromUserBoxRequest implements IGetMaxKeyFromUserBoxRequest {
+
+            /**
+             * Constructs a new GetMaxKeyFromUserBoxRequest.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: dcnet.pb.IGetMaxKeyFromUserBoxRequest);
+
+            /** GetMaxKeyFromUserBoxRequest appId. */
+            public appId: Uint8Array;
+
+            /**
+             * Creates a new GetMaxKeyFromUserBoxRequest instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns GetMaxKeyFromUserBoxRequest instance
+             */
+            public static create(properties?: dcnet.pb.IGetMaxKeyFromUserBoxRequest): dcnet.pb.GetMaxKeyFromUserBoxRequest;
+
+            /**
+             * Encodes the specified GetMaxKeyFromUserBoxRequest message. Does not implicitly {@link dcnet.pb.GetMaxKeyFromUserBoxRequest.verify|verify} messages.
+             * @param message GetMaxKeyFromUserBoxRequest message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: dcnet.pb.IGetMaxKeyFromUserBoxRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified GetMaxKeyFromUserBoxRequest message, length delimited. Does not implicitly {@link dcnet.pb.GetMaxKeyFromUserBoxRequest.verify|verify} messages.
+             * @param message GetMaxKeyFromUserBoxRequest message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: dcnet.pb.IGetMaxKeyFromUserBoxRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes a GetMaxKeyFromUserBoxRequest message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns GetMaxKeyFromUserBoxRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): dcnet.pb.GetMaxKeyFromUserBoxRequest;
+
+            /**
+             * Decodes a GetMaxKeyFromUserBoxRequest message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns GetMaxKeyFromUserBoxRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): dcnet.pb.GetMaxKeyFromUserBoxRequest;
+
+            /**
+             * Verifies a GetMaxKeyFromUserBoxRequest message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates a GetMaxKeyFromUserBoxRequest message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns GetMaxKeyFromUserBoxRequest
+             */
+            public static fromObject(object: { [k: string]: any }): dcnet.pb.GetMaxKeyFromUserBoxRequest;
+
+            /**
+             * Creates a plain object from a GetMaxKeyFromUserBoxRequest message. Also converts values to other types if specified.
+             * @param message GetMaxKeyFromUserBoxRequest
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: dcnet.pb.GetMaxKeyFromUserBoxRequest, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this GetMaxKeyFromUserBoxRequest to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for GetMaxKeyFromUserBoxRequest
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** Properties of a GetMaxKeyFromUserBoxReply. */
+        interface IGetMaxKeyFromUserBoxReply {
+
+            /** GetMaxKeyFromUserBoxReply maxkey */
+            maxkey?: (Uint8Array|null);
+        }
+
+        /** Represents a GetMaxKeyFromUserBoxReply. */
+        class GetMaxKeyFromUserBoxReply implements IGetMaxKeyFromUserBoxReply {
+
+            /**
+             * Constructs a new GetMaxKeyFromUserBoxReply.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: dcnet.pb.IGetMaxKeyFromUserBoxReply);
+
+            /** GetMaxKeyFromUserBoxReply maxkey. */
+            public maxkey: Uint8Array;
+
+            /**
+             * Creates a new GetMaxKeyFromUserBoxReply instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns GetMaxKeyFromUserBoxReply instance
+             */
+            public static create(properties?: dcnet.pb.IGetMaxKeyFromUserBoxReply): dcnet.pb.GetMaxKeyFromUserBoxReply;
+
+            /**
+             * Encodes the specified GetMaxKeyFromUserBoxReply message. Does not implicitly {@link dcnet.pb.GetMaxKeyFromUserBoxReply.verify|verify} messages.
+             * @param message GetMaxKeyFromUserBoxReply message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: dcnet.pb.IGetMaxKeyFromUserBoxReply, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified GetMaxKeyFromUserBoxReply message, length delimited. Does not implicitly {@link dcnet.pb.GetMaxKeyFromUserBoxReply.verify|verify} messages.
+             * @param message GetMaxKeyFromUserBoxReply message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: dcnet.pb.IGetMaxKeyFromUserBoxReply, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes a GetMaxKeyFromUserBoxReply message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns GetMaxKeyFromUserBoxReply
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): dcnet.pb.GetMaxKeyFromUserBoxReply;
+
+            /**
+             * Decodes a GetMaxKeyFromUserBoxReply message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns GetMaxKeyFromUserBoxReply
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): dcnet.pb.GetMaxKeyFromUserBoxReply;
+
+            /**
+             * Verifies a GetMaxKeyFromUserBoxReply message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates a GetMaxKeyFromUserBoxReply message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns GetMaxKeyFromUserBoxReply
+             */
+            public static fromObject(object: { [k: string]: any }): dcnet.pb.GetMaxKeyFromUserBoxReply;
+
+            /**
+             * Creates a plain object from a GetMaxKeyFromUserBoxReply message. Also converts values to other types if specified.
+             * @param message GetMaxKeyFromUserBoxReply
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: dcnet.pb.GetMaxKeyFromUserBoxReply, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this GetMaxKeyFromUserBoxReply to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for GetMaxKeyFromUserBoxReply
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** Properties of a GetMsgFromUserBoxRequest. */
+        interface IGetMsgFromUserBoxRequest {
+
+            /** GetMsgFromUserBoxRequest appId */
+            appId?: (Uint8Array|null);
+
+            /** GetMsgFromUserBoxRequest blockheight */
+            blockheight?: (number|null);
+
+            /** GetMsgFromUserBoxRequest seekKey */
+            seekKey?: (Uint8Array|null);
+
+            /** GetMsgFromUserBoxRequest limit */
+            limit?: (number|null);
+        }
+
+        /** Represents a GetMsgFromUserBoxRequest. */
+        class GetMsgFromUserBoxRequest implements IGetMsgFromUserBoxRequest {
+
+            /**
+             * Constructs a new GetMsgFromUserBoxRequest.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: dcnet.pb.IGetMsgFromUserBoxRequest);
+
+            /** GetMsgFromUserBoxRequest appId. */
+            public appId: Uint8Array;
+
+            /** GetMsgFromUserBoxRequest blockheight. */
+            public blockheight: number;
+
+            /** GetMsgFromUserBoxRequest seekKey. */
+            public seekKey: Uint8Array;
+
+            /** GetMsgFromUserBoxRequest limit. */
+            public limit: number;
+
+            /**
+             * Creates a new GetMsgFromUserBoxRequest instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns GetMsgFromUserBoxRequest instance
+             */
+            public static create(properties?: dcnet.pb.IGetMsgFromUserBoxRequest): dcnet.pb.GetMsgFromUserBoxRequest;
+
+            /**
+             * Encodes the specified GetMsgFromUserBoxRequest message. Does not implicitly {@link dcnet.pb.GetMsgFromUserBoxRequest.verify|verify} messages.
+             * @param message GetMsgFromUserBoxRequest message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: dcnet.pb.IGetMsgFromUserBoxRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified GetMsgFromUserBoxRequest message, length delimited. Does not implicitly {@link dcnet.pb.GetMsgFromUserBoxRequest.verify|verify} messages.
+             * @param message GetMsgFromUserBoxRequest message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: dcnet.pb.IGetMsgFromUserBoxRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes a GetMsgFromUserBoxRequest message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns GetMsgFromUserBoxRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): dcnet.pb.GetMsgFromUserBoxRequest;
+
+            /**
+             * Decodes a GetMsgFromUserBoxRequest message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns GetMsgFromUserBoxRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): dcnet.pb.GetMsgFromUserBoxRequest;
+
+            /**
+             * Verifies a GetMsgFromUserBoxRequest message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates a GetMsgFromUserBoxRequest message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns GetMsgFromUserBoxRequest
+             */
+            public static fromObject(object: { [k: string]: any }): dcnet.pb.GetMsgFromUserBoxRequest;
+
+            /**
+             * Creates a plain object from a GetMsgFromUserBoxRequest message. Also converts values to other types if specified.
+             * @param message GetMsgFromUserBoxRequest
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: dcnet.pb.GetMsgFromUserBoxRequest, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this GetMsgFromUserBoxRequest to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for GetMsgFromUserBoxRequest
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** Properties of a GetMsgFromUserBoxReply. */
+        interface IGetMsgFromUserBoxReply {
+
+            /** GetMsgFromUserBoxReply msgs */
+            msgs?: (dcnet.pb.IUserMsg[]|null);
+        }
+
+        /** Represents a GetMsgFromUserBoxReply. */
+        class GetMsgFromUserBoxReply implements IGetMsgFromUserBoxReply {
+
+            /**
+             * Constructs a new GetMsgFromUserBoxReply.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: dcnet.pb.IGetMsgFromUserBoxReply);
+
+            /** GetMsgFromUserBoxReply msgs. */
+            public msgs: dcnet.pb.IUserMsg[];
+
+            /**
+             * Creates a new GetMsgFromUserBoxReply instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns GetMsgFromUserBoxReply instance
+             */
+            public static create(properties?: dcnet.pb.IGetMsgFromUserBoxReply): dcnet.pb.GetMsgFromUserBoxReply;
+
+            /**
+             * Encodes the specified GetMsgFromUserBoxReply message. Does not implicitly {@link dcnet.pb.GetMsgFromUserBoxReply.verify|verify} messages.
+             * @param message GetMsgFromUserBoxReply message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: dcnet.pb.IGetMsgFromUserBoxReply, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified GetMsgFromUserBoxReply message, length delimited. Does not implicitly {@link dcnet.pb.GetMsgFromUserBoxReply.verify|verify} messages.
+             * @param message GetMsgFromUserBoxReply message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: dcnet.pb.IGetMsgFromUserBoxReply, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes a GetMsgFromUserBoxReply message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns GetMsgFromUserBoxReply
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): dcnet.pb.GetMsgFromUserBoxReply;
+
+            /**
+             * Decodes a GetMsgFromUserBoxReply message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns GetMsgFromUserBoxReply
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): dcnet.pb.GetMsgFromUserBoxReply;
+
+            /**
+             * Verifies a GetMsgFromUserBoxReply message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates a GetMsgFromUserBoxReply message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns GetMsgFromUserBoxReply
+             */
+            public static fromObject(object: { [k: string]: any }): dcnet.pb.GetMsgFromUserBoxReply;
+
+            /**
+             * Creates a plain object from a GetMsgFromUserBoxReply message. Also converts values to other types if specified.
+             * @param message GetMsgFromUserBoxReply
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: dcnet.pb.GetMsgFromUserBoxReply, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this GetMsgFromUserBoxReply to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for GetMsgFromUserBoxReply
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** Properties of a UserMsg. */
+        interface IUserMsg {
+
+            /** UserMsg messageId */
+            messageId?: (Uint8Array|null);
+
+            /** UserMsg senderPubkey */
+            senderPubkey?: (Uint8Array|null);
+
+            /** UserMsg receiverPubkey */
+            receiverPubkey?: (Uint8Array|null);
+
+            /** UserMsg appId */
+            appId?: (Uint8Array|null);
+
+            /** UserMsg blockheight */
+            blockheight?: (number|null);
+
+            /** UserMsg encryptMsg */
+            encryptMsg?: (Uint8Array|null);
+
+            /** UserMsg signature */
+            signature?: (Uint8Array|null);
+        }
+
+        /** Represents a UserMsg. */
+        class UserMsg implements IUserMsg {
+
+            /**
+             * Constructs a new UserMsg.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: dcnet.pb.IUserMsg);
+
+            /** UserMsg messageId. */
+            public messageId: Uint8Array;
+
+            /** UserMsg senderPubkey. */
+            public senderPubkey: Uint8Array;
+
+            /** UserMsg receiverPubkey. */
+            public receiverPubkey: Uint8Array;
+
+            /** UserMsg appId. */
+            public appId: Uint8Array;
+
+            /** UserMsg blockheight. */
+            public blockheight: number;
+
+            /** UserMsg encryptMsg. */
+            public encryptMsg: Uint8Array;
+
+            /** UserMsg signature. */
+            public signature: Uint8Array;
+
+            /**
+             * Creates a new UserMsg instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns UserMsg instance
+             */
+            public static create(properties?: dcnet.pb.IUserMsg): dcnet.pb.UserMsg;
+
+            /**
+             * Encodes the specified UserMsg message. Does not implicitly {@link dcnet.pb.UserMsg.verify|verify} messages.
+             * @param message UserMsg message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: dcnet.pb.IUserMsg, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified UserMsg message, length delimited. Does not implicitly {@link dcnet.pb.UserMsg.verify|verify} messages.
+             * @param message UserMsg message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: dcnet.pb.IUserMsg, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes a UserMsg message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns UserMsg
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): dcnet.pb.UserMsg;
+
+            /**
+             * Decodes a UserMsg message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns UserMsg
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): dcnet.pb.UserMsg;
+
+            /**
+             * Verifies a UserMsg message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates a UserMsg message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns UserMsg
+             */
+            public static fromObject(object: { [k: string]: any }): dcnet.pb.UserMsg;
+
+            /**
+             * Creates a plain object from a UserMsg message. Also converts values to other types if specified.
+             * @param message UserMsg
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: dcnet.pb.UserMsg, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this UserMsg to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for UserMsg
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** Properties of a ReportSpamMsgRequest. */
+        interface IReportSpamMsgRequest {
+
+            /** ReportSpamMsgRequest msg */
+            msg?: (dcnet.pb.IUserMsg|null);
+
+            /** ReportSpamMsgRequest blockheight */
+            blockheight?: (number|null);
+
+            /** ReportSpamMsgRequest signature */
+            signature?: (Uint8Array|null);
+
+            /** ReportSpamMsgRequest vaccount */
+            vaccount?: (Uint8Array|null);
+        }
+
+        /** Represents a ReportSpamMsgRequest. */
+        class ReportSpamMsgRequest implements IReportSpamMsgRequest {
+
+            /**
+             * Constructs a new ReportSpamMsgRequest.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: dcnet.pb.IReportSpamMsgRequest);
+
+            /** ReportSpamMsgRequest msg. */
+            public msg?: (dcnet.pb.IUserMsg|null);
+
+            /** ReportSpamMsgRequest blockheight. */
+            public blockheight: number;
+
+            /** ReportSpamMsgRequest signature. */
+            public signature: Uint8Array;
+
+            /** ReportSpamMsgRequest vaccount. */
+            public vaccount: Uint8Array;
+
+            /**
+             * Creates a new ReportSpamMsgRequest instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns ReportSpamMsgRequest instance
+             */
+            public static create(properties?: dcnet.pb.IReportSpamMsgRequest): dcnet.pb.ReportSpamMsgRequest;
+
+            /**
+             * Encodes the specified ReportSpamMsgRequest message. Does not implicitly {@link dcnet.pb.ReportSpamMsgRequest.verify|verify} messages.
+             * @param message ReportSpamMsgRequest message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: dcnet.pb.IReportSpamMsgRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified ReportSpamMsgRequest message, length delimited. Does not implicitly {@link dcnet.pb.ReportSpamMsgRequest.verify|verify} messages.
+             * @param message ReportSpamMsgRequest message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: dcnet.pb.IReportSpamMsgRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes a ReportSpamMsgRequest message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns ReportSpamMsgRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): dcnet.pb.ReportSpamMsgRequest;
+
+            /**
+             * Decodes a ReportSpamMsgRequest message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns ReportSpamMsgRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): dcnet.pb.ReportSpamMsgRequest;
+
+            /**
+             * Verifies a ReportSpamMsgRequest message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates a ReportSpamMsgRequest message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns ReportSpamMsgRequest
+             */
+            public static fromObject(object: { [k: string]: any }): dcnet.pb.ReportSpamMsgRequest;
+
+            /**
+             * Creates a plain object from a ReportSpamMsgRequest message. Also converts values to other types if specified.
+             * @param message ReportSpamMsgRequest
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: dcnet.pb.ReportSpamMsgRequest, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this ReportSpamMsgRequest to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for ReportSpamMsgRequest
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** Properties of a ReportSpamMsgReply. */
+        interface IReportSpamMsgReply {
+        }
+
+        /** Represents a ReportSpamMsgReply. */
+        class ReportSpamMsgReply implements IReportSpamMsgReply {
+
+            /**
+             * Constructs a new ReportSpamMsgReply.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: dcnet.pb.IReportSpamMsgReply);
+
+            /**
+             * Creates a new ReportSpamMsgReply instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns ReportSpamMsgReply instance
+             */
+            public static create(properties?: dcnet.pb.IReportSpamMsgReply): dcnet.pb.ReportSpamMsgReply;
+
+            /**
+             * Encodes the specified ReportSpamMsgReply message. Does not implicitly {@link dcnet.pb.ReportSpamMsgReply.verify|verify} messages.
+             * @param message ReportSpamMsgReply message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: dcnet.pb.IReportSpamMsgReply, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified ReportSpamMsgReply message, length delimited. Does not implicitly {@link dcnet.pb.ReportSpamMsgReply.verify|verify} messages.
+             * @param message ReportSpamMsgReply message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: dcnet.pb.IReportSpamMsgReply, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes a ReportSpamMsgReply message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns ReportSpamMsgReply
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): dcnet.pb.ReportSpamMsgReply;
+
+            /**
+             * Decodes a ReportSpamMsgReply message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns ReportSpamMsgReply
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): dcnet.pb.ReportSpamMsgReply;
+
+            /**
+             * Verifies a ReportSpamMsgReply message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates a ReportSpamMsgReply message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns ReportSpamMsgReply
+             */
+            public static fromObject(object: { [k: string]: any }): dcnet.pb.ReportSpamMsgReply;
+
+            /**
+             * Creates a plain object from a ReportSpamMsgReply message. Also converts values to other types if specified.
+             * @param message ReportSpamMsgReply
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: dcnet.pb.ReportSpamMsgReply, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this ReportSpamMsgReply to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for ReportSpamMsgReply
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** Properties of a GetUserClientPeersRequest. */
+        interface IGetUserClientPeersRequest {
+
+            /** GetUserClientPeersRequest userPubkey */
+            userPubkey?: (Uint8Array|null);
+        }
+
+        /** Represents a GetUserClientPeersRequest. */
+        class GetUserClientPeersRequest implements IGetUserClientPeersRequest {
+
+            /**
+             * Constructs a new GetUserClientPeersRequest.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: dcnet.pb.IGetUserClientPeersRequest);
+
+            /** GetUserClientPeersRequest userPubkey. */
+            public userPubkey: Uint8Array;
+
+            /**
+             * Creates a new GetUserClientPeersRequest instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns GetUserClientPeersRequest instance
+             */
+            public static create(properties?: dcnet.pb.IGetUserClientPeersRequest): dcnet.pb.GetUserClientPeersRequest;
+
+            /**
+             * Encodes the specified GetUserClientPeersRequest message. Does not implicitly {@link dcnet.pb.GetUserClientPeersRequest.verify|verify} messages.
+             * @param message GetUserClientPeersRequest message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: dcnet.pb.IGetUserClientPeersRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified GetUserClientPeersRequest message, length delimited. Does not implicitly {@link dcnet.pb.GetUserClientPeersRequest.verify|verify} messages.
+             * @param message GetUserClientPeersRequest message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: dcnet.pb.IGetUserClientPeersRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes a GetUserClientPeersRequest message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns GetUserClientPeersRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): dcnet.pb.GetUserClientPeersRequest;
+
+            /**
+             * Decodes a GetUserClientPeersRequest message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns GetUserClientPeersRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): dcnet.pb.GetUserClientPeersRequest;
+
+            /**
+             * Verifies a GetUserClientPeersRequest message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates a GetUserClientPeersRequest message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns GetUserClientPeersRequest
+             */
+            public static fromObject(object: { [k: string]: any }): dcnet.pb.GetUserClientPeersRequest;
+
+            /**
+             * Creates a plain object from a GetUserClientPeersRequest message. Also converts values to other types if specified.
+             * @param message GetUserClientPeersRequest
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: dcnet.pb.GetUserClientPeersRequest, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this GetUserClientPeersRequest to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for GetUserClientPeersRequest
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** Properties of a GetUserClientPeersReply. */
+        interface IGetUserClientPeersReply {
+
+            /** GetUserClientPeersReply peers */
+            peers?: (string[]|null);
+        }
+
+        /** Represents a GetUserClientPeersReply. */
+        class GetUserClientPeersReply implements IGetUserClientPeersReply {
+
+            /**
+             * Constructs a new GetUserClientPeersReply.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: dcnet.pb.IGetUserClientPeersReply);
+
+            /** GetUserClientPeersReply peers. */
+            public peers: string[];
+
+            /**
+             * Creates a new GetUserClientPeersReply instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns GetUserClientPeersReply instance
+             */
+            public static create(properties?: dcnet.pb.IGetUserClientPeersReply): dcnet.pb.GetUserClientPeersReply;
+
+            /**
+             * Encodes the specified GetUserClientPeersReply message. Does not implicitly {@link dcnet.pb.GetUserClientPeersReply.verify|verify} messages.
+             * @param message GetUserClientPeersReply message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: dcnet.pb.IGetUserClientPeersReply, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified GetUserClientPeersReply message, length delimited. Does not implicitly {@link dcnet.pb.GetUserClientPeersReply.verify|verify} messages.
+             * @param message GetUserClientPeersReply message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: dcnet.pb.IGetUserClientPeersReply, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes a GetUserClientPeersReply message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns GetUserClientPeersReply
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): dcnet.pb.GetUserClientPeersReply;
+
+            /**
+             * Decodes a GetUserClientPeersReply message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns GetUserClientPeersReply
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): dcnet.pb.GetUserClientPeersReply;
+
+            /**
+             * Verifies a GetUserClientPeersReply message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates a GetUserClientPeersReply message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns GetUserClientPeersReply
+             */
+            public static fromObject(object: { [k: string]: any }): dcnet.pb.GetUserClientPeersReply;
+
+            /**
+             * Creates a plain object from a GetUserClientPeersReply message. Also converts values to other types if specified.
+             * @param message GetUserClientPeersReply
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: dcnet.pb.GetUserClientPeersReply, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this GetUserClientPeersReply to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for GetUserClientPeersReply
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** Properties of an AddThemeObjRequest. */
+        interface IAddThemeObjRequest {
+
+            /** AddThemeObjRequest theme */
+            theme?: (Uint8Array|null);
+
+            /** AddThemeObjRequest appId */
+            appId?: (Uint8Array|null);
+
+            /** AddThemeObjRequest blockheight */
+            blockheight?: (number|null);
+
+            /** AddThemeObjRequest commentSpace */
+            commentSpace?: (number|null);
+
+            /** AddThemeObjRequest allowSpace */
+            allowSpace?: (number|null);
+
+            /** AddThemeObjRequest userPubkey */
+            userPubkey?: (Uint8Array|null);
+
+            /** AddThemeObjRequest openFlag */
+            openFlag?: (number|null);
+
+            /** AddThemeObjRequest signature */
+            signature?: (Uint8Array|null);
+
+            /** AddThemeObjRequest CCount */
+            CCount?: (number|null);
+
+            /** AddThemeObjRequest UpCount */
+            UpCount?: (number|null);
+
+            /** AddThemeObjRequest DownCount */
+            DownCount?: (number|null);
+
+            /** AddThemeObjRequest TCount */
+            TCount?: (number|null);
+
+            /** AddThemeObjRequest vaccount */
+            vaccount?: (Uint8Array|null);
+        }
+
+        /** Represents an AddThemeObjRequest. */
+        class AddThemeObjRequest implements IAddThemeObjRequest {
+
+            /**
+             * Constructs a new AddThemeObjRequest.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: dcnet.pb.IAddThemeObjRequest);
+
+            /** AddThemeObjRequest theme. */
+            public theme: Uint8Array;
+
+            /** AddThemeObjRequest appId. */
+            public appId: Uint8Array;
+
+            /** AddThemeObjRequest blockheight. */
+            public blockheight: number;
+
+            /** AddThemeObjRequest commentSpace. */
+            public commentSpace: number;
+
+            /** AddThemeObjRequest allowSpace. */
+            public allowSpace: number;
+
+            /** AddThemeObjRequest userPubkey. */
+            public userPubkey: Uint8Array;
+
+            /** AddThemeObjRequest openFlag. */
+            public openFlag: number;
+
+            /** AddThemeObjRequest signature. */
+            public signature: Uint8Array;
+
+            /** AddThemeObjRequest CCount. */
+            public CCount: number;
+
+            /** AddThemeObjRequest UpCount. */
+            public UpCount: number;
+
+            /** AddThemeObjRequest DownCount. */
+            public DownCount: number;
+
+            /** AddThemeObjRequest TCount. */
+            public TCount: number;
+
+            /** AddThemeObjRequest vaccount. */
+            public vaccount: Uint8Array;
+
+            /**
+             * Creates a new AddThemeObjRequest instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns AddThemeObjRequest instance
+             */
+            public static create(properties?: dcnet.pb.IAddThemeObjRequest): dcnet.pb.AddThemeObjRequest;
+
+            /**
+             * Encodes the specified AddThemeObjRequest message. Does not implicitly {@link dcnet.pb.AddThemeObjRequest.verify|verify} messages.
+             * @param message AddThemeObjRequest message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: dcnet.pb.IAddThemeObjRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified AddThemeObjRequest message, length delimited. Does not implicitly {@link dcnet.pb.AddThemeObjRequest.verify|verify} messages.
+             * @param message AddThemeObjRequest message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: dcnet.pb.IAddThemeObjRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes an AddThemeObjRequest message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns AddThemeObjRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): dcnet.pb.AddThemeObjRequest;
+
+            /**
+             * Decodes an AddThemeObjRequest message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns AddThemeObjRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): dcnet.pb.AddThemeObjRequest;
+
+            /**
+             * Verifies an AddThemeObjRequest message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates an AddThemeObjRequest message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns AddThemeObjRequest
+             */
+            public static fromObject(object: { [k: string]: any }): dcnet.pb.AddThemeObjRequest;
+
+            /**
+             * Creates a plain object from an AddThemeObjRequest message. Also converts values to other types if specified.
+             * @param message AddThemeObjRequest
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: dcnet.pb.AddThemeObjRequest, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this AddThemeObjRequest to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for AddThemeObjRequest
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** Properties of an AddThemeObjReply. */
+        interface IAddThemeObjReply {
+
+            /** AddThemeObjReply flag */
+            flag?: (number|null);
+        }
+
+        /** Represents an AddThemeObjReply. */
+        class AddThemeObjReply implements IAddThemeObjReply {
+
+            /**
+             * Constructs a new AddThemeObjReply.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: dcnet.pb.IAddThemeObjReply);
+
+            /** AddThemeObjReply flag. */
+            public flag: number;
+
+            /**
+             * Creates a new AddThemeObjReply instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns AddThemeObjReply instance
+             */
+            public static create(properties?: dcnet.pb.IAddThemeObjReply): dcnet.pb.AddThemeObjReply;
+
+            /**
+             * Encodes the specified AddThemeObjReply message. Does not implicitly {@link dcnet.pb.AddThemeObjReply.verify|verify} messages.
+             * @param message AddThemeObjReply message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: dcnet.pb.IAddThemeObjReply, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified AddThemeObjReply message, length delimited. Does not implicitly {@link dcnet.pb.AddThemeObjReply.verify|verify} messages.
+             * @param message AddThemeObjReply message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: dcnet.pb.IAddThemeObjReply, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes an AddThemeObjReply message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns AddThemeObjReply
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): dcnet.pb.AddThemeObjReply;
+
+            /**
+             * Decodes an AddThemeObjReply message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns AddThemeObjReply
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): dcnet.pb.AddThemeObjReply;
+
+            /**
+             * Verifies an AddThemeObjReply message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates an AddThemeObjReply message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns AddThemeObjReply
+             */
+            public static fromObject(object: { [k: string]: any }): dcnet.pb.AddThemeObjReply;
+
+            /**
+             * Creates a plain object from an AddThemeObjReply message. Also converts values to other types if specified.
+             * @param message AddThemeObjReply
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: dcnet.pb.AddThemeObjReply, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this AddThemeObjReply to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for AddThemeObjReply
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** Properties of an AddThemeSpaceRequest. */
+        interface IAddThemeSpaceRequest {
+
+            /** AddThemeSpaceRequest theme */
+            theme?: (Uint8Array|null);
+
+            /** AddThemeSpaceRequest appId */
+            appId?: (Uint8Array|null);
+
+            /** AddThemeSpaceRequest blockheight */
+            blockheight?: (number|null);
+
+            /** AddThemeSpaceRequest addspace */
+            addspace?: (number|null);
+
+            /** AddThemeSpaceRequest userPubkey */
+            userPubkey?: (Uint8Array|null);
+
+            /** AddThemeSpaceRequest signature */
+            signature?: (Uint8Array|null);
+
+            /** AddThemeSpaceRequest vaccount */
+            vaccount?: (Uint8Array|null);
+        }
+
+        /** Represents an AddThemeSpaceRequest. */
+        class AddThemeSpaceRequest implements IAddThemeSpaceRequest {
+
+            /**
+             * Constructs a new AddThemeSpaceRequest.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: dcnet.pb.IAddThemeSpaceRequest);
+
+            /** AddThemeSpaceRequest theme. */
+            public theme: Uint8Array;
+
+            /** AddThemeSpaceRequest appId. */
+            public appId: Uint8Array;
+
+            /** AddThemeSpaceRequest blockheight. */
+            public blockheight: number;
+
+            /** AddThemeSpaceRequest addspace. */
+            public addspace: number;
+
+            /** AddThemeSpaceRequest userPubkey. */
+            public userPubkey: Uint8Array;
+
+            /** AddThemeSpaceRequest signature. */
+            public signature: Uint8Array;
+
+            /** AddThemeSpaceRequest vaccount. */
+            public vaccount: Uint8Array;
+
+            /**
+             * Creates a new AddThemeSpaceRequest instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns AddThemeSpaceRequest instance
+             */
+            public static create(properties?: dcnet.pb.IAddThemeSpaceRequest): dcnet.pb.AddThemeSpaceRequest;
+
+            /**
+             * Encodes the specified AddThemeSpaceRequest message. Does not implicitly {@link dcnet.pb.AddThemeSpaceRequest.verify|verify} messages.
+             * @param message AddThemeSpaceRequest message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: dcnet.pb.IAddThemeSpaceRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified AddThemeSpaceRequest message, length delimited. Does not implicitly {@link dcnet.pb.AddThemeSpaceRequest.verify|verify} messages.
+             * @param message AddThemeSpaceRequest message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: dcnet.pb.IAddThemeSpaceRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes an AddThemeSpaceRequest message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns AddThemeSpaceRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): dcnet.pb.AddThemeSpaceRequest;
+
+            /**
+             * Decodes an AddThemeSpaceRequest message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns AddThemeSpaceRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): dcnet.pb.AddThemeSpaceRequest;
+
+            /**
+             * Verifies an AddThemeSpaceRequest message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates an AddThemeSpaceRequest message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns AddThemeSpaceRequest
+             */
+            public static fromObject(object: { [k: string]: any }): dcnet.pb.AddThemeSpaceRequest;
+
+            /**
+             * Creates a plain object from an AddThemeSpaceRequest message. Also converts values to other types if specified.
+             * @param message AddThemeSpaceRequest
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: dcnet.pb.AddThemeSpaceRequest, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this AddThemeSpaceRequest to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for AddThemeSpaceRequest
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** Properties of an AddThemeSpaceReply. */
+        interface IAddThemeSpaceReply {
+
+            /** AddThemeSpaceReply flag */
+            flag?: (number|null);
+        }
+
+        /** Represents an AddThemeSpaceReply. */
+        class AddThemeSpaceReply implements IAddThemeSpaceReply {
+
+            /**
+             * Constructs a new AddThemeSpaceReply.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: dcnet.pb.IAddThemeSpaceReply);
+
+            /** AddThemeSpaceReply flag. */
+            public flag: number;
+
+            /**
+             * Creates a new AddThemeSpaceReply instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns AddThemeSpaceReply instance
+             */
+            public static create(properties?: dcnet.pb.IAddThemeSpaceReply): dcnet.pb.AddThemeSpaceReply;
+
+            /**
+             * Encodes the specified AddThemeSpaceReply message. Does not implicitly {@link dcnet.pb.AddThemeSpaceReply.verify|verify} messages.
+             * @param message AddThemeSpaceReply message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: dcnet.pb.IAddThemeSpaceReply, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified AddThemeSpaceReply message, length delimited. Does not implicitly {@link dcnet.pb.AddThemeSpaceReply.verify|verify} messages.
+             * @param message AddThemeSpaceReply message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: dcnet.pb.IAddThemeSpaceReply, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes an AddThemeSpaceReply message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns AddThemeSpaceReply
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): dcnet.pb.AddThemeSpaceReply;
+
+            /**
+             * Decodes an AddThemeSpaceReply message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns AddThemeSpaceReply
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): dcnet.pb.AddThemeSpaceReply;
+
+            /**
+             * Verifies an AddThemeSpaceReply message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates an AddThemeSpaceReply message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns AddThemeSpaceReply
+             */
+            public static fromObject(object: { [k: string]: any }): dcnet.pb.AddThemeSpaceReply;
+
+            /**
+             * Creates a plain object from an AddThemeSpaceReply message. Also converts values to other types if specified.
+             * @param message AddThemeSpaceReply
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: dcnet.pb.AddThemeSpaceReply, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this AddThemeSpaceReply to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for AddThemeSpaceReply
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** Properties of a SetCacheKeyRequest. */
+        interface ISetCacheKeyRequest {
+
+            /** SetCacheKeyRequest expire */
+            expire?: (number|null);
+
+            /** SetCacheKeyRequest blockheight */
+            blockheight?: (number|null);
+
+            /** SetCacheKeyRequest value */
+            value?: (Uint8Array|null);
+
+            /** SetCacheKeyRequest signature */
+            signature?: (Uint8Array|null);
+        }
+
+        /** Represents a SetCacheKeyRequest. */
+        class SetCacheKeyRequest implements ISetCacheKeyRequest {
+
+            /**
+             * Constructs a new SetCacheKeyRequest.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: dcnet.pb.ISetCacheKeyRequest);
+
+            /** SetCacheKeyRequest expire. */
+            public expire: number;
+
+            /** SetCacheKeyRequest blockheight. */
+            public blockheight: number;
+
+            /** SetCacheKeyRequest value. */
+            public value: Uint8Array;
+
+            /** SetCacheKeyRequest signature. */
+            public signature: Uint8Array;
+
+            /**
+             * Creates a new SetCacheKeyRequest instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns SetCacheKeyRequest instance
+             */
+            public static create(properties?: dcnet.pb.ISetCacheKeyRequest): dcnet.pb.SetCacheKeyRequest;
+
+            /**
+             * Encodes the specified SetCacheKeyRequest message. Does not implicitly {@link dcnet.pb.SetCacheKeyRequest.verify|verify} messages.
+             * @param message SetCacheKeyRequest message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: dcnet.pb.ISetCacheKeyRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified SetCacheKeyRequest message, length delimited. Does not implicitly {@link dcnet.pb.SetCacheKeyRequest.verify|verify} messages.
+             * @param message SetCacheKeyRequest message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: dcnet.pb.ISetCacheKeyRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes a SetCacheKeyRequest message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns SetCacheKeyRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): dcnet.pb.SetCacheKeyRequest;
+
+            /**
+             * Decodes a SetCacheKeyRequest message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns SetCacheKeyRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): dcnet.pb.SetCacheKeyRequest;
+
+            /**
+             * Verifies a SetCacheKeyRequest message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates a SetCacheKeyRequest message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns SetCacheKeyRequest
+             */
+            public static fromObject(object: { [k: string]: any }): dcnet.pb.SetCacheKeyRequest;
+
+            /**
+             * Creates a plain object from a SetCacheKeyRequest message. Also converts values to other types if specified.
+             * @param message SetCacheKeyRequest
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: dcnet.pb.SetCacheKeyRequest, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this SetCacheKeyRequest to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for SetCacheKeyRequest
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** Properties of a SetCacheKeyReply. */
+        interface ISetCacheKeyReply {
+
+            /** SetCacheKeyReply flag */
+            flag?: (number|null);
+
+            /** SetCacheKeyReply cacheKey */
+            cacheKey?: (Uint8Array|null);
+        }
+
+        /** Represents a SetCacheKeyReply. */
+        class SetCacheKeyReply implements ISetCacheKeyReply {
+
+            /**
+             * Constructs a new SetCacheKeyReply.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: dcnet.pb.ISetCacheKeyReply);
+
+            /** SetCacheKeyReply flag. */
+            public flag: number;
+
+            /** SetCacheKeyReply cacheKey. */
+            public cacheKey: Uint8Array;
+
+            /**
+             * Creates a new SetCacheKeyReply instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns SetCacheKeyReply instance
+             */
+            public static create(properties?: dcnet.pb.ISetCacheKeyReply): dcnet.pb.SetCacheKeyReply;
+
+            /**
+             * Encodes the specified SetCacheKeyReply message. Does not implicitly {@link dcnet.pb.SetCacheKeyReply.verify|verify} messages.
+             * @param message SetCacheKeyReply message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: dcnet.pb.ISetCacheKeyReply, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified SetCacheKeyReply message, length delimited. Does not implicitly {@link dcnet.pb.SetCacheKeyReply.verify|verify} messages.
+             * @param message SetCacheKeyReply message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: dcnet.pb.ISetCacheKeyReply, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes a SetCacheKeyReply message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns SetCacheKeyReply
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): dcnet.pb.SetCacheKeyReply;
+
+            /**
+             * Decodes a SetCacheKeyReply message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns SetCacheKeyReply
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): dcnet.pb.SetCacheKeyReply;
+
+            /**
+             * Verifies a SetCacheKeyReply message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates a SetCacheKeyReply message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns SetCacheKeyReply
+             */
+            public static fromObject(object: { [k: string]: any }): dcnet.pb.SetCacheKeyReply;
+
+            /**
+             * Creates a plain object from a SetCacheKeyReply message. Also converts values to other types if specified.
+             * @param message SetCacheKeyReply
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: dcnet.pb.SetCacheKeyReply, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this SetCacheKeyReply to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for SetCacheKeyReply
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** Properties of a GetCacheValueRequest. */
+        interface IGetCacheValueRequest {
+
+            /** GetCacheValueRequest key */
+            key?: (Uint8Array|null);
+        }
+
+        /** Represents a GetCacheValueRequest. */
+        class GetCacheValueRequest implements IGetCacheValueRequest {
+
+            /**
+             * Constructs a new GetCacheValueRequest.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: dcnet.pb.IGetCacheValueRequest);
+
+            /** GetCacheValueRequest key. */
+            public key: Uint8Array;
+
+            /**
+             * Creates a new GetCacheValueRequest instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns GetCacheValueRequest instance
+             */
+            public static create(properties?: dcnet.pb.IGetCacheValueRequest): dcnet.pb.GetCacheValueRequest;
+
+            /**
+             * Encodes the specified GetCacheValueRequest message. Does not implicitly {@link dcnet.pb.GetCacheValueRequest.verify|verify} messages.
+             * @param message GetCacheValueRequest message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: dcnet.pb.IGetCacheValueRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified GetCacheValueRequest message, length delimited. Does not implicitly {@link dcnet.pb.GetCacheValueRequest.verify|verify} messages.
+             * @param message GetCacheValueRequest message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: dcnet.pb.IGetCacheValueRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes a GetCacheValueRequest message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns GetCacheValueRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): dcnet.pb.GetCacheValueRequest;
+
+            /**
+             * Decodes a GetCacheValueRequest message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns GetCacheValueRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): dcnet.pb.GetCacheValueRequest;
+
+            /**
+             * Verifies a GetCacheValueRequest message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates a GetCacheValueRequest message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns GetCacheValueRequest
+             */
+            public static fromObject(object: { [k: string]: any }): dcnet.pb.GetCacheValueRequest;
+
+            /**
+             * Creates a plain object from a GetCacheValueRequest message. Also converts values to other types if specified.
+             * @param message GetCacheValueRequest
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: dcnet.pb.GetCacheValueRequest, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this GetCacheValueRequest to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for GetCacheValueRequest
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** Properties of a GetCacheValueReply. */
+        interface IGetCacheValueReply {
+
+            /** GetCacheValueReply value */
+            value?: (Uint8Array|null);
+        }
+
+        /** Represents a GetCacheValueReply. */
+        class GetCacheValueReply implements IGetCacheValueReply {
+
+            /**
+             * Constructs a new GetCacheValueReply.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: dcnet.pb.IGetCacheValueReply);
+
+            /** GetCacheValueReply value. */
+            public value: Uint8Array;
+
+            /**
+             * Creates a new GetCacheValueReply instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns GetCacheValueReply instance
+             */
+            public static create(properties?: dcnet.pb.IGetCacheValueReply): dcnet.pb.GetCacheValueReply;
+
+            /**
+             * Encodes the specified GetCacheValueReply message. Does not implicitly {@link dcnet.pb.GetCacheValueReply.verify|verify} messages.
+             * @param message GetCacheValueReply message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: dcnet.pb.IGetCacheValueReply, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified GetCacheValueReply message, length delimited. Does not implicitly {@link dcnet.pb.GetCacheValueReply.verify|verify} messages.
+             * @param message GetCacheValueReply message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: dcnet.pb.IGetCacheValueReply, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes a GetCacheValueReply message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns GetCacheValueReply
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): dcnet.pb.GetCacheValueReply;
+
+            /**
+             * Decodes a GetCacheValueReply message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns GetCacheValueReply
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): dcnet.pb.GetCacheValueReply;
+
+            /**
+             * Verifies a GetCacheValueReply message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates a GetCacheValueReply message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns GetCacheValueReply
+             */
+            public static fromObject(object: { [k: string]: any }): dcnet.pb.GetCacheValueReply;
+
+            /**
+             * Creates a plain object from a GetCacheValueReply message. Also converts values to other types if specified.
+             * @param message GetCacheValueReply
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: dcnet.pb.GetCacheValueReply, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this GetCacheValueReply to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for GetCacheValueReply
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** Properties of a GetThemeSpaceRequest. */
+        interface IGetThemeSpaceRequest {
+
+            /** GetThemeSpaceRequest theme */
+            theme?: (Uint8Array|null);
+
+            /** GetThemeSpaceRequest appId */
+            appId?: (Uint8Array|null);
+
+            /** GetThemeSpaceRequest blockheight */
+            blockheight?: (number|null);
+
+            /** GetThemeSpaceRequest userPubkey */
+            userPubkey?: (Uint8Array|null);
+
+            /** GetThemeSpaceRequest signature */
+            signature?: (Uint8Array|null);
+
+            /** GetThemeSpaceRequest vaccount */
+            vaccount?: (Uint8Array|null);
+        }
+
+        /** Represents a GetThemeSpaceRequest. */
+        class GetThemeSpaceRequest implements IGetThemeSpaceRequest {
+
+            /**
+             * Constructs a new GetThemeSpaceRequest.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: dcnet.pb.IGetThemeSpaceRequest);
+
+            /** GetThemeSpaceRequest theme. */
+            public theme: Uint8Array;
+
+            /** GetThemeSpaceRequest appId. */
+            public appId: Uint8Array;
+
+            /** GetThemeSpaceRequest blockheight. */
+            public blockheight: number;
+
+            /** GetThemeSpaceRequest userPubkey. */
+            public userPubkey: Uint8Array;
+
+            /** GetThemeSpaceRequest signature. */
+            public signature: Uint8Array;
+
+            /** GetThemeSpaceRequest vaccount. */
+            public vaccount: Uint8Array;
+
+            /**
+             * Creates a new GetThemeSpaceRequest instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns GetThemeSpaceRequest instance
+             */
+            public static create(properties?: dcnet.pb.IGetThemeSpaceRequest): dcnet.pb.GetThemeSpaceRequest;
+
+            /**
+             * Encodes the specified GetThemeSpaceRequest message. Does not implicitly {@link dcnet.pb.GetThemeSpaceRequest.verify|verify} messages.
+             * @param message GetThemeSpaceRequest message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: dcnet.pb.IGetThemeSpaceRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified GetThemeSpaceRequest message, length delimited. Does not implicitly {@link dcnet.pb.GetThemeSpaceRequest.verify|verify} messages.
+             * @param message GetThemeSpaceRequest message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: dcnet.pb.IGetThemeSpaceRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes a GetThemeSpaceRequest message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns GetThemeSpaceRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): dcnet.pb.GetThemeSpaceRequest;
+
+            /**
+             * Decodes a GetThemeSpaceRequest message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns GetThemeSpaceRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): dcnet.pb.GetThemeSpaceRequest;
+
+            /**
+             * Verifies a GetThemeSpaceRequest message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates a GetThemeSpaceRequest message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns GetThemeSpaceRequest
+             */
+            public static fromObject(object: { [k: string]: any }): dcnet.pb.GetThemeSpaceRequest;
+
+            /**
+             * Creates a plain object from a GetThemeSpaceRequest message. Also converts values to other types if specified.
+             * @param message GetThemeSpaceRequest
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: dcnet.pb.GetThemeSpaceRequest, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this GetThemeSpaceRequest to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for GetThemeSpaceRequest
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** Properties of a GetThemeSpaceReply. */
+        interface IGetThemeSpaceReply {
+
+            /** GetThemeSpaceReply space */
+            space?: (number|null);
+        }
+
+        /** Represents a GetThemeSpaceReply. */
+        class GetThemeSpaceReply implements IGetThemeSpaceReply {
+
+            /**
+             * Constructs a new GetThemeSpaceReply.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: dcnet.pb.IGetThemeSpaceReply);
+
+            /** GetThemeSpaceReply space. */
+            public space: number;
+
+            /**
+             * Creates a new GetThemeSpaceReply instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns GetThemeSpaceReply instance
+             */
+            public static create(properties?: dcnet.pb.IGetThemeSpaceReply): dcnet.pb.GetThemeSpaceReply;
+
+            /**
+             * Encodes the specified GetThemeSpaceReply message. Does not implicitly {@link dcnet.pb.GetThemeSpaceReply.verify|verify} messages.
+             * @param message GetThemeSpaceReply message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: dcnet.pb.IGetThemeSpaceReply, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified GetThemeSpaceReply message, length delimited. Does not implicitly {@link dcnet.pb.GetThemeSpaceReply.verify|verify} messages.
+             * @param message GetThemeSpaceReply message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: dcnet.pb.IGetThemeSpaceReply, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes a GetThemeSpaceReply message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns GetThemeSpaceReply
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): dcnet.pb.GetThemeSpaceReply;
+
+            /**
+             * Decodes a GetThemeSpaceReply message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns GetThemeSpaceReply
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): dcnet.pb.GetThemeSpaceReply;
+
+            /**
+             * Verifies a GetThemeSpaceReply message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates a GetThemeSpaceReply message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns GetThemeSpaceReply
+             */
+            public static fromObject(object: { [k: string]: any }): dcnet.pb.GetThemeSpaceReply;
+
+            /**
+             * Creates a plain object from a GetThemeSpaceReply message. Also converts values to other types if specified.
+             * @param message GetThemeSpaceReply
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: dcnet.pb.GetThemeSpaceReply, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this GetThemeSpaceReply to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for GetThemeSpaceReply
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** Properties of a DeleteThemeObjRequest. */
+        interface IDeleteThemeObjRequest {
+
+            /** DeleteThemeObjRequest theme */
+            theme?: (Uint8Array|null);
+
+            /** DeleteThemeObjRequest appId */
+            appId?: (Uint8Array|null);
+
+            /** DeleteThemeObjRequest blockheight */
+            blockheight?: (number|null);
+
+            /** DeleteThemeObjRequest userPubkey */
+            userPubkey?: (Uint8Array|null);
+
+            /** DeleteThemeObjRequest signature */
+            signature?: (Uint8Array|null);
+        }
+
+        /** Represents a DeleteThemeObjRequest. */
+        class DeleteThemeObjRequest implements IDeleteThemeObjRequest {
+
+            /**
+             * Constructs a new DeleteThemeObjRequest.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: dcnet.pb.IDeleteThemeObjRequest);
+
+            /** DeleteThemeObjRequest theme. */
+            public theme: Uint8Array;
+
+            /** DeleteThemeObjRequest appId. */
+            public appId: Uint8Array;
+
+            /** DeleteThemeObjRequest blockheight. */
+            public blockheight: number;
+
+            /** DeleteThemeObjRequest userPubkey. */
+            public userPubkey: Uint8Array;
+
+            /** DeleteThemeObjRequest signature. */
+            public signature: Uint8Array;
+
+            /**
+             * Creates a new DeleteThemeObjRequest instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns DeleteThemeObjRequest instance
+             */
+            public static create(properties?: dcnet.pb.IDeleteThemeObjRequest): dcnet.pb.DeleteThemeObjRequest;
+
+            /**
+             * Encodes the specified DeleteThemeObjRequest message. Does not implicitly {@link dcnet.pb.DeleteThemeObjRequest.verify|verify} messages.
+             * @param message DeleteThemeObjRequest message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: dcnet.pb.IDeleteThemeObjRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified DeleteThemeObjRequest message, length delimited. Does not implicitly {@link dcnet.pb.DeleteThemeObjRequest.verify|verify} messages.
+             * @param message DeleteThemeObjRequest message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: dcnet.pb.IDeleteThemeObjRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes a DeleteThemeObjRequest message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns DeleteThemeObjRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): dcnet.pb.DeleteThemeObjRequest;
+
+            /**
+             * Decodes a DeleteThemeObjRequest message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns DeleteThemeObjRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): dcnet.pb.DeleteThemeObjRequest;
+
+            /**
+             * Verifies a DeleteThemeObjRequest message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates a DeleteThemeObjRequest message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns DeleteThemeObjRequest
+             */
+            public static fromObject(object: { [k: string]: any }): dcnet.pb.DeleteThemeObjRequest;
+
+            /**
+             * Creates a plain object from a DeleteThemeObjRequest message. Also converts values to other types if specified.
+             * @param message DeleteThemeObjRequest
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: dcnet.pb.DeleteThemeObjRequest, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this DeleteThemeObjRequest to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for DeleteThemeObjRequest
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** Properties of a DeleteThemeObjReply. */
+        interface IDeleteThemeObjReply {
+
+            /** DeleteThemeObjReply flag */
+            flag?: (number|null);
+        }
+
+        /** Represents a DeleteThemeObjReply. */
+        class DeleteThemeObjReply implements IDeleteThemeObjReply {
+
+            /**
+             * Constructs a new DeleteThemeObjReply.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: dcnet.pb.IDeleteThemeObjReply);
+
+            /** DeleteThemeObjReply flag. */
+            public flag: number;
+
+            /**
+             * Creates a new DeleteThemeObjReply instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns DeleteThemeObjReply instance
+             */
+            public static create(properties?: dcnet.pb.IDeleteThemeObjReply): dcnet.pb.DeleteThemeObjReply;
+
+            /**
+             * Encodes the specified DeleteThemeObjReply message. Does not implicitly {@link dcnet.pb.DeleteThemeObjReply.verify|verify} messages.
+             * @param message DeleteThemeObjReply message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: dcnet.pb.IDeleteThemeObjReply, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified DeleteThemeObjReply message, length delimited. Does not implicitly {@link dcnet.pb.DeleteThemeObjReply.verify|verify} messages.
+             * @param message DeleteThemeObjReply message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: dcnet.pb.IDeleteThemeObjReply, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes a DeleteThemeObjReply message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns DeleteThemeObjReply
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): dcnet.pb.DeleteThemeObjReply;
+
+            /**
+             * Decodes a DeleteThemeObjReply message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns DeleteThemeObjReply
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): dcnet.pb.DeleteThemeObjReply;
+
+            /**
+             * Verifies a DeleteThemeObjReply message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates a DeleteThemeObjReply message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns DeleteThemeObjReply
+             */
+            public static fromObject(object: { [k: string]: any }): dcnet.pb.DeleteThemeObjReply;
+
+            /**
+             * Creates a plain object from a DeleteThemeObjReply message. Also converts values to other types if specified.
+             * @param message DeleteThemeObjReply
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: dcnet.pb.DeleteThemeObjReply, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this DeleteThemeObjReply to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for DeleteThemeObjReply
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** Properties of a PublishCommentToThemeRequest. */
+        interface IPublishCommentToThemeRequest {
+
+            /** PublishCommentToThemeRequest theme */
+            theme?: (Uint8Array|null);
+
+            /** PublishCommentToThemeRequest appId */
+            appId?: (Uint8Array|null);
+
+            /** PublishCommentToThemeRequest themeAuthor */
+            themeAuthor?: (Uint8Array|null);
+
+            /** PublishCommentToThemeRequest blockheight */
+            blockheight?: (number|null);
+
+            /** PublishCommentToThemeRequest userPubkey */
+            userPubkey?: (Uint8Array|null);
+
+            /** PublishCommentToThemeRequest commentCid */
+            commentCid?: (Uint8Array|null);
+
+            /** PublishCommentToThemeRequest comment */
+            comment?: (Uint8Array|null);
+
+            /** PublishCommentToThemeRequest commentSize */
+            commentSize?: (number|null);
+
+            /** PublishCommentToThemeRequest status */
+            status?: (number|null);
+
+            /** PublishCommentToThemeRequest refercommentkey */
+            refercommentkey?: (Uint8Array|null);
+
+            /** PublishCommentToThemeRequest CCount */
+            CCount?: (number|null);
+
+            /** PublishCommentToThemeRequest UpCount */
+            UpCount?: (number|null);
+
+            /** PublishCommentToThemeRequest DownCount */
+            DownCount?: (number|null);
+
+            /** PublishCommentToThemeRequest TCount */
+            TCount?: (number|null);
+
+            /** PublishCommentToThemeRequest type */
+            type?: (number|null);
+
+            /** PublishCommentToThemeRequest signature */
+            signature?: (Uint8Array|null);
+
+            /** PublishCommentToThemeRequest vaccount */
+            vaccount?: (Uint8Array|null);
+        }
+
+        /** Represents a PublishCommentToThemeRequest. */
+        class PublishCommentToThemeRequest implements IPublishCommentToThemeRequest {
+
+            /**
+             * Constructs a new PublishCommentToThemeRequest.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: dcnet.pb.IPublishCommentToThemeRequest);
+
+            /** PublishCommentToThemeRequest theme. */
+            public theme: Uint8Array;
+
+            /** PublishCommentToThemeRequest appId. */
+            public appId: Uint8Array;
+
+            /** PublishCommentToThemeRequest themeAuthor. */
+            public themeAuthor: Uint8Array;
+
+            /** PublishCommentToThemeRequest blockheight. */
+            public blockheight: number;
+
+            /** PublishCommentToThemeRequest userPubkey. */
+            public userPubkey: Uint8Array;
+
+            /** PublishCommentToThemeRequest commentCid. */
+            public commentCid: Uint8Array;
+
+            /** PublishCommentToThemeRequest comment. */
+            public comment: Uint8Array;
+
+            /** PublishCommentToThemeRequest commentSize. */
+            public commentSize: number;
+
+            /** PublishCommentToThemeRequest status. */
+            public status: number;
+
+            /** PublishCommentToThemeRequest refercommentkey. */
+            public refercommentkey: Uint8Array;
+
+            /** PublishCommentToThemeRequest CCount. */
+            public CCount: number;
+
+            /** PublishCommentToThemeRequest UpCount. */
+            public UpCount: number;
+
+            /** PublishCommentToThemeRequest DownCount. */
+            public DownCount: number;
+
+            /** PublishCommentToThemeRequest TCount. */
+            public TCount: number;
+
+            /** PublishCommentToThemeRequest type. */
+            public type: number;
+
+            /** PublishCommentToThemeRequest signature. */
+            public signature: Uint8Array;
+
+            /** PublishCommentToThemeRequest vaccount. */
+            public vaccount: Uint8Array;
+
+            /**
+             * Creates a new PublishCommentToThemeRequest instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns PublishCommentToThemeRequest instance
+             */
+            public static create(properties?: dcnet.pb.IPublishCommentToThemeRequest): dcnet.pb.PublishCommentToThemeRequest;
+
+            /**
+             * Encodes the specified PublishCommentToThemeRequest message. Does not implicitly {@link dcnet.pb.PublishCommentToThemeRequest.verify|verify} messages.
+             * @param message PublishCommentToThemeRequest message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: dcnet.pb.IPublishCommentToThemeRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified PublishCommentToThemeRequest message, length delimited. Does not implicitly {@link dcnet.pb.PublishCommentToThemeRequest.verify|verify} messages.
+             * @param message PublishCommentToThemeRequest message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: dcnet.pb.IPublishCommentToThemeRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes a PublishCommentToThemeRequest message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns PublishCommentToThemeRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): dcnet.pb.PublishCommentToThemeRequest;
+
+            /**
+             * Decodes a PublishCommentToThemeRequest message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns PublishCommentToThemeRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): dcnet.pb.PublishCommentToThemeRequest;
+
+            /**
+             * Verifies a PublishCommentToThemeRequest message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates a PublishCommentToThemeRequest message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns PublishCommentToThemeRequest
+             */
+            public static fromObject(object: { [k: string]: any }): dcnet.pb.PublishCommentToThemeRequest;
+
+            /**
+             * Creates a plain object from a PublishCommentToThemeRequest message. Also converts values to other types if specified.
+             * @param message PublishCommentToThemeRequest
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: dcnet.pb.PublishCommentToThemeRequest, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this PublishCommentToThemeRequest to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for PublishCommentToThemeRequest
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** Properties of a PublishCommentToThemeReply. */
+        interface IPublishCommentToThemeReply {
+
+            /** PublishCommentToThemeReply flag */
+            flag?: (number|null);
+        }
+
+        /** Represents a PublishCommentToThemeReply. */
+        class PublishCommentToThemeReply implements IPublishCommentToThemeReply {
+
+            /**
+             * Constructs a new PublishCommentToThemeReply.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: dcnet.pb.IPublishCommentToThemeReply);
+
+            /** PublishCommentToThemeReply flag. */
+            public flag: number;
+
+            /**
+             * Creates a new PublishCommentToThemeReply instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns PublishCommentToThemeReply instance
+             */
+            public static create(properties?: dcnet.pb.IPublishCommentToThemeReply): dcnet.pb.PublishCommentToThemeReply;
+
+            /**
+             * Encodes the specified PublishCommentToThemeReply message. Does not implicitly {@link dcnet.pb.PublishCommentToThemeReply.verify|verify} messages.
+             * @param message PublishCommentToThemeReply message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: dcnet.pb.IPublishCommentToThemeReply, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified PublishCommentToThemeReply message, length delimited. Does not implicitly {@link dcnet.pb.PublishCommentToThemeReply.verify|verify} messages.
+             * @param message PublishCommentToThemeReply message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: dcnet.pb.IPublishCommentToThemeReply, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes a PublishCommentToThemeReply message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns PublishCommentToThemeReply
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): dcnet.pb.PublishCommentToThemeReply;
+
+            /**
+             * Decodes a PublishCommentToThemeReply message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns PublishCommentToThemeReply
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): dcnet.pb.PublishCommentToThemeReply;
+
+            /**
+             * Verifies a PublishCommentToThemeReply message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates a PublishCommentToThemeReply message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns PublishCommentToThemeReply
+             */
+            public static fromObject(object: { [k: string]: any }): dcnet.pb.PublishCommentToThemeReply;
+
+            /**
+             * Creates a plain object from a PublishCommentToThemeReply message. Also converts values to other types if specified.
+             * @param message PublishCommentToThemeReply
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: dcnet.pb.PublishCommentToThemeReply, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this PublishCommentToThemeReply to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for PublishCommentToThemeReply
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** Properties of a SetKeyValueRequest. */
+        interface ISetKeyValueRequest {
+
+            /** SetKeyValueRequest theme */
+            theme?: (Uint8Array|null);
+
+            /** SetKeyValueRequest appId */
+            appId?: (Uint8Array|null);
+
+            /** SetKeyValueRequest themeAuthor */
+            themeAuthor?: (Uint8Array|null);
+
+            /** SetKeyValueRequest blockheight */
+            blockheight?: (number|null);
+
+            /** SetKeyValueRequest userPubkey */
+            userPubkey?: (Uint8Array|null);
+
+            /** SetKeyValueRequest contentCid */
+            contentCid?: (Uint8Array|null);
+
+            /** SetKeyValueRequest content */
+            content?: (Uint8Array|null);
+
+            /** SetKeyValueRequest contentSize */
+            contentSize?: (number|null);
+
+            /** SetKeyValueRequest type */
+            type?: (number|null);
+
+            /** SetKeyValueRequest signature */
+            signature?: (Uint8Array|null);
+        }
+
+        /** Represents a SetKeyValueRequest. */
+        class SetKeyValueRequest implements ISetKeyValueRequest {
+
+            /**
+             * Constructs a new SetKeyValueRequest.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: dcnet.pb.ISetKeyValueRequest);
+
+            /** SetKeyValueRequest theme. */
+            public theme: Uint8Array;
+
+            /** SetKeyValueRequest appId. */
+            public appId: Uint8Array;
+
+            /** SetKeyValueRequest themeAuthor. */
+            public themeAuthor: Uint8Array;
+
+            /** SetKeyValueRequest blockheight. */
+            public blockheight: number;
+
+            /** SetKeyValueRequest userPubkey. */
+            public userPubkey: Uint8Array;
+
+            /** SetKeyValueRequest contentCid. */
+            public contentCid: Uint8Array;
+
+            /** SetKeyValueRequest content. */
+            public content: Uint8Array;
+
+            /** SetKeyValueRequest contentSize. */
+            public contentSize: number;
+
+            /** SetKeyValueRequest type. */
+            public type: number;
+
+            /** SetKeyValueRequest signature. */
+            public signature: Uint8Array;
+
+            /**
+             * Creates a new SetKeyValueRequest instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns SetKeyValueRequest instance
+             */
+            public static create(properties?: dcnet.pb.ISetKeyValueRequest): dcnet.pb.SetKeyValueRequest;
+
+            /**
+             * Encodes the specified SetKeyValueRequest message. Does not implicitly {@link dcnet.pb.SetKeyValueRequest.verify|verify} messages.
+             * @param message SetKeyValueRequest message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: dcnet.pb.ISetKeyValueRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified SetKeyValueRequest message, length delimited. Does not implicitly {@link dcnet.pb.SetKeyValueRequest.verify|verify} messages.
+             * @param message SetKeyValueRequest message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: dcnet.pb.ISetKeyValueRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes a SetKeyValueRequest message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns SetKeyValueRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): dcnet.pb.SetKeyValueRequest;
+
+            /**
+             * Decodes a SetKeyValueRequest message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns SetKeyValueRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): dcnet.pb.SetKeyValueRequest;
+
+            /**
+             * Verifies a SetKeyValueRequest message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates a SetKeyValueRequest message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns SetKeyValueRequest
+             */
+            public static fromObject(object: { [k: string]: any }): dcnet.pb.SetKeyValueRequest;
+
+            /**
+             * Creates a plain object from a SetKeyValueRequest message. Also converts values to other types if specified.
+             * @param message SetKeyValueRequest
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: dcnet.pb.SetKeyValueRequest, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this SetKeyValueRequest to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for SetKeyValueRequest
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** Properties of a SetKeyValueReply. */
+        interface ISetKeyValueReply {
+
+            /** SetKeyValueReply flag */
+            flag?: (number|null);
+        }
+
+        /** Represents a SetKeyValueReply. */
+        class SetKeyValueReply implements ISetKeyValueReply {
+
+            /**
+             * Constructs a new SetKeyValueReply.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: dcnet.pb.ISetKeyValueReply);
+
+            /** SetKeyValueReply flag. */
+            public flag: number;
+
+            /**
+             * Creates a new SetKeyValueReply instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns SetKeyValueReply instance
+             */
+            public static create(properties?: dcnet.pb.ISetKeyValueReply): dcnet.pb.SetKeyValueReply;
+
+            /**
+             * Encodes the specified SetKeyValueReply message. Does not implicitly {@link dcnet.pb.SetKeyValueReply.verify|verify} messages.
+             * @param message SetKeyValueReply message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: dcnet.pb.ISetKeyValueReply, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified SetKeyValueReply message, length delimited. Does not implicitly {@link dcnet.pb.SetKeyValueReply.verify|verify} messages.
+             * @param message SetKeyValueReply message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: dcnet.pb.ISetKeyValueReply, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes a SetKeyValueReply message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns SetKeyValueReply
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): dcnet.pb.SetKeyValueReply;
+
+            /**
+             * Decodes a SetKeyValueReply message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns SetKeyValueReply
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): dcnet.pb.SetKeyValueReply;
+
+            /**
+             * Verifies a SetKeyValueReply message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates a SetKeyValueReply message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns SetKeyValueReply
+             */
+            public static fromObject(object: { [k: string]: any }): dcnet.pb.SetKeyValueReply;
+
+            /**
+             * Creates a plain object from a SetKeyValueReply message. Also converts values to other types if specified.
+             * @param message SetKeyValueReply
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: dcnet.pb.SetKeyValueReply, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this SetKeyValueReply to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for SetKeyValueReply
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** Properties of a ConfigThemeObjAuthRequest. */
+        interface IConfigThemeObjAuthRequest {
+
+            /** ConfigThemeObjAuthRequest theme */
+            theme?: (Uint8Array|null);
+
+            /** ConfigThemeObjAuthRequest appId */
+            appId?: (Uint8Array|null);
+
+            /** ConfigThemeObjAuthRequest themeAuthor */
+            themeAuthor?: (Uint8Array|null);
+
+            /** ConfigThemeObjAuthRequest blockheight */
+            blockheight?: (number|null);
+
+            /** ConfigThemeObjAuthRequest userPubkey */
+            userPubkey?: (Uint8Array|null);
+
+            /** ConfigThemeObjAuthRequest contentCid */
+            contentCid?: (Uint8Array|null);
+
+            /** ConfigThemeObjAuthRequest content */
+            content?: (Uint8Array|null);
+
+            /** ConfigThemeObjAuthRequest contentSize */
+            contentSize?: (number|null);
+
+            /** ConfigThemeObjAuthRequest type */
+            type?: (number|null);
+
+            /** ConfigThemeObjAuthRequest signature */
+            signature?: (Uint8Array|null);
+        }
+
+        /** Represents a ConfigThemeObjAuthRequest. */
+        class ConfigThemeObjAuthRequest implements IConfigThemeObjAuthRequest {
+
+            /**
+             * Constructs a new ConfigThemeObjAuthRequest.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: dcnet.pb.IConfigThemeObjAuthRequest);
+
+            /** ConfigThemeObjAuthRequest theme. */
+            public theme: Uint8Array;
+
+            /** ConfigThemeObjAuthRequest appId. */
+            public appId: Uint8Array;
+
+            /** ConfigThemeObjAuthRequest themeAuthor. */
+            public themeAuthor: Uint8Array;
+
+            /** ConfigThemeObjAuthRequest blockheight. */
+            public blockheight: number;
+
+            /** ConfigThemeObjAuthRequest userPubkey. */
+            public userPubkey: Uint8Array;
+
+            /** ConfigThemeObjAuthRequest contentCid. */
+            public contentCid: Uint8Array;
+
+            /** ConfigThemeObjAuthRequest content. */
+            public content: Uint8Array;
+
+            /** ConfigThemeObjAuthRequest contentSize. */
+            public contentSize: number;
+
+            /** ConfigThemeObjAuthRequest type. */
+            public type: number;
+
+            /** ConfigThemeObjAuthRequest signature. */
+            public signature: Uint8Array;
+
+            /**
+             * Creates a new ConfigThemeObjAuthRequest instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns ConfigThemeObjAuthRequest instance
+             */
+            public static create(properties?: dcnet.pb.IConfigThemeObjAuthRequest): dcnet.pb.ConfigThemeObjAuthRequest;
+
+            /**
+             * Encodes the specified ConfigThemeObjAuthRequest message. Does not implicitly {@link dcnet.pb.ConfigThemeObjAuthRequest.verify|verify} messages.
+             * @param message ConfigThemeObjAuthRequest message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: dcnet.pb.IConfigThemeObjAuthRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified ConfigThemeObjAuthRequest message, length delimited. Does not implicitly {@link dcnet.pb.ConfigThemeObjAuthRequest.verify|verify} messages.
+             * @param message ConfigThemeObjAuthRequest message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: dcnet.pb.IConfigThemeObjAuthRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes a ConfigThemeObjAuthRequest message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns ConfigThemeObjAuthRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): dcnet.pb.ConfigThemeObjAuthRequest;
+
+            /**
+             * Decodes a ConfigThemeObjAuthRequest message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns ConfigThemeObjAuthRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): dcnet.pb.ConfigThemeObjAuthRequest;
+
+            /**
+             * Verifies a ConfigThemeObjAuthRequest message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates a ConfigThemeObjAuthRequest message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns ConfigThemeObjAuthRequest
+             */
+            public static fromObject(object: { [k: string]: any }): dcnet.pb.ConfigThemeObjAuthRequest;
+
+            /**
+             * Creates a plain object from a ConfigThemeObjAuthRequest message. Also converts values to other types if specified.
+             * @param message ConfigThemeObjAuthRequest
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: dcnet.pb.ConfigThemeObjAuthRequest, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this ConfigThemeObjAuthRequest to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for ConfigThemeObjAuthRequest
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** Properties of a ConfigThemeObjAuthReply. */
+        interface IConfigThemeObjAuthReply {
+
+            /** ConfigThemeObjAuthReply flag */
+            flag?: (number|null);
+        }
+
+        /** Represents a ConfigThemeObjAuthReply. */
+        class ConfigThemeObjAuthReply implements IConfigThemeObjAuthReply {
+
+            /**
+             * Constructs a new ConfigThemeObjAuthReply.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: dcnet.pb.IConfigThemeObjAuthReply);
+
+            /** ConfigThemeObjAuthReply flag. */
+            public flag: number;
+
+            /**
+             * Creates a new ConfigThemeObjAuthReply instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns ConfigThemeObjAuthReply instance
+             */
+            public static create(properties?: dcnet.pb.IConfigThemeObjAuthReply): dcnet.pb.ConfigThemeObjAuthReply;
+
+            /**
+             * Encodes the specified ConfigThemeObjAuthReply message. Does not implicitly {@link dcnet.pb.ConfigThemeObjAuthReply.verify|verify} messages.
+             * @param message ConfigThemeObjAuthReply message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: dcnet.pb.IConfigThemeObjAuthReply, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified ConfigThemeObjAuthReply message, length delimited. Does not implicitly {@link dcnet.pb.ConfigThemeObjAuthReply.verify|verify} messages.
+             * @param message ConfigThemeObjAuthReply message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: dcnet.pb.IConfigThemeObjAuthReply, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes a ConfigThemeObjAuthReply message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns ConfigThemeObjAuthReply
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): dcnet.pb.ConfigThemeObjAuthReply;
+
+            /**
+             * Decodes a ConfigThemeObjAuthReply message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns ConfigThemeObjAuthReply
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): dcnet.pb.ConfigThemeObjAuthReply;
+
+            /**
+             * Verifies a ConfigThemeObjAuthReply message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates a ConfigThemeObjAuthReply message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns ConfigThemeObjAuthReply
+             */
+            public static fromObject(object: { [k: string]: any }): dcnet.pb.ConfigThemeObjAuthReply;
+
+            /**
+             * Creates a plain object from a ConfigThemeObjAuthReply message. Also converts values to other types if specified.
+             * @param message ConfigThemeObjAuthReply
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: dcnet.pb.ConfigThemeObjAuthReply, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this ConfigThemeObjAuthReply to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for ConfigThemeObjAuthReply
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** Properties of an AddUserOffChainSpaceRequest. */
+        interface IAddUserOffChainSpaceRequest {
+
+            /** AddUserOffChainSpaceRequest userPubkey */
+            userPubkey?: (Uint8Array|null);
+
+            /** AddUserOffChainSpaceRequest blockheight */
+            blockheight?: (number|null);
+
+            /** AddUserOffChainSpaceRequest peerid */
+            peerid?: (Uint8Array|null);
+
+            /** AddUserOffChainSpaceRequest signature */
+            signature?: (Uint8Array|null);
+
+            /** AddUserOffChainSpaceRequest vaccount */
+            vaccount?: (Uint8Array|null);
+        }
+
+        /** Represents an AddUserOffChainSpaceRequest. */
+        class AddUserOffChainSpaceRequest implements IAddUserOffChainSpaceRequest {
+
+            /**
+             * Constructs a new AddUserOffChainSpaceRequest.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: dcnet.pb.IAddUserOffChainSpaceRequest);
+
+            /** AddUserOffChainSpaceRequest userPubkey. */
+            public userPubkey: Uint8Array;
+
+            /** AddUserOffChainSpaceRequest blockheight. */
+            public blockheight: number;
+
+            /** AddUserOffChainSpaceRequest peerid. */
+            public peerid: Uint8Array;
+
+            /** AddUserOffChainSpaceRequest signature. */
+            public signature: Uint8Array;
+
+            /** AddUserOffChainSpaceRequest vaccount. */
+            public vaccount: Uint8Array;
+
+            /**
+             * Creates a new AddUserOffChainSpaceRequest instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns AddUserOffChainSpaceRequest instance
+             */
+            public static create(properties?: dcnet.pb.IAddUserOffChainSpaceRequest): dcnet.pb.AddUserOffChainSpaceRequest;
+
+            /**
+             * Encodes the specified AddUserOffChainSpaceRequest message. Does not implicitly {@link dcnet.pb.AddUserOffChainSpaceRequest.verify|verify} messages.
+             * @param message AddUserOffChainSpaceRequest message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: dcnet.pb.IAddUserOffChainSpaceRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified AddUserOffChainSpaceRequest message, length delimited. Does not implicitly {@link dcnet.pb.AddUserOffChainSpaceRequest.verify|verify} messages.
+             * @param message AddUserOffChainSpaceRequest message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: dcnet.pb.IAddUserOffChainSpaceRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes an AddUserOffChainSpaceRequest message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns AddUserOffChainSpaceRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): dcnet.pb.AddUserOffChainSpaceRequest;
+
+            /**
+             * Decodes an AddUserOffChainSpaceRequest message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns AddUserOffChainSpaceRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): dcnet.pb.AddUserOffChainSpaceRequest;
+
+            /**
+             * Verifies an AddUserOffChainSpaceRequest message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates an AddUserOffChainSpaceRequest message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns AddUserOffChainSpaceRequest
+             */
+            public static fromObject(object: { [k: string]: any }): dcnet.pb.AddUserOffChainSpaceRequest;
+
+            /**
+             * Creates a plain object from an AddUserOffChainSpaceRequest message. Also converts values to other types if specified.
+             * @param message AddUserOffChainSpaceRequest
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: dcnet.pb.AddUserOffChainSpaceRequest, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this AddUserOffChainSpaceRequest to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for AddUserOffChainSpaceRequest
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** Properties of an AddUserOffChainSpaceReply. */
+        interface IAddUserOffChainSpaceReply {
+        }
+
+        /** Represents an AddUserOffChainSpaceReply. */
+        class AddUserOffChainSpaceReply implements IAddUserOffChainSpaceReply {
+
+            /**
+             * Constructs a new AddUserOffChainSpaceReply.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: dcnet.pb.IAddUserOffChainSpaceReply);
+
+            /**
+             * Creates a new AddUserOffChainSpaceReply instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns AddUserOffChainSpaceReply instance
+             */
+            public static create(properties?: dcnet.pb.IAddUserOffChainSpaceReply): dcnet.pb.AddUserOffChainSpaceReply;
+
+            /**
+             * Encodes the specified AddUserOffChainSpaceReply message. Does not implicitly {@link dcnet.pb.AddUserOffChainSpaceReply.verify|verify} messages.
+             * @param message AddUserOffChainSpaceReply message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: dcnet.pb.IAddUserOffChainSpaceReply, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified AddUserOffChainSpaceReply message, length delimited. Does not implicitly {@link dcnet.pb.AddUserOffChainSpaceReply.verify|verify} messages.
+             * @param message AddUserOffChainSpaceReply message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: dcnet.pb.IAddUserOffChainSpaceReply, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes an AddUserOffChainSpaceReply message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns AddUserOffChainSpaceReply
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): dcnet.pb.AddUserOffChainSpaceReply;
+
+            /**
+             * Decodes an AddUserOffChainSpaceReply message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns AddUserOffChainSpaceReply
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): dcnet.pb.AddUserOffChainSpaceReply;
+
+            /**
+             * Verifies an AddUserOffChainSpaceReply message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates an AddUserOffChainSpaceReply message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns AddUserOffChainSpaceReply
+             */
+            public static fromObject(object: { [k: string]: any }): dcnet.pb.AddUserOffChainSpaceReply;
+
+            /**
+             * Creates a plain object from an AddUserOffChainSpaceReply message. Also converts values to other types if specified.
+             * @param message AddUserOffChainSpaceReply
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: dcnet.pb.AddUserOffChainSpaceReply, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this AddUserOffChainSpaceReply to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for AddUserOffChainSpaceReply
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** Properties of a ReportMaliciousCommentRequest. */
+        interface IReportMaliciousCommentRequest {
+
+            /** ReportMaliciousCommentRequest theme */
+            theme?: (Uint8Array|null);
+
+            /** ReportMaliciousCommentRequest appId */
+            appId?: (Uint8Array|null);
+
+            /** ReportMaliciousCommentRequest themeAuthor */
+            themeAuthor?: (Uint8Array|null);
+
+            /** ReportMaliciousCommentRequest blockheight */
+            blockheight?: (number|null);
+
+            /** ReportMaliciousCommentRequest commentBlockheight */
+            commentBlockheight?: (number|null);
+
+            /** ReportMaliciousCommentRequest commentCid */
+            commentCid?: (Uint8Array|null);
+
+            /** ReportMaliciousCommentRequest signature */
+            signature?: (Uint8Array|null);
+
+            /** ReportMaliciousCommentRequest vaccount */
+            vaccount?: (Uint8Array|null);
+        }
+
+        /** Represents a ReportMaliciousCommentRequest. */
+        class ReportMaliciousCommentRequest implements IReportMaliciousCommentRequest {
+
+            /**
+             * Constructs a new ReportMaliciousCommentRequest.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: dcnet.pb.IReportMaliciousCommentRequest);
+
+            /** ReportMaliciousCommentRequest theme. */
+            public theme: Uint8Array;
+
+            /** ReportMaliciousCommentRequest appId. */
+            public appId: Uint8Array;
+
+            /** ReportMaliciousCommentRequest themeAuthor. */
+            public themeAuthor: Uint8Array;
+
+            /** ReportMaliciousCommentRequest blockheight. */
+            public blockheight: number;
+
+            /** ReportMaliciousCommentRequest commentBlockheight. */
+            public commentBlockheight: number;
+
+            /** ReportMaliciousCommentRequest commentCid. */
+            public commentCid: Uint8Array;
+
+            /** ReportMaliciousCommentRequest signature. */
+            public signature: Uint8Array;
+
+            /** ReportMaliciousCommentRequest vaccount. */
+            public vaccount: Uint8Array;
+
+            /**
+             * Creates a new ReportMaliciousCommentRequest instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns ReportMaliciousCommentRequest instance
+             */
+            public static create(properties?: dcnet.pb.IReportMaliciousCommentRequest): dcnet.pb.ReportMaliciousCommentRequest;
+
+            /**
+             * Encodes the specified ReportMaliciousCommentRequest message. Does not implicitly {@link dcnet.pb.ReportMaliciousCommentRequest.verify|verify} messages.
+             * @param message ReportMaliciousCommentRequest message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: dcnet.pb.IReportMaliciousCommentRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified ReportMaliciousCommentRequest message, length delimited. Does not implicitly {@link dcnet.pb.ReportMaliciousCommentRequest.verify|verify} messages.
+             * @param message ReportMaliciousCommentRequest message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: dcnet.pb.IReportMaliciousCommentRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes a ReportMaliciousCommentRequest message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns ReportMaliciousCommentRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): dcnet.pb.ReportMaliciousCommentRequest;
+
+            /**
+             * Decodes a ReportMaliciousCommentRequest message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns ReportMaliciousCommentRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): dcnet.pb.ReportMaliciousCommentRequest;
+
+            /**
+             * Verifies a ReportMaliciousCommentRequest message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates a ReportMaliciousCommentRequest message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns ReportMaliciousCommentRequest
+             */
+            public static fromObject(object: { [k: string]: any }): dcnet.pb.ReportMaliciousCommentRequest;
+
+            /**
+             * Creates a plain object from a ReportMaliciousCommentRequest message. Also converts values to other types if specified.
+             * @param message ReportMaliciousCommentRequest
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: dcnet.pb.ReportMaliciousCommentRequest, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this ReportMaliciousCommentRequest to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for ReportMaliciousCommentRequest
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** Properties of a ReportMaliciousCommentReply. */
+        interface IReportMaliciousCommentReply {
+
+            /** ReportMaliciousCommentReply flag */
+            flag?: (number|null);
+        }
+
+        /** Represents a ReportMaliciousCommentReply. */
+        class ReportMaliciousCommentReply implements IReportMaliciousCommentReply {
+
+            /**
+             * Constructs a new ReportMaliciousCommentReply.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: dcnet.pb.IReportMaliciousCommentReply);
+
+            /** ReportMaliciousCommentReply flag. */
+            public flag: number;
+
+            /**
+             * Creates a new ReportMaliciousCommentReply instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns ReportMaliciousCommentReply instance
+             */
+            public static create(properties?: dcnet.pb.IReportMaliciousCommentReply): dcnet.pb.ReportMaliciousCommentReply;
+
+            /**
+             * Encodes the specified ReportMaliciousCommentReply message. Does not implicitly {@link dcnet.pb.ReportMaliciousCommentReply.verify|verify} messages.
+             * @param message ReportMaliciousCommentReply message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: dcnet.pb.IReportMaliciousCommentReply, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified ReportMaliciousCommentReply message, length delimited. Does not implicitly {@link dcnet.pb.ReportMaliciousCommentReply.verify|verify} messages.
+             * @param message ReportMaliciousCommentReply message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: dcnet.pb.IReportMaliciousCommentReply, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes a ReportMaliciousCommentReply message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns ReportMaliciousCommentReply
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): dcnet.pb.ReportMaliciousCommentReply;
+
+            /**
+             * Decodes a ReportMaliciousCommentReply message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns ReportMaliciousCommentReply
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): dcnet.pb.ReportMaliciousCommentReply;
+
+            /**
+             * Verifies a ReportMaliciousCommentReply message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates a ReportMaliciousCommentReply message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns ReportMaliciousCommentReply
+             */
+            public static fromObject(object: { [k: string]: any }): dcnet.pb.ReportMaliciousCommentReply;
+
+            /**
+             * Creates a plain object from a ReportMaliciousCommentReply message. Also converts values to other types if specified.
+             * @param message ReportMaliciousCommentReply
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: dcnet.pb.ReportMaliciousCommentReply, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this ReportMaliciousCommentReply to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for ReportMaliciousCommentReply
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** Properties of a SetObjCommentPublicRequest. */
+        interface ISetObjCommentPublicRequest {
+
+            /** SetObjCommentPublicRequest theme */
+            theme?: (Uint8Array|null);
+
+            /** SetObjCommentPublicRequest appId */
+            appId?: (Uint8Array|null);
+
+            /** SetObjCommentPublicRequest themeAuthor */
+            themeAuthor?: (Uint8Array|null);
+
+            /** SetObjCommentPublicRequest blockheight */
+            blockheight?: (number|null);
+
+            /** SetObjCommentPublicRequest commentBlockheight */
+            commentBlockheight?: (number|null);
+
+            /** SetObjCommentPublicRequest commentCid */
+            commentCid?: (Uint8Array|null);
+
+            /** SetObjCommentPublicRequest signature */
+            signature?: (Uint8Array|null);
+
+            /** SetObjCommentPublicRequest vaccount */
+            vaccount?: (Uint8Array|null);
+        }
+
+        /** Represents a SetObjCommentPublicRequest. */
+        class SetObjCommentPublicRequest implements ISetObjCommentPublicRequest {
+
+            /**
+             * Constructs a new SetObjCommentPublicRequest.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: dcnet.pb.ISetObjCommentPublicRequest);
+
+            /** SetObjCommentPublicRequest theme. */
+            public theme: Uint8Array;
+
+            /** SetObjCommentPublicRequest appId. */
+            public appId: Uint8Array;
+
+            /** SetObjCommentPublicRequest themeAuthor. */
+            public themeAuthor: Uint8Array;
+
+            /** SetObjCommentPublicRequest blockheight. */
+            public blockheight: number;
+
+            /** SetObjCommentPublicRequest commentBlockheight. */
+            public commentBlockheight: number;
+
+            /** SetObjCommentPublicRequest commentCid. */
+            public commentCid: Uint8Array;
+
+            /** SetObjCommentPublicRequest signature. */
+            public signature: Uint8Array;
+
+            /** SetObjCommentPublicRequest vaccount. */
+            public vaccount: Uint8Array;
+
+            /**
+             * Creates a new SetObjCommentPublicRequest instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns SetObjCommentPublicRequest instance
+             */
+            public static create(properties?: dcnet.pb.ISetObjCommentPublicRequest): dcnet.pb.SetObjCommentPublicRequest;
+
+            /**
+             * Encodes the specified SetObjCommentPublicRequest message. Does not implicitly {@link dcnet.pb.SetObjCommentPublicRequest.verify|verify} messages.
+             * @param message SetObjCommentPublicRequest message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: dcnet.pb.ISetObjCommentPublicRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified SetObjCommentPublicRequest message, length delimited. Does not implicitly {@link dcnet.pb.SetObjCommentPublicRequest.verify|verify} messages.
+             * @param message SetObjCommentPublicRequest message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: dcnet.pb.ISetObjCommentPublicRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes a SetObjCommentPublicRequest message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns SetObjCommentPublicRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): dcnet.pb.SetObjCommentPublicRequest;
+
+            /**
+             * Decodes a SetObjCommentPublicRequest message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns SetObjCommentPublicRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): dcnet.pb.SetObjCommentPublicRequest;
+
+            /**
+             * Verifies a SetObjCommentPublicRequest message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates a SetObjCommentPublicRequest message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns SetObjCommentPublicRequest
+             */
+            public static fromObject(object: { [k: string]: any }): dcnet.pb.SetObjCommentPublicRequest;
+
+            /**
+             * Creates a plain object from a SetObjCommentPublicRequest message. Also converts values to other types if specified.
+             * @param message SetObjCommentPublicRequest
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: dcnet.pb.SetObjCommentPublicRequest, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this SetObjCommentPublicRequest to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for SetObjCommentPublicRequest
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** Properties of a SetObjCommentPublicReply. */
+        interface ISetObjCommentPublicReply {
+
+            /** SetObjCommentPublicReply flag */
+            flag?: (number|null);
+        }
+
+        /** Represents a SetObjCommentPublicReply. */
+        class SetObjCommentPublicReply implements ISetObjCommentPublicReply {
+
+            /**
+             * Constructs a new SetObjCommentPublicReply.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: dcnet.pb.ISetObjCommentPublicReply);
+
+            /** SetObjCommentPublicReply flag. */
+            public flag: number;
+
+            /**
+             * Creates a new SetObjCommentPublicReply instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns SetObjCommentPublicReply instance
+             */
+            public static create(properties?: dcnet.pb.ISetObjCommentPublicReply): dcnet.pb.SetObjCommentPublicReply;
+
+            /**
+             * Encodes the specified SetObjCommentPublicReply message. Does not implicitly {@link dcnet.pb.SetObjCommentPublicReply.verify|verify} messages.
+             * @param message SetObjCommentPublicReply message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: dcnet.pb.ISetObjCommentPublicReply, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified SetObjCommentPublicReply message, length delimited. Does not implicitly {@link dcnet.pb.SetObjCommentPublicReply.verify|verify} messages.
+             * @param message SetObjCommentPublicReply message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: dcnet.pb.ISetObjCommentPublicReply, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes a SetObjCommentPublicReply message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns SetObjCommentPublicReply
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): dcnet.pb.SetObjCommentPublicReply;
+
+            /**
+             * Decodes a SetObjCommentPublicReply message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns SetObjCommentPublicReply
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): dcnet.pb.SetObjCommentPublicReply;
+
+            /**
+             * Verifies a SetObjCommentPublicReply message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates a SetObjCommentPublicReply message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns SetObjCommentPublicReply
+             */
+            public static fromObject(object: { [k: string]: any }): dcnet.pb.SetObjCommentPublicReply;
+
+            /**
+             * Creates a plain object from a SetObjCommentPublicReply message. Also converts values to other types if specified.
+             * @param message SetObjCommentPublicReply
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: dcnet.pb.SetObjCommentPublicReply, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this SetObjCommentPublicReply to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for SetObjCommentPublicReply
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** Properties of a DeleteSelfCommentRequest. */
+        interface IDeleteSelfCommentRequest {
+
+            /** DeleteSelfCommentRequest theme */
+            theme?: (Uint8Array|null);
+
+            /** DeleteSelfCommentRequest appId */
+            appId?: (Uint8Array|null);
+
+            /** DeleteSelfCommentRequest userPubkey */
+            userPubkey?: (Uint8Array|null);
+
+            /** DeleteSelfCommentRequest themeAuthor */
+            themeAuthor?: (Uint8Array|null);
+
+            /** DeleteSelfCommentRequest blockheight */
+            blockheight?: (number|null);
+
+            /** DeleteSelfCommentRequest commentBlockheight */
+            commentBlockheight?: (number|null);
+
+            /** DeleteSelfCommentRequest commentCid */
+            commentCid?: (Uint8Array|null);
+
+            /** DeleteSelfCommentRequest signature */
+            signature?: (Uint8Array|null);
+        }
+
+        /** Represents a DeleteSelfCommentRequest. */
+        class DeleteSelfCommentRequest implements IDeleteSelfCommentRequest {
+
+            /**
+             * Constructs a new DeleteSelfCommentRequest.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: dcnet.pb.IDeleteSelfCommentRequest);
+
+            /** DeleteSelfCommentRequest theme. */
+            public theme: Uint8Array;
+
+            /** DeleteSelfCommentRequest appId. */
+            public appId: Uint8Array;
+
+            /** DeleteSelfCommentRequest userPubkey. */
+            public userPubkey: Uint8Array;
+
+            /** DeleteSelfCommentRequest themeAuthor. */
+            public themeAuthor: Uint8Array;
+
+            /** DeleteSelfCommentRequest blockheight. */
+            public blockheight: number;
+
+            /** DeleteSelfCommentRequest commentBlockheight. */
+            public commentBlockheight: number;
+
+            /** DeleteSelfCommentRequest commentCid. */
+            public commentCid: Uint8Array;
+
+            /** DeleteSelfCommentRequest signature. */
+            public signature: Uint8Array;
+
+            /**
+             * Creates a new DeleteSelfCommentRequest instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns DeleteSelfCommentRequest instance
+             */
+            public static create(properties?: dcnet.pb.IDeleteSelfCommentRequest): dcnet.pb.DeleteSelfCommentRequest;
+
+            /**
+             * Encodes the specified DeleteSelfCommentRequest message. Does not implicitly {@link dcnet.pb.DeleteSelfCommentRequest.verify|verify} messages.
+             * @param message DeleteSelfCommentRequest message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: dcnet.pb.IDeleteSelfCommentRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified DeleteSelfCommentRequest message, length delimited. Does not implicitly {@link dcnet.pb.DeleteSelfCommentRequest.verify|verify} messages.
+             * @param message DeleteSelfCommentRequest message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: dcnet.pb.IDeleteSelfCommentRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes a DeleteSelfCommentRequest message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns DeleteSelfCommentRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): dcnet.pb.DeleteSelfCommentRequest;
+
+            /**
+             * Decodes a DeleteSelfCommentRequest message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns DeleteSelfCommentRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): dcnet.pb.DeleteSelfCommentRequest;
+
+            /**
+             * Verifies a DeleteSelfCommentRequest message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates a DeleteSelfCommentRequest message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns DeleteSelfCommentRequest
+             */
+            public static fromObject(object: { [k: string]: any }): dcnet.pb.DeleteSelfCommentRequest;
+
+            /**
+             * Creates a plain object from a DeleteSelfCommentRequest message. Also converts values to other types if specified.
+             * @param message DeleteSelfCommentRequest
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: dcnet.pb.DeleteSelfCommentRequest, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this DeleteSelfCommentRequest to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for DeleteSelfCommentRequest
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** Properties of a DeleteSelfCommentReply. */
+        interface IDeleteSelfCommentReply {
+
+            /** DeleteSelfCommentReply flag */
+            flag?: (number|null);
+        }
+
+        /** Represents a DeleteSelfCommentReply. */
+        class DeleteSelfCommentReply implements IDeleteSelfCommentReply {
+
+            /**
+             * Constructs a new DeleteSelfCommentReply.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: dcnet.pb.IDeleteSelfCommentReply);
+
+            /** DeleteSelfCommentReply flag. */
+            public flag: number;
+
+            /**
+             * Creates a new DeleteSelfCommentReply instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns DeleteSelfCommentReply instance
+             */
+            public static create(properties?: dcnet.pb.IDeleteSelfCommentReply): dcnet.pb.DeleteSelfCommentReply;
+
+            /**
+             * Encodes the specified DeleteSelfCommentReply message. Does not implicitly {@link dcnet.pb.DeleteSelfCommentReply.verify|verify} messages.
+             * @param message DeleteSelfCommentReply message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: dcnet.pb.IDeleteSelfCommentReply, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified DeleteSelfCommentReply message, length delimited. Does not implicitly {@link dcnet.pb.DeleteSelfCommentReply.verify|verify} messages.
+             * @param message DeleteSelfCommentReply message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: dcnet.pb.IDeleteSelfCommentReply, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes a DeleteSelfCommentReply message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns DeleteSelfCommentReply
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): dcnet.pb.DeleteSelfCommentReply;
+
+            /**
+             * Decodes a DeleteSelfCommentReply message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns DeleteSelfCommentReply
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): dcnet.pb.DeleteSelfCommentReply;
+
+            /**
+             * Verifies a DeleteSelfCommentReply message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates a DeleteSelfCommentReply message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns DeleteSelfCommentReply
+             */
+            public static fromObject(object: { [k: string]: any }): dcnet.pb.DeleteSelfCommentReply;
+
+            /**
+             * Creates a plain object from a DeleteSelfCommentReply message. Also converts values to other types if specified.
+             * @param message DeleteSelfCommentReply
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: dcnet.pb.DeleteSelfCommentReply, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this DeleteSelfCommentReply to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for DeleteSelfCommentReply
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** Properties of a DeleteCommentToObjRequest. */
+        interface IDeleteCommentToObjRequest {
+
+            /** DeleteCommentToObjRequest theme */
+            theme?: (Uint8Array|null);
+
+            /** DeleteCommentToObjRequest appId */
+            appId?: (Uint8Array|null);
+
+            /** DeleteCommentToObjRequest userPubkey */
+            userPubkey?: (Uint8Array|null);
+
+            /** DeleteCommentToObjRequest themeAuthor */
+            themeAuthor?: (Uint8Array|null);
+
+            /** DeleteCommentToObjRequest blockheight */
+            blockheight?: (number|null);
+
+            /** DeleteCommentToObjRequest commentBlockheight */
+            commentBlockheight?: (number|null);
+
+            /** DeleteCommentToObjRequest commentCid */
+            commentCid?: (Uint8Array|null);
+
+            /** DeleteCommentToObjRequest signature */
+            signature?: (Uint8Array|null);
+        }
+
+        /** Represents a DeleteCommentToObjRequest. */
+        class DeleteCommentToObjRequest implements IDeleteCommentToObjRequest {
+
+            /**
+             * Constructs a new DeleteCommentToObjRequest.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: dcnet.pb.IDeleteCommentToObjRequest);
+
+            /** DeleteCommentToObjRequest theme. */
+            public theme: Uint8Array;
+
+            /** DeleteCommentToObjRequest appId. */
+            public appId: Uint8Array;
+
+            /** DeleteCommentToObjRequest userPubkey. */
+            public userPubkey: Uint8Array;
+
+            /** DeleteCommentToObjRequest themeAuthor. */
+            public themeAuthor: Uint8Array;
+
+            /** DeleteCommentToObjRequest blockheight. */
+            public blockheight: number;
+
+            /** DeleteCommentToObjRequest commentBlockheight. */
+            public commentBlockheight: number;
+
+            /** DeleteCommentToObjRequest commentCid. */
+            public commentCid: Uint8Array;
+
+            /** DeleteCommentToObjRequest signature. */
+            public signature: Uint8Array;
+
+            /**
+             * Creates a new DeleteCommentToObjRequest instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns DeleteCommentToObjRequest instance
+             */
+            public static create(properties?: dcnet.pb.IDeleteCommentToObjRequest): dcnet.pb.DeleteCommentToObjRequest;
+
+            /**
+             * Encodes the specified DeleteCommentToObjRequest message. Does not implicitly {@link dcnet.pb.DeleteCommentToObjRequest.verify|verify} messages.
+             * @param message DeleteCommentToObjRequest message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: dcnet.pb.IDeleteCommentToObjRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified DeleteCommentToObjRequest message, length delimited. Does not implicitly {@link dcnet.pb.DeleteCommentToObjRequest.verify|verify} messages.
+             * @param message DeleteCommentToObjRequest message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: dcnet.pb.IDeleteCommentToObjRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes a DeleteCommentToObjRequest message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns DeleteCommentToObjRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): dcnet.pb.DeleteCommentToObjRequest;
+
+            /**
+             * Decodes a DeleteCommentToObjRequest message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns DeleteCommentToObjRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): dcnet.pb.DeleteCommentToObjRequest;
+
+            /**
+             * Verifies a DeleteCommentToObjRequest message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates a DeleteCommentToObjRequest message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns DeleteCommentToObjRequest
+             */
+            public static fromObject(object: { [k: string]: any }): dcnet.pb.DeleteCommentToObjRequest;
+
+            /**
+             * Creates a plain object from a DeleteCommentToObjRequest message. Also converts values to other types if specified.
+             * @param message DeleteCommentToObjRequest
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: dcnet.pb.DeleteCommentToObjRequest, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this DeleteCommentToObjRequest to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for DeleteCommentToObjRequest
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** Properties of a DeleteCommentToObjReply. */
+        interface IDeleteCommentToObjReply {
+
+            /** DeleteCommentToObjReply flag */
+            flag?: (number|null);
+        }
+
+        /** Represents a DeleteCommentToObjReply. */
+        class DeleteCommentToObjReply implements IDeleteCommentToObjReply {
+
+            /**
+             * Constructs a new DeleteCommentToObjReply.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: dcnet.pb.IDeleteCommentToObjReply);
+
+            /** DeleteCommentToObjReply flag. */
+            public flag: number;
+
+            /**
+             * Creates a new DeleteCommentToObjReply instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns DeleteCommentToObjReply instance
+             */
+            public static create(properties?: dcnet.pb.IDeleteCommentToObjReply): dcnet.pb.DeleteCommentToObjReply;
+
+            /**
+             * Encodes the specified DeleteCommentToObjReply message. Does not implicitly {@link dcnet.pb.DeleteCommentToObjReply.verify|verify} messages.
+             * @param message DeleteCommentToObjReply message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: dcnet.pb.IDeleteCommentToObjReply, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified DeleteCommentToObjReply message, length delimited. Does not implicitly {@link dcnet.pb.DeleteCommentToObjReply.verify|verify} messages.
+             * @param message DeleteCommentToObjReply message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: dcnet.pb.IDeleteCommentToObjReply, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes a DeleteCommentToObjReply message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns DeleteCommentToObjReply
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): dcnet.pb.DeleteCommentToObjReply;
+
+            /**
+             * Decodes a DeleteCommentToObjReply message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns DeleteCommentToObjReply
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): dcnet.pb.DeleteCommentToObjReply;
+
+            /**
+             * Verifies a DeleteCommentToObjReply message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates a DeleteCommentToObjReply message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns DeleteCommentToObjReply
+             */
+            public static fromObject(object: { [k: string]: any }): dcnet.pb.DeleteCommentToObjReply;
+
+            /**
+             * Creates a plain object from a DeleteCommentToObjReply message. Also converts values to other types if specified.
+             * @param message DeleteCommentToObjReply
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: dcnet.pb.DeleteCommentToObjReply, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this DeleteCommentToObjReply to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for DeleteCommentToObjReply
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** Properties of a GetThemeObjRequest. */
+        interface IGetThemeObjRequest {
+
+            /** GetThemeObjRequest appId */
+            appId?: (Uint8Array|null);
+
+            /** GetThemeObjRequest themeAuthor */
+            themeAuthor?: (Uint8Array|null);
+
+            /** GetThemeObjRequest startHeight */
+            startHeight?: (number|null);
+
+            /** GetThemeObjRequest direction */
+            direction?: (number|null);
+
+            /** GetThemeObjRequest offset */
+            offset?: (number|null);
+
+            /** GetThemeObjRequest limit */
+            limit?: (number|null);
+
+            /** GetThemeObjRequest seekKey */
+            seekKey?: (Uint8Array|null);
+        }
+
+        /** Represents a GetThemeObjRequest. */
+        class GetThemeObjRequest implements IGetThemeObjRequest {
+
+            /**
+             * Constructs a new GetThemeObjRequest.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: dcnet.pb.IGetThemeObjRequest);
+
+            /** GetThemeObjRequest appId. */
+            public appId: Uint8Array;
+
+            /** GetThemeObjRequest themeAuthor. */
+            public themeAuthor: Uint8Array;
+
+            /** GetThemeObjRequest startHeight. */
+            public startHeight: number;
+
+            /** GetThemeObjRequest direction. */
+            public direction: number;
+
+            /** GetThemeObjRequest offset. */
+            public offset: number;
+
+            /** GetThemeObjRequest limit. */
+            public limit: number;
+
+            /** GetThemeObjRequest seekKey. */
+            public seekKey: Uint8Array;
+
+            /**
+             * Creates a new GetThemeObjRequest instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns GetThemeObjRequest instance
+             */
+            public static create(properties?: dcnet.pb.IGetThemeObjRequest): dcnet.pb.GetThemeObjRequest;
+
+            /**
+             * Encodes the specified GetThemeObjRequest message. Does not implicitly {@link dcnet.pb.GetThemeObjRequest.verify|verify} messages.
+             * @param message GetThemeObjRequest message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: dcnet.pb.IGetThemeObjRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified GetThemeObjRequest message, length delimited. Does not implicitly {@link dcnet.pb.GetThemeObjRequest.verify|verify} messages.
+             * @param message GetThemeObjRequest message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: dcnet.pb.IGetThemeObjRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes a GetThemeObjRequest message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns GetThemeObjRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): dcnet.pb.GetThemeObjRequest;
+
+            /**
+             * Decodes a GetThemeObjRequest message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns GetThemeObjRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): dcnet.pb.GetThemeObjRequest;
+
+            /**
+             * Verifies a GetThemeObjRequest message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates a GetThemeObjRequest message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns GetThemeObjRequest
+             */
+            public static fromObject(object: { [k: string]: any }): dcnet.pb.GetThemeObjRequest;
+
+            /**
+             * Creates a plain object from a GetThemeObjRequest message. Also converts values to other types if specified.
+             * @param message GetThemeObjRequest
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: dcnet.pb.GetThemeObjRequest, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this GetThemeObjRequest to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for GetThemeObjRequest
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** Properties of a GetThemeObjReply. */
+        interface IGetThemeObjReply {
+
+            /** GetThemeObjReply flag */
+            flag?: (number|null);
+
+            /** GetThemeObjReply objsCid */
+            objsCid?: (Uint8Array|null);
+        }
+
+        /** Represents a GetThemeObjReply. */
+        class GetThemeObjReply implements IGetThemeObjReply {
+
+            /**
+             * Constructs a new GetThemeObjReply.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: dcnet.pb.IGetThemeObjReply);
+
+            /** GetThemeObjReply flag. */
+            public flag: number;
+
+            /** GetThemeObjReply objsCid. */
+            public objsCid: Uint8Array;
+
+            /**
+             * Creates a new GetThemeObjReply instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns GetThemeObjReply instance
+             */
+            public static create(properties?: dcnet.pb.IGetThemeObjReply): dcnet.pb.GetThemeObjReply;
+
+            /**
+             * Encodes the specified GetThemeObjReply message. Does not implicitly {@link dcnet.pb.GetThemeObjReply.verify|verify} messages.
+             * @param message GetThemeObjReply message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: dcnet.pb.IGetThemeObjReply, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified GetThemeObjReply message, length delimited. Does not implicitly {@link dcnet.pb.GetThemeObjReply.verify|verify} messages.
+             * @param message GetThemeObjReply message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: dcnet.pb.IGetThemeObjReply, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes a GetThemeObjReply message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns GetThemeObjReply
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): dcnet.pb.GetThemeObjReply;
+
+            /**
+             * Decodes a GetThemeObjReply message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns GetThemeObjReply
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): dcnet.pb.GetThemeObjReply;
+
+            /**
+             * Verifies a GetThemeObjReply message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates a GetThemeObjReply message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns GetThemeObjReply
+             */
+            public static fromObject(object: { [k: string]: any }): dcnet.pb.GetThemeObjReply;
+
+            /**
+             * Creates a plain object from a GetThemeObjReply message. Also converts values to other types if specified.
+             * @param message GetThemeObjReply
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: dcnet.pb.GetThemeObjReply, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this GetThemeObjReply to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for GetThemeObjReply
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** Properties of a GetThemeCommentsRequest. */
+        interface IGetThemeCommentsRequest {
+
+            /** GetThemeCommentsRequest theme */
+            theme?: (Uint8Array|null);
+
+            /** GetThemeCommentsRequest appId */
+            appId?: (Uint8Array|null);
+
+            /** GetThemeCommentsRequest themeAuthor */
+            themeAuthor?: (Uint8Array|null);
+
+            /** GetThemeCommentsRequest startHeight */
+            startHeight?: (number|null);
+
+            /** GetThemeCommentsRequest direction */
+            direction?: (number|null);
+
+            /** GetThemeCommentsRequest offset */
+            offset?: (number|null);
+
+            /** GetThemeCommentsRequest limit */
+            limit?: (number|null);
+
+            /** GetThemeCommentsRequest seekKey */
+            seekKey?: (Uint8Array|null);
+        }
+
+        /** Represents a GetThemeCommentsRequest. */
+        class GetThemeCommentsRequest implements IGetThemeCommentsRequest {
+
+            /**
+             * Constructs a new GetThemeCommentsRequest.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: dcnet.pb.IGetThemeCommentsRequest);
+
+            /** GetThemeCommentsRequest theme. */
+            public theme: Uint8Array;
+
+            /** GetThemeCommentsRequest appId. */
+            public appId: Uint8Array;
+
+            /** GetThemeCommentsRequest themeAuthor. */
+            public themeAuthor: Uint8Array;
+
+            /** GetThemeCommentsRequest startHeight. */
+            public startHeight: number;
+
+            /** GetThemeCommentsRequest direction. */
+            public direction: number;
+
+            /** GetThemeCommentsRequest offset. */
+            public offset: number;
+
+            /** GetThemeCommentsRequest limit. */
+            public limit: number;
+
+            /** GetThemeCommentsRequest seekKey. */
+            public seekKey: Uint8Array;
+
+            /**
+             * Creates a new GetThemeCommentsRequest instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns GetThemeCommentsRequest instance
+             */
+            public static create(properties?: dcnet.pb.IGetThemeCommentsRequest): dcnet.pb.GetThemeCommentsRequest;
+
+            /**
+             * Encodes the specified GetThemeCommentsRequest message. Does not implicitly {@link dcnet.pb.GetThemeCommentsRequest.verify|verify} messages.
+             * @param message GetThemeCommentsRequest message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: dcnet.pb.IGetThemeCommentsRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified GetThemeCommentsRequest message, length delimited. Does not implicitly {@link dcnet.pb.GetThemeCommentsRequest.verify|verify} messages.
+             * @param message GetThemeCommentsRequest message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: dcnet.pb.IGetThemeCommentsRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes a GetThemeCommentsRequest message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns GetThemeCommentsRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): dcnet.pb.GetThemeCommentsRequest;
+
+            /**
+             * Decodes a GetThemeCommentsRequest message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns GetThemeCommentsRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): dcnet.pb.GetThemeCommentsRequest;
+
+            /**
+             * Verifies a GetThemeCommentsRequest message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates a GetThemeCommentsRequest message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns GetThemeCommentsRequest
+             */
+            public static fromObject(object: { [k: string]: any }): dcnet.pb.GetThemeCommentsRequest;
+
+            /**
+             * Creates a plain object from a GetThemeCommentsRequest message. Also converts values to other types if specified.
+             * @param message GetThemeCommentsRequest
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: dcnet.pb.GetThemeCommentsRequest, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this GetThemeCommentsRequest to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for GetThemeCommentsRequest
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** Properties of a GetThemeCommentsReply. */
+        interface IGetThemeCommentsReply {
+
+            /** GetThemeCommentsReply flag */
+            flag?: (number|null);
+
+            /** GetThemeCommentsReply commentsCid */
+            commentsCid?: (Uint8Array|null);
+        }
+
+        /** Represents a GetThemeCommentsReply. */
+        class GetThemeCommentsReply implements IGetThemeCommentsReply {
+
+            /**
+             * Constructs a new GetThemeCommentsReply.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: dcnet.pb.IGetThemeCommentsReply);
+
+            /** GetThemeCommentsReply flag. */
+            public flag: number;
+
+            /** GetThemeCommentsReply commentsCid. */
+            public commentsCid: Uint8Array;
+
+            /**
+             * Creates a new GetThemeCommentsReply instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns GetThemeCommentsReply instance
+             */
+            public static create(properties?: dcnet.pb.IGetThemeCommentsReply): dcnet.pb.GetThemeCommentsReply;
+
+            /**
+             * Encodes the specified GetThemeCommentsReply message. Does not implicitly {@link dcnet.pb.GetThemeCommentsReply.verify|verify} messages.
+             * @param message GetThemeCommentsReply message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: dcnet.pb.IGetThemeCommentsReply, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified GetThemeCommentsReply message, length delimited. Does not implicitly {@link dcnet.pb.GetThemeCommentsReply.verify|verify} messages.
+             * @param message GetThemeCommentsReply message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: dcnet.pb.IGetThemeCommentsReply, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes a GetThemeCommentsReply message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns GetThemeCommentsReply
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): dcnet.pb.GetThemeCommentsReply;
+
+            /**
+             * Decodes a GetThemeCommentsReply message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns GetThemeCommentsReply
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): dcnet.pb.GetThemeCommentsReply;
+
+            /**
+             * Verifies a GetThemeCommentsReply message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates a GetThemeCommentsReply message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns GetThemeCommentsReply
+             */
+            public static fromObject(object: { [k: string]: any }): dcnet.pb.GetThemeCommentsReply;
+
+            /**
+             * Creates a plain object from a GetThemeCommentsReply message. Also converts values to other types if specified.
+             * @param message GetThemeCommentsReply
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: dcnet.pb.GetThemeCommentsReply, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this GetThemeCommentsReply to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for GetThemeCommentsReply
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** Properties of a GetThemeAuthListRequest. */
+        interface IGetThemeAuthListRequest {
+
+            /** GetThemeAuthListRequest theme */
+            theme?: (Uint8Array|null);
+
+            /** GetThemeAuthListRequest appId */
+            appId?: (Uint8Array|null);
+
+            /** GetThemeAuthListRequest themeAuthor */
+            themeAuthor?: (Uint8Array|null);
+
+            /** GetThemeAuthListRequest startHeight */
+            startHeight?: (number|null);
+
+            /** GetThemeAuthListRequest direction */
+            direction?: (number|null);
+
+            /** GetThemeAuthListRequest offset */
+            offset?: (number|null);
+
+            /** GetThemeAuthListRequest limit */
+            limit?: (number|null);
+
+            /** GetThemeAuthListRequest seekKey */
+            seekKey?: (Uint8Array|null);
+        }
+
+        /** Represents a GetThemeAuthListRequest. */
+        class GetThemeAuthListRequest implements IGetThemeAuthListRequest {
+
+            /**
+             * Constructs a new GetThemeAuthListRequest.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: dcnet.pb.IGetThemeAuthListRequest);
+
+            /** GetThemeAuthListRequest theme. */
+            public theme: Uint8Array;
+
+            /** GetThemeAuthListRequest appId. */
+            public appId: Uint8Array;
+
+            /** GetThemeAuthListRequest themeAuthor. */
+            public themeAuthor: Uint8Array;
+
+            /** GetThemeAuthListRequest startHeight. */
+            public startHeight: number;
+
+            /** GetThemeAuthListRequest direction. */
+            public direction: number;
+
+            /** GetThemeAuthListRequest offset. */
+            public offset: number;
+
+            /** GetThemeAuthListRequest limit. */
+            public limit: number;
+
+            /** GetThemeAuthListRequest seekKey. */
+            public seekKey: Uint8Array;
+
+            /**
+             * Creates a new GetThemeAuthListRequest instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns GetThemeAuthListRequest instance
+             */
+            public static create(properties?: dcnet.pb.IGetThemeAuthListRequest): dcnet.pb.GetThemeAuthListRequest;
+
+            /**
+             * Encodes the specified GetThemeAuthListRequest message. Does not implicitly {@link dcnet.pb.GetThemeAuthListRequest.verify|verify} messages.
+             * @param message GetThemeAuthListRequest message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: dcnet.pb.IGetThemeAuthListRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified GetThemeAuthListRequest message, length delimited. Does not implicitly {@link dcnet.pb.GetThemeAuthListRequest.verify|verify} messages.
+             * @param message GetThemeAuthListRequest message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: dcnet.pb.IGetThemeAuthListRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes a GetThemeAuthListRequest message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns GetThemeAuthListRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): dcnet.pb.GetThemeAuthListRequest;
+
+            /**
+             * Decodes a GetThemeAuthListRequest message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns GetThemeAuthListRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): dcnet.pb.GetThemeAuthListRequest;
+
+            /**
+             * Verifies a GetThemeAuthListRequest message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates a GetThemeAuthListRequest message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns GetThemeAuthListRequest
+             */
+            public static fromObject(object: { [k: string]: any }): dcnet.pb.GetThemeAuthListRequest;
+
+            /**
+             * Creates a plain object from a GetThemeAuthListRequest message. Also converts values to other types if specified.
+             * @param message GetThemeAuthListRequest
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: dcnet.pb.GetThemeAuthListRequest, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this GetThemeAuthListRequest to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for GetThemeAuthListRequest
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** Properties of a GetThemeAuthListReply. */
+        interface IGetThemeAuthListReply {
+
+            /** GetThemeAuthListReply flag */
+            flag?: (number|null);
+
+            /** GetThemeAuthListReply authListCid */
+            authListCid?: (Uint8Array|null);
+        }
+
+        /** Represents a GetThemeAuthListReply. */
+        class GetThemeAuthListReply implements IGetThemeAuthListReply {
+
+            /**
+             * Constructs a new GetThemeAuthListReply.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: dcnet.pb.IGetThemeAuthListReply);
+
+            /** GetThemeAuthListReply flag. */
+            public flag: number;
+
+            /** GetThemeAuthListReply authListCid. */
+            public authListCid: Uint8Array;
+
+            /**
+             * Creates a new GetThemeAuthListReply instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns GetThemeAuthListReply instance
+             */
+            public static create(properties?: dcnet.pb.IGetThemeAuthListReply): dcnet.pb.GetThemeAuthListReply;
+
+            /**
+             * Encodes the specified GetThemeAuthListReply message. Does not implicitly {@link dcnet.pb.GetThemeAuthListReply.verify|verify} messages.
+             * @param message GetThemeAuthListReply message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: dcnet.pb.IGetThemeAuthListReply, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified GetThemeAuthListReply message, length delimited. Does not implicitly {@link dcnet.pb.GetThemeAuthListReply.verify|verify} messages.
+             * @param message GetThemeAuthListReply message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: dcnet.pb.IGetThemeAuthListReply, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes a GetThemeAuthListReply message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns GetThemeAuthListReply
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): dcnet.pb.GetThemeAuthListReply;
+
+            /**
+             * Decodes a GetThemeAuthListReply message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns GetThemeAuthListReply
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): dcnet.pb.GetThemeAuthListReply;
+
+            /**
+             * Verifies a GetThemeAuthListReply message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates a GetThemeAuthListReply message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns GetThemeAuthListReply
+             */
+            public static fromObject(object: { [k: string]: any }): dcnet.pb.GetThemeAuthListReply;
+
+            /**
+             * Creates a plain object from a GetThemeAuthListReply message. Also converts values to other types if specified.
+             * @param message GetThemeAuthListReply
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: dcnet.pb.GetThemeAuthListReply, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this GetThemeAuthListReply to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for GetThemeAuthListReply
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** Properties of a GetUserCommentsRequest. */
+        interface IGetUserCommentsRequest {
+
+            /** GetUserCommentsRequest appId */
+            appId?: (Uint8Array|null);
+
+            /** GetUserCommentsRequest UserPubkey */
+            UserPubkey?: (Uint8Array|null);
+
+            /** GetUserCommentsRequest startHeight */
+            startHeight?: (number|null);
+
+            /** GetUserCommentsRequest direction */
+            direction?: (number|null);
+
+            /** GetUserCommentsRequest offset */
+            offset?: (number|null);
+
+            /** GetUserCommentsRequest limit */
+            limit?: (number|null);
+
+            /** GetUserCommentsRequest seekKey */
+            seekKey?: (Uint8Array|null);
+        }
+
+        /** Represents a GetUserCommentsRequest. */
+        class GetUserCommentsRequest implements IGetUserCommentsRequest {
+
+            /**
+             * Constructs a new GetUserCommentsRequest.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: dcnet.pb.IGetUserCommentsRequest);
+
+            /** GetUserCommentsRequest appId. */
+            public appId: Uint8Array;
+
+            /** GetUserCommentsRequest UserPubkey. */
+            public UserPubkey: Uint8Array;
+
+            /** GetUserCommentsRequest startHeight. */
+            public startHeight: number;
+
+            /** GetUserCommentsRequest direction. */
+            public direction: number;
+
+            /** GetUserCommentsRequest offset. */
+            public offset: number;
+
+            /** GetUserCommentsRequest limit. */
+            public limit: number;
+
+            /** GetUserCommentsRequest seekKey. */
+            public seekKey: Uint8Array;
+
+            /**
+             * Creates a new GetUserCommentsRequest instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns GetUserCommentsRequest instance
+             */
+            public static create(properties?: dcnet.pb.IGetUserCommentsRequest): dcnet.pb.GetUserCommentsRequest;
+
+            /**
+             * Encodes the specified GetUserCommentsRequest message. Does not implicitly {@link dcnet.pb.GetUserCommentsRequest.verify|verify} messages.
+             * @param message GetUserCommentsRequest message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: dcnet.pb.IGetUserCommentsRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified GetUserCommentsRequest message, length delimited. Does not implicitly {@link dcnet.pb.GetUserCommentsRequest.verify|verify} messages.
+             * @param message GetUserCommentsRequest message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: dcnet.pb.IGetUserCommentsRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes a GetUserCommentsRequest message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns GetUserCommentsRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): dcnet.pb.GetUserCommentsRequest;
+
+            /**
+             * Decodes a GetUserCommentsRequest message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns GetUserCommentsRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): dcnet.pb.GetUserCommentsRequest;
+
+            /**
+             * Verifies a GetUserCommentsRequest message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates a GetUserCommentsRequest message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns GetUserCommentsRequest
+             */
+            public static fromObject(object: { [k: string]: any }): dcnet.pb.GetUserCommentsRequest;
+
+            /**
+             * Creates a plain object from a GetUserCommentsRequest message. Also converts values to other types if specified.
+             * @param message GetUserCommentsRequest
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: dcnet.pb.GetUserCommentsRequest, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this GetUserCommentsRequest to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for GetUserCommentsRequest
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** Properties of a GetUserCommentsReply. */
+        interface IGetUserCommentsReply {
+
+            /** GetUserCommentsReply flag */
+            flag?: (number|null);
+
+            /** GetUserCommentsReply commentsCid */
+            commentsCid?: (Uint8Array|null);
+        }
+
+        /** Represents a GetUserCommentsReply. */
+        class GetUserCommentsReply implements IGetUserCommentsReply {
+
+            /**
+             * Constructs a new GetUserCommentsReply.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: dcnet.pb.IGetUserCommentsReply);
+
+            /** GetUserCommentsReply flag. */
+            public flag: number;
+
+            /** GetUserCommentsReply commentsCid. */
+            public commentsCid: Uint8Array;
+
+            /**
+             * Creates a new GetUserCommentsReply instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns GetUserCommentsReply instance
+             */
+            public static create(properties?: dcnet.pb.IGetUserCommentsReply): dcnet.pb.GetUserCommentsReply;
+
+            /**
+             * Encodes the specified GetUserCommentsReply message. Does not implicitly {@link dcnet.pb.GetUserCommentsReply.verify|verify} messages.
+             * @param message GetUserCommentsReply message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: dcnet.pb.IGetUserCommentsReply, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified GetUserCommentsReply message, length delimited. Does not implicitly {@link dcnet.pb.GetUserCommentsReply.verify|verify} messages.
+             * @param message GetUserCommentsReply message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: dcnet.pb.IGetUserCommentsReply, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes a GetUserCommentsReply message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns GetUserCommentsReply
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): dcnet.pb.GetUserCommentsReply;
+
+            /**
+             * Decodes a GetUserCommentsReply message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns GetUserCommentsReply
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): dcnet.pb.GetUserCommentsReply;
+
+            /**
+             * Verifies a GetUserCommentsReply message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates a GetUserCommentsReply message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns GetUserCommentsReply
+             */
+            public static fromObject(object: { [k: string]: any }): dcnet.pb.GetUserCommentsReply;
+
+            /**
+             * Creates a plain object from a GetUserCommentsReply message. Also converts values to other types if specified.
+             * @param message GetUserCommentsReply
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: dcnet.pb.GetUserCommentsReply, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this GetUserCommentsReply to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for GetUserCommentsReply
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** Properties of a GetValueWithKeyRequest. */
+        interface IGetValueWithKeyRequest {
+
+            /** GetValueWithKeyRequest theme */
+            theme?: (Uint8Array|null);
+
+            /** GetValueWithKeyRequest appId */
+            appId?: (Uint8Array|null);
+
+            /** GetValueWithKeyRequest themeAuthor */
+            themeAuthor?: (Uint8Array|null);
+
+            /** GetValueWithKeyRequest UserPubkey */
+            UserPubkey?: (Uint8Array|null);
+
+            /** GetValueWithKeyRequest Key */
+            Key?: (Uint8Array|null);
+        }
+
+        /** Represents a GetValueWithKeyRequest. */
+        class GetValueWithKeyRequest implements IGetValueWithKeyRequest {
+
+            /**
+             * Constructs a new GetValueWithKeyRequest.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: dcnet.pb.IGetValueWithKeyRequest);
+
+            /** GetValueWithKeyRequest theme. */
+            public theme: Uint8Array;
+
+            /** GetValueWithKeyRequest appId. */
+            public appId: Uint8Array;
+
+            /** GetValueWithKeyRequest themeAuthor. */
+            public themeAuthor: Uint8Array;
+
+            /** GetValueWithKeyRequest UserPubkey. */
+            public UserPubkey: Uint8Array;
+
+            /** GetValueWithKeyRequest Key. */
+            public Key: Uint8Array;
+
+            /**
+             * Creates a new GetValueWithKeyRequest instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns GetValueWithKeyRequest instance
+             */
+            public static create(properties?: dcnet.pb.IGetValueWithKeyRequest): dcnet.pb.GetValueWithKeyRequest;
+
+            /**
+             * Encodes the specified GetValueWithKeyRequest message. Does not implicitly {@link dcnet.pb.GetValueWithKeyRequest.verify|verify} messages.
+             * @param message GetValueWithKeyRequest message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: dcnet.pb.IGetValueWithKeyRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified GetValueWithKeyRequest message, length delimited. Does not implicitly {@link dcnet.pb.GetValueWithKeyRequest.verify|verify} messages.
+             * @param message GetValueWithKeyRequest message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: dcnet.pb.IGetValueWithKeyRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes a GetValueWithKeyRequest message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns GetValueWithKeyRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): dcnet.pb.GetValueWithKeyRequest;
+
+            /**
+             * Decodes a GetValueWithKeyRequest message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns GetValueWithKeyRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): dcnet.pb.GetValueWithKeyRequest;
+
+            /**
+             * Verifies a GetValueWithKeyRequest message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates a GetValueWithKeyRequest message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns GetValueWithKeyRequest
+             */
+            public static fromObject(object: { [k: string]: any }): dcnet.pb.GetValueWithKeyRequest;
+
+            /**
+             * Creates a plain object from a GetValueWithKeyRequest message. Also converts values to other types if specified.
+             * @param message GetValueWithKeyRequest
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: dcnet.pb.GetValueWithKeyRequest, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this GetValueWithKeyRequest to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for GetValueWithKeyRequest
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** Properties of a GetValueWithKeyReply. */
+        interface IGetValueWithKeyReply {
+
+            /** GetValueWithKeyReply flag */
+            flag?: (number|null);
+
+            /** GetValueWithKeyReply value */
+            value?: (Uint8Array|null);
+        }
+
+        /** Represents a GetValueWithKeyReply. */
+        class GetValueWithKeyReply implements IGetValueWithKeyReply {
+
+            /**
+             * Constructs a new GetValueWithKeyReply.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: dcnet.pb.IGetValueWithKeyReply);
+
+            /** GetValueWithKeyReply flag. */
+            public flag: number;
+
+            /** GetValueWithKeyReply value. */
+            public value: Uint8Array;
+
+            /**
+             * Creates a new GetValueWithKeyReply instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns GetValueWithKeyReply instance
+             */
+            public static create(properties?: dcnet.pb.IGetValueWithKeyReply): dcnet.pb.GetValueWithKeyReply;
+
+            /**
+             * Encodes the specified GetValueWithKeyReply message. Does not implicitly {@link dcnet.pb.GetValueWithKeyReply.verify|verify} messages.
+             * @param message GetValueWithKeyReply message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: dcnet.pb.IGetValueWithKeyReply, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified GetValueWithKeyReply message, length delimited. Does not implicitly {@link dcnet.pb.GetValueWithKeyReply.verify|verify} messages.
+             * @param message GetValueWithKeyReply message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: dcnet.pb.IGetValueWithKeyReply, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes a GetValueWithKeyReply message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns GetValueWithKeyReply
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): dcnet.pb.GetValueWithKeyReply;
+
+            /**
+             * Decodes a GetValueWithKeyReply message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns GetValueWithKeyReply
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): dcnet.pb.GetValueWithKeyReply;
+
+            /**
+             * Verifies a GetValueWithKeyReply message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates a GetValueWithKeyReply message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns GetValueWithKeyReply
+             */
+            public static fromObject(object: { [k: string]: any }): dcnet.pb.GetValueWithKeyReply;
+
+            /**
+             * Creates a plain object from a GetValueWithKeyReply message. Also converts values to other types if specified.
+             * @param message GetValueWithKeyReply
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: dcnet.pb.GetValueWithKeyReply, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this GetValueWithKeyReply to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for GetValueWithKeyReply
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** Properties of a GetValuesWithKeysRequest. */
+        interface IGetValuesWithKeysRequest {
+
+            /** GetValuesWithKeysRequest theme */
+            theme?: (Uint8Array|null);
+
+            /** GetValuesWithKeysRequest appId */
+            appId?: (Uint8Array|null);
+
+            /** GetValuesWithKeysRequest themeAuthor */
+            themeAuthor?: (Uint8Array|null);
+
+            /** GetValuesWithKeysRequest UserPubkey */
+            UserPubkey?: (Uint8Array|null);
+
+            /** GetValuesWithKeysRequest Keys */
+            Keys?: (Uint8Array|null);
+        }
+
+        /** Represents a GetValuesWithKeysRequest. */
+        class GetValuesWithKeysRequest implements IGetValuesWithKeysRequest {
+
+            /**
+             * Constructs a new GetValuesWithKeysRequest.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: dcnet.pb.IGetValuesWithKeysRequest);
+
+            /** GetValuesWithKeysRequest theme. */
+            public theme: Uint8Array;
+
+            /** GetValuesWithKeysRequest appId. */
+            public appId: Uint8Array;
+
+            /** GetValuesWithKeysRequest themeAuthor. */
+            public themeAuthor: Uint8Array;
+
+            /** GetValuesWithKeysRequest UserPubkey. */
+            public UserPubkey: Uint8Array;
+
+            /** GetValuesWithKeysRequest Keys. */
+            public Keys: Uint8Array;
+
+            /**
+             * Creates a new GetValuesWithKeysRequest instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns GetValuesWithKeysRequest instance
+             */
+            public static create(properties?: dcnet.pb.IGetValuesWithKeysRequest): dcnet.pb.GetValuesWithKeysRequest;
+
+            /**
+             * Encodes the specified GetValuesWithKeysRequest message. Does not implicitly {@link dcnet.pb.GetValuesWithKeysRequest.verify|verify} messages.
+             * @param message GetValuesWithKeysRequest message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: dcnet.pb.IGetValuesWithKeysRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified GetValuesWithKeysRequest message, length delimited. Does not implicitly {@link dcnet.pb.GetValuesWithKeysRequest.verify|verify} messages.
+             * @param message GetValuesWithKeysRequest message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: dcnet.pb.IGetValuesWithKeysRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes a GetValuesWithKeysRequest message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns GetValuesWithKeysRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): dcnet.pb.GetValuesWithKeysRequest;
+
+            /**
+             * Decodes a GetValuesWithKeysRequest message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns GetValuesWithKeysRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): dcnet.pb.GetValuesWithKeysRequest;
+
+            /**
+             * Verifies a GetValuesWithKeysRequest message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates a GetValuesWithKeysRequest message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns GetValuesWithKeysRequest
+             */
+            public static fromObject(object: { [k: string]: any }): dcnet.pb.GetValuesWithKeysRequest;
+
+            /**
+             * Creates a plain object from a GetValuesWithKeysRequest message. Also converts values to other types if specified.
+             * @param message GetValuesWithKeysRequest
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: dcnet.pb.GetValuesWithKeysRequest, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this GetValuesWithKeysRequest to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for GetValuesWithKeysRequest
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** Properties of a GetValuesWithKeysReply. */
+        interface IGetValuesWithKeysReply {
+
+            /** GetValuesWithKeysReply flag */
+            flag?: (number|null);
+
+            /** GetValuesWithKeysReply keyValues */
+            keyValues?: (Uint8Array|null);
+        }
+
+        /** Represents a GetValuesWithKeysReply. */
+        class GetValuesWithKeysReply implements IGetValuesWithKeysReply {
+
+            /**
+             * Constructs a new GetValuesWithKeysReply.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: dcnet.pb.IGetValuesWithKeysReply);
+
+            /** GetValuesWithKeysReply flag. */
+            public flag: number;
+
+            /** GetValuesWithKeysReply keyValues. */
+            public keyValues: Uint8Array;
+
+            /**
+             * Creates a new GetValuesWithKeysReply instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns GetValuesWithKeysReply instance
+             */
+            public static create(properties?: dcnet.pb.IGetValuesWithKeysReply): dcnet.pb.GetValuesWithKeysReply;
+
+            /**
+             * Encodes the specified GetValuesWithKeysReply message. Does not implicitly {@link dcnet.pb.GetValuesWithKeysReply.verify|verify} messages.
+             * @param message GetValuesWithKeysReply message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: dcnet.pb.IGetValuesWithKeysReply, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified GetValuesWithKeysReply message, length delimited. Does not implicitly {@link dcnet.pb.GetValuesWithKeysReply.verify|verify} messages.
+             * @param message GetValuesWithKeysReply message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: dcnet.pb.IGetValuesWithKeysReply, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes a GetValuesWithKeysReply message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns GetValuesWithKeysReply
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): dcnet.pb.GetValuesWithKeysReply;
+
+            /**
+             * Decodes a GetValuesWithKeysReply message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns GetValuesWithKeysReply
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): dcnet.pb.GetValuesWithKeysReply;
+
+            /**
+             * Verifies a GetValuesWithKeysReply message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates a GetValuesWithKeysReply message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns GetValuesWithKeysReply
+             */
+            public static fromObject(object: { [k: string]: any }): dcnet.pb.GetValuesWithKeysReply;
+
+            /**
+             * Creates a plain object from a GetValuesWithKeysReply message. Also converts values to other types if specified.
+             * @param message GetValuesWithKeysReply
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: dcnet.pb.GetValuesWithKeysReply, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this GetValuesWithKeysReply to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for GetValuesWithKeysReply
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** Properties of a PushThemeFunOptRequest. */
+        interface IPushThemeFunOptRequest {
+
+            /** PushThemeFunOptRequest opt */
+            opt?: (dcnet.pb.ICommentFunOpt|null);
+        }
+
+        /** Represents a PushThemeFunOptRequest. */
+        class PushThemeFunOptRequest implements IPushThemeFunOptRequest {
+
+            /**
+             * Constructs a new PushThemeFunOptRequest.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: dcnet.pb.IPushThemeFunOptRequest);
+
+            /** PushThemeFunOptRequest opt. */
+            public opt?: (dcnet.pb.ICommentFunOpt|null);
+
+            /**
+             * Creates a new PushThemeFunOptRequest instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns PushThemeFunOptRequest instance
+             */
+            public static create(properties?: dcnet.pb.IPushThemeFunOptRequest): dcnet.pb.PushThemeFunOptRequest;
+
+            /**
+             * Encodes the specified PushThemeFunOptRequest message. Does not implicitly {@link dcnet.pb.PushThemeFunOptRequest.verify|verify} messages.
+             * @param message PushThemeFunOptRequest message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: dcnet.pb.IPushThemeFunOptRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified PushThemeFunOptRequest message, length delimited. Does not implicitly {@link dcnet.pb.PushThemeFunOptRequest.verify|verify} messages.
+             * @param message PushThemeFunOptRequest message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: dcnet.pb.IPushThemeFunOptRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes a PushThemeFunOptRequest message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns PushThemeFunOptRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): dcnet.pb.PushThemeFunOptRequest;
+
+            /**
+             * Decodes a PushThemeFunOptRequest message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns PushThemeFunOptRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): dcnet.pb.PushThemeFunOptRequest;
+
+            /**
+             * Verifies a PushThemeFunOptRequest message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates a PushThemeFunOptRequest message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns PushThemeFunOptRequest
+             */
+            public static fromObject(object: { [k: string]: any }): dcnet.pb.PushThemeFunOptRequest;
+
+            /**
+             * Creates a plain object from a PushThemeFunOptRequest message. Also converts values to other types if specified.
+             * @param message PushThemeFunOptRequest
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: dcnet.pb.PushThemeFunOptRequest, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this PushThemeFunOptRequest to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for PushThemeFunOptRequest
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** Properties of a PushThemeFunOptReply. */
+        interface IPushThemeFunOptReply {
+        }
+
+        /** Represents a PushThemeFunOptReply. */
+        class PushThemeFunOptReply implements IPushThemeFunOptReply {
+
+            /**
+             * Constructs a new PushThemeFunOptReply.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: dcnet.pb.IPushThemeFunOptReply);
+
+            /**
+             * Creates a new PushThemeFunOptReply instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns PushThemeFunOptReply instance
+             */
+            public static create(properties?: dcnet.pb.IPushThemeFunOptReply): dcnet.pb.PushThemeFunOptReply;
+
+            /**
+             * Encodes the specified PushThemeFunOptReply message. Does not implicitly {@link dcnet.pb.PushThemeFunOptReply.verify|verify} messages.
+             * @param message PushThemeFunOptReply message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: dcnet.pb.IPushThemeFunOptReply, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified PushThemeFunOptReply message, length delimited. Does not implicitly {@link dcnet.pb.PushThemeFunOptReply.verify|verify} messages.
+             * @param message PushThemeFunOptReply message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: dcnet.pb.IPushThemeFunOptReply, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes a PushThemeFunOptReply message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns PushThemeFunOptReply
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): dcnet.pb.PushThemeFunOptReply;
+
+            /**
+             * Decodes a PushThemeFunOptReply message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns PushThemeFunOptReply
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): dcnet.pb.PushThemeFunOptReply;
+
+            /**
+             * Verifies a PushThemeFunOptReply message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates a PushThemeFunOptReply message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns PushThemeFunOptReply
+             */
+            public static fromObject(object: { [k: string]: any }): dcnet.pb.PushThemeFunOptReply;
+
+            /**
+             * Creates a plain object from a PushThemeFunOptReply message. Also converts values to other types if specified.
+             * @param message PushThemeFunOptReply
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: dcnet.pb.PushThemeFunOptReply, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this PushThemeFunOptReply to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for PushThemeFunOptReply
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** Properties of a PullCommentFunOptsRequest. */
+        interface IPullCommentFunOptsRequest {
+
+            /** PullCommentFunOptsRequest userPubkey */
+            userPubkey?: (Uint8Array|null);
+
+            /** PullCommentFunOptsRequest limit */
+            limit?: (number|null);
+
+            /** PullCommentFunOptsRequest seqs */
+            seqs?: (dcnet.pb.IpeerSeqno[]|null);
+        }
+
+        /** Represents a PullCommentFunOptsRequest. */
+        class PullCommentFunOptsRequest implements IPullCommentFunOptsRequest {
+
+            /**
+             * Constructs a new PullCommentFunOptsRequest.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: dcnet.pb.IPullCommentFunOptsRequest);
+
+            /** PullCommentFunOptsRequest userPubkey. */
+            public userPubkey: Uint8Array;
+
+            /** PullCommentFunOptsRequest limit. */
+            public limit: number;
+
+            /** PullCommentFunOptsRequest seqs. */
+            public seqs: dcnet.pb.IpeerSeqno[];
+
+            /**
+             * Creates a new PullCommentFunOptsRequest instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns PullCommentFunOptsRequest instance
+             */
+            public static create(properties?: dcnet.pb.IPullCommentFunOptsRequest): dcnet.pb.PullCommentFunOptsRequest;
+
+            /**
+             * Encodes the specified PullCommentFunOptsRequest message. Does not implicitly {@link dcnet.pb.PullCommentFunOptsRequest.verify|verify} messages.
+             * @param message PullCommentFunOptsRequest message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: dcnet.pb.IPullCommentFunOptsRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified PullCommentFunOptsRequest message, length delimited. Does not implicitly {@link dcnet.pb.PullCommentFunOptsRequest.verify|verify} messages.
+             * @param message PullCommentFunOptsRequest message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: dcnet.pb.IPullCommentFunOptsRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes a PullCommentFunOptsRequest message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns PullCommentFunOptsRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): dcnet.pb.PullCommentFunOptsRequest;
+
+            /**
+             * Decodes a PullCommentFunOptsRequest message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns PullCommentFunOptsRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): dcnet.pb.PullCommentFunOptsRequest;
+
+            /**
+             * Verifies a PullCommentFunOptsRequest message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates a PullCommentFunOptsRequest message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns PullCommentFunOptsRequest
+             */
+            public static fromObject(object: { [k: string]: any }): dcnet.pb.PullCommentFunOptsRequest;
+
+            /**
+             * Creates a plain object from a PullCommentFunOptsRequest message. Also converts values to other types if specified.
+             * @param message PullCommentFunOptsRequest
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: dcnet.pb.PullCommentFunOptsRequest, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this PullCommentFunOptsRequest to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for PullCommentFunOptsRequest
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** Properties of a peerSeqno. */
+        interface IpeerSeqno {
+
+            /** peerSeqno peerid */
+            peerid?: (Uint8Array|null);
+
+            /** peerSeqno seqno */
+            seqno?: (number|Long|null);
+        }
+
+        /** Represents a peerSeqno. */
+        class peerSeqno implements IpeerSeqno {
+
+            /**
+             * Constructs a new peerSeqno.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: dcnet.pb.IpeerSeqno);
+
+            /** peerSeqno peerid. */
+            public peerid: Uint8Array;
+
+            /** peerSeqno seqno. */
+            public seqno: (number|Long);
+
+            /**
+             * Creates a new peerSeqno instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns peerSeqno instance
+             */
+            public static create(properties?: dcnet.pb.IpeerSeqno): dcnet.pb.peerSeqno;
+
+            /**
+             * Encodes the specified peerSeqno message. Does not implicitly {@link dcnet.pb.peerSeqno.verify|verify} messages.
+             * @param message peerSeqno message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: dcnet.pb.IpeerSeqno, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified peerSeqno message, length delimited. Does not implicitly {@link dcnet.pb.peerSeqno.verify|verify} messages.
+             * @param message peerSeqno message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: dcnet.pb.IpeerSeqno, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes a peerSeqno message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns peerSeqno
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): dcnet.pb.peerSeqno;
+
+            /**
+             * Decodes a peerSeqno message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns peerSeqno
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): dcnet.pb.peerSeqno;
+
+            /**
+             * Verifies a peerSeqno message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates a peerSeqno message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns peerSeqno
+             */
+            public static fromObject(object: { [k: string]: any }): dcnet.pb.peerSeqno;
+
+            /**
+             * Creates a plain object from a peerSeqno message. Also converts values to other types if specified.
+             * @param message peerSeqno
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: dcnet.pb.peerSeqno, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this peerSeqno to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for peerSeqno
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** Properties of a PullCommentFunOptsReply. */
+        interface IPullCommentFunOptsReply {
+
+            /** PullCommentFunOptsReply flag */
+            flag?: (number|null);
+
+            /** PullCommentFunOptsReply funcOptsCid */
+            funcOptsCid?: (Uint8Array|null);
+        }
+
+        /** Represents a PullCommentFunOptsReply. */
+        class PullCommentFunOptsReply implements IPullCommentFunOptsReply {
+
+            /**
+             * Constructs a new PullCommentFunOptsReply.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: dcnet.pb.IPullCommentFunOptsReply);
+
+            /** PullCommentFunOptsReply flag. */
+            public flag: number;
+
+            /** PullCommentFunOptsReply funcOptsCid. */
+            public funcOptsCid: Uint8Array;
+
+            /**
+             * Creates a new PullCommentFunOptsReply instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns PullCommentFunOptsReply instance
+             */
+            public static create(properties?: dcnet.pb.IPullCommentFunOptsReply): dcnet.pb.PullCommentFunOptsReply;
+
+            /**
+             * Encodes the specified PullCommentFunOptsReply message. Does not implicitly {@link dcnet.pb.PullCommentFunOptsReply.verify|verify} messages.
+             * @param message PullCommentFunOptsReply message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: dcnet.pb.IPullCommentFunOptsReply, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified PullCommentFunOptsReply message, length delimited. Does not implicitly {@link dcnet.pb.PullCommentFunOptsReply.verify|verify} messages.
+             * @param message PullCommentFunOptsReply message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: dcnet.pb.IPullCommentFunOptsReply, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes a PullCommentFunOptsReply message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns PullCommentFunOptsReply
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): dcnet.pb.PullCommentFunOptsReply;
+
+            /**
+             * Decodes a PullCommentFunOptsReply message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns PullCommentFunOptsReply
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): dcnet.pb.PullCommentFunOptsReply;
+
+            /**
+             * Verifies a PullCommentFunOptsReply message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates a PullCommentFunOptsReply message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns PullCommentFunOptsReply
+             */
+            public static fromObject(object: { [k: string]: any }): dcnet.pb.PullCommentFunOptsReply;
+
+            /**
+             * Creates a plain object from a PullCommentFunOptsReply message. Also converts values to other types if specified.
+             * @param message PullCommentFunOptsReply
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: dcnet.pb.PullCommentFunOptsReply, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this PullCommentFunOptsReply to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for PullCommentFunOptsReply
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** Properties of a CommentFunOpt. */
+        interface ICommentFunOpt {
+
+            /** CommentFunOpt userPubkey */
+            userPubkey?: (Uint8Array|null);
+
+            /** CommentFunOpt seqno */
+            seqno?: (number|Long|null);
+
+            /** CommentFunOpt peerid */
+            peerid?: (Uint8Array|null);
+
+            /** CommentFunOpt opType */
+            opType?: (number|null);
+
+            /** CommentFunOpt opReq */
+            opReq?: (Uint8Array|null);
+        }
+
+        /** Represents a CommentFunOpt. */
+        class CommentFunOpt implements ICommentFunOpt {
+
+            /**
+             * Constructs a new CommentFunOpt.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: dcnet.pb.ICommentFunOpt);
+
+            /** CommentFunOpt userPubkey. */
+            public userPubkey: Uint8Array;
+
+            /** CommentFunOpt seqno. */
+            public seqno: (number|Long);
+
+            /** CommentFunOpt peerid. */
+            public peerid: Uint8Array;
+
+            /** CommentFunOpt opType. */
+            public opType: number;
+
+            /** CommentFunOpt opReq. */
+            public opReq: Uint8Array;
+
+            /**
+             * Creates a new CommentFunOpt instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns CommentFunOpt instance
+             */
+            public static create(properties?: dcnet.pb.ICommentFunOpt): dcnet.pb.CommentFunOpt;
+
+            /**
+             * Encodes the specified CommentFunOpt message. Does not implicitly {@link dcnet.pb.CommentFunOpt.verify|verify} messages.
+             * @param message CommentFunOpt message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: dcnet.pb.ICommentFunOpt, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified CommentFunOpt message, length delimited. Does not implicitly {@link dcnet.pb.CommentFunOpt.verify|verify} messages.
+             * @param message CommentFunOpt message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: dcnet.pb.ICommentFunOpt, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes a CommentFunOpt message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns CommentFunOpt
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): dcnet.pb.CommentFunOpt;
+
+            /**
+             * Decodes a CommentFunOpt message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns CommentFunOpt
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): dcnet.pb.CommentFunOpt;
+
+            /**
+             * Verifies a CommentFunOpt message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates a CommentFunOpt message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns CommentFunOpt
+             */
+            public static fromObject(object: { [k: string]: any }): dcnet.pb.CommentFunOpt;
+
+            /**
+             * Creates a plain object from a CommentFunOpt message. Also converts values to other types if specified.
+             * @param message CommentFunOpt
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: dcnet.pb.CommentFunOpt, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this CommentFunOpt to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for CommentFunOpt
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** Properties of an ExchangeThemeEdgesRequest. */
+        interface IExchangeThemeEdgesRequest {
+
+            /** ExchangeThemeEdgesRequest userSeqEdges */
+            userSeqEdges?: (dcnet.pb.IUserCommentSeqEdge[]|null);
+        }
+
+        /** Represents an ExchangeThemeEdgesRequest. */
+        class ExchangeThemeEdgesRequest implements IExchangeThemeEdgesRequest {
+
+            /**
+             * Constructs a new ExchangeThemeEdgesRequest.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: dcnet.pb.IExchangeThemeEdgesRequest);
+
+            /** ExchangeThemeEdgesRequest userSeqEdges. */
+            public userSeqEdges: dcnet.pb.IUserCommentSeqEdge[];
+
+            /**
+             * Creates a new ExchangeThemeEdgesRequest instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns ExchangeThemeEdgesRequest instance
+             */
+            public static create(properties?: dcnet.pb.IExchangeThemeEdgesRequest): dcnet.pb.ExchangeThemeEdgesRequest;
+
+            /**
+             * Encodes the specified ExchangeThemeEdgesRequest message. Does not implicitly {@link dcnet.pb.ExchangeThemeEdgesRequest.verify|verify} messages.
+             * @param message ExchangeThemeEdgesRequest message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: dcnet.pb.IExchangeThemeEdgesRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified ExchangeThemeEdgesRequest message, length delimited. Does not implicitly {@link dcnet.pb.ExchangeThemeEdgesRequest.verify|verify} messages.
+             * @param message ExchangeThemeEdgesRequest message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: dcnet.pb.IExchangeThemeEdgesRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes an ExchangeThemeEdgesRequest message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns ExchangeThemeEdgesRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): dcnet.pb.ExchangeThemeEdgesRequest;
+
+            /**
+             * Decodes an ExchangeThemeEdgesRequest message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns ExchangeThemeEdgesRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): dcnet.pb.ExchangeThemeEdgesRequest;
+
+            /**
+             * Verifies an ExchangeThemeEdgesRequest message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates an ExchangeThemeEdgesRequest message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns ExchangeThemeEdgesRequest
+             */
+            public static fromObject(object: { [k: string]: any }): dcnet.pb.ExchangeThemeEdgesRequest;
+
+            /**
+             * Creates a plain object from an ExchangeThemeEdgesRequest message. Also converts values to other types if specified.
+             * @param message ExchangeThemeEdgesRequest
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: dcnet.pb.ExchangeThemeEdgesRequest, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this ExchangeThemeEdgesRequest to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for ExchangeThemeEdgesRequest
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** Properties of an ExchangeThemeEdgesReply. */
+        interface IExchangeThemeEdgesReply {
+
+            /** ExchangeThemeEdgesReply userSeqEdges */
+            userSeqEdges?: (dcnet.pb.IUserCommentSeqEdge[]|null);
+        }
+
+        /** Represents an ExchangeThemeEdgesReply. */
+        class ExchangeThemeEdgesReply implements IExchangeThemeEdgesReply {
+
+            /**
+             * Constructs a new ExchangeThemeEdgesReply.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: dcnet.pb.IExchangeThemeEdgesReply);
+
+            /** ExchangeThemeEdgesReply userSeqEdges. */
+            public userSeqEdges: dcnet.pb.IUserCommentSeqEdge[];
+
+            /**
+             * Creates a new ExchangeThemeEdgesReply instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns ExchangeThemeEdgesReply instance
+             */
+            public static create(properties?: dcnet.pb.IExchangeThemeEdgesReply): dcnet.pb.ExchangeThemeEdgesReply;
+
+            /**
+             * Encodes the specified ExchangeThemeEdgesReply message. Does not implicitly {@link dcnet.pb.ExchangeThemeEdgesReply.verify|verify} messages.
+             * @param message ExchangeThemeEdgesReply message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: dcnet.pb.IExchangeThemeEdgesReply, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified ExchangeThemeEdgesReply message, length delimited. Does not implicitly {@link dcnet.pb.ExchangeThemeEdgesReply.verify|verify} messages.
+             * @param message ExchangeThemeEdgesReply message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: dcnet.pb.IExchangeThemeEdgesReply, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes an ExchangeThemeEdgesReply message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns ExchangeThemeEdgesReply
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): dcnet.pb.ExchangeThemeEdgesReply;
+
+            /**
+             * Decodes an ExchangeThemeEdgesReply message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns ExchangeThemeEdgesReply
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): dcnet.pb.ExchangeThemeEdgesReply;
+
+            /**
+             * Verifies an ExchangeThemeEdgesReply message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates an ExchangeThemeEdgesReply message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns ExchangeThemeEdgesReply
+             */
+            public static fromObject(object: { [k: string]: any }): dcnet.pb.ExchangeThemeEdgesReply;
+
+            /**
+             * Creates a plain object from an ExchangeThemeEdgesReply message. Also converts values to other types if specified.
+             * @param message ExchangeThemeEdgesReply
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: dcnet.pb.ExchangeThemeEdgesReply, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this ExchangeThemeEdgesReply to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for ExchangeThemeEdgesReply
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** Properties of a UserCommentSeqEdge. */
+        interface IUserCommentSeqEdge {
+
+            /** UserCommentSeqEdge userPubkey */
+            userPubkey?: (Uint8Array|null);
+
+            /** UserCommentSeqEdge seqedge */
+            seqedge?: (number|Long|null);
+        }
+
+        /** Represents a UserCommentSeqEdge. */
+        class UserCommentSeqEdge implements IUserCommentSeqEdge {
+
+            /**
+             * Constructs a new UserCommentSeqEdge.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: dcnet.pb.IUserCommentSeqEdge);
+
+            /** UserCommentSeqEdge userPubkey. */
+            public userPubkey: Uint8Array;
+
+            /** UserCommentSeqEdge seqedge. */
+            public seqedge: (number|Long);
+
+            /**
+             * Creates a new UserCommentSeqEdge instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns UserCommentSeqEdge instance
+             */
+            public static create(properties?: dcnet.pb.IUserCommentSeqEdge): dcnet.pb.UserCommentSeqEdge;
+
+            /**
+             * Encodes the specified UserCommentSeqEdge message. Does not implicitly {@link dcnet.pb.UserCommentSeqEdge.verify|verify} messages.
+             * @param message UserCommentSeqEdge message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: dcnet.pb.IUserCommentSeqEdge, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified UserCommentSeqEdge message, length delimited. Does not implicitly {@link dcnet.pb.UserCommentSeqEdge.verify|verify} messages.
+             * @param message UserCommentSeqEdge message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: dcnet.pb.IUserCommentSeqEdge, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes a UserCommentSeqEdge message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns UserCommentSeqEdge
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): dcnet.pb.UserCommentSeqEdge;
+
+            /**
+             * Decodes a UserCommentSeqEdge message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns UserCommentSeqEdge
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): dcnet.pb.UserCommentSeqEdge;
+
+            /**
+             * Verifies a UserCommentSeqEdge message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates a UserCommentSeqEdge message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns UserCommentSeqEdge
+             */
+            public static fromObject(object: { [k: string]: any }): dcnet.pb.UserCommentSeqEdge;
+
+            /**
+             * Creates a plain object from a UserCommentSeqEdge message. Also converts values to other types if specified.
+             * @param message UserCommentSeqEdge
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: dcnet.pb.UserCommentSeqEdge, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this UserCommentSeqEdge to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for UserCommentSeqEdge
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** Properties of a DownloadUserCommentsRequest. */
+        interface IDownloadUserCommentsRequest {
+
+            /** DownloadUserCommentsRequest userPubkey */
+            userPubkey?: (Uint8Array|null);
+
+            /** DownloadUserCommentsRequest blockheight */
+            blockheight?: (number|null);
+
+            /** DownloadUserCommentsRequest teereport */
+            teereport?: (Uint8Array|null);
+        }
+
+        /** Represents a DownloadUserCommentsRequest. */
+        class DownloadUserCommentsRequest implements IDownloadUserCommentsRequest {
+
+            /**
+             * Constructs a new DownloadUserCommentsRequest.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: dcnet.pb.IDownloadUserCommentsRequest);
+
+            /** DownloadUserCommentsRequest userPubkey. */
+            public userPubkey: Uint8Array;
+
+            /** DownloadUserCommentsRequest blockheight. */
+            public blockheight: number;
+
+            /** DownloadUserCommentsRequest teereport. */
+            public teereport: Uint8Array;
+
+            /**
+             * Creates a new DownloadUserCommentsRequest instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns DownloadUserCommentsRequest instance
+             */
+            public static create(properties?: dcnet.pb.IDownloadUserCommentsRequest): dcnet.pb.DownloadUserCommentsRequest;
+
+            /**
+             * Encodes the specified DownloadUserCommentsRequest message. Does not implicitly {@link dcnet.pb.DownloadUserCommentsRequest.verify|verify} messages.
+             * @param message DownloadUserCommentsRequest message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: dcnet.pb.IDownloadUserCommentsRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified DownloadUserCommentsRequest message, length delimited. Does not implicitly {@link dcnet.pb.DownloadUserCommentsRequest.verify|verify} messages.
+             * @param message DownloadUserCommentsRequest message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: dcnet.pb.IDownloadUserCommentsRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes a DownloadUserCommentsRequest message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns DownloadUserCommentsRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): dcnet.pb.DownloadUserCommentsRequest;
+
+            /**
+             * Decodes a DownloadUserCommentsRequest message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns DownloadUserCommentsRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): dcnet.pb.DownloadUserCommentsRequest;
+
+            /**
+             * Verifies a DownloadUserCommentsRequest message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates a DownloadUserCommentsRequest message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns DownloadUserCommentsRequest
+             */
+            public static fromObject(object: { [k: string]: any }): dcnet.pb.DownloadUserCommentsRequest;
+
+            /**
+             * Creates a plain object from a DownloadUserCommentsRequest message. Also converts values to other types if specified.
+             * @param message DownloadUserCommentsRequest
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: dcnet.pb.DownloadUserCommentsRequest, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this DownloadUserCommentsRequest to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for DownloadUserCommentsRequest
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** Properties of a DownloadUserCommentsReply. */
+        interface IDownloadUserCommentsReply {
+
+            /** DownloadUserCommentsReply flag */
+            flag?: (number|null);
+        }
+
+        /** Represents a DownloadUserCommentsReply. */
+        class DownloadUserCommentsReply implements IDownloadUserCommentsReply {
+
+            /**
+             * Constructs a new DownloadUserCommentsReply.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: dcnet.pb.IDownloadUserCommentsReply);
+
+            /** DownloadUserCommentsReply flag. */
+            public flag: number;
+
+            /**
+             * Creates a new DownloadUserCommentsReply instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns DownloadUserCommentsReply instance
+             */
+            public static create(properties?: dcnet.pb.IDownloadUserCommentsReply): dcnet.pb.DownloadUserCommentsReply;
+
+            /**
+             * Encodes the specified DownloadUserCommentsReply message. Does not implicitly {@link dcnet.pb.DownloadUserCommentsReply.verify|verify} messages.
+             * @param message DownloadUserCommentsReply message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: dcnet.pb.IDownloadUserCommentsReply, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified DownloadUserCommentsReply message, length delimited. Does not implicitly {@link dcnet.pb.DownloadUserCommentsReply.verify|verify} messages.
+             * @param message DownloadUserCommentsReply message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: dcnet.pb.IDownloadUserCommentsReply, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes a DownloadUserCommentsReply message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns DownloadUserCommentsReply
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): dcnet.pb.DownloadUserCommentsReply;
+
+            /**
+             * Decodes a DownloadUserCommentsReply message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns DownloadUserCommentsReply
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): dcnet.pb.DownloadUserCommentsReply;
+
+            /**
+             * Verifies a DownloadUserCommentsReply message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates a DownloadUserCommentsReply message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns DownloadUserCommentsReply
+             */
+            public static fromObject(object: { [k: string]: any }): dcnet.pb.DownloadUserCommentsReply;
+
+            /**
+             * Creates a plain object from a DownloadUserCommentsReply message. Also converts values to other types if specified.
+             * @param message DownloadUserCommentsReply
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: dcnet.pb.DownloadUserCommentsReply, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this DownloadUserCommentsReply to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for DownloadUserCommentsReply
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** Properties of a UserCommentsDownloadReadyRequest. */
+        interface IUserCommentsDownloadReadyRequest {
+
+            /** UserCommentsDownloadReadyRequest userPubkey */
+            userPubkey?: (Uint8Array|null);
+
+            /** UserCommentsDownloadReadyRequest commentsCid */
+            commentsCid?: (Uint8Array|null);
+
+            /** UserCommentsDownloadReadyRequest blockheight */
+            blockheight?: (number|null);
+
+            /** UserCommentsDownloadReadyRequest teereport */
+            teereport?: (Uint8Array|null);
+        }
+
+        /** Represents a UserCommentsDownloadReadyRequest. */
+        class UserCommentsDownloadReadyRequest implements IUserCommentsDownloadReadyRequest {
+
+            /**
+             * Constructs a new UserCommentsDownloadReadyRequest.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: dcnet.pb.IUserCommentsDownloadReadyRequest);
+
+            /** UserCommentsDownloadReadyRequest userPubkey. */
+            public userPubkey: Uint8Array;
+
+            /** UserCommentsDownloadReadyRequest commentsCid. */
+            public commentsCid: Uint8Array;
+
+            /** UserCommentsDownloadReadyRequest blockheight. */
+            public blockheight: number;
+
+            /** UserCommentsDownloadReadyRequest teereport. */
+            public teereport: Uint8Array;
+
+            /**
+             * Creates a new UserCommentsDownloadReadyRequest instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns UserCommentsDownloadReadyRequest instance
+             */
+            public static create(properties?: dcnet.pb.IUserCommentsDownloadReadyRequest): dcnet.pb.UserCommentsDownloadReadyRequest;
+
+            /**
+             * Encodes the specified UserCommentsDownloadReadyRequest message. Does not implicitly {@link dcnet.pb.UserCommentsDownloadReadyRequest.verify|verify} messages.
+             * @param message UserCommentsDownloadReadyRequest message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: dcnet.pb.IUserCommentsDownloadReadyRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified UserCommentsDownloadReadyRequest message, length delimited. Does not implicitly {@link dcnet.pb.UserCommentsDownloadReadyRequest.verify|verify} messages.
+             * @param message UserCommentsDownloadReadyRequest message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: dcnet.pb.IUserCommentsDownloadReadyRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes a UserCommentsDownloadReadyRequest message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns UserCommentsDownloadReadyRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): dcnet.pb.UserCommentsDownloadReadyRequest;
+
+            /**
+             * Decodes a UserCommentsDownloadReadyRequest message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns UserCommentsDownloadReadyRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): dcnet.pb.UserCommentsDownloadReadyRequest;
+
+            /**
+             * Verifies a UserCommentsDownloadReadyRequest message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates a UserCommentsDownloadReadyRequest message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns UserCommentsDownloadReadyRequest
+             */
+            public static fromObject(object: { [k: string]: any }): dcnet.pb.UserCommentsDownloadReadyRequest;
+
+            /**
+             * Creates a plain object from a UserCommentsDownloadReadyRequest message. Also converts values to other types if specified.
+             * @param message UserCommentsDownloadReadyRequest
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: dcnet.pb.UserCommentsDownloadReadyRequest, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this UserCommentsDownloadReadyRequest to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for UserCommentsDownloadReadyRequest
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** Properties of a UserCommentsDownloadReadyReply. */
+        interface IUserCommentsDownloadReadyReply {
+        }
+
+        /** Represents a UserCommentsDownloadReadyReply. */
+        class UserCommentsDownloadReadyReply implements IUserCommentsDownloadReadyReply {
+
+            /**
+             * Constructs a new UserCommentsDownloadReadyReply.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: dcnet.pb.IUserCommentsDownloadReadyReply);
+
+            /**
+             * Creates a new UserCommentsDownloadReadyReply instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns UserCommentsDownloadReadyReply instance
+             */
+            public static create(properties?: dcnet.pb.IUserCommentsDownloadReadyReply): dcnet.pb.UserCommentsDownloadReadyReply;
+
+            /**
+             * Encodes the specified UserCommentsDownloadReadyReply message. Does not implicitly {@link dcnet.pb.UserCommentsDownloadReadyReply.verify|verify} messages.
+             * @param message UserCommentsDownloadReadyReply message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: dcnet.pb.IUserCommentsDownloadReadyReply, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified UserCommentsDownloadReadyReply message, length delimited. Does not implicitly {@link dcnet.pb.UserCommentsDownloadReadyReply.verify|verify} messages.
+             * @param message UserCommentsDownloadReadyReply message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: dcnet.pb.IUserCommentsDownloadReadyReply, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes a UserCommentsDownloadReadyReply message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns UserCommentsDownloadReadyReply
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): dcnet.pb.UserCommentsDownloadReadyReply;
+
+            /**
+             * Decodes a UserCommentsDownloadReadyReply message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns UserCommentsDownloadReadyReply
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): dcnet.pb.UserCommentsDownloadReadyReply;
+
+            /**
+             * Verifies a UserCommentsDownloadReadyReply message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates a UserCommentsDownloadReadyReply message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns UserCommentsDownloadReadyReply
+             */
+            public static fromObject(object: { [k: string]: any }): dcnet.pb.UserCommentsDownloadReadyReply;
+
+            /**
+             * Creates a plain object from a UserCommentsDownloadReadyReply message. Also converts values to other types if specified.
+             * @param message UserCommentsDownloadReadyReply
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: dcnet.pb.UserCommentsDownloadReadyReply, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this UserCommentsDownloadReadyReply to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for UserCommentsDownloadReadyReply
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** Properties of a DeviceStatusReportRequest. */
+        interface IDeviceStatusReportRequest {
+
+            /** DeviceStatusReportRequest seqno */
+            seqno?: (number|null);
+
+            /** DeviceStatusReportRequest deviceID */
+            deviceID?: (Uint8Array|null);
+
+            /** DeviceStatusReportRequest theme */
+            theme?: (Uint8Array|null);
+
+            /** DeviceStatusReportRequest appId */
+            appId?: (Uint8Array|null);
+
+            /** DeviceStatusReportRequest themeAuthor */
+            themeAuthor?: (Uint8Array|null);
+
+            /** DeviceStatusReportRequest userPubkey */
+            userPubkey?: (Uint8Array|null);
+
+            /** DeviceStatusReportRequest type */
+            type?: (number|null);
+
+            /** DeviceStatusReportRequest contentHash */
+            contentHash?: (Uint8Array|null);
+
+            /** DeviceStatusReportRequest content */
+            content?: (Uint8Array|null);
+
+            /** DeviceStatusReportRequest contentSize */
+            contentSize?: (number|null);
+
+            /** DeviceStatusReportRequest blockheight */
+            blockheight?: (number|null);
+
+            /** DeviceStatusReportRequest groups */
+            groups?: (Uint8Array|null);
+
+            /** DeviceStatusReportRequest signature */
+            signature?: (Uint8Array|null);
+
+            /** DeviceStatusReportRequest rawReq */
+            rawReq?: (Uint8Array|null);
+
+            /** DeviceStatusReportRequest resendcount */
+            resendcount?: (number|null);
+        }
+
+        /** Represents a DeviceStatusReportRequest. */
+        class DeviceStatusReportRequest implements IDeviceStatusReportRequest {
+
+            /**
+             * Constructs a new DeviceStatusReportRequest.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: dcnet.pb.IDeviceStatusReportRequest);
+
+            /** DeviceStatusReportRequest seqno. */
+            public seqno: number;
+
+            /** DeviceStatusReportRequest deviceID. */
+            public deviceID: Uint8Array;
+
+            /** DeviceStatusReportRequest theme. */
+            public theme: Uint8Array;
+
+            /** DeviceStatusReportRequest appId. */
+            public appId: Uint8Array;
+
+            /** DeviceStatusReportRequest themeAuthor. */
+            public themeAuthor: Uint8Array;
+
+            /** DeviceStatusReportRequest userPubkey. */
+            public userPubkey: Uint8Array;
+
+            /** DeviceStatusReportRequest type. */
+            public type: number;
+
+            /** DeviceStatusReportRequest contentHash. */
+            public contentHash: Uint8Array;
+
+            /** DeviceStatusReportRequest content. */
+            public content: Uint8Array;
+
+            /** DeviceStatusReportRequest contentSize. */
+            public contentSize: number;
+
+            /** DeviceStatusReportRequest blockheight. */
+            public blockheight: number;
+
+            /** DeviceStatusReportRequest groups. */
+            public groups: Uint8Array;
+
+            /** DeviceStatusReportRequest signature. */
+            public signature: Uint8Array;
+
+            /** DeviceStatusReportRequest rawReq. */
+            public rawReq: Uint8Array;
+
+            /** DeviceStatusReportRequest resendcount. */
+            public resendcount: number;
+
+            /**
+             * Creates a new DeviceStatusReportRequest instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns DeviceStatusReportRequest instance
+             */
+            public static create(properties?: dcnet.pb.IDeviceStatusReportRequest): dcnet.pb.DeviceStatusReportRequest;
+
+            /**
+             * Encodes the specified DeviceStatusReportRequest message. Does not implicitly {@link dcnet.pb.DeviceStatusReportRequest.verify|verify} messages.
+             * @param message DeviceStatusReportRequest message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: dcnet.pb.IDeviceStatusReportRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified DeviceStatusReportRequest message, length delimited. Does not implicitly {@link dcnet.pb.DeviceStatusReportRequest.verify|verify} messages.
+             * @param message DeviceStatusReportRequest message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: dcnet.pb.IDeviceStatusReportRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes a DeviceStatusReportRequest message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns DeviceStatusReportRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): dcnet.pb.DeviceStatusReportRequest;
+
+            /**
+             * Decodes a DeviceStatusReportRequest message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns DeviceStatusReportRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): dcnet.pb.DeviceStatusReportRequest;
+
+            /**
+             * Verifies a DeviceStatusReportRequest message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates a DeviceStatusReportRequest message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns DeviceStatusReportRequest
+             */
+            public static fromObject(object: { [k: string]: any }): dcnet.pb.DeviceStatusReportRequest;
+
+            /**
+             * Creates a plain object from a DeviceStatusReportRequest message. Also converts values to other types if specified.
+             * @param message DeviceStatusReportRequest
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: dcnet.pb.DeviceStatusReportRequest, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this DeviceStatusReportRequest to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for DeviceStatusReportRequest
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** Properties of a DeviceStatusReportReply. */
+        interface IDeviceStatusReportReply {
+
+            /** DeviceStatusReportReply flag */
+            flag?: (number|null);
+        }
+
+        /** Represents a DeviceStatusReportReply. */
+        class DeviceStatusReportReply implements IDeviceStatusReportReply {
+
+            /**
+             * Constructs a new DeviceStatusReportReply.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: dcnet.pb.IDeviceStatusReportReply);
+
+            /** DeviceStatusReportReply flag. */
+            public flag: number;
+
+            /**
+             * Creates a new DeviceStatusReportReply instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns DeviceStatusReportReply instance
+             */
+            public static create(properties?: dcnet.pb.IDeviceStatusReportReply): dcnet.pb.DeviceStatusReportReply;
+
+            /**
+             * Encodes the specified DeviceStatusReportReply message. Does not implicitly {@link dcnet.pb.DeviceStatusReportReply.verify|verify} messages.
+             * @param message DeviceStatusReportReply message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: dcnet.pb.IDeviceStatusReportReply, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified DeviceStatusReportReply message, length delimited. Does not implicitly {@link dcnet.pb.DeviceStatusReportReply.verify|verify} messages.
+             * @param message DeviceStatusReportReply message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: dcnet.pb.IDeviceStatusReportReply, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes a DeviceStatusReportReply message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns DeviceStatusReportReply
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): dcnet.pb.DeviceStatusReportReply;
+
+            /**
+             * Decodes a DeviceStatusReportReply message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns DeviceStatusReportReply
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): dcnet.pb.DeviceStatusReportReply;
+
+            /**
+             * Verifies a DeviceStatusReportReply message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates a DeviceStatusReportReply message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns DeviceStatusReportReply
+             */
+            public static fromObject(object: { [k: string]: any }): dcnet.pb.DeviceStatusReportReply;
+
+            /**
+             * Creates a plain object from a DeviceStatusReportReply message. Also converts values to other types if specified.
+             * @param message DeviceStatusReportReply
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: dcnet.pb.DeviceStatusReportReply, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this DeviceStatusReportReply to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for DeviceStatusReportReply
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** Properties of a GetThemeDevicesStatusRequest. */
+        interface IGetThemeDevicesStatusRequest {
+
+            /** GetThemeDevicesStatusRequest theme */
+            theme?: (Uint8Array|null);
+
+            /** GetThemeDevicesStatusRequest appId */
+            appId?: (Uint8Array|null);
+
+            /** GetThemeDevicesStatusRequest themeAuthor */
+            themeAuthor?: (Uint8Array|null);
+
+            /** GetThemeDevicesStatusRequest direction */
+            direction?: (number|null);
+
+            /** GetThemeDevicesStatusRequest offset */
+            offset?: (number|null);
+
+            /** GetThemeDevicesStatusRequest limit */
+            limit?: (number|null);
+
+            /** GetThemeDevicesStatusRequest seekKey */
+            seekKey?: (Uint8Array|null);
+
+            /** GetThemeDevicesStatusRequest groups */
+            groups?: (Uint8Array|null);
+        }
+
+        /** Represents a GetThemeDevicesStatusRequest. */
+        class GetThemeDevicesStatusRequest implements IGetThemeDevicesStatusRequest {
+
+            /**
+             * Constructs a new GetThemeDevicesStatusRequest.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: dcnet.pb.IGetThemeDevicesStatusRequest);
+
+            /** GetThemeDevicesStatusRequest theme. */
+            public theme: Uint8Array;
+
+            /** GetThemeDevicesStatusRequest appId. */
+            public appId: Uint8Array;
+
+            /** GetThemeDevicesStatusRequest themeAuthor. */
+            public themeAuthor: Uint8Array;
+
+            /** GetThemeDevicesStatusRequest direction. */
+            public direction: number;
+
+            /** GetThemeDevicesStatusRequest offset. */
+            public offset: number;
+
+            /** GetThemeDevicesStatusRequest limit. */
+            public limit: number;
+
+            /** GetThemeDevicesStatusRequest seekKey. */
+            public seekKey: Uint8Array;
+
+            /** GetThemeDevicesStatusRequest groups. */
+            public groups: Uint8Array;
+
+            /**
+             * Creates a new GetThemeDevicesStatusRequest instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns GetThemeDevicesStatusRequest instance
+             */
+            public static create(properties?: dcnet.pb.IGetThemeDevicesStatusRequest): dcnet.pb.GetThemeDevicesStatusRequest;
+
+            /**
+             * Encodes the specified GetThemeDevicesStatusRequest message. Does not implicitly {@link dcnet.pb.GetThemeDevicesStatusRequest.verify|verify} messages.
+             * @param message GetThemeDevicesStatusRequest message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: dcnet.pb.IGetThemeDevicesStatusRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified GetThemeDevicesStatusRequest message, length delimited. Does not implicitly {@link dcnet.pb.GetThemeDevicesStatusRequest.verify|verify} messages.
+             * @param message GetThemeDevicesStatusRequest message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: dcnet.pb.IGetThemeDevicesStatusRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes a GetThemeDevicesStatusRequest message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns GetThemeDevicesStatusRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): dcnet.pb.GetThemeDevicesStatusRequest;
+
+            /**
+             * Decodes a GetThemeDevicesStatusRequest message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns GetThemeDevicesStatusRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): dcnet.pb.GetThemeDevicesStatusRequest;
+
+            /**
+             * Verifies a GetThemeDevicesStatusRequest message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates a GetThemeDevicesStatusRequest message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns GetThemeDevicesStatusRequest
+             */
+            public static fromObject(object: { [k: string]: any }): dcnet.pb.GetThemeDevicesStatusRequest;
+
+            /**
+             * Creates a plain object from a GetThemeDevicesStatusRequest message. Also converts values to other types if specified.
+             * @param message GetThemeDevicesStatusRequest
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: dcnet.pb.GetThemeDevicesStatusRequest, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this GetThemeDevicesStatusRequest to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for GetThemeDevicesStatusRequest
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** Properties of a GetThemeDevicesStatusReply. */
+        interface IGetThemeDevicesStatusReply {
+
+            /** GetThemeDevicesStatusReply flag */
+            flag?: (number|null);
+
+            /** GetThemeDevicesStatusReply statuslistCid */
+            statuslistCid?: (Uint8Array|null);
+        }
+
+        /** Represents a GetThemeDevicesStatusReply. */
+        class GetThemeDevicesStatusReply implements IGetThemeDevicesStatusReply {
+
+            /**
+             * Constructs a new GetThemeDevicesStatusReply.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: dcnet.pb.IGetThemeDevicesStatusReply);
+
+            /** GetThemeDevicesStatusReply flag. */
+            public flag: number;
+
+            /** GetThemeDevicesStatusReply statuslistCid. */
+            public statuslistCid: Uint8Array;
+
+            /**
+             * Creates a new GetThemeDevicesStatusReply instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns GetThemeDevicesStatusReply instance
+             */
+            public static create(properties?: dcnet.pb.IGetThemeDevicesStatusReply): dcnet.pb.GetThemeDevicesStatusReply;
+
+            /**
+             * Encodes the specified GetThemeDevicesStatusReply message. Does not implicitly {@link dcnet.pb.GetThemeDevicesStatusReply.verify|verify} messages.
+             * @param message GetThemeDevicesStatusReply message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: dcnet.pb.IGetThemeDevicesStatusReply, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified GetThemeDevicesStatusReply message, length delimited. Does not implicitly {@link dcnet.pb.GetThemeDevicesStatusReply.verify|verify} messages.
+             * @param message GetThemeDevicesStatusReply message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: dcnet.pb.IGetThemeDevicesStatusReply, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes a GetThemeDevicesStatusReply message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns GetThemeDevicesStatusReply
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): dcnet.pb.GetThemeDevicesStatusReply;
+
+            /**
+             * Decodes a GetThemeDevicesStatusReply message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns GetThemeDevicesStatusReply
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): dcnet.pb.GetThemeDevicesStatusReply;
+
+            /**
+             * Verifies a GetThemeDevicesStatusReply message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates a GetThemeDevicesStatusReply message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns GetThemeDevicesStatusReply
+             */
+            public static fromObject(object: { [k: string]: any }): dcnet.pb.GetThemeDevicesStatusReply;
+
+            /**
+             * Creates a plain object from a GetThemeDevicesStatusReply message. Also converts values to other types if specified.
+             * @param message GetThemeDevicesStatusReply
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: dcnet.pb.GetThemeDevicesStatusReply, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this GetThemeDevicesStatusReply to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for GetThemeDevicesStatusReply
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** Properties of a GetDeviceAuthRequest. */
+        interface IGetDeviceAuthRequest {
+
+            /** GetDeviceAuthRequest theme */
+            theme?: (Uint8Array|null);
+
+            /** GetDeviceAuthRequest appId */
+            appId?: (Uint8Array|null);
+
+            /** GetDeviceAuthRequest themeAuthor */
+            themeAuthor?: (Uint8Array|null);
+        }
+
+        /** Represents a GetDeviceAuthRequest. */
+        class GetDeviceAuthRequest implements IGetDeviceAuthRequest {
+
+            /**
+             * Constructs a new GetDeviceAuthRequest.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: dcnet.pb.IGetDeviceAuthRequest);
+
+            /** GetDeviceAuthRequest theme. */
+            public theme: Uint8Array;
+
+            /** GetDeviceAuthRequest appId. */
+            public appId: Uint8Array;
+
+            /** GetDeviceAuthRequest themeAuthor. */
+            public themeAuthor: Uint8Array;
+
+            /**
+             * Creates a new GetDeviceAuthRequest instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns GetDeviceAuthRequest instance
+             */
+            public static create(properties?: dcnet.pb.IGetDeviceAuthRequest): dcnet.pb.GetDeviceAuthRequest;
+
+            /**
+             * Encodes the specified GetDeviceAuthRequest message. Does not implicitly {@link dcnet.pb.GetDeviceAuthRequest.verify|verify} messages.
+             * @param message GetDeviceAuthRequest message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: dcnet.pb.IGetDeviceAuthRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified GetDeviceAuthRequest message, length delimited. Does not implicitly {@link dcnet.pb.GetDeviceAuthRequest.verify|verify} messages.
+             * @param message GetDeviceAuthRequest message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: dcnet.pb.IGetDeviceAuthRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes a GetDeviceAuthRequest message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns GetDeviceAuthRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): dcnet.pb.GetDeviceAuthRequest;
+
+            /**
+             * Decodes a GetDeviceAuthRequest message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns GetDeviceAuthRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): dcnet.pb.GetDeviceAuthRequest;
+
+            /**
+             * Verifies a GetDeviceAuthRequest message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates a GetDeviceAuthRequest message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns GetDeviceAuthRequest
+             */
+            public static fromObject(object: { [k: string]: any }): dcnet.pb.GetDeviceAuthRequest;
+
+            /**
+             * Creates a plain object from a GetDeviceAuthRequest message. Also converts values to other types if specified.
+             * @param message GetDeviceAuthRequest
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: dcnet.pb.GetDeviceAuthRequest, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this GetDeviceAuthRequest to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for GetDeviceAuthRequest
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** Properties of a GetDeviceAuthReply. */
+        interface IGetDeviceAuthReply {
+
+            /** GetDeviceAuthReply flag */
+            flag?: (number|null);
+
+            /** GetDeviceAuthReply blockheight */
+            blockheight?: (number|null);
+
+            /** GetDeviceAuthReply authGroups */
+            authGroups?: (Uint8Array|null);
+
+            /** GetDeviceAuthReply signature */
+            signature?: (Uint8Array|null);
+        }
+
+        /** Represents a GetDeviceAuthReply. */
+        class GetDeviceAuthReply implements IGetDeviceAuthReply {
+
+            /**
+             * Constructs a new GetDeviceAuthReply.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: dcnet.pb.IGetDeviceAuthReply);
+
+            /** GetDeviceAuthReply flag. */
+            public flag: number;
+
+            /** GetDeviceAuthReply blockheight. */
+            public blockheight: number;
+
+            /** GetDeviceAuthReply authGroups. */
+            public authGroups: Uint8Array;
+
+            /** GetDeviceAuthReply signature. */
+            public signature: Uint8Array;
+
+            /**
+             * Creates a new GetDeviceAuthReply instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns GetDeviceAuthReply instance
+             */
+            public static create(properties?: dcnet.pb.IGetDeviceAuthReply): dcnet.pb.GetDeviceAuthReply;
+
+            /**
+             * Encodes the specified GetDeviceAuthReply message. Does not implicitly {@link dcnet.pb.GetDeviceAuthReply.verify|verify} messages.
+             * @param message GetDeviceAuthReply message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: dcnet.pb.IGetDeviceAuthReply, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified GetDeviceAuthReply message, length delimited. Does not implicitly {@link dcnet.pb.GetDeviceAuthReply.verify|verify} messages.
+             * @param message GetDeviceAuthReply message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: dcnet.pb.IGetDeviceAuthReply, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes a GetDeviceAuthReply message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns GetDeviceAuthReply
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): dcnet.pb.GetDeviceAuthReply;
+
+            /**
+             * Decodes a GetDeviceAuthReply message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns GetDeviceAuthReply
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): dcnet.pb.GetDeviceAuthReply;
+
+            /**
+             * Verifies a GetDeviceAuthReply message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates a GetDeviceAuthReply message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns GetDeviceAuthReply
+             */
+            public static fromObject(object: { [k: string]: any }): dcnet.pb.GetDeviceAuthReply;
+
+            /**
+             * Creates a plain object from a GetDeviceAuthReply message. Also converts values to other types if specified.
+             * @param message GetDeviceAuthReply
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: dcnet.pb.GetDeviceAuthReply, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this GetDeviceAuthReply to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for GetDeviceAuthReply
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** Properties of a GetDeviceStatusListRequest. */
+        interface IGetDeviceStatusListRequest {
+
+            /** GetDeviceStatusListRequest theme */
+            theme?: (Uint8Array|null);
+
+            /** GetDeviceStatusListRequest appId */
+            appId?: (Uint8Array|null);
+
+            /** GetDeviceStatusListRequest deviceId */
+            deviceId?: (Uint8Array|null);
+
+            /** GetDeviceStatusListRequest themeAuthor */
+            themeAuthor?: (Uint8Array|null);
+
+            /** GetDeviceStatusListRequest UserPubkey */
+            UserPubkey?: (Uint8Array|null);
+
+            /** GetDeviceStatusListRequest seqno */
+            seqno?: (number|null);
+
+            /** GetDeviceStatusListRequest startHeight */
+            startHeight?: (number|null);
+
+            /** GetDeviceStatusListRequest direction */
+            direction?: (number|null);
+
+            /** GetDeviceStatusListRequest offset */
+            offset?: (number|null);
+
+            /** GetDeviceStatusListRequest limit */
+            limit?: (number|null);
+
+            /** GetDeviceStatusListRequest seekKey */
+            seekKey?: (Uint8Array|null);
+
+            /** GetDeviceStatusListRequest authgroupspermission */
+            authgroupspermission?: (Uint8Array|null);
+
+            /** GetDeviceStatusListRequest authBlockheight */
+            authBlockheight?: (number|null);
+
+            /** GetDeviceStatusListRequest authPeerid */
+            authPeerid?: (Uint8Array|null);
+
+            /** GetDeviceStatusListRequest authSignature */
+            authSignature?: (Uint8Array|null);
+        }
+
+        /** Represents a GetDeviceStatusListRequest. */
+        class GetDeviceStatusListRequest implements IGetDeviceStatusListRequest {
+
+            /**
+             * Constructs a new GetDeviceStatusListRequest.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: dcnet.pb.IGetDeviceStatusListRequest);
+
+            /** GetDeviceStatusListRequest theme. */
+            public theme: Uint8Array;
+
+            /** GetDeviceStatusListRequest appId. */
+            public appId: Uint8Array;
+
+            /** GetDeviceStatusListRequest deviceId. */
+            public deviceId: Uint8Array;
+
+            /** GetDeviceStatusListRequest themeAuthor. */
+            public themeAuthor: Uint8Array;
+
+            /** GetDeviceStatusListRequest UserPubkey. */
+            public UserPubkey: Uint8Array;
+
+            /** GetDeviceStatusListRequest seqno. */
+            public seqno: number;
+
+            /** GetDeviceStatusListRequest startHeight. */
+            public startHeight: number;
+
+            /** GetDeviceStatusListRequest direction. */
+            public direction: number;
+
+            /** GetDeviceStatusListRequest offset. */
+            public offset: number;
+
+            /** GetDeviceStatusListRequest limit. */
+            public limit: number;
+
+            /** GetDeviceStatusListRequest seekKey. */
+            public seekKey: Uint8Array;
+
+            /** GetDeviceStatusListRequest authgroupspermission. */
+            public authgroupspermission: Uint8Array;
+
+            /** GetDeviceStatusListRequest authBlockheight. */
+            public authBlockheight: number;
+
+            /** GetDeviceStatusListRequest authPeerid. */
+            public authPeerid: Uint8Array;
+
+            /** GetDeviceStatusListRequest authSignature. */
+            public authSignature: Uint8Array;
+
+            /**
+             * Creates a new GetDeviceStatusListRequest instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns GetDeviceStatusListRequest instance
+             */
+            public static create(properties?: dcnet.pb.IGetDeviceStatusListRequest): dcnet.pb.GetDeviceStatusListRequest;
+
+            /**
+             * Encodes the specified GetDeviceStatusListRequest message. Does not implicitly {@link dcnet.pb.GetDeviceStatusListRequest.verify|verify} messages.
+             * @param message GetDeviceStatusListRequest message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: dcnet.pb.IGetDeviceStatusListRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified GetDeviceStatusListRequest message, length delimited. Does not implicitly {@link dcnet.pb.GetDeviceStatusListRequest.verify|verify} messages.
+             * @param message GetDeviceStatusListRequest message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: dcnet.pb.IGetDeviceStatusListRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes a GetDeviceStatusListRequest message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns GetDeviceStatusListRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): dcnet.pb.GetDeviceStatusListRequest;
+
+            /**
+             * Decodes a GetDeviceStatusListRequest message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns GetDeviceStatusListRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): dcnet.pb.GetDeviceStatusListRequest;
+
+            /**
+             * Verifies a GetDeviceStatusListRequest message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates a GetDeviceStatusListRequest message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns GetDeviceStatusListRequest
+             */
+            public static fromObject(object: { [k: string]: any }): dcnet.pb.GetDeviceStatusListRequest;
+
+            /**
+             * Creates a plain object from a GetDeviceStatusListRequest message. Also converts values to other types if specified.
+             * @param message GetDeviceStatusListRequest
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: dcnet.pb.GetDeviceStatusListRequest, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this GetDeviceStatusListRequest to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for GetDeviceStatusListRequest
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** Properties of a GetDeviceStatusListReply. */
+        interface IGetDeviceStatusListReply {
+
+            /** GetDeviceStatusListReply flag */
+            flag?: (number|null);
+
+            /** GetDeviceStatusListReply statuslistCid */
+            statuslistCid?: (Uint8Array|null);
+        }
+
+        /** Represents a GetDeviceStatusListReply. */
+        class GetDeviceStatusListReply implements IGetDeviceStatusListReply {
+
+            /**
+             * Constructs a new GetDeviceStatusListReply.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: dcnet.pb.IGetDeviceStatusListReply);
+
+            /** GetDeviceStatusListReply flag. */
+            public flag: number;
+
+            /** GetDeviceStatusListReply statuslistCid. */
+            public statuslistCid: Uint8Array;
+
+            /**
+             * Creates a new GetDeviceStatusListReply instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns GetDeviceStatusListReply instance
+             */
+            public static create(properties?: dcnet.pb.IGetDeviceStatusListReply): dcnet.pb.GetDeviceStatusListReply;
+
+            /**
+             * Encodes the specified GetDeviceStatusListReply message. Does not implicitly {@link dcnet.pb.GetDeviceStatusListReply.verify|verify} messages.
+             * @param message GetDeviceStatusListReply message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: dcnet.pb.IGetDeviceStatusListReply, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified GetDeviceStatusListReply message, length delimited. Does not implicitly {@link dcnet.pb.GetDeviceStatusListReply.verify|verify} messages.
+             * @param message GetDeviceStatusListReply message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: dcnet.pb.IGetDeviceStatusListReply, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes a GetDeviceStatusListReply message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns GetDeviceStatusListReply
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): dcnet.pb.GetDeviceStatusListReply;
+
+            /**
+             * Decodes a GetDeviceStatusListReply message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns GetDeviceStatusListReply
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): dcnet.pb.GetDeviceStatusListReply;
+
+            /**
+             * Verifies a GetDeviceStatusListReply message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates a GetDeviceStatusListReply message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns GetDeviceStatusListReply
+             */
+            public static fromObject(object: { [k: string]: any }): dcnet.pb.GetDeviceStatusListReply;
+
+            /**
+             * Creates a plain object from a GetDeviceStatusListReply message. Also converts values to other types if specified.
+             * @param message GetDeviceStatusListReply
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: dcnet.pb.GetDeviceStatusListReply, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this GetDeviceStatusListReply to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for GetDeviceStatusListReply
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** Properties of a ReEncryptFileRequest. */
+        interface IReEncryptFileRequest {
+
+            /** ReEncryptFileRequest cid */
+            cid?: (Uint8Array|null);
+
+            /** ReEncryptFileRequest encDecryptKey */
+            encDecryptKey?: (Uint8Array|null);
+
+            /** ReEncryptFileRequest encSecretkey */
+            encSecretkey?: (Uint8Array|null);
+
+            /** ReEncryptFileRequest blockheight */
+            blockheight?: (number|null);
+
+            /** ReEncryptFileRequest signature */
+            signature?: (Uint8Array|null);
+        }
+
+        /** Represents a ReEncryptFileRequest. */
+        class ReEncryptFileRequest implements IReEncryptFileRequest {
+
+            /**
+             * Constructs a new ReEncryptFileRequest.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: dcnet.pb.IReEncryptFileRequest);
+
+            /** ReEncryptFileRequest cid. */
+            public cid: Uint8Array;
+
+            /** ReEncryptFileRequest encDecryptKey. */
+            public encDecryptKey: Uint8Array;
+
+            /** ReEncryptFileRequest encSecretkey. */
+            public encSecretkey: Uint8Array;
+
+            /** ReEncryptFileRequest blockheight. */
+            public blockheight: number;
+
+            /** ReEncryptFileRequest signature. */
+            public signature: Uint8Array;
+
+            /**
+             * Creates a new ReEncryptFileRequest instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns ReEncryptFileRequest instance
+             */
+            public static create(properties?: dcnet.pb.IReEncryptFileRequest): dcnet.pb.ReEncryptFileRequest;
+
+            /**
+             * Encodes the specified ReEncryptFileRequest message. Does not implicitly {@link dcnet.pb.ReEncryptFileRequest.verify|verify} messages.
+             * @param message ReEncryptFileRequest message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: dcnet.pb.IReEncryptFileRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified ReEncryptFileRequest message, length delimited. Does not implicitly {@link dcnet.pb.ReEncryptFileRequest.verify|verify} messages.
+             * @param message ReEncryptFileRequest message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: dcnet.pb.IReEncryptFileRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes a ReEncryptFileRequest message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns ReEncryptFileRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): dcnet.pb.ReEncryptFileRequest;
+
+            /**
+             * Decodes a ReEncryptFileRequest message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns ReEncryptFileRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): dcnet.pb.ReEncryptFileRequest;
+
+            /**
+             * Verifies a ReEncryptFileRequest message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates a ReEncryptFileRequest message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns ReEncryptFileRequest
+             */
+            public static fromObject(object: { [k: string]: any }): dcnet.pb.ReEncryptFileRequest;
+
+            /**
+             * Creates a plain object from a ReEncryptFileRequest message. Also converts values to other types if specified.
+             * @param message ReEncryptFileRequest
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: dcnet.pb.ReEncryptFileRequest, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this ReEncryptFileRequest to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for ReEncryptFileRequest
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** Properties of a ReEncryptFileReply. */
+        interface IReEncryptFileReply {
+
+            /** ReEncryptFileReply cid */
+            cid?: (Uint8Array|null);
+
+            /** ReEncryptFileReply fileSize */
+            fileSize?: (number|Long|null);
+        }
+
+        /** Represents a ReEncryptFileReply. */
+        class ReEncryptFileReply implements IReEncryptFileReply {
+
+            /**
+             * Constructs a new ReEncryptFileReply.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: dcnet.pb.IReEncryptFileReply);
+
+            /** ReEncryptFileReply cid. */
+            public cid: Uint8Array;
+
+            /** ReEncryptFileReply fileSize. */
+            public fileSize: (number|Long);
+
+            /**
+             * Creates a new ReEncryptFileReply instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns ReEncryptFileReply instance
+             */
+            public static create(properties?: dcnet.pb.IReEncryptFileReply): dcnet.pb.ReEncryptFileReply;
+
+            /**
+             * Encodes the specified ReEncryptFileReply message. Does not implicitly {@link dcnet.pb.ReEncryptFileReply.verify|verify} messages.
+             * @param message ReEncryptFileReply message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: dcnet.pb.IReEncryptFileReply, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified ReEncryptFileReply message, length delimited. Does not implicitly {@link dcnet.pb.ReEncryptFileReply.verify|verify} messages.
+             * @param message ReEncryptFileReply message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: dcnet.pb.IReEncryptFileReply, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes a ReEncryptFileReply message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns ReEncryptFileReply
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): dcnet.pb.ReEncryptFileReply;
+
+            /**
+             * Decodes a ReEncryptFileReply message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns ReEncryptFileReply
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): dcnet.pb.ReEncryptFileReply;
+
+            /**
+             * Verifies a ReEncryptFileReply message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates a ReEncryptFileReply message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns ReEncryptFileReply
+             */
+            public static fromObject(object: { [k: string]: any }): dcnet.pb.ReEncryptFileReply;
+
+            /**
+             * Creates a plain object from a ReEncryptFileReply message. Also converts values to other types if specified.
+             * @param message ReEncryptFileReply
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: dcnet.pb.ReEncryptFileReply, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this ReEncryptFileReply to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for ReEncryptFileReply
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** Properties of a RequestRandDataRequest. */
+        interface IRequestRandDataRequest {
+
+            /** RequestRandDataRequest userPubkey */
+            userPubkey?: (Uint8Array|null);
+
+            /** RequestRandDataRequest blockheight */
+            blockheight?: (number|null);
+
+            /** RequestRandDataRequest extradata */
+            extradata?: (Uint8Array|null);
+
+            /** RequestRandDataRequest signature */
+            signature?: (Uint8Array|null);
+        }
+
+        /** Represents a RequestRandDataRequest. */
+        class RequestRandDataRequest implements IRequestRandDataRequest {
+
+            /**
+             * Constructs a new RequestRandDataRequest.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: dcnet.pb.IRequestRandDataRequest);
+
+            /** RequestRandDataRequest userPubkey. */
+            public userPubkey: Uint8Array;
+
+            /** RequestRandDataRequest blockheight. */
+            public blockheight: number;
+
+            /** RequestRandDataRequest extradata. */
+            public extradata: Uint8Array;
+
+            /** RequestRandDataRequest signature. */
+            public signature: Uint8Array;
+
+            /**
+             * Creates a new RequestRandDataRequest instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns RequestRandDataRequest instance
+             */
+            public static create(properties?: dcnet.pb.IRequestRandDataRequest): dcnet.pb.RequestRandDataRequest;
+
+            /**
+             * Encodes the specified RequestRandDataRequest message. Does not implicitly {@link dcnet.pb.RequestRandDataRequest.verify|verify} messages.
+             * @param message RequestRandDataRequest message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: dcnet.pb.IRequestRandDataRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified RequestRandDataRequest message, length delimited. Does not implicitly {@link dcnet.pb.RequestRandDataRequest.verify|verify} messages.
+             * @param message RequestRandDataRequest message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: dcnet.pb.IRequestRandDataRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes a RequestRandDataRequest message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns RequestRandDataRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): dcnet.pb.RequestRandDataRequest;
+
+            /**
+             * Decodes a RequestRandDataRequest message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns RequestRandDataRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): dcnet.pb.RequestRandDataRequest;
+
+            /**
+             * Verifies a RequestRandDataRequest message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates a RequestRandDataRequest message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns RequestRandDataRequest
+             */
+            public static fromObject(object: { [k: string]: any }): dcnet.pb.RequestRandDataRequest;
+
+            /**
+             * Creates a plain object from a RequestRandDataRequest message. Also converts values to other types if specified.
+             * @param message RequestRandDataRequest
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: dcnet.pb.RequestRandDataRequest, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this RequestRandDataRequest to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for RequestRandDataRequest
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** Properties of a RequestRandDataReply. */
+        interface IRequestRandDataReply {
+
+            /** RequestRandDataReply userPubkey */
+            userPubkey?: (Uint8Array|null);
+
+            /** RequestRandDataReply randdata */
+            randdata?: (Uint8Array|null);
+
+            /** RequestRandDataReply blockheight */
+            blockheight?: (number|null);
+
+            /** RequestRandDataReply extradata */
+            extradata?: (Uint8Array|null);
+
+            /** RequestRandDataReply signature */
+            signature?: (Uint8Array|null);
+        }
+
+        /** Represents a RequestRandDataReply. */
+        class RequestRandDataReply implements IRequestRandDataReply {
+
+            /**
+             * Constructs a new RequestRandDataReply.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: dcnet.pb.IRequestRandDataReply);
+
+            /** RequestRandDataReply userPubkey. */
+            public userPubkey: Uint8Array;
+
+            /** RequestRandDataReply randdata. */
+            public randdata: Uint8Array;
+
+            /** RequestRandDataReply blockheight. */
+            public blockheight: number;
+
+            /** RequestRandDataReply extradata. */
+            public extradata: Uint8Array;
+
+            /** RequestRandDataReply signature. */
+            public signature: Uint8Array;
+
+            /**
+             * Creates a new RequestRandDataReply instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns RequestRandDataReply instance
+             */
+            public static create(properties?: dcnet.pb.IRequestRandDataReply): dcnet.pb.RequestRandDataReply;
+
+            /**
+             * Encodes the specified RequestRandDataReply message. Does not implicitly {@link dcnet.pb.RequestRandDataReply.verify|verify} messages.
+             * @param message RequestRandDataReply message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: dcnet.pb.IRequestRandDataReply, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified RequestRandDataReply message, length delimited. Does not implicitly {@link dcnet.pb.RequestRandDataReply.verify|verify} messages.
+             * @param message RequestRandDataReply message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: dcnet.pb.IRequestRandDataReply, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes a RequestRandDataReply message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns RequestRandDataReply
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): dcnet.pb.RequestRandDataReply;
+
+            /**
+             * Decodes a RequestRandDataReply message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns RequestRandDataReply
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): dcnet.pb.RequestRandDataReply;
+
+            /**
+             * Verifies a RequestRandDataReply message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates a RequestRandDataReply message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns RequestRandDataReply
+             */
+            public static fromObject(object: { [k: string]: any }): dcnet.pb.RequestRandDataReply;
+
+            /**
+             * Creates a plain object from a RequestRandDataReply message. Also converts values to other types if specified.
+             * @param message RequestRandDataReply
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: dcnet.pb.RequestRandDataReply, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this RequestRandDataReply to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for RequestRandDataReply
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** Properties of a DeductUserOffChainOpTimesRequest. */
+        interface IDeductUserOffChainOpTimesRequest {
+
+            /** DeductUserOffChainOpTimesRequest userPubkey */
+            userPubkey?: (Uint8Array|null);
+
+            /** DeductUserOffChainOpTimesRequest blockheight */
+            blockheight?: (number|null);
+
+            /** DeductUserOffChainOpTimesRequest deductType */
+            deductType?: (number|null);
+
+            /** DeductUserOffChainOpTimesRequest rawReq */
+            rawReq?: (Uint8Array|null);
+        }
+
+        /** Represents a DeductUserOffChainOpTimesRequest. */
+        class DeductUserOffChainOpTimesRequest implements IDeductUserOffChainOpTimesRequest {
+
+            /**
+             * Constructs a new DeductUserOffChainOpTimesRequest.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: dcnet.pb.IDeductUserOffChainOpTimesRequest);
+
+            /** DeductUserOffChainOpTimesRequest userPubkey. */
+            public userPubkey: Uint8Array;
+
+            /** DeductUserOffChainOpTimesRequest blockheight. */
+            public blockheight: number;
+
+            /** DeductUserOffChainOpTimesRequest deductType. */
+            public deductType: number;
+
+            /** DeductUserOffChainOpTimesRequest rawReq. */
+            public rawReq: Uint8Array;
+
+            /**
+             * Creates a new DeductUserOffChainOpTimesRequest instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns DeductUserOffChainOpTimesRequest instance
+             */
+            public static create(properties?: dcnet.pb.IDeductUserOffChainOpTimesRequest): dcnet.pb.DeductUserOffChainOpTimesRequest;
+
+            /**
+             * Encodes the specified DeductUserOffChainOpTimesRequest message. Does not implicitly {@link dcnet.pb.DeductUserOffChainOpTimesRequest.verify|verify} messages.
+             * @param message DeductUserOffChainOpTimesRequest message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: dcnet.pb.IDeductUserOffChainOpTimesRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified DeductUserOffChainOpTimesRequest message, length delimited. Does not implicitly {@link dcnet.pb.DeductUserOffChainOpTimesRequest.verify|verify} messages.
+             * @param message DeductUserOffChainOpTimesRequest message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: dcnet.pb.IDeductUserOffChainOpTimesRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes a DeductUserOffChainOpTimesRequest message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns DeductUserOffChainOpTimesRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): dcnet.pb.DeductUserOffChainOpTimesRequest;
+
+            /**
+             * Decodes a DeductUserOffChainOpTimesRequest message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns DeductUserOffChainOpTimesRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): dcnet.pb.DeductUserOffChainOpTimesRequest;
+
+            /**
+             * Verifies a DeductUserOffChainOpTimesRequest message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates a DeductUserOffChainOpTimesRequest message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns DeductUserOffChainOpTimesRequest
+             */
+            public static fromObject(object: { [k: string]: any }): dcnet.pb.DeductUserOffChainOpTimesRequest;
+
+            /**
+             * Creates a plain object from a DeductUserOffChainOpTimesRequest message. Also converts values to other types if specified.
+             * @param message DeductUserOffChainOpTimesRequest
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: dcnet.pb.DeductUserOffChainOpTimesRequest, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this DeductUserOffChainOpTimesRequest to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for DeductUserOffChainOpTimesRequest
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** Properties of a DeductUserOffChainOpTimesReply. */
+        interface IDeductUserOffChainOpTimesReply {
+
+            /** DeductUserOffChainOpTimesReply flag */
+            flag?: (number|null);
+        }
+
+        /** Represents a DeductUserOffChainOpTimesReply. */
+        class DeductUserOffChainOpTimesReply implements IDeductUserOffChainOpTimesReply {
+
+            /**
+             * Constructs a new DeductUserOffChainOpTimesReply.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: dcnet.pb.IDeductUserOffChainOpTimesReply);
+
+            /** DeductUserOffChainOpTimesReply flag. */
+            public flag: number;
+
+            /**
+             * Creates a new DeductUserOffChainOpTimesReply instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns DeductUserOffChainOpTimesReply instance
+             */
+            public static create(properties?: dcnet.pb.IDeductUserOffChainOpTimesReply): dcnet.pb.DeductUserOffChainOpTimesReply;
+
+            /**
+             * Encodes the specified DeductUserOffChainOpTimesReply message. Does not implicitly {@link dcnet.pb.DeductUserOffChainOpTimesReply.verify|verify} messages.
+             * @param message DeductUserOffChainOpTimesReply message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: dcnet.pb.IDeductUserOffChainOpTimesReply, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified DeductUserOffChainOpTimesReply message, length delimited. Does not implicitly {@link dcnet.pb.DeductUserOffChainOpTimesReply.verify|verify} messages.
+             * @param message DeductUserOffChainOpTimesReply message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: dcnet.pb.IDeductUserOffChainOpTimesReply, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes a DeductUserOffChainOpTimesReply message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns DeductUserOffChainOpTimesReply
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): dcnet.pb.DeductUserOffChainOpTimesReply;
+
+            /**
+             * Decodes a DeductUserOffChainOpTimesReply message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns DeductUserOffChainOpTimesReply
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): dcnet.pb.DeductUserOffChainOpTimesReply;
+
+            /**
+             * Verifies a DeductUserOffChainOpTimesReply message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates a DeductUserOffChainOpTimesReply message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns DeductUserOffChainOpTimesReply
+             */
+            public static fromObject(object: { [k: string]: any }): dcnet.pb.DeductUserOffChainOpTimesReply;
+
+            /**
+             * Creates a plain object from a DeductUserOffChainOpTimesReply message. Also converts values to other types if specified.
+             * @param message DeductUserOffChainOpTimesReply
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: dcnet.pb.DeductUserOffChainOpTimesReply, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this DeductUserOffChainOpTimesReply to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for DeductUserOffChainOpTimesReply
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** Properties of an ArchiveDeviceStatusRequest. */
+        interface IArchiveDeviceStatusRequest {
+
+            /** ArchiveDeviceStatusRequest deviceID */
+            deviceID?: (Uint8Array|null);
+
+            /** ArchiveDeviceStatusRequest themeAuthor */
+            themeAuthor?: (Uint8Array|null);
+
+            /** ArchiveDeviceStatusRequest theme */
+            theme?: (Uint8Array|null);
+
+            /** ArchiveDeviceStatusRequest appId */
+            appId?: (Uint8Array|null);
+
+            /** ArchiveDeviceStatusRequest startSeqno */
+            startSeqno?: (number|null);
+
+            /** ArchiveDeviceStatusRequest endSeqno */
+            endSeqno?: (number|null);
+
+            /** ArchiveDeviceStatusRequest blockheight */
+            blockheight?: (number|null);
+
+            /** ArchiveDeviceStatusRequest encSecretkey */
+            encSecretkey?: (Uint8Array|null);
+
+            /** ArchiveDeviceStatusRequest signature */
+            signature?: (Uint8Array|null);
+        }
+
+        /** Represents an ArchiveDeviceStatusRequest. */
+        class ArchiveDeviceStatusRequest implements IArchiveDeviceStatusRequest {
+
+            /**
+             * Constructs a new ArchiveDeviceStatusRequest.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: dcnet.pb.IArchiveDeviceStatusRequest);
+
+            /** ArchiveDeviceStatusRequest deviceID. */
+            public deviceID: Uint8Array;
+
+            /** ArchiveDeviceStatusRequest themeAuthor. */
+            public themeAuthor: Uint8Array;
+
+            /** ArchiveDeviceStatusRequest theme. */
+            public theme: Uint8Array;
+
+            /** ArchiveDeviceStatusRequest appId. */
+            public appId: Uint8Array;
+
+            /** ArchiveDeviceStatusRequest startSeqno. */
+            public startSeqno: number;
+
+            /** ArchiveDeviceStatusRequest endSeqno. */
+            public endSeqno: number;
+
+            /** ArchiveDeviceStatusRequest blockheight. */
+            public blockheight: number;
+
+            /** ArchiveDeviceStatusRequest encSecretkey. */
+            public encSecretkey: Uint8Array;
+
+            /** ArchiveDeviceStatusRequest signature. */
+            public signature: Uint8Array;
+
+            /**
+             * Creates a new ArchiveDeviceStatusRequest instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns ArchiveDeviceStatusRequest instance
+             */
+            public static create(properties?: dcnet.pb.IArchiveDeviceStatusRequest): dcnet.pb.ArchiveDeviceStatusRequest;
+
+            /**
+             * Encodes the specified ArchiveDeviceStatusRequest message. Does not implicitly {@link dcnet.pb.ArchiveDeviceStatusRequest.verify|verify} messages.
+             * @param message ArchiveDeviceStatusRequest message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: dcnet.pb.IArchiveDeviceStatusRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified ArchiveDeviceStatusRequest message, length delimited. Does not implicitly {@link dcnet.pb.ArchiveDeviceStatusRequest.verify|verify} messages.
+             * @param message ArchiveDeviceStatusRequest message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: dcnet.pb.IArchiveDeviceStatusRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes an ArchiveDeviceStatusRequest message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns ArchiveDeviceStatusRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): dcnet.pb.ArchiveDeviceStatusRequest;
+
+            /**
+             * Decodes an ArchiveDeviceStatusRequest message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns ArchiveDeviceStatusRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): dcnet.pb.ArchiveDeviceStatusRequest;
+
+            /**
+             * Verifies an ArchiveDeviceStatusRequest message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates an ArchiveDeviceStatusRequest message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns ArchiveDeviceStatusRequest
+             */
+            public static fromObject(object: { [k: string]: any }): dcnet.pb.ArchiveDeviceStatusRequest;
+
+            /**
+             * Creates a plain object from an ArchiveDeviceStatusRequest message. Also converts values to other types if specified.
+             * @param message ArchiveDeviceStatusRequest
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: dcnet.pb.ArchiveDeviceStatusRequest, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this ArchiveDeviceStatusRequest to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for ArchiveDeviceStatusRequest
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** Properties of an ArchiveDeviceStatusReply. */
+        interface IArchiveDeviceStatusReply {
+
+            /** ArchiveDeviceStatusReply flag */
+            flag?: (number|null);
+
+            /** ArchiveDeviceStatusReply statusCid */
+            statusCid?: (Uint8Array|null);
+
+            /** ArchiveDeviceStatusReply statusCount */
+            statusCount?: (number|null);
+
+            /** ArchiveDeviceStatusReply statusSize */
+            statusSize?: (number|Long|null);
+
+            /** ArchiveDeviceStatusReply blockheight */
+            blockheight?: (number|null);
+
+            /** ArchiveDeviceStatusReply signature */
+            signature?: (Uint8Array|null);
+        }
+
+        /** Represents an ArchiveDeviceStatusReply. */
+        class ArchiveDeviceStatusReply implements IArchiveDeviceStatusReply {
+
+            /**
+             * Constructs a new ArchiveDeviceStatusReply.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: dcnet.pb.IArchiveDeviceStatusReply);
+
+            /** ArchiveDeviceStatusReply flag. */
+            public flag: number;
+
+            /** ArchiveDeviceStatusReply statusCid. */
+            public statusCid: Uint8Array;
+
+            /** ArchiveDeviceStatusReply statusCount. */
+            public statusCount: number;
+
+            /** ArchiveDeviceStatusReply statusSize. */
+            public statusSize: (number|Long);
+
+            /** ArchiveDeviceStatusReply blockheight. */
+            public blockheight: number;
+
+            /** ArchiveDeviceStatusReply signature. */
+            public signature: Uint8Array;
+
+            /**
+             * Creates a new ArchiveDeviceStatusReply instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns ArchiveDeviceStatusReply instance
+             */
+            public static create(properties?: dcnet.pb.IArchiveDeviceStatusReply): dcnet.pb.ArchiveDeviceStatusReply;
+
+            /**
+             * Encodes the specified ArchiveDeviceStatusReply message. Does not implicitly {@link dcnet.pb.ArchiveDeviceStatusReply.verify|verify} messages.
+             * @param message ArchiveDeviceStatusReply message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: dcnet.pb.IArchiveDeviceStatusReply, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified ArchiveDeviceStatusReply message, length delimited. Does not implicitly {@link dcnet.pb.ArchiveDeviceStatusReply.verify|verify} messages.
+             * @param message ArchiveDeviceStatusReply message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: dcnet.pb.IArchiveDeviceStatusReply, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes an ArchiveDeviceStatusReply message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns ArchiveDeviceStatusReply
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): dcnet.pb.ArchiveDeviceStatusReply;
+
+            /**
+             * Decodes an ArchiveDeviceStatusReply message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns ArchiveDeviceStatusReply
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): dcnet.pb.ArchiveDeviceStatusReply;
+
+            /**
+             * Verifies an ArchiveDeviceStatusReply message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates an ArchiveDeviceStatusReply message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns ArchiveDeviceStatusReply
+             */
+            public static fromObject(object: { [k: string]: any }): dcnet.pb.ArchiveDeviceStatusReply;
+
+            /**
+             * Creates a plain object from an ArchiveDeviceStatusReply message. Also converts values to other types if specified.
+             * @param message ArchiveDeviceStatusReply
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: dcnet.pb.ArchiveDeviceStatusReply, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this ArchiveDeviceStatusReply to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for ArchiveDeviceStatusReply
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** Properties of an AddUserOffChainOpTimesRequest. */
+        interface IAddUserOffChainOpTimesRequest {
+
+            /** AddUserOffChainOpTimesRequest userPubkey */
+            userPubkey?: (Uint8Array|null);
+
+            /** AddUserOffChainOpTimesRequest blockheight */
+            blockheight?: (number|null);
+
+            /** AddUserOffChainOpTimesRequest peerid */
+            peerid?: (Uint8Array|null);
+
+            /** AddUserOffChainOpTimesRequest times */
+            times?: (number|null);
+
+            /** AddUserOffChainOpTimesRequest signature */
+            signature?: (Uint8Array|null);
+
+            /** AddUserOffChainOpTimesRequest vaccount */
+            vaccount?: (Uint8Array|null);
+        }
+
+        /** Represents an AddUserOffChainOpTimesRequest. */
+        class AddUserOffChainOpTimesRequest implements IAddUserOffChainOpTimesRequest {
+
+            /**
+             * Constructs a new AddUserOffChainOpTimesRequest.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: dcnet.pb.IAddUserOffChainOpTimesRequest);
+
+            /** AddUserOffChainOpTimesRequest userPubkey. */
+            public userPubkey: Uint8Array;
+
+            /** AddUserOffChainOpTimesRequest blockheight. */
+            public blockheight: number;
+
+            /** AddUserOffChainOpTimesRequest peerid. */
+            public peerid: Uint8Array;
+
+            /** AddUserOffChainOpTimesRequest times. */
+            public times: number;
+
+            /** AddUserOffChainOpTimesRequest signature. */
+            public signature: Uint8Array;
+
+            /** AddUserOffChainOpTimesRequest vaccount. */
+            public vaccount: Uint8Array;
+
+            /**
+             * Creates a new AddUserOffChainOpTimesRequest instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns AddUserOffChainOpTimesRequest instance
+             */
+            public static create(properties?: dcnet.pb.IAddUserOffChainOpTimesRequest): dcnet.pb.AddUserOffChainOpTimesRequest;
+
+            /**
+             * Encodes the specified AddUserOffChainOpTimesRequest message. Does not implicitly {@link dcnet.pb.AddUserOffChainOpTimesRequest.verify|verify} messages.
+             * @param message AddUserOffChainOpTimesRequest message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: dcnet.pb.IAddUserOffChainOpTimesRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified AddUserOffChainOpTimesRequest message, length delimited. Does not implicitly {@link dcnet.pb.AddUserOffChainOpTimesRequest.verify|verify} messages.
+             * @param message AddUserOffChainOpTimesRequest message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: dcnet.pb.IAddUserOffChainOpTimesRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes an AddUserOffChainOpTimesRequest message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns AddUserOffChainOpTimesRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): dcnet.pb.AddUserOffChainOpTimesRequest;
+
+            /**
+             * Decodes an AddUserOffChainOpTimesRequest message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns AddUserOffChainOpTimesRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): dcnet.pb.AddUserOffChainOpTimesRequest;
+
+            /**
+             * Verifies an AddUserOffChainOpTimesRequest message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates an AddUserOffChainOpTimesRequest message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns AddUserOffChainOpTimesRequest
+             */
+            public static fromObject(object: { [k: string]: any }): dcnet.pb.AddUserOffChainOpTimesRequest;
+
+            /**
+             * Creates a plain object from an AddUserOffChainOpTimesRequest message. Also converts values to other types if specified.
+             * @param message AddUserOffChainOpTimesRequest
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: dcnet.pb.AddUserOffChainOpTimesRequest, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this AddUserOffChainOpTimesRequest to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for AddUserOffChainOpTimesRequest
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** Properties of an AddUserOffChainOpTimesReply. */
+        interface IAddUserOffChainOpTimesReply {
+
+            /** AddUserOffChainOpTimesReply flag */
+            flag?: (number|null);
+        }
+
+        /** Represents an AddUserOffChainOpTimesReply. */
+        class AddUserOffChainOpTimesReply implements IAddUserOffChainOpTimesReply {
+
+            /**
+             * Constructs a new AddUserOffChainOpTimesReply.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: dcnet.pb.IAddUserOffChainOpTimesReply);
+
+            /** AddUserOffChainOpTimesReply flag. */
+            public flag: number;
+
+            /**
+             * Creates a new AddUserOffChainOpTimesReply instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns AddUserOffChainOpTimesReply instance
+             */
+            public static create(properties?: dcnet.pb.IAddUserOffChainOpTimesReply): dcnet.pb.AddUserOffChainOpTimesReply;
+
+            /**
+             * Encodes the specified AddUserOffChainOpTimesReply message. Does not implicitly {@link dcnet.pb.AddUserOffChainOpTimesReply.verify|verify} messages.
+             * @param message AddUserOffChainOpTimesReply message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: dcnet.pb.IAddUserOffChainOpTimesReply, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified AddUserOffChainOpTimesReply message, length delimited. Does not implicitly {@link dcnet.pb.AddUserOffChainOpTimesReply.verify|verify} messages.
+             * @param message AddUserOffChainOpTimesReply message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: dcnet.pb.IAddUserOffChainOpTimesReply, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes an AddUserOffChainOpTimesReply message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns AddUserOffChainOpTimesReply
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): dcnet.pb.AddUserOffChainOpTimesReply;
+
+            /**
+             * Decodes an AddUserOffChainOpTimesReply message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns AddUserOffChainOpTimesReply
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): dcnet.pb.AddUserOffChainOpTimesReply;
+
+            /**
+             * Verifies an AddUserOffChainOpTimesReply message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates an AddUserOffChainOpTimesReply message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns AddUserOffChainOpTimesReply
+             */
+            public static fromObject(object: { [k: string]: any }): dcnet.pb.AddUserOffChainOpTimesReply;
+
+            /**
+             * Creates a plain object from an AddUserOffChainOpTimesReply message. Also converts values to other types if specified.
+             * @param message AddUserOffChainOpTimesReply
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: dcnet.pb.AddUserOffChainOpTimesReply, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this AddUserOffChainOpTimesReply to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for AddUserOffChainOpTimesReply
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** Properties of a GetUserOffChainOpTimesRequest. */
+        interface IGetUserOffChainOpTimesRequest {
+
+            /** GetUserOffChainOpTimesRequest userPubkey */
+            userPubkey?: (Uint8Array|null);
+        }
+
+        /** Represents a GetUserOffChainOpTimesRequest. */
+        class GetUserOffChainOpTimesRequest implements IGetUserOffChainOpTimesRequest {
+
+            /**
+             * Constructs a new GetUserOffChainOpTimesRequest.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: dcnet.pb.IGetUserOffChainOpTimesRequest);
+
+            /** GetUserOffChainOpTimesRequest userPubkey. */
+            public userPubkey: Uint8Array;
+
+            /**
+             * Creates a new GetUserOffChainOpTimesRequest instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns GetUserOffChainOpTimesRequest instance
+             */
+            public static create(properties?: dcnet.pb.IGetUserOffChainOpTimesRequest): dcnet.pb.GetUserOffChainOpTimesRequest;
+
+            /**
+             * Encodes the specified GetUserOffChainOpTimesRequest message. Does not implicitly {@link dcnet.pb.GetUserOffChainOpTimesRequest.verify|verify} messages.
+             * @param message GetUserOffChainOpTimesRequest message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: dcnet.pb.IGetUserOffChainOpTimesRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified GetUserOffChainOpTimesRequest message, length delimited. Does not implicitly {@link dcnet.pb.GetUserOffChainOpTimesRequest.verify|verify} messages.
+             * @param message GetUserOffChainOpTimesRequest message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: dcnet.pb.IGetUserOffChainOpTimesRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes a GetUserOffChainOpTimesRequest message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns GetUserOffChainOpTimesRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): dcnet.pb.GetUserOffChainOpTimesRequest;
+
+            /**
+             * Decodes a GetUserOffChainOpTimesRequest message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns GetUserOffChainOpTimesRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): dcnet.pb.GetUserOffChainOpTimesRequest;
+
+            /**
+             * Verifies a GetUserOffChainOpTimesRequest message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates a GetUserOffChainOpTimesRequest message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns GetUserOffChainOpTimesRequest
+             */
+            public static fromObject(object: { [k: string]: any }): dcnet.pb.GetUserOffChainOpTimesRequest;
+
+            /**
+             * Creates a plain object from a GetUserOffChainOpTimesRequest message. Also converts values to other types if specified.
+             * @param message GetUserOffChainOpTimesRequest
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: dcnet.pb.GetUserOffChainOpTimesRequest, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this GetUserOffChainOpTimesRequest to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for GetUserOffChainOpTimesRequest
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** Properties of a GetUserOffChainOpTimesReply. */
+        interface IGetUserOffChainOpTimesReply {
+
+            /** GetUserOffChainOpTimesReply usedtimes */
+            usedtimes?: (number|null);
+        }
+
+        /** Represents a GetUserOffChainOpTimesReply. */
+        class GetUserOffChainOpTimesReply implements IGetUserOffChainOpTimesReply {
+
+            /**
+             * Constructs a new GetUserOffChainOpTimesReply.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: dcnet.pb.IGetUserOffChainOpTimesReply);
+
+            /** GetUserOffChainOpTimesReply usedtimes. */
+            public usedtimes: number;
+
+            /**
+             * Creates a new GetUserOffChainOpTimesReply instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns GetUserOffChainOpTimesReply instance
+             */
+            public static create(properties?: dcnet.pb.IGetUserOffChainOpTimesReply): dcnet.pb.GetUserOffChainOpTimesReply;
+
+            /**
+             * Encodes the specified GetUserOffChainOpTimesReply message. Does not implicitly {@link dcnet.pb.GetUserOffChainOpTimesReply.verify|verify} messages.
+             * @param message GetUserOffChainOpTimesReply message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: dcnet.pb.IGetUserOffChainOpTimesReply, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified GetUserOffChainOpTimesReply message, length delimited. Does not implicitly {@link dcnet.pb.GetUserOffChainOpTimesReply.verify|verify} messages.
+             * @param message GetUserOffChainOpTimesReply message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: dcnet.pb.IGetUserOffChainOpTimesReply, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes a GetUserOffChainOpTimesReply message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns GetUserOffChainOpTimesReply
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): dcnet.pb.GetUserOffChainOpTimesReply;
+
+            /**
+             * Decodes a GetUserOffChainOpTimesReply message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns GetUserOffChainOpTimesReply
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): dcnet.pb.GetUserOffChainOpTimesReply;
+
+            /**
+             * Verifies a GetUserOffChainOpTimesReply message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates a GetUserOffChainOpTimesReply message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns GetUserOffChainOpTimesReply
+             */
+            public static fromObject(object: { [k: string]: any }): dcnet.pb.GetUserOffChainOpTimesReply;
+
+            /**
+             * Creates a plain object from a GetUserOffChainOpTimesReply message. Also converts values to other types if specified.
+             * @param message GetUserOffChainOpTimesReply
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: dcnet.pb.GetUserOffChainOpTimesReply, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this GetUserOffChainOpTimesReply to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for GetUserOffChainOpTimesReply
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** Properties of a GetUserOffChainUsedInfoRequest. */
+        interface IGetUserOffChainUsedInfoRequest {
+
+            /** GetUserOffChainUsedInfoRequest vaccount */
+            vaccount?: (Uint8Array|null);
+        }
+
+        /** Represents a GetUserOffChainUsedInfoRequest. */
+        class GetUserOffChainUsedInfoRequest implements IGetUserOffChainUsedInfoRequest {
+
+            /**
+             * Constructs a new GetUserOffChainUsedInfoRequest.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: dcnet.pb.IGetUserOffChainUsedInfoRequest);
+
+            /** GetUserOffChainUsedInfoRequest vaccount. */
+            public vaccount: Uint8Array;
+
+            /**
+             * Creates a new GetUserOffChainUsedInfoRequest instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns GetUserOffChainUsedInfoRequest instance
+             */
+            public static create(properties?: dcnet.pb.IGetUserOffChainUsedInfoRequest): dcnet.pb.GetUserOffChainUsedInfoRequest;
+
+            /**
+             * Encodes the specified GetUserOffChainUsedInfoRequest message. Does not implicitly {@link dcnet.pb.GetUserOffChainUsedInfoRequest.verify|verify} messages.
+             * @param message GetUserOffChainUsedInfoRequest message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: dcnet.pb.IGetUserOffChainUsedInfoRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified GetUserOffChainUsedInfoRequest message, length delimited. Does not implicitly {@link dcnet.pb.GetUserOffChainUsedInfoRequest.verify|verify} messages.
+             * @param message GetUserOffChainUsedInfoRequest message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: dcnet.pb.IGetUserOffChainUsedInfoRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes a GetUserOffChainUsedInfoRequest message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns GetUserOffChainUsedInfoRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): dcnet.pb.GetUserOffChainUsedInfoRequest;
+
+            /**
+             * Decodes a GetUserOffChainUsedInfoRequest message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns GetUserOffChainUsedInfoRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): dcnet.pb.GetUserOffChainUsedInfoRequest;
+
+            /**
+             * Verifies a GetUserOffChainUsedInfoRequest message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates a GetUserOffChainUsedInfoRequest message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns GetUserOffChainUsedInfoRequest
+             */
+            public static fromObject(object: { [k: string]: any }): dcnet.pb.GetUserOffChainUsedInfoRequest;
+
+            /**
+             * Creates a plain object from a GetUserOffChainUsedInfoRequest message. Also converts values to other types if specified.
+             * @param message GetUserOffChainUsedInfoRequest
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: dcnet.pb.GetUserOffChainUsedInfoRequest, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this GetUserOffChainUsedInfoRequest to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for GetUserOffChainUsedInfoRequest
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** Properties of a GetUserOffChainUsedInfoReply. */
+        interface IGetUserOffChainUsedInfoReply {
+
+            /** GetUserOffChainUsedInfoReply usedtimes */
+            usedtimes?: (number|null);
+
+            /** GetUserOffChainUsedInfoReply usedspace */
+            usedspace?: (number|Long|null);
+        }
+
+        /** Represents a GetUserOffChainUsedInfoReply. */
+        class GetUserOffChainUsedInfoReply implements IGetUserOffChainUsedInfoReply {
+
+            /**
+             * Constructs a new GetUserOffChainUsedInfoReply.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: dcnet.pb.IGetUserOffChainUsedInfoReply);
+
+            /** GetUserOffChainUsedInfoReply usedtimes. */
+            public usedtimes: number;
+
+            /** GetUserOffChainUsedInfoReply usedspace. */
+            public usedspace: (number|Long);
+
+            /**
+             * Creates a new GetUserOffChainUsedInfoReply instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns GetUserOffChainUsedInfoReply instance
+             */
+            public static create(properties?: dcnet.pb.IGetUserOffChainUsedInfoReply): dcnet.pb.GetUserOffChainUsedInfoReply;
+
+            /**
+             * Encodes the specified GetUserOffChainUsedInfoReply message. Does not implicitly {@link dcnet.pb.GetUserOffChainUsedInfoReply.verify|verify} messages.
+             * @param message GetUserOffChainUsedInfoReply message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: dcnet.pb.IGetUserOffChainUsedInfoReply, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified GetUserOffChainUsedInfoReply message, length delimited. Does not implicitly {@link dcnet.pb.GetUserOffChainUsedInfoReply.verify|verify} messages.
+             * @param message GetUserOffChainUsedInfoReply message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: dcnet.pb.IGetUserOffChainUsedInfoReply, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes a GetUserOffChainUsedInfoReply message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns GetUserOffChainUsedInfoReply
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): dcnet.pb.GetUserOffChainUsedInfoReply;
+
+            /**
+             * Decodes a GetUserOffChainUsedInfoReply message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns GetUserOffChainUsedInfoReply
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): dcnet.pb.GetUserOffChainUsedInfoReply;
+
+            /**
+             * Verifies a GetUserOffChainUsedInfoReply message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates a GetUserOffChainUsedInfoReply message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns GetUserOffChainUsedInfoReply
+             */
+            public static fromObject(object: { [k: string]: any }): dcnet.pb.GetUserOffChainUsedInfoReply;
+
+            /**
+             * Creates a plain object from a GetUserOffChainUsedInfoReply message. Also converts values to other types if specified.
+             * @param message GetUserOffChainUsedInfoReply
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: dcnet.pb.GetUserOffChainUsedInfoReply, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this GetUserOffChainUsedInfoReply to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for GetUserOffChainUsedInfoReply
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** Represents a Service */
+        class Service extends $protobuf.rpc.Service {
+
+            /**
+             * Constructs a new Service service.
+             * @param rpcImpl RPC implementation
+             * @param [requestDelimited=false] Whether requests are length-delimited
+             * @param [responseDelimited=false] Whether responses are length-delimited
+             */
+            constructor(rpcImpl: $protobuf.RPCImpl, requestDelimited?: boolean, responseDelimited?: boolean);
+
+            /**
+             * Creates new Service service using the specified rpc implementation.
+             * @param rpcImpl RPC implementation
+             * @param [requestDelimited=false] Whether requests are length-delimited
+             * @param [responseDelimited=false] Whether responses are length-delimited
+             * @returns RPC service. Useful where requests and/or responses are streamed.
+             */
+            public static create(rpcImpl: $protobuf.RPCImpl, requestDelimited?: boolean, responseDelimited?: boolean): Service;
+
+            /**
+             * Calls StoreThreadToPeer.
+             * @param request StoreThreadRequest message or plain object
+             * @param callback Node-style callback called with the error, if any, and StoreThreadReply
+             */
+            public storeThreadToPeer(request: dcnet.pb.IStoreThreadRequest, callback: dcnet.pb.Service.StoreThreadToPeerCallback): void;
+
+            /**
+             * Calls StoreThreadToPeer.
+             * @param request StoreThreadRequest message or plain object
+             * @returns Promise
+             */
+            public storeThreadToPeer(request: dcnet.pb.IStoreThreadRequest): Promise<dcnet.pb.StoreThreadReply>;
+
+            /**
+             * Calls StoreFileToPeer.
+             * @param request StroeFileToPeerRequest message or plain object
+             * @param callback Node-style callback called with the error, if any, and StroeFileToPeerReply
+             */
+            public storeFileToPeer(request: dcnet.pb.IStroeFileToPeerRequest, callback: dcnet.pb.Service.StoreFileToPeerCallback): void;
+
+            /**
+             * Calls StoreFileToPeer.
+             * @param request StroeFileToPeerRequest message or plain object
+             * @returns Promise
+             */
+            public storeFileToPeer(request: dcnet.pb.IStroeFileToPeerRequest): Promise<dcnet.pb.StroeFileToPeerReply>;
+
+            /**
+             * Calls AccountBindBackup.
+             * @param request AccountDealBackupRequest message or plain object
+             * @param callback Node-style callback called with the error, if any, and AccountDealBackupReply
+             */
+            public accountBindBackup(request: dcnet.pb.IAccountDealBackupRequest, callback: dcnet.pb.Service.AccountBindBackupCallback): void;
+
+            /**
+             * Calls AccountBindBackup.
+             * @param request AccountDealBackupRequest message or plain object
+             * @returns Promise
+             */
+            public accountBindBackup(request: dcnet.pb.IAccountDealBackupRequest): Promise<dcnet.pb.AccountDealBackupReply>;
+
+            /**
+             * Calls AccountInfoModifyBackup.
+             * @param request AccountDealBackupRequest message or plain object
+             * @param callback Node-style callback called with the error, if any, and AccountDealBackupReply
+             */
+            public accountInfoModifyBackup(request: dcnet.pb.IAccountDealBackupRequest, callback: dcnet.pb.Service.AccountInfoModifyBackupCallback): void;
+
+            /**
+             * Calls AccountInfoModifyBackup.
+             * @param request AccountDealBackupRequest message or plain object
+             * @returns Promise
+             */
+            public accountInfoModifyBackup(request: dcnet.pb.IAccountDealBackupRequest): Promise<dcnet.pb.AccountDealBackupReply>;
+
+            /**
+             * Calls OnlineStatusCheck.
+             * @param request OnlineStatusCheckRequest message or plain object
+             * @param callback Node-style callback called with the error, if any, and OnlineStatusCheckReply
+             */
+            public onlineStatusCheck(request: dcnet.pb.IOnlineStatusCheckRequest, callback: dcnet.pb.Service.OnlineStatusCheckCallback): void;
+
+            /**
+             * Calls OnlineStatusCheck.
+             * @param request OnlineStatusCheckRequest message or plain object
+             * @returns Promise
+             */
+            public onlineStatusCheck(request: dcnet.pb.IOnlineStatusCheckRequest): Promise<dcnet.pb.OnlineStatusCheckReply>;
+
+            /**
+             * Calls TeeReportVerify.
+             * @param request TeeReportVerifyRequest message or plain object
+             * @param callback Node-style callback called with the error, if any, and TeeReportVerifyReply
+             */
+            public teeReportVerify(request: dcnet.pb.ITeeReportVerifyRequest, callback: dcnet.pb.Service.TeeReportVerifyCallback): void;
+
+            /**
+             * Calls TeeReportVerify.
+             * @param request TeeReportVerifyRequest message or plain object
+             * @returns Promise
+             */
+            public teeReportVerify(request: dcnet.pb.ITeeReportVerifyRequest): Promise<dcnet.pb.TeeReportVerifyReply>;
+
+            /**
+             * Calls CheckPeerStatus.
+             * @param request CheckPeerStatusRequest message or plain object
+             * @param callback Node-style callback called with the error, if any, and CheckPeerStatusReply
+             */
+            public checkPeerStatus(request: dcnet.pb.ICheckPeerStatusRequest, callback: dcnet.pb.Service.CheckPeerStatusCallback): void;
+
+            /**
+             * Calls CheckPeerStatus.
+             * @param request CheckPeerStatusRequest message or plain object
+             * @returns Promise
+             */
+            public checkPeerStatus(request: dcnet.pb.ICheckPeerStatusRequest): Promise<dcnet.pb.CheckPeerStatusReply>;
+
+            /**
+             * Calls LocalFileCheck.
+             * @param request LocalFileCheckRequest message or plain object
+             * @param callback Node-style callback called with the error, if any, and LocalFileCheckReply
+             */
+            public localFileCheck(request: dcnet.pb.ILocalFileCheckRequest, callback: dcnet.pb.Service.LocalFileCheckCallback): void;
+
+            /**
+             * Calls LocalFileCheck.
+             * @param request LocalFileCheckRequest message or plain object
+             * @returns Promise
+             */
+            public localFileCheck(request: dcnet.pb.ILocalFileCheckRequest): Promise<dcnet.pb.LocalFileCheckReply>;
+
+            /**
+             * Calls GetPeersWithSid.
+             * @param request GetPeersWithSidRequest message or plain object
+             * @param callback Node-style callback called with the error, if any, and GetPeersWithSidReply
+             */
+            public getPeersWithSid(request: dcnet.pb.IGetPeersWithSidRequest, callback: dcnet.pb.Service.GetPeersWithSidCallback): void;
+
+            /**
+             * Calls GetPeersWithSid.
+             * @param request GetPeersWithSidRequest message or plain object
+             * @returns Promise
+             */
+            public getPeersWithSid(request: dcnet.pb.IGetPeersWithSidRequest): Promise<dcnet.pb.GetPeersWithSidReply>;
+
+            /**
+             * Calls GetPeersWithAccountHash.
+             * @param request GetPeersWithAccountHashRequest message or plain object
+             * @param callback Node-style callback called with the error, if any, and GetPeersWithAccountHashReply
+             */
+            public getPeersWithAccountHash(request: dcnet.pb.IGetPeersWithAccountHashRequest, callback: dcnet.pb.Service.GetPeersWithAccountHashCallback): void;
+
+            /**
+             * Calls GetPeersWithAccountHash.
+             * @param request GetPeersWithAccountHashRequest message or plain object
+             * @returns Promise
+             */
+            public getPeersWithAccountHash(request: dcnet.pb.IGetPeersWithAccountHashRequest): Promise<dcnet.pb.GetPeersWithAccountHashReply>;
+
+            /**
+             * Calls LocalAccountInfoCheck.
+             * @param request LocalAccountInfoCheckRequest message or plain object
+             * @param callback Node-style callback called with the error, if any, and LocalAccountInfoCheckReply
+             */
+            public localAccountInfoCheck(request: dcnet.pb.ILocalAccountInfoCheckRequest, callback: dcnet.pb.Service.LocalAccountInfoCheckCallback): void;
+
+            /**
+             * Calls LocalAccountInfoCheck.
+             * @param request LocalAccountInfoCheckRequest message or plain object
+             * @returns Promise
+             */
+            public localAccountInfoCheck(request: dcnet.pb.ILocalAccountInfoCheckRequest): Promise<dcnet.pb.LocalAccountInfoCheckReply>;
+
+            /**
+             * Calls AccountInfoSync.
+             * @param request AccountInfoSyncRequest message or plain object
+             * @param callback Node-style callback called with the error, if any, and AccountInfoSyncReply
+             */
+            public accountInfoSync(request: dcnet.pb.IAccountInfoSyncRequest, callback: dcnet.pb.Service.AccountInfoSyncCallback): void;
+
+            /**
+             * Calls AccountInfoSync.
+             * @param request AccountInfoSyncRequest message or plain object
+             * @returns Promise
+             */
+            public accountInfoSync(request: dcnet.pb.IAccountInfoSyncRequest): Promise<dcnet.pb.AccountInfoSyncReply>;
+
+            /**
+             * Calls SetEncryptKeyWithScan.
+             * @param request SetEncryptKeyWithScanRequest message or plain object
+             * @param callback Node-style callback called with the error, if any, and SetEncryptKeyWithScanReply
+             */
+            public setEncryptKeyWithScan(request: dcnet.pb.ISetEncryptKeyWithScanRequest, callback: dcnet.pb.Service.SetEncryptKeyWithScanCallback): void;
+
+            /**
+             * Calls SetEncryptKeyWithScan.
+             * @param request SetEncryptKeyWithScanRequest message or plain object
+             * @returns Promise
+             */
+            public setEncryptKeyWithScan(request: dcnet.pb.ISetEncryptKeyWithScanRequest): Promise<dcnet.pb.SetEncryptKeyWithScanReply>;
+
+            /**
+             * Calls GetEncryptKeyWithScan.
+             * @param request GetEncryptKeyWithScanRequest message or plain object
+             * @param callback Node-style callback called with the error, if any, and GetEncryptKeyWithScanReply
+             */
+            public getEncryptKeyWithScan(request: dcnet.pb.IGetEncryptKeyWithScanRequest, callback: dcnet.pb.Service.GetEncryptKeyWithScanCallback): void;
+
+            /**
+             * Calls GetEncryptKeyWithScan.
+             * @param request GetEncryptKeyWithScanRequest message or plain object
+             * @returns Promise
+             */
+            public getEncryptKeyWithScan(request: dcnet.pb.IGetEncryptKeyWithScanRequest): Promise<dcnet.pb.GetEncryptKeyWithScanReply>;
+
+            /**
+             * Calls RequestRandEncryptKey.
+             * @param request RequestRandEncryptKeyRequest message or plain object
+             * @param callback Node-style callback called with the error, if any, and RequestRandEncryptKeyReply
+             */
+            public requestRandEncryptKey(request: dcnet.pb.IRequestRandEncryptKeyRequest, callback: dcnet.pb.Service.RequestRandEncryptKeyCallback): void;
+
+            /**
+             * Calls RequestRandEncryptKey.
+             * @param request RequestRandEncryptKeyRequest message or plain object
+             * @returns Promise
+             */
+            public requestRandEncryptKey(request: dcnet.pb.IRequestRandEncryptKeyRequest): Promise<dcnet.pb.RequestRandEncryptKeyReply>;
+
+            /**
+             * Calls GetEncryptKey.
+             * @param request GetEncryptKeyRequest message or plain object
+             * @param callback Node-style callback called with the error, if any, and GetEncryptKeyReply
+             */
+            public getEncryptKey(request: dcnet.pb.IGetEncryptKeyRequest, callback: dcnet.pb.Service.GetEncryptKeyCallback): void;
+
+            /**
+             * Calls GetEncryptKey.
+             * @param request GetEncryptKeyRequest message or plain object
+             * @returns Promise
+             */
+            public getEncryptKey(request: dcnet.pb.IGetEncryptKeyRequest): Promise<dcnet.pb.GetEncryptKeyReply>;
+
+            /**
+             * Calls ReportLocalMultilAddr.
+             * @param request ReportLocalMultilAddrRequest message or plain object
+             * @param callback Node-style callback called with the error, if any, and ReportLocalMultilAddrReply
+             */
+            public reportLocalMultilAddr(request: dcnet.pb.IReportLocalMultilAddrRequest, callback: dcnet.pb.Service.ReportLocalMultilAddrCallback): void;
+
+            /**
+             * Calls ReportLocalMultilAddr.
+             * @param request ReportLocalMultilAddrRequest message or plain object
+             * @returns Promise
+             */
+            public reportLocalMultilAddr(request: dcnet.pb.IReportLocalMultilAddrRequest): Promise<dcnet.pb.ReportLocalMultilAddrReply>;
+
+            /**
+             * Calls GetHostID.
+             * @param request GetHostIDRequest message or plain object
+             * @param callback Node-style callback called with the error, if any, and GetHostIDReply
+             */
+            public getHostID(request: dcnet.pb.IGetHostIDRequest, callback: dcnet.pb.Service.GetHostIDCallback): void;
+
+            /**
+             * Calls GetHostID.
+             * @param request GetHostIDRequest message or plain object
+             * @returns Promise
+             */
+            public getHostID(request: dcnet.pb.IGetHostIDRequest): Promise<dcnet.pb.GetHostIDReply>;
+
+            /**
+             * Calls GetToken.
+             * @param request GetTokenRequest message or plain object
+             * @param callback Node-style callback called with the error, if any, and GetTokenReply
+             */
+            public getToken(request: dcnet.pb.IGetTokenRequest, callback: dcnet.pb.Service.GetTokenCallback): void;
+
+            /**
+             * Calls GetToken.
+             * @param request GetTokenRequest message or plain object
+             * @returns Promise
+             */
+            public getToken(request: dcnet.pb.IGetTokenRequest): Promise<dcnet.pb.GetTokenReply>;
+
+            /**
+             * Calls CreateThread.
+             * @param request CreateThreadRequest message or plain object
+             * @param callback Node-style callback called with the error, if any, and ThreadInfoReply
+             */
+            public createThread(request: dcnet.pb.ICreateThreadRequest, callback: dcnet.pb.Service.CreateThreadCallback): void;
+
+            /**
+             * Calls CreateThread.
+             * @param request CreateThreadRequest message or plain object
+             * @returns Promise
+             */
+            public createThread(request: dcnet.pb.ICreateThreadRequest): Promise<dcnet.pb.ThreadInfoReply>;
+
+            /**
+             * Calls RequestThreadID.
+             * @param request ThreadIDRequest message or plain object
+             * @param callback Node-style callback called with the error, if any, and ThreadIDReply
+             */
+            public requestThreadID(request: dcnet.pb.IThreadIDRequest, callback: dcnet.pb.Service.RequestThreadIDCallback): void;
+
+            /**
+             * Calls RequestThreadID.
+             * @param request ThreadIDRequest message or plain object
+             * @returns Promise
+             */
+            public requestThreadID(request: dcnet.pb.IThreadIDRequest): Promise<dcnet.pb.ThreadIDReply>;
+
+            /**
+             * Calls AddLogToThread.
+             * @param request AddLogToThreadRequest message or plain object
+             * @param callback Node-style callback called with the error, if any, and AddLogToThreadReply
+             */
+            public addLogToThread(request: dcnet.pb.IAddLogToThreadRequest, callback: dcnet.pb.Service.AddLogToThreadCallback): void;
+
+            /**
+             * Calls AddLogToThread.
+             * @param request AddLogToThreadRequest message or plain object
+             * @returns Promise
+             */
+            public addLogToThread(request: dcnet.pb.IAddLogToThreadRequest): Promise<dcnet.pb.AddLogToThreadReply>;
+
+            /**
+             * Calls GetThreadUsedSpace.
+             * @param request GetThreadUsedSpaceRequest message or plain object
+             * @param callback Node-style callback called with the error, if any, and GetThreadUsedSpaceReply
+             */
+            public getThreadUsedSpace(request: dcnet.pb.IGetThreadUsedSpaceRequest, callback: dcnet.pb.Service.GetThreadUsedSpaceCallback): void;
+
+            /**
+             * Calls GetThreadUsedSpace.
+             * @param request GetThreadUsedSpaceRequest message or plain object
+             * @returns Promise
+             */
+            public getThreadUsedSpace(request: dcnet.pb.IGetThreadUsedSpaceRequest): Promise<dcnet.pb.GetThreadUsedSpaceReply>;
+
+            /**
+             * Calls AddThreadToPeer.
+             * @param request AddThreadToPeerRequest message or plain object
+             * @param callback Node-style callback called with the error, if any, and AddThreadToPeerReply
+             */
+            public addThreadToPeer(request: dcnet.pb.IAddThreadToPeerRequest, callback: dcnet.pb.Service.AddThreadToPeerCallback): void;
+
+            /**
+             * Calls AddThreadToPeer.
+             * @param request AddThreadToPeerRequest message or plain object
+             * @returns Promise
+             */
+            public addThreadToPeer(request: dcnet.pb.IAddThreadToPeerRequest): Promise<dcnet.pb.AddThreadToPeerReply>;
+
+            /**
+             * Calls GetThread.
+             * @param request GetThreadRequest message or plain object
+             * @param callback Node-style callback called with the error, if any, and ThreadInfoReply
+             */
+            public getThread(request: dcnet.pb.IGetThreadRequest, callback: dcnet.pb.Service.GetThreadCallback): void;
+
+            /**
+             * Calls GetThread.
+             * @param request GetThreadRequest message or plain object
+             * @returns Promise
+             */
+            public getThread(request: dcnet.pb.IGetThreadRequest): Promise<dcnet.pb.ThreadInfoReply>;
+
+            /**
+             * Calls DeleteThread.
+             * @param request DeleteThreadRequest message or plain object
+             * @param callback Node-style callback called with the error, if any, and DeleteThreadReply
+             */
+            public deleteThread(request: dcnet.pb.IDeleteThreadRequest, callback: dcnet.pb.Service.DeleteThreadCallback): void;
+
+            /**
+             * Calls DeleteThread.
+             * @param request DeleteThreadRequest message or plain object
+             * @returns Promise
+             */
+            public deleteThread(request: dcnet.pb.IDeleteThreadRequest): Promise<dcnet.pb.DeleteThreadReply>;
+
+            /**
+             * Calls AddThreadSpace.
+             * @param request AddThreadSpaceRequest message or plain object
+             * @param callback Node-style callback called with the error, if any, and AddThreadSpaceReply
+             */
+            public addThreadSpace(request: dcnet.pb.IAddThreadSpaceRequest, callback: dcnet.pb.Service.AddThreadSpaceCallback): void;
+
+            /**
+             * Calls AddThreadSpace.
+             * @param request AddThreadSpaceRequest message or plain object
+             * @returns Promise
+             */
+            public addThreadSpace(request: dcnet.pb.IAddThreadSpaceRequest): Promise<dcnet.pb.AddThreadSpaceReply>;
+
+            /**
+             * Calls StoreFile.
+             * @param request StroeFileRequest message or plain object
+             * @param callback Node-style callback called with the error, if any, and StroeFileReply
+             */
+            public storeFile(request: dcnet.pb.IStroeFileRequest, callback: dcnet.pb.Service.StoreFileCallback): void;
+
+            /**
+             * Calls StoreFile.
+             * @param request StroeFileRequest message or plain object
+             * @returns Promise
+             */
+            public storeFile(request: dcnet.pb.IStroeFileRequest): Promise<dcnet.pb.StroeFileReply>;
+
+            /**
+             * Calls StoreFolder.
+             * @param request StoreFolderRequest message or plain object
+             * @param callback Node-style callback called with the error, if any, and StoreFolderReply
+             */
+            public storeFolder(request: dcnet.pb.IStoreFolderRequest, callback: dcnet.pb.Service.StoreFolderCallback): void;
+
+            /**
+             * Calls StoreFolder.
+             * @param request StoreFolderRequest message or plain object
+             * @returns Promise
+             */
+            public storeFolder(request: dcnet.pb.IStoreFolderRequest): Promise<dcnet.pb.StoreFolderReply>;
+
+            /**
+             * Calls DeleteFile.
+             * @param request DeleteFileRequest message or plain object
+             * @param callback Node-style callback called with the error, if any, and DeleteFileReply
+             */
+            public deleteFile(request: dcnet.pb.IDeleteFileRequest, callback: dcnet.pb.Service.DeleteFileCallback): void;
+
+            /**
+             * Calls DeleteFile.
+             * @param request DeleteFileRequest message or plain object
+             * @returns Promise
+             */
+            public deleteFile(request: dcnet.pb.IDeleteFileRequest): Promise<dcnet.pb.DeleteFileReply>;
+
+            /**
+             * Calls AccountBind.
+             * @param request AccountDealRequest message or plain object
+             * @param callback Node-style callback called with the error, if any, and AccountDealReply
+             */
+            public accountBind(request: dcnet.pb.IAccountDealRequest, callback: dcnet.pb.Service.AccountBindCallback): void;
+
+            /**
+             * Calls AccountBind.
+             * @param request AccountDealRequest message or plain object
+             * @returns Promise
+             */
+            public accountBind(request: dcnet.pb.IAccountDealRequest): Promise<dcnet.pb.AccountDealReply>;
+
+            /**
+             * Calls AccountInfoModify.
+             * @param request AccountDealRequest message or plain object
+             * @param callback Node-style callback called with the error, if any, and AccountDealReply
+             */
+            public accountInfoModify(request: dcnet.pb.IAccountDealRequest, callback: dcnet.pb.Service.AccountInfoModifyCallback): void;
+
+            /**
+             * Calls AccountInfoModify.
+             * @param request AccountDealRequest message or plain object
+             * @returns Promise
+             */
+            public accountInfoModify(request: dcnet.pb.IAccountDealRequest): Promise<dcnet.pb.AccountDealReply>;
+
+            /**
+             * Calls AccountLogin.
+             * @param request AccountLoginRequest message or plain object
+             * @param callback Node-style callback called with the error, if any, and AccountLoginReply
+             */
+            public accountLogin(request: dcnet.pb.IAccountLoginRequest, callback: dcnet.pb.Service.AccountLoginCallback): void;
+
+            /**
+             * Calls AccountLogin.
+             * @param request AccountLoginRequest message or plain object
+             * @returns Promise
+             */
+            public accountLogin(request: dcnet.pb.IAccountLoginRequest): Promise<dcnet.pb.AccountLoginReply>;
+
+            /**
+             * Calls TransferAccount.
+             * @param request TransferAccountRequest message or plain object
+             * @param callback Node-style callback called with the error, if any, and TransferAccountReply
+             */
+            public transferAccount(request: dcnet.pb.ITransferAccountRequest, callback: dcnet.pb.Service.TransferAccountCallback): void;
+
+            /**
+             * Calls TransferAccount.
+             * @param request TransferAccountRequest message or plain object
+             * @returns Promise
+             */
+            public transferAccount(request: dcnet.pb.ITransferAccountRequest): Promise<dcnet.pb.TransferAccountReply>;
+
+            /**
+             * Calls AddSubPubkey.
+             * @param request AddSubPubkeyRequest message or plain object
+             * @param callback Node-style callback called with the error, if any, and AddSubPubkeyReply
+             */
+            public addSubPubkey(request: dcnet.pb.IAddSubPubkeyRequest, callback: dcnet.pb.Service.AddSubPubkeyCallback): void;
+
+            /**
+             * Calls AddSubPubkey.
+             * @param request AddSubPubkeyRequest message or plain object
+             * @returns Promise
+             */
+            public addSubPubkey(request: dcnet.pb.IAddSubPubkeyRequest): Promise<dcnet.pb.AddSubPubkeyReply>;
+
+            /**
+             * Calls DeleteSubPubkey.
+             * @param request DeleteSubPubkeyRequest message or plain object
+             * @param callback Node-style callback called with the error, if any, and DeleteSubPubkeyReply
+             */
+            public deleteSubPubkey(request: dcnet.pb.IDeleteSubPubkeyRequest, callback: dcnet.pb.Service.DeleteSubPubkeyCallback): void;
+
+            /**
+             * Calls DeleteSubPubkey.
+             * @param request DeleteSubPubkeyRequest message or plain object
+             * @returns Promise
+             */
+            public deleteSubPubkey(request: dcnet.pb.IDeleteSubPubkeyRequest): Promise<dcnet.pb.DeleteSubPubkeyReply>;
+
+            /**
+             * Calls BindAccessPeerToUser.
+             * @param request BindAccessPeerToUserRequest message or plain object
+             * @param callback Node-style callback called with the error, if any, and BindAccessPeerToUserReply
+             */
+            public bindAccessPeerToUser(request: dcnet.pb.IBindAccessPeerToUserRequest, callback: dcnet.pb.Service.BindAccessPeerToUserCallback): void;
+
+            /**
+             * Calls BindAccessPeerToUser.
+             * @param request BindAccessPeerToUserRequest message or plain object
+             * @returns Promise
+             */
+            public bindAccessPeerToUser(request: dcnet.pb.IBindAccessPeerToUserRequest): Promise<dcnet.pb.BindAccessPeerToUserReply>;
+
+            /**
+             * Calls SetUserDefaultDB.
+             * @param request SetUserDefaultDBRequest message or plain object
+             * @param callback Node-style callback called with the error, if any, and SetUserDefaultDBReply
+             */
+            public setUserDefaultDB(request: dcnet.pb.ISetUserDefaultDBRequest, callback: dcnet.pb.Service.SetUserDefaultDBCallback): void;
+
+            /**
+             * Calls SetUserDefaultDB.
+             * @param request SetUserDefaultDBRequest message or plain object
+             * @returns Promise
+             */
+            public setUserDefaultDB(request: dcnet.pb.ISetUserDefaultDBRequest): Promise<dcnet.pb.SetUserDefaultDBReply>;
+
+            /**
+             * Calls SendMsgToUserBox.
+             * @param request SendMsgToUserBoxRequest message or plain object
+             * @param callback Node-style callback called with the error, if any, and SendMsgToUserBoxReply
+             */
+            public sendMsgToUserBox(request: dcnet.pb.ISendMsgToUserBoxRequest, callback: dcnet.pb.Service.SendMsgToUserBoxCallback): void;
+
+            /**
+             * Calls SendMsgToUserBox.
+             * @param request SendMsgToUserBoxRequest message or plain object
+             * @returns Promise
+             */
+            public sendMsgToUserBox(request: dcnet.pb.ISendMsgToUserBoxRequest): Promise<dcnet.pb.SendMsgToUserBoxReply>;
+
+            /**
+             * Calls GetToUserBoxAuth.
+             * @param request GetToUserBoxAuthRequest message or plain object
+             * @param callback Node-style callback called with the error, if any, and GetToUserBoxAuthReply
+             */
+            public getToUserBoxAuth(request: dcnet.pb.IGetToUserBoxAuthRequest, callback: dcnet.pb.Service.GetToUserBoxAuthCallback): void;
+
+            /**
+             * Calls GetToUserBoxAuth.
+             * @param request GetToUserBoxAuthRequest message or plain object
+             * @returns Promise
+             */
+            public getToUserBoxAuth(request: dcnet.pb.IGetToUserBoxAuthRequest): Promise<dcnet.pb.GetToUserBoxAuthReply>;
+
+            /**
+             * Calls GetMaxKeyFromUserBox.
+             * @param request GetMaxKeyFromUserBoxRequest message or plain object
+             * @param callback Node-style callback called with the error, if any, and GetMaxKeyFromUserBoxReply
+             */
+            public getMaxKeyFromUserBox(request: dcnet.pb.IGetMaxKeyFromUserBoxRequest, callback: dcnet.pb.Service.GetMaxKeyFromUserBoxCallback): void;
+
+            /**
+             * Calls GetMaxKeyFromUserBox.
+             * @param request GetMaxKeyFromUserBoxRequest message or plain object
+             * @returns Promise
+             */
+            public getMaxKeyFromUserBox(request: dcnet.pb.IGetMaxKeyFromUserBoxRequest): Promise<dcnet.pb.GetMaxKeyFromUserBoxReply>;
+
+            /**
+             * Calls GetMsgFromUserBox.
+             * @param request GetMsgFromUserBoxRequest message or plain object
+             * @param callback Node-style callback called with the error, if any, and GetMsgFromUserBoxReply
+             */
+            public getMsgFromUserBox(request: dcnet.pb.IGetMsgFromUserBoxRequest, callback: dcnet.pb.Service.GetMsgFromUserBoxCallback): void;
+
+            /**
+             * Calls GetMsgFromUserBox.
+             * @param request GetMsgFromUserBoxRequest message or plain object
+             * @returns Promise
+             */
+            public getMsgFromUserBox(request: dcnet.pb.IGetMsgFromUserBoxRequest): Promise<dcnet.pb.GetMsgFromUserBoxReply>;
+
+            /**
+             * Calls ReportSpamMsg.
+             * @param request ReportSpamMsgRequest message or plain object
+             * @param callback Node-style callback called with the error, if any, and ReportSpamMsgReply
+             */
+            public reportSpamMsg(request: dcnet.pb.IReportSpamMsgRequest, callback: dcnet.pb.Service.ReportSpamMsgCallback): void;
+
+            /**
+             * Calls ReportSpamMsg.
+             * @param request ReportSpamMsgRequest message or plain object
+             * @returns Promise
+             */
+            public reportSpamMsg(request: dcnet.pb.IReportSpamMsgRequest): Promise<dcnet.pb.ReportSpamMsgReply>;
+
+            /**
+             * Calls ValidToken.
+             * @param request ValidTokenRequest message or plain object
+             * @param callback Node-style callback called with the error, if any, and ValidTokenReply
+             */
+            public validToken(request: dcnet.pb.IValidTokenRequest, callback: dcnet.pb.Service.ValidTokenCallback): void;
+
+            /**
+             * Calls ValidToken.
+             * @param request ValidTokenRequest message or plain object
+             * @returns Promise
+             */
+            public validToken(request: dcnet.pb.IValidTokenRequest): Promise<dcnet.pb.ValidTokenReply>;
+
+            /**
+             * Calls GetUserClientPeers.
+             * @param request GetUserClientPeersRequest message or plain object
+             * @param callback Node-style callback called with the error, if any, and GetUserClientPeersReply
+             */
+            public getUserClientPeers(request: dcnet.pb.IGetUserClientPeersRequest, callback: dcnet.pb.Service.GetUserClientPeersCallback): void;
+
+            /**
+             * Calls GetUserClientPeers.
+             * @param request GetUserClientPeersRequest message or plain object
+             * @returns Promise
+             */
+            public getUserClientPeers(request: dcnet.pb.IGetUserClientPeersRequest): Promise<dcnet.pb.GetUserClientPeersReply>;
+
+            /**
+             * Calls SetCacheKey.
+             * @param request SetCacheKeyRequest message or plain object
+             * @param callback Node-style callback called with the error, if any, and SetCacheKeyReply
+             */
+            public setCacheKey(request: dcnet.pb.ISetCacheKeyRequest, callback: dcnet.pb.Service.SetCacheKeyCallback): void;
+
+            /**
+             * Calls SetCacheKey.
+             * @param request SetCacheKeyRequest message or plain object
+             * @returns Promise
+             */
+            public setCacheKey(request: dcnet.pb.ISetCacheKeyRequest): Promise<dcnet.pb.SetCacheKeyReply>;
+
+            /**
+             * Calls GetCacheValue.
+             * @param request GetCacheValueRequest message or plain object
+             * @param callback Node-style callback called with the error, if any, and GetCacheValueReply
+             */
+            public getCacheValue(request: dcnet.pb.IGetCacheValueRequest, callback: dcnet.pb.Service.GetCacheValueCallback): void;
+
+            /**
+             * Calls GetCacheValue.
+             * @param request GetCacheValueRequest message or plain object
+             * @returns Promise
+             */
+            public getCacheValue(request: dcnet.pb.IGetCacheValueRequest): Promise<dcnet.pb.GetCacheValueReply>;
+
+            /**
+             * Calls AddThemeObj.
+             * @param request AddThemeObjRequest message or plain object
+             * @param callback Node-style callback called with the error, if any, and AddThemeObjReply
+             */
+            public addThemeObj(request: dcnet.pb.IAddThemeObjRequest, callback: dcnet.pb.Service.AddThemeObjCallback): void;
+
+            /**
+             * Calls AddThemeObj.
+             * @param request AddThemeObjRequest message or plain object
+             * @returns Promise
+             */
+            public addThemeObj(request: dcnet.pb.IAddThemeObjRequest): Promise<dcnet.pb.AddThemeObjReply>;
+
+            /**
+             * Calls AddThemeSpace.
+             * @param request AddThemeSpaceRequest message or plain object
+             * @param callback Node-style callback called with the error, if any, and AddThemeSpaceReply
+             */
+            public addThemeSpace(request: dcnet.pb.IAddThemeSpaceRequest, callback: dcnet.pb.Service.AddThemeSpaceCallback): void;
+
+            /**
+             * Calls AddThemeSpace.
+             * @param request AddThemeSpaceRequest message or plain object
+             * @returns Promise
+             */
+            public addThemeSpace(request: dcnet.pb.IAddThemeSpaceRequest): Promise<dcnet.pb.AddThemeSpaceReply>;
+
+            /**
+             * Calls GetThemeSpace.
+             * @param request GetThemeSpaceRequest message or plain object
+             * @param callback Node-style callback called with the error, if any, and GetThemeSpaceReply
+             */
+            public getThemeSpace(request: dcnet.pb.IGetThemeSpaceRequest, callback: dcnet.pb.Service.GetThemeSpaceCallback): void;
+
+            /**
+             * Calls GetThemeSpace.
+             * @param request GetThemeSpaceRequest message or plain object
+             * @returns Promise
+             */
+            public getThemeSpace(request: dcnet.pb.IGetThemeSpaceRequest): Promise<dcnet.pb.GetThemeSpaceReply>;
+
+            /**
+             * Calls DeleteThemeObj.
+             * @param request DeleteThemeObjRequest message or plain object
+             * @param callback Node-style callback called with the error, if any, and DeleteThemeObjReply
+             */
+            public deleteThemeObj(request: dcnet.pb.IDeleteThemeObjRequest, callback: dcnet.pb.Service.DeleteThemeObjCallback): void;
+
+            /**
+             * Calls DeleteThemeObj.
+             * @param request DeleteThemeObjRequest message or plain object
+             * @returns Promise
+             */
+            public deleteThemeObj(request: dcnet.pb.IDeleteThemeObjRequest): Promise<dcnet.pb.DeleteThemeObjReply>;
+
+            /**
+             * Calls ReportMaliciousComment.
+             * @param request ReportMaliciousCommentRequest message or plain object
+             * @param callback Node-style callback called with the error, if any, and ReportMaliciousCommentReply
+             */
+            public reportMaliciousComment(request: dcnet.pb.IReportMaliciousCommentRequest, callback: dcnet.pb.Service.ReportMaliciousCommentCallback): void;
+
+            /**
+             * Calls ReportMaliciousComment.
+             * @param request ReportMaliciousCommentRequest message or plain object
+             * @returns Promise
+             */
+            public reportMaliciousComment(request: dcnet.pb.IReportMaliciousCommentRequest): Promise<dcnet.pb.ReportMaliciousCommentReply>;
+
+            /**
+             * Calls SetObjCommentPublic.
+             * @param request SetObjCommentPublicRequest message or plain object
+             * @param callback Node-style callback called with the error, if any, and SetObjCommentPublicReply
+             */
+            public setObjCommentPublic(request: dcnet.pb.ISetObjCommentPublicRequest, callback: dcnet.pb.Service.SetObjCommentPublicCallback): void;
+
+            /**
+             * Calls SetObjCommentPublic.
+             * @param request SetObjCommentPublicRequest message or plain object
+             * @returns Promise
+             */
+            public setObjCommentPublic(request: dcnet.pb.ISetObjCommentPublicRequest): Promise<dcnet.pb.SetObjCommentPublicReply>;
+
+            /**
+             * Calls AddUserOffChainSpace.
+             * @param request AddUserOffChainSpaceRequest message or plain object
+             * @param callback Node-style callback called with the error, if any, and AddUserOffChainSpaceReply
+             */
+            public addUserOffChainSpace(request: dcnet.pb.IAddUserOffChainSpaceRequest, callback: dcnet.pb.Service.AddUserOffChainSpaceCallback): void;
+
+            /**
+             * Calls AddUserOffChainSpace.
+             * @param request AddUserOffChainSpaceRequest message or plain object
+             * @returns Promise
+             */
+            public addUserOffChainSpace(request: dcnet.pb.IAddUserOffChainSpaceRequest): Promise<dcnet.pb.AddUserOffChainSpaceReply>;
+
+            /**
+             * Calls PublishCommentToTheme.
+             * @param request PublishCommentToThemeRequest message or plain object
+             * @param callback Node-style callback called with the error, if any, and PublishCommentToThemeReply
+             */
+            public publishCommentToTheme(request: dcnet.pb.IPublishCommentToThemeRequest, callback: dcnet.pb.Service.PublishCommentToThemeCallback): void;
+
+            /**
+             * Calls PublishCommentToTheme.
+             * @param request PublishCommentToThemeRequest message or plain object
+             * @returns Promise
+             */
+            public publishCommentToTheme(request: dcnet.pb.IPublishCommentToThemeRequest): Promise<dcnet.pb.PublishCommentToThemeReply>;
+
+            /**
+             * Calls ConfigThemeObjAuth.
+             * @param request ConfigThemeObjAuthRequest message or plain object
+             * @param callback Node-style callback called with the error, if any, and ConfigThemeObjAuthReply
+             */
+            public configThemeObjAuth(request: dcnet.pb.IConfigThemeObjAuthRequest, callback: dcnet.pb.Service.ConfigThemeObjAuthCallback): void;
+
+            /**
+             * Calls ConfigThemeObjAuth.
+             * @param request ConfigThemeObjAuthRequest message or plain object
+             * @returns Promise
+             */
+            public configThemeObjAuth(request: dcnet.pb.IConfigThemeObjAuthRequest): Promise<dcnet.pb.ConfigThemeObjAuthReply>;
+
+            /**
+             * Calls SetKeyValue.
+             * @param request SetKeyValueRequest message or plain object
+             * @param callback Node-style callback called with the error, if any, and SetKeyValueReply
+             */
+            public setKeyValue(request: dcnet.pb.ISetKeyValueRequest, callback: dcnet.pb.Service.SetKeyValueCallback): void;
+
+            /**
+             * Calls SetKeyValue.
+             * @param request SetKeyValueRequest message or plain object
+             * @returns Promise
+             */
+            public setKeyValue(request: dcnet.pb.ISetKeyValueRequest): Promise<dcnet.pb.SetKeyValueReply>;
+
+            /**
+             * Calls DeleteSelfComment.
+             * @param request DeleteSelfCommentRequest message or plain object
+             * @param callback Node-style callback called with the error, if any, and DeleteSelfCommentReply
+             */
+            public deleteSelfComment(request: dcnet.pb.IDeleteSelfCommentRequest, callback: dcnet.pb.Service.DeleteSelfCommentCallback): void;
+
+            /**
+             * Calls DeleteSelfComment.
+             * @param request DeleteSelfCommentRequest message or plain object
+             * @returns Promise
+             */
+            public deleteSelfComment(request: dcnet.pb.IDeleteSelfCommentRequest): Promise<dcnet.pb.DeleteSelfCommentReply>;
+
+            /**
+             * Calls DeleteCommentToObj.
+             * @param request DeleteCommentToObjRequest message or plain object
+             * @param callback Node-style callback called with the error, if any, and DeleteCommentToObjReply
+             */
+            public deleteCommentToObj(request: dcnet.pb.IDeleteCommentToObjRequest, callback: dcnet.pb.Service.DeleteCommentToObjCallback): void;
+
+            /**
+             * Calls DeleteCommentToObj.
+             * @param request DeleteCommentToObjRequest message or plain object
+             * @returns Promise
+             */
+            public deleteCommentToObj(request: dcnet.pb.IDeleteCommentToObjRequest): Promise<dcnet.pb.DeleteCommentToObjReply>;
+
+            /**
+             * Calls GetThemeObj.
+             * @param request GetThemeObjRequest message or plain object
+             * @param callback Node-style callback called with the error, if any, and GetThemeObjReply
+             */
+            public getThemeObj(request: dcnet.pb.IGetThemeObjRequest, callback: dcnet.pb.Service.GetThemeObjCallback): void;
+
+            /**
+             * Calls GetThemeObj.
+             * @param request GetThemeObjRequest message or plain object
+             * @returns Promise
+             */
+            public getThemeObj(request: dcnet.pb.IGetThemeObjRequest): Promise<dcnet.pb.GetThemeObjReply>;
+
+            /**
+             * Calls GetThemeComments.
+             * @param request GetThemeCommentsRequest message or plain object
+             * @param callback Node-style callback called with the error, if any, and GetThemeCommentsReply
+             */
+            public getThemeComments(request: dcnet.pb.IGetThemeCommentsRequest, callback: dcnet.pb.Service.GetThemeCommentsCallback): void;
+
+            /**
+             * Calls GetThemeComments.
+             * @param request GetThemeCommentsRequest message or plain object
+             * @returns Promise
+             */
+            public getThemeComments(request: dcnet.pb.IGetThemeCommentsRequest): Promise<dcnet.pb.GetThemeCommentsReply>;
+
+            /**
+             * Calls GetThemeAuthList.
+             * @param request GetThemeAuthListRequest message or plain object
+             * @param callback Node-style callback called with the error, if any, and GetThemeAuthListReply
+             */
+            public getThemeAuthList(request: dcnet.pb.IGetThemeAuthListRequest, callback: dcnet.pb.Service.GetThemeAuthListCallback): void;
+
+            /**
+             * Calls GetThemeAuthList.
+             * @param request GetThemeAuthListRequest message or plain object
+             * @returns Promise
+             */
+            public getThemeAuthList(request: dcnet.pb.IGetThemeAuthListRequest): Promise<dcnet.pb.GetThemeAuthListReply>;
+
+            /**
+             * Calls GetUserComments.
+             * @param request GetUserCommentsRequest message or plain object
+             * @param callback Node-style callback called with the error, if any, and GetUserCommentsReply
+             */
+            public getUserComments(request: dcnet.pb.IGetUserCommentsRequest, callback: dcnet.pb.Service.GetUserCommentsCallback): void;
+
+            /**
+             * Calls GetUserComments.
+             * @param request GetUserCommentsRequest message or plain object
+             * @returns Promise
+             */
+            public getUserComments(request: dcnet.pb.IGetUserCommentsRequest): Promise<dcnet.pb.GetUserCommentsReply>;
+
+            /**
+             * Calls GetValueWithKey.
+             * @param request GetValueWithKeyRequest message or plain object
+             * @param callback Node-style callback called with the error, if any, and GetValueWithKeyReply
+             */
+            public getValueWithKey(request: dcnet.pb.IGetValueWithKeyRequest, callback: dcnet.pb.Service.GetValueWithKeyCallback): void;
+
+            /**
+             * Calls GetValueWithKey.
+             * @param request GetValueWithKeyRequest message or plain object
+             * @returns Promise
+             */
+            public getValueWithKey(request: dcnet.pb.IGetValueWithKeyRequest): Promise<dcnet.pb.GetValueWithKeyReply>;
+
+            /**
+             * Calls GetValuesWithKeys.
+             * @param request GetValuesWithKeysRequest message or plain object
+             * @param callback Node-style callback called with the error, if any, and GetValuesWithKeysReply
+             */
+            public getValuesWithKeys(request: dcnet.pb.IGetValuesWithKeysRequest, callback: dcnet.pb.Service.GetValuesWithKeysCallback): void;
+
+            /**
+             * Calls GetValuesWithKeys.
+             * @param request GetValuesWithKeysRequest message or plain object
+             * @returns Promise
+             */
+            public getValuesWithKeys(request: dcnet.pb.IGetValuesWithKeysRequest): Promise<dcnet.pb.GetValuesWithKeysReply>;
+
+            /**
+             * Calls SendCommentToPeer.
+             * @param request PublishCommentToThemeRequest message or plain object
+             * @param callback Node-style callback called with the error, if any, and PublishCommentToThemeReply
+             */
+            public sendCommentToPeer(request: dcnet.pb.IPublishCommentToThemeRequest, callback: dcnet.pb.Service.SendCommentToPeerCallback): void;
+
+            /**
+             * Calls SendCommentToPeer.
+             * @param request PublishCommentToThemeRequest message or plain object
+             * @returns Promise
+             */
+            public sendCommentToPeer(request: dcnet.pb.IPublishCommentToThemeRequest): Promise<dcnet.pb.PublishCommentToThemeReply>;
+
+            /**
+             * Calls PushThemeFunOpt.
+             * @param request PushThemeFunOptRequest message or plain object
+             * @param callback Node-style callback called with the error, if any, and PushThemeFunOptReply
+             */
+            public pushThemeFunOpt(request: dcnet.pb.IPushThemeFunOptRequest, callback: dcnet.pb.Service.PushThemeFunOptCallback): void;
+
+            /**
+             * Calls PushThemeFunOpt.
+             * @param request PushThemeFunOptRequest message or plain object
+             * @returns Promise
+             */
+            public pushThemeFunOpt(request: dcnet.pb.IPushThemeFunOptRequest): Promise<dcnet.pb.PushThemeFunOptReply>;
+
+            /**
+             * Calls PullCommentFunOpts.
+             * @param request PullCommentFunOptsRequest message or plain object
+             * @param callback Node-style callback called with the error, if any, and PullCommentFunOptsReply
+             */
+            public pullCommentFunOpts(request: dcnet.pb.IPullCommentFunOptsRequest, callback: dcnet.pb.Service.PullCommentFunOptsCallback): void;
+
+            /**
+             * Calls PullCommentFunOpts.
+             * @param request PullCommentFunOptsRequest message or plain object
+             * @returns Promise
+             */
+            public pullCommentFunOpts(request: dcnet.pb.IPullCommentFunOptsRequest): Promise<dcnet.pb.PullCommentFunOptsReply>;
+
+            /**
+             * Calls ExchangeThemeEdges.
+             * @param request ExchangeThemeEdgesRequest message or plain object
+             * @param callback Node-style callback called with the error, if any, and ExchangeThemeEdgesReply
+             */
+            public exchangeThemeEdges(request: dcnet.pb.IExchangeThemeEdgesRequest, callback: dcnet.pb.Service.ExchangeThemeEdgesCallback): void;
+
+            /**
+             * Calls ExchangeThemeEdges.
+             * @param request ExchangeThemeEdgesRequest message or plain object
+             * @returns Promise
+             */
+            public exchangeThemeEdges(request: dcnet.pb.IExchangeThemeEdgesRequest): Promise<dcnet.pb.ExchangeThemeEdgesReply>;
+
+            /**
+             * Calls DownloadUserComments.
+             * @param request DownloadUserCommentsRequest message or plain object
+             * @param callback Node-style callback called with the error, if any, and DownloadUserCommentsReply
+             */
+            public downloadUserComments(request: dcnet.pb.IDownloadUserCommentsRequest, callback: dcnet.pb.Service.DownloadUserCommentsCallback): void;
+
+            /**
+             * Calls DownloadUserComments.
+             * @param request DownloadUserCommentsRequest message or plain object
+             * @returns Promise
+             */
+            public downloadUserComments(request: dcnet.pb.IDownloadUserCommentsRequest): Promise<dcnet.pb.DownloadUserCommentsReply>;
+
+            /**
+             * Calls UserCommentsDownloadReady.
+             * @param request UserCommentsDownloadReadyRequest message or plain object
+             * @param callback Node-style callback called with the error, if any, and UserCommentsDownloadReadyReply
+             */
+            public userCommentsDownloadReady(request: dcnet.pb.IUserCommentsDownloadReadyRequest, callback: dcnet.pb.Service.UserCommentsDownloadReadyCallback): void;
+
+            /**
+             * Calls UserCommentsDownloadReady.
+             * @param request UserCommentsDownloadReadyRequest message or plain object
+             * @returns Promise
+             */
+            public userCommentsDownloadReady(request: dcnet.pb.IUserCommentsDownloadReadyRequest): Promise<dcnet.pb.UserCommentsDownloadReadyReply>;
+
+            /**
+             * Calls DeviceStatusReport.
+             * @param request DeviceStatusReportRequest message or plain object
+             * @param callback Node-style callback called with the error, if any, and DeviceStatusReportReply
+             */
+            public deviceStatusReport(request: dcnet.pb.IDeviceStatusReportRequest, callback: dcnet.pb.Service.DeviceStatusReportCallback): void;
+
+            /**
+             * Calls DeviceStatusReport.
+             * @param request DeviceStatusReportRequest message or plain object
+             * @returns Promise
+             */
+            public deviceStatusReport(request: dcnet.pb.IDeviceStatusReportRequest): Promise<dcnet.pb.DeviceStatusReportReply>;
+
+            /**
+             * Calls ArchiveDeviceStatus.
+             * @param request ArchiveDeviceStatusRequest message or plain object
+             * @param callback Node-style callback called with the error, if any, and ArchiveDeviceStatusReply
+             */
+            public archiveDeviceStatus(request: dcnet.pb.IArchiveDeviceStatusRequest, callback: dcnet.pb.Service.ArchiveDeviceStatusCallback): void;
+
+            /**
+             * Calls ArchiveDeviceStatus.
+             * @param request ArchiveDeviceStatusRequest message or plain object
+             * @returns Promise
+             */
+            public archiveDeviceStatus(request: dcnet.pb.IArchiveDeviceStatusRequest): Promise<dcnet.pb.ArchiveDeviceStatusReply>;
+
+            /**
+             * Calls SendDeviceStatusToPeer.
+             * @param request DeviceStatusReportRequest message or plain object
+             * @param callback Node-style callback called with the error, if any, and DeviceStatusReportReply
+             */
+            public sendDeviceStatusToPeer(request: dcnet.pb.IDeviceStatusReportRequest, callback: dcnet.pb.Service.SendDeviceStatusToPeerCallback): void;
+
+            /**
+             * Calls SendDeviceStatusToPeer.
+             * @param request DeviceStatusReportRequest message or plain object
+             * @returns Promise
+             */
+            public sendDeviceStatusToPeer(request: dcnet.pb.IDeviceStatusReportRequest): Promise<dcnet.pb.DeviceStatusReportReply>;
+
+            /**
+             * Calls GetThemeDevicesStatus.
+             * @param request GetThemeDevicesStatusRequest message or plain object
+             * @param callback Node-style callback called with the error, if any, and GetThemeDevicesStatusReply
+             */
+            public getThemeDevicesStatus(request: dcnet.pb.IGetThemeDevicesStatusRequest, callback: dcnet.pb.Service.GetThemeDevicesStatusCallback): void;
+
+            /**
+             * Calls GetThemeDevicesStatus.
+             * @param request GetThemeDevicesStatusRequest message or plain object
+             * @returns Promise
+             */
+            public getThemeDevicesStatus(request: dcnet.pb.IGetThemeDevicesStatusRequest): Promise<dcnet.pb.GetThemeDevicesStatusReply>;
+
+            /**
+             * Calls GetDeviceAuth.
+             * @param request GetDeviceAuthRequest message or plain object
+             * @param callback Node-style callback called with the error, if any, and GetDeviceAuthReply
+             */
+            public getDeviceAuth(request: dcnet.pb.IGetDeviceAuthRequest, callback: dcnet.pb.Service.GetDeviceAuthCallback): void;
+
+            /**
+             * Calls GetDeviceAuth.
+             * @param request GetDeviceAuthRequest message or plain object
+             * @returns Promise
+             */
+            public getDeviceAuth(request: dcnet.pb.IGetDeviceAuthRequest): Promise<dcnet.pb.GetDeviceAuthReply>;
+
+            /**
+             * Calls GetDeviceStatusList.
+             * @param request GetDeviceStatusListRequest message or plain object
+             * @param callback Node-style callback called with the error, if any, and GetDeviceStatusListReply
+             */
+            public getDeviceStatusList(request: dcnet.pb.IGetDeviceStatusListRequest, callback: dcnet.pb.Service.GetDeviceStatusListCallback): void;
+
+            /**
+             * Calls GetDeviceStatusList.
+             * @param request GetDeviceStatusListRequest message or plain object
+             * @returns Promise
+             */
+            public getDeviceStatusList(request: dcnet.pb.IGetDeviceStatusListRequest): Promise<dcnet.pb.GetDeviceStatusListReply>;
+
+            /**
+             * Calls AddUserOffChainOpTimes.
+             * @param request AddUserOffChainOpTimesRequest message or plain object
+             * @param callback Node-style callback called with the error, if any, and AddUserOffChainOpTimesReply
+             */
+            public addUserOffChainOpTimes(request: dcnet.pb.IAddUserOffChainOpTimesRequest, callback: dcnet.pb.Service.AddUserOffChainOpTimesCallback): void;
+
+            /**
+             * Calls AddUserOffChainOpTimes.
+             * @param request AddUserOffChainOpTimesRequest message or plain object
+             * @returns Promise
+             */
+            public addUserOffChainOpTimes(request: dcnet.pb.IAddUserOffChainOpTimesRequest): Promise<dcnet.pb.AddUserOffChainOpTimesReply>;
+
+            /**
+             * Calls GetUserOffChainOpTimes.
+             * @param request GetUserOffChainOpTimesRequest message or plain object
+             * @param callback Node-style callback called with the error, if any, and GetUserOffChainOpTimesReply
+             */
+            public getUserOffChainOpTimes(request: dcnet.pb.IGetUserOffChainOpTimesRequest, callback: dcnet.pb.Service.GetUserOffChainOpTimesCallback): void;
+
+            /**
+             * Calls GetUserOffChainOpTimes.
+             * @param request GetUserOffChainOpTimesRequest message or plain object
+             * @returns Promise
+             */
+            public getUserOffChainOpTimes(request: dcnet.pb.IGetUserOffChainOpTimesRequest): Promise<dcnet.pb.GetUserOffChainOpTimesReply>;
+
+            /**
+             * Calls GetUserOffChainUsedInfo.
+             * @param request GetUserOffChainUsedInfoRequest message or plain object
+             * @param callback Node-style callback called with the error, if any, and GetUserOffChainUsedInfoReply
+             */
+            public getUserOffChainUsedInfo(request: dcnet.pb.IGetUserOffChainUsedInfoRequest, callback: dcnet.pb.Service.GetUserOffChainUsedInfoCallback): void;
+
+            /**
+             * Calls GetUserOffChainUsedInfo.
+             * @param request GetUserOffChainUsedInfoRequest message or plain object
+             * @returns Promise
+             */
+            public getUserOffChainUsedInfo(request: dcnet.pb.IGetUserOffChainUsedInfoRequest): Promise<dcnet.pb.GetUserOffChainUsedInfoReply>;
+
+            /**
+             * Calls ReEncryptFile.
+             * @param request ReEncryptFileRequest message or plain object
+             * @param callback Node-style callback called with the error, if any, and ReEncryptFileReply
+             */
+            public reEncryptFile(request: dcnet.pb.IReEncryptFileRequest, callback: dcnet.pb.Service.ReEncryptFileCallback): void;
+
+            /**
+             * Calls ReEncryptFile.
+             * @param request ReEncryptFileRequest message or plain object
+             * @returns Promise
+             */
+            public reEncryptFile(request: dcnet.pb.IReEncryptFileRequest): Promise<dcnet.pb.ReEncryptFileReply>;
+
+            /**
+             * Calls RequestRandData.
+             * @param request RequestRandDataRequest message or plain object
+             * @param callback Node-style callback called with the error, if any, and RequestRandDataReply
+             */
+            public requestRandData(request: dcnet.pb.IRequestRandDataRequest, callback: dcnet.pb.Service.RequestRandDataCallback): void;
+
+            /**
+             * Calls RequestRandData.
+             * @param request RequestRandDataRequest message or plain object
+             * @returns Promise
+             */
+            public requestRandData(request: dcnet.pb.IRequestRandDataRequest): Promise<dcnet.pb.RequestRandDataReply>;
+
+            /**
+             * Calls DeductUserOffChainOpTimes.
+             * @param request DeductUserOffChainOpTimesRequest message or plain object
+             * @param callback Node-style callback called with the error, if any, and DeductUserOffChainOpTimesReply
+             */
+            public deductUserOffChainOpTimes(request: dcnet.pb.IDeductUserOffChainOpTimesRequest, callback: dcnet.pb.Service.DeductUserOffChainOpTimesCallback): void;
+
+            /**
+             * Calls DeductUserOffChainOpTimes.
+             * @param request DeductUserOffChainOpTimesRequest message or plain object
+             * @returns Promise
+             */
+            public deductUserOffChainOpTimes(request: dcnet.pb.IDeductUserOffChainOpTimesRequest): Promise<dcnet.pb.DeductUserOffChainOpTimesReply>;
+        }
+
+        namespace Service {
+
+            /**
+             * Callback as used by {@link dcnet.pb.Service#storeThreadToPeer}.
+             * @param error Error, if any
+             * @param [response] StoreThreadReply
+             */
+            type StoreThreadToPeerCallback = (error: (Error|null), response?: dcnet.pb.StoreThreadReply) => void;
+
+            /**
+             * Callback as used by {@link dcnet.pb.Service#storeFileToPeer}.
+             * @param error Error, if any
+             * @param [response] StroeFileToPeerReply
+             */
+            type StoreFileToPeerCallback = (error: (Error|null), response?: dcnet.pb.StroeFileToPeerReply) => void;
+
+            /**
+             * Callback as used by {@link dcnet.pb.Service#accountBindBackup}.
+             * @param error Error, if any
+             * @param [response] AccountDealBackupReply
+             */
+            type AccountBindBackupCallback = (error: (Error|null), response?: dcnet.pb.AccountDealBackupReply) => void;
+
+            /**
+             * Callback as used by {@link dcnet.pb.Service#accountInfoModifyBackup}.
+             * @param error Error, if any
+             * @param [response] AccountDealBackupReply
+             */
+            type AccountInfoModifyBackupCallback = (error: (Error|null), response?: dcnet.pb.AccountDealBackupReply) => void;
+
+            /**
+             * Callback as used by {@link dcnet.pb.Service#onlineStatusCheck}.
+             * @param error Error, if any
+             * @param [response] OnlineStatusCheckReply
+             */
+            type OnlineStatusCheckCallback = (error: (Error|null), response?: dcnet.pb.OnlineStatusCheckReply) => void;
+
+            /**
+             * Callback as used by {@link dcnet.pb.Service#teeReportVerify}.
+             * @param error Error, if any
+             * @param [response] TeeReportVerifyReply
+             */
+            type TeeReportVerifyCallback = (error: (Error|null), response?: dcnet.pb.TeeReportVerifyReply) => void;
+
+            /**
+             * Callback as used by {@link dcnet.pb.Service#checkPeerStatus}.
+             * @param error Error, if any
+             * @param [response] CheckPeerStatusReply
+             */
+            type CheckPeerStatusCallback = (error: (Error|null), response?: dcnet.pb.CheckPeerStatusReply) => void;
+
+            /**
+             * Callback as used by {@link dcnet.pb.Service#localFileCheck}.
+             * @param error Error, if any
+             * @param [response] LocalFileCheckReply
+             */
+            type LocalFileCheckCallback = (error: (Error|null), response?: dcnet.pb.LocalFileCheckReply) => void;
+
+            /**
+             * Callback as used by {@link dcnet.pb.Service#getPeersWithSid}.
+             * @param error Error, if any
+             * @param [response] GetPeersWithSidReply
+             */
+            type GetPeersWithSidCallback = (error: (Error|null), response?: dcnet.pb.GetPeersWithSidReply) => void;
+
+            /**
+             * Callback as used by {@link dcnet.pb.Service#getPeersWithAccountHash}.
+             * @param error Error, if any
+             * @param [response] GetPeersWithAccountHashReply
+             */
+            type GetPeersWithAccountHashCallback = (error: (Error|null), response?: dcnet.pb.GetPeersWithAccountHashReply) => void;
+
+            /**
+             * Callback as used by {@link dcnet.pb.Service#localAccountInfoCheck}.
+             * @param error Error, if any
+             * @param [response] LocalAccountInfoCheckReply
+             */
+            type LocalAccountInfoCheckCallback = (error: (Error|null), response?: dcnet.pb.LocalAccountInfoCheckReply) => void;
+
+            /**
+             * Callback as used by {@link dcnet.pb.Service#accountInfoSync}.
+             * @param error Error, if any
+             * @param [response] AccountInfoSyncReply
+             */
+            type AccountInfoSyncCallback = (error: (Error|null), response?: dcnet.pb.AccountInfoSyncReply) => void;
+
+            /**
+             * Callback as used by {@link dcnet.pb.Service#setEncryptKeyWithScan}.
+             * @param error Error, if any
+             * @param [response] SetEncryptKeyWithScanReply
+             */
+            type SetEncryptKeyWithScanCallback = (error: (Error|null), response?: dcnet.pb.SetEncryptKeyWithScanReply) => void;
+
+            /**
+             * Callback as used by {@link dcnet.pb.Service#getEncryptKeyWithScan}.
+             * @param error Error, if any
+             * @param [response] GetEncryptKeyWithScanReply
+             */
+            type GetEncryptKeyWithScanCallback = (error: (Error|null), response?: dcnet.pb.GetEncryptKeyWithScanReply) => void;
+
+            /**
+             * Callback as used by {@link dcnet.pb.Service#requestRandEncryptKey}.
+             * @param error Error, if any
+             * @param [response] RequestRandEncryptKeyReply
+             */
+            type RequestRandEncryptKeyCallback = (error: (Error|null), response?: dcnet.pb.RequestRandEncryptKeyReply) => void;
+
+            /**
+             * Callback as used by {@link dcnet.pb.Service#getEncryptKey}.
+             * @param error Error, if any
+             * @param [response] GetEncryptKeyReply
+             */
+            type GetEncryptKeyCallback = (error: (Error|null), response?: dcnet.pb.GetEncryptKeyReply) => void;
+
+            /**
+             * Callback as used by {@link dcnet.pb.Service#reportLocalMultilAddr}.
+             * @param error Error, if any
+             * @param [response] ReportLocalMultilAddrReply
+             */
+            type ReportLocalMultilAddrCallback = (error: (Error|null), response?: dcnet.pb.ReportLocalMultilAddrReply) => void;
+
+            /**
+             * Callback as used by {@link dcnet.pb.Service#getHostID}.
+             * @param error Error, if any
+             * @param [response] GetHostIDReply
+             */
+            type GetHostIDCallback = (error: (Error|null), response?: dcnet.pb.GetHostIDReply) => void;
+
+            /**
+             * Callback as used by {@link dcnet.pb.Service#getToken}.
+             * @param error Error, if any
+             * @param [response] GetTokenReply
+             */
+            type GetTokenCallback = (error: (Error|null), response?: dcnet.pb.GetTokenReply) => void;
+
+            /**
+             * Callback as used by {@link dcnet.pb.Service#createThread}.
+             * @param error Error, if any
+             * @param [response] ThreadInfoReply
+             */
+            type CreateThreadCallback = (error: (Error|null), response?: dcnet.pb.ThreadInfoReply) => void;
+
+            /**
+             * Callback as used by {@link dcnet.pb.Service#requestThreadID}.
+             * @param error Error, if any
+             * @param [response] ThreadIDReply
+             */
+            type RequestThreadIDCallback = (error: (Error|null), response?: dcnet.pb.ThreadIDReply) => void;
+
+            /**
+             * Callback as used by {@link dcnet.pb.Service#addLogToThread}.
+             * @param error Error, if any
+             * @param [response] AddLogToThreadReply
+             */
+            type AddLogToThreadCallback = (error: (Error|null), response?: dcnet.pb.AddLogToThreadReply) => void;
+
+            /**
+             * Callback as used by {@link dcnet.pb.Service#getThreadUsedSpace}.
+             * @param error Error, if any
+             * @param [response] GetThreadUsedSpaceReply
+             */
+            type GetThreadUsedSpaceCallback = (error: (Error|null), response?: dcnet.pb.GetThreadUsedSpaceReply) => void;
+
+            /**
+             * Callback as used by {@link dcnet.pb.Service#addThreadToPeer}.
+             * @param error Error, if any
+             * @param [response] AddThreadToPeerReply
+             */
+            type AddThreadToPeerCallback = (error: (Error|null), response?: dcnet.pb.AddThreadToPeerReply) => void;
+
+            /**
+             * Callback as used by {@link dcnet.pb.Service#getThread}.
+             * @param error Error, if any
+             * @param [response] ThreadInfoReply
+             */
+            type GetThreadCallback = (error: (Error|null), response?: dcnet.pb.ThreadInfoReply) => void;
+
+            /**
+             * Callback as used by {@link dcnet.pb.Service#deleteThread}.
+             * @param error Error, if any
+             * @param [response] DeleteThreadReply
+             */
+            type DeleteThreadCallback = (error: (Error|null), response?: dcnet.pb.DeleteThreadReply) => void;
+
+            /**
+             * Callback as used by {@link dcnet.pb.Service#addThreadSpace}.
+             * @param error Error, if any
+             * @param [response] AddThreadSpaceReply
+             */
+            type AddThreadSpaceCallback = (error: (Error|null), response?: dcnet.pb.AddThreadSpaceReply) => void;
+
+            /**
+             * Callback as used by {@link dcnet.pb.Service#storeFile}.
+             * @param error Error, if any
+             * @param [response] StroeFileReply
+             */
+            type StoreFileCallback = (error: (Error|null), response?: dcnet.pb.StroeFileReply) => void;
+
+            /**
+             * Callback as used by {@link dcnet.pb.Service#storeFolder}.
+             * @param error Error, if any
+             * @param [response] StoreFolderReply
+             */
+            type StoreFolderCallback = (error: (Error|null), response?: dcnet.pb.StoreFolderReply) => void;
+
+            /**
+             * Callback as used by {@link dcnet.pb.Service#deleteFile}.
+             * @param error Error, if any
+             * @param [response] DeleteFileReply
+             */
+            type DeleteFileCallback = (error: (Error|null), response?: dcnet.pb.DeleteFileReply) => void;
+
+            /**
+             * Callback as used by {@link dcnet.pb.Service#accountBind}.
+             * @param error Error, if any
+             * @param [response] AccountDealReply
+             */
+            type AccountBindCallback = (error: (Error|null), response?: dcnet.pb.AccountDealReply) => void;
+
+            /**
+             * Callback as used by {@link dcnet.pb.Service#accountInfoModify}.
+             * @param error Error, if any
+             * @param [response] AccountDealReply
+             */
+            type AccountInfoModifyCallback = (error: (Error|null), response?: dcnet.pb.AccountDealReply) => void;
+
+            /**
+             * Callback as used by {@link dcnet.pb.Service#accountLogin}.
+             * @param error Error, if any
+             * @param [response] AccountLoginReply
+             */
+            type AccountLoginCallback = (error: (Error|null), response?: dcnet.pb.AccountLoginReply) => void;
+
+            /**
+             * Callback as used by {@link dcnet.pb.Service#transferAccount}.
+             * @param error Error, if any
+             * @param [response] TransferAccountReply
+             */
+            type TransferAccountCallback = (error: (Error|null), response?: dcnet.pb.TransferAccountReply) => void;
+
+            /**
+             * Callback as used by {@link dcnet.pb.Service#addSubPubkey}.
+             * @param error Error, if any
+             * @param [response] AddSubPubkeyReply
+             */
+            type AddSubPubkeyCallback = (error: (Error|null), response?: dcnet.pb.AddSubPubkeyReply) => void;
+
+            /**
+             * Callback as used by {@link dcnet.pb.Service#deleteSubPubkey}.
+             * @param error Error, if any
+             * @param [response] DeleteSubPubkeyReply
+             */
+            type DeleteSubPubkeyCallback = (error: (Error|null), response?: dcnet.pb.DeleteSubPubkeyReply) => void;
+
+            /**
+             * Callback as used by {@link dcnet.pb.Service#bindAccessPeerToUser}.
+             * @param error Error, if any
+             * @param [response] BindAccessPeerToUserReply
+             */
+            type BindAccessPeerToUserCallback = (error: (Error|null), response?: dcnet.pb.BindAccessPeerToUserReply) => void;
+
+            /**
+             * Callback as used by {@link dcnet.pb.Service#setUserDefaultDB}.
+             * @param error Error, if any
+             * @param [response] SetUserDefaultDBReply
+             */
+            type SetUserDefaultDBCallback = (error: (Error|null), response?: dcnet.pb.SetUserDefaultDBReply) => void;
+
+            /**
+             * Callback as used by {@link dcnet.pb.Service#sendMsgToUserBox}.
+             * @param error Error, if any
+             * @param [response] SendMsgToUserBoxReply
+             */
+            type SendMsgToUserBoxCallback = (error: (Error|null), response?: dcnet.pb.SendMsgToUserBoxReply) => void;
+
+            /**
+             * Callback as used by {@link dcnet.pb.Service#getToUserBoxAuth}.
+             * @param error Error, if any
+             * @param [response] GetToUserBoxAuthReply
+             */
+            type GetToUserBoxAuthCallback = (error: (Error|null), response?: dcnet.pb.GetToUserBoxAuthReply) => void;
+
+            /**
+             * Callback as used by {@link dcnet.pb.Service#getMaxKeyFromUserBox}.
+             * @param error Error, if any
+             * @param [response] GetMaxKeyFromUserBoxReply
+             */
+            type GetMaxKeyFromUserBoxCallback = (error: (Error|null), response?: dcnet.pb.GetMaxKeyFromUserBoxReply) => void;
+
+            /**
+             * Callback as used by {@link dcnet.pb.Service#getMsgFromUserBox}.
+             * @param error Error, if any
+             * @param [response] GetMsgFromUserBoxReply
+             */
+            type GetMsgFromUserBoxCallback = (error: (Error|null), response?: dcnet.pb.GetMsgFromUserBoxReply) => void;
+
+            /**
+             * Callback as used by {@link dcnet.pb.Service#reportSpamMsg}.
+             * @param error Error, if any
+             * @param [response] ReportSpamMsgReply
+             */
+            type ReportSpamMsgCallback = (error: (Error|null), response?: dcnet.pb.ReportSpamMsgReply) => void;
+
+            /**
+             * Callback as used by {@link dcnet.pb.Service#validToken}.
+             * @param error Error, if any
+             * @param [response] ValidTokenReply
+             */
+            type ValidTokenCallback = (error: (Error|null), response?: dcnet.pb.ValidTokenReply) => void;
+
+            /**
+             * Callback as used by {@link dcnet.pb.Service#getUserClientPeers}.
+             * @param error Error, if any
+             * @param [response] GetUserClientPeersReply
+             */
+            type GetUserClientPeersCallback = (error: (Error|null), response?: dcnet.pb.GetUserClientPeersReply) => void;
+
+            /**
+             * Callback as used by {@link dcnet.pb.Service#setCacheKey}.
+             * @param error Error, if any
+             * @param [response] SetCacheKeyReply
+             */
+            type SetCacheKeyCallback = (error: (Error|null), response?: dcnet.pb.SetCacheKeyReply) => void;
+
+            /**
+             * Callback as used by {@link dcnet.pb.Service#getCacheValue}.
+             * @param error Error, if any
+             * @param [response] GetCacheValueReply
+             */
+            type GetCacheValueCallback = (error: (Error|null), response?: dcnet.pb.GetCacheValueReply) => void;
+
+            /**
+             * Callback as used by {@link dcnet.pb.Service#addThemeObj}.
+             * @param error Error, if any
+             * @param [response] AddThemeObjReply
+             */
+            type AddThemeObjCallback = (error: (Error|null), response?: dcnet.pb.AddThemeObjReply) => void;
+
+            /**
+             * Callback as used by {@link dcnet.pb.Service#addThemeSpace}.
+             * @param error Error, if any
+             * @param [response] AddThemeSpaceReply
+             */
+            type AddThemeSpaceCallback = (error: (Error|null), response?: dcnet.pb.AddThemeSpaceReply) => void;
+
+            /**
+             * Callback as used by {@link dcnet.pb.Service#getThemeSpace}.
+             * @param error Error, if any
+             * @param [response] GetThemeSpaceReply
+             */
+            type GetThemeSpaceCallback = (error: (Error|null), response?: dcnet.pb.GetThemeSpaceReply) => void;
+
+            /**
+             * Callback as used by {@link dcnet.pb.Service#deleteThemeObj}.
+             * @param error Error, if any
+             * @param [response] DeleteThemeObjReply
+             */
+            type DeleteThemeObjCallback = (error: (Error|null), response?: dcnet.pb.DeleteThemeObjReply) => void;
+
+            /**
+             * Callback as used by {@link dcnet.pb.Service#reportMaliciousComment}.
+             * @param error Error, if any
+             * @param [response] ReportMaliciousCommentReply
+             */
+            type ReportMaliciousCommentCallback = (error: (Error|null), response?: dcnet.pb.ReportMaliciousCommentReply) => void;
+
+            /**
+             * Callback as used by {@link dcnet.pb.Service#setObjCommentPublic}.
+             * @param error Error, if any
+             * @param [response] SetObjCommentPublicReply
+             */
+            type SetObjCommentPublicCallback = (error: (Error|null), response?: dcnet.pb.SetObjCommentPublicReply) => void;
+
+            /**
+             * Callback as used by {@link dcnet.pb.Service#addUserOffChainSpace}.
+             * @param error Error, if any
+             * @param [response] AddUserOffChainSpaceReply
+             */
+            type AddUserOffChainSpaceCallback = (error: (Error|null), response?: dcnet.pb.AddUserOffChainSpaceReply) => void;
+
+            /**
+             * Callback as used by {@link dcnet.pb.Service#publishCommentToTheme}.
+             * @param error Error, if any
+             * @param [response] PublishCommentToThemeReply
+             */
+            type PublishCommentToThemeCallback = (error: (Error|null), response?: dcnet.pb.PublishCommentToThemeReply) => void;
+
+            /**
+             * Callback as used by {@link dcnet.pb.Service#configThemeObjAuth}.
+             * @param error Error, if any
+             * @param [response] ConfigThemeObjAuthReply
+             */
+            type ConfigThemeObjAuthCallback = (error: (Error|null), response?: dcnet.pb.ConfigThemeObjAuthReply) => void;
+
+            /**
+             * Callback as used by {@link dcnet.pb.Service#setKeyValue}.
+             * @param error Error, if any
+             * @param [response] SetKeyValueReply
+             */
+            type SetKeyValueCallback = (error: (Error|null), response?: dcnet.pb.SetKeyValueReply) => void;
+
+            /**
+             * Callback as used by {@link dcnet.pb.Service#deleteSelfComment}.
+             * @param error Error, if any
+             * @param [response] DeleteSelfCommentReply
+             */
+            type DeleteSelfCommentCallback = (error: (Error|null), response?: dcnet.pb.DeleteSelfCommentReply) => void;
+
+            /**
+             * Callback as used by {@link dcnet.pb.Service#deleteCommentToObj}.
+             * @param error Error, if any
+             * @param [response] DeleteCommentToObjReply
+             */
+            type DeleteCommentToObjCallback = (error: (Error|null), response?: dcnet.pb.DeleteCommentToObjReply) => void;
+
+            /**
+             * Callback as used by {@link dcnet.pb.Service#getThemeObj}.
+             * @param error Error, if any
+             * @param [response] GetThemeObjReply
+             */
+            type GetThemeObjCallback = (error: (Error|null), response?: dcnet.pb.GetThemeObjReply) => void;
+
+            /**
+             * Callback as used by {@link dcnet.pb.Service#getThemeComments}.
+             * @param error Error, if any
+             * @param [response] GetThemeCommentsReply
+             */
+            type GetThemeCommentsCallback = (error: (Error|null), response?: dcnet.pb.GetThemeCommentsReply) => void;
+
+            /**
+             * Callback as used by {@link dcnet.pb.Service#getThemeAuthList}.
+             * @param error Error, if any
+             * @param [response] GetThemeAuthListReply
+             */
+            type GetThemeAuthListCallback = (error: (Error|null), response?: dcnet.pb.GetThemeAuthListReply) => void;
+
+            /**
+             * Callback as used by {@link dcnet.pb.Service#getUserComments}.
+             * @param error Error, if any
+             * @param [response] GetUserCommentsReply
+             */
+            type GetUserCommentsCallback = (error: (Error|null), response?: dcnet.pb.GetUserCommentsReply) => void;
+
+            /**
+             * Callback as used by {@link dcnet.pb.Service#getValueWithKey}.
+             * @param error Error, if any
+             * @param [response] GetValueWithKeyReply
+             */
+            type GetValueWithKeyCallback = (error: (Error|null), response?: dcnet.pb.GetValueWithKeyReply) => void;
+
+            /**
+             * Callback as used by {@link dcnet.pb.Service#getValuesWithKeys}.
+             * @param error Error, if any
+             * @param [response] GetValuesWithKeysReply
+             */
+            type GetValuesWithKeysCallback = (error: (Error|null), response?: dcnet.pb.GetValuesWithKeysReply) => void;
+
+            /**
+             * Callback as used by {@link dcnet.pb.Service#sendCommentToPeer}.
+             * @param error Error, if any
+             * @param [response] PublishCommentToThemeReply
+             */
+            type SendCommentToPeerCallback = (error: (Error|null), response?: dcnet.pb.PublishCommentToThemeReply) => void;
+
+            /**
+             * Callback as used by {@link dcnet.pb.Service#pushThemeFunOpt}.
+             * @param error Error, if any
+             * @param [response] PushThemeFunOptReply
+             */
+            type PushThemeFunOptCallback = (error: (Error|null), response?: dcnet.pb.PushThemeFunOptReply) => void;
+
+            /**
+             * Callback as used by {@link dcnet.pb.Service#pullCommentFunOpts}.
+             * @param error Error, if any
+             * @param [response] PullCommentFunOptsReply
+             */
+            type PullCommentFunOptsCallback = (error: (Error|null), response?: dcnet.pb.PullCommentFunOptsReply) => void;
+
+            /**
+             * Callback as used by {@link dcnet.pb.Service#exchangeThemeEdges}.
+             * @param error Error, if any
+             * @param [response] ExchangeThemeEdgesReply
+             */
+            type ExchangeThemeEdgesCallback = (error: (Error|null), response?: dcnet.pb.ExchangeThemeEdgesReply) => void;
+
+            /**
+             * Callback as used by {@link dcnet.pb.Service#downloadUserComments}.
+             * @param error Error, if any
+             * @param [response] DownloadUserCommentsReply
+             */
+            type DownloadUserCommentsCallback = (error: (Error|null), response?: dcnet.pb.DownloadUserCommentsReply) => void;
+
+            /**
+             * Callback as used by {@link dcnet.pb.Service#userCommentsDownloadReady}.
+             * @param error Error, if any
+             * @param [response] UserCommentsDownloadReadyReply
+             */
+            type UserCommentsDownloadReadyCallback = (error: (Error|null), response?: dcnet.pb.UserCommentsDownloadReadyReply) => void;
+
+            /**
+             * Callback as used by {@link dcnet.pb.Service#deviceStatusReport}.
+             * @param error Error, if any
+             * @param [response] DeviceStatusReportReply
+             */
+            type DeviceStatusReportCallback = (error: (Error|null), response?: dcnet.pb.DeviceStatusReportReply) => void;
+
+            /**
+             * Callback as used by {@link dcnet.pb.Service#archiveDeviceStatus}.
+             * @param error Error, if any
+             * @param [response] ArchiveDeviceStatusReply
+             */
+            type ArchiveDeviceStatusCallback = (error: (Error|null), response?: dcnet.pb.ArchiveDeviceStatusReply) => void;
+
+            /**
+             * Callback as used by {@link dcnet.pb.Service#sendDeviceStatusToPeer}.
+             * @param error Error, if any
+             * @param [response] DeviceStatusReportReply
+             */
+            type SendDeviceStatusToPeerCallback = (error: (Error|null), response?: dcnet.pb.DeviceStatusReportReply) => void;
+
+            /**
+             * Callback as used by {@link dcnet.pb.Service#getThemeDevicesStatus}.
+             * @param error Error, if any
+             * @param [response] GetThemeDevicesStatusReply
+             */
+            type GetThemeDevicesStatusCallback = (error: (Error|null), response?: dcnet.pb.GetThemeDevicesStatusReply) => void;
+
+            /**
+             * Callback as used by {@link dcnet.pb.Service#getDeviceAuth}.
+             * @param error Error, if any
+             * @param [response] GetDeviceAuthReply
+             */
+            type GetDeviceAuthCallback = (error: (Error|null), response?: dcnet.pb.GetDeviceAuthReply) => void;
+
+            /**
+             * Callback as used by {@link dcnet.pb.Service#getDeviceStatusList}.
+             * @param error Error, if any
+             * @param [response] GetDeviceStatusListReply
+             */
+            type GetDeviceStatusListCallback = (error: (Error|null), response?: dcnet.pb.GetDeviceStatusListReply) => void;
+
+            /**
+             * Callback as used by {@link dcnet.pb.Service#addUserOffChainOpTimes}.
+             * @param error Error, if any
+             * @param [response] AddUserOffChainOpTimesReply
+             */
+            type AddUserOffChainOpTimesCallback = (error: (Error|null), response?: dcnet.pb.AddUserOffChainOpTimesReply) => void;
+
+            /**
+             * Callback as used by {@link dcnet.pb.Service#getUserOffChainOpTimes}.
+             * @param error Error, if any
+             * @param [response] GetUserOffChainOpTimesReply
+             */
+            type GetUserOffChainOpTimesCallback = (error: (Error|null), response?: dcnet.pb.GetUserOffChainOpTimesReply) => void;
+
+            /**
+             * Callback as used by {@link dcnet.pb.Service#getUserOffChainUsedInfo}.
+             * @param error Error, if any
+             * @param [response] GetUserOffChainUsedInfoReply
+             */
+            type GetUserOffChainUsedInfoCallback = (error: (Error|null), response?: dcnet.pb.GetUserOffChainUsedInfoReply) => void;
+
+            /**
+             * Callback as used by {@link dcnet.pb.Service#reEncryptFile}.
+             * @param error Error, if any
+             * @param [response] ReEncryptFileReply
+             */
+            type ReEncryptFileCallback = (error: (Error|null), response?: dcnet.pb.ReEncryptFileReply) => void;
+
+            /**
+             * Callback as used by {@link dcnet.pb.Service#requestRandData}.
+             * @param error Error, if any
+             * @param [response] RequestRandDataReply
+             */
+            type RequestRandDataCallback = (error: (Error|null), response?: dcnet.pb.RequestRandDataReply) => void;
+
+            /**
+             * Callback as used by {@link dcnet.pb.Service#deductUserOffChainOpTimes}.
+             * @param error Error, if any
+             * @param [response] DeductUserOffChainOpTimesReply
+             */
+            type DeductUserOffChainOpTimesCallback = (error: (Error|null), response?: dcnet.pb.DeductUserOffChainOpTimesReply) => void;
+        }
+    }
+}
