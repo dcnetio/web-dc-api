@@ -3,16 +3,18 @@ import type { Libp2p } from 'libp2p'
 import type {Multiaddr} from '@multiformats/multiaddr'
 import { dcnet } from './proto/dcnet_proto'
 import { base58btc } from 'multiformats/bases/base58'
-import { Libp2pGrpcClient } from './grpc-libp2p-client';
+import { Libp2pGrpcClient } from 'grpc-libp2p-client';
 import { toString as uint8ArrayToString } from 'uint8arrays/to-string' 
 import { DataSource } from './proto/datasource' 
 
 export class DCGrpcClient {
     grpcClient: Libp2pGrpcClient;
     stream : any;
+    token: string;
 
-    constructor(node:Libp2p,peerAddr:Multiaddr,protocol?:string) {
-        this.grpcClient = new Libp2pGrpcClient(node,peerAddr,protocol)
+    constructor(node:Libp2p,peerAddr:Multiaddr,token:string,protocol?:string) {
+        this.grpcClient = new Libp2pGrpcClient(node,peerAddr,token,protocol)
+        this.token = token
     }  
 
 
@@ -80,6 +82,8 @@ export class DCGrpcClient {
                 return signatureDataSource.getDataSource();  
             }; 
             await this.grpcClient.Call('/dcnet.pb.Service/GetToken',messageBytes,30000,"bidirectional",onDataCallback,dataSourceCallback)
+            this.token = token
+            this.grpcClient.setToken(token)
             return token
         } catch (err) {
             console.error('GetToken error:', err)
@@ -102,6 +106,27 @@ export class DCGrpcClient {
             return prikeyencrypt2
         } catch (err) {
             console.error('AccountLogin error:', err)
+            throw err
+        }
+    }
+
+    async SetCacheKey(value:string,blockheight:number,expire:number,signature:Uint8Array): Promise<string> {
+        try {
+            const message = new dcnet.pb.SetCacheKeyRequest({})
+            message.value = new TextEncoder().encode(value)
+            message.blockheight = blockheight
+            message.expire = expire
+            message.signature = signature
+            const messageBytes = dcnet.pb.SetCacheKeyRequest.encode(message).finish()  
+            const reply = await this.grpcClient.unaryCall('/dcnet.pb.Service/SetCacheKey',messageBytes,30000)
+            const decoded = dcnet.pb.SetCacheKeyReply.decode(reply)
+            if (decoded.flag !== 0) {
+                throw new Error('SetCacheKey failed,flag: '+decoded.flag)
+            }
+            const result = uint8ArrayToString(decoded.cacheKey)
+            return result
+        } catch (err) {
+            console.error('SetCacheKey error:', err)
             throw err
         }
     }

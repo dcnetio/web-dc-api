@@ -64,9 +64,9 @@ export class Http2Frame {
         return Http2Frame.createFrame(0x0, flags, streamId, framedData)  
     }  
 
-    static createHeadersFrame(streamId:number,path:string, endHeaders:boolean = true):Uint8Array {  
+    static createHeadersFrame(streamId:number,path:string, endHeaders:boolean = true,token?:string):Uint8Array {  
         // gRPC-Web 需要的标准 headers  
-        const headersList = {  
+        const headersList: { [key: string]: string } = {  
             ':path': path,  
             ':method': 'POST',  
             ':scheme': 'http',  
@@ -76,6 +76,9 @@ export class Http2Frame {
             'accept': 'application/grpc+proto',  
             'grpc-timeout': '20S'  
         };  
+        if (token) {  
+            headersList['authorization'] = `Bearer ${token}`  
+        }
         // 将 headers 编码为 HPACK 格式  
         const hpack = new HPACK();
         const encodedHeaders = hpack.encode(headersList);

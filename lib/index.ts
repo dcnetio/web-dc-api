@@ -22,6 +22,7 @@ import * as JsCrypto from "jscrypto/es6";
 import * as buffer from "buffer/";
 import { noise } from "@chainsafe/libp2p-noise";
 import {DCClient} from "./dcapi"
+import {sha256,uint32ToLittleEndianBytes} from "./util/util"
 
 const { Buffer } = buffer;
 const { Word32Array, AES, pad, mode, Base64 } = JsCrypto;
@@ -189,19 +190,34 @@ export class DcUtil {
     }
     console.log("nodeAddr", nodeAddr.toString());
     const dcClient = new DCClient(this.dcNodeClient.libp2p,nodeAddr, protocol);
-     const getHostIdreply = await dcClient.getHostID();
+    const getHostIdreply = await dcClient.getHostID();
     console.log("getHostIdreply:", getHostIdreply);
     try {
-      const getCacheValuereply = await dcClient.GetCacheValue(nodeAddr,"ua31dpQneAD2sv8r2zX3gWg");
+      const getCacheValuereply = await dcClient.GetCacheValue(nodeAddr,"u-SMBCjtfLj4WL6HRCTf9hw");
       console.log('GetCacheValueReply reply:', getCacheValuereply)
     }catch (err) {
       console.log("getCacheValue error:", err);
     }
    
-    //生成助记词
-     const mnemonic = KeyManager.generateMnemonic();
-     //生成私钥
-    const privKey = KeyManager.getEd25519KeyFromMnemonic(mnemonic);
+    // //生成助记词
+    //  const mnemonic = KeyManager.generateMnemonic();
+    //  //生成私钥
+    // const privKey = KeyManager.getEd25519KeyFromMnemonic(mnemonic);
+    // const pubKey = privKey.publicKey;
+    
+    //登录
+    const prikey = await dcClient.AccountLogin("JxJtBntOkOnisICyiDEqIdyLWjIgph", "123456","000000",nodeAddr);
+    console.log('AccountLogin success:', prikey)
+    let mnemonic = "";
+    if (prikey.startsWith("mnemonic:")) {  
+       mnemonic = prikey.slice(9);  
+    } else if (prikey.startsWith("privatekey:")) {  
+      const basePriKey = prikey.slice(11);  
+      let priKey: Uint8Array;  
+    }
+    const keymanager = new KeyManager();
+    //const privKey1 = await keymanager.getEd25519KeyFromMnemonic(mnemonic);
+    const privKey =await keymanager.getEd25519KeyFromMnemonic(mnemonic,"DCAPP");
     const pubKey = privKey.publicKey;
     //获取token
     const token = await dcClient.GetToken( pubKey.string(),(payload: Uint8Array): Uint8Array => {
@@ -210,12 +226,40 @@ export class DcUtil {
       return signature; 
     });
     console.log('GetToken reply:', token)
-    const prikey = await dcClient.AccountLogin("JxJtBntOkOnisICyiDEqIdyLWjIgph", "123456","000000",nodeAddr);
-    console.log('AccountLogin success:', prikey)
+    //设置缓存值
+    //获取最新区块高度
+    const blockHeight = await this.getBlockHeight();
+    const expire = (blockHeight? blockHeight : 0) + 100;
+    const value = "testvalue";
+    const valueArray = new TextEncoder().encode(value);
+    const hashValue = await sha256(valueArray);  
+    
+    // 将 Blockheight 和 Expire 转换为小端字节数组  
+    const hValue: Uint8Array = uint32ToLittleEndianBytes(blockHeight? blockHeight : 0);  
+    const expValue: Uint8Array = uint32ToLittleEndianBytes(expire);  
 
+    // 将 expValue 和 hValue 连接起来  
+    const preSignPart1 = new Uint8Array(expValue.length + hValue.length);  
+    preSignPart1.set(expValue, 0);  
+    preSignPart1.set(hValue, expValue.length);  
+
+    // 将 hashValue 追加到 preSignPart1 之后  
+    const preSign = new Uint8Array(preSignPart1.length + hashValue.length);  
+    preSign.set(preSignPart1, 0);  
+    preSign.set(hashValue, preSignPart1.length);  
+
+    const signature = privKey.sign(preSign);
+    const setCacheValueReply = await dcClient.SetCacheKey(value,blockHeight? blockHeight : 0,expire,signature);
+    console.log('SetCacheKey reply:', setCacheValueReply)
     return "";
   };
 
+
+   async getBlockHeight() {
+     const lastBlock = await this.dcchainapi?.rpc.chain.getBlock();
+     const blockHeight = lastBlock?.block.header.number.toNumber();
+    return blockHeight;
+  }
 
   // 连接到所有文件存储节点
   _connectToObjNodes = async (cid: string) => {

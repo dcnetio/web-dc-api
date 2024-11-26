@@ -45,6 +45,7 @@
     "multiformats": "^13.1.0",
     "protons-runtime": "^4.0.2",
     "tweetnacl": "^1.0.3",
+    "uint8arrays": "^5.1.0",
     "webrtc-adapter": "^9.0.1"
   },
   "directories": {

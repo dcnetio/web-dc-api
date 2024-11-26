@@ -1,5 +1,6 @@
-import { generateMnemonic, mnemonicToSeed, validateMnemonic } from '@scure/bip39'  
+import { generateMnemonic, mnemonicToSeed, validateMnemonic,mnemonicToEntropy as bip39MnemonicToEntropy } from '@scure/bip39'  
 import { wordlist } from '@scure/bip39/wordlists/english'  
+
 import { ed25519 } from '@noble/curves/ed25519' 
 import { pbkdf2 } from '@noble/hashes/pbkdf2'  
 import { sha512 } from '@noble/hashes/sha512' 
@@ -28,54 +29,88 @@ export class KeyManager {
     static readonly PUBLIC_KEY_SIZE = 32 
     // Schnorrkel 常量  
     private static readonly SCHNORRKEL_SEED_PREFIX = 'mnemonic'  
-    private static readonly SCHNORRKEL_SALT_PREFIX = 'substrate' 
-    // 模拟 Schnorrkel.SeedFromMnemonic  
-    static seedFromMnemonic(  
-        mnemonic: string,  
-        password: string = ''  
-    ): Uint8Array {  
-        if (!this.validateMnemonic(mnemonic)) {  
-            throw new Error('Invalid mnemonic')  
-        }  
 
-        // 构造盐值  
-        const saltPrefix = this.SCHNORRKEL_SEED_PREFIX  
-        const salt = new TextEncoder().encode(`${saltPrefix}${password}`)  
 
-        // 使用 PBKDF2 派生密钥  
-        const seed = pbkdf2(  
-            sha512, // hash function  
-            new TextEncoder().encode(mnemonic), // 助记词输入  
-            salt, // 盐值  
-            { c: 2048, // 迭代次数
-              dkLen: 64, // 生成密钥长度
-              asyncTick: 10 // 异步调用的间隔
-            }
-        )  
-        return seed  
+ // MnemonicToEntropy 将助记词转换为熵  
+// 如果助记词无效，则抛出错误  
+ mnemonicToEntropy(mnemonic: string): Uint8Array {  
+    // 验证助记词的有效性，传入英文单词表  
+    if (!validateMnemonic(mnemonic, wordlist)) {  
+      throw new Error('无效的助记词');  
     }  
+  
+    // 使用 @scure/bip39 将助记词转换为熵的 Uint8Array，传入英文单词表  
+    const entropy = bip39MnemonicToEntropy(mnemonic, wordlist);  
+  
+    return entropy;  
+  }  
+// SeedFromMnemonic 从 BIP39 助记词和密码生成 64 字节的种子  
+async  seedFromMnemonic(mnemonic: string, password: string): Promise<Uint8Array> {  
+    // 将助记词转换为熵  
+    const entropy = this.mnemonicToEntropy(mnemonic);  
+  
+    // 验证熵的长度：必须在 16 到 32 字节之间，并且是 4 的倍数  
+    if (entropy.length < 16 || entropy.length > 32 || entropy.length % 4 !== 0) {  
+      throw new Error("无效的熵长度");  
+    }  
+  
+    // 准备盐值："mnemonic" + password  
+    const saltStr = KeyManager.SCHNORRKEL_SEED_PREFIX + password;  
+    const encoder = new TextEncoder();  
+    const salt = encoder.encode(saltStr);  
+  
+    // 使用 Web Crypto API 导入熵作为 PBKDF2 的密钥  
+    const key = await crypto.subtle.importKey(  
+      'raw',  
+      entropy,  
+      { name: 'PBKDF2' },  
+      false,  
+      ['deriveBits']  
+    );  
+  
+    // 使用 PBKDF2 生成 64 字节（512 位）的种子，迭代次数为 2048，使用 SHA-512 哈希算法  
+    const derivedBits = await crypto.subtle.deriveBits(  
+      {  
+        name: 'PBKDF2',  
+        salt: salt,  
+        iterations: 2048,  
+        hash: 'SHA-512',  
+      },  
+      key,  
+      64 * 8 // 64 字节 = 512 位  
+    );  
+  
+    // 将导出的位转换为 Uint8Array  
+    const derivedBytes = new Uint8Array(derivedBits);  
+  
+    return derivedBytes;  
+  }  
 
+
+   
     //直接生成与 Go ed25519.NewKeyFromSeed 兼容的密钥  
-    static getEd25519KeyFromMnemonic(  
+    async getEd25519KeyFromMnemonic(  
         mnemonic: string,  
         password: string = ''  
-    ):Ed25519PrivKey{  
+    ): Promise<Ed25519PrivKey> {  
         // 使用兼容 Schnorrkel 的方式生成种子  
-        const seed = this.seedFromMnemonic(mnemonic, password)  
+        const seed = await this.seedFromMnemonic(mnemonic, password)  
         const ed25519Key = this.newKeyFromSeed(seed.slice(0, 32))
         const privateKey =  new Ed25519PrivKey(ed25519Key.privateKey)
          // 安全清除内存中的敏感数据  
-        this.clearSensitiveData(seed)  
-        this.clearSensitiveData(ed25519Key.privateKey)  
+         KeyManager.clearSensitiveData(seed)  
+         KeyManager.clearSensitiveData(ed25519Key.privateKey)  
         return privateKey
     } 
 
+     
+
     // 实现与 Go 完全一致的 newKeyFromSeed  
-    static newKeyFromSeed(seed: Uint8Array): {  
+     newKeyFromSeed(seed: Uint8Array): {  
         privateKey: Uint8Array,  
         publicKey: Uint8Array  
     } {  
-        if (seed.length !== this.SEED_SIZE) {  
+        if (seed.length !== KeyManager.SEED_SIZE) {  
             throw new Error(`ed25519: bad seed length: ${seed.length}`)  
         }  
 
@@ -92,7 +127,7 @@ export class KeyManager {
         const publicKey = ed25519.getPublicKey(seed)  
 
         // 4. 构造64字节私钥（种子 + 公钥）  
-        const privateKey = new Uint8Array(this.PRIVATE_KEY_SIZE)  
+        const privateKey = new Uint8Array(KeyManager.PRIVATE_KEY_SIZE)  
         privateKey.set(seed) // 前32字节是种子  
         privateKey.set(publicKey, 32) // 后32字节是公钥  
 

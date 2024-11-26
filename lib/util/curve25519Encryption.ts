@@ -2,7 +2,7 @@
 import { randomBytes } from '@stablelib/random';  
 import { box } from 'tweetnacl';  
 import { BigInteger } from 'jsbn';
-import { webcrypto } from 'crypto'; 
+// import { webcrypto } from 'crypto'; 
 
 export class Encryption {  
     private static readonly NONCE_LENGTH = 24;  
@@ -241,11 +241,11 @@ private static ed25519PublicKeyToCurve25519(publicKey: Uint8Array): Uint8Array {
             const buffer = await window.crypto.subtle.digest('SHA-512', data);  
             return new Uint8Array(buffer);  
         }   
-        // Node.js 环境  
-        else if (typeof webcrypto !== 'undefined') {  
-            const buffer = await webcrypto.subtle.digest('SHA-512', data);  
-            return new Uint8Array(buffer);  
-        }  
+        // // Node.js 环境  
+        // else if (typeof webcrypto !== 'undefined') {  
+        //     const buffer = await webcrypto.subtle.digest('SHA-512', data);  
+        //     return new Uint8Array(buffer);  
+        // }  
         throw new Error('No crypto implementation available');  
     } catch (error) {  
         console.error('SHA-512 hash failed:', error);  

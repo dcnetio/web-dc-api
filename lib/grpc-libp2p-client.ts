@@ -32,8 +32,10 @@ export class Libp2pGrpcClient {
     protocol: string;
     steamManager: StreamManager;
     peerAddr: Multiaddr;
+    token: string;
 
-    constructor(node:Libp2p,peerAddr:Multiaddr,protocol?:string) {
+
+    constructor(node:Libp2p,peerAddr:Multiaddr,token:string,protocol?:string) {
         this.node = node
         this.peerAddr = peerAddr
         if (protocol) {
@@ -42,7 +44,12 @@ export class Libp2pGrpcClient {
              this.protocol = '/dc/thread/0.0.1'
         }
         this.steamManager = new StreamManager()
+        this.token = token
     }  
+
+    setToken(token:string) {
+        this.token = token
+    }
     
 
     async unaryCall(method:string, requestData:Uint8Array,timeout:number): Promise<Uint8Array> {  
@@ -87,7 +94,7 @@ export class Libp2pGrpcClient {
             await writer.write(settingFrme)
             await parser.waitForSettingsAck()
             // 创建头部帧
-            const headerFrame = Http2Frame.createHeadersFrame( streamId,method,true)
+            const headerFrame = Http2Frame.createHeadersFrame( streamId,method,true,this.token)
             await writer.write(headerFrame)
             // 创建数据帧
             const dataFrame = Http2Frame.createDataFrame( streamId,requestData, true)
@@ -130,7 +137,7 @@ export class Libp2pGrpcClient {
         method: string,  
         requestData: Uint8Array,  
         timeout: number,  
-        mode: 'unary' | 'server-streaming' | 'client-streaming' | 'bidirectional',  
+        mode: 'unary' | 'server-streaming' | 'client-streaming' | 'bidirectional', 
         onDataCallback: (payload: Uint8Array) => void,  
         dataSourceCallback?: () => AsyncIterable<Uint8Array>,
         onEndCallback?: () => void,  
@@ -195,7 +202,7 @@ export class Libp2pGrpcClient {
            
       
             // Create header frame  
-            const headerFrame = Http2Frame.createHeadersFrame(streamId, method, true);  
+            const headerFrame = Http2Frame.createHeadersFrame(streamId, method, true,this.token);  
             if (mode === 'unary' || mode === 'server-streaming') {  
               const dataFrame = Http2Frame.createDataFrame(streamId,requestData,  true);  
               await writer.write(new Uint8Array([...headerFrame, ...dataFrame]));  

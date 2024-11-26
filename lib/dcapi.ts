@@ -14,6 +14,7 @@ import { peerIdFromString } from '@libp2p/peer-id';
 import {Encryption} from './util/curve25519Encryption'
 import {decryptContent} from './util/dccrypt'
 import { keys } from '@libp2p/crypto'
+import { sha256,getRandomBytes,concatenateUint8Arrays } from './util/util'
 
 
 
@@ -25,12 +26,14 @@ export class DCClient {
     readonly protocol : string
     p2pNode: Libp2p;
     peerAddr: Multiaddr;
+    token: string;
     
 
     constructor(node:Libp2p,peerAddr:Multiaddr,protocol:string) {
         this.protocol = protocol 
         this.p2pNode = node
         this.peerAddr = peerAddr
+        this.token = ''
     }  
 
 
@@ -42,7 +45,7 @@ export class DCClient {
             if (!peerAddr) {
                 peerAddr = this.peerAddr
             }
-            const grpcClient = new DCGrpcClient(this.p2pNode,peerAddr,this.protocol)
+            const grpcClient = new DCGrpcClient(this.p2pNode,peerAddr,this.token,this.protocol)
             const reply = await grpcClient.getHostID()
             return reply
         } catch (err) {
@@ -56,7 +59,7 @@ export class DCClient {
             if (this.p2pNode == null) {
                 throw new Error('p2pNode is null')
             }
-            const grpcClient = new DCGrpcClient(this.p2pNode,peerAddr,this.protocol)
+            const grpcClient = new DCGrpcClient(this.p2pNode,peerAddr,this.token,this.protocol)
             const reply = await grpcClient.GetCacheValue(key) 
             return reply
         } catch (err) {
@@ -74,8 +77,9 @@ export class DCClient {
             if (!peerAddr) {
                 peerAddr = this.peerAddr
             }
-            const grpcClient = new DCGrpcClient(this.p2pNode,peerAddr,this.protocol)
+            const grpcClient = new DCGrpcClient(this.p2pNode,peerAddr,this.token,this.protocol)
             const token = await grpcClient.GetToken(pubkey, signCallback)
+            this.token = token
             return token
         } catch (err) {
             console.error('GetToken error:', err)
@@ -101,7 +105,7 @@ export class DCClient {
             // 获取当前节点的peerID,并且获取节点的公钥
             const localPubkeyBytes =  this.p2pNode.peerId.publicKey 
             const req = await generateAccountLoginRequestWithPeerId(peerId, account, password, seccode, tempEdPubkey)
-            const grpcClient = new DCGrpcClient(this.p2pNode,this.peerAddr,this.protocol)
+            const grpcClient = new DCGrpcClient(this.p2pNode,this.peerAddr,this.token,this.protocol)
             const prikeyencrypt2 = await grpcClient.AccountLogin(req.accounthashencrypt,req.pubkeyencrypt,req.loginkeyrandencrypt)
             //从返回的数据中解析出私钥
            //Decrypt with private key
@@ -116,6 +120,23 @@ export class DCClient {
             throw err
         }
     }
+
+    async SetCacheKey(value:string,blockheight:number,expire:number,signature:Uint8Array,peerAddr?:Multiaddr): Promise<string> {
+        try {
+            if (this.p2pNode == null) {
+                throw new Error('p2pNode is null')
+            }
+            if (!peerAddr) {
+                peerAddr = this.peerAddr
+            }
+            const grpcClient = new DCGrpcClient(this.p2pNode,peerAddr,this.token,this.protocol)
+            const res = await grpcClient.SetCacheKey(value,blockheight,expire,signature)
+            return res
+        } catch (err) {
+            console.error('SetCacheKey error:', err)
+            throw err
+        }
+    }
 }
 
 interface AccountLoginRequest {  
@@ -124,28 +145,28 @@ interface AccountLoginRequest {
     loginkeyrandencrypt: Uint8Array;  
 }  
 
-// 辅助函数：SHA-256 哈希计算  
-async function sha256(data: Uint8Array): Promise<Uint8Array> {  
-    const hashBuffer = await crypto.subtle.digest('SHA-256', data);  
-    return new Uint8Array(hashBuffer);  
-}  
+// // SHA-256 哈希计算  
+// async function sha256(data: Uint8Array): Promise<Uint8Array> {  
+//     const hashBuffer = await crypto.subtle.digest('SHA-256', data);  
+//     return new Uint8Array(hashBuffer);  
+// }  
 
-// 辅助函数：生成随机字节  
-function getRandomBytes(length: number): Uint8Array {  
-    return crypto.getRandomValues(new Uint8Array(length));  
-}  
+// // 生成随机字节  
+// function getRandomBytes(length: number): Uint8Array {  
+//     return crypto.getRandomValues(new Uint8Array(length));  
+// }  
 
-// 辅助函数：连接 Uint8Array  
-function concatenateUint8Arrays(...arrays: Uint8Array[]): Uint8Array {  
-    const totalLength = arrays.reduce((acc, arr) => acc + arr.length, 0);  
-    const result = new Uint8Array(totalLength);  
-    let offset = 0;  
-    for (const arr of arrays) {  
-        result.set(arr, offset);  
-        offset += arr.length;  
-    }  
-    return result;  
-}  
+// // 连接 Uint8Array  
+// function concatenateUint8Arrays(...arrays: Uint8Array[]): Uint8Array {  
+//     const totalLength = arrays.reduce((acc, arr) => acc + arr.length, 0);  
+//     const result = new Uint8Array(totalLength);  
+//     let offset = 0;  
+//     for (const arr of arrays) {  
+//         result.set(arr, offset);  
+//         offset += arr.length;  
+//     }  
+//     return result;  
+// }  
 
 /**  
  * 生成账户登录请求  
