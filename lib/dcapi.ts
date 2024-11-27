@@ -137,6 +137,28 @@ export class DCClient {
             throw err
         }
     }
+
+    async AddUserOffChainSpace(pubkey:string,blockheight:number,signature:Uint8Array,peerAddr?:Multiaddr): Promise<void> {
+        try {
+            console.log('AddUserOffChainSpace pubkey', pubkey)
+            console.log('AddUserOffChainSpace blockheight', blockheight)
+            console.log('AddUserOffChainSpace signature', signature)
+            console.log('AddUserOffChainSpace peerAddr', peerAddr)
+            if (this.p2pNode == null || this.p2pNode.peerId == null) {
+                throw new Error('p2pNode is null or node privateKey is null')
+            }
+            if (!peerAddr) {
+                peerAddr = this.peerAddr
+            }
+            const peerId = await extractPeerIdFromMultiaddr(peerAddr)
+            console.log('AddUserOffChainSpace peerId', peerId)
+            const grpcClient = new DCGrpcClient(this.p2pNode,peerAddr,this.token,this.protocol)
+            const res = await grpcClient.AddUserOffChainSpace(pubkey,blockheight, peerId.toString(),signature)
+        } catch (err) {
+            console.error('SetCacheKey error:', err)
+            throw err
+        }
+    }
 }
 
 interface AccountLoginRequest {  

@@ -131,4 +131,23 @@ export class DCGrpcClient {
         }
     }
 
+    async AddUserOffChainSpace(pubkey:string,blockheight:number,peerid: string,signature:Uint8Array): Promise<void> {
+        try {
+            console.log('AddUserOffChainSpace2 pubkey', pubkey)
+            console.log('AddUserOffChainSpace2 blockheight', blockheight)
+            console.log('AddUserOffChainSpace2 peerid', peerid)
+            console.log('AddUserOffChainSpace2 signature', signature)
+            const message = new dcnet.pb.AddUserOffChainSpaceRequest({})
+            message.userPubkey = new TextEncoder().encode(pubkey)
+            message.blockheight = blockheight
+            message.peerid = new TextEncoder().encode(peerid)
+            message.signature = signature
+            const messageBytes = dcnet.pb.AddUserOffChainSpaceRequest.encode(message).finish()  
+            const reply = await this.grpcClient.unaryCall('/dcnet.pb.Service/AddUserOffChainSpace',messageBytes,30000)
+            console.log('AddUserOffChainSpace2 reply', reply)
+        } catch (err) {
+            console.error('AddUserOffChainSpace error:', err)
+            throw err
+        }
+    }
 }

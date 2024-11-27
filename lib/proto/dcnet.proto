@@ -692,7 +692,7 @@ message AddUserOffChainSpaceRequest{
    bytes userPubkey  = 1; //要新增用户对外评论空间的用户
    uint32 blockheight = 2; //发送请求时的区块高度
    bytes  peerid = 3; //允许发起上链请求的peerid
-   bytes signature = 4 ; //发送者私钥对（blockheight+peerid)的签名
+   bytes signature = 4 ; //发送者私钥对（peerid+blockheight）的签名
    bytes vaccount = 5 ; //虚拟账号,可选,如果有虚拟账号
 }
 
