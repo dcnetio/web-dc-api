@@ -120,11 +120,11 @@ export class DCGrpcClient {
             const messageBytes = dcnet.pb.SetCacheKeyRequest.encode(message).finish()  
             const reply = await this.grpcClient.unaryCall('/dcnet.pb.Service/SetCacheKey',messageBytes,30000)
             const decoded = dcnet.pb.SetCacheKeyReply.decode(reply)
-            if (decoded.flag !== 0) {
-                throw new Error('SetCacheKey failed,flag: '+decoded.flag)
+            if(decoded.cacheKey){
+                const result = uint8ArrayToString(decoded.cacheKey)
+                return result
             }
-            const result = uint8ArrayToString(decoded.cacheKey)
-            return result
+            throw new Error('SetCacheKey failed,flag: '+decoded.flag)
         } catch (err) {
             console.error('SetCacheKey error:', err)
             throw err

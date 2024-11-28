@@ -3,12 +3,12 @@
 import { ApiPromise, WsProvider } from "@polkadot/api";
 import { MemoryBlockstore } from "blockstore-core";
 import { MemoryDatastore } from "datastore-core";
-import { circuitRelayTransport } from '@libp2p/circuit-relay-v2'  
-import { webRTCDirect } from '@libp2p/webrtc' 
-import {KeyManager} from "./dc-key/keyManager"
-import { keys } from '@libp2p/crypto' 
+import { circuitRelayTransport } from "@libp2p/circuit-relay-v2";
+import { webRTCDirect } from "@libp2p/webrtc";
+import { KeyManager } from "./dc-key/keyManager";
+import { keys } from "@libp2p/crypto";
 
-import {createHelia} from "helia";
+import { createHelia } from "helia";
 import { createLibp2p } from "libp2p";
 import { identify } from "@libp2p/identify";
 import { CID } from "multiformats";
@@ -17,29 +17,35 @@ import { base32 } from "multiformats/bases/base32";
 
 import { yamux } from "@chainsafe/libp2p-yamux";
 import { isName, multiaddr } from "@multiformats/multiaddr";
+import type { Multiaddr } from "@multiformats/multiaddr";
 import toBuffer from "it-to-buffer";
 import * as JsCrypto from "jscrypto/es6";
 import * as buffer from "buffer/";
 import { noise } from "@chainsafe/libp2p-noise";
-import {DCClient} from "./dcapi"
-import {sha256,uint32ToLittleEndianBytes} from "./util/util"
+import { DCClient } from "./dcapi";
+import { sha256, uint32ToLittleEndianBytes } from "./util/util";
+import { Ed25519PrivKey } from "./dc-key/ed25519";
+import { decryptContent } from "./util/dccrypt";
 
 const { Buffer } = buffer;
 const { Word32Array, AES, pad, mode, Base64 } = JsCrypto;
 const NonceBytes = 12;
 const TagBytes = 16;
-alert("dddd")
-const protocol = '/dc/thread/0.0.1'
+alert("dddd");
+const protocol = "/dc/thread/0.0.1";
 export class DcUtil {
   blockChainAddr: string;
   dcchainapi: ApiPromise | undefined;
   dcNodeClient: any | undefined; // 什么类型？
+  dcClient: DCClient | undefined;
+  nodeAddr: Multiaddr | undefined;
+  accountNodeAddr: Multiaddr | undefined;
+  privKey: Ed25519PrivKey | undefined;
 
   constructor(blockChainAddr: string) {
     this.blockChainAddr = blockChainAddr;
   }
 
-  
   // 初始化
   init = async () => {
     const chainProvider = new WsProvider(this.blockChainAddr);
@@ -50,9 +56,13 @@ export class DcUtil {
       return;
     }
     this.dcNodeClient = await this._createHeliaNode();
-   
+    // todo 获取默认连接peerid
+    const peerId = await this._getConnectedPeerId();
+    this.nodeAddr = await this._getNodeAddr(peerId);
+    if (this.nodeAddr) {
+      this.dcClient = await this._newDcClient(this.nodeAddr);
+    }
   };
-
 
   // 从dc网络获取指定文件
   getFileFromDc = async (cid: string, decryptKey: string) => {
@@ -105,7 +115,7 @@ export class DcUtil {
           } else {
             if (waitBuffer.length > 0) {
               if (decryptKey != "") {
-                const decrypted = decryptContentForBrowser(
+                const decrypted = await decryptContent(
                   waitBuffer,
                   decryptKey
                 );
@@ -162,119 +172,245 @@ export class DcUtil {
     }
   };
 
-
-  
-
-  
   /// <reference path = "dcnet_pb.d.ts" />
+
+  // 获取hostid
+  getHostID = async (): Promise<
+    { peerID: string; reqAddr: string } | undefined
+  > => {
+    if (!this.dcClient) {
+      console.log("dcClient is null");
+      return;
+    }
+    const getHostIdreply = await this.dcClient.getHostID();
+    console.log("getHostIdreply:", getHostIdreply);
+    return getHostIdreply;
+  };
   // 从dc网络获取缓存值
   getCacheValueFromDc = async (key: string) => {
-
     //解析出peerid与cachekey
     const pkeys = key.split("/");
     if (pkeys.length != 2) {
       console.log("key format error!");
       return;
     }
-   // const peerid = pkeys[0];
-    const cacheKey = pkeys[1];
-    const peerid = "12D3KooWNr1ERkUSdUQjGtmtWPB8AtWGVuDVhcoZSH4UkudU2in9"
-    let nodeAddr = await this._getDcNodeWebrtcDirectAddr(peerid);
-    if (!nodeAddr) {
-      console.log("no node address found for peer: ", peerid);
+    if (!this.dcClient) {
+      console.log("dcClient is null");
       return;
     }
-    if (isName(nodeAddr)) {
-      const addrs = await nodeAddr.resolve();
-      nodeAddr = addrs[0];
-    }
-    console.log("nodeAddr", nodeAddr.toString());
-    const dcClient = new DCClient(this.dcNodeClient.libp2p,nodeAddr, protocol);
-    const getHostIdreply = await dcClient.getHostID();
-    console.log("getHostIdreply:", getHostIdreply);
+    const peerid = pkeys[0];
+    const cacheKey = pkeys[1];
     try {
-      const getCacheValuereply = await dcClient.GetCacheValue(nodeAddr,"uIjsQ73e2wGmfSORDb_EbJA");
-      console.log('GetCacheValueReply reply:', getCacheValuereply)
-    }catch (err) {
+      let nodeAddr: Multiaddr | undefined;
+      if (this.nodeAddr) {
+        const connectedPeerId = this.nodeAddr.getPeerId() || "";
+        if (connectedPeerId && connectedPeerId === peerid) {
+          // 同一个节点
+          nodeAddr = this.nodeAddr;
+        } else {
+          // 不是同一个节点
+          nodeAddr = await this._getNodeAddr(peerid);
+        }
+      } else {
+        nodeAddr = await this._getNodeAddr(peerid);
+      }
+      if (!nodeAddr) {
+        console.log("nodeAddr is null");
+        return;
+      }
+      // // 登陆
+      // await this.accountLogin();
+      // // 添加用户空间存储
+      // await this.addUserOffChainSpace();
+      // // 设置keyvalue
+      // const setKey = await this.setCacheKey(JSON.stringify({
+      //   cidList: [
+      //     {
+      //       AlbumId: "01j8mnyap0bk226s64ekeeq88f",
+      //       CreateTime: 1732263381000,
+      //       Duration: 0,
+      //       Height: 900,
+      //       Name: "1727598866014_1727598866014_3526c07d5206ee7bac6fd515071fe32c.jpg",
+      //       ThumbCID:
+      //         "bafybeidgxlgzahktprvoqyo2iesxui2z2uuwftxll6iyabszkyjhfmrz2y",
+      //       Type: 1,
+      //       UriCID:
+      //         "bafybeidgxlgzahktprvoqyo2iesxui2z2uuwftxll6iyabszkyjhfmrz2y",
+      //       Width: 601,
+      //       _id: "01jdhhy9wj7fgcebwx58cp2y4d",
+      //       enkey: "buzs2iwjaiixz2ql6jbt67xcpxcqeuhz774p2a7uzr2dpp55cplrq",
+      //     },
+      //     {
+      //       AlbumId: "01j8mnyap0bk226s64ekeeq88f",
+      //       CreateTime: 1731409392200,
+      //       Duration: 0,
+      //       Height: 372,
+      //       Name: "t01fdbe074015146f42.webp",
+      //       ThumbCID:
+      //         "bafybeihqm5n7fnmbk32m4s4riwxg4lvfttwxzgtzchtukpivadbit2t3bi",
+      //       Type: 1,
+      //       UriCID:
+      //         "bafybeihqm5n7fnmbk32m4s4riwxg4lvfttwxzgtzchtukpivadbit2t3bi",
+      //       Width: 340,
+      //       _id: "01jcg0nfjcsermj92372txc7gf",
+      //       enkey: "buzs2iwjaiixz2ql6jbt67xcpxcqeuhz774p2a7uzr2dpp55cplrq",
+      //     },
+      //   ],
+      // }));
+
+      const getCacheValuereply = await this.dcClient.GetCacheValue(
+        nodeAddr,
+        cacheKey
+      );
+      console.log("GetCacheValueReply reply:", getCacheValuereply);
+      return getCacheValuereply;
+    } catch (err) {
       console.log("getCacheValue error:", err);
+      return;
     }
-   
+  };
+  register = async () => {
     // //生成助记词
     //  const mnemonic = KeyManager.generateMnemonic();
     //  //生成私钥
     // const privKey = KeyManager.getEd25519KeyFromMnemonic(mnemonic);
     // const pubKey = privKey.publicKey;
-    
-    // //登录
-    // const account = "sQCijJnNaSVnpzRMcRGqKhCCgERAFb";
-    // const prikey = await dcClient.AccountLogin(account, "123456","000000",nodeAddr);
-    // console.log('AccountLogin success:', prikey)
-    // let mnemonic = "";
-    // if (prikey.startsWith("mnemonic:")) {  
-    //    mnemonic = prikey.slice(9);  
-    // } else if (prikey.startsWith("privatekey:")) {  
-    //   const basePriKey = prikey.slice(11);  
-    //   let priKey: Uint8Array;  
-    // }
-    // const keymanager = new KeyManager();
-    // //const privKey1 = await keymanager.getEd25519KeyFromMnemonic(mnemonic);
-    // const privKey =await keymanager.getEd25519KeyFromMnemonic(mnemonic,"DCAPP");
-    // const pubKey = privKey.publicKey;
-    // console.log('get privKey:', privKey)
-    // console.log('get pubKey:', pubKey)
-    // //获取token
-    // const token = await dcClient.GetToken( pubKey.string(),(payload: Uint8Array): Uint8Array => {
-    //   // Implement your signCallback logic here
-    //   const signature =  privKey.sign(payload);
-    //   return signature; 
-    // });
-    // console.log('GetToken reply:', token)
-
-    // // 添加用户评论空间
-    // const blockHeight = await this.getBlockHeight() || 0;
-    // const hValue: Uint8Array = uint32ToLittleEndianBytes(blockHeight? blockHeight : 0);  
-    // const peerIdValue: Uint8Array = new TextEncoder().encode(peerid);
-
-    // // 将 hValue 和 peerIdValue 连接起来  
-    // const preSign = new Uint8Array(peerIdValue.length + hValue.length);  
-    // preSign.set(peerIdValue, 0);  
-    // preSign.set(hValue, peerIdValue.length);  
-    // const signature = privKey.sign(preSign);
-    // dcClient.AddUserOffChainSpace(pubKey.string(),blockHeight,signature,nodeAddr);
-    // console.log('AddUserOffChainSpace end')
-
-    // //设置缓存值
-    // //获取最新区块高度
-    // const blockHeight = await this.getBlockHeight();
-    // const expire = (blockHeight? blockHeight : 0) + 10000;
-    // const value = "testvalue";
-    // const valueArray = new TextEncoder().encode(value);
-    // const hashValue = await sha256(valueArray);  
-    
-    // // 将 Blockheight 和 Expire 转换为小端字节数组  
-    // const hValue: Uint8Array = uint32ToLittleEndianBytes(blockHeight? blockHeight : 0);  
-    // const expValue: Uint8Array = uint32ToLittleEndianBytes(expire);  
-
-    // // 将 expValue 和 hValue 连接起来  
-    // const preSignPart1 = new Uint8Array(expValue.length + hValue.length);  
-    // preSignPart1.set(expValue, 0);  
-    // preSignPart1.set(hValue, expValue.length);  
-
-    // // 将 hashValue 追加到 preSignPart1 之后  
-    // const preSign = new Uint8Array(preSignPart1.length + hashValue.length);  
-    // preSign.set(preSignPart1, 0);  
-    // preSign.set(hashValue, preSignPart1.length);  
-
-    // const signature = privKey.sign(preSign);
-    // const setCacheValueReply = await dcClient.SetCacheKey(value,blockHeight? blockHeight : 0,expire,signature);
-    // console.log('SetCacheKey reply:', setCacheValueReply)
-    return "";
+  };
+  // 登陆
+  accountLogin = async () => {
+    //登录
+    if (!this.dcClient) {
+      console.log("dcClient is null");
+      return;
+    }
+    if (!this.nodeAddr) {
+      console.log("nodeAddr is null");
+      return;
+    }
+    // todo获取账号的连接节点
+    // const peerid = '12D3KooWNr1ERkUSdUQjGtmtWPB8AtWGVuDVhcoZSH4UkudU2in9';
+    // const nodeAddr = await this._getNodeAddr(peerid);
+    // this.accountNodeAddr = nodeAddr;
+    const account = "ePfwWntptFlGNQIhrwTOSWLNdMCbmW";
+    const prikey = await this.dcClient.AccountLogin(
+      account,
+      "123456",
+      "000000",
+      this.nodeAddr
+    );
+    console.log("AccountLogin success:", prikey);
+    let mnemonic = "";
+    if (prikey.startsWith("mnemonic:")) {
+      mnemonic = prikey.slice(9);
+    } else if (prikey.startsWith("privatekey:")) {
+      const basePriKey = prikey.slice(11);
+      let priKey: Uint8Array;
+    }
+    const keymanager = new KeyManager();
+    //const privKey1 = await keymanager.getEd25519KeyFromMnemonic(mnemonic);
+    const privKey = await keymanager.getEd25519KeyFromMnemonic(
+      mnemonic,
+      "DCAPP"
+    );
+    const pubKey = privKey.publicKey;
+    console.log("get privKey:", privKey);
+    console.log("get pubKey:", pubKey);
+    this.privKey = privKey;
+    //获取token
+    const token = await this.dcClient.GetToken(
+      pubKey.string(),
+      (payload: Uint8Array): Uint8Array => {
+        // Implement your signCallback logic here
+        const signature = privKey.sign(payload);
+        return signature;
+      }
+    );
+    console.log("GetToken reply:", token);
   };
 
+  // 添加用户评论空间
+  addUserOffChainSpace = async () => {
+    if (!this.dcClient) {
+      console.log("dcClient is null");
+      return;
+    }
+    if (!this.nodeAddr) {
+      console.log("nodeAddr is null");
+      return;
+    }
+    if (!this.privKey) {
+      console.log("privKey is null");
+      return;
+    }
+    const blockHeight = (await this.getBlockHeight()) || 0;
+    const hValue: Uint8Array = uint32ToLittleEndianBytes(
+      blockHeight ? blockHeight : 0
+    );
+    const peerIdValue: Uint8Array = new TextEncoder().encode(
+      this.nodeAddr.getPeerId() || ""
+    );
 
-   async getBlockHeight() {
-     const lastBlock = await this.dcchainapi?.rpc.chain.getBlock();
-     const blockHeight = lastBlock?.block.header.number.toNumber();
+    // 将 hValue 和 peerIdValue 连接起来
+    const preSign = new Uint8Array(peerIdValue.length + hValue.length);
+    preSign.set(peerIdValue, 0);
+    preSign.set(hValue, peerIdValue.length);
+    const signature = this.privKey.sign(preSign);
+    const pubKey = this.privKey.publicKey;
+    this.dcClient.AddUserOffChainSpace(
+      pubKey.string(),
+      blockHeight,
+      signature,
+      this.nodeAddr
+    );
+    console.log("AddUserOffChainSpace end");
+  };
+
+  // 设置缓存值
+  setCacheKey = async (value: string) => {
+    if (!this.dcClient) {
+      console.log("dcClient is null");
+      return;
+    }
+    if (!this.privKey) {
+      console.log("privKey is null");
+      return;
+    }
+    //获取最新区块高度
+    const blockHeight = await this.getBlockHeight();
+    const expire = (blockHeight ? blockHeight : 0) + 10000;
+    const valueArray = new TextEncoder().encode(value);
+    const hashValue = await sha256(valueArray);
+
+    // 将 Blockheight 和 Expire 转换为小端字节数组
+    const hValue: Uint8Array = uint32ToLittleEndianBytes(
+      blockHeight ? blockHeight : 0
+    );
+    const expValue: Uint8Array = uint32ToLittleEndianBytes(expire);
+
+    // 将 expValue 和 hValue 连接起来
+    const preSignPart1 = new Uint8Array(expValue.length + hValue.length);
+    preSignPart1.set(expValue, 0);
+    preSignPart1.set(hValue, expValue.length);
+
+    // 将 hashValue 追加到 preSignPart1 之后
+    const preSign = new Uint8Array(preSignPart1.length + hashValue.length);
+    preSign.set(preSignPart1, 0);
+    preSign.set(hashValue, preSignPart1.length);
+
+    const signature = this.privKey.sign(preSign);
+    const setCacheValueReply = await this.dcClient.SetCacheKey(
+      value,
+      blockHeight ? blockHeight : 0,
+      expire,
+      signature
+    );
+    console.log("SetCacheKey reply:", setCacheValueReply);
+    return setCacheValueReply;
+  };
+
+  async getBlockHeight() {
+    const lastBlock = await this.dcchainapi?.rpc.chain.getBlock();
+    const blockHeight = lastBlock?.block.header.number.toNumber();
     return blockHeight;
   }
 
@@ -320,7 +456,7 @@ export class DcUtil {
         }
 
         try {
-          const res = await _this.dcNodeClient.dial(nodeAddr);
+          const res = await _this.dcNodeClient.libp2p.dial(nodeAddr);
           console.log("nodeAddr try return");
           console.log(res);
           if (res) {
@@ -363,8 +499,8 @@ export class DcUtil {
       (peerInfoJson as { ipAddress: string }).ipAddress.slice(2),
       "hex"
     ).toString("utf8");
-   let addrParts = nodeAddr.split(",");
-    nodeAddr = addrParts[0]
+    let addrParts = nodeAddr.split(",");
+    nodeAddr = addrParts[0];
     //节点ws监听端口号在原来的tcp监听的基础上加10
     let newNodeAddr = "";
     const parts = nodeAddr.split("/");
@@ -384,7 +520,6 @@ export class DcUtil {
     return addr;
   };
 
-
   // 链上查询节点webrtc direct的地址信息
   _getDcNodeWebrtcDirectAddr = async (peerid: string) => {
     const peerInfo = await this.dcchainapi?.query.dcNode.peers(peerid);
@@ -401,9 +536,9 @@ export class DcUtil {
       (peerInfoJson as { ipAddress: string }).ipAddress.slice(2),
       "hex"
     ).toString("utf8");
-   let addrParts = nodeAddr.split(",");
-   if (addrParts.length < 2) {
-     return ;
+    let addrParts = nodeAddr.split(",");
+    if (addrParts.length < 2) {
+      return;
     }
 
     console.log("nodeAddr", addrParts[1]);
@@ -411,25 +546,20 @@ export class DcUtil {
     return addr;
   };
 
-
-
   _createHeliaNode = async () => {
     // the blockstore is where we store the blocks that make up files
     const blockstore = new MemoryBlockstore();
 
     // application-specific data lives in the datastore
     const datastore = new MemoryDatastore();
-    // 创建或导入私钥  
-    const keyPair = await keys.generateKeyPair('Ed25519')  
+    // 创建或导入私钥
+    const keyPair = await keys.generateKeyPair("Ed25519");
 
     // libp2p is the networking layer that underpins Helia
     const libp2p = await createLibp2p({
       privateKey: keyPair,
       datastore,
-      transports: [
-        webRTCDirect(),
-        circuitRelayTransport(),     
-      ],
+      transports: [webRTCDirect(), circuitRelayTransport()],
       connectionEncrypters: [noise()],
       connectionGater: {
         denyDialMultiaddr: () => false, // this is necessary to dial local addresses at all
@@ -439,16 +569,40 @@ export class DcUtil {
         identify: identify(),
       },
     });
-  
-    // libp2p.handle("/dc/thread/0.0.1", async ({ stream, connection }) => {  
-    //   // 处理入站流  
-    //   this.handleIncomingStream(stream);  
+
+    // libp2p.handle("/dc/thread/0.0.1", async ({ stream, connection }) => {
+    //   // 处理入站流
+    //   this.handleIncomingStream(stream);
     // });
     return await createHelia({
       datastore,
       blockstore,
       libp2p,
     });
+  };
+  _getConnectedPeerId = async (): Promise<string> => {
+    // todo 获取默认peerid
+    const peerid = "12D3KooWNr1ERkUSdUQjGtmtWPB8AtWGVuDVhcoZSH4UkudU2in9";
+    return peerid;
+  };
+  _getNodeAddr = async (peerId: string): Promise<Multiaddr | undefined> => {
+    let nodeAddr = await this._getDcNodeWebrtcDirectAddr(peerId);
+    if (!nodeAddr) {
+      console.log("no node address found for peer: ", peerId);
+      return;
+    }
+    if (isName(nodeAddr)) {
+      const addrs = await nodeAddr.resolve();
+      nodeAddr = addrs[0];
+    }
+    return nodeAddr;
+  };
+  _newDcClient = async (nodeAddr: Multiaddr): Promise<DCClient | undefined> => {
+    if (!this.nodeAddr) {
+      return;
+    }
+    const dcClient = new DCClient(this.dcNodeClient.libp2p, nodeAddr, protocol);
+    return dcClient;
   };
 }
 
