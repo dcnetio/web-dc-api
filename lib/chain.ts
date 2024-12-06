@@ -48,41 +48,41 @@ export class ChainUtil {
   };
   
   // 链上查询节点信息
-  getDcNodeAddr = async (peerid: string) => {
-    const peerInfo = await this.dcchainapi?.query.dcNode.peers(peerid);
-    const peerInfoJson = peerInfo?.toJSON();
-    if (
-      !peerInfoJson ||
-      typeof peerInfoJson !== "object" ||
-      (peerInfoJson as { ipAddress: string }).ipAddress == ""
-    ) {
-      console.log("no ip address found for peer: ", peerid);
-      return;
-    }
-    let nodeAddr = Buffer.from(
-      (peerInfoJson as { ipAddress: string }).ipAddress.slice(2),
-      "hex"
-    ).toString("utf8");
-    let addrParts = nodeAddr.split(",");
-    nodeAddr = addrParts[0];
-    //节点ws监听端口号在原来的tcp监听的基础上加10
-    let newNodeAddr = "";
-    const parts = nodeAddr.split("/");
-    for (let i = 0; i < parts.length; i++) {
-      if (parts[i] == "tcp" && i < parts.length - 1) {
-        const newPort = parseInt(parts[i + 1]) + 10;
-        newNodeAddr += parts[i] + "/" + newPort + "/";
-        i++;
-      } else if (parts[i] == "p2p") {
-        newNodeAddr += "ws/" + parts[i] + "/";
-      } else {
-        newNodeAddr += parts[i] + "/";
-      }
-    }
-    const addr = multiaddr(newNodeAddr);
-    console.log("newNodeAddr", newNodeAddr);
-    return addr;
-  };
+  // getDcNodeAddr = async (peerid: string) => {
+  //   const peerInfo = await this.dcchainapi?.query.dcNode.peers(peerid);
+  //   const peerInfoJson = peerInfo?.toJSON();
+  //   if (
+  //     !peerInfoJson ||
+  //     typeof peerInfoJson !== "object" ||
+  //     (peerInfoJson as { ipAddress: string }).ipAddress == ""
+  //   ) {
+  //     console.log("no ip address found for peer: ", peerid);
+  //     return;
+  //   }
+  //   let nodeAddr = Buffer.from(
+  //     (peerInfoJson as { ipAddress: string }).ipAddress.slice(2),
+  //     "hex"
+  //   ).toString("utf8");
+  //   let addrParts = nodeAddr.split(",");
+  //   nodeAddr = addrParts[0];
+  //   //节点ws监听端口号在原来的tcp监听的基础上加10
+  //   let newNodeAddr = "";
+  //   const parts = nodeAddr.split("/");
+  //   for (let i = 0; i < parts.length; i++) {
+  //     if (parts[i] == "tcp" && i < parts.length - 1) {
+  //       const newPort = parseInt(parts[i + 1]) + 10;
+  //       newNodeAddr += parts[i] + "/" + newPort + "/";
+  //       i++;
+  //     } else if (parts[i] == "p2p") {
+  //       newNodeAddr += "ws/" + parts[i] + "/";
+  //     } else {
+  //       newNodeAddr += parts[i] + "/";
+  //     }
+  //   }
+  //   const addr = multiaddr(newNodeAddr);
+  //   console.log("newNodeAddr", newNodeAddr);
+  //   return addr;
+  // };
   // 链上查询节点webrtc direct的地址信息
   getDcNodeWebrtcDirectAddr = async (peerid: string) => {
     const peerInfo = await this.dcchainapi?.query.dcNode.peers(peerid);
