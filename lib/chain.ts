@@ -12,7 +12,11 @@ export class ChainUtil {
   // 连接链节点
   create = async (blockChainAddr) => {
     const chainProvider = new WsProvider(blockChainAddr);
-    this.dcchainapi = await ApiPromise.create({ provider: chainProvider });
+    this.dcchainapi = await ApiPromise.create({ 
+      provider: chainProvider,
+      throwOnConnect: true,
+      throwOnUnknown: true,
+    });
     if (!this.dcchainapi) {
       console.log("dcchainapi init failed");
       return false;
@@ -119,7 +123,7 @@ export class ChainUtil {
       return [];
     }
     let peers : string[] = [];
-    for (let i = 0; i < peerListJson.length; i++) {
+    for (let i = 0; i < (peerListJson as string[]).length; i++) {
       const peerJson = Buffer.from(peerListJson[i].slice(2), "hex").toString("utf8");
       console.log("peerJson", peerJson);
       peers = peers.concat(peerJson);

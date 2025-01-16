@@ -10,6 +10,7 @@ import { keys } from "@libp2p/crypto";
 
 import { createHelia } from "helia";
 import { createLibp2p } from "libp2p";
+
 import { identify } from "@libp2p/identify";
 import { CID } from "multiformats";
 import { unixfs } from "@helia/unixfs";
@@ -35,33 +36,56 @@ const TagBytes = 16;
 const protocol = "/dc/thread/0.0.1";
 export class DcUtil {
   blockChainAddr: string;
+  backChainAddr: string;
   dcChain: ChainUtil;
-  dcNodeClient: any | undefined; // 什么类型？
-  dcClient: DCClient | undefined;
-  nodeAddr: Multiaddr | undefined;
-  accountNodeAddr: Multiaddr | undefined;
-  privKey: Ed25519PrivKey | undefined;
-  defaultPeerId: string | undefined;
+  dcNodeClient: any | undefined; // 什么类型？dc node 对象，主要用于建立连接
+  dcClient: DCClient | undefined; // dc client 对象
+  nodeAddr: Multiaddr | undefined; // dc node 地址
+  accountNodeAddr: Multiaddr | undefined; // account dc node 地址
+  privKey: Ed25519PrivKey | undefined; // 私钥
+  defaultPeerId: string | undefined; // 默认 peerId
+  connectLength: 5; // 连接长度
 
-  constructor(blockChainAddr: string) {
-    this.blockChainAddr = blockChainAddr;
+  constructor(options: { wssUrl: string; backWssUrl: string }) {
+    this.blockChainAddr = options.wssUrl;
+    this.backChainAddr = options.backWssUrl;
+    this.dcChain = new ChainUtil();
   }
 
   // 初始化
   init = async () => {
-    this.dcChain = new ChainUtil();
-    const createChain = await this.dcChain.create(this.blockChainAddr);
-    if (!createChain) {
-      console.log("dcchainapi init failed");
-      return;
-    }
-    this.dcNodeClient = await this._createHeliaNode();
-    
-      const nodeAddr = await this._getDefaultDcNodeAddr();
-      if (nodeAddr) {
-        this.nodeAddr = nodeAddr;
-        this.dcClient = await this._newDcClient(nodeAddr);
+    let createChain;
+    try {
+      createChain = await this.dcChain.create(this.blockChainAddr);
+      if (!createChain) {
+        // 换个路径重新创建
+        createChain = await this.dcChain.create(this.backChainAddr);
+        if (!createChain) {
+          console.log("dcchainapi init failed");
+          return;
+        }
       }
+    } catch (error) {
+      if (!createChain) {
+        // 换个路径重新创建
+        createChain = await this.dcChain.create(this.backChainAddr);
+        if (!createChain) {
+          console.log("dcchainapi init failed");
+          return;
+        }
+      }
+    } finally {
+      // 如果链节点已经连接
+      if(createChain) {
+        this.dcNodeClient = await this._createHeliaNode();
+        // 获取默认dc节点地址
+        const nodeAddr = await this._getDefaultDcNodeAddr();
+        if (nodeAddr) {
+          this.nodeAddr = nodeAddr; // 当前地址
+          this.dcClient = await this._newDcClient(nodeAddr); 
+        }
+      }
+    }
   };
 
   // 从dc网络获取指定文件
@@ -78,6 +102,7 @@ export class DcUtil {
     let headDealed = false;
     let waitBuffer = new Uint8Array(0);
     let fileContent = new Uint8Array(0);
+    console.log("first 31");
 
     const encryptextLen = (3 << 20) + NonceBytes + TagBytes; //每段密文长度(最后一段可能会短一点)
     const catOptions = {
@@ -85,11 +110,13 @@ export class DcUtil {
       length: 32,
       // signal: AbortSignal.timeout(5000),
     };
+    console.log("first 32");
     let readCount = 0;
     try {
       for (;;) {
         if (!headDealed) {
           //处理文件头
+          console.log("first 33");
           const headBuf = await toBuffer(fs.cat(CID.parse(cid), catOptions));
           console.log("first 4");
           readCount += headBuf.length;
@@ -408,9 +435,9 @@ export class DcUtil {
   // 连接到所有文件存储节点
   _connectToObjNodes = async (cid: string) => {
     const peers = await this.dcChain.getObjNodes(cid);
-    if(!peers){
+    if (!peers) {
       console.log("peers is null");
-      return
+      return;
     }
     const res = await this._connectPeers(peers);
     console.log("new first 2");
@@ -467,6 +494,7 @@ export class DcUtil {
     });
   };
 
+  // 连接节点列表
   _connectNodeAddrs = (peers: string[]) => {
     return new Promise((reslove, reject) => {
       const _this = this;
@@ -483,7 +511,7 @@ export class DcUtil {
           }
           return;
         }
-        const addrParts = peers[i].split(',');
+        const addrParts = peers[i].split(",");
         const nodeAddr = multiaddr(addrParts[1]);
         console.log("nodeAddr", nodeAddr);
 
@@ -548,14 +576,17 @@ export class DcUtil {
       libp2p,
     });
   };
+
+  // 获取链接过的peerid
   _getConnectedPeerId = async (): Promise<string> => {
-    // todo 获取默认peerid
     if (this.defaultPeerId) {
       return this.defaultPeerId;
     } else {
+      const defaultPeerId = localStorage.getItem('defaultPeerId');
+      if (defaultPeerId) {
+        return defaultPeerId;
+      }
       return "";
-      // return "12D3KooWNr1ERkUSdUQjGtmtWPB8AtWGVuDVhcoZSH4UkudU2in9";
-      // return "12D3KooWQLMxZzZxwPgGjLTWW8NkeKomq8v2Kixu3QfchqNVG5in"
     }
   };
   _getNodeAddr = async (peerId): Promise<Multiaddr | undefined> => {
@@ -573,7 +604,7 @@ export class DcUtil {
 
   _getDefaultDcNodeAddr = async (): Promise<Multiaddr | undefined> => {
     const peerId = await this._getConnectedPeerId();
-    if(peerId){
+    if (peerId) {
       let nodeAddr = await this.dcChain.getDcNodeWebrtcDirectAddr(peerId);
       if (!nodeAddr) {
         console.log("no node address found for peer: ", peerId);
@@ -584,18 +615,54 @@ export class DcUtil {
         nodeAddr = addrs[0];
       }
       return nodeAddr;
-    }else { // 获取节点上的默认节点列表，批量连接节点，得到最快的几节点
-      const dcNodeList = await this.dcChain.getDcNodeList();
-      if (!dcNodeList) {
+    } else {
+      // 获取节点上的默认节点列表，随机获取几个，批量连接节点，得到最快的节点
+      const allNodeList = await this.dcChain.getDcNodeList();
+      if (!allNodeList) {
         return;
       }
-      const nodeAddr = await this._connectNodeAddrs(dcNodeList);
+      // 连接节点，得到最快的节点（随机取几个连接取最快，如果都没有连接上继续随机取）
+      const nodeAddr = await this._getConnectDcNodeList(allNodeList);
       if (!nodeAddr) {
         console.log("no node connected");
         return;
       }
+      
+      // 保存默认节点
+      const defaultPeerId = (nodeAddr as Multiaddr).getPeerId();
+      if(defaultPeerId){
+        localStorage.setItem('defaultPeerId', defaultPeerId.toString());
+      }
       return nodeAddr as Multiaddr;
     }
+  };
+
+  _getConnectDcNodeList = async (nodeList) => {
+    if(nodeList.length > this.connectLength) {
+      let dcNodeList = this._getRamdomNodeList(nodeList, this.connectLength);
+      const nodeAddr = await this._connectNodeAddrs(dcNodeList);
+      if (!nodeAddr) {
+        // allNodeList 过滤掉dcNodeList
+        const leftNodeList = nodeList.filter(node => dcNodeList.indexOf(node) === -1);
+        return this._getConnectDcNodeList(leftNodeList);
+      }
+      return nodeAddr;
+    }else {
+      let nodeAddr = await this._connectNodeAddrs(nodeList);
+      if (!nodeAddr) {
+        return;
+      }
+      return nodeAddr;
+    }
+  }
+  _getRamdomNodeList = (nodeList, num): string[] => {
+    const len = nodeList.length;
+    const res: string[] = [];
+    for (let i = 0; i < num; i++) {
+      const randomIndex = Math.floor(Math.random() * len);
+      res.push(nodeList[randomIndex]);
+    }
+    return res;
   }
   _newDcClient = async (nodeAddr: Multiaddr): Promise<DCClient | undefined> => {
     if (!this.nodeAddr) {
@@ -604,6 +671,7 @@ export class DcUtil {
     const dcClient = new DCClient(this.dcNodeClient.libp2p, nodeAddr, protocol);
     return dcClient;
   };
+
 }
 
 function decryptContentForBrowser(
