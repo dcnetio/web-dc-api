@@ -44,12 +44,13 @@ export class DcUtil {
   accountNodeAddr: Multiaddr | undefined; // account dc node 地址
   privKey: Ed25519PrivKey | undefined; // 私钥
   defaultPeerId: string | undefined; // 默认 peerId
-  connectLength: 5; // 连接长度
+  connectLength: number; // 连接长度
 
   constructor(options: { wssUrl: string; backWssUrl: string }) {
     this.blockChainAddr = options.wssUrl;
     this.backChainAddr = options.backWssUrl;
     this.dcChain = new ChainUtil();
+    this.connectLength = 5;
   }
 
   // 初始化
@@ -76,13 +77,13 @@ export class DcUtil {
       }
     } finally {
       // 如果链节点已经连接
-      if(createChain) {
+      if (createChain) {
         this.dcNodeClient = await this._createHeliaNode();
         // 获取默认dc节点地址
         const nodeAddr = await this._getDefaultDcNodeAddr();
         if (nodeAddr) {
           this.nodeAddr = nodeAddr; // 当前地址
-          this.dcClient = await this._newDcClient(nodeAddr); 
+          this.dcClient = await this._newDcClient(nodeAddr);
         }
       }
     }
@@ -242,45 +243,6 @@ export class DcUtil {
         console.log("nodeAddr is null");
         return;
       }
-      // // 登陆
-      // await this.accountLogin();
-      // // 添加用户空间存储
-      // await this.addUserOffChainSpace();
-      // // 设置keyvalue
-      // const setKey = await this.setCacheKey(JSON.stringify({
-      //   cidList: [
-      //     {
-      //       AlbumId: "01j8mnyap0bk226s64ekeeq88f",
-      //       CreateTime: 1732263381000,
-      //       Duration: 0,
-      //       Height: 900,
-      //       Name: "1727598866014_1727598866014_3526c07d5206ee7bac6fd515071fe32c.jpg",
-      //       ThumbCID:
-      //         "bafybeidgxlgzahktprvoqyo2iesxui2z2uuwftxll6iyabszkyjhfmrz2y",
-      //       Type: 1,
-      //       UriCID:
-      //         "bafybeidgxlgzahktprvoqyo2iesxui2z2uuwftxll6iyabszkyjhfmrz2y",
-      //       Width: 601,
-      //       _id: "01jdhhy9wj7fgcebwx58cp2y4d",
-      //       enkey: "buzs2iwjaiixz2ql6jbt67xcpxcqeuhz774p2a7uzr2dpp55cplrq",
-      //     },
-      //     {
-      //       AlbumId: "01j8mnyap0bk226s64ekeeq88f",
-      //       CreateTime: 1731409392200,
-      //       Duration: 0,
-      //       Height: 372,
-      //       Name: "t01fdbe074015146f42.webp",
-      //       ThumbCID:
-      //         "bafybeihqm5n7fnmbk32m4s4riwxg4lvfttwxzgtzchtukpivadbit2t3bi",
-      //       Type: 1,
-      //       UriCID:
-      //         "bafybeihqm5n7fnmbk32m4s4riwxg4lvfttwxzgtzchtukpivadbit2t3bi",
-      //       Width: 340,
-      //       _id: "01jcg0nfjcsermj92372txc7gf",
-      //       enkey: "buzs2iwjaiixz2ql6jbt67xcpxcqeuhz774p2a7uzr2dpp55cplrq",
-      //     },
-      //   ],
-      // }));
 
       const getCacheValuereply = await this.dcClient.GetCacheValue(
         nodeAddr,
@@ -301,7 +263,12 @@ export class DcUtil {
     // const pubKey = privKey.publicKey;
   };
   // 登陆
-  accountLogin = async () => {
+  accountLogin = async (
+    nftAccount: string,
+    password: string,
+    safecode: string,
+    appName: string
+  ) => {
     //登录
     if (!this.dcClient) {
       console.log("dcClient is null");
@@ -315,11 +282,10 @@ export class DcUtil {
     // const peerid = '12D3KooWNr1ERkUSdUQjGtmtWPB8AtWGVuDVhcoZSH4UkudU2in9';
     // const nodeAddr = await this._getNodeAddr(peerid);
     // this.accountNodeAddr = nodeAddr;
-    const account = "tcorZTCZaDnyMmmYifnfztmzuxbjgy";
     const prikey = await this.dcClient.AccountLogin(
-      account,
-      "123456",
-      "000000",
+      nftAccount,
+      password,
+      safecode,
       this.nodeAddr
     );
     console.log("AccountLogin success:", prikey);
@@ -334,7 +300,7 @@ export class DcUtil {
     //const privKey1 = await keymanager.getEd25519KeyFromMnemonic(mnemonic);
     const privKey = await keymanager.getEd25519KeyFromMnemonic(
       mnemonic,
-      "DCAPP"
+      appName
     );
     const pubKey = privKey.publicKey;
     console.log("get privKey:", privKey);
@@ -350,7 +316,23 @@ export class DcUtil {
       }
     );
     console.log("GetToken reply:", token);
+    return true;
   };
+
+  // 获取用户信息
+  getUserInfo = async () => {
+    if (!this.dcClient) {
+      console.log("dcClient is null");
+      return;
+    }
+    // todo 从链上获取
+    const account = "a";
+    const userInfo = await this.dcChain.getUserInfo(account);
+    console.log("userInfo reply:", userInfo);
+    return userInfo;
+  };
+
+  // 获取用户数据列表
 
   // 添加用户评论空间
   addUserOffChainSpace = async () => {
@@ -582,7 +564,7 @@ export class DcUtil {
     if (this.defaultPeerId) {
       return this.defaultPeerId;
     } else {
-      const defaultPeerId = localStorage.getItem('defaultPeerId');
+      const defaultPeerId = localStorage.getItem("defaultPeerId");
       if (defaultPeerId) {
         return defaultPeerId;
       }
@@ -627,34 +609,36 @@ export class DcUtil {
         console.log("no node connected");
         return;
       }
-      
+
       // 保存默认节点
       const defaultPeerId = (nodeAddr as Multiaddr).getPeerId();
-      if(defaultPeerId){
-        localStorage.setItem('defaultPeerId', defaultPeerId.toString());
+      if (defaultPeerId) {
+        localStorage.setItem("defaultPeerId", defaultPeerId.toString());
       }
       return nodeAddr as Multiaddr;
     }
   };
 
   _getConnectDcNodeList = async (nodeList) => {
-    if(nodeList.length > this.connectLength) {
+    if (nodeList.length > this.connectLength) {
       let dcNodeList = this._getRamdomNodeList(nodeList, this.connectLength);
       const nodeAddr = await this._connectNodeAddrs(dcNodeList);
       if (!nodeAddr) {
         // allNodeList 过滤掉dcNodeList
-        const leftNodeList = nodeList.filter(node => dcNodeList.indexOf(node) === -1);
+        const leftNodeList = nodeList.filter(
+          (node) => dcNodeList.indexOf(node) === -1
+        );
         return this._getConnectDcNodeList(leftNodeList);
       }
       return nodeAddr;
-    }else {
+    } else {
       let nodeAddr = await this._connectNodeAddrs(nodeList);
       if (!nodeAddr) {
         return;
       }
       return nodeAddr;
     }
-  }
+  };
   _getRamdomNodeList = (nodeList, num): string[] => {
     const len = nodeList.length;
     const res: string[] = [];
@@ -663,7 +647,7 @@ export class DcUtil {
       res.push(nodeList[randomIndex]);
     }
     return res;
-  }
+  };
   _newDcClient = async (nodeAddr: Multiaddr): Promise<DCClient | undefined> => {
     if (!this.nodeAddr) {
       return;
@@ -671,7 +655,6 @@ export class DcUtil {
     const dcClient = new DCClient(this.dcNodeClient.libp2p, nodeAddr, protocol);
     return dcClient;
   };
-
 }
 
 function decryptContentForBrowser(

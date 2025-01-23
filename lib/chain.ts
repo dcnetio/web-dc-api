@@ -5,6 +5,8 @@
 import { multiaddr } from "@multiformats/multiaddr";
 import { ApiPromise, WsProvider } from "@polkadot/api";
 import * as buffer from "buffer/";
+import { isUser, sha256 } from "./util/util";
+import { User } from "./types/types";
 const { Buffer } = buffer;
 
 export class ChainUtil {
@@ -12,7 +14,7 @@ export class ChainUtil {
   // 连接链节点
   create = async (blockChainAddr) => {
     const chainProvider = new WsProvider(blockChainAddr);
-    this.dcchainapi = await ApiPromise.create({ 
+    this.dcchainapi = await ApiPromise.create({
       provider: chainProvider,
       throwOnConnect: true,
       throwOnUnknown: true,
@@ -22,7 +24,7 @@ export class ChainUtil {
       return false;
     }
     return true;
-  }
+  };
 
   // 获取区块高度
   async getBlockHeight() {
@@ -31,6 +33,56 @@ export class ChainUtil {
     return blockHeight;
   }
 
+  // 获取用户钱包信息
+  async getUserInfo(account: string) {
+    console.log("=========account", account);
+    const accountBytes = new TextEncoder().encode(account);
+    const accountHash = await sha256(accountBytes);
+    const walletAccount =
+      await this.dcchainapi?.query.dcNode.nftToWalletAccount(
+        "0x" + Buffer.from(accountHash).toString("hex")
+      );
+    console.log("=========walletAccount", walletAccount);
+    if (!walletAccount) {
+      return "";
+    }
+    const walletAccountStorage =
+      await this.dcchainapi?.query.dcNode.walletAccountStorage(
+        walletAccount.toString()
+      );
+    console.log("=========walletAccountStorage", walletAccountStorage);
+    if (!walletAccountStorage) {
+      return "";
+    }
+    let userInfo = walletAccountStorage.toJSON();
+    if (!isUser(userInfo)) {
+      return userInfo;
+    }
+    if (userInfo?.parentAccount !== walletAccount.toString()) {
+      const parentWalletAccountStorage =
+        await this.dcchainapi?.query.dcNode.walletAccountStorage(
+          userInfo?.parentAccount
+        );
+      if (!parentWalletAccountStorage) {
+        return "";
+      }
+      const parentUserInfo = parentWalletAccountStorage?.toJSON();
+      if (!isUser(parentUserInfo)) {
+        return userInfo;
+      }
+      userInfo.requestPeers = parentUserInfo.requestPeers;
+      if (userInfo.peers?.length == 0) {
+        //If the sub-account does not have account backup node information (this will happen if the sub-account is not bound to an nft account), the backup node information of the parent account will be obtained.
+        userInfo.peers = parentUserInfo.peers;
+      }
+      userInfo.subscribeSpace = parentUserInfo.subscribeSpace;
+      userInfo.usedSpace = parentUserInfo.usedSpace;
+      userInfo.expireNumber = parentUserInfo.expireNumber;
+      userInfo.purchaseNumber = parentUserInfo.purchaseNumber;
+      return userInfo;
+    }
+    return userInfo;
+  }
 
   // 获取所有文件存储节点
   getObjNodes = async (cid: string) => {
@@ -50,7 +102,7 @@ export class ChainUtil {
     const peers = (fileInfoJSON as { peers: any[] }).peers || [];
     return peers;
   };
-  
+
   // 链上查询节点信息
   // getDcNodeAddr = async (peerid: string) => {
   //   const peerInfo = await this.dcchainapi?.query.dcNode.peers(peerid);
@@ -117,19 +169,23 @@ export class ChainUtil {
   getDcNodeList = async () => {
     const peerList = await this.dcchainapi?.query.dcNode.onlineNodesAddress();
     const peerListJson = peerList?.toJSON();
-    console.log("peerListJson================================================", peerListJson);
-    if (!peerListJson || typeof peerListJson!== "object") {
+    console.log(
+      "peerListJson================================================",
+      peerListJson
+    );
+    if (!peerListJson || typeof peerListJson !== "object") {
       console.log("no peer list found");
       return [];
     }
-    let peers : string[] = [];
+    let peers: string[] = [];
     for (let i = 0; i < (peerListJson as string[]).length; i++) {
-      const peerJson = Buffer.from(peerListJson[i].slice(2), "hex").toString("utf8");
+      const peerJson = Buffer.from(peerListJson[i].slice(2), "hex").toString(
+        "utf8"
+      );
       console.log("peerJson", peerJson);
       peers = peers.concat(peerJson);
     }
     console.log("peers", peers);
     return peers;
   };
-
 }
