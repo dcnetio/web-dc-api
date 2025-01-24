@@ -320,14 +320,13 @@ export class DcUtil {
   };
 
   // 获取用户信息
-  getUserInfo = async () => {
+  getUserInfoWithNft = async (nftAccount: string) => {
     if (!this.dcClient) {
       console.log("dcClient is null");
       return;
     }
     // todo 从链上获取
-    const account = "a";
-    const userInfo = await this.dcChain.getUserInfo(account);
+    const userInfo = await this.dcChain.getUserInfoWithNft(nftAccount);
     console.log("userInfo reply:", userInfo);
     return userInfo;
   };

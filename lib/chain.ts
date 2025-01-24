@@ -32,24 +32,10 @@ export class ChainUtil {
     const blockHeight = lastBlock?.block.header.number.toNumber();
     return blockHeight;
   }
-
   // 获取用户钱包信息
-  async getUserInfo(account: string) {
-    console.log("=========account", account);
-    const accountBytes = new TextEncoder().encode(account);
-    const accountHash = await sha256(accountBytes);
-    const walletAccount =
-      await this.dcchainapi?.query.dcNode.nftToWalletAccount(
-        "0x" + Buffer.from(accountHash).toString("hex")
-      );
-    console.log("=========walletAccount", walletAccount);
-    if (!walletAccount) {
-      return "";
-    }
+  async getUserInfoWithAccount(account: string) {
     const walletAccountStorage =
-      await this.dcchainapi?.query.dcNode.walletAccountStorage(
-        walletAccount.toString()
-      );
+      await this.dcchainapi?.query.dcNode.walletAccountStorage(account);
     console.log("=========walletAccountStorage", walletAccountStorage);
     if (!walletAccountStorage) {
       return "";
@@ -58,7 +44,7 @@ export class ChainUtil {
     if (!isUser(userInfo)) {
       return userInfo;
     }
-    if (userInfo?.parentAccount !== walletAccount.toString()) {
+    if (userInfo?.parentAccount !== account.toString()) {
       const parentWalletAccountStorage =
         await this.dcchainapi?.query.dcNode.walletAccountStorage(
           userInfo?.parentAccount
@@ -81,6 +67,30 @@ export class ChainUtil {
       userInfo.purchaseNumber = parentUserInfo.purchaseNumber;
       return userInfo;
     }
+    return userInfo;
+  }
+  // 获取用户钱包信息
+  async getUserInfoWithNftHex(nftHexAccount: string) {
+    const walletAccount =
+      await this.dcchainapi?.query.dcNode.nftToWalletAccount(nftHexAccount);
+    console.log("=========walletAccount", walletAccount);
+    if (!walletAccount) {
+      return "";
+    }
+    const userInfo = await this.getUserInfoWithAccount(
+      walletAccount.toString()
+    );
+    return userInfo;
+  }
+
+  // 获取用户钱包信息
+  async getUserInfoWithNft(nftAccount: string) {
+    console.log("=========nftAccount", nftAccount);
+    const accountBytes = new TextEncoder().encode(nftAccount);
+    const accountHash = await sha256(accountBytes);
+
+    const nftHexAccount = "0x" + Buffer.from(accountHash).toString("hex");
+    const userInfo = await this.getUserInfoWithNftHex(nftHexAccount);
     return userInfo;
   }
 
