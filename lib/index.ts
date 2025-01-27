@@ -413,6 +413,26 @@ export class DcUtil {
     return setCacheValueReply;
   };
 
+/********************************数据库相关操作开始********************************/
+ // 从DC网络拉取数据库到本地
+  pullDBFromDc = async (cid: string, dbName: string) => {
+    if (!this.dcClient) {
+      console.log("dcClient is null");
+      return;
+    }
+    const fs = unixfs(this.dcNodeClient);
+    const dbContent = await toBuffer(fs.cat(CID.parse(cid)));
+    console.log("dbContent:", dbContent);
+    const dbContentStr = new TextDecoder().decode(dbContent);
+    console.log("dbContentStr:", dbContentStr);
+    const db = JSON.parse(dbContentStr);
+    console.log("db:", db);
+    return db;
+  };
+/********************************数据库相关操作结束********************************/
+
+
+
   // 连接到所有文件存储节点
   _connectToObjNodes = async (cid: string) => {
     const peers = await this.dcChain.getObjNodes(cid);

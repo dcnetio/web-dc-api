@@ -17,6 +17,7 @@
     "@improbable-eng/grpc-web": "^0.15.0",
     "@libp2p/crypto": "^5.0.7",
     "@libp2p/interface": "^2.2.1",
+    "@libp2p/interface-keys": "^1.0.8",
     "@libp2p/interface-libp2p": "^3.2.0",
     "@libp2p/keychain": "^5.0.10",
     "@libp2p/peer-id": "^5.0.8",
