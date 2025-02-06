@@ -1,3 +1,32 @@
+import { ThreadID } from '@textile/threads-id';
+import type { PeerId } from '@libp2p/interface'  
+import { peerIdFromPrivateKey, peerIdFromPublicKey} from "@libp2p/peer-id";
+import type { PrivateKey } from '@libp2p/interface-keys' 
+import { Ed25519PrivKey } from "../dc-key/ed25519";
+import { keys } from "@libp2p/crypto";
+
+
+import { createFromPubKey, createFromPrivKey } from '@libp2p/peer-id-factory'  
+import { CID } from 'multiformats/cid'  
+
+import exp from 'constants';
+
+import { join } from 'path';  
+import { promises as fs } from 'fs';  
+import { stat } from 'fs/promises';  
+import { ed25519 } from '@noble/curves/ed25519';
+
+// 类型定义  
+
+export enum KeyType {  
+    Ed25519 = 'Ed25519',  
+    Secp256k1 = 'Secp256k1',  
+    RSA = 'RSA'  
+}  
+
+
+
+
 // 错误定义  
 const Errors = {  
     ErrNoDbManager: new Error('No database manager available'),  
@@ -56,51 +85,10 @@ namespace Types {
         backfillBlock: boolean;  
         collections: any[];  
     }  
+ 
 
-    export class ThreadID {  
-        private bytes: Buffer;  
+}
 
-        constructor(bytes: Buffer) {  
-            this.bytes = bytes;  
-        }  
-
-        static fromString(str: string): ThreadID {  
-            // 移除可能的前缀  
-            const clean = str.replace(/^\/thread\//, '');  
-            // Base58 解码  
-            const bytes = ThreadID.fromB58String(clean);  
-            return new ThreadID(bytes);  
-        }  
-
-        static fromB58String(str: string): Buffer {  
-            try {  
-                // 这里使用bs58库进行解码  
-                // 实际使用时需要安装: npm install bs58  
-                const bs58 = require('bs58');  
-                return Buffer.from(bs58.decode(str));  
-            } catch (error) {  
-                throw new Error('Invalid base58 string');  
-            }  
-        }  
-
-        toString(): string {  
-            // 这里使用bs58库进行编码  
-            const bs58 = require('bs58');  
-            return bs58.encode(this.bytes);  
-        }  
-
-        toBytes(): Buffer {  
-            return this.bytes;  
-        }  
-    }  
-
-    export class ThreadIDValidationError extends Error {  
-        constructor(message: string) {  
-            super(message);  
-            this.name = 'ThreadIDValidationError';  
-        }  
-    } 
-}  
 
 // 工具函数  
 class Utils {  
@@ -129,358 +117,71 @@ class Utils {
 
 // 主类实现  
 class ThreadDb {  
-    private dbManager: any;  
     private connectedDc: any;  
     private context: any;  
     private net: any;  
     private privateKey: any;  
-    private identity: any;  
-    private appId: string;  
+   
 
     constructor(config: {  
-        dbManager?: any;  
         context?: any;  
         net?: any;  
         privateKey?: any;  
-        identity?: any;  
-        appId?: string;  
-    }) {  
-        this.dbManager = config.dbManager;  
+        storagePrefix?: string;
+    }) {   
         this.context = config.context;  
         this.net = config.net;  
         this.privateKey = config.privateKey;  
-        this.identity = config.identity;  
-        this.appId = config.appId || '';  
+        this.storagePrefix = config.storagePrefix || '';
     }  
 
-    private async getLogKey(threadID: any): Promise<any> {  
-        // Implementation of getting log key  
-        // This would depend on your specific requirements  
-        return this.privateKey;  
-    }  
-
-    private async getBlockChainHeight(): Promise<number> {  
-        // Implementation of getting blockchain height  
-        return 0;  
-    }  
-
-    private async connectToPeer(peerId: any): Promise<boolean> {  
-        try {  
-            await this.net.host.connect(this.context, peerId);  
-            return true;  
-        } catch {  
-            return false;  
-        }  
-    }  
-
-    private async getClient(peerId: any): Promise<any> {  
-        // Implementation of getting client  
-        return {};  
-    }  
-
-    private async addLogToThreadStart(ctx: any, threadID: any, lid: any): Promise<void> {  
-        // Implementation of adding log to thread  
-    }  
-
-    async newDB(  
-        dbname: string,  
-        b32Rk: string,  
-        b32Sk: string,  
-        jsonCollections: string  
-    ): Promise<[string, Error | null]> {  
-        if (!this.dbManager) {  
-            return ['', Errors.ErrNoDbManager];  
-        }  
-
-        if (!this.connectedDc?.client) {  
-            return ['', Errors.ErrNoDcPeerConnected];  
-        }  
-
-        try {  
-            const threadID = await this.connectedDc.client.requestThreadID();  
-            const logKey = await this.getLogKey(threadID);  
-            const lpk = logKey.getPublic();  
-
-            const lid = await logKey.getId();  
-            const threadKey = await Utils.generateThreadKey(b32Sk, b32Rk);  
-            const serviceKey = await Utils.generateServiceKey(b32Sk);  
-            const blockHeight = await this.getBlockChainHeight();  
-
-            // Prepare signature data  
-            const preSign = Buffer.concat([  
-                Buffer.from(threadID.toString()),  
-                Buffer.alloc(8).fill(50 << 20), // 50M fixed size  
-                Buffer.alloc(4).fill(blockHeight),  
-                Buffer.alloc(4).fill(Threaddbtype),  
-                Buffer.from(this.connectedDc.peerid.toString())  
-            ]);  
-
-            const signature = await this.privateKey.sign(preSign);  
-
-            // Create thread options  
-            const opts: Types.ThreadOption[] = [  
-                { withThreadKey: serviceKey },  
-                { withLogKey: lpk },  
-                { withNewThreadBlockHeight: blockHeight },  
-                { withNewThreadSignature: signature }  
-            ];  
-
-            const threadInfo = await this.connectedDc.client.createThread(threadID, ...opts);  
-
-            // Parse collections  
-            let collectionInfos: Types.CollectionInfo[] = [];  
-            if (jsonCollections.length > 2) {  
-                collectionInfos = JSON.parse(jsonCollections);  
-            }  
-
-            const collections = await Promise.all(  
-                collectionInfos.map(async info => ({  
-                    name: info.name,  
-                    schema: await Utils.SchemaFromSchemaString(info.schema),  
-                    indexes: info.indexs || [],  
-                    writeValidator: info.writeValidator || '',  
-                    readFilter: info.readFilter || ''  
-                }))  
-            );  
-
-            // Create database options  
-            const dbOpts: Types.DBOptions = {  
-                name: dbname,  
-                key: threadKey,  
-                logKey: logKey,  
-                backfillBlock: true,  
-                collections  
-            };  
-
-            // Try creating database  
-            const errors: string[] = [];  
-            for (const multiAddr of threadInfo.addrs) {  
-                try {  
-                    await this.dbManager.newDBFromAddr(this.context, multiAddr, threadKey, dbOpts);  
-                    break;  
-                } catch (error) {  
-                    errors.push(error.message);  
-                }  
-            }  
-
-            if (errors.length === threadInfo.addrs.length) {  
-                throw new Error(`create db failed:${errors.join(',')}`);  
-            }  
-
-            const [ctx, cancel] = Utils.createTimeoutContext(30000);  
-            try {  
-                await this.addLogToThreadStart(ctx, threadID, lid);  
-            } finally {  
-                cancel();  
-            }  
-
-            return [threadID.toString(), null];  
-        } catch (error) {  
-            return ['', error as Error];  
-        }  
-    }  
-
-    async refreshDBFromDC(tId: string): Promise<Error | null> {  
-        try {  
-            await this.net.pullThread(this.context, tId);  
-            return null;  
-        } catch (error) {  
-            return error as Error;  
-        }  
-    }  
-
-    async syncDBToDC(tId: string): Promise<Error | null> {  
-        if (!this.net) {  
-            return Errors.ErrP2pNetworkNotInit;  
-        }  
-        try {  
-            await this.net.exchange(this.context, tId);  
-            return null;  
-        } catch (error) {  
-            return error as Error;  
-        }  
-    }  
-
-    async ifSyncDBToDCSuccess(tId: string): Promise<boolean> {  
-        try {  
-            const storeUnit = await this.objectState(tId);  
-            if (!storeUnit) return false;  
-
-            return new Promise((resolve) => {  
-                const timeout = setTimeout(() => resolve(false), PullTimeout);  
-                
-                const checkPeers = async () => {  
-                    for (const pid of Object.keys(storeUnit.peers)) {  
-                        try {  
-                            const peerId = await this.net.peer.decode(pid);  
-                            const client = await this.getClient(peerId);  
-                            const remoteInfo = await client.getThread(tId);  
-                            const localInfo = await this.net.getThread(this.context, tId);  
-
-                            if (this.compareThreadSync(localInfo, remoteInfo, storeUnit)) {  
-                                clearTimeout(timeout);  
-                                resolve(true);  
-                                return;  
-                            }  
-                        } catch {  
-                            continue;  
-                        }  
-                    }  
-                    resolve(false);  
-                };  
-
-                checkPeers();  
-            });  
-        } catch {  
-            return false;  
-        }  
-    }  
-
-    private compareThreadSync(local: Types.ThreadInfo, remote: Types.ThreadInfo, storeUnit: Types.StoreUnit): boolean {  
-        for (const logInfo of local.logs) {  
-            if (!storeUnit.logs[logInfo.id.toString()]) {  
-                continue;  
-            }  
-
-            const remoteLog = remote.logs.find(l => l.id === logInfo.id);  
-            if (!remoteLog || logInfo.head.counter > remoteLog.head.counter) {  
-                return false;  
-            }  
-        }  
-        return true;  
-    }  
-
-    async ifDbInitSuccess(tid: string): Promise<boolean> {  
-        try {  
-            const logKey = await this.getLogKey(tid);  
-            const lid = await logKey.getId();  
-            const threadInfo = await this.objectState(tid);  
-
-            return !!(threadInfo?.logs && threadInfo.logs[lid.toString()]);  
-        } catch {  
-            return false;  
-        }  
-    }  
-
-    async syncDBFromDC(  
-        threadid: string,  
-        dbname: string,  
-        dbAddr: string,  
-        b32Rk: string,  
-        b32Sk: string,  
-        block: boolean,  
-        jsonCollections: string  
-    ): Promise<Error | null> {  
-        if (!this.dbManager) {  
-            return Errors.ErrNoDbManager;  
-        }  
-
-        try {  
-            const tID = await this.decodeThreadId(threadid);  
-            const logKey = await this.getLogKey(tID);  
-            const lid = await logKey.getId();  
-
-            this.makeDcObjectGetConnect(threadid);  
-
-            const threadKey = await Utils.generateThreadKey(b32Sk, b32Rk);  
-            const multiAddr = await this.getMultiAddr(dbAddr, threadid);  
-
-            if (!multiAddr) {  
-                return Errors.ErrNoThreadOnDc;  
-            }  
-
-            const collectionInfos: Types.CollectionInfo[] = JSON.parse(jsonCollections);  
-            const collections = await Promise.all(  
-                collectionInfos.map(async info => ({  
-                    name: info.name,  
-                    schema: await Utils.SchemaFromSchemaString(info.schema),  
-                    indexes: info.indexs || []  
-                }))  
-            );  
-
-            const dbOpts: Types.DBOptions = {  
-                name: dbname,  
-                key: threadKey,  
-                logKey: logKey,  
-                backfillBlock: block,  
-                collections  
-            };  
-
-            // Delete existing database if present  
-            try {  
-                await this.dbManager.deleteDB(this.context, tID, false);  
-            } catch (error) {  
-                if (error !== Errors.ErrDBNotFound && error !== Errors.ErrThreadNotFound) {  
-                    throw error;  
-                }  
-            }  
-
-            await this.dbManager.newDBFromAddr(this.context, multiAddr, threadKey, dbOpts);  
-            return null;  
-        } catch (error) {  
-            if (error instanceof Types.ThreadIDValidationError) {  
-                return error;  
-            }  
-            return error as Error;  
-        }  
-    }  
-
-    async getDBRecordsCount(threadid: string): Promise<[number, Error | null]> {  
-        if (!this.dbManager) {  
-            return [0, Errors.ErrNoDbManager];  
-        }  
-
-        try {  
-            const tid = await this.decodeThreadId(threadid);  
-            const count = await this.dbManager.getDBRecordsCount(this.context, tid);  
-            return [count, null];  
-        } catch (error) {  
-            if (error instanceof Types.ThreadIDValidationError) {  
-                return [0, error];  
-            }  
-            return [0, error as Error];  
-        }  
-    } 
-
+   
     
-    private async decodeThreadId(threadid: string): Promise<Types.ThreadID> {  
-        if (!threadid) {  
-            throw new Types.ThreadIDValidationError('Thread ID cannot be empty');  
-        }  
 
-        try {  
-            // 基本格式验证  
-            if (!/^[a-zA-Z0-9]+$/.test(threadid)) {  
-                throw new Types.ThreadIDValidationError('Invalid thread ID format');  
-            }  
 
-            // 尝试解码  
-            const threadID = Types.ThreadID.fromString(threadid);  
-
-            // 验证长度  
-            const bytes = threadID.toBytes();  
-            if (bytes.length < 32) { // 假设最小长度为32字节  
-                throw new Types.ThreadIDValidationError('Thread ID too short');  
-            }  
-
-            return threadID;  
-        } catch (error) {  
-            if (error instanceof Types.ThreadIDValidationError) {  
-                throw error;  
-            }  
-            throw new Types.ThreadIDValidationError(`Failed to decode thread ID: ${error.message}`);  
-        }  
+     /**  
+     * Convert Uint8Array to base64 string for storage  
+     */  
+     private uint8ArrayToBase64(bytes: Uint8Array): string {  
+        return btoa(String.fromCharCode.apply(null, [...bytes]));  
     }  
 
-    // 为了方便使用，可以添加一个验证方法  
-    async validateThreadId(threadid: string): Promise<boolean> {  
-        try {  
-            await this.decodeThreadId(threadid);  
-            return true;  
-        } catch {  
-            return false;  
+    /**  
+     * Convert base64 string back to Uint8Array  
+     */  
+    private base64ToUint8Array(base64: string): Uint8Array {  
+        const binary = atob(base64);  
+        const bytes = new Uint8Array(binary.length);  
+        for (let i = 0; i < binary.length; i++) {  
+            bytes[i] = binary.charCodeAt(i);  
         }  
+        return bytes;  
     }  
-}  
 
-export { ThreadDb, Types, Errors };
+    /**  
+     * Clear all stored keys  
+    */  
+    clearAllKeys(): void {  
+        const keys = Array.from({ length: localStorage.length }, (_, i) => localStorage.key(i))  
+            .filter((key): key is string =>   
+                key !== null && key.startsWith(this.storagePrefix));  
+        // 删除匹配的键  
+        keys.forEach(key => localStorage.removeItem(key));  
+    }  
+
+
+  
+
+//todo
+// startDBSpaceMonitor 开启threaddb是否需要再分配空间监控,
+// 自动为访问过的数据库分配空间
+// 用户访问某一个数据库，就将该数据库纳入空间监控队列
+// 首次访问，判断一次是否需要申请空间
+// 后续每1000次数据生成，判断一次是否需要申请空间
+//func (dc *Dc) startDBSpaceMonitor() {
+
+
+}
+
+
+export { ThreadDb, Errors, Types, Utils };

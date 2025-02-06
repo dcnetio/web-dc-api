@@ -5,9 +5,18 @@
 import { multiaddr } from "@multiformats/multiaddr";
 import { ApiPromise, WsProvider } from "@polkadot/api";
 import * as buffer from "buffer/";
-import { isUser, sha256 } from "./util/util";
-import { User } from "./types/types";
+import { isUser, sha256 } from "./util/util"; 
 const { Buffer } = buffer;
+
+interface StoreunitInfo {  
+  size: number;  
+  utype: number;  
+  peers: Set<string>;  
+  users: Set<string>;  
+  logs: Set<string>;  
+}  
+
+
 
 export class ChainUtil {
   dcchainapi: ApiPromise | undefined;
@@ -198,4 +207,30 @@ export class ChainUtil {
     console.log("peers", peers);
     return peers;
   };
+
+  objectState =  async (cid: string): Promise<StoreunitInfo | null> =>{
+      if (!this.dcchainapi) {  
+          throw new Error('Blockchain not connected');  
+      }  
+
+      const fileInfo = await this.dcchainapi.query.dcNode.files(cid);  
+      
+      if (!fileInfo || fileInfo.isEmpty) {  
+          return null;  
+      }  
+
+      const data = fileInfo.toJSON();  
+
+      if (!data) {  
+          return null;  
+      }  
+      // 构造返回数据  
+      return {  
+        size: Number(data['size'] || 0),  
+        utype: Number(data['utype'] || 0),  
+        peers: new Set(Array.isArray(data['peers']) ? data['peers'].map(String) : []),  
+        users: new Set(Array.isArray(data['users']) ? data['users'].map(String) : []),  
+        logs: new Set(Array.isArray(data['logs']) ? data['logs'].map(String) : [])  
+    };    
+  }
 }
