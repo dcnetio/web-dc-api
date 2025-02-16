@@ -10,8 +10,8 @@ import { LevelDatastore } from 'datastore-level'
 import { Ed25519PrivKey } from "../dc-key/ed25519";
 import { keys } from "@libp2p/crypto";
 import { Key as ThreadKey } from './key';
-import { TxnDatastoreExtended, PrefixTransform,TransformedDatastore } from './transformdatastore' 
-import {createTxnDatastore} from './leveldatastoreadapter'
+import { PrefixTransform,TransformedDatastore,TxnDatastoreExtended} from './transformed-datastore' 
+import {createTxnDatastore} from './level-adapter'
 // 协议常量定义  
 export const Protocol = {  
     Code: 406, // 根据实际协议代码调整  
@@ -83,30 +83,30 @@ export class DBManager {
     }  
 
      /**  
-         * Gets the log key for a thread. If it doesn't exist, creates a new one.  
-         * @param tid Thread ID  
-         * @returns Promise resolving to the private key  
-         * @throws Error if key operations fail  
-         */  
-        async getLogKey(tid: ThreadID): Promise<Ed25519PrivKey> {  
-            const storageKey = `${this.storagePrefix}_${tid.toString()}_logkey`;  
-            
-            try {  
-                // Try to get existing key from localStorage  
-                const storedBytes = await this.store.get(new Key(storageKey));
-                if (storedBytes) {  
-                    const key = Ed25519PrivKey.fromString(Buffer.from(storedBytes).toString('hex'));
-                    return key;
-                } else {  
-                    // Create new key if none exists  
-                    const  key = await this.newLogKey();  
-                    this.store.put(new Key(storageKey), Buffer.from(key.raw));
-                    return key;  
-                }  
-            } catch (err) {  
-                throw new Error(`Failed to get/create log key: ${err}`);  
+     * Gets the log key for a thread. If it doesn't exist, creates a new one.  
+     * @param tid Thread ID  
+     * @returns Promise resolving to the private key  
+     * @throws Error if key operations fail  
+     */  
+    async getLogKey(tid: ThreadID): Promise<Ed25519PrivKey> {  
+        const storageKey = `${this.storagePrefix}_${tid.toString()}_logkey`;  
+        
+        try {  
+            // Try to get existing key from localStorage  
+            const storedBytes = await this.store.get(new Key(storageKey));
+            if (storedBytes) {  
+                const key = Ed25519PrivKey.fromString(Buffer.from(storedBytes).toString('hex'));
+                return key;
+            } else {  
+                // Create new key if none exists  
+                const  key = await this.newLogKey();  
+                this.store.put(new Key(storageKey), Buffer.from(key.raw));
+                return key;  
             }  
-        }
+        } catch (err) {  
+            throw new Error(`Failed to get/create log key: ${err}`);  
+        }  
+    }
 
 
     
@@ -190,7 +190,7 @@ export class DBManager {
                 token: opts.token,  
             });  
 
-            const [store, dbOpts] = await this.wrapDB(this.store,id, opts.name, opts.collections);  
+            const [store, dbOpts] = await this.wrapDB(this.store,id, opts, opts.collections);  
             const db = await newDB(store, this.network, id, dbOpts);  
             this.dbs.set(id.toString(), db);  
 

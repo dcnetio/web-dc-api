@@ -1,6 +1,6 @@
 import { Key, Datastore, Query, QueryFilter, Batch, Pair, KeyQuery } from 'interface-datastore'  
 import { LevelDatastore } from 'datastore-level'  
-import { Context, QueryExt, QueryResult, TxnDatastoreExtended, TxnExt } from './transformdatastore'  
+import { Context, QueryExt, QueryResult, TxnDatastoreExtended,Transaction } from './transformed-datastore'  
 import { AbortOptions } from '@libp2p/interface';
 type AwaitIterable<T> = AsyncIterable<T> | Iterable<T>;  
 
@@ -50,7 +50,6 @@ class LevelDatastoreAdapter implements TxnDatastoreExtended {
     
   // 修改 queryExtended 的实现  
   async *queryExtended(  
-    ctx: Context,  
     q: QueryExt  
   ): AsyncIterable<QueryResult> {  
     const { prefix, filters = [] } = q;  
@@ -147,11 +146,11 @@ class LevelDatastoreAdapter implements TxnDatastoreExtended {
 
   // 实现 TxnDatastoreExtended 接口的方法  
   async newTransactionExtended(  
-    ctx: Context,  
+    ctx: Context,
     readOnly: boolean  
-  ): Promise<TxnExt> {  
+  ): Promise<Transaction> {  
     // 由于 LevelDatastore 不支持原生事务，我们创建一个简单的包装器  
-    const txn: TxnExt = {  
+    const txn: Transaction = {  
       put: async (ctx: Context, key: Key, value: Uint8Array): Promise<Key> => {  
         if (readOnly) throw new Error('Transaction is read-only');  
         await this.store.put(key, value);  
@@ -166,10 +165,10 @@ class LevelDatastoreAdapter implements TxnDatastoreExtended {
         return this.store.has(key);  
       },  
 
-      delete: async (ctx: Context, key: Key): Promise<Key> => {  
+      delete: async (ctx: Context, key: Key): Promise<void> => {  
         if (readOnly) throw new Error('Transaction is read-only');  
         await this.store.delete(key);  
-        return key;  
+        return  ;
       },  
 
       query: async function*(ctx: Context, q: Query): AsyncIterable<QueryResult> {  
@@ -219,5 +218,7 @@ class LevelDatastoreAdapter implements TxnDatastoreExtended {
 // 工厂函数  
 export function createTxnDatastore(path: string): TxnDatastoreExtended {  
   const levelStore = new LevelDatastore(path);  
-  return new LevelDatastoreAdapter(levelStore);  
+  const adapter = new LevelDatastoreAdapter(levelStore);  
+  return adapter;
+
 }  

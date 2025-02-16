@@ -49,7 +49,7 @@ interface KeyTransform {
 // 组合接口  
 interface TxnDatastoreExtended extends Datastore, DatastoreExtensions {  
     batch(): Batch;  
-  }  
+}  
 
  
 
@@ -147,7 +147,7 @@ class TransformedDatastore extends BaseDatastore implements TxnDatastoreExtended
     return this.newTransactionExtended(ctx, readOnly)  
   }  
 
-  async newTransactionExtended(ctx: Context, readOnly: boolean): Promise<TxnExt> {  
+  async newTransactionExtended(ctx: Context, readOnly: boolean): Promise<Transaction> {  
     if (typeof this.child.newTransactionExtended !== 'function') {  
       throw new Error('Child datastore does not support extended transactions')  
     }  

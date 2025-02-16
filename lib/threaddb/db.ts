@@ -1,187 +1,574 @@
-import { ThreadID } from '@textile/threads-id';
-import type { PeerId } from '@libp2p/interface'  
-import { peerIdFromPrivateKey, peerIdFromPublicKey} from "@libp2p/peer-id";
-import type { PrivateKey } from '@libp2p/interface-keys' 
-import { Ed25519PrivKey } from "../dc-key/ed25519";
-import { keys } from "@libp2p/crypto";
+// db.ts - Complete TypeScript Implementation (Simplified Core)  
+import { EventEmitter } from 'events';  
+import { TxnDatastoreExtended,TxnExt} from './transformed-datastore' 
+import { Key,Query } from 'interface-datastore';
+import { ulid } from 'ulid';  
 
+// ======== 核心类型定义 ========  
+export type InstanceID = string;  
+export const EmptyInstanceID: InstanceID = '';  
 
-import { createFromPubKey, createFromPrivKey } from '@libp2p/peer-id-factory'  
-import { CID } from 'multiformats/cid'  
-
-import exp from 'constants';
-
-import { join } from 'path';  
-import { promises as fs } from 'fs';  
-import { stat } from 'fs/promises';  
-import { ed25519 } from '@noble/curves/ed25519';
-
-// 类型定义  
-
-export enum KeyType {  
-    Ed25519 = 'Ed25519',  
-    Secp256k1 = 'Secp256k1',  
-    RSA = 'RSA'  
+export enum ActionType {  
+  Create = 0,  
+  Save = 1,  
+  Delete = 2  
 }  
 
+export interface Event<T = any> {  
+  /** 事件时间戳 (Unix毫秒时间戳) */  
+  readonly timestamp: number;  
+  /** 关联的实例ID */  
+  readonly instanceID: InstanceID;  
+  /** 所属集合名称 */  
+  readonly collection: string;  
+  /** 事件负载数据 */  
+  readonly payload: T;  
 
-
-
-// 错误定义  
-const Errors = {  
-    ErrNoDbManager: new Error('No database manager available'),  
-    ErrNoDcPeerConnected: new Error('No DC peer connected'),  
-    ErrP2pNetworkNotInit: new Error('P2P network not initialized'),  
-    ErrNoThreadOnDc: new Error('Thread not found on DC'),  
-    ErrDBNotFound: new Error('Database not found'),  
-    ErrThreadNotFound: new Error('Thread not found')  
-} as const;  
-
-// 常量定义  
-const PullTimeout = 30000; // 30 seconds  
-const Threaddbtype = 2;  
-
-// 类型定义  
-namespace Types {  
-    export interface CollectionInfo {  
-        name: string;  
-        schema: string;  
-        indexs?: Array<{  
-            path: string;  
-            unique: boolean;  
-        }>;  
-        writeValidator?: string;  
-        readFilter?: string;  
-    }  
-
-    export interface ThreadInfo {  
-        addrs: string[];  
-        logs: LogInfo[];  
-    }  
-
-    export interface LogInfo {  
-        id: string;  
-        head: {  
-            counter: number;  
-        };  
-    }  
-
-    export interface StoreUnit {  
-        peers: { [key: string]: any };  
-        logs: { [key: string]: any };  
-    }  
-
-    export interface ThreadOption {  
-        withThreadKey?: any;  
-        withLogKey?: any;  
-        withNewThreadBlockHeight?: number;  
-        withNewThreadSignature?: Uint8Array;  
-    }  
-
-    export interface DBOptions {  
-        name: string;  
-        key: any;  
-        logKey: any;  
-        backfillBlock: boolean;  
-        collections: any[];  
-    }  
- 
-
-}
-
-
-// 工具函数  
-class Utils {  
-    static async generateThreadKey(b32Sk: string, b32Rk: string): Promise<any> {  
-        // Implementation of thread key generation  
-        // This would depend on your cryptographic requirements  
-        return Buffer.from(`${b32Sk}:${b32Rk}`);  
-    }  
-
-    static async generateServiceKey(b32Sk: string): Promise<any> {  
-        // Implementation of service key generation  
-        return Buffer.from(b32Sk);  
-    }  
-
-    static createTimeoutContext(ms: number): [any, () => void] {  
-        const ctx = {};  
-        const cancel = () => {};  
-        return [ctx, cancel];  
-    }  
-
-    static async SchemaFromSchemaString(schema: string): Promise<any> {  
-        // Convert schema string to schema object  
-        return JSON.parse(schema);  
-    }  
+  /** 序列化为Uint8Array */  
+  marshal(): Promise<Uint8Array>;  
 }  
 
-// 主类实现  
-class ThreadDb {  
-    private connectedDc: any;  
-    private context: any;  
-    private net: any;  
-    private privateKey: any;  
-   
+export interface Action {  
+    type: ActionType;  
+    instanceID: InstanceID;  
+    collectionName: string;  
+    previous: Uint8Array | null;  
+    current: Uint8Array | null;  
+  }  
+  
+  export interface ReduceAction {  
+    type: ActionType;  
+    collection: string;  
+    instanceID: InstanceID;  
+  }  
 
-    constructor(config: {  
-        context?: any;  
-        net?: any;  
-        privateKey?: any;  
-        storagePrefix?: string;
-    }) {   
-        this.context = config.context;  
-        this.net = config.net;  
-        this.privateKey = config.privateKey;  
-        this.storagePrefix = config.storagePrefix || '';
-    }  
 
-   
+  // ======== 实现类 ========  
+export class CollectionEvent<T = any> implements Event<T> {  
+    readonly timestamp: number;  
     
+    constructor(  
+      readonly instanceID: InstanceID,  
+      readonly collection: string,  
+      readonly payload: T  
+    ) {  
+      this.timestamp = Date.now();  
+    }  
+  
+    async marshal(): Promise<Uint8Array> {  
+      return new TextEncoder().encode(JSON.stringify({  
+        t: this.timestamp,  
+        i: this.instanceID,  
+        c: this.collection,  
+        p: this.payload  
+      }));  
+    }  
+  }  
+  
+  // ======== 工具类 ========  
+  class Instance {  
+    static generateID(): InstanceID {  
+      return ulid().toLowerCase();  
+    }  
+  } 
+  
+  // ======== 事件编解码器 ========  
+  export abstract class EventCodec {  
+    abstract reduce(  
+      events: Event[],  
+      store: TxnDatastoreExtended,  
+      baseKey: Key,  
+      indexFn: IndexFunc  
+    ): Promise<ReduceAction[]>;  
+  
+    abstract create(actions: Action[]): Promise<[Event[], Uint8Array]>;  
+  
+    async eventsFromBytes(data: Uint8Array): Promise<Event[]> {  
+      const decoded = JSON.parse(new TextDecoder().decode(data));  
+      return decoded.map((d: any) => new CollectionEvent(  
+        d.i,  
+        d.c,  
+        d.p  
+      ));  
+    }  
+  }  
+  
+  // ======== 索引处理函数类型 ========  
+  export type IndexFunc = (  
+    collection: string,  
+    key: Key,  
+    oldData: Uint8Array | null,  
+    newData: Uint8Array | null,  
+    txn: TxnExt  
+  ) => Promise<void>;  
+  
+  // ======== 默认实现示例 ========  
+  export class DefaultEventCodec extends EventCodec {  
+    async reduce(  
+      events: Event[],  
+      store: TxnDatastoreExtended,  
+      baseKey: Key,  
+      indexFn: IndexFunc  
+    ): Promise<ReduceAction[]> {  
+      const reduceActions: ReduceAction[] = [];  
+      
+      for (const event of events) {  
+        const key = baseKey.child(new Key(`/${event.collection}/${event.instanceID}`));  
+        
+        // 使用事务处理数据变更  
+        await store.txn(async (txn) => {  
+          const oldData = await txn.get(key);  
+          const newData = event.payload ? new TextEncoder().encode(JSON.stringify(event.payload)) : null;  
+  
+          // 应用索引更新  
+          await indexFn(event.collection, key, oldData, newData, txn);  
+  
+          // 保存数据  
+          if (newData) {  
+            await txn.put(key, newData);  
+          } else {  
+            await txn.delete(key);  
+          }  
+        });  
+  
+        reduceActions.push({  
+          type: this.getActionType(event),  
+          collection: event.collection,  
+          instanceID: event.instanceID  
+        });  
+      }  
+      
+      return reduceActions;  
+    }  
+  
+    async create(actions: Action[]): Promise<[Event[], Uint8Array]> {  
+      const events: Event[] = [];  
+      
+      for (const action of actions) {  
+        const payload = this.buildEventPayload(action);  
+        const event = new CollectionEvent(  
+          action.instanceID,  
+          action.collectionName,  
+          payload  
+        );  
+        events.push(event);  
+      }  
+      
+      // 序列化整个事件集合  
+      const nodeData = new TextEncoder().encode(JSON.stringify(events));  
+      return [events, nodeData];  
+    }  
+  
+    private getActionType(event: Event): ActionType {  
+      // 根据payload内容判断操作类型  
+      if (!event.payload) return ActionType.Delete;  
+      if ('previous' in event.payload) return ActionType.Save;  
+      return ActionType.Create;  
+    }  
+  
+    private buildEventPayload(action: Action): any {  
+      switch (action.type) {  
+        case ActionType.Create:  
+          return {  
+            created: action.current ? JSON.parse(new TextDecoder().decode(action.current)) : null  
+          };  
+        case ActionType.Save:  
+          return {  
+            previous: action.previous ? JSON.parse(new TextDecoder().decode(action.previous)) : null,  
+            current: action.current ? JSON.parse(new TextDecoder().decode(action.current)) : null  
+          };  
+        case ActionType.Delete:  
+          return {  
+            deleted: action.previous ? JSON.parse(new TextDecoder().decode(action.previous)) : null  
+          };  
+      }  
+    }  
+}
+// ======== Type Definitions ========  
+interface JsonSchema {  
+  type: string;  
+  properties?: Record<string, JsonSchema>;  
+  required?: string[];  
+}  
 
 
-     /**  
-     * Convert Uint8Array to base64 string for storage  
-     */  
-     private uint8ArrayToBase64(bytes: Uint8Array): string {  
-        return btoa(String.fromCharCode.apply(null, [...bytes]));  
+interface CollectionConfig {  
+  name: string;  
+  schema: JsonSchema;  
+  indexes?: Index[];  
+  writeValidator?: string;  
+  readFilter?: string;  
+}  
+
+interface Index {  
+  path: string;  
+  unique: boolean;  
+}  
+
+interface DBInfo {  
+  name: string;  
+  addrs: string[];  
+  key: Uint8Array;  
+}  
+
+// ======== Error Classes ========  
+class DBError extends Error {  
+  constructor(message: string) {  
+    super(message);  
+    this.name = 'DBError';  
+  }  
+}  
+
+class CollectionExistsError extends DBError {  
+  constructor(name: string) {  
+    super(`Collection ${name} already exists`);  
+    this.name = 'CollectionExistsError';  
+  }  
+}  
+
+// ======== Core Implementation ========  
+export class Collection {  
+  private indexes: Map<string, Index> = new Map();  
+
+  constructor(  
+    public readonly name: string,  
+    private schema: JsonSchema,  
+    private store: TxnDatastoreExtended,  
+    private vm: any // Simplified VM for validation  
+  ) {}  
+
+  async addIndex(index: Index): Promise<void> {  
+    if (index.path === '_id') throw new DBError('Cannot index _id field');  
+    this.indexes.set(index.path, index);  
+    await this.rebuildIndex(index.path);  
+  }  
+
+  private async rebuildIndex(path: string): Promise<void> {  
+    const entries = this.store.query({prefix:`/${this.name}/`});  
+    for await (const entry of entries) {  
+      const doc = this.parseDocument(entry.value);  
+      await this.updateIndex(path, doc, entry.key.toString());  
+    }  
+  }  
+
+  private parseDocument(data: Uint8Array): any {  
+    return JSON.parse(new TextDecoder().decode(data));  
+  }  
+
+  private async updateIndex(path: string, doc: any, key: string): Promise<void> {  
+    const value = this.getIndexValue(doc, path);  
+    const indexKey = `/${this.name}/_index/${path}/${value}/${doc._id}`;  
+    if (value) await this.store.put(new Key(indexKey), new Uint8Array());  
+  }  
+
+  private getIndexValue(doc: any, path: string): any {  
+    return path.split('.').reduce((obj, part) => obj?.[part], doc);  
+  }  
+}  
+
+
+
+
+export class DB {  
+  private collections: Map<string, Collection> = new Map();  
+  private emitter = new EventEmitter();   
+  
+  constructor(  
+    private store: TxnDatastoreExtended,  
+    private net: NetAdapter,  
+    public name = 'unnamed'  
+  ) {
+  }  
+
+  static async create(options: {  
+    store: TxnDatastoreExtended;  
+    net: NetAdapter;  
+    collections?: CollectionConfig[];  
+    name?: string;  
+  }): Promise<DB> {  
+    const db = new DB(options.store, options.net, options.name || 'unnamed');  
+    await db.initCollections(options.collections || []);  
+    return db;  
+  }  
+
+  private async initCollections(configs: CollectionConfig[]): Promise<void> {  
+    for (const config of configs) {  
+      await this.newCollection(config);  
+    }  
+  }  
+
+  async newCollection(config: CollectionConfig): Promise<Collection> {  
+    if (this.collections.has(config.name)) {  
+      throw new CollectionExistsError(config.name);  
     }  
 
-    /**  
-     * Convert base64 string back to Uint8Array  
-     */  
-    private base64ToUint8Array(base64: string): Uint8Array {  
-        const binary = atob(base64);  
-        const bytes = new Uint8Array(binary.length);  
-        for (let i = 0; i < binary.length; i++) {  
-            bytes[i] = binary.charCodeAt(i);  
-        }  
-        return bytes;  
+    const collection = new Collection(  
+      config.name,  
+      config.schema,  
+      this.store,  
+      new VM()  
+    );  
+    
+    // Add default _id index  
+    await collection.addIndex({ path: '_id', unique: true });  
+    
+    // Add custom indexes  
+    for (const index of config.indexes || []) {  
+      await collection.addIndex(index);  
+    }  
+    
+    this.collections.set(config.name, collection);  
+    return collection;  
+  }  
+
+  getCollection(name: string): Collection {  
+    const collection = this.collections.get(name);  
+    if (!collection) throw new DBError(`Collection ${name} not found`);  
+    return collection;  
+  }  
+
+  async close(): Promise<void> {  
+    // Implement cleanup logic  
+  }  
+
+  async reduce(events: Event[]): Promise<void> {  
+    for (const event of events) {  
+      await this.processCollectionEvent(event);  
+    }  
+  }  
+  private async processCollectionEvent(event: CoreEvent): Promise<void> {  
+    const collectionName = event.collection;  
+    const collection = this.getCollection(collectionName);  
+    
+    switch(event.type) {  
+      case 'create':  
+        await this.handleCreateEvent(  
+          collection,  
+          event.documentId,  
+          (event as CreateEvent).payload.fullDocument  
+        );  
+        break;  
+      
+      case 'update':  
+        await this.handleUpdateEvent(  
+          collection,  
+          event.documentId,  
+          (event as UpdateEvent).payload.patch,  
+          (event as UpdateEvent).previousState  
+        );  
+        break;  
+      
+      case 'delete':  
+        await this.handleDeleteEvent(  
+          collection,  
+          event.documentId,  
+          (event as DeleteEvent).previousState  
+        );  
+        break;  
+
+      default:  
+        throw new Error(`Unsupported event type: ${(event as CoreEvent).type}`);  
+    }  
+  }  
+
+  // ===== 创建事件处理器 =====  
+  private async handleCreateEvent(  
+    collection: Collection,  
+    documentId: string,  
+    payload: Record<string, unknown>  
+  ): Promise<void> {  
+    // 合法性检查  
+    if (!documentId || !payload) {  
+      throw new Error(`Invalid create payload for document ${documentId}`);  
     }  
 
-    /**  
-     * Clear all stored keys  
-    */  
-    clearAllKeys(): void {  
-        const keys = Array.from({ length: localStorage.length }, (_, i) => localStorage.key(i))  
-            .filter((key): key is string =>   
-                key !== null && key.startsWith(this.storagePrefix));  
-        // 删除匹配的键  
-        keys.forEach(key => localStorage.removeItem(key));  
-    }  
+    // 生成最终文档  
+    const doc = {  
+      _id: documentId,  
+      ...payload,  
+      _createdAt: Date.now(),  
+      _version: 1  
+    };  
 
+    // 执行数据存取  
+    await this.withTransaction(collection.name, async (txn) => {  
+      // 验证Schema  
+      if (!collection.validateSchema(doc)) {  
+        throw new Error(`Schema validation failed for document ${documentId}`);  
+      }  
+
+      // 触发前置钩子  
+      await collection.hooks.beforeCreate?.(doc, txn);  
+
+      // 保存文档  
+      const key = `/${collection.name}/${documentId}`;  
+      await txn.put(key, this.encodeDocument(doc));  
+
+      // 更新索引  
+      await collection.updateIndexes(txn, doc, null);  
+
+      // 触发后置钩子  
+      await collection.hooks.afterCreate?.(doc, txn);  
+    });  
+  }  
+
+  // ===== 更新事件处理器 =====  
+  private async handleUpdateEvent(  
+    collection: Collection,  
+    documentId: string,  
+    patch: Record<string, unknown>,  
+    previousState?: Record<string, unknown>  
+  ): Promise<void> {  
+    await this.withTransaction(collection.name, async (txn) => {  
+      // 获取现有文档  
+      const existing = await this.getDocument(collection, documentId);  
+      if (!existing) {  
+        throw new Error(`Cannot update non-existing document ${documentId}`);  
+      }  
+
+      // 应用数据修改  
+      const updatedDoc = {   
+        ...existing,   
+        ...patch,   
+        _version: existing._version + 1,  
+        _updatedAt: Date.now()   
+      };  
+
+      // 数据验证  
+      if (!collection.validateSchema(updatedDoc)) {  
+        throw new Error(`Update violates schema for document ${documentId}`);  
+      }  
+
+      // 触发前置钩子  
+      await collection.hooks.beforeUpdate?.(updatedDoc, existing, txn);  
+
+      // 保存更新  
+      const key = `/${collection.name}/${documentId}`;  
+      await txn.put(key, this.encodeDocument(updatedDoc));  
+
+      // 更新索引  
+      await collection.updateIndexes(txn, updatedDoc, existing);  
+
+      // 触发后置钩子  
+      await collection.hooks.afterUpdate?.(updatedDoc, existing, txn);  
+    });  
+  }  
+
+  // ===== 删除事件处理器 =====   
+  private async handleDeleteEvent(  
+    collection: Collection,  
+    documentId: string,  
+    previousState?: Record<string, unknown>  
+  ): Promise<void> {  
+    await this.withTransaction(collection.name, async (txn) => {  
+      const existing = await this.getDocument(collection, documentId);  
+      if (!existing) return;  
+
+      // 触发前置钩子  
+      await collection.hooks.beforeDelete?.(existing, txn);  
+
+      // 删除数据  
+      const key = `/${collection.name}/${documentId}`;  
+      await txn.delete(key);  
+
+      // 清理索引  
+      await collection.clearIndexes(txn, existing);  
+
+      // 触发后置钩子  
+      await collection.hooks.afterDelete?.(existing, txn);  
+    });  
+  }  
 
   
 
-//todo
-// startDBSpaceMonitor 开启threaddb是否需要再分配空间监控,
-// 自动为访问过的数据库分配空间
-// 用户访问某一个数据库，就将该数据库纳入空间监控队列
-// 首次访问，判断一次是否需要申请空间
-// 后续每1000次数据生成，判断一次是否需要申请空间
-//func (dc *Dc) startDBSpaceMonitor() {
+  // ===== 辅助方法 =====  
+  private async getDocument(  
+    collection: Collection,   
+    documentId: string  
+  ): Promise<Record<string, unknown> | null> {  
+    const key = `/${collection.name}/${documentId}`;  
+    const data = await this.datastore.get(key);  
+    return data ? this.decodeDocument(data) : null;  
+  }  
+
+  private encodeDocument(doc: Record<string, unknown>): Uint8Array {  
+    return new TextEncoder().encode(JSON.stringify(doc));  
+  }  
+
+  private decodeDocument(data: Uint8Array): Record<string, unknown> {  
+    return JSON.parse(new TextDecoder().decode(data));  
+  }  
+
+  private async withTransaction(  
+    collection: string,  
+    operation: (txn: Transaction) => Promise<void>  
+  ): Promise<void> {  
+    const txn = this.datastore.newTransaction();  
+    try {  
+      await operation(txn);  
+      await txn.commit();  
+    } catch (error) {  
+      await txn.rollback();  
+      throw new Error(  
+        `Transaction failed in ${collection}: ${error instanceof Error ? error.message : String(error)}`  
+      );  
+    }  
+  }  
+}  
+ 
 
 
-}
+// ======== Transaction Support ========  
+export class Transaction {  
+  constructor(  
+    private store: TxnDatastoreExtended,  
+    public readonly readOnly = false  
+  ) {}  
 
+  async commit(): Promise<void> {  
+    // Implement commit logic  
+  }  
 
-export { ThreadDb, Errors, Types, Utils };
+  async discard(): Promise<void> {  
+    // Implement rollback logic  
+  }  
+}  
+
+// ======== Helper Interfaces ========  
+interface NetAdapter {  
+  getBlock(cid: string): Promise<Uint8Array>;  
+  // Other network methods...  
+}  
+
+class VM {  
+  // Simplified validation VM  
+  validate(code: string, data: any): boolean {  
+    // Implement validation logic  
+    return true;  
+  }  
+}  
+
+// ====== Usage Example ======  
+/*  
+const memStore = new MemoryStore();  
+const netAdapter = new MockNetAdapter();  
+
+const db = await DB.create({  
+  store: memStore,  
+  net: netAdapter,  
+  collections: [{  
+    name: 'users',  
+    schema: {  
+      type: 'object',  
+      properties: {  
+        _id: { type: 'string' },  
+        name: { type: 'string' }  
+      },  
+      required: ['_id']  
+    },  
+    indexes: [  
+      { path: 'name', unique: false }  
+    ]  
+  }]  
+});  
+*/  
