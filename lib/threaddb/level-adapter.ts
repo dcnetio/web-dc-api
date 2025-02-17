@@ -1,6 +1,6 @@
-import { Key, Datastore, Query, QueryFilter, Batch, Pair, KeyQuery } from 'interface-datastore'  
+import { Key, Query, Batch, Pair, KeyQuery } from 'interface-datastore'  
 import { LevelDatastore } from 'datastore-level'  
-import { Context, QueryExt, QueryResult, TxnDatastoreExtended,Transaction } from './transformed-datastore'  
+import {  QueryExt, QueryResult, TxnDatastoreExtended,Transaction } from './core'  
 import { AbortOptions } from '@libp2p/interface';
 type AwaitIterable<T> = AsyncIterable<T> | Iterable<T>;  
 
@@ -146,32 +146,32 @@ class LevelDatastoreAdapter implements TxnDatastoreExtended {
 
   // 实现 TxnDatastoreExtended 接口的方法  
   async newTransactionExtended(  
-    ctx: Context,
+    
     readOnly: boolean  
   ): Promise<Transaction> {  
     // 由于 LevelDatastore 不支持原生事务，我们创建一个简单的包装器  
     const txn: Transaction = {  
-      put: async (ctx: Context, key: Key, value: Uint8Array): Promise<Key> => {  
+      put: async ( key: Key, value: Uint8Array): Promise<Key> => {  
         if (readOnly) throw new Error('Transaction is read-only');  
         await this.store.put(key, value);  
         return key;  
       },  
 
-      get: async (ctx: Context, key: Key): Promise<Uint8Array> => {  
+      get: async ( key: Key): Promise<Uint8Array> => {  
         return this.store.get(key);  
       },  
 
-      has: async (ctx: Context, key: Key): Promise<boolean> => {  
+      has: async ( key: Key): Promise<boolean> => {  
         return this.store.has(key);  
       },  
 
-      delete: async (ctx: Context, key: Key): Promise<void> => {  
+      delete: async ( key: Key): Promise<void> => {  
         if (readOnly) throw new Error('Transaction is read-only');  
         await this.store.delete(key);  
         return  ;
       },  
 
-      query: async function*(ctx: Context, q: Query): AsyncIterable<QueryResult> {  
+      query: async function*( q: Query): AsyncIterable<QueryResult> {  
         for await (const entry of this.store.query(q)) {  
           yield {  
             key: entry.key,  
@@ -181,7 +181,7 @@ class LevelDatastoreAdapter implements TxnDatastoreExtended {
         }  
       }.bind(this),  
 
-      queryExtended: async function*(ctx: Context, q: QueryExt): AsyncIterable<QueryResult> {  
+      queryExtended: async function*( q: QueryExt): AsyncIterable<QueryResult> {  
         const { prefix, filters = [] } = q;  
         for await (const entry of this.store.query({ prefix })) {  
           let match = true;  
@@ -201,11 +201,11 @@ class LevelDatastoreAdapter implements TxnDatastoreExtended {
         }  
       }.bind(this),  
 
-      commit: async (ctx: Context): Promise<void> => {  
+      commit: async (): Promise<void> => {  
         // 由于没有实际的事务支持，这里是一个空操作  
         return Promise.resolve();  
       } , 
-      discard: async (ctx: Context): Promise<void> => {  
+      discard: async (): Promise<void> => {  
         // 由于没有实际的事务支持，这里是一个空操作  
         return Promise.resolve();  
       } 

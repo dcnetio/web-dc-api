@@ -1,46 +1,9 @@
 // db.ts - Complete TypeScript Implementation (Simplified Core)  
 import { EventEmitter } from 'events';  
-import { TxnDatastoreExtended,TxnExt} from './transformed-datastore' 
+import { } from './transformed-datastore' 
 import { Key,Query } from 'interface-datastore';
+import { Event,InstanceID,ReduceAction,Action,ActionType,TxnDatastoreExtended,Transaction,IndexFunc } from './core';
 import { ulid } from 'ulid';  
-
-// ======== 核心类型定义 ========  
-export type InstanceID = string;  
-export const EmptyInstanceID: InstanceID = '';  
-
-export enum ActionType {  
-  Create = 0,  
-  Save = 1,  
-  Delete = 2  
-}  
-
-export interface Event<T = any> {  
-  /** 事件时间戳 (Unix毫秒时间戳) */  
-  readonly timestamp: number;  
-  /** 关联的实例ID */  
-  readonly instanceID: InstanceID;  
-  /** 所属集合名称 */  
-  readonly collection: string;  
-  /** 事件负载数据 */  
-  readonly payload: T;  
-
-  /** 序列化为Uint8Array */  
-  marshal(): Promise<Uint8Array>;  
-}  
-
-export interface Action {  
-    type: ActionType;  
-    instanceID: InstanceID;  
-    collectionName: string;  
-    previous: Uint8Array | null;  
-    current: Uint8Array | null;  
-  }  
-  
-  export interface ReduceAction {  
-    type: ActionType;  
-    collection: string;  
-    instanceID: InstanceID;  
-  }  
 
 
   // ======== 实现类 ========  
@@ -93,20 +56,14 @@ export class CollectionEvent<T = any> implements Event<T> {
     }  
   }  
   
-  // ======== 索引处理函数类型 ========  
-  export type IndexFunc = (  
-    collection: string,  
-    key: Key,  
-    oldData: Uint8Array | null,  
-    newData: Uint8Array | null,  
-    txn: TxnExt  
-  ) => Promise<void>;  
+
+
   
   // ======== 默认实现示例 ========  
   export class DefaultEventCodec extends EventCodec {  
     async reduce(  
       events: Event[],  
-      store: TxnDatastoreExtended,  
+      store: TransformedDatastore,  
       baseKey: Key,  
       indexFn: IndexFunc  
     ): Promise<ReduceAction[]> {  
@@ -116,28 +73,24 @@ export class CollectionEvent<T = any> implements Event<T> {
         const key = baseKey.child(new Key(`/${event.collection}/${event.instanceID}`));  
         
         // 使用事务处理数据变更  
-        await store.txn(async (txn) => {  
-          const oldData = await txn.get(key);  
-          const newData = event.payload ? new TextEncoder().encode(JSON.stringify(event.payload)) : null;  
-  
+        const txn = await store.beginTransaction(); 
+        const oldData = await txn.get(key);  
+        const newData = event.payload ? new TextEncoder().encode(JSON.stringify(event.payload)) : null;  
           // 应用索引更新  
-          await indexFn(event.collection, key, oldData, newData, txn);  
-  
+        await indexFn(event.collection, key, oldData, newData, txn);  
           // 保存数据  
           if (newData) {  
             await txn.put(key, newData);  
           } else {  
             await txn.delete(key);  
           }  
-        });  
-  
+        txn.commit();
         reduceActions.push({  
           type: this.getActionType(event),  
           collection: event.collection,  
           instanceID: event.instanceID  
         });  
       }  
-      
       return reduceActions;  
     }  
   
@@ -233,7 +186,7 @@ export class Collection {
   constructor(  
     public readonly name: string,  
     private schema: JsonSchema,  
-    private store: TxnDatastoreExtended,  
+    private store: TransformedDatastore,  
     private vm: any // Simplified VM for validation  
   ) {}  
 
@@ -274,14 +227,14 @@ export class DB {
   private emitter = new EventEmitter();   
   
   constructor(  
-    private store: TxnDatastoreExtended,  
+    private store: TransformedDatastore,  
     private net: NetAdapter,  
     public name = 'unnamed'  
   ) {
   }  
 
   static async create(options: {  
-    store: TxnDatastoreExtended;  
+    store: TransformedDatastore;  
     net: NetAdapter;  
     collections?: CollectionConfig[];  
     name?: string;  
@@ -336,7 +289,9 @@ export class DB {
       await this.processCollectionEvent(event);  
     }  
   }  
-  private async processCollectionEvent(event: CoreEvent): Promise<void> {  
+
+
+  private async processCollectionEvent(event: Event): Promise<void> {  
     const collectionName = event.collection;  
     const collection = this.getCollection(collectionName);  
     
@@ -518,21 +473,7 @@ export class DB {
  
 
 
-// ======== Transaction Support ========  
-export class Transaction {  
-  constructor(  
-    private store: TxnDatastoreExtended,  
-    public readonly readOnly = false  
-  ) {}  
 
-  async commit(): Promise<void> {  
-    // Implement commit logic  
-  }  
-
-  async discard(): Promise<void> {  
-    // Implement rollback logic  
-  }  
-}  
 
 // ======== Helper Interfaces ========  
 interface NetAdapter {  

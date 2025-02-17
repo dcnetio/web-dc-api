@@ -1,3 +1,16 @@
+
+import { Key, Query, QueryFilter, Pair } from 'interface-datastore';  
+import { BaseDatastore } from 'datastore-core';  
+import { 
+  AbortOptions, 
+  Transaction,
+  TxnDatastoreExtended,
+  KeyTransform,
+  QueryExt,
+  QueryResult 
+} from './core';
+
+
 // ======== 类型扩展声明 ========  
 declare module 'interface-datastore' {  
   interface Pair {  
@@ -20,30 +33,9 @@ declare module 'interface-datastore' {
   }  
 
   interface Datastore {  
-    newTransactionExtended?: (ctx: Context, readOnly: boolean) => Promise<Transaction>;  
+    newTransactionExtended?: ( readOnly: boolean) => Promise<Transaction>;  
   }  
 }
-import { Key, Datastore, Query, QueryFilter, Pair,Batch } from 'interface-datastore';  
-import { BaseDatastore } from 'datastore-core';  
-import { Await } from 'interface-store';
-
-
-interface AbortOptions {  
-  signal?: AbortSignal  
-}  
-// 数据存储扩展接口  
-interface DatastoreExtensions {  
-  newTransactionExtended(ctx: Context, readOnly: boolean): Promise<Transaction>  
-  queryExtended(ctx: Context, q: QueryExt): AsyncIterable<QueryResult>  
-}  
-
-
-// 组合接口  
-interface TxnDatastoreExtended extends Datastore, DatastoreExtensions {  
-    batch(): Batch;  
-    newTransactionExtended(ctx: Context, readOnly: boolean): Promise<Transaction>
-} 
-
 // ======== 类型守卫优化 ========  
 
 function isKeyFilter(filter: QueryFilter): filter is KeyFilter {  
@@ -54,39 +46,6 @@ function isKeyFilter(filter: QueryFilter): filter is KeyFilter {
 function isPrefixFilter(filter: QueryFilter): filter is PrefixFilter {  
   return (filter as PrefixFilter).$type === 'prefix' &&   
          typeof (filter as PrefixFilter).prefix === 'string';  
-}  
-
-// ======== 基础类型定义 ========  
-interface Context extends Record<string, any> {  
-  signal?: AbortSignal;  
-}  
-
-interface QueryResult {  
-  key: string;  
-  value: Uint8Array;  
-  size?: number;  
-}  
-
-interface QueryExt extends Query {  
-  seekPrefix?: string;  
-}  
-
-// ======== 事务接口 ========  
-interface Transaction {  
-  put(ctx: Context, key: Key, value: Uint8Array): Promise<Key>;  
-  delete(ctx: Context, key: Key): Promise<void>;  
-  get(ctx: Context, key: Key): Promise<Uint8Array | null>;  
-  has(ctx: Context, key: Key): Promise<boolean>;  
-  commit(ctx: Context): Promise<void>;  
-  discard(ctx: Context): void;  
-  query(ctx: Context, q: Query): AsyncIterable<QueryResult>;  
-  queryExtended(ctx: Context, q: QueryExt): AsyncIterable<QueryResult>;  
-}  
-
-// ======== 键转换接口 ========  
-interface KeyTransform {  
-  convert(key: Key): Key;  
-  invert(key: Key): Key | null;  
 }  
 
 // ======== 转换存储实现 ========  
@@ -117,14 +76,14 @@ class TransformedDatastore extends BaseDatastore {
   }
 
   // === 事务管理 ===  
-  async beginTransaction(ctx: Context): Promise<Transaction> {  
-    const childTxn = await this.getTransaction(ctx);  
+  async beginTransaction(): Promise<Transaction> {  
+    const childTxn = await this.getTransaction();  
     return new TransformedTransaction(childTxn, this.transform);  
   }  
 
-  private async getTransaction(ctx: Context): Promise<Transaction> {  
+  private async getTransaction(): Promise<Transaction> {  
     if (typeof (this.child as any).newTransactionExtended === 'function') {  
-      return (this.child as any).newTransactionExtended(ctx, false);  
+      return (this.child as any).newTransactionExtended(false);  
     }  
     throw new Error('Transactions not supported by underlying datastore');  
   }  
@@ -169,39 +128,39 @@ class TransformedTransaction implements Transaction {
   ) {}  
 
   // === 核心操作 ===  
-  async put(ctx: Context, key: Key, value: Uint8Array): Promise<Key> {  
-    return this.txn.put(ctx, this.transform.convert(key), value);  
+  async put( key: Key, value: Uint8Array): Promise<Key> {  
+    return this.txn.put(this.transform.convert(key), value);  
   }  
 
-  async delete(ctx: Context, key: Key): Promise<void> {  
-    return this.txn.delete(ctx, this.transform.convert(key));  
+  async delete( key: Key): Promise<void> {  
+    return this.txn.delete(this.transform.convert(key));  
   }  
 
-  async get(ctx: Context, key: Key): Promise<Uint8Array | null> {  
-    return this.txn.get(ctx, this.transform.convert(key));  
+  async get( key: Key): Promise<Uint8Array | null> {  
+    return this.txn.get(this.transform.convert(key));  
   }  
 
-  async has(ctx: Context, key: Key): Promise<boolean> {  
-    return this.txn.has(ctx, this.transform.convert(key));  
+  async has( key: Key): Promise<boolean> {  
+    return this.txn.has(this.transform.convert(key));  
   }  
 
-  async commit(ctx: Context): Promise<void> {  
-    return this.txn.commit(ctx);  
+  async commit(): Promise<void> {  
+    return this.txn.commit();  
   }  
 
-  discard(ctx: Context): void {  
-    this.txn.discard(ctx);  
+  discard(): void {  
+    this.txn.discard();  
   }  
 
   // === 查询操作 ===  
-  async *query(ctx: Context, q: Query): AsyncIterable<QueryResult> {  
-    yield* this.queryExtended(ctx, q as QueryExt);  
+  async *query( q: Query): AsyncIterable<QueryResult> {  
+    yield* this.queryExtended(q as QueryExt);  
   }  
 
-  async *queryExtended(ctx: Context, q: QueryExt): AsyncIterable<QueryResult> {  
+  async *queryExtended( q: QueryExt): AsyncIterable<QueryResult> {  
     const processedQuery = FilterProcessor.process(q, this.transform);  
     
-    for await (const result of this.txn.queryExtended(ctx, processedQuery)) {  
+    for await (const result of this.txn.queryExtended(processedQuery)) {  
       const originalKey = this.transform.invert(new Key(result.key));  
       if (!originalKey) continue;  
 
@@ -315,12 +274,6 @@ class PrefixTransform implements KeyTransform {
 // 导出  
 export {  
   TransformedDatastore,  
-  TxnDatastoreExtended,
-  Transaction,
   PrefixTransform,  
-  KeyTransform,  
-  QueryExt,  
-  QueryResult,  
-  Context,  
-  AbortOptions  
 }
+

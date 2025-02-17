@@ -15,6 +15,7 @@
     "@helia/strings": "^4.0.1",
     "@helia/unixfs": "^4.0.1",
     "@improbable-eng/grpc-web": "^0.15.0",
+    "@ipld/dag-cbor": "^9.2.2",
     "@libp2p/crypto": "^5.0.9",
     "@libp2p/interface": "^2.4.0",
     "@libp2p/interface-keys": "^1.0.8",
@@ -36,6 +37,7 @@
     "@types/bcryptjs": "^2.4.6",
     "@types/jsbn": "^1.2.33",
     "bcryptjs": "^2.4.3",
+    "cbor-web": "^10.0.3",
     "crypto-js": "^4.2.0",
     "datastore-core": "^10.0.2",
     "datastore-level": "^11.0.1",
@@ -47,7 +49,7 @@
     "jscrypto": "^1.0.3",
     "libp2p": "^2.3.1",
     "lodash": "~4.17.0",
-    "multiformats": "^13.3.1",
+    "multiformats": "^13.3.2",
     "protons-runtime": "^4.0.2",
     "tweetnacl": "^1.0.3",
     "uint8arrays": "^5.1.0",
@@ -56,5 +58,8 @@
   },
   "directories": {
     "lib": "lib"
+  },
+  "devDependencies": {
+    "@types/cbor": "^6.0.4"
   }
 }
