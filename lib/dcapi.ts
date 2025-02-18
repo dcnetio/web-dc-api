@@ -12,6 +12,7 @@ import { Encryption } from "./util/curve25519Encryption";
 import { decryptContent } from "./util/dccrypt";
 import { keys } from "@libp2p/crypto";
 import { sha256, getRandomBytes, concatenateUint8Arrays } from "./util/util";
+import { SymKey } from "./threaddb/core";
 
 /**
  * bcrypt 的成本因子
@@ -372,11 +373,7 @@ async function extractPeerIdFromMultiaddr(
   }
 }
 
-// 定义对称密钥类型
-interface SymKey {
-  key: CryptoKey;
-  raw: Uint8Array;
-}
+
 
 /**
  * 从字节数组生成对称密钥

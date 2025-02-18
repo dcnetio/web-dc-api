@@ -1,12 +1,80 @@
 
 
 import { Key,Datastore,Query,Batch } from 'interface-datastore';
-
+import { Key as threadKey } from './key';
+import { Ed25519PrivKey,Ed25519PubKey } from "../dc-key/ed25519";
+import { EventEmitter } from 'events'; 
 
 // ======== 基础类型定义 ========  
 export interface Context extends Record<string, any> {  
   signal?: AbortSignal;  
 }  
+
+
+export interface JsonSchema {  
+  type: string;  
+  properties?: Record<string, JsonSchema>;  
+  required?: string[];  
+}  
+
+
+export interface CollectionConfig {  
+  name: string;  
+  schema: JsonSchema;  
+  indexes?: Index[];  
+  writeValidator?: string;  
+  readFilter?: string;  
+}  
+
+export interface Index {  
+  path: string;  
+  unique: boolean;  
+}  
+
+export interface DBInfo {  
+  name: string;  
+  addrs: string[];  
+  key: Uint8Array;  
+}  
+
+
+
+ 
+export class NewOptions {  
+  name?: string;  
+  collections?: CollectionConfig[];  
+  eventCodec?: any;  
+  debug?: boolean;  
+  key?: threadKey;
+  LogKey?: Ed25519PrivKey|Ed25519PubKey;
+  block?: boolean;
+  token?: Token; 
+
+  constructor(init?: Partial<NewOptions>) {  
+      Object.assign(this, init);  
+  }  
+} 
+
+type Token = Uint8Array;  
+
+class TokenUtil {  
+    // 判断两个 Token 是否相等  
+    static equal(t: Token, b: Token): boolean {  
+        if (t.length !== b.length) {  
+            return false;  
+        }  
+        for (let i = 0; i < t.length; i++) {  
+            if (t[i] !== b[i]) {  
+                return false;  
+            }  
+        }  
+        return true;  
+    }  
+}
+
+export interface ManagedOptions {  
+  token?: Token;  
+} 
 
 export interface QueryResult {  
   key: string;  
@@ -119,3 +187,10 @@ export interface Action {
         newData: Uint8Array | null,  
         txn: Transaction  
       ) => Promise<void>;  
+
+
+      // 定义对称密钥类型
+export interface SymKey {
+  key: CryptoKey;
+  raw: Uint8Array;
+}

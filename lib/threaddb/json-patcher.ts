@@ -154,7 +154,7 @@ export class JsonPatcher implements EventCodec {
     txn: Transaction,  
     indexFunc: IndexFunc  
   ): Promise<void> {  
-    const recordKey = baseKey.child(new Key(event.id));  
+    const recordKey = baseKey.child(new Key(event.collection)).child(new Key(event.id));  
     
     const oldData = await txn.get(recordKey).catch(() => null);  
     const newData = event.operation.type === 'delete'   

@@ -167,7 +167,7 @@ export class DBManager {
         ctx: Context,  
         addr: Multiaddr,  
         key: ThreadKey,  
-        opts: NewManagedOptions = {}  
+        opts: NewOptions = {}  
     ): Promise<ThreadDb> {  
         const id =  DBManager.fromAddr(addr);  
         
@@ -613,29 +613,7 @@ function createTimeoutContext(timeout: number): Context {
     setTimeout(() => ctx.emit('timeout'), timeout);  
     return ctx;  
 }  
-
-// 类型定义  
-export interface Context extends EventEmitter {  
-    // Context 接口定义...  
-}  
-
-export interface NewOptions {  
-    name?: string;  
-    collections?: CollectionConfig[];  
-    eventCodec?: any;  
-    debug?: boolean;  
-}  
-
-export interface NewManagedOptions extends NewOptions {  
-    key?: Key;  
-    logKey?: Key;  
-    token?: Token;  
-    block?: boolean;  
-}  
-
-export interface ManagedOptions {  
-    token?: Token;  
-}  
+ 
 
 export interface ThreadInfo {  
     // ThreadInfo 接口定义...  

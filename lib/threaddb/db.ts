@@ -2,8 +2,20 @@
 import { EventEmitter } from 'events';  
 import { } from './transformed-datastore' 
 import { Key,Query } from 'interface-datastore';
-import { Event,InstanceID,ReduceAction,Action,ActionType,TxnDatastoreExtended,Transaction,IndexFunc } from './core';
+import { 
+  Event,
+  InstanceID,
+  ReduceAction,
+  Action,ActionType,
+  TxnDatastoreExtended,
+  Transaction,
+  IndexFunc,
+  JsonSchema,
+  NewOptions,
+  Index,
+  CollectionConfig } from './core';
 import { ulid } from 'ulid';  
+import {JsonPatcher}  from './json-patcher';
 
 
   // ======== 实现类 ========  
@@ -63,7 +75,7 @@ export class CollectionEvent<T = any> implements Event<T> {
   export class DefaultEventCodec extends EventCodec {  
     async reduce(  
       events: Event[],  
-      store: TransformedDatastore,  
+      store: TxnDatastoreExtended,  
       baseKey: Key,  
       indexFn: IndexFunc  
     ): Promise<ReduceAction[]> {  
@@ -73,7 +85,7 @@ export class CollectionEvent<T = any> implements Event<T> {
         const key = baseKey.child(new Key(`/${event.collection}/${event.instanceID}`));  
         
         // 使用事务处理数据变更  
-        const txn = await store.beginTransaction(); 
+        const txn = await store.newTransactionExtended(false);
         const oldData = await txn.get(key);  
         const newData = event.payload ? new TextEncoder().encode(JSON.stringify(event.payload)) : null;  
           // 应用索引更新  
@@ -137,33 +149,6 @@ export class CollectionEvent<T = any> implements Event<T> {
       }  
     }  
 }
-// ======== Type Definitions ========  
-interface JsonSchema {  
-  type: string;  
-  properties?: Record<string, JsonSchema>;  
-  required?: string[];  
-}  
-
-
-interface CollectionConfig {  
-  name: string;  
-  schema: JsonSchema;  
-  indexes?: Index[];  
-  writeValidator?: string;  
-  readFilter?: string;  
-}  
-
-interface Index {  
-  path: string;  
-  unique: boolean;  
-}  
-
-interface DBInfo {  
-  name: string;  
-  addrs: string[];  
-  key: Uint8Array;  
-}  
-
 // ======== Error Classes ========  
 class DBError extends Error {  
   constructor(message: string) {  
@@ -186,7 +171,7 @@ export class Collection {
   constructor(  
     public readonly name: string,  
     private schema: JsonSchema,  
-    private store: TransformedDatastore,  
+    private store: TxnDatastoreExtended,  
     private vm: any // Simplified VM for validation  
   ) {}  
 
@@ -223,25 +208,61 @@ export class Collection {
 
 
 export class DB {  
-  private collections: Map<string, Collection> = new Map();  
-  private emitter = new EventEmitter();   
-  
-  constructor(  
-    private store: TransformedDatastore,  
-    private net: NetAdapter,  
-    public name = 'unnamed'  
-  ) {
+  private datastore: TxnDatastoreExtended;  
+  private name: string;  
+  private collections: Map<string, Collection>;  
+  private connector: any; // 具体类型请根据实现定义  
+  private eventcodec: any; // 抽象的事件编解码机制  
+
+  constructor(datastore: TxnDatastoreExtended, net: any, id: string, opts: NewOptions) {  
+      this.datastore = datastore;  
+      this.collections = new Map();  
+      this.name = opts.name || 'unnamed';  
+      this.eventcodec = opts.eventCodec || new JsonPatcher(); 
+
   }  
 
-  static async create(options: {  
-    store: TransformedDatastore;  
-    net: NetAdapter;  
-    collections?: CollectionConfig[];  
-    name?: string;  
-  }): Promise<DB> {  
-    const db = new DB(options.store, options.net, options.name || 'unnamed');  
-    await db.initCollections(options.collections || []);  
-    return db;  
+  // 新建 DB 实例  
+  static async newDB(store: TxnDatastoreExtended, n: any, id: string, opts?: NewOptions): Promise<DB | null> {  
+
+      const args = opts || new NewOptions();  
+      // 添加线程  
+      const info: Info = await n.AddThread({  
+          // 根据需要提供 context, addr, key 等参数  
+      });  
+
+      const dbInstance = new DB(store, n, info.key, args);  
+
+      if (args.block) {  
+          await n.PullThread(info.id, { token: args.token });  
+      } else {  
+          setTimeout(async () => {  
+              await n.PullThread(info.id, { token: args.token });  
+          }, 5000); // 示例：设置超时  
+      }  
+
+      return dbInstance;  
+  }  
+
+  // 保存 DB 名称  
+  async saveName(prevName: string): Promise<void> {  
+      if (this.name === prevName) return;  
+      if (!this.name.match(/a-zA-Z0-9+/)) { // 根据需求定义规则  
+          throw new Error('Invalid name');  
+      }  
+      await this.datastore.put(new Key('dbName'),  new TextEncoder().encode(this.name)); 
+  }  
+
+  // 加载 DB 名称  
+  async loadName(): Promise<void> {  
+      try {  
+          const nameBuffer = await this.datastore.get(new Key('dbName'));  
+          if (nameBuffer) {  
+              this.name = nameBuffer.toString();  
+          }  
+      } catch (error) {  
+          console.error(`Error loading name: ${error.message}`);  
+      }  
   }  
 
   private async initCollections(configs: CollectionConfig[]): Promise<void> {  
@@ -294,6 +315,8 @@ export class DB {
   private async processCollectionEvent(event: Event): Promise<void> {  
     const collectionName = event.collection;  
     const collection = this.getCollection(collectionName);  
+    const payload = event.payload as any;
+    const action = payload.action;
     
     switch(event.type) {  
       case 'create':  

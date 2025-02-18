@@ -36,6 +36,7 @@
     "@textile/multiaddr": "^0.6.1",
     "@types/bcryptjs": "^2.4.6",
     "@types/jsbn": "^1.2.33",
+    "@types/node": "^22.13.4",
     "bcryptjs": "^2.4.3",
     "cbor-web": "^10.0.3",
     "crypto-js": "^4.2.0",
