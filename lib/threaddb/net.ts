@@ -1,10 +1,11 @@
 import crypto from 'crypto';  
-import type { PeerId,PublicKey } from "@libp2p/interface"; 
-import { Ed25519PrivKey } from "../dc-key/ed25519"; 
+import type { PeerId,PublicKey,PrivateKey } from "@libp2p/interface"; 
+import { Ed25519PrivKey,Ed25519PubKey } from "../dc-key/ed25519"; 
 import { peerIdFromPublicKey,peerIdFromPrivateKey } from "@libp2p/peer-id";
 import { keys } from "@libp2p/crypto";
-import { Multiaddr } from '@multiformats/multiaddr'; // 多地址库  
-import {Head} from './head';
+import { Multiaddr, multiaddr } from '@multiformats/multiaddr'; // 多地址库  
+import { Head } from './head'; // Ensure Head is a class and not just a type
+import { log } from 'console';
 // 定义 Thread ID、Token 和 PubKey 的接口  
 interface ThreadID {  
   validate(): boolean;  
@@ -30,7 +31,7 @@ export interface ThreadLogInfo {
 // id is the log's identifier.
   id: PeerId;  
 // privKey is the log's private key.
-  privKey?: string;  
+  privKey?: PrivateKey;  
 // pubKey is the log's public key.
   pubKey?: PublicKey;  
 // Addrs are the addresses associated with the given log.
@@ -63,7 +64,7 @@ class Network {
   /**  
    * 创建线程  
    */  
-  async createThread(id: ThreadID, options: { token: ThreadToken; logKey?: string, threadKey?: ThreadKey }): Promise<ThreadInfo> {  
+  async createThread(id: ThreadID, options: { token: ThreadToken; logKey?: Ed25519PrivKey|Ed25519PubKey, threadKey?: ThreadKey }): Promise<ThreadInfo> {  
     const identity = await this.validate(id, options.token, false);  
     if (identity) {  
       console.debug("Creating thread with identity:", identity.toString());  
@@ -96,7 +97,7 @@ class Network {
   /**  
    * 确保日志唯一性  
    */  
-  async ensureUniqueLog(id: ThreadID, logKey: string | undefined, identity: PublicKey): Promise<void> {  
+  async ensureUniqueLog(id: ThreadID, logKey: Ed25519PrivKey|Ed25519PubKey|undefined, identity: PublicKey): Promise<void> {  
     // 自定义逻辑，检查日志唯一性  
   }  
 
@@ -114,42 +115,47 @@ class Network {
    */  
   async createLog(  
     id: ThreadID,  
-    key?: string,  
+    key?: Ed25519PrivKey|Ed25519PubKey,  
     identity?: PublicKey  
   ): Promise<ThreadLogInfo> {  
-    let privKey: string | undefined;  
+    let privKey: PrivateKey | undefined;  
     let pubKey: PublicKey;  
     let peerId: PeerId;  
-
     if (!key) {  
       const keyPair = await keys.generateKeyPair('Ed25519');
-      const privateKey =  new Ed25519PrivKey(keyPair.raw)
-      privKey = privateKey.toString();  
+      privKey =  new Ed25519PrivKey(keyPair.raw) 
       pubKey = keyPair.publicKey;  
-      peerId =  peerIdFromPrivateKey(privateKey);  
+      peerId =  peerIdFromPrivateKey(privKey);  
     } else {  
-      // 如果提供了 key，解析它  
-      privKey = key;  
-      pubKey = new PubKey(privKey); // 示例：将 privKey 直接转为 pubKey，这是伪代码  
-      peerId = await createPeerIdFromKeys(pubKey.toString(), privKey); // 示例功能  
+      if (key instanceof Ed25519PrivKey) {  
+        privKey = key;
+        pubKey = key.publicKey;  
+        peerId = peerIdFromPrivateKey(key);  
+      }else if(key instanceof Ed25519PubKey){
+        pubKey = key;
+        peerId = peerIdFromPublicKey(key);
+      }else{
+        throw new Error("Invalid key type.");  
+      }   
     }  
-
-    const addr = new Multiaddr(`/p2p/${this.hostID}`); // 基于 hostID 生成地址  
-
+    const addr = multiaddr(`/p2p/${this.hostID}`); // 基于 hostID 生成地址  
+    const head : Head = {
+        id: peerId.toCID(),
+        counter: 0,
+    }
     const logInfo: ThreadLogInfo = {  
       privKey,  
       pubKey,  
       id: peerId,  
       addrs: [addr],  
-      managed: true,  
+      managed: true, 
+      head: head
     };  
 
     // 将日志添加到线程存储  
     await this.store.addLog(id, logInfo);  
-
-    const logIDBytes = new Uint8Array(peerId.toBytes());  
+    const logIDBytes = new Uint8Array(new TextEncoder().encode(peerId.toString()));  
     await this.store.putBytes(id, identity?.toString() || "", logIDBytes);  
-
     return logInfo;  
   }  
 }
