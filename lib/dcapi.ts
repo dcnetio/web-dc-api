@@ -100,6 +100,11 @@ export class DCClient {
     }
   }
 
+  // 清除token
+  async ClearToken(): Promise<void> {
+      this.token = "";
+  }
+
   async AccountLogin(
     account: string,
     password: string,
@@ -225,6 +230,40 @@ export class DCClient {
       throw err;
     }
   }
+  // 验证token
+  async ValidToken(
+    peerAddr?: Multiaddr
+    ):  Promise<void> {
+      try {
+        if (this.p2pNode == null) {
+          throw new Error("p2pNode is null");
+        }
+        if (!peerAddr) {
+          peerAddr = this.peerAddr;
+        }
+        const grpcClient = new DCGrpcClient(
+          this.p2pNode,
+          peerAddr,
+          this.token,
+          this.protocol
+        );
+        await grpcClient.ValidToken();
+      } catch (err) {
+        console.error("GetToken error:", err);
+        throw err;
+      }
+    }
+
+  // 获取Token
+  async refreshToken(
+    pubkey: string,
+    signCallback: (payload: Uint8Array) => Uint8Array,
+    peerAddr?: Multiaddr
+  ): Promise<string> {
+    this.ClearToken();
+    return await this.GetToken(pubkey, signCallback, peerAddr);
+  }
+
 }
 
 interface AccountLoginRequest {

@@ -113,6 +113,25 @@ export class ChainUtil {
     return peers;
   };
 
+  // 获取用户节点列表
+  getAccountPeers = async (parentAccount: string) => {
+    const parentWalletAccountStorage =
+      await this.dcchainapi?.query.dcNode.walletAccountStorage(
+        parentAccount
+      );
+    if (!parentWalletAccountStorage) {
+      return "";
+    }
+    const parentUserInfo = parentWalletAccountStorage?.toJSON();
+    if (!isUser(parentUserInfo)) {
+      return null;
+    }
+    const requestPeers = parentUserInfo.requestPeers;
+    const peers = parentUserInfo.peers;
+    // todo 哪个是
+    return peers;
+  }
+
   // 链上查询节点信息
   // getDcNodeAddr = async (peerid: string) => {
   //   const peerInfo = await this.dcchainapi?.query.dcNode.peers(peerid);
