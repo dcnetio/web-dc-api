@@ -1,10 +1,13 @@
 import { ThreadID } from '@textile/threads-id';
-import type { PeerId,PublicKey } from "@libp2p/interface";
-import { Ed25519PrivKey } from "../dc-key/ed25519"; 
-import {SymKey} from "./core";
+import type { PeerId, PrivateKey, PublicKey } from "@libp2p/interface";
+import { Ed25519PrivKey } from "../../dc-key/ed25519"; 
+import { SymKey, ThreadInfo, ThreadLogInfo } from "./core";
 import type { Multiaddr } from "@multiformats/multiaddr";
-// 类型别名定义    
-type Head = string;  
+import { multiaddr } from '@multiformats/multiaddr';
+import { Head } from '../head'; 
+import { Key } from 'interface-datastore'  
+import * as pb from '../pb/lstore.ts'; 
+
 
 // 异常定义  
 export class ThreadExistsError extends Error {  
@@ -42,13 +45,13 @@ export interface ThreadMetadata {
 }  
 
 export interface KeyBook {  
-  pubKey(threadId: ThreadID, peerId: PeerId): Promise<PublicKey>;  
+  pubKey(threadId: ThreadID, peerId: PeerId): Promise<PublicKey | null>;  
   addPubKey(threadId: ThreadID, peerId: PeerId, key: PublicKey): Promise<void>;  
-  privKey(threadId: ThreadID, peerId: PeerId): Promise<Ed25519PrivKey>;  
-  addPrivKey(threadId: ThreadID, peerId: PeerId, key: Ed25519PrivKey): Promise<void>;  
-  readKey(threadId: ThreadID): Promise<SymKey>;  
+  privKey(threadId: ThreadID, peerId: PeerId): Promise<PrivateKey | null>;  
+  addPrivKey(threadId: ThreadID, peerId: PeerId, key: PrivateKey): Promise<void>;  
+  readKey(threadId: ThreadID): Promise<SymKey | null>;  
   addReadKey(threadId: ThreadID, key: SymKey): Promise<void>;  
-  serviceKey(threadId: ThreadID): Promise<SymKey>;  
+  serviceKey(threadId: ThreadID): Promise<SymKey | null>;  
   addServiceKey(threadId: ThreadID, key: SymKey): Promise<void>;  
   clearKeys(threadId: ThreadID): Promise<void>;  
   clearLogKeys(threadId: ThreadID, peerId: PeerId): Promise<void>;  
@@ -58,14 +61,17 @@ export interface KeyBook {
   restoreKeys(book: DumpKeyBook): Promise<void>;  
 }  
 
+
+
+
+
 export interface AddrBook {  
   addAddr(threadId: ThreadID, peerId: PeerId, addr: Multiaddr, ttl: number): Promise<void>;  
   addAddrs(threadId: ThreadID, peerId: PeerId, addrs: Multiaddr[], ttl: number): Promise<void>;  
   setAddr(threadId: ThreadID, peerId: PeerId, addr: Multiaddr, ttl: number): Promise<void>;  
   setAddrs(threadId: ThreadID, peerId: PeerId, addrs: Multiaddr[], ttl: number): Promise<void>;  
   updateAddrs(threadId: ThreadID, peerId: PeerId, oldTTL: number, newTTL: number): Promise<void>;  
-  addrs(threadId: ThreadID, peerId: PeerId): Promise<Multiaddr[]>;  
-  addrStream( threadId: ThreadID, peerId: PeerId): AsyncIterable<Multiaddr>;  
+  addrs(threadId: ThreadID, peerId: PeerId): Promise<Multiaddr[]>;   
   clearAddrs(threadId: ThreadID, peerId: PeerId): Promise<void>;  
   logsWithAddrs(threadId: ThreadID): Promise<PeerId[]>;  
   threadsFromAddrs(): Promise<ThreadID[]>;  
@@ -92,54 +98,56 @@ export interface Logstore extends ThreadMetadata, KeyBook, AddrBook, HeadBook {
   addThread(info: ThreadInfo): Promise<void>;  
   getThread(threadId: ThreadID): Promise<ThreadInfo>;  
   deleteThread(threadId: ThreadID): Promise<void>;  
-  addLog(threadId: ThreadID, logInfo: LogInfo): Promise<void>;  
-  getLog(threadId: ThreadID, peerId: PeerId): Promise<LogInfo>;  
-  getManagedLogs(threadId: ThreadID): Promise<LogInfo[]>;  
+  addLog(threadId: ThreadID, logInfo: ThreadLogInfo): Promise<void>;  
+  getLog(threadId: ThreadID, peerId: PeerId): Promise<ThreadLogInfo>;  
+  getManagedLogs(threadId: ThreadID): Promise<ThreadLogInfo[]>;  
   deleteLog(threadId: ThreadID, peerId: PeerId): Promise<void>;  
 }  
 
+
+
+export function dsLogKey(tid: ThreadID, pid: PeerId, base: Key): Key {  
+  return base.child(new Key(tid.toString())).child(new Key(pid.toString()))  
+}  
+
+export function dsThreadKey(tid: ThreadID, base: Key): Key {  
+  return base.child(new Key(tid.toString()))  
+}  
+
+
 // Dump 结构定义  
-interface ExpiredAddress {  
+export interface ExpiredAddress {  
   addr: Multiaddr;  
   expires: Date;  
 }  
 
-interface DumpHeadBook {  
+export interface DumpHeadBook {  
   data: Record<string, Record<string, Head[]>>;  
 }  
 
-interface DumpAddrBook {  
+export interface DumpAddrBook {  
   data: Record<string, Record<string, ExpiredAddress[]>>;  
 }  
 
-interface DumpKeyBook {  
+export interface DumpKeyBook {  
   data: {  
     public: Record<string, Record<string, PublicKey>>;  
-    private: Record<string, Record<string, Ed25519PrivKey>>;  
+    private: Record<string, Record<string, PrivateKey>>;  
     read: Record<string, Buffer>;  
     service: Record<string, Buffer>;  
   };  
 }  
 
-interface MetadataKey {  
+export interface MetadataKey {  
   t: ThreadID;  
   k: string;  
 }  
 
-interface DumpMetadata {  
+export interface DumpMetadata {  
   data: {  
     int64: Record<string, number>;   
     bool: Record<string, boolean>;  
     string: Record<string, string>;  
     bytes: Record<string, Buffer>;  
   };  
-}  
-
-// 辅助类型定义  
-interface ThreadInfo {  
-  // 根据实际情况完善  
-}  
-
-interface LogInfo {  
-  // 根据实际情况完善  
-}  
+}

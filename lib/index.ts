@@ -5,7 +5,8 @@ import { MemoryBlockstore } from "blockstore-core";
 import { MemoryDatastore } from "datastore-core";
 import { circuitRelayTransport } from "@libp2p/circuit-relay-v2";
 import { webRTCDirect } from "@libp2p/webrtc";
-import { KeyManager } from "./dc-key/keyManager";
+import { KeyManager } from "./dc-key/keymanager";
+import { compareByteArrays,mergeUInt8Arrays} from "./util/util"; 
 import { keys } from "@libp2p/crypto";
 
 import { createHelia } from "helia";
@@ -703,27 +704,4 @@ function decryptContentForBrowser(
     kdfSalt: kdfSalt,
   });
   return decrypted.toUint8Array();
-}
-
-// 比较两个字节数组是否相等
-function compareByteArrays(array1: Uint8Array, array2: Uint8Array) {
-  if (array1.byteLength != array2.byteLength) {
-    return false;
-  }
-  const view1 = new DataView(array1.buffer, array1.byteOffset);
-  const view2 = new DataView(array2.buffer, array2.byteOffset);
-  for (let i = 0; i < array1.length; i++) {
-    if (view1.getUint8(i) !== view2.getUint8(i)) {
-      return false;
-    }
-  }
-  return true;
-}
-
-function mergeUInt8Arrays(a1: Uint8Array, a2: Uint8Array): Uint8Array {
-  // sum of individual array lengths
-  const mergedArray = new Uint8Array(a1.length + a2.length);
-  mergedArray.set(a1);
-  mergedArray.set(a2, a1.length);
-  return mergedArray;
 }

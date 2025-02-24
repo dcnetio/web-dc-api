@@ -13,7 +13,7 @@ import {
   JsonSchema,
   NewOptions,
   Index,
-  CollectionConfig } from './core';
+  CollectionConfig } from './core/core';
 import { ulid } from 'ulid';  
 import {JsonPatcher}  from './json-patcher';
 

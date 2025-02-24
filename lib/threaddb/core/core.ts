@@ -1,9 +1,11 @@
 
-
+ 
 import { Key,Datastore,Query,Batch } from 'interface-datastore';
-import { Key as threadKey } from './key';
-import { Ed25519PrivKey,Ed25519PubKey } from "../dc-key/ed25519";
-import { EventEmitter } from 'events'; 
+import { Key as threadKey } from '../key';
+import { Ed25519PrivKey,Ed25519PubKey } from "../../dc-key/ed25519";
+import type { PeerId,PublicKey,PrivateKey } from "@libp2p/interface"; 
+import { Multiaddr } from '@multiformats/multiaddr'; 
+import { Head } from '../head'; 
 
 // ======== 基础类型定义 ========  
 export interface Context extends Record<string, any> {  
@@ -194,3 +196,47 @@ export interface SymKey {
   key: CryptoKey;
   raw: Uint8Array;
 }
+
+
+// 定义 Thread ID、Token 和 PubKey 的接口  
+export interface ThreadID {  
+  validate(): boolean;  
+}  
+
+export interface ThreadKey {  
+  defined(): boolean;  
+}  
+
+export interface ThreadToken {  
+  validate(privKey: string): Promise<PublicKey>;  
+}  
+
+
+
+// 定义 Thread Info 的接口  
+export interface ThreadInfo {  
+  id: ThreadID;  
+  key: ThreadKey;  
+}  
+
+export interface ThreadLogInfo {  
+// id is the log's identifier.
+  id: PeerId;  
+// privKey is the log's private key.
+  privKey?: PrivateKey;  
+// pubKey is the log's public key.
+  pubKey?: PublicKey;  
+// Addrs are the addresses associated with the given log.
+  addrs: Multiaddr[];  
+// Managed logs are any logs directly added/created by the host, and/or logs for which we have the private key
+  managed: boolean;  
+// Head is the log's current head.
+  head: Head;
+}  
+
+// 定义 Store 接口  
+export interface Store {  
+  addThread(info: ThreadInfo): Promise<void>;  
+  addLog(id: ThreadID, logInfo: ThreadLogInfo): Promise<void>;  
+  putBytes(id: ThreadID, identity: string, bytes: Uint8Array): Promise<void>;  
+}  

@@ -1,23 +1,21 @@
 import type { Libp2p } from "libp2p";
 import type { Multiaddr } from "@multiformats/multiaddr";
-import * as bcrypt from "./util/bcrypt"; //
+
 import { DCGrpcClient } from "./grpc-dc";
 import { toString as uint8ArrayToString } from "uint8arrays/to-string";
 import { Ed25519PubKey } from "./dc-key/ed25519";
+import { extractPeerIdFromMultiaddr,generateSymKeyForPrikey,extractPublicKeyFromPeerId } from "./dc-key/keymanager";
 import type { PeerId } from "@libp2p/interface";
 
-import { multiaddr } from "@multiformats/multiaddr";
-import { peerIdFromString } from "@libp2p/peer-id";
+
 import { Encryption } from "./util/curve25519Encryption";
 import { decryptContent } from "./util/dccrypt";
 import { keys } from "@libp2p/crypto";
 import { sha256, getRandomBytes, concatenateUint8Arrays } from "./util/util";
-import { SymKey } from "./threaddb/core";
 
-/**
- * bcrypt 的成本因子
- */
-const BCRYPT_COST = 12;
+
+
+
 export class DCClient {
   readonly protocol: string;
   p2pNode: Libp2p;
@@ -324,116 +322,5 @@ async function generateAccountLoginRequestWithPeerId(
     };
   } catch (error: any) {
     throw new Error(`Failed to generate login request: ${error.message}`);
-  }
-}
-
-/**
- * 从 PeerId 中提取公钥 ,只支持 Ed25519PubKey
- * @param peerId libp2p PeerId 实例
- * @returns 提取的公钥
- */
-async function extractPublicKeyFromPeerId(
-  peerId: PeerId
-): Promise<Ed25519PubKey> {
-  try {
-    if (peerId.type === "Ed25519") {
-      if (peerId.publicKey != null) {
-        return Ed25519PubKey.formEd25519PublicKey(peerId.publicKey);
-      }
-    }
-    // 如果无法从 PeerId 中直接获取公钥
-    throw new Error("Unable to extract public key from PeerId");
-  } catch (error: any) {
-    throw new Error(`Failed to extract public key: ${error.message}`);
-  }
-}
-
-/**
- * 从 Multiaddr 中提取 PeerId
- * @param addr Multiaddr 实例或字符串
- * @returns PeerId 实例
- */
-async function extractPeerIdFromMultiaddr(
-  addr: Multiaddr | string
-): Promise<PeerId> {
-  try {
-    // 确保地址是 Multiaddr 实例
-    const multiAddr = typeof addr === "string" ? multiaddr(addr) : addr;
-
-    // 获取 p2p 或 ipfs 协议的值
-    const p2pValue = multiAddr.getPeerId();
-
-    if (!p2pValue) {
-      throw new Error("No PeerId found in multiaddr");
-    }
-    // 从字符串创建 PeerId
-    return peerIdFromString(p2pValue);
-  } catch (error: any) {
-    throw new Error(`Failed to extract PeerId: ${error.message}`);
-  }
-}
-
-
-
-/**
- * 从字节数组生成对称密钥
- * @param bytes - 输入字节数组
- * @returns Promise<SymKey> - 返回对称密钥
- */
-async function symKeyFromBytes(bytes: Uint8Array): Promise<SymKey> {
-  const key = await window.crypto.subtle.importKey(
-    "raw",
-    bytes,
-    { name: "AES-GCM" },
-    true,
-    ["encrypt", "decrypt"]
-  );
-
-  return {
-    key,
-    raw: bytes,
-  };
-}
-
-/**
- * 生成用户私钥加解密的密钥
- * @param account - 用户账号
- * @param password - 用户密码
- * @returns Promise<SymKey> - 返回对称加密密钥
- */
-export async function generateSymKeyForPrikey(
-  account: string,
-  password: string
-): Promise<SymKey> {
-  try {
-    // 计算密码的 SHA256 哈希
-    const passwordHash = await sha256(new TextEncoder().encode(password));
-
-    // 从哈希中提取盐值（与 Go 代码保持一致，使用后16字节）
-    const salt = passwordHash.slice(16, 32);
-
-    // 使用 bcrypt 生成哈希
-    const bcryptHash = await bcrypt.generateFromPasswordWithSalt(
-      passwordHash,
-      BCRYPT_COST,
-      salt
-    );
-
-    const hash = bcryptHash.hash;
-    // 将 account 转换为字节数组
-    const accountBytes = new TextEncoder().encode(account);
-
-    // 合并 bcryptHash 和 account 字节
-    const combined = new Uint8Array(hash.length + accountBytes.length);
-    combined.set(hash);
-    combined.set(accountBytes, hash.length);
-
-    // 计算最终的 SHA256 哈希
-    const keyBytes = await sha256(combined);
-
-    // 从字节生成对称密钥
-    return await symKeyFromBytes(keyBytes);
-  } catch (error: any) {
-    throw new Error(`Failed to generate symmetric key: ${error.message}`);
   }
 }

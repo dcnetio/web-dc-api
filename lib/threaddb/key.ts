@@ -4,6 +4,7 @@
 import { base32 } from 'multiformats/bases/base32'  
 import { secretbox, randomBytes } from 'tweetnacl'  
 
+
 export class SymmetricKey {  
   static readonly keyBytes: number = secretbox.keyLength  
   private key: Uint8Array  

@@ -13,7 +13,7 @@ import {
   TxnDatastoreExtended,  
   Transaction,  
   ActionType
-} from './core';  
+} from './core/core';  
 
 // ==================== 核心数据结构 ====================  
 interface Operation {  

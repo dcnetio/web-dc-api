@@ -1,6 +1,6 @@
 import { Key, Query, Batch, Pair, KeyQuery } from 'interface-datastore'  
 import { LevelDatastore } from 'datastore-level'  
-import {  QueryExt, QueryResult, TxnDatastoreExtended,Transaction } from './core'  
+import {  QueryExt, QueryResult, TxnDatastoreExtended,Transaction } from './core/core'  
 import { AbortOptions } from '@libp2p/interface';
 type AwaitIterable<T> = AsyncIterable<T> | Iterable<T>;  
 

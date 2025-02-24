@@ -1,53 +1,14 @@
 import crypto from 'crypto';  
-import type { PeerId,PublicKey,PrivateKey } from "@libp2p/interface"; 
-import { Ed25519PrivKey,Ed25519PubKey } from "../dc-key/ed25519"; 
+
 import { peerIdFromPublicKey,peerIdFromPrivateKey } from "@libp2p/peer-id";
 import { keys } from "@libp2p/crypto";
 import { Multiaddr, multiaddr } from '@multiformats/multiaddr'; // 多地址库  
-import { Head } from './head'; // Ensure Head is a class and not just a type
-import { log } from 'console';
-// 定义 Thread ID、Token 和 PubKey 的接口  
-interface ThreadID {  
-  validate(): boolean;  
-}  
-
-interface ThreadKey {  
-  defined(): boolean;  
-}  
-
-interface ThreadToken {  
-  validate(privKey: string): Promise<PublicKey>;  
-}  
+import { Head } from './head'; 
+import { Ed25519PrivKey,Ed25519PubKey } from "../dc-key/ed25519";
+import type { PeerId,PublicKey,PrivateKey } from "@libp2p/interface"; 
+import {ThreadID,  ThreadInfo, ThreadLogInfo,ThreadToken,ThreadKey,Store} from './core/core';
 
 
-
-// 定义 Thread Info 的接口  
-export interface ThreadInfo {  
-  id: ThreadID;  
-  key: ThreadKey;  
-}  
-
-export interface ThreadLogInfo {  
-// id is the log's identifier.
-  id: PeerId;  
-// privKey is the log's private key.
-  privKey?: PrivateKey;  
-// pubKey is the log's public key.
-  pubKey?: PublicKey;  
-// Addrs are the addresses associated with the given log.
-  addrs: Multiaddr[];  
-// Managed logs are any logs directly added/created by the host, and/or logs for which we have the private key
-  managed: boolean;  
-// Head is the log's current head.
-  head: Head;
-}  
-
-// 定义 Store 接口  
-interface Store {  
-  addThread(info: ThreadInfo): Promise<void>;  
-  addLog(id: ThreadID, logInfo: ThreadLogInfo): Promise<void>;  
-  putBytes(id: ThreadID, identity: string, bytes: Uint8Array): Promise<void>;  
-}  
 
 // 定义 Network 类  
 class Network {  

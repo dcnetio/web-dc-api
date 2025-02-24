@@ -8,7 +8,7 @@ import {
   KeyTransform,
   QueryExt,
   QueryResult 
-} from './core';
+} from './core/core';
 
 
 // ======== 类型扩展声明 ========  
