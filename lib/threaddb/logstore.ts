@@ -3,10 +3,15 @@
 import { Mutex } from 'async-mutex';
 import { KeyBook, AddrBook, ThreadMetadata, HeadBook, Logstore as CoreLogstore, ErrThreadNotFound, ErrLogNotFound, ErrLogExists } from './core/logstore';
 import {ThreadInfo,ThreadLogInfo} from './core/core';
+import {SymmetricKey} from './key';
 import { ThreadID } from '@textile/threads-id'; 
 import type { PeerId } from "@libp2p/interface";
 import { compareByteArrays } from '../util/util';
+import {Key as ThreadKey} from './key';
 import { symKeyFromBytes } from '../dc-key/keymanager';
+import { CID } from 'multiformats';
+
+const PermanentAddrTTL = 2^53-1; // 使用 bigint 精确表示 64 位整数  
 
 
 const managedSuffix = "/managed";
@@ -55,11 +60,10 @@ class Logstore implements CoreLogstore {
     async threads(): Promise<ThreadID[]> {
         return this.mutex.runExclusive(async () => {
             const set: Set<ThreadID> = new Set();
-            const threadsFromKeys = await this.threadsFromKeys();
+            const threadsFromKeys = await this.keyBook.threadsFromKeys();
             threadsFromKeys.forEach(t => set.add(t));
-            const threadsFromAddrs = await this.threadsFromAddrs();
+            const threadsFromAddrs = await this.addrBook.threadsFromAddrs();
             threadsFromAddrs.forEach(t => set.add(t));
-
             return Array.from(set);
         });
     }
@@ -98,30 +102,32 @@ class Logstore implements CoreLogstore {
     // GetThread returns thread info of the given id.
     async getThread(id: ThreadID):Promise<ThreadInfo> {
         return this.mutex.runExclusive(async () => {
-            const sk = await this.serviceKey(id);
+            const sk = await this.keyBook.serviceKey(id);
             if (!sk) {
                 throw ErrThreadNotFound;
             }
-            const rk = await this.readKey(id);
+            const rk = await this.keyBook.readKey(id);
             const set = await this.getLogIDs(id);
             const logs: ThreadLogInfo[] = [];
             for (const l of set) {
                 const i = await this.getLog(id, l);
                 logs.push(i);
             }
+
             return {
                 id,
                 logs,
-                key: NewKey(sk, rk)
+                key: new ThreadKey(SymmetricKey.fromSymKey(sk), rk?SymmetricKey.fromSymKey(rk):null),
+                addrs:[]
             };
         });
     }
 
     private async getLogIDs(id: ThreadID): Promise<Set<PeerId>> {
         const set: Set<PeerId> = new Set();
-        const logsWithKeys = await this.logsWithKeys(id);
+        const logsWithKeys = await this.keyBook.logsWithKeys(id);
         logsWithKeys.forEach(l => set.add(l));
-        const logsWithAddrs = await this.logsWithAddrs(id);
+        const logsWithAddrs = await this.addrBook.logsWithAddrs(id);
         logsWithAddrs.forEach(l => set.add(l));
         return set;
     }
@@ -129,12 +135,12 @@ class Logstore implements CoreLogstore {
     // DeleteThread deletes a thread.
     async deleteThread(id: ThreadID): Promise<void> {
         return this.mutex.runExclusive(async () => {
-            await this.clearKeys(id);
-            await this.clearMetadata(id);
+            await this.keyBook.clearKeys(id);
+            await this.threadMetadata.clearMetadata(id);
             const set = await this.getLogIDs(id);
             for (const l of set) {
-                await this.clearAddrs(id, l);
-                await this.clearHeads(id, l);
+                await this.addrBook.clearAddrs(id, l);
+                await this.headBook.clearHeads(id, l);
             }
         });
     }
@@ -143,19 +149,22 @@ class Logstore implements CoreLogstore {
     async addLog(id: ThreadID, lg: ThreadLogInfo): Promise<void> {
         return this.mutex.runExclusive(async () => {
             if (lg.privKey) {
-                const pk = await this.privKey(id, lg.id);
+                const pk = await this.keyBook.privKey(id, lg.id);
                 if (pk) {
                     throw ErrLogExists;
                 }
-                await this.addPrivKey(id, lg.id, lg.privKey);
+                await this.keyBook.addPrivKey(id, lg.id, lg.privKey);
             }
-            await this.addPubKey(id, lg.id, lg.pubKey);
-            await this.addAddrs(id, lg.id, lg.addrs, PermanentAddrTTL);
-            if (lg.head.id.defined()) {
-                await this.setHead(id, lg.id, lg.head);
+            if (!lg.pubKey) {
+                throw new Error("public key is required");
+            }
+            await this.keyBook.addPubKey(id, lg.id, lg.pubKey);
+            await this.addrBook.addAddrs(id, lg.id, lg.addrs, PermanentAddrTTL);
+            if (lg.head && lg.head.id.toString() !== "") {
+                await this.headBook.setHead(id, lg.id, lg.head);
             }
             if (lg.managed || lg.privKey) {
-                await this.putBool(id, lg.id.toString() + managedSuffix, true);
+                await this.threadMetadata.putBool(id, lg.id.toString() + managedSuffix, true);
             }
         });
     }
@@ -168,18 +177,18 @@ class Logstore implements CoreLogstore {
     }
 
     private async getLogInternal(id: ThreadID, lid: PeerId): Promise<ThreadLogInfo> {
-        const pk = await this.pubKey(id, lid);
+        const pk = await this.keyBook.pubKey(id, lid);
         if (!pk) {
             throw ErrLogNotFound;
         }
-        const sk = await this.privKey(id, lid);
-        const addrs = await this.addrs(id, lid);
-        const heads = await this.heads(id, lid);
-        const managed = await this.getBool(id, lid.toString() + managedSuffix);
+        const sk = await this.keyBook.privKey(id, lid);
+        const addrs = await this.addrBook.addrs(id, lid);
+        const heads = await this.headBook.heads(id, lid);
+        const managed = await this.threadMetadata.getBool(id, lid.toString() + managedSuffix);
         return {
             id: lid,
             pubKey: pk,
-            privKey: sk,
+            privKey: sk?sk:undefined,
             addrs,
             head: heads.length > 0 ? heads[0] : undefined,
             managed: managed || false
@@ -188,7 +197,7 @@ class Logstore implements CoreLogstore {
 
     // GetManagedLogs returns the logs the host is 'managing' under the given thread.
     async getManagedLogs(id: ThreadID): Promise<ThreadLogInfo[]> {
-        const logs = await this.logsWithKeys(id);
+        const logs = await this.keyBook.logsWithKeys(id);
         const managed: ThreadLogInfo[] = [];
         for (const lid of logs) {
             const lg = await this.getLog(id, lid);
@@ -202,9 +211,9 @@ class Logstore implements CoreLogstore {
     // DeleteLog deletes a log.
     async deleteLog(id: ThreadID, lid: PeerId): Promise<void> {
         return this.mutex.runExclusive(async () => {
-            await this.clearLogKeys(id, lid);
-            await this.clearAddrs(id, lid);
-            await this.clearHeads(id, lid);
+            await this.keyBook.clearLogKeys(id, lid);
+            await this.addrBook.clearAddrs(id, lid);
+            await this.headBook.clearHeads(id, lid);
         });
     }
 

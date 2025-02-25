@@ -4,9 +4,12 @@ import { peerIdFromPublicKey,peerIdFromPrivateKey } from "@libp2p/peer-id";
 import { keys } from "@libp2p/crypto";
 import { Multiaddr, multiaddr } from '@multiformats/multiaddr'; // 多地址库  
 import { Head } from './core/head'; 
+import { ThreadID } from '@textile/threads-id'; 
 import { Ed25519PrivKey,Ed25519PubKey } from "../dc-key/ed25519";
 import type { PeerId,PublicKey,PrivateKey } from "@libp2p/interface"; 
-import {ThreadID,  ThreadInfo, ThreadLogInfo,ThreadToken,ThreadKey,Store} from './core/core';
+import { SymmetricKey, Key as ThreadKey } from './key';
+import {validateIDData} from './lsstoreds/global';
+import {  ThreadInfo, ThreadLogInfo,ThreadToken,Store} from './core/core';
 
 
 
@@ -36,7 +39,7 @@ class Network {
     await this.ensureUniqueLog(id, options.logKey, identity);  
     const threadKey = options.threadKey || this.generateRandomKey();  
 
-    const threadInfo: ThreadInfo = { id, key: threadKey };  
+    const threadInfo: ThreadInfo = { id:id, key: threadKey,logs: [],addrs: [] };  
 
     await this.store.addThread(threadInfo);  
     const logInfo = await this.createLog(id, options.logKey, identity);  
@@ -48,10 +51,9 @@ class Network {
    * 验证线程 ID 和 Token  
    */  
   async validate(id: ThreadID, token: ThreadToken, readOnly: boolean): Promise<PublicKey> {  
-    if (!id.validate()) {  
+    if (!validateIDData(id.toBytes())) {  
       throw new Error("Invalid thread ID.");  
     }  
-
     return await token.validate(this.privateKey);  
   }  
 
@@ -62,14 +64,7 @@ class Network {
     // 自定义逻辑，检查日志唯一性  
   }  
 
-  /**  
-   * 随机生成线程密钥  
-   */  
-  generateRandomKey(): ThreadKey {  
-    return {  
-      defined: () => true,  
-    };  
-  }  
+
 
   /**  
    * 创建日志，分配 privKey 和 pubKey  
@@ -118,5 +113,12 @@ class Network {
     const logIDBytes = new Uint8Array(new TextEncoder().encode(peerId.toString()));  
     await this.store.putBytes(id, identity?.toString() || "", logIDBytes);  
     return logInfo;  
+  }  
+
+  /**  
+   * 生成随机线程密钥  
+   */  
+  generateRandomKey(): ThreadKey {  
+    return new ThreadKey(SymmetricKey.new(),SymmetricKey.new());  
   }  
 }

@@ -92,7 +92,7 @@ export interface HeadBook {
   restoreHeads(book: DumpHeadBook): Promise<void>;  
 }  
 
-export interface Logstore extends ThreadMetadata, KeyBook, AddrBook, HeadBook {  
+export interface Logstore  {  
   close(): Promise<void>;  
   threads(): Promise<ThreadID[]>;  
   addThread(info: ThreadInfo): Promise<void>;  

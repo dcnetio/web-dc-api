@@ -22,6 +22,7 @@ export async function newLogstore(
   const keyBook = await newKeyBook(store)  
   const threadMetadata = newThreadMetadata(store)  
   const headBook = newHeadBook(store as TxnDatastoreExtended)  
+  
   return lstore.newLogstore(keyBook, addrBook, headBook, threadMetadata)  
 }  
  

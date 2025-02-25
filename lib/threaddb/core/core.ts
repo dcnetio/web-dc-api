@@ -227,7 +227,7 @@ export interface ThreadLogInfo {
 // Managed logs are any logs directly added/created by the host, and/or logs for which we have the private key
   managed: boolean;  
 // Head is the log's current head.
-  head: Head;
+  head?: Head;
 }  
 
 // 定义 Store 接口  

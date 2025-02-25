@@ -55,6 +55,10 @@ export class SymmetricKey {
     const symKey =  await symKeyFromBytes(this.key);
     return symKey
   }
+
+  static fromSymKey(symKey: SymKey): SymmetricKey {
+    return new SymmetricKey(symKey.raw)
+  }
 }  
 
 export class Key {  
