@@ -3,6 +3,8 @@
 
 import { base32 } from 'multiformats/bases/base32'  
 import { secretbox, randomBytes } from 'tweetnacl'  
+import { symKeyFromBytes } from '../dc-key/keymanager';
+import { SymKey } from "../threaddb/core/core";
 
 
 export class SymmetricKey {  
@@ -12,6 +14,7 @@ export class SymmetricKey {
   private constructor(key: Uint8Array) {  
     this.key = key  
   }  
+
 
   static new(): SymmetricKey {  
     const key = randomBytes(SymmetricKey.keyBytes)  
@@ -47,6 +50,11 @@ export class SymmetricKey {
     }  
     return decrypted  
   }  
+
+  async toSymKey(): Promise<SymKey> {
+    const symKey =  await symKeyFromBytes(this.key);
+    return symKey
+  }
 }  
 
 export class Key {  
@@ -122,4 +130,6 @@ export class Key {
   toString(): string {  
     return base32.encode(this.toBytes())  
   }  
+
+
 }

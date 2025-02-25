@@ -8,6 +8,11 @@ const AllowEmptyRestore = false
 // 元数据键前缀  
 const tmetaBase = new Key('/thread/meta')  
 
+
+export function newThreadMetadata(ds: Datastore): DsThreadMetadata {
+    return new DsThreadMetadata(ds);
+}
+
 export class DsThreadMetadata implements ThreadMetadata {  
   constructor(private readonly ds: Datastore) {}  
 

@@ -4,10 +4,10 @@ import { peerIdFromPrivateKey, peerIdFromPublicKey } from '@libp2p/peer-id'
 import { keys } from '@libp2p/crypto'  
 import { base32 } from 'multiformats/bases/base32'  
 import { fromString as uint8ArrayFromString } from 'uint8arrays/from-string'  
-import { DumpKeyBook,KeyBook,dsLogKey,dsThreadKey,AddrBookRecord } from '../core/logstore'
+import { DumpKeyBook,KeyBook} from '../core/logstore'
 import { ThreadID } from '@textile/threads-id';
 import type { PeerId,PrivateKey,PublicKey } from "@libp2p/interface";
-import {uniqueLogIds,uniqueThreadIds} from './logstore'
+import {uniqueLogIds,uniqueThreadIds,AllowEmptyRestore,dsLogKey,dsThreadKey } from './global'
 import { SymmetricKey } from '../key';
 import { symKeyFromBytes } from '../../dc-key/keymanager';
 import { publicKeyFromRaw ,privateKeyFromRaw} from '@libp2p/crypto/keys'
@@ -146,13 +146,13 @@ class DsKeyBook implements KeyBook {
     )  
     
     return uniqueLogIds(this.ds,threadKey, result =>   
-      new Key(result.key).parent().name()  
+      result.parent().name()  
     )  
   }  
 
   async threadsFromKeys(): Promise<ThreadID[]> {  
     return uniqueThreadIds(this.ds,KB_BASE, result =>  
-      new Key(result.key).parent().parent().name()  
+        result.parent().parent().name()  
     )  
   }  
 
@@ -228,8 +228,48 @@ class DsKeyBook implements KeyBook {
     const [tid] = namespaces.slice(2, 3)    
     dump.data.service[tid] = Buffer.from(value)  
   } 
- 
-}  
+
+async restoreKeys(dump: DumpKeyBook): Promise<void> {
+    if (
+        !AllowEmptyRestore &&
+        Object.keys(dump.data.public).length === 0 &&
+        Object.keys(dump.data.private).length === 0 &&
+        Object.keys(dump.data.read).length === 0 &&
+        Object.keys(dump.data.service).length === 0
+    ) {
+        throw new Error('Empty dump data');
+    }
+
+    // clear all local keys
+    await this.clearKeysInternal(KB_BASE);
+
+    for (const tid in dump.data.public) {
+        for (const lid in dump.data.public[tid]) {
+            const pubKey = dump.data.public[tid][lid];
+            await this.addPubKey(ThreadID.fromString(tid), await peerIdFromPublicKey(pubKey), pubKey);
+        }
+    }
+
+    for (const tid in dump.data.private) {
+        for (const lid in dump.data.private[tid]) {
+            const privKey = dump.data.private[tid][lid];
+            await this.addPrivKey(ThreadID.fromString(tid), await peerIdFromPrivateKey(privKey), privKey);
+        }
+    }
+
+    for (const tid in dump.data.read) {
+        const rk = dump.data.read[tid];
+        const key = await symKeyFromBytes(rk);
+        await this.addReadKey(ThreadID.fromString(tid), key);
+    }
+
+    for (const tid in dump.data.service) {
+        const sk = dump.data.service[tid];
+        const key = await symKeyFromBytes(sk);
+        await this.addServiceKey(ThreadID.fromString(tid), key);
+    }
+}
+}
 
 export async function newKeyBook(store: Datastore): Promise<DsKeyBook> {  
   return new DsKeyBook(store)  

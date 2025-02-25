@@ -4,28 +4,28 @@ import { Ed25519PrivKey } from "../../dc-key/ed25519";
 import { SymKey, ThreadInfo, ThreadLogInfo } from "./core";
 import type { Multiaddr } from "@multiformats/multiaddr";
 import { multiaddr } from '@multiformats/multiaddr';
-import { Head } from '../head'; 
+import { Head } from './head.ts'; 
 import { Key } from 'interface-datastore'  
 import * as pb from '../pb/lstore.ts'; 
 
 
 // 异常定义  
-export class ThreadExistsError extends Error {  
+export class ErrThreadExists extends Error {  
   constructor() { super('thread already exists'); }  
 }  
-export class ThreadNotFoundError extends Error {  
+export class ErrThreadNotFound extends Error {  
   constructor() { super('thread not found'); }  
 }  
-export class LogNotFoundError extends Error {  
+export class ErrLogNotFound extends Error {  
   constructor() { super('log not found'); }  
 }  
-export class LogExistsError extends Error {  
+export class ErrLogExists extends Error {  
   constructor() { super('log already exists'); }  
 }  
-export class EmptyDumpError extends Error {  
+export class ErrEmptyDump extends Error {  
   constructor() { super('empty dump'); }  
 }  
-export class EdgeUnavailableError extends Error {  
+export class ErrEdgeUnavailable extends Error {  
   constructor() { super('edge unavailable'); }  
 }  
 
@@ -105,14 +105,6 @@ export interface Logstore extends ThreadMetadata, KeyBook, AddrBook, HeadBook {
 }  
 
 
-
-export function dsLogKey(tid: ThreadID, pid: PeerId, base: Key): Key {  
-  return base.child(new Key(tid.toString())).child(new Key(pid.toString()))  
-}  
-
-export function dsThreadKey(tid: ThreadID, base: Key): Key {  
-  return base.child(new Key(tid.toString()))  
-}  
 
 
 // Dump 结构定义  

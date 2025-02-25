@@ -1,11 +1,12 @@
 
  
 import { Key,Datastore,Query,Batch } from 'interface-datastore';
-import { Key as threadKey } from '../key';
+import { Key as ThreadKey } from '../key';
+import { ThreadID } from '@textile/threads-id';
 import { Ed25519PrivKey,Ed25519PubKey } from "../../dc-key/ed25519";
 import type { PeerId,PublicKey,PrivateKey } from "@libp2p/interface"; 
 import { Multiaddr } from '@multiformats/multiaddr'; 
-import { Head } from '../head'; 
+import { Head } from './head'; 
 
 // ======== 基础类型定义 ========  
 export interface Context extends Record<string, any> {  
@@ -47,7 +48,7 @@ export class NewOptions {
   collections?: CollectionConfig[];  
   eventCodec?: any;  
   debug?: boolean;  
-  key?: threadKey;
+  key?: ThreadKey;
   LogKey?: Ed25519PrivKey|Ed25519PubKey;
   block?: boolean;
   token?: Token; 
@@ -198,14 +199,7 @@ export interface SymKey {
 }
 
 
-// 定义 Thread ID、Token 和 PubKey 的接口  
-export interface ThreadID {  
-  validate(): boolean;  
-}  
 
-export interface ThreadKey {  
-  defined(): boolean;  
-}  
 
 export interface ThreadToken {  
   validate(privKey: string): Promise<PublicKey>;  
@@ -217,6 +211,8 @@ export interface ThreadToken {
 export interface ThreadInfo {  
   id: ThreadID;  
   key: ThreadKey;  
+  logs: ThreadLogInfo[];
+	addrs: Multiaddr[];
 }  
 
 export interface ThreadLogInfo {  

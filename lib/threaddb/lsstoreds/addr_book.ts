@@ -3,16 +3,12 @@ import * as bytes from 'uint8arrays'
 import {  peerIdFromString } from '@libp2p/peer-id'  
 import type { PeerId,PrivateKey,PublicKey } from "@libp2p/interface";
 import { Multiaddr, multiaddr, isMultiaddr } from '@multiformats/multiaddr'  
-import {  AddrBook,dsThreadKey,DumpAddrBook} from '../core/logstore' // 核心接口定义  
+import {  AddrBook,DumpAddrBook} from '../core/logstore' // 核心接口定义  
 import  * as pb from '../pb/lstore'
-import {DSOptions,uniqueLogIds,uniqueThreadIds} from './logstore'
+import {uniqueLogIds,uniqueThreadIds,DSOptions,AllowEmptyRestore,dsThreadKey} from './global'
 import LRU from 'lru-cache'  
 import { ThreadID } from '@textile/threads-id';
 
-// 全局配置  
-const log = console  
-const AllowEmptyRestore = false  
-const EmptyEdgeValue = 0  
 
 // 缓存键类型  
 type CacheKey = {  
@@ -33,6 +29,24 @@ interface  AddrsRecord {
   dirty: boolean  
 }  
 
+
+// NewAddrBook initializes a new datastore-backed address book. It serves as a drop-in replacement for pstoremem
+// (memory-backed peerstore), and works with any datastore implementing the ds.Batching interface.
+//
+// Threads and logs addresses are serialized into protobuf, storing one datastore entry per (thread, log), along with metadata
+// to control address expiration. To alleviate disk access and serde overhead, we internally use a read/write-through
+// ARC cache, the size of which is adjustable via Options.CacheSize.
+export async function newAddrBook(ds: Datastore, opts: DSOptions): Promise<DsAddrBook> {
+    const ab = new DsAddrBook(ds, opts);
+    if (opts.CacheSize > 0) {
+        ab.cache = new LRU({ max: opts.CacheSize });
+    } else {
+        ab.cache = new LRU({ max: 0 });
+    }
+    return ab;
+}
+
+
 export class DsAddrBook implements AddrBook {  
   private static readonly logBookBase = new Key('/thread/addrs')  
   private static readonly logBookEdge = new Key('/thread/addrs:edge')  
@@ -40,8 +54,7 @@ export class DsAddrBook implements AddrBook {
  
   private opts: DSOptions  
   private ds: Datastore  
-  private cache: LRU<CacheKey, AddrsRecord>  
-  private cleanup: () => void  
+   cache: LRU<CacheKey, AddrsRecord>  
 
   constructor( ds: Datastore, opts: DSOptions) {  
     this.opts = opts  
@@ -177,7 +190,7 @@ async clearAddrs(t: ThreadID, logId: PeerId): Promise<void> {
 async logsWithAddrs(t: ThreadID): Promise<PeerId[]> {
     try {
         const ids = await uniqueLogIds(this.ds, DsAddrBook.logBookBase.child(new Key(t.toString())), (result) => {
-            return new Key(result.key).name();
+            return result.name();
         });
         return ids;
     } catch (err) {
@@ -188,7 +201,7 @@ async logsWithAddrs(t: ThreadID): Promise<PeerId[]> {
 async threadsFromAddrs(): Promise<ThreadID[]> {
     try {
         const ids = await uniqueThreadIds(this.ds, DsAddrBook.logBookBase, (result) => {
-            return new Key(result.key).parent().name();
+            return result.parent().name();
         });
         return ids;
     } catch (err) {
@@ -305,8 +318,25 @@ async addrsEdge(t: ThreadID): Promise<number> {
 	return this.ds.delete(key)
   }
 
+
+
+private async traverse(withAddrs: boolean): Promise<{ [key: string]: { [key: string]: pb.AddrBookRecord } }> {
+    const data: { [key: string]: { [key: string]: pb.AddrBookRecord } } = {};
+    let result = this.ds.query({ prefix: DsAddrBook.logBookBase.toString()});
+    for await (const entry of result) {
+        const { tid, pid, record } = this.decodeAddrEntry(entry, withAddrs);
+
+        if (!data[tid.toString()]) {
+            data[tid.toString()] = {};
+        }
+        data[tid.toString()][pid.toString()] = record!;
+    }
+    return data;
+}
+
+
     private decodeAddrEntry(entry: Pair, withAddrs: boolean): { tid: ThreadID, pid: PeerId, record?: pb.AddrBookRecord } {
-        const kns = entry.key.namespaces();
+        const kns = entry.key.toString().split('/');
         if (kns.length < 3) {
             throw new Error(`bad addressbook key detected: ${entry.key}`);
         }
@@ -325,6 +355,8 @@ async addrsEdge(t: ThreadID): Promise<number> {
 
         return { tid, pid, record };
     }
+
+      
 
     private computeAddrsEdge(as: { logId: PeerId, addr: Uint8Array }[]): number {
         // sort peer addresses for deterministic edge computation
@@ -352,28 +384,27 @@ async addrsEdge(t: ThreadID): Promise<number> {
 
     // dumpAddrs(): Promise<DumpAddrBook>;  
     async dumpAddrs(): Promise<DumpAddrBook> {
-        const dump: { [key: string]: { [key: string]: { addr: Uint8Array, expires: Date }[] } } = {};
+        const dump: { [key: string]: { [key: string]: { addr: Multiaddr, expires: Date }[] } } = {};
         const data = await this.traverse(true);
 
         for (const [tid, logs] of Object.entries(data)) {
-            const lm: { [key: string]: { addr: Uint8Array, expires: Date }[] } = {};
+            const lm: { [key: string]: { addr: Multiaddr, expires: Date }[] } = {};
             for (const [lid, rec] of Object.entries(logs)) {
                 if (rec.addrs.length > 0) {
                     const addrs = rec.addrs.map(r => ({
-                        addr: r.addr,
+                        addr: multiaddr(r.addr),
                         expires: new Date(r.expiry)
                     }));
-                    lm[lid] = addrs;
+                    lm[lid] = addrs.map(a => ({ addr: a.addr, expires: a.expires }));
                 }
             }
             dump[tid] = lm;
         }
-
-        return dump;
+        return { data: dump };
     }
 
-    async restoreAddrs(dump: { [key: string]: { [key: string]: { addr: Uint8Array, expires: Date }[] } }): Promise<void> {
-        if (!AllowEmptyRestore && Object.keys(dump).length === 0) {
+    async restoreAddrs(dump:DumpAddrBook): Promise<void> {
+        if (!AllowEmptyRestore && Object.keys(dump.data).length === 0) {
             throw new Error('Empty dump');
         }
 
@@ -384,9 +415,8 @@ async addrsEdge(t: ThreadID): Promise<number> {
                 await this.clearAddrs(ThreadID.fromString(tid), peerIdFromString(lid));
             }
         }
-
         const current = new Date();
-        for (const [tid, logs] of Object.entries(dump)) {
+        for (const [tid, logs] of Object.entries(dump.data)) {
             for (const [lid, addrs] of Object.entries(logs)) {
                 for (const addr of addrs) {
                     const ttl = addr.expires.getTime() - current.getTime();
@@ -397,6 +427,7 @@ async addrsEdge(t: ThreadID): Promise<number> {
             }
         }
     }
+}
 
 // 辅助类实现  
 class AsyncMutex {  

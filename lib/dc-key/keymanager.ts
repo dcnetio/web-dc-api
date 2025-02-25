@@ -13,6 +13,7 @@ import { Ed25519PubKey } from "../dc-key/ed25519";
 import type { Multiaddr } from "@multiformats/multiaddr";
 import { sha256 } from "../util/util";
 import type { PeerId } from "@libp2p/interface";
+
 /**
  * bcrypt 的成本因子
  */

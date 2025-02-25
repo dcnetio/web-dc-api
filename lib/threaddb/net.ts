@@ -3,7 +3,7 @@ import crypto from 'crypto';
 import { peerIdFromPublicKey,peerIdFromPrivateKey } from "@libp2p/peer-id";
 import { keys } from "@libp2p/crypto";
 import { Multiaddr, multiaddr } from '@multiformats/multiaddr'; // 多地址库  
-import { Head } from './head'; 
+import { Head } from './core/head'; 
 import { Ed25519PrivKey,Ed25519PubKey } from "../dc-key/ed25519";
 import type { PeerId,PublicKey,PrivateKey } from "@libp2p/interface"; 
 import {ThreadID,  ThreadInfo, ThreadLogInfo,ThreadToken,ThreadKey,Store} from './core/core';
