@@ -1,4 +1,9 @@
 import { User } from "../types/types";
+import { base32 } from "multiformats/bases/base32";
+import * as JsCrypto from "jscrypto/es6";
+const { Word32Array, AES, pad, mode, Base64 } = JsCrypto;
+const NonceBytes = 12;
+const TagBytes = 16;
 
 // SHA-256 哈希计算
 async function sha256(data: Uint8Array): Promise<Uint8Array> {
@@ -36,6 +41,61 @@ function isUser(obj: any): obj is User {
 }
 
 const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms)); 
+
+
+
+function decryptContentForBrowser(
+  encryptBuffer: Uint8Array,
+  decryptKey: string
+) {
+  if (decryptKey == "" || encryptBuffer.length <= 28) {
+    return encryptBuffer;
+  }
+  const nonce = encryptBuffer.subarray(0, NonceBytes);
+  const iv = new Word32Array(nonce);
+  const tag = encryptBuffer.subarray(
+    encryptBuffer.length - TagBytes,
+    encryptBuffer.length
+  );
+  const kdfSalt = new Word32Array(tag);
+  const encryptContent = encryptBuffer.subarray(
+    NonceBytes,
+    encryptBuffer.length - TagBytes
+  );
+  const cipherText = new Word32Array(encryptContent);
+  const key = new Word32Array(base32.decode(decryptKey));
+  const decrypted = AES.decrypt(cipherText.toString(Base64), key, {
+    iv: iv,
+    padding: pad.NoPadding,
+    mode: mode.GCM,
+    kdfSalt: kdfSalt,
+  });
+  return decrypted.toUint8Array();
+}
+
+// 比较两个字节数组是否相等
+function compareByteArrays(array1: Uint8Array, array2: Uint8Array) {
+  if (array1.byteLength != array2.byteLength) {
+    return false;
+  }
+  const view1 = new DataView(array1.buffer, array1.byteOffset);
+  const view2 = new DataView(array2.buffer, array2.byteOffset);
+  for (let i = 0; i < array1.length; i++) {
+    if (view1.getUint8(i) !== view2.getUint8(i)) {
+      return false;
+    }
+  }
+  return true;
+}
+
+function mergeUInt8Arrays(a1: Uint8Array, a2: Uint8Array): Uint8Array {
+  // sum of individual array lengths
+  const mergedArray = new Uint8Array(a1.length + a2.length);
+  mergedArray.set(a1);
+  mergedArray.set(a2, a1.length);
+  return mergedArray;
+}
+
 export {
   sha256,
   getRandomBytes,
@@ -43,4 +103,7 @@ export {
   uint32ToLittleEndianBytes,
   isUser,
   sleep,
+  decryptContentForBrowser,
+  compareByteArrays,
+  mergeUInt8Arrays
 };
