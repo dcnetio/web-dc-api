@@ -11,7 +11,7 @@ import { peerIdFromString } from "@libp2p/peer-id";
 import { Encryption } from "./util/curve25519Encryption";
 import { decryptContent } from "./util/dccrypt";
 import { keys } from "@libp2p/crypto";
-import { sha256, getRandomBytes, concatenateUint8Arrays } from "./util/util";
+import { sha256, getRandomBytes, concatenateUint8Arrays } from "./util/utils";
 
 /**
  * bcrypt 的成本因子
