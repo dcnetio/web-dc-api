@@ -5,7 +5,7 @@
 import { multiaddr } from "@multiformats/multiaddr";
 import { ApiPromise, WsProvider } from "@polkadot/api";
 import * as buffer from "buffer/";
-import { isUser, sha256 } from "./util/util";
+import { isUser, sha256 } from "./util/utils";
 import { User } from "./types/types";
 const { Buffer } = buffer;
 
@@ -53,7 +53,7 @@ export class ChainUtil {
         return "";
       }
       const parentUserInfo = parentWalletAccountStorage?.toJSON();
-      if (!isUser(parentUserInfo)) {
+      if (!parentUserInfo || !isUser(parentUserInfo)) {
         return userInfo;
       }
       userInfo.requestPeers = parentUserInfo.requestPeers;
@@ -111,6 +111,17 @@ export class ChainUtil {
     }
     const peers = (fileInfoJSON as { peers: any[] }).peers || [];
     return peers;
+  };
+
+  // 获取用户节点列表
+  getAccountPeers = async (account: Uint8Array) => {
+    const hexAccount = "0x" + Buffer.from(account).toString("hex");
+    const userInfo = await this.getUserInfoWithAccount(hexAccount);
+    if (!userInfo || !isUser(userInfo)) {
+      return null;
+    }
+    const requestPeers = userInfo.requestPeers;
+    return requestPeers;
   };
 
   // 链上查询节点信息

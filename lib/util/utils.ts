@@ -35,10 +35,12 @@ function isUser(obj: any): obj is User {
   return true; // or false if the object doesn't conform to User
 }
 
+const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms)); 
 export {
   sha256,
   getRandomBytes,
   concatenateUint8Arrays,
   uint32ToLittleEndianBytes,
   isUser,
+  sleep,
 };

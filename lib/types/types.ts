@@ -1,5 +1,6 @@
-
-export interface User  {
+import { Multiaddr } from "@multiformats/multiaddr";
+import type { DCClient } from "../dcapi";
+export interface User {
   callMinusNumber: number;
   commentFrozenStatus: number;
   commentReportAmount: number;
@@ -22,4 +23,9 @@ export interface User  {
   subscribePrice: string;
   subscribeSpace: number;
   usedSpace: number;
+}
+
+export interface DCConnectInfo {
+  client?: DCClient | undefined;
+  nodeAddr?: Multiaddr | undefined;
 }

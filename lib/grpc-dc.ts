@@ -114,6 +114,25 @@ export class DCGrpcClient {
     }
   }
 
+  async ValidToken(): Promise<boolean> {
+    try {
+      const message = new dcnet.pb.ValidTokenRequest({});
+      const messageBytes =
+        dcnet.pb.ValidTokenRequest.encode(message).finish();
+      const responseData = await this.grpcClient.unaryCall(
+        "/dcnet.pb.Service/ValidToken",
+        messageBytes,
+        30000
+      );
+      dcnet.pb.ValidTokenReply.decode(responseData);
+      return true;
+    } catch (err) {
+      console.error("ValidToken error:", err);
+      throw err;
+    }
+  }
+
+  
   async AccountLogin(
     accounthashencrypt: Uint8Array,
     pubkeyencrypt: Uint8Array,

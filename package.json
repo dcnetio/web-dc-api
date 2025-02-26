@@ -3,8 +3,14 @@
   "version": "0.1.2",
   "description": "dcapi web",
   "main": "lib/index.ts",
+  "types": "lib/index.ts",
+  "type": "module",
+  "files": [
+    "lib"
+  ],
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "nodemon --watch lib --ext ts,tsx,js,jsx,json --ignore 'src/**/*.test.ts' --exec 'npx yalc push'"
   },
   "author": "",
   "license": "ISC",
@@ -35,6 +41,7 @@
     "bcryptjs": "^2.4.3",
     "crypto-js": "^4.2.0",
     "google-protobuf": "~3.21.2",
+    "grpc-libp2p-client": "file:.yalc/grpc-libp2p-client",
     "grpc-web": "~1.5.0",
     "helia": "^5.1.1",
     "it-to-buffer": "^4.0.7",
@@ -43,6 +50,7 @@
     "libp2p": "^2.3.1",
     "lodash": "~4.17.0",
     "multiformats": "^13.1.0",
+    "nodemon": "^3.1.9",
     "protons-runtime": "^4.0.2",
     "tweetnacl": "^1.0.3",
     "uint8arrays": "^5.1.0",
