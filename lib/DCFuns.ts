@@ -2,8 +2,6 @@ import { ChainUtil } from "./chain";
 import { isName, multiaddr } from "@multiformats/multiaddr";
 import { IDBDatastore } from 'datastore-idb'  
 import { IDBBlockstore } from 'blockstore-idb' 
-import { MemoryDatastore } from 'datastore-core'  
-import { MemoryBlockstore } from 'blockstore-core' 
 import { keys } from "@libp2p/crypto";
 import { circuitRelayTransport } from "@libp2p/circuit-relay-v2";
 import { webRTCDirect } from "@libp2p/webrtc";
@@ -137,11 +135,6 @@ export class DC {
   };
   _createHeliaNode = async () => { 
     console.log("_createHeliaNode=======");
-    // the blockstore is where we store the blocks that make up files
-    // const blockstore = new MemoryBlockstore();
-
-    // application-specific data lives in the datastore
-    // const datastore = new MemoryDatastore();
     const datastore = new IDBDatastore('helia-meta')  
     await datastore.open();
     const blockstore = new IDBBlockstore('helia-blocks')
