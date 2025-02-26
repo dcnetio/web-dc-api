@@ -14,20 +14,20 @@ import { decryptContent } from "./util/dccrypt";
 import { ChainUtil } from "./chain";
 import type { DCConnectInfo } from "./types/types";
 import { DCClient } from "./dcapi";
-import { DC } from "./dc";
+import { DcUtil } from "./dcutil";
 import { ErrInvalidToken } from "./error";
 
 const NonceBytes = 12;
 const TagBytes = 16;
 const protocol = "/dc/thread/0.0.1";
 const { Buffer } = buffer;
-export class DcUtil {
+export class DC {
   blockChainAddr: string;
   backChainAddr: string;
   dcChain: ChainUtil;
   dcNodeClient: any | undefined; // 什么类型？dc node 对象，主要用于建立连接
   privKey: Ed25519PrivKey | undefined; // 私钥
-  dc: DC | undefined;
+  dc: DcUtil | undefined;
 
   public TokenTask: boolean = false;
   public ConnectedDc: DCConnectInfo = {};
@@ -40,7 +40,7 @@ export class DcUtil {
     this.blockChainAddr = options.wssUrl;
     this.backChainAddr = options.backWssUrl;
     this.dcChain = new ChainUtil();
-    this.dc = new DC(this.dcChain);
+    this.dc = new DcUtil(this.dcChain);
   }
 
   // 初始化
