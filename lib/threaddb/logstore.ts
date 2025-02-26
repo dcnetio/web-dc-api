@@ -8,7 +8,7 @@ import { ThreadID } from '@textile/threads-id';
 import type { PeerId } from "@libp2p/interface";
 import { compareByteArrays } from '../util/utils';
 import {Key as ThreadKey} from './key';
-import { symKeyFromBytes } from '../dc-key/keymanager';
+import { symKeyFromBytes } from '../dc-key/keyManager';
 import { CID } from 'multiformats';
 
 const PermanentAddrTTL = 2^53-1; // 使用 bigint 精确表示 64 位整数  

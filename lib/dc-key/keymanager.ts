@@ -9,9 +9,9 @@ import * as bcrypt from "../util/bcrypt"; //
 import { SymKey } from "../threaddb/core/core";
 import { multiaddr } from "@multiformats/multiaddr";
 import { peerIdFromString } from "@libp2p/peer-id";
-import { Ed25519PubKey } from "../dc-key/ed25519";
+import { Ed25519PubKey } from "./ed25519";
 import type { Multiaddr } from "@multiformats/multiaddr";
-import { sha256 } from "../util/util";
+import { sha256 } from "../util/utils";
 import type { PeerId } from "@libp2p/interface";
 
 /**

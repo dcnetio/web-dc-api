@@ -1,4 +1,9 @@
 import { User } from "../types/types";
+import { base32 } from "multiformats/bases/base32";
+import * as JsCrypto from "jscrypto/es6";
+const { Word32Array, AES, pad, mode, Base64 } = JsCrypto;
+const NonceBytes = 12;
+const TagBytes = 16;
 
 // SHA-256 哈希计算
 async function sha256(data: Uint8Array): Promise<Uint8Array> {
@@ -37,6 +42,41 @@ function isUser(obj: any): obj is User {
 
 
 
+
+
+const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms)); 
+
+
+
+function decryptContentForBrowser(
+  encryptBuffer: Uint8Array,
+  decryptKey: string
+) {
+  if (decryptKey == "" || encryptBuffer.length <= 28) {
+    return encryptBuffer;
+  }
+  const nonce = encryptBuffer.subarray(0, NonceBytes);
+  const iv = new Word32Array(nonce);
+  const tag = encryptBuffer.subarray(
+    encryptBuffer.length - TagBytes,
+    encryptBuffer.length
+  );
+  const kdfSalt = new Word32Array(tag);
+  const encryptContent = encryptBuffer.subarray(
+    NonceBytes,
+    encryptBuffer.length - TagBytes
+  );
+  const cipherText = new Word32Array(encryptContent);
+  const key = new Word32Array(base32.decode(decryptKey));
+  const decrypted = AES.decrypt(cipherText.toString(Base64), key, {
+    iv: iv,
+    padding: pad.NoPadding,
+    mode: mode.GCM,
+    kdfSalt: kdfSalt,
+  });
+  return decrypted.toUint8Array();
+}
+
 // 比较两个字节数组是否相等
 function compareByteArrays(array1: Uint8Array, array2: Uint8Array) {
   if (array1.byteLength != array2.byteLength) {
@@ -60,15 +100,14 @@ function mergeUInt8Arrays(a1: Uint8Array, a2: Uint8Array): Uint8Array {
   return mergedArray;
 }
 
-
-const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms)); 
 export {
   sha256,
   getRandomBytes,
   concatenateUint8Arrays,
   uint32ToLittleEndianBytes,
   isUser,
-  compareByteArrays,
-  mergeUInt8Arrays,
   sleep,
+  decryptContentForBrowser,
+  compareByteArrays,
+  mergeUInt8Arrays
 };

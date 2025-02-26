@@ -3,7 +3,7 @@
 
 import { base32 } from 'multiformats/bases/base32'  
 import { secretbox, randomBytes } from 'tweetnacl'  
-import { symKeyFromBytes } from '../dc-key/keymanager';
+import { symKeyFromBytes } from '../dc-key/keyManager';
 import { SymKey } from "../threaddb/core/core";
 
 
