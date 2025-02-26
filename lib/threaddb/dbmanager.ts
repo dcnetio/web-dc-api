@@ -1,7 +1,7 @@
 import { PeerId } from '@libp2p/interface-peer-id';  
 import { multiaddr, Multiaddr } from '@multiformats/multiaddr';  
 import { ThreadID } from '@textile/threads-id';
-import { peerIdFromString } from "@libp2p/peer-id";
+import { peerIdFromPrivateKey, peerIdFromString } from "@libp2p/peer-id";
 import { Buffer } from 'buffer';  
 import { Key } from 'interface-datastore';
 import { EventEmitter } from 'events';  
@@ -11,8 +11,9 @@ import { LevelDatastore } from 'datastore-level'
 import { Ed25519PrivKey } from "../dc-key/ed25519";
 import { keys } from "@libp2p/crypto";
 import { Key as ThreadKey } from './key';
+import {StoreunitInfo} from '../chain';
 import { PrefixTransform,TransformedDatastore} from './transformed-datastore' 
-import {TxnDatastoreExtended,NewOptions,Token,CollectionConfig,ManagedOptions} from './core/core';
+import {TxnDatastoreExtended,NewOptions,Token,CollectionConfig,ManagedOptions,ThreadInfo} from './core/core';
 
 import { createTxnDatastore } from './level-adapter';
 // 协议常量定义  
@@ -214,7 +215,7 @@ async  wrapDB(
     id: ThreadID,  
     base: NewOptions,  
     name: string,  
-    ...collections: CollectionConfig[]  
+    collections: CollectionConfig[]  
   ): Promise<[TxnDatastoreExtended, NewOptions, Error | null]> {  
     // 验证线程 ID  
     const isValid = await this.validateThreadId(id.toString());  
@@ -243,7 +244,7 @@ async  wrapDB(
         await this.lock.acquire('dbs', async () => {  
             for (const [idStr, db] of this.dbs) {  
                 const id = ThreadID.fromString(idStr);  
-                await this.network.getThread(id, { token: opts.token });  
+                await this.network.getThread(id);  
                 dbs.set(id, db);  
             }  
         });  
@@ -263,10 +264,9 @@ async  wrapDB(
                     for (const pid of Object.keys(storeUnit.peers)) {  
                         try {  
                             const peerId =  peerIdFromString(pid);  
-                            const client = await this.getClient(peerId);  
-                            const remoteInfo = await client.getThread(tId);  
-                            const localInfo = await this.net.getThread(this.context, tId);  
-
+                            const threadId = ThreadID.fromString(tId);
+                            const remoteInfo = await this.network.getThreadFromPeer(threadId, peerId);  
+                            const localInfo = await this.network.getThread( threadId);  
                             if (this.compareThreadSync(localInfo, remoteInfo, storeUnit)) {  
                                 clearTimeout(timeout);  
                                 resolve(true);  
@@ -286,13 +286,18 @@ async  wrapDB(
         }  
     }  
 
-    private compareThreadSync(local: Types.ThreadInfo, remote: Types.ThreadInfo, storeUnit: Types.StoreUnit): boolean {  
+    private compareThreadSync(local: ThreadInfo, remote: ThreadInfo, storeUnit: StoreunitInfo): boolean {  
         for (const logInfo of local.logs) {  
             if (!storeUnit.logs[logInfo.id.toString()]) {  
                 continue;  
             }  
-
+            if (!logInfo.head){
+                continue;
+            }
             const remoteLog = remote.logs.find(l => l.id === logInfo.id);  
+            if (!remoteLog?.head) {
+                return false;
+            }
             if (!remoteLog || logInfo.head.counter > remoteLog.head.counter) {  
                 return false;  
             }  
@@ -300,12 +305,11 @@ async  wrapDB(
         return true;  
     }  
 
-    async ifDbInitSuccess(tid: string): Promise<boolean> {  
+    async ifDbInitSuccess(tid: ThreadID): Promise<boolean> {  
         try {  
             const logKey = await this.getLogKey(tid);  
-            const lid = await logKey.getId();  
-            const threadInfo =  await this.dbManager.chainUtil.objectState(tid);  
-
+            const lid =  peerIdFromPrivateKey(logKey); 
+            const threadInfo =  await this.chainUtil.objectState(tid.toString());  
             return !!(threadInfo?.logs && threadInfo.logs[lid.toString()]);  
         } catch {  
             return false;  
@@ -321,14 +325,10 @@ async  wrapDB(
         block: boolean,  
         jsonCollections: string  
     ): Promise<Error | null> {  
-        if (!this.dbManager) {  
-            return Errors.ErrNoDbManager;  
-        }  
-
         try {  
             const tID = await this.decodeThreadId(threadid);  
             const logKey = await this.getLogKey(tID);  
-            const lid = await logKey.getId();  
+            const lid =  peerIdFromPrivateKey(logKey);
 
             this.makeDcObjectGetConnect(threadid);  
 

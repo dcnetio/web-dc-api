@@ -1,12 +1,10 @@
 // Description: 该文件包含了dc网络的工具函数，用于从dc网络获取文件或缓存值
 
 import { ApiPromise, WsProvider } from "@polkadot/api";
-import { MemoryBlockstore } from "blockstore-core";
-import { MemoryDatastore } from "datastore-core";
 import { circuitRelayTransport } from "@libp2p/circuit-relay-v2";
 import { webRTCDirect } from "@libp2p/webrtc";
 import { KeyManager } from "./dc-key/keymanager";
-import { compareByteArrays,mergeUInt8Arrays} from "./util/util"; 
+import { compareByteArrays,mergeUInt8Arrays} from "./util/utils"; 
 import { keys } from "@libp2p/crypto";
 
 import { createHelia } from "helia";
@@ -31,6 +29,10 @@ import { decryptContent } from "./util/dccrypt";
 import { ChainUtil } from "./chain";
 import { ErrInvalidToken } from "./error";
 import type { DCConnectInfo } from "./types/types";
+import { IDBDatastore } from 'datastore-idb'  
+import { IDBBlockstore } from 'blockstore-idb'  
+
+
 
 const { Buffer } = buffer;
 const { Word32Array, AES, pad, mode, Base64 } = JsCrypto;
@@ -62,7 +64,7 @@ export class DcUtil {
 
   // 初始化
   init = async () => {
-    let createChain;
+    let createChain = false;
     try {
       createChain = await this.dcChain.create(this.blockChainAddr);
       if (!createChain) {
@@ -453,7 +455,7 @@ export class DcUtil {
 /********************************数据库相关操作开始********************************/
  // 从DC网络拉取数据库到本地
   pullDBFromDc = async (cid: string, dbName: string) => {
-    if (!this.dcClient) {
+    if (!this.ConnectedDc.client) {
       console.log("dcClient is null");
       return;
     }
@@ -581,11 +583,9 @@ export class DcUtil {
     });
   };
   _createHeliaNode = async () => {
-    // the blockstore is where we store the blocks that make up files
-    const blockstore = new MemoryBlockstore();
 
-    // application-specific data lives in the datastore
-    const datastore = new MemoryDatastore();
+    const datastore = new IDBDatastore('helia-meta')  
+    const blockstore = new IDBBlockstore('helia-blocks')
     // 创建或导入私钥
     const keyPair = await keys.generateKeyPair("Ed25519");
 

@@ -20,6 +20,7 @@ import { ulid } from 'ulid';
 import {JsonPatcher}  from './json-patcher';
 import { multiaddr, Multiaddr } from '@multiformats/multiaddr';  
 import { ThreadID } from '@textile/threads-id';
+import { PeerId } from '@libp2p/interface';
 
 
 // 接口定义  
@@ -27,6 +28,7 @@ export interface Net {
   createThread( id: ThreadID, ...opts: any[]): Promise<void>;  
   addThread( addr: Multiaddr, ...opts: any[]): Promise<void>;  
   getThread( id: ThreadID, ...opts: any[]): Promise<ThreadInfo>;  
+  getThreadFromPeer( id: ThreadID, peer: PeerId, ...opts: any[]): Promise<ThreadInfo>;
   deleteThread( id: ThreadID, ...opts: any[]): Promise<void>;  
   pullThread( id: ThreadID,timeout: number, ...opts: any[]): Promise<void>;  
   getPbLogs( id: ThreadID): Promise<[dcnet.pb.LogInfo[], ThreadInfo]>;  

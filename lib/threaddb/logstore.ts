@@ -6,7 +6,7 @@ import {ThreadInfo,ThreadLogInfo} from './core/core';
 import {SymmetricKey} from './key';
 import { ThreadID } from '@textile/threads-id'; 
 import type { PeerId } from "@libp2p/interface";
-import { compareByteArrays } from '../util/util';
+import { compareByteArrays } from '../util/utils';
 import {Key as ThreadKey} from './key';
 import { symKeyFromBytes } from '../dc-key/keymanager';
 import { CID } from 'multiformats';

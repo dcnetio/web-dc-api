@@ -9,7 +9,7 @@ import { isUser, sha256 } from "./util/utils";
 import { User } from "./types/types";
 const { Buffer } = buffer;
 
-interface StoreunitInfo {  
+export interface StoreunitInfo {  
   size: number;  
   utype: number;  
   peers: Set<string>;  
