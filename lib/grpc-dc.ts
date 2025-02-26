@@ -2,7 +2,7 @@ import type { Libp2p } from "libp2p";
 import type { Multiaddr } from "@multiformats/multiaddr";
 import { dcnet } from "./proto/dcnet_proto";
 import { base58btc } from "multiformats/bases/base58";
-import { Libp2pGrpcClient } from "grpc-libp2p-client";
+import { Libp2pGrpcClient } from "./grpc-libp2p-client";
 import { toString as uint8ArrayToString } from "uint8arrays/to-string";
 import { DataSource } from "./proto/datasource";
 
