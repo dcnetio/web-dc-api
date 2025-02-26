@@ -61,6 +61,7 @@ function mergeUInt8Arrays(a1: Uint8Array, a2: Uint8Array): Uint8Array {
 }
 
 
+const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms)); 
 export {
   sha256,
   getRandomBytes,
@@ -69,4 +70,5 @@ export {
   isUser,
   compareByteArrays,
   mergeUInt8Arrays,
+  sleep,
 };

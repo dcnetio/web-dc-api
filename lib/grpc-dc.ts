@@ -2,7 +2,7 @@ import type { Libp2p } from "libp2p";
 import type { Multiaddr } from "@multiformats/multiaddr";
 import { dcnet } from "./proto/dcnet_proto";
 import { base58btc } from "multiformats/bases/base58";
-import { Libp2pGrpcClient } from "grpc-libp2p-client";
+import { Libp2pGrpcClient } from "./grpc-libp2p-client";
 import { toString as uint8ArrayToString } from "uint8arrays/to-string";
 import { DataSource } from "./proto/datasource";
 
@@ -114,6 +114,25 @@ export class DCGrpcClient {
     }
   }
 
+  async ValidToken(): Promise<boolean> {
+    try {
+      const message = new dcnet.pb.ValidTokenRequest({});
+      const messageBytes =
+        dcnet.pb.ValidTokenRequest.encode(message).finish();
+      const responseData = await this.grpcClient.unaryCall(
+        "/dcnet.pb.Service/ValidToken",
+        messageBytes,
+        30000
+      );
+      dcnet.pb.ValidTokenReply.decode(responseData);
+      return true;
+    } catch (err) {
+      console.error("ValidToken error:", err);
+      throw err;
+    }
+  }
+
+  
   async AccountLogin(
     accounthashencrypt: Uint8Array,
     pubkeyencrypt: Uint8Array,

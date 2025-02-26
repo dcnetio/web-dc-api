@@ -25,10 +25,12 @@ import * as JsCrypto from "jscrypto/es6";
 import * as buffer from "buffer/";
 import { noise } from "@chainsafe/libp2p-noise";
 import { DCClient } from "./dcapi";
-import { sha256, uint32ToLittleEndianBytes } from "./util/util";
+import { sha256, sleep, uint32ToLittleEndianBytes } from "./util/utils";
 import { Ed25519PrivKey } from "./dc-key/ed25519";
 import { decryptContent } from "./util/dccrypt";
 import { ChainUtil } from "./chain";
+import { ErrInvalidToken } from "./error";
+import type { DCConnectInfo } from "./types/types";
 
 const { Buffer } = buffer;
 const { Word32Array, AES, pad, mode, Base64 } = JsCrypto;
@@ -40,12 +42,16 @@ export class DcUtil {
   backChainAddr: string;
   dcChain: ChainUtil;
   dcNodeClient: any | undefined; // 什么类型？dc node 对象，主要用于建立连接
-  dcClient: DCClient | undefined; // dc client 对象
-  nodeAddr: Multiaddr | undefined; // dc node 地址
-  accountNodeAddr: Multiaddr | undefined; // account dc node 地址
   privKey: Ed25519PrivKey | undefined; // 私钥
   defaultPeerId: string | undefined; // 默认 peerId
   connectLength: number; // 连接长度
+
+  public TokenTask: boolean = false;
+  public ConnectedDc: DCConnectInfo = {};
+  public AccountBackupDc: DCConnectInfo = {};
+  public AppId: string = "";
+  public Identity: string = "";
+  public Blockheight: number = 0;
 
   constructor(options: { wssUrl: string; backWssUrl: string }) {
     this.blockChainAddr = options.wssUrl;
@@ -83,9 +89,11 @@ export class DcUtil {
         // 获取默认dc节点地址
         const nodeAddr = await this._getDefaultDcNodeAddr();
         if (nodeAddr) {
-          this.nodeAddr = nodeAddr; // 当前地址
-          this.dcClient = await this._newDcClient(nodeAddr);
+          this.ConnectedDc.nodeAddr = nodeAddr; // 当前地址
+          this.ConnectedDc.client = await this._newDcClient(nodeAddr);
         }
+        // 定时维系token
+        this.startDcPeerTokenKeepValidTask();
       }
     }
   };
@@ -204,11 +212,11 @@ export class DcUtil {
   getHostID = async (): Promise<
     { peerID: string; reqAddr: string } | undefined
   > => {
-    if (!this.dcClient) {
+    if (!this.ConnectedDc.client) {
       console.log("dcClient is null");
       return;
     }
-    const getHostIdreply = await this.dcClient.getHostID();
+    const getHostIdreply = await this.ConnectedDc.client?.getHostID();
     console.log("getHostIdreply:", getHostIdreply);
     return getHostIdreply;
   };
@@ -220,7 +228,7 @@ export class DcUtil {
       console.log("key format error!");
       return;
     }
-    if (!this.dcClient) {
+    if (!this.ConnectedDc.client) {
       console.log("dcClient is null");
       return;
     }
@@ -228,11 +236,11 @@ export class DcUtil {
     const cacheKey = pkeys[1];
     try {
       let nodeAddr: Multiaddr | undefined;
-      if (this.nodeAddr) {
-        const connectedPeerId = this.nodeAddr.getPeerId() || "";
+      if (this.ConnectedDc.nodeAddr) {
+        const connectedPeerId = this.ConnectedDc.nodeAddr.getPeerId() || "";
         if (connectedPeerId && connectedPeerId === peerid) {
           // 同一个节点
-          nodeAddr = this.nodeAddr;
+          nodeAddr = this.ConnectedDc.nodeAddr;
         } else {
           // 不是同一个节点
           nodeAddr = await this._getNodeAddr(peerid);
@@ -245,7 +253,7 @@ export class DcUtil {
         return;
       }
 
-      const getCacheValuereply = await this.dcClient.GetCacheValue(
+      const getCacheValuereply = await this.ConnectedDc.client?.GetCacheValue(
         nodeAddr,
         cacheKey
       );
@@ -263,6 +271,7 @@ export class DcUtil {
     // const privKey = KeyManager.getEd25519KeyFromMnemonic(mnemonic);
     // const pubKey = privKey.publicKey;
   };
+
   // 登陆
   accountLogin = async (
     nftAccount: string,
@@ -271,23 +280,19 @@ export class DcUtil {
     appName: string
   ) => {
     //登录
-    if (!this.dcClient) {
+    if (!this.ConnectedDc.client) {
       console.log("dcClient is null");
       return;
     }
-    if (!this.nodeAddr) {
+    if (!this.ConnectedDc.nodeAddr) {
       console.log("nodeAddr is null");
       return;
     }
-    // todo获取账号的连接节点
-    // const peerid = '12D3KooWNr1ERkUSdUQjGtmtWPB8AtWGVuDVhcoZSH4UkudU2in9';
-    // const nodeAddr = await this._getNodeAddr(peerid);
-    // this.accountNodeAddr = nodeAddr;
-    const prikey = await this.dcClient.AccountLogin(
+    const prikey = await this.ConnectedDc.client.AccountLogin(
       nftAccount,
       password,
       safecode,
-      this.nodeAddr
+      this.ConnectedDc.nodeAddr
     );
     console.log("AccountLogin success:", prikey);
     let mnemonic = "";
@@ -308,7 +313,7 @@ export class DcUtil {
     console.log("get pubKey:", pubKey);
     this.privKey = privKey;
     //获取token
-    const token = await this.dcClient.GetToken(
+    const token = await this.ConnectedDc.client.GetToken(
       pubKey.string(),
       (payload: Uint8Array): Uint8Array => {
         // Implement your signCallback logic here
@@ -317,12 +322,43 @@ export class DcUtil {
       }
     );
     console.log("GetToken reply:", token);
+    // 获取用户备用节点
+    const peerAddrs = await this.dcChain.getAccountPeers(pubKey.raw);
+    if (peerAddrs && peerAddrs.length > 0) {
+      // 连接备用节点
+      const nodeAddr = await this._connectPeers(peerAddrs);
+      console.log("_connectNodeAddrs nodeAddr:", nodeAddr);
+      if (!nodeAddr) {
+        return false;
+      }
+      this.AccountBackupDc.nodeAddr = nodeAddr as Multiaddr; // 当前地址
+      this.AccountBackupDc.client = await this._newDcClient(
+        nodeAddr as Multiaddr
+      );
+    }
     return true;
   };
 
+  // // 退出登陆
+  // accountLogout = async () => {
+  //   if (!this.ConnectedDc.client) {
+  //     console.log("dcClient is null");
+  //     return;
+  //   }
+  //   if (!this.ConnectedDc.nodeAddr) {
+  //     console.log("nodeAddr is null");
+  //     return;
+  //   }
+  //   const logoutReply = await this.ConnectedDc.client.AccountLogout(
+  //     this.ConnectedDc.nodeAddr
+  //   );
+  //   console.log("AccountLogout reply:", logoutReply);
+  //   return logoutReply;
+  // };
+
   // 获取用户信息
   getUserInfoWithNft = async (nftAccount: string) => {
-    if (!this.dcClient) {
+    if (!this.ConnectedDc.client) {
       console.log("dcClient is null");
       return;
     }
@@ -336,11 +372,11 @@ export class DcUtil {
 
   // 添加用户评论空间
   addUserOffChainSpace = async () => {
-    if (!this.dcClient) {
+    if (!this.ConnectedDc.client) {
       console.log("dcClient is null");
       return;
     }
-    if (!this.nodeAddr) {
+    if (!this.ConnectedDc.nodeAddr) {
       console.log("nodeAddr is null");
       return;
     }
@@ -353,7 +389,7 @@ export class DcUtil {
       blockHeight ? blockHeight : 0
     );
     const peerIdValue: Uint8Array = new TextEncoder().encode(
-      this.nodeAddr.getPeerId() || ""
+      this.ConnectedDc.nodeAddr.getPeerId() || ""
     );
 
     // 将 hValue 和 peerIdValue 连接起来
@@ -362,18 +398,18 @@ export class DcUtil {
     preSign.set(hValue, peerIdValue.length);
     const signature = this.privKey.sign(preSign);
     const pubKey = this.privKey.publicKey;
-    this.dcClient.AddUserOffChainSpace(
+    this.ConnectedDc.client.AddUserOffChainSpace(
       pubKey.string(),
       blockHeight,
       signature,
-      this.nodeAddr
+      this.ConnectedDc.nodeAddr
     );
     console.log("AddUserOffChainSpace end");
   };
 
   // 设置缓存值
   setCacheKey = async (value: string) => {
-    if (!this.dcClient) {
+    if (!this.ConnectedDc.client) {
       console.log("dcClient is null");
       return;
     }
@@ -404,7 +440,7 @@ export class DcUtil {
     preSign.set(hashValue, preSignPart1.length);
 
     const signature = this.privKey.sign(preSign);
-    const setCacheValueReply = await this.dcClient.SetCacheKey(
+    const setCacheValueReply = await this.ConnectedDc.client.SetCacheKey(
       value,
       blockHeight ? blockHeight : 0,
       expire,
@@ -591,7 +627,7 @@ export class DcUtil {
       return "";
     }
   };
-  _getNodeAddr = async (peerId): Promise<Multiaddr | undefined> => {
+  _getNodeAddr = async (peerId: string): Promise<Multiaddr | undefined> => {
     let nodeAddr = await this.dcChain.getDcNodeWebrtcDirectAddr(peerId);
     if (!nodeAddr) {
       console.log("no node address found for peer: ", peerId);
@@ -607,15 +643,7 @@ export class DcUtil {
   _getDefaultDcNodeAddr = async (): Promise<Multiaddr | undefined> => {
     const peerId = await this._getConnectedPeerId();
     if (peerId) {
-      let nodeAddr = await this.dcChain.getDcNodeWebrtcDirectAddr(peerId);
-      if (!nodeAddr) {
-        console.log("no node address found for peer: ", peerId);
-        return;
-      }
-      if (isName(nodeAddr)) {
-        const addrs = await nodeAddr.resolve();
-        nodeAddr = addrs[0];
-      }
+      let nodeAddr = await this._getNodeAddr(peerId);
       return nodeAddr;
     } else {
       // 获取节点上的默认节点列表，随机获取几个，批量连接节点，得到最快的节点
@@ -639,7 +667,9 @@ export class DcUtil {
     }
   };
 
-  _getConnectDcNodeList = async (nodeList) => {
+  _getConnectDcNodeList = async (
+    nodeList: string[]
+  ): Promise<Multiaddr | undefined> => {
     if (nodeList.length > this.connectLength) {
       let dcNodeList = this._getRamdomNodeList(nodeList, this.connectLength);
       const nodeAddr = await this._connectNodeAddrs(dcNodeList);
@@ -650,16 +680,16 @@ export class DcUtil {
         );
         return this._getConnectDcNodeList(leftNodeList);
       }
-      return nodeAddr;
+      return nodeAddr as Multiaddr;
     } else {
       let nodeAddr = await this._connectNodeAddrs(nodeList);
       if (!nodeAddr) {
         return;
       }
-      return nodeAddr;
+      return nodeAddr as Multiaddr;
     }
   };
-  _getRamdomNodeList = (nodeList, num): string[] => {
+  _getRamdomNodeList = (nodeList: string[], num: number): string[] => {
     const len = nodeList.length;
     const res: string[] = [];
     for (let i = 0; i < num; i++) {
@@ -669,12 +699,171 @@ export class DcUtil {
     return res;
   };
   _newDcClient = async (nodeAddr: Multiaddr): Promise<DCClient | undefined> => {
-    if (!this.nodeAddr) {
+    if (!this.ConnectedDc.nodeAddr) {
       return;
     }
     const dcClient = new DCClient(this.dcNodeClient.libp2p, nodeAddr, protocol);
     return dcClient;
   };
+  /**
+   * 开启定时验证 token 线程
+   * 对应 Go 中的 dcPeerTokenKeepValidTask()
+   */
+  public startDcPeerTokenKeepValidTask(): void {
+    // 如果已经有定时任务在跑，直接返回
+    if (this.TokenTask) {
+      return;
+    }
+    this.TokenTask = true;
+
+    // 30秒一次心跳维持连接
+    const period = 10000;
+    let count = 0;
+
+    // 启动ticker
+    (async () => {
+      while (this.TokenTask) {
+        count++;
+        console.info(
+          `********** 定时验证token任务开始执行, 当前次数: ${count} **********`
+        );
+        await this.getTokenWithDCConnectInfo(this.ConnectedDc);
+        await this.getTokenWithDCConnectInfo(this.AccountBackupDc);
+        await sleep(period);
+      }
+    })();
+  }
+
+  async getTokenWithDCConnectInfo(connectInfo: DCConnectInfo) {
+    try {
+      // 判断 client 是否为空
+      if (!connectInfo.client) {
+        return;
+      }
+      // 判断 client 是否连接，不连接则需要连接
+      if (
+        !connectInfo.client?.p2pNode ||
+        connectInfo.client?.p2pNode.status !== "started"
+      ) {
+        try {
+          const nodeAddr = connectInfo.client?.peerAddr;
+          if (!nodeAddr) {
+            console.log("nodeAddr is null");
+            return;
+          }
+          console.log("_newDcClient start ");
+          connectInfo.client = await this._newDcClient(nodeAddr);
+          console.log("_newDcClient end ");
+        } catch (e) {
+          console.log("connectInfo failed", e);
+          return;
+        }
+      }
+    } catch (error) {
+      console.log("error111 failed", error);
+      return;
+    }
+
+    // 判断 token 是否为空
+    if (!connectInfo.client?.token) {
+      // 直接获取token
+      if (!this.privKey) {
+        return;
+      }
+      const privKey = this.privKey;
+      const pubKey = privKey.publicKey;
+      console.log("get token start ");
+      await connectInfo.client?.GetToken(
+        pubKey.string(),
+        (payload: Uint8Array): Uint8Array => {
+          // Implement your signCallback logic here
+          const signature = privKey.sign(payload);
+          return signature;
+        }
+      );
+      console.log("get token end ");
+      return;
+    }
+
+    // 调用 ValidToken
+    try {
+      console.log("ValidToken start ");
+      await connectInfo.client?.ValidToken();
+      console.log("ValidToken end ");
+    } catch (err: any) {
+      // 若 token 无效，需要刷新；否则重连
+      if (err?.message && err.message.endsWith(ErrInvalidToken.message)) {
+        if (!this.privKey) {
+          return;
+        }
+        const privKey = this.privKey;
+        const pubKey = privKey.publicKey;
+        console.log("refreshToken start ");
+        await connectInfo.client?.refreshToken(
+          pubKey.string(),
+          (payload: Uint8Array): Uint8Array => {
+            // Implement your signCallback logic here
+            const signature = privKey.sign(payload);
+            return signature;
+          }
+        );
+        console.log("refreshToken end ");
+      } else {
+        console.log("需要重连 start ");
+        // 需要重连
+        let resClient: DCClient | undefined;
+        try {
+          const nodeAddr = await this._getNodeAddr(
+            connectInfo.nodeAddr?.getPeerId() as string
+          );
+          if (!nodeAddr) {
+            console.log("nodeAddr is null");
+            return;
+          }
+          resClient = await this._newDcClient(nodeAddr);
+          if (!resClient) {
+            console.log("resClient is null");
+            return;
+          }
+        } catch (e: any) {
+          console.debug(
+            `GetClient失败, err: ${
+              e?.message
+            }, PEERID: ${connectInfo.nodeAddr?.getPeerId()}`
+          );
+          return;
+        }
+
+        if (resClient) {
+          connectInfo.client = resClient;
+        }
+        try {
+          // 直接获取token
+          if (!this.privKey) {
+            return;
+          }
+          const privKey = this.privKey;
+          const pubKey = privKey.publicKey;
+          console.log("GetToken start ");
+          await connectInfo.client?.GetToken(
+            pubKey.string(),
+            (payload: Uint8Array): Uint8Array => {
+              // Implement your signCallback logic here
+              const signature = privKey.sign(payload);
+              return signature;
+            }
+          );
+          console.log("GetToken end ");
+        } catch (tokenErr: any) {
+          console.debug(
+            `获取token失败, err: ${
+              tokenErr?.message
+            }, PEERID: ${connectInfo.nodeAddr?.getPeerId()}`
+          );
+        }
+      }
+    }
+  }
 }
 
 function decryptContentForBrowser(
