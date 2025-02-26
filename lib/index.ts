@@ -14,7 +14,7 @@ import { decryptContent } from "./util/dccrypt";
 import { ChainUtil } from "./chain";
 import type { DCConnectInfo } from "./types/types";
 import { DCClient } from "./dcapi";
-import { DC } from "./DCFuns";
+import { DC } from "./dc";
 import { ErrInvalidToken } from "./error";
 
 const NonceBytes = 12;
