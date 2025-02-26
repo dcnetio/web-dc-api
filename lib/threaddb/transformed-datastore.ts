@@ -81,6 +81,11 @@ class TransformedDatastore extends BaseDatastore {
     return new TransformedTransaction(childTxn, this.transform);  
   }  
 
+  async  newTransactionExtended( readOnly: boolean): Promise<Transaction> {  
+    const childTxn =  await this.getTransaction(); 
+    return new TransformedTransaction(childTxn, this.transform);  
+  }
+
   private async getTransaction(): Promise<Transaction> {  
     if (typeof (this.child as any).newTransactionExtended === 'function') {  
       return (this.child as any).newTransactionExtended(false);  

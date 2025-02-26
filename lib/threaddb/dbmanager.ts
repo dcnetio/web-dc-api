@@ -1,17 +1,20 @@
 import { PeerId } from '@libp2p/interface-peer-id';  
 import { multiaddr, Multiaddr } from '@multiformats/multiaddr';  
 import { ThreadID } from '@textile/threads-id';
+import { peerIdFromString } from "@libp2p/peer-id";
 import { Buffer } from 'buffer';  
 import { Key } from 'interface-datastore';
 import { EventEmitter } from 'events';  
-import { ThreadDb } from './db';
+import { DB as ThreadDb,Net } from './db';
 import { ChainUtil } from "../chain";
 import { LevelDatastore } from 'datastore-level' 
 import { Ed25519PrivKey } from "../dc-key/ed25519";
 import { keys } from "@libp2p/crypto";
 import { Key as ThreadKey } from './key';
-import { PrefixTransform,TransformedDatastore,TxnDatastoreExtended} from './transformed-datastore' 
-import {createTxnDatastore} from './level-adapter'
+import { PrefixTransform,TransformedDatastore} from './transformed-datastore' 
+import {TxnDatastoreExtended,NewOptions,Token,CollectionConfig,ManagedOptions} from './core/core';
+
+import { createTxnDatastore } from './level-adapter';
 // 协议常量定义  
 export const Protocol = {  
     Code: 406, // 根据实际协议代码调整  
@@ -20,7 +23,8 @@ export const Protocol = {
   } 
 
 export const ThreadProtocol = "/dc/" + Protocol.Name + "/" + Protocol.Version
- 
+const pullThreadBackgroundTimeout = 3600000; // 1 hour in milliseconds
+const PullTimeout = 20000; // 20 seconds in milliseconds
 
 // 错误定义  
 export class DBError extends Error {  
@@ -41,15 +45,7 @@ export const Errors = {
 export const MaxLoadConcurrency = 100;  
 export const dsManagerBaseKey = new Key('/manager');  
 
-// 接口定义  
-export interface Net {  
-    createThread(ctx: Context, id: ThreadID, ...opts: any[]): Promise<void>;  
-    addThread(ctx: Context, addr: Multiaddr, ...opts: any[]): Promise<void>;  
-    getThread(ctx: Context, id: ThreadID, ...opts: any[]): Promise<ThreadInfo>;  
-    deleteThread(ctx: Context, id: ThreadID, ...opts: any[]): Promise<void>;  
-    pullThread(ctx: Context, id: ThreadID, ...opts: any[]): Promise<void>;  
-    getPbLogs(ctx: Context, id: ThreadID): Promise<[PbLog[], ThreadInfo]>;  
-}  
+
 
 
 // 管理器类  
@@ -75,11 +71,6 @@ export class DBManager {
         this.dbs = new Map();  
         this.lock = new AsyncLock();  
         this.chainUtil = chainUtil;
-        // 使用配置对象  
-        // this.store = new LevelDatastore('my-database-name', {  
-        //     prefix: 'custom-prefix',  
-        //     version: 1,  // IndexedDB 版本  
-        // }) 
     }  
 
      /**  
@@ -164,7 +155,6 @@ export class DBManager {
   }  
 
     async newDBFromAddr(  
-        ctx: Context,  
         addr: Multiaddr,  
         key: ThreadKey,  
         opts: NewOptions = {}  
@@ -184,31 +174,29 @@ export class DBManager {
                 throw Errors.ErrThreadReadKeyRequired;  
             }  
 
-            await this.network.addThread(ctx, addr, {  
+            await this.network.addThread( addr, {  
                 key,  
                 logKey: opts.logKey,  
                 token: opts.token,  
             });  
-
-            const [store, dbOpts] = await this.wrapDB(this.store,id, opts, opts.collections);  
-            const db = await newDB(store, this.network, id, dbOpts);  
+            const collections = opts.collections || [];
+            const name = opts.name || '';
+            const [store, dbOpts] = await this.wrapDB(this.store,id, opts,name, collections);  
+            const db = await ThreadDb.newDB(store, this.network, id.toString(), dbOpts);  
             this.dbs.set(id.toString(), db);  
-
             if (opts.block) {  
-                await this.network.pullThread(ctx, id, { token: opts.token });  
+                await this.network.pullThread(id,pullThreadBackgroundTimeout, { token: opts.token });  
             } else {  
                 // Background pull  
                 this.pullThreadBackground(id, opts.token);  
             }  
-
             return db;  
         });  
     }  
 
     private async pullThreadBackground(id: ThreadID, token?: Token) {  
-        try {  
-            const ctx = createTimeoutContext(pullThreadBackgroundTimeout);  
-            await this.network.pullThread(ctx, id, { token });  
+        try {   
+            await this.network.pullThread( id,pullThreadBackgroundTimeout, { token });  
         } catch (err) {  
             console.error(`Error pulling thread ${id}:`, err);  
         }  
@@ -229,9 +217,9 @@ async  wrapDB(
     ...collections: CollectionConfig[]  
   ): Promise<[TxnDatastoreExtended, NewOptions, Error | null]> {  
     // 验证线程 ID  
-    const validationError = this.validateThreadId(id.toString());  
-    if (validationError) {  
-      return [null as unknown as TxnDatastoreExtended, null as unknown as NewOptions, validationError];  
+    const isValid = await this.validateThreadId(id.toString());  
+    if (!isValid) {  
+      return [null as unknown as TxnDatastoreExtended, null as unknown as NewOptions, new Error('Invalid Thread ID')];  
     }  
    
      // 创建前缀转换器并包装数据存储  
@@ -250,12 +238,12 @@ async  wrapDB(
     return [wrappedStore, opts, null];  
   }  
 
-    async listDBs(ctx: Context, opts: ManagedOptions = {}): Promise<Map<ThreadID, DB>> {  
+    async listDBs( opts: ManagedOptions = {}): Promise<Map<ThreadID, ThreadDb>> {  
         const dbs = new Map();  
         await this.lock.acquire('dbs', async () => {  
             for (const [idStr, db] of this.dbs) {  
                 const id = ThreadID.fromString(idStr);  
-                await this.network.getThread(ctx, id, { token: opts.token });  
+                await this.network.getThread(id, { token: opts.token });  
                 dbs.set(id, db);  
             }  
         });  
@@ -265,7 +253,7 @@ async  wrapDB(
     
     async ifSyncDBToDCSuccess(tId: string): Promise<boolean> {  
         try {  
-            const storeUnit = await this.dbManager.chainUtil.objectState(tId);  
+            const storeUnit = await this.chainUtil.objectState(tId);  
             if (!storeUnit) return false;  
 
             return new Promise((resolve) => {  
@@ -274,7 +262,7 @@ async  wrapDB(
                 const checkPeers = async () => {  
                     for (const pid of Object.keys(storeUnit.peers)) {  
                         try {  
-                            const peerId = await this.net.peer.decode(pid);  
+                            const peerId =  peerIdFromString(pid);  
                             const client = await this.getClient(peerId);  
                             const remoteInfo = await client.getThread(tId);  
                             const localInfo = await this.net.getThread(this.context, tId);  
@@ -614,23 +602,3 @@ function createTimeoutContext(timeout: number): Context {
     return ctx;  
 }  
  
-
-export interface ThreadInfo {  
-    // ThreadInfo 接口定义...  
-}  
-
-export interface Token {  
-    // Token 接口定义...  
-}  
-
-export interface Identity {  
-    // Identity 接口定义...  
-}  
-
-export interface PbLog {  
-    // PbLog 接口定义...  
-}  
-
-export interface CollectionConfig {  
-    // CollectionConfig 接口定义...  
-}  

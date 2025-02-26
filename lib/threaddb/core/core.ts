@@ -49,7 +49,7 @@ export class NewOptions {
   eventCodec?: any;  
   debug?: boolean;  
   key?: ThreadKey;
-  LogKey?: Ed25519PrivKey|Ed25519PubKey;
+  logKey?: Ed25519PrivKey|Ed25519PubKey;
   block?: boolean;
   token?: Token; 
 
@@ -58,7 +58,7 @@ export class NewOptions {
   }  
 } 
 
-type Token = Uint8Array;  
+export type Token = Uint8Array;  
 
 class TokenUtil {  
     // 判断两个 Token 是否相等  
