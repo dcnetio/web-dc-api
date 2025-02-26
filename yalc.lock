@@ -1,9 +1,0 @@
-{
-  "version": "v1",
-  "packages": {
-    "grpc-libp2p-client": {
-      "signature": "bb46002cc98c62efd6e9d8ff68604a63",
-      "file": true
-    }
-  }
-}
