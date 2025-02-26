@@ -13,7 +13,7 @@ import { noise } from "@chainsafe/libp2p-noise";
 import type { Multiaddr } from "@multiformats/multiaddr";
 
 
-export class DC {
+export class DcUtil {
   dcChain: ChainUtil;
   connectLength: number;
   dcNodeClient: any | undefined; // 什么类型？dc node 对象，主要用于建立连接
