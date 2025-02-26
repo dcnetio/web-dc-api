@@ -59,6 +59,10 @@ export class SymmetricKey {
   static fromSymKey(symKey: SymKey): SymmetricKey {
     return new SymmetricKey(symKey.raw)
   }
+  static fromString(s: string): SymmetricKey {
+    const decoded = base32.decode(s)  
+    return SymmetricKey.fromBytes(decoded)  
+  }
 }  
 
 export class Key {  

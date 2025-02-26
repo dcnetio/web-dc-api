@@ -239,11 +239,12 @@ export class DB {
   }  
 
   // 新建 DB 实例  
-  static async newDB(store: TxnDatastoreExtended, n: any, id: string, opts?: NewOptions): Promise<DB > {  
+  static async newDB(store: TxnDatastoreExtended, n: Net, id: ThreadID, opts?: NewOptions): Promise<DB > {  
 
       const args = opts || new NewOptions();  
       // 添加线程  
-      const info: Info = await n.AddThread({  
+
+      const info = await n.addThread({  
           // 根据需要提供 context, addr, key 等参数  
       });  
 

@@ -22,7 +22,7 @@
     "@helia/unixfs": "^4.0.1",
     "@ipld/dag-cbor": "^9.2.2",
     "@libp2p/crypto": "^5.0.9",
-    "@libp2p/interface": "^2.4.0",
+    "@libp2p/interface": "^2.6.1",
     "@libp2p/interface-keys": "^1.0.8",
     "@libp2p/interface-libp2p": "^3.2.0",
     "@libp2p/keychain": "^5.0.10",

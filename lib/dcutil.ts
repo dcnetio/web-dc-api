@@ -5,8 +5,8 @@ import { IDBBlockstore } from 'blockstore-idb'
 import { keys } from "@libp2p/crypto";
 import { circuitRelayTransport } from "@libp2p/circuit-relay-v2";
 import { webRTCDirect } from "@libp2p/webrtc";
-import { createHelia } from "helia";
-import { createLibp2p } from "libp2p";
+import { createHelia,HeliaLibp2p } from "helia";
+import { createLibp2p, Libp2p } from "libp2p";
 import { identify } from "@libp2p/identify";
 import { yamux } from "@chainsafe/libp2p-yamux";
 import { noise } from "@chainsafe/libp2p-noise";
@@ -16,7 +16,7 @@ import type { Multiaddr } from "@multiformats/multiaddr";
 export class DcUtil {
   dcChain: ChainUtil;
   connectLength: number;
-  dcNodeClient: any | undefined; // 什么类型？dc node 对象，主要用于建立连接
+  dcNodeClient: HeliaLibp2p<Libp2p> | undefined; // 什么类型？dc node 对象，主要用于建立连接
   defaultPeerId: string | undefined; // 默认 peerId
 
   constructor(dcChain: ChainUtil) {
@@ -36,7 +36,7 @@ export class DcUtil {
     return res;
   };
 
-  _connectPeers = (peerListJson: string[]) => {
+  _connectPeers = (peerListJson: string[]): Promise<Multiaddr> => {
     return new Promise((reslove, reject) => {
       const _this = this;
       const len = peerListJson.length;
@@ -49,31 +49,31 @@ export class DcUtil {
         );
         console.log("nodeAddr", nodeAddr);
         if (!nodeAddr) {
-          console.log("nodeAddr return");
+          console.log("no nodeAddr return");
           num++;
           if (num >= len) {
-            reslove(false);
+            reject("no nodeAddr return");
           }
           return;
         }
 
         try {
-          const res = await _this.dcNodeClient.libp2p.dial(nodeAddr);
+          const resCon = await _this.dcNodeClient?.libp2p.dial(nodeAddr);
           console.log("nodeAddr try return");
-          console.log(res);
-          if (res) {
+          console.log(resCon);
+          if (resCon) {
             reslove(nodeAddr);
           } else {
             num++;
             if (num >= len) {
-              reslove(false);
+              reject("dial nodeAddr failed");
             }
           }
         } catch (error) {
-          console.log("nodeAddr catch return", error);
+          console.log("dial nodeAddr error,error:%s", error.message);
           num++;
           if (num >= len) {
-            reslove(false);
+            reject(error.message);
           }
         }
       }
@@ -107,7 +107,7 @@ export class DcUtil {
         console.log("nodeAddr", nodeAddr);
 
         try {
-          const res = await _this.dcNodeClient.libp2p.dial(nodeAddr);
+          const res = await this.dcNodeClient.libp2p.dial(nodeAddr);
           console.log("nodeAddr try return");
           console.log(res);
           if (res) {
