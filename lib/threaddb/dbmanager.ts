@@ -14,7 +14,8 @@ import { Key as ThreadKey } from './key';
 import {StoreunitInfo} from '../chain';
 import { PrefixTransform,TransformedDatastore} from './transformed-datastore' 
 import {TxnDatastoreExtended,NewOptions,Token,CollectionConfig,ManagedOptions,ThreadInfo} from './core/core';
-import {DC} from '../dc';
+import type { DCConnectInfo } from "../types/types";
+import {DC} from '../dcutil';
 
 import { createTxnDatastore } from './level-adapter';
 // 协议常量定义  
@@ -55,6 +56,7 @@ export class DBManager {
     private store: TxnDatastoreExtended;   
     private network: Net;  
     private dc:    DC;
+    private connectedDc:DCConnectInfo;
     private opts: NewOptions;  
     private dbs: Map<string, ThreadDb>;  
     private lock: AsyncLock;  
