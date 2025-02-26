@@ -14,6 +14,7 @@ import { Key as ThreadKey } from './key';
 import {StoreunitInfo} from '../chain';
 import { PrefixTransform,TransformedDatastore} from './transformed-datastore' 
 import {TxnDatastoreExtended,NewOptions,Token,CollectionConfig,ManagedOptions,ThreadInfo} from './core/core';
+import {DC} from '../dc';
 
 import { createTxnDatastore } from './level-adapter';
 // 协议常量定义  
@@ -53,6 +54,7 @@ export const dsManagerBaseKey = new Key('/manager');
 export class DBManager {  
     private store: TxnDatastoreExtended;   
     private network: Net;  
+    private dc:    DC;
     private opts: NewOptions;  
     private dbs: Map<string, ThreadDb>;  
     private lock: AsyncLock;  
@@ -62,12 +64,16 @@ export class DBManager {
     constructor(  
         store: TxnDatastoreExtended,  //实际上是一个LevelDatastore实例,用levelDatastoreAdapter包装
         network: Net,  
+        dc: DC,
         opts: NewOptions = {} ,
-        chainUtil: ChainUtil
+        chainUtil: ChainUtil,
+        storagePrefix: string
     ) {  
 
         this.store = store;  
-        this.network = network;  
+        this.network = network; 
+        this.dc = dc;
+        this.storagePrefix = storagePrefix; 
         this.opts = opts;  
         this.dbs = new Map();  
         this.lock = new AsyncLock();  
@@ -330,7 +336,7 @@ async  wrapDB(
             const logKey = await this.getLogKey(tID);  
             const lid =  peerIdFromPrivateKey(logKey);
 
-            this.makeDcObjectGetConnect(threadid);  
+            this.dc._connectToObjNodes(threadid);  
 
             const threadKey = await Utils.generateThreadKey(b32Sk, b32Rk);  
             const multiAddr = await this.getMultiAddr(dbAddr, threadid);  
