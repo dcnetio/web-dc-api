@@ -5,17 +5,18 @@ import { peerIdFromPrivateKey, peerIdFromString } from "@libp2p/peer-id";
 import { Buffer } from 'buffer';  
 import { Key } from 'interface-datastore';
 import { EventEmitter } from 'events';  
-import { DB as ThreadDb,Net } from './db';
+import { DB as ThreadDb,Net ,Collection} from './db';
 import { ChainUtil } from "../chain";
 import { LevelDatastore } from 'datastore-level' 
 import { Ed25519PrivKey } from "../dc-key/ed25519";
-import type { PrivateKey }  from '@libp2p/interface'
+import type { Connection, PrivateKey }  from '@libp2p/interface'
 import { keys } from "@libp2p/crypto";
 import { SymmetricKey, Key as ThreadKey } from './key';
 import {StoreunitInfo} from '../chain';
 import { PrefixTransform,TransformedDatastore} from './transformed-datastore' 
 import {TxnDatastoreExtended,NewOptions,Token,CollectionConfig,ManagedOptions,ThreadInfo} from './core/core';
 import type { DCConnectInfo } from "../types/types";
+import { fastExtractPeerId  } from '../util/utils';
 import {DcUtil} from '../dcutil';
 
 import { createTxnDatastore } from './level-adapter';
@@ -68,7 +69,7 @@ export class DBManager {
         store: TxnDatastoreExtended,  //实际上是一个LevelDatastore实例,用levelDatastoreAdapter包装
         network: Net,  
         dc: DcUtil,
-         connectedDc:DCConnectInfo;
+        connectedDc:DCConnectInfo,
         opts: NewOptions = {} ,
         chainUtil: ChainUtil,
         storagePrefix: string
@@ -346,52 +347,54 @@ async syncDBFromDC(
         const sk = SymmetricKey.fromString(b32Sk);
         const rk = SymmetricKey.fromString(b32Rk);
         const threadKey =  new ThreadKey(sk, rk);  
-        let connectedFlag = false;
+        let connectedFlag = false ;
+        let connectedConn :Connection | undefined;
+        let fullMultiAddr :Multiaddr | undefined;
+        let threadAddr :Multiaddr;
+        let connectedPeerId :PeerId;
+        let dbMultiAddr :Multiaddr;
         if (dbAddr.length > 0) {
             try {
-                const res = await this.dc.dcNodeClient.libp2p.dial(dbAddr);
-                if (res) {
-                    connectedFlag = true;
-                } 
-            } catch (error: Error) {
+                
+                connectedConn = await this.dc.dcNodeClient?.libp2p.dial(multiaddr(dbAddr));
+            } catch (error) {
                 console.log("connect to %s catch return, error:%s",dbAddr, error.message);
             }
         }   
 
+        if (connectedConn) {//连接成功
+            connectedPeerId = connectedConn?.remotePeer;
+            dbMultiAddr = connectedConn.remoteAddr;
+            threadAddr = multiaddr(`/p2p/${connectedPeerId.toString()}/thread/${threadid}`);
+           
+        }else{//从区块链中获取节点信息,再连接
+            const connectedAddr = await this.dc._connectToObjNodes(threadid);
+            if (!connectedAddr) {
+                throw new Error("connect to obj nodes failed");
+            }
+            dbMultiAddr = connectedAddr;
+            const connectedPeerId = fastExtractPeerId(connectedAddr);
+            threadAddr = multiaddr(`/p2p/${connectedPeerId?.toString()}/thread/${threadid}`);
 
-        if (!connectedPeerId) {
-            return Errors.ErrNoThreadOnDc;
         }
-        const conns = this.dc.Net.Host().network.connections.get(connectedPeerId);
-        if (conns && conns.length > 0) {
-            let multiAddr = conns[0].remoteAddr;
-            const threadAddr = multiaddr(`/p2p/${connectedPeerId.toString()}/thread/${threadid}`);
-            multiAddr = multiAddr.decapsulate(threadAddr);
-            multiAddr = multiAddr.encapsulate(threadAddr);
-            console.log(multiAddr.toString());
-        } else {
-            return Errors.ErrNoThreadOnDc;
-        }
+        dbMultiAddr = dbMultiAddr.decapsulate(threadAddr);
+        dbMultiAddr = dbMultiAddr.encapsulate(threadAddr);
 
-        if (!multiAddr) {  
-            return Errors.ErrNoThreadOnDc;  
-        }  
-
-        const collectionInfos: Types.CollectionInfo[] = JSON.parse(jsonCollections);  
+        const collectionInfos: CollectionConfig[] = JSON.parse(jsonCollections);  
         const collections = await Promise.all(  
             collectionInfos.map(async info => ({  
                 name: info.name,  
-                schema: await Utils.SchemaFromSchemaString(info.schema),  
-                indexes: info.indexs || []  
+                schema: info.schema,  
+                indexes: info.indexes || []  
             }))  
         );  
 
-        const dbOpts: Types.DBOptions = {  
+        const dbOpts: ManagedOptions = {  
             name: dbname,  
             key: threadKey,  
             logKey: logKey,  
-            backfillBlock: block,  
-            collections  
+            block: block,  
+            collections: collections
         };  
 
         // Delete existing database if present  
@@ -601,7 +604,59 @@ async close(): Promise<void> {
         this.dbs.clear();  
     });  
 }  
-}  
+
+// DeleteDB deletes a db by id.
+async deleteDB(ctx: any, id: ThreadID, deleteThreadFlag: boolean, opts: ManagedOptions): Promise<void> {
+    console.debug(`manager: deleting db ${id}`);
+
+    console.debug(`manager: getting thread ${id} from net`);
+    try {
+        await this.network.getThread(id, { token: opts.token });
+        console.debug(`manager: got thread ${id} from net`);
+    } catch (err) {
+        throw err;
+    }
+    this.lock.acquire('dbs', async () => {
+        const db = this.dbs.get(id.toString());
+        if (!db) {
+            throw Errors.ErrDBNotFound;
+        }
+
+        try {
+            await db.close();
+        } catch (err) {
+            throw err;
+        }
+
+        if (deleteThreadFlag) {
+            console.debug(`manager: deleting thread ${id} from net`);
+            try {
+                await this.network.deleteThread(id, { token: opts.token, apiToken: db.connector.token() });
+                console.debug(`manager: deleted thread ${id} from net`);
+            } catch (err) {
+                throw err;
+            }
+        }
+
+        try {
+            await this.deleteThreadNamespace(id);
+        } catch (err) {
+            throw err;
+        }
+
+        this.dbs.delete(id.toString());
+        console.debug(`manager: deleted db ${id}`);
+    });
+}
+
+private async deleteThreadNamespace(id: ThreadID): Promise<void> {
+    const pre = dsManagerBaseKey.child(new Key(id.toString())).toString();
+    const q = { prefix: pre, keysOnly: true };
+    const results =  this.store.query(q);
+    for await (const result of results) {
+        await this.store.delete(result.key);
+    }
+}
 
 // 辅助类和函数  
 class AsyncLock {  
@@ -640,3 +695,4 @@ function createTimeoutContext(timeout: number): Context {
     return ctx;  
 }  
  
+

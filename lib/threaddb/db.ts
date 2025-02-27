@@ -3,6 +3,7 @@ import { EventEmitter } from 'events';
 import { } from './transformed-datastore' 
 import { Key,Query } from 'interface-datastore';
 import { dcnet } from "../proto/dcnet_proto";
+import { Connector } from './core/app';
 import { 
   Event,
   InstanceID,
@@ -182,13 +183,13 @@ class CollectionExistsError extends DBError {
 
 // ======== Core Implementation ========  
 export class Collection {  
-  private indexes: Map<string, Index> = new Map();  
+  public indexes: Map<string, Index> = new Map();  
 
   constructor(  
     public readonly name: string,  
-    private schema: JsonSchema,  
-    private store: TxnDatastoreExtended,  
-    private vm: any // Simplified VM for validation  
+    public schema: JsonSchema,  
+    public store: TxnDatastoreExtended,  
+    public vm: any // Simplified VM for validation  
   ) {}  
 
   async addIndex(index: Index): Promise<void> {  
@@ -227,7 +228,7 @@ export class DB {
   private datastore: TxnDatastoreExtended;  
   private name: string;  
   private collections: Map<string, Collection>;  
-  private connector: any; // 具体类型请根据实现定义  
+  private connector: Connector; // 具体类型请根据实现定义  
   private eventcodec: any; // 抽象的事件编解码机制  
 
   constructor(datastore: TxnDatastoreExtended, net: any, id: string, opts: NewOptions) {  

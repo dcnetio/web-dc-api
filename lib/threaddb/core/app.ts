@@ -1,0 +1,158 @@
+// app.ts  
+import { EventEmitter } from 'events'  
+import {ThreadID} from '@textile/threads-id'
+import {ThreadRecord} from './record'
+import {Key as ThreadKey} from '../key';
+import {ThreadInfo } from './core';
+
+
+// 类型定义  
+
+export type ThreadToken = Uint8Array  
+export type PubKey = Uint8Array  
+
+
+
+
+
+export interface FormatNode {  
+  // IPLD 节点接口  
+}  
+
+// 错误定义  
+export const ErrThreadInUse = new Error('thread is in use')  
+export const ErrInvalidNetRecordBody = new Error('app denied net record body')  
+
+// 核心接口  
+export interface App {  
+  validateNetRecordBody( body: FormatNode, identity: PubKey): Promise<Error | null>  
+  handleNetRecord( rec: ThreadRecord, key: ThreadKey): Promise<Error | null>  
+  getNetRecordCreateTime( rec: ThreadRecord, key: ThreadKey): Promise<[number, Error | null]>  
+}  
+
+
+
+// 本地事件总线实现  
+export class LocalEventsBus {  
+  private bus = new EventEmitter()  
+  private static readonly busTimeout = 15000 // 15秒  
+
+  send(event: LocalEvent): Promise<void> {  
+    return new Promise((resolve, reject) => {  
+      const timeout = setTimeout(() =>   
+        reject(new Error('Event send timeout')), LocalEventsBus.busTimeout  
+      )  
+      
+      this.bus.emit('event', event, () => {  
+        clearTimeout(timeout)  
+        resolve()  
+      })  
+    })  
+  }  
+
+  listen(): LocalEventListener {  
+    return new LocalEventListener(this.bus)  
+  }  
+
+  discard() {  
+    this.bus.removeAllListeners()  
+  }  
+}  
+
+export class LocalEventListener {  
+  private handler: (event: LocalEvent) => void  
+
+  constructor(private bus: EventEmitter) {  
+    this.handler = (event: LocalEvent) => this.onEvent(event)  
+    bus.on('event', this.handler)  
+  }  
+
+  private onEvent(event: LocalEvent) {  
+    // 处理事件  
+  }  
+
+  discard() {  
+    this.bus.off('event', this.handler)  
+  }  
+}  
+
+export interface LocalEvent {  
+  node: FormatNode  
+  token: ThreadToken  
+}  
+
+// 网络接口  
+export interface Net {  
+  createRecord(  
+       
+    threadId: ThreadID,  
+    body: FormatNode,  
+    options?: { threadToken?: ThreadToken, apiToken?: ThreadToken }  
+  ): Promise<ThreadRecord>  
+
+  validate(  
+    id: ThreadID,  
+    token: ThreadToken,  
+    readOnly: boolean  
+  ): Promise<[PubKey | null, Error | null]>  
+
+  exchange( id: ThreadID): Promise<Error | null>  
+}  
+
+// 连接器实现  
+export class Connector {  
+  private readonly token: ThreadToken  
+  
+  constructor(  
+    private net: Net,  
+    private app: App,  
+    private threadInfo: ThreadInfo  
+  ) {  
+    if (!threadInfo.key.canRead()) {  
+      throw new Error(`Read key not found for thread ${threadInfo.id}`)  
+    }  
+    this.token = this.generateRandomBytes(32)  
+  }  
+
+  get threadId(): ThreadID {  
+    return this.threadInfo.id  
+  }  
+
+  async createNetRecord(  
+      
+    body: FormatNode,  
+    token: ThreadToken  
+  ): Promise<[ThreadRecord | null, Error | null]> {  
+    try {  
+      const rec = await this.net.createRecord( this.threadId, body, {  
+        threadToken: token,  
+        apiToken: this.token  
+      })  
+      return [rec, null]  
+    } catch (err) {  
+      return [null, err as Error]  
+    }  
+  }  
+
+  async validate(token: ThreadToken, readOnly: boolean): Promise<Error | null> {  
+    const [_, err] = await this.net.validate(this.threadId, token, readOnly)  
+    return err  
+  }  
+
+  private generateRandomBytes(size: number): Uint8Array {  
+    return crypto.getRandomValues(new Uint8Array(size))  
+  }  
+}  
+
+// 工具函数  
+export function NewConnector(  
+  app: App,  
+  net: Net,  
+  threadInfo: ThreadInfo  
+): [Connector | null, Error | null] {  
+  try {  
+    return [new Connector(net, app, threadInfo), null]  
+  } catch (err) {  
+    return [null, err as Error]  
+  }  
+}  

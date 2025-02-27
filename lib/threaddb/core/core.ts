@@ -7,6 +7,7 @@ import { Ed25519PrivKey,Ed25519PubKey } from "../../dc-key/ed25519";
 import type { PeerId,PublicKey,PrivateKey } from "@libp2p/interface"; 
 import { Multiaddr } from '@multiformats/multiaddr'; 
 import { Head } from './head'; 
+import Ajv, { type JSONSchemaType } from "ajv"; 
 
 // ======== 基础类型定义 ========  
 export interface Context extends Record<string, any> {  
@@ -23,7 +24,7 @@ export interface JsonSchema {
 
 export interface CollectionConfig {  
   name: string;  
-  schema: JsonSchema;  
+  schema: JSONSchemaType<any>;  
   indexes?: Index[];  
   writeValidator?: string;  
   readFilter?: string;  
@@ -49,7 +50,7 @@ export class NewOptions {
   eventCodec?: any;  
   debug?: boolean;  
   key?: ThreadKey;
-  logKey?: Ed25519PrivKey|Ed25519PubKey;
+  logKey?: PrivateKey | PublicKey;
   block?: boolean;
   token?: Token; 
 
@@ -76,7 +77,12 @@ class TokenUtil {
 }
 
 export interface ManagedOptions {  
-  token?: Token;  
+  name: string;
+  key: ThreadKey;
+  logKey: PrivateKey | PublicKey;
+  token?: Token;
+  collections: CollectionConfig[];
+  block: boolean;
 } 
 
 export interface QueryResult {  

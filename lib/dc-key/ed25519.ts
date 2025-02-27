@@ -7,6 +7,7 @@ import { base32 } from 'multiformats/bases/base32'
 import type { MultihashDigest } from 'multiformats/hashes/interface'
 import type {  Ed25519PrivateKey, Ed25519PublicKey }  from '@libp2p/interface'
 import { bytesToHex,hexToBytes } from '@noble/hashes/utils'
+import { Encryption } from "../util/curve25519Encryption";
 
 enum keyType {  
     RSA = 0,  
@@ -35,9 +36,11 @@ const PublicKeyProto = new protobuf.Type("PublicKey")
 .add(new protobuf.Field("type", 1, "uint32"))  
 .add(new protobuf.Field("data", 2, "bytes"));  
 
+
+
 // ED25519公钥实现  // 更完整的实现  
 export class Ed25519PubKey implements Ed25519PublicKey {  
-    raw;  
+    raw: Uint8Array;  
     type :'Ed25519';  
  
 
@@ -92,6 +95,10 @@ export class Ed25519PubKey implements Ed25519PublicKey {
     verify(data: Uint8Array, sig: Uint8Array) {  
         return ed25519.verify(sig, data, this.raw)  
     }
+    async encrypt(data: Uint8Array): Promise<Uint8Array> {  
+        const encrypted = await Encryption.encrypt(this.raw, data);
+        return encrypted 
+      }  
 
     static formEd25519PublicKey(publicKey: Ed25519PublicKey): Ed25519PubKey {
         return new Ed25519PubKey(publicKey.raw)
@@ -222,6 +229,10 @@ export class Ed25519PrivKey implements Ed25519PrivateKey {
     }  
 
 
+    async decrypt(data: Uint8Array): Promise<Uint8Array> {  
+        const decrypted = await Encryption.decrypt(this.raw, data);
+        return decrypted 
+    } 
  
 
     equals(other: Ed25519PrivKey): boolean {  

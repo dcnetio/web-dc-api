@@ -1,6 +1,9 @@
 import { User } from "../types/types";
 import { base32 } from "multiformats/bases/base32";
 import * as JsCrypto from "jscrypto/es6";
+import { Multiaddr,multiaddr } from "@multiformats/multiaddr";
+import {peerIdFromString} from '@libp2p/peer-id'
+import { PeerId } from "@libp2p/interface";
 const { Word32Array, AES, pad, mode, Base64 } = JsCrypto;
 const NonceBytes = 12;
 const TagBytes = 16;
@@ -99,6 +102,12 @@ function mergeUInt8Arrays(a1: Uint8Array, a2: Uint8Array): Uint8Array {
   mergedArray.set(a2, a1.length);
   return mergedArray;
 }
+ function fastExtractPeerId(ma: Multiaddr | string): PeerId | null {  
+  const addr = typeof ma === 'string' ? multiaddr(ma) : ma  
+  const peerIdStr = addr.getPeerId() // 直接使用内置方法  
+  
+  return peerIdStr ? peerIdFromString(peerIdStr) : null  
+}  
 
 export {
   sha256,
@@ -109,5 +118,6 @@ export {
   sleep,
   decryptContentForBrowser,
   compareByteArrays,
-  mergeUInt8Arrays
+  mergeUInt8Arrays,
+  fastExtractPeerId
 };

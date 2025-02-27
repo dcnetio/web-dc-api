@@ -329,3 +329,98 @@ export async function extractPublicKeyFromPeerId(
     }
   }
   
+
+  /**  
+ * 将 Ed25519 公钥转换为 CryptoKey  
+ * @param publicKey - 输入的公钥（支持多种格式）  
+ * @param format - 密钥格式（默认自动检测）  
+ */  
+export async function ed25519PublicKeyToCryptoKey(  
+  publicKey: Uint8Array | string,  
+  format: 'raw' | 'spki' = 'raw'  
+): Promise<CryptoKey> {  
+  // 1. 统一转换为 ArrayBuffer  
+  let keyData: ArrayBuffer;  
+  if (typeof publicKey === 'string') {  
+    // 处理 PEM 格式（自动识别 SPKI）  
+    if (publicKey.startsWith('-----BEGIN')) {  
+      const pemHeader = '-----BEGIN PUBLIC KEY-----';  
+      const pemFooter = '-----END PUBLIC KEY-----';  
+      const pemContents = publicKey  
+        .replace(pemHeader, '')  
+        .replace(pemFooter, '')  
+        .replace(/\s+/g, '');  
+      keyData = Uint8Array.from(atob(pemContents), c => c.charCodeAt(0));  
+    } else {  
+      // 处理 Base64/Hex 等编码的 RAW 格式  
+      keyData = Uint8Array.from(atob(publicKey), c => c.charCodeAt(0));  
+    }  
+  } else {  
+    keyData = publicKey;  
+  }  
+
+  // 2. 检测密钥格式  
+  const detectedFormat = format === 'spki' || publicKey instanceof Uint8Array   
+    ? format   
+    : 'spki';  
+
+  // 3. 导入为 CryptoKey  
+  return crypto.subtle.importKey(  
+    detectedFormat,  
+    keyData,  
+    {  
+      name: 'Ed25519',  
+      namedCurve: 'Ed25519'  
+    },  
+    true, // 是否可导出  
+    ['verify'] // 公钥用途  
+  );  
+}  
+
+
+/**  
+ * 将 Ed25519 私钥转换为 CryptoKey  
+ * @param privateKey - 输入的私钥（支持多种格式）  
+ * @param format - 密钥格式（默认自动检测）  
+ */  
+export async function ed25519PrivateKeyToCryptoKey(  
+  privateKey: Uint8Array | string,  
+  format: 'raw' | 'pkcs8' = 'pkcs8'  
+): Promise<CryptoKey> {  
+  // 1. 统一转换为 ArrayBuffer  
+  let keyData: ArrayBuffer;  
+  if (typeof privateKey === 'string') {  
+    // 处理 PEM 格式（自动识别 PKCS8）  
+    if (privateKey.startsWith('-----BEGIN')) {  
+      const pemHeader = '-----BEGIN PRIVATE KEY-----';  
+      const pemFooter = '-----END PRIVATE KEY-----';  
+      const pemContents = privateKey  
+        .replace(pemHeader, '')  
+        .replace(pemFooter, '')  
+        .replace(/\s+/g, '');  
+      keyData = Uint8Array.from(atob(pemContents), c => c.charCodeAt(0));  
+    } else {  
+      // 处理 Base64/Hex 编码的 RAW 格式  
+      keyData = Uint8Array.from(atob(privateKey), c => c.charCodeAt(0));  
+    }  
+  } else {  
+    keyData = privateKey;  
+  }  
+
+  // 2. 检测密钥格式  
+  const detectedFormat = format === 'pkcs8' || privateKey instanceof Uint8Array   
+    ? format   
+    : 'pkcs8';  
+
+  // 3. 导入为 CryptoKey  
+  return crypto.subtle.importKey(  
+    detectedFormat,  
+    keyData,  
+    {  
+      name: 'Ed25519',  
+      namedCurve: 'Ed25519'  
+    },  
+    true, // 是否可导出（建议设为 false 生产环境）  
+    ['sign'] // 私钥用途  
+  );  
+} 
