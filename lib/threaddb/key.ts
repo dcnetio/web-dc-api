@@ -5,6 +5,7 @@ import { base32 } from 'multiformats/bases/base32'
 import { secretbox, randomBytes } from 'tweetnacl'  
 import { symKeyFromBytes } from '../dc-key/keyManager';
 import { SymKey } from "../threaddb/core/core";
+import type { PublicKey,PrivateKey } from "@libp2p/interface"; 
 
 
 export class SymmetricKey {  
@@ -64,6 +65,8 @@ export class SymmetricKey {
     return SymmetricKey.fromBytes(decoded)  
   }
 }  
+
+export type LogKey = PrivateKey | PublicKey 
 
 export class Key {  
   private sk: SymmetricKey | null  

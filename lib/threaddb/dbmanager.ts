@@ -12,12 +12,14 @@ import { Ed25519PrivKey } from "../dc-key/ed25519";
 import type { Connection, PrivateKey }  from '@libp2p/interface'
 import { keys } from "@libp2p/crypto";
 import { SymmetricKey, Key as ThreadKey } from './key';
+
 import {StoreunitInfo} from '../chain';
 import { PrefixTransform,TransformedDatastore} from './transformed-datastore' 
 import {TxnDatastoreExtended,NewOptions,Token,CollectionConfig,ManagedOptions,ThreadInfo} from './core/core';
 import type { DCConnectInfo } from "../types/types";
-import { fastExtractPeerId  } from '../util/utils';
+import { fastExtractPeerId, uint32ToLittleEndianBytes } from "../util/utils";
 import {DcUtil} from '../dcutil';
+import {DBClient} from './client';
 
 import { createTxnDatastore } from './level-adapter';
 // 协议常量定义  
@@ -43,7 +45,12 @@ export const Errors = {
     ErrDBNotFound: new DBError('db not found'),  
     ErrDBExists: new DBError('db already exists'),  
     ErrInvalidName: new DBError('invalid name'),  
-    ErrThreadReadKeyRequired: new DBError('thread read key required'),  
+    ErrThreadReadKeyRequired: new DBError('thread read key required'), 
+    ThreadIDValidationError: new DBError('thread id validation error'),
+    ErrThreadNotFound: new DBError('thread not found'), 
+    ErrP2pNetworkNotInit: new DBError('p2p network not initialized'),
+    ErrNoDbManager: new DBError('no db manager'),
+    ErrNoDcPeerConnected: new DBError('no dc peer connected'),
 };  
 
 // 常量  
@@ -195,7 +202,7 @@ export class DBManager {
             const collections = opts.collections || [];
             const name = opts.name || '';
             const [store, dbOpts] = await this.wrapDB(this.store,id, opts,name, collections);  
-            const db = await ThreadDb.newDB(store, this.network, id.toString(), dbOpts);  
+            const db = await ThreadDb.newDB(store, this.network, id, dbOpts);  
             this.dbs.set(id.toString(), db);  
             if (opts.block) {  
                 await this.network.pullThread(id,pullThreadBackgroundTimeout, { token: opts.token });  
@@ -209,7 +216,7 @@ export class DBManager {
 
     private async pullThreadBackground(id: ThreadID, token?: Token) {  
         try {   
-            await this.network.pullThread( id,pullThreadBackgroundTimeout, { token });  
+            await this.network.pullThread( id,pullThreadBackgroundTimeout, { token: token });  
         } catch (err) {  
             console.error(`Error pulling thread ${id}:`, err);  
         }  
@@ -399,17 +406,17 @@ async syncDBFromDC(
 
         // Delete existing database if present  
         try {  
-            await this.deleteDB(this.context, tID, false);  
-        } catch (error) {  
-            if (error !== Errors.ErrDBNotFound && error !== Errors.ErrThreadNotFound) {  
+            await this.deleteDB(tID, false);  
+        } catch (error:Error) {  
+            if (error.message != Errors.ErrDBNotFound.message && error.message != Errors.ErrThreadNotFound.message) {
                 throw error;  
             }  
         }  
 
-        await this.dbManager.newDBFromAddr(this.context, multiAddr, threadKey, dbOpts);  
+        await this.newDBFromAddr(dbMultiAddr,  threadKey, dbOpts);  
         return null;  
     } catch (error) {  
-        if (error instanceof Types.ThreadIDValidationError) {  
+        if (error == Errors.ThreadIDValidationError) {  
             return error;  
         }  
         return error as Error;  
@@ -417,16 +424,13 @@ async syncDBFromDC(
 }  
 
 async getDBRecordsCount(threadid: string): Promise<[number, Error | null]> {  
-    if (!this.dbManager) {  
-        return [0, Errors.ErrNoDbManager];  
-    }  
 
     try {  
         const tid = await this.decodeThreadId(threadid);  
-        const count = await this.dbManager.getDBRecordsCount(this.context, tid);  
-        return [count, null];  
+        const count = await this.getDBRecordsCount( tid);  
+        return count;  
     } catch (error) {  
-        if (error instanceof Types.ThreadIDValidationError) {  
+        if (error.message == Errors.ThreadIDValidationError.message) {  
             return [0, error];  
         }  
         return [0, error as Error];  
@@ -445,21 +449,34 @@ async newDB(
     b32Sk: string,  
     jsonCollections: string  
 ): Promise<[string, Error | null]> {  
-
-
     if (!this.connectedDc?.client) {  
         return ['', Errors.ErrNoDcPeerConnected];  
     }  
-
     try {  
-        const threadID = await this.connectedDc.client.requestThreadID();  
+        const dbClient = new DBClient(this.connectedDc.client);
+        const tidStr = await dbClient.requestThreadID(); 
+        const threadID = await this.decodeThreadId(tidStr);
         const logKey = await this.getLogKey(threadID);  
         const lpk = logKey.publicKey;
         const lid =  peerIdFromPrivateKey(logKey)  
-        const threadKey = await Utils.generateThreadKey(b32Sk, b32Rk);  
-        const serviceKey = await Utils.generateServiceKey(b32Sk);  
-        const blockHeight = await this.getBlockChainHeight();  
+        const sk = SymmetricKey.fromString(b32Sk);
+        const rk = SymmetricKey.fromString(b32Rk);
+        const threadKey = new ThreadKey(sk, rk);  
+        const blockHeight = (await this.chainUtil.getBlockHeight())||0;
 
+        const hValue: Uint8Array = uint32ToLittleEndianBytes(
+          blockHeight ? blockHeight : 0
+        );
+        const peerIdValue: Uint8Array = new TextEncoder().encode(
+          this.connectedDc.nodeAddr?.getPeerId() || ""
+        );
+    
+        // 将 hValue 和 peerIdValue 连接起来
+        const preSign = new Uint8Array(peerIdValue.length + hValue.length);
+        preSign.set(peerIdValue, 0);
+        preSign.set(hValue, peerIdValue.length);
+        const signature = this.privKey.sign(preSign);
+        const pubKey = this.privKey.publicKey;
         // Prepare signature data  
         const preSign = Buffer.concat([  
             Buffer.from(threadID.toString()),  
@@ -559,13 +576,13 @@ async syncDBToDC(tId: string): Promise<Error | null> {
 
 private async decodeThreadId(threadid: string): Promise<Types.ThreadID> {  
     if (!threadid) {  
-        throw new Types.ThreadIDValidationError('Thread ID cannot be empty');  
+        throw new Errors.ThreadIDValidationError('Thread ID cannot be empty');  
     }  
 
     try {  
         // 基本格式验证  
         if (!/^[a-zA-Z0-9]+$/.test(threadid)) {  
-            throw new Types.ThreadIDValidationError('Invalid thread ID format');  
+            throw new Errors.ThreadIDValidationError('Invalid thread ID format');  
         }  
 
         // 尝试解码  
@@ -574,15 +591,15 @@ private async decodeThreadId(threadid: string): Promise<Types.ThreadID> {
         // 验证长度  
         const bytes = threadID.toBytes();  
         if (bytes.length < 32) { // 假设最小长度为32字节  
-            throw new Types.ThreadIDValidationError('Thread ID too short');  
+            throw new Errors.ThreadIDValidationError('Thread ID too short');  
         }  
 
         return threadID;  
     } catch (error) {  
-        if (error instanceof Types.ThreadIDValidationError) {  
+        if (error instanceof Errors.ThreadIDValidationError) {  
             throw error;  
         }  
-        throw new Types.ThreadIDValidationError(`Failed to decode thread ID: ${error.message}`);  
+        throw new Errors.ThreadIDValidationError(`Failed to decode thread ID: ${error.message}`);  
     }  
 }  
 
@@ -606,12 +623,12 @@ async close(): Promise<void> {
 }  
 
 // DeleteDB deletes a db by id.
-async deleteDB(ctx: any, id: ThreadID, deleteThreadFlag: boolean, opts: ManagedOptions): Promise<void> {
+async deleteDB( id: ThreadID, deleteThreadFlag: boolean, opts?: ManagedOptions): Promise<void> {
     console.debug(`manager: deleting db ${id}`);
 
     console.debug(`manager: getting thread ${id} from net`);
     try {
-        await this.network.getThread(id, { token: opts.token });
+        await this.network.getThread(id, { token: opts?.token });
         console.debug(`manager: got thread ${id} from net`);
     } catch (err) {
         throw err;
@@ -631,7 +648,7 @@ async deleteDB(ctx: any, id: ThreadID, deleteThreadFlag: boolean, opts: ManagedO
         if (deleteThreadFlag) {
             console.debug(`manager: deleting thread ${id} from net`);
             try {
-                await this.network.deleteThread(id, { token: opts.token, apiToken: db.connector.token() });
+                await this.network.deleteThread(id, { token: opts?.token, apiToken: db.connector.token });
                 console.debug(`manager: deleted thread ${id} from net`);
             } catch (err) {
                 throw err;

@@ -4,13 +4,15 @@ import {ThreadID} from '@textile/threads-id'
 import {ThreadRecord} from './record'
 import {Key as ThreadKey} from '../key';
 import {ThreadInfo } from './core';
+import {ThreadToken} from './identity';
+import {Ed25519PubKey} from '../../dc-key/ed25519';
 
 
 // 类型定义  
 
-export type ThreadToken = Uint8Array  
-export type PubKey = Uint8Array  
-
+ 
+export type PubKey = Ed25519PubKey  
+export type Token = Uint8Array
 
 
 
@@ -87,7 +89,7 @@ export interface Net {
        
     threadId: ThreadID,  
     body: FormatNode,  
-    options?: { threadToken?: ThreadToken, apiToken?: ThreadToken }  
+    options?: { threadToken?: ThreadToken, apiToken?: Token }  
   ): Promise<ThreadRecord>  
 
   validate(  
@@ -101,7 +103,7 @@ export interface Net {
 
 // 连接器实现  
 export class Connector {  
-  private readonly token: ThreadToken  
+  public readonly token: Token  
   
   constructor(  
     private net: Net,  

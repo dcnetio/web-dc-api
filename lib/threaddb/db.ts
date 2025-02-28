@@ -228,7 +228,7 @@ export class DB {
   private datastore: TxnDatastoreExtended;  
   private name: string;  
   private collections: Map<string, Collection>;  
-  private connector: Connector; // 具体类型请根据实现定义  
+  public connector: Connector; // 具体类型请根据实现定义  
   private eventcodec: any; // 抽象的事件编解码机制  
 
   constructor(datastore: TxnDatastoreExtended, net: any, id: string, opts: NewOptions) {  

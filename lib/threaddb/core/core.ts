@@ -207,10 +207,6 @@ export interface SymKey {
 
 
 
-export interface ThreadToken {  
-  validate(privKey: string): Promise<PublicKey>;  
-}  
-
 
 
 // 定义 Thread Info 的接口  
@@ -242,3 +238,6 @@ export interface Store {
   addLog(id: ThreadID, logInfo: ThreadLogInfo): Promise<void>;  
   putBytes(id: ThreadID, identity: string, bytes: Uint8Array): Promise<void>;  
 }  
+
+
+
