@@ -71,7 +71,7 @@ class Logstore implements CoreLogstore {
     // AddThread adds a thread with keys.
     async addThread(info: ThreadInfo): Promise<void> {
         return this.mutex.runExclusive(async () => {
-            if (!info.key.service()) {
+            if (!info.key?.service()) {
                 throw new Error("a service-key is required to add a thread");
             }
             const sk = await this.keyBook.serviceKey(info.id);

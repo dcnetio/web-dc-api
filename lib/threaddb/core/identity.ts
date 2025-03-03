@@ -5,6 +5,7 @@ import {ed25519PublicKeyToCryptoKey,ed25519PrivateKeyToCryptoKey} from '../../dc
 import { SignJWT, jwtVerify, type JWTPayload, importPKCS8, exportJWK } from 'jose' 
 import { base32 } from 'multiformats/bases/base32' 
 import { jwtDecode } from 'jwt-decode'
+import { Ed25519PrivateKey } from "@libp2p/interface";
 
 // ==================== 核心接口 ====================  
 export interface Identity {  
@@ -78,10 +79,10 @@ export class ThreadToken {
     )  
   }  
 
-  async validate(issuerPubKey: Ed25519PubKey): Promise<Ed25519PubKey | null> {  
+  async validate(issuerPrivateKey: Ed25519PrivateKey): Promise<Ed25519PubKey | null> {  
     try {  
-      const publicKey = await ed25519PublicKeyToCryptoKey(issuerPubKey.raw, 'raw') 
-      const { payload } = await jwtVerify(this.value, publicKey)  
+      const privateKey = await ed25519PrivateKeyToCryptoKey(issuerPrivateKey.raw, 'raw') 
+      const { payload } = await jwtVerify(this.value, privateKey)  
       return this.parsePubKey(payload.sub!)  
     } catch {  
       return null  

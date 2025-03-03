@@ -9,7 +9,8 @@ import { Ed25519PrivKey,Ed25519PubKey } from "../dc-key/ed25519";
 import type { PeerId,PublicKey,PrivateKey } from "@libp2p/interface"; 
 import { SymmetricKey, Key as ThreadKey } from './key';
 import {validateIDData} from './lsstoreds/global';
-import {  ThreadInfo, ThreadLogInfo,ThreadToken,Store} from './core/core';
+import {  ThreadInfo, ThreadLogInfo,Store} from './core/core';
+import {ThreadToken} from './core/identity';
 
 
 
@@ -17,9 +18,9 @@ import {  ThreadInfo, ThreadLogInfo,ThreadToken,Store} from './core/core';
 class Network {  
   private store: Store;  
   private hostID: string;  
-  private privateKey: string;  
+  private privateKey: Ed25519PrivKey;  
 
-  constructor(store: Store, hostID: string, privateKey: string) {  
+  constructor(store: Store, hostID: string, privateKey: Ed25519PrivKey) {  
     this.store = store;  
     this.hostID = hostID;  
     this.privateKey = privateKey;  
@@ -50,10 +51,10 @@ class Network {
   /**  
    * 验证线程 ID 和 Token  
    */  
-  async validate(id: ThreadID, token: ThreadToken, readOnly: boolean): Promise<PublicKey> {  
+  async validate(id: ThreadID, token: ThreadToken, readOnly: boolean): Promise<PublicKey|null> {  
     if (!validateIDData(id.toBytes())) {  
       throw new Error("Invalid thread ID.");  
-    }  
+    }    
     return await token.validate(this.privateKey);  
   }  
 

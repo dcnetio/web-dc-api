@@ -212,7 +212,7 @@ export interface SymKey {
 // 定义 Thread Info 的接口  
 export interface ThreadInfo {  
   id: ThreadID;  
-  key: ThreadKey;  
+  key?: ThreadKey;  
   logs: ThreadLogInfo[];
 	addrs: Multiaddr[];
 }  

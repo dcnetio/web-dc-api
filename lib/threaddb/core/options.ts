@@ -3,7 +3,7 @@ import { Ed25519PubKey } from "../../dc-key/ed25519";
 import {ThreadToken} from './identity';
 
 
-type NewThreadOptions = {
+export type NewThreadOptions = {
     threadKey: ThreadKey;
     logKey: LogKey;
     token: ThreadToken;

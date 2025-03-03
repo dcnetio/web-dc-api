@@ -420,7 +420,7 @@ export async function ed25519PrivateKeyToCryptoKey(
       name: 'Ed25519',  
       namedCurve: 'Ed25519'  
     },  
-    true, // 是否可导出（建议设为 false 生产环境）  
-    ['sign'] // 私钥用途  
+    true, 
+    ['sign'] 
   );  
 } 
