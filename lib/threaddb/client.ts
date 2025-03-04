@@ -1,4 +1,4 @@
-import type { DCClient } from "../dcapi";
+import type { Client } from "../dcapi";
 import { DBGrpcClient } from "./grpcClient";
 import type { Multiaddr } from "@multiformats/multiaddr";
 import { extractPublicKeyFromPeerId } from "../dc-key/keyManager";
@@ -12,9 +12,9 @@ import { NewThreadOptions } from './core/options';
 
 
 export class DBClient {
-  client: DCClient;
+  client: Client;
 
-  constructor(dcClient: DCClient) {
+  constructor(dcClient: Client) {
     this.client = dcClient;
   }
 

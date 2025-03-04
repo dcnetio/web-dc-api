@@ -16,7 +16,7 @@ import { sha256, getRandomBytes, concatenateUint8Arrays } from "./util/utils";
 
 
 
-export class DCClient {
+export class Client {
   readonly protocol: string;
   p2pNode: Libp2p;
   peerAddr: Multiaddr;
@@ -27,49 +27,6 @@ export class DCClient {
     this.p2pNode = node;
     this.peerAddr = peerAddr;
     this.token = "";
-  }
-
-  async getHostID(
-    peerAddr?: Multiaddr
-  ): Promise<{ peerID: string; reqAddr: string }> {
-    try {
-      if (this.p2pNode == null) {
-        throw new Error("p2pNode is null");
-      }
-      if (!peerAddr) {
-        peerAddr = this.peerAddr;
-      }
-      const grpcClient = new DCGrpcClient(
-        this.p2pNode,
-        peerAddr,
-        this.token,
-        this.protocol
-      );
-      const reply = await grpcClient.getHostID();
-      return reply;
-    } catch (err) {
-      console.error("getHostID error:", err);
-      throw err;
-    }
-  }
-
-  async GetCacheValue(peerAddr: Multiaddr, key: string): Promise<string> {
-    try {
-      if (this.p2pNode == null) {
-        throw new Error("p2pNode is null");
-      }
-      const grpcClient = new DCGrpcClient(
-        this.p2pNode,
-        peerAddr,
-        this.token,
-        this.protocol
-      );
-      const reply = await grpcClient.GetCacheValue(key);
-      return reply;
-    } catch (err) {
-      console.error("GetCacheValue error:", err);
-      throw err;
-    }
   }
 
   async GetToken(
@@ -160,38 +117,6 @@ export class DCClient {
     }
   }
 
-  async SetCacheKey(
-    value: string,
-    blockheight: number,
-    expire: number,
-    signature: Uint8Array,
-    peerAddr?: Multiaddr
-  ): Promise<string> {
-    try {
-      if (this.p2pNode == null) {
-        throw new Error("p2pNode is null");
-      }
-      if (!peerAddr) {
-        peerAddr = this.peerAddr;
-      }
-      const grpcClient = new DCGrpcClient(
-        this.p2pNode,
-        peerAddr,
-        this.token,
-        this.protocol
-      );
-      const res = await grpcClient.SetCacheKey(
-        value,
-        blockheight,
-        expire,
-        signature
-      );
-      return res;
-    } catch (err) {
-      console.error("SetCacheKey error:", err);
-      throw err;
-    }
-  }
 
   async AddUserOffChainSpace(
     pubkey: string,
