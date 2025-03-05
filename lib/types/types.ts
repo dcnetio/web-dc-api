@@ -29,3 +29,8 @@ export interface DCConnectInfo {
   client?: Client | undefined;
   nodeAddr?: Multiaddr | undefined;
 }
+
+export interface AccountKey {
+  sign: (payload: Uint8Array) => Uint8Array;
+  getPubkeyRaw: () => Uint8Array;
+}

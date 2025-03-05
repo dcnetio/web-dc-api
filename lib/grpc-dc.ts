@@ -8,7 +8,6 @@ import { DataSource } from "./proto/datasource";
 
 export class DCGrpcClient {
   grpcClient: Libp2pGrpcClient;
-  stream: any;
   token: string;
 
   constructor(
@@ -19,49 +18,6 @@ export class DCGrpcClient {
   ) {
     this.grpcClient = new Libp2pGrpcClient(node, peerAddr, token, protocol);
     this.token = token;
-  }
-
-  async getHostID(): Promise<{ peerID: string; reqAddr: string }> {
-    try {
-      const message = new dcnet.pb.GetHostIDRequest({});
-      const messageBytes = dcnet.pb.GetHostIDRequest.encode(message).finish();
-      const responseData = await this.grpcClient.unaryCall(
-        "/dcnet.pb.Service/GetHostID",
-        messageBytes,
-        30000
-      );
-      const decoded = dcnet.pb.GetHostIDReply.decode(responseData);
-      const encodedPeerid = base58btc.encode(decoded.peerID);
-      const encodedReqAddr = uint8ArrayToString(decoded.reqAddr);
-      const reply = {
-        peerID: encodedPeerid,
-        reqAddr: encodedReqAddr,
-      };
-      return reply;
-    } catch (err) {
-      console.error("getHostID error:", err);
-      throw err;
-    }
-  }
-
-  async GetCacheValue(key: string): Promise<string> {
-    try {
-      const message = new dcnet.pb.GetCacheValueRequest({});
-      message.key = new TextEncoder().encode(key);
-      const messageBytes =
-        dcnet.pb.GetCacheValueRequest.encode(message).finish();
-      const responseData = await this.grpcClient.unaryCall(
-        "/dcnet.pb.Service/GetCacheValue",
-        messageBytes,
-        30000
-      );
-      const decoded = dcnet.pb.GetCacheValueReply.decode(responseData);
-      const encodedValue = uint8ArrayToString(decoded.value);
-      return encodedValue;
-    } catch (err) {
-      console.error("GetCacheValue error:", err);
-      throw err;
-    }
   }
 
   async GetToken(
@@ -132,62 +88,6 @@ export class DCGrpcClient {
     }
   }
 
-  
-  async AccountLogin(
-    accounthashencrypt: Uint8Array,
-    pubkeyencrypt: Uint8Array,
-    loginkeyrandencrypt: Uint8Array
-  ): Promise<Uint8Array> {
-    try {
-      const message = new dcnet.pb.AccountLoginRequest({});
-      message.accounthashencrypt = accounthashencrypt;
-      message.pubkeyencrypt = pubkeyencrypt;
-      message.loginkeyrandencrypt = loginkeyrandencrypt;
-      const messageBytes =
-        dcnet.pb.AccountLoginRequest.encode(message).finish();
-      const responseData = await this.grpcClient.unaryCall(
-        "/dcnet.pb.Service/AccountLogin",
-        messageBytes,
-        30000
-      );
-      const decoded = dcnet.pb.AccountLoginReply.decode(responseData);
-      const prikeyencrypt2 = decoded.prikeyencrypt2;
-      return prikeyencrypt2;
-    } catch (err) {
-      console.error("AccountLogin error:", err);
-      throw err;
-    }
-  }
-
-  async SetCacheKey(
-    value: string,
-    blockheight: number,
-    expire: number,
-    signature: Uint8Array
-  ): Promise<string> {
-    try {
-      const message = new dcnet.pb.SetCacheKeyRequest({});
-      message.value = new TextEncoder().encode(value);
-      message.blockheight = blockheight;
-      message.expire = expire;
-      message.signature = signature;
-      const messageBytes = dcnet.pb.SetCacheKeyRequest.encode(message).finish();
-      const reply = await this.grpcClient.unaryCall(
-        "/dcnet.pb.Service/SetCacheKey",
-        messageBytes,
-        30000
-      );
-      const decoded = dcnet.pb.SetCacheKeyReply.decode(reply);
-      if (decoded.cacheKey) {
-        const result = uint8ArrayToString(decoded.cacheKey);
-        return result;
-      }
-      throw new Error("SetCacheKey failed,flag: " + decoded.flag);
-    } catch (err) {
-      console.error("SetCacheKey error:", err);
-      throw err;
-    }
-  }
 
   async AddUserOffChainSpace(
     pubkey: string,

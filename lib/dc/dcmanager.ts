@@ -24,7 +24,9 @@ export class DCManager {
     if (!this.connectedDc?.client) {
       return [null, Errors.ErrNoDcPeerConnected];
     }
-    const dcClient = new DCClient(this.connectedDc.client);
+    const dcClient = new DCClient(
+      this.connectedDc.client,
+    );
     const reply = await dcClient.getHostID(peerAddr);
     return [reply, null];
   }

@@ -1,11 +1,9 @@
 import type { Multiaddr } from "@multiformats/multiaddr";
-import { DCConnectInfo } from "../types/types";
+import { AccountKey, DCConnectInfo } from "../types/types";
 import { ThemeClient } from "./client";
 import { DcUtil } from "../dcutil";
 import { ChainUtil } from "../chain";
 import { sha256, uint32ToLittleEndianBytes } from "../util/utils";
-import { Ed25519PrivKey } from "../dc-key/ed25519";
-import { AccountClient } from "../account/client";
 
 // 错误定义
 export class ThemeError extends Error {
@@ -23,20 +21,20 @@ export const Errors = {
   ErrPrivKeyIsNull: new ThemeError("privKey is null"),
   // chainUtil is null
   ErrChainUtilIsNull: new ThemeError("chainUtil is null"),
-  // accountClient is null
-  ErrAccountClientIsNull: new ThemeError("accountClient is null"),
+  // account privatekey sign is null
+  ErrAccountPrivateSignIsNull: new ThemeError("account privatekey sign is null"),
 };
 
-export class ThemeManager {
+export class ThemeManager{
   dc: DcUtil;
   chainUtil: ChainUtil | undefined;
   connectedDc: DCConnectInfo = {};
-  accountClient: AccountClient | undefined;
-  constructor(connectedDc: DCConnectInfo, dc: DcUtil, chainUtil?: ChainUtil, accountClient?: AccountClient) {
+  accountKey : AccountKey | undefined;
+  constructor(connectedDc: DCConnectInfo, dc: DcUtil, chainUtil?: ChainUtil, accPrivateSign?: AccountKey) {
     this.connectedDc = connectedDc;
     this.dc = dc;
     this.chainUtil = chainUtil;
-    this.accountClient = accountClient;
+    this.accountKey = accPrivateSign;
   }
 
   async getCacheValue(key: string): Promise<[string | null, Error | null]> {
@@ -93,6 +91,10 @@ export class ThemeManager {
       console.log("chainUtil is null");
       return [null, Errors.ErrChainUtilIsNull];
     }
+    if(!this.accountKey) {
+      console.log("accountKey is null");
+      return [null, Errors.ErrAccountPrivateSignIsNull];
+    }
     //获取最新区块高度
     const blockHeight = await this.chainUtil.getBlockHeight();
     const expire = (blockHeight ? blockHeight : 0) + 10000;
@@ -115,11 +117,7 @@ export class ThemeManager {
     preSign.set(preSignPart1, 0);
     preSign.set(hashValue, preSignPart1.length);
 
-    if(!this.accountClient) {
-      console.log("accountClient is null");
-      return [null, Errors.ErrAccountClientIsNull];
-    }
-    const signature = this.accountClient.sign(preSign);
+    const signature = this.accountKey.sign(preSign);
     const themeClient = new ThemeClient(this.connectedDc.client);
     const setCacheValueReply = await themeClient.setCacheKey(
       value,

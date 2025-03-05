@@ -19,26 +19,27 @@ import {
 import { Ed25519PrivKey } from "./dc-key/ed25519";
 import { decryptContent } from "./util/dccrypt";
 import { ChainUtil } from "./chain";
-import type { DCConnectInfo } from "./types/types";
+import type { AccountKey, DCConnectInfo } from "./types/types";
 import { Client } from "./dcapi";
 import { DcUtil } from "./dcutil";
 import { ErrInvalidToken } from "./error";
 import { DCManager } from "./dc/dcmanager";
 import { ThemeManager } from "./theme/thememanager";
 import { AccountManager } from "./account/account";
-import { AccountClient } from "./account/client";
+import { CommonClient } from "./commonclient";
 
 const NonceBytes = 12;
 const TagBytes = 16;
 const protocol = "/dc/thread/0.0.1";
 const { Buffer } = buffer;
-export class DC {
+export class DC implements AccountKey{
   blockChainAddr: string;
   backChainAddr: string;
   dcChain: ChainUtil;
   dcNodeClient: any | undefined; // 什么类型？dc node 对象，主要用于建立连接
-  privKey: Ed25519PrivKey | undefined; // 私钥
   dc: DcUtil;
+  privKey: Ed25519PrivKey | undefined; // 私钥
+  token: string | undefined;
 
   public TokenTask: boolean = false;
   public connectedDc: DCConnectInfo = {};
@@ -46,13 +47,26 @@ export class DC {
   public AppId: string = "";
   public Identity: string = "";
   public Blockheight: number = 0;
-  public  accountClient: AccountClient | undefined;
 
   constructor(options: { wssUrl: string; backWssUrl: string }) {
     this.blockChainAddr = options.wssUrl;
     this.backChainAddr = options.backWssUrl;
     this.dcChain = new ChainUtil();
     this.dc = new DcUtil(this.dcChain);
+  }
+
+  sign = (payload: Uint8Array): Uint8Array => {
+    if (!this.privKey) {
+      throw new Error("privKey is null");
+    }
+    return this.privKey.sign(payload);
+  };
+  getPubkeyRaw() {
+    if (!this.privKey) {
+      throw new Error("Private key is not initialized");
+    }
+    const pubKey = this.privKey.publicKey;
+    return pubKey.raw;
   }
 
   // 初始化
@@ -86,9 +100,6 @@ export class DC {
         if (nodeAddr) {
           this.connectedDc.nodeAddr = nodeAddr; // 当前地址
           this.connectedDc.client = await this._newDcClient(nodeAddr);
-          if(this.connectedDc.client){
-            this.accountClient = new AccountClient(this.connectedDc.client);
-          }
         }
         // 定时维系token
         this.startDcPeerTokenKeepValidTask();
@@ -228,7 +239,7 @@ export class DC {
       this.connectedDc,
       this.dc,
       this.dcChain,
-      this.accountClient
+      this
     );
     const res = await themeManager.setCacheKey(value);
     return res;
@@ -248,21 +259,26 @@ export class DC {
     safecode: string,
     appName: string
   ) => {
-    //登录
-    const accountManager = new AccountManager(
-      this.connectedDc,
-      this.dc,
-      this.dcChain,
-      this.accountClient
-    );
-    const res = await accountManager.accountLogin(
+    //登录accountLogin
+    if (!this.connectedDc?.client) {
+      throw new Error("dcClient is null");
+    }
+    const commonClient = new CommonClient(this.connectedDc.client);
+    const privKey = await commonClient.accountLogin(
       nftAccount,
       password,
       safecode,
       appName
     );
-    if (res && res[0]) {
+    if(privKey) {
+      this.privKey = privKey;
       // 存在token， 获取用户备用节点
+      const accountManager = new AccountManager(
+        this.connectedDc,
+        this.dc,
+        this.dcChain,
+        this,
+      );
       const reply = await accountManager.getAccountNodeAddr();
       if (reply && reply[0]) {
         const nodeAddr = reply[0];
@@ -270,10 +286,11 @@ export class DC {
         this.AccountBackupDc.client = await this._newDcClient(nodeAddr);
       }
     }
-    return res;
+    return true;
   };
 
-  // // 退出登陆
+
+  // 退出登陆
   // accountLogout = async () => {
   //   if (!this.connectedDc.client) {
   //     console.log("dcClient is null");
@@ -292,12 +309,12 @@ export class DC {
 
   // 获取用户信息
   getUserInfoWithNft = async (nftAccount: string) => {
-    if (!this.connectedDc.client) {
-      console.log("dcClient is null");
-      return;
-    }
-    // todo 从链上获取
-    const userInfo = await this.dcChain.getUserInfoWithNft(nftAccount);
+    const accountManager = new AccountManager(
+      this.connectedDc,
+      this.dc,
+      this.dcChain,
+    );
+    const userInfo = await accountManager.getUserInfoWithNft(nftAccount);
     console.log("userInfo reply:", userInfo);
     return userInfo;
   };

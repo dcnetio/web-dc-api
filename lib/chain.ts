@@ -43,16 +43,16 @@ export class ChainUtil {
     return blockHeight;
   }
   // 获取用户钱包信息
-  async getUserInfoWithAccount(account: string) {
+  async getUserInfoWithAccount(account: string): Promise<User> {
     const walletAccountStorage =
       await this.dcchainapi?.query.dcNode.walletAccountStorage(account);
     console.log("=========walletAccountStorage", walletAccountStorage);
     if (!walletAccountStorage) {
-      return "";
+      throw new Error("walletAccountStorage is null");
     }
     let userInfo = walletAccountStorage.toJSON();
     if (!isUser(userInfo)) {
-      return userInfo;
+      throw new Error("walletAccountStorage is not user");
     }
     if (userInfo?.parentAccount !== account.toString()) {
       const parentWalletAccountStorage =
@@ -60,7 +60,7 @@ export class ChainUtil {
           userInfo?.parentAccount
         );
       if (!parentWalletAccountStorage) {
-        return "";
+        throw new Error("parentWalletAccountStorage is null");
       }
       const parentUserInfo = parentWalletAccountStorage?.toJSON();
       if (!parentUserInfo || !isUser(parentUserInfo)) {
@@ -80,12 +80,12 @@ export class ChainUtil {
     return userInfo;
   }
   // 获取用户钱包信息
-  async getUserInfoWithNftHex(nftHexAccount: string) {
+  async getUserInfoWithNftHex(nftHexAccount: string): Promise<User> {
     const walletAccount =
       await this.dcchainapi?.query.dcNode.nftToWalletAccount(nftHexAccount);
     console.log("=========walletAccount", walletAccount);
     if (!walletAccount) {
-      return "";
+      throw new Error("walletAccount is null");
     }
     const userInfo = await this.getUserInfoWithAccount(
       walletAccount.toString()
@@ -94,7 +94,7 @@ export class ChainUtil {
   }
 
   // 获取用户钱包信息
-  async getUserInfoWithNft(nftAccount: string) {
+  async getUserInfoWithNft(nftAccount: string): Promise<User | null> {
     console.log("=========nftAccount", nftAccount);
     const accountBytes = new TextEncoder().encode(nftAccount);
     const accountHash = await sha256(accountBytes);

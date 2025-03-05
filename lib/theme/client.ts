@@ -1,6 +1,8 @@
 import type { Multiaddr } from "@multiformats/multiaddr";
 import type { Client } from "../dcapi";
-import { DCGrpcClient } from "../grpc-dc";
+import { dcnet } from "../proto/dcnet_proto";
+import { Libp2pGrpcClient } from "grpc-libp2p-client";
+import { toString as uint8ArrayToString } from "uint8arrays/to-string";
 
 
 
@@ -11,28 +13,38 @@ export class ThemeClient {
   constructor(dcClient: Client) {
     this.client = dcClient;
   }
-  
-    async getCacheValue(peerAddr: Multiaddr, key: string): Promise<string> {
-      try {
-        if (this.client.p2pNode == null) {
-          throw new Error("p2pNode is null");
-        }
-        if (!peerAddr) {
-          peerAddr = this.client.peerAddr;
-        }
-        const grpcClient = new DCGrpcClient(
-          this.client.p2pNode,
-          peerAddr,
-          this.client.token,
-          this.client.protocol
-        );
-        const reply = await grpcClient.GetCacheValue(key);
-        return reply;
-      } catch (err) {
-        console.error("GetCacheValue error:", err);
-        throw err;
+
+  async getCacheValue(peerAddr: Multiaddr, key: string): Promise<string> {
+    try {
+      if (this.client.p2pNode == null) {
+        throw new Error("p2pNode is null");
       }
+      if (!peerAddr) {
+        peerAddr = this.client.peerAddr;
+      }
+      const grpcClient = new Libp2pGrpcClient(
+        this.client.p2pNode,
+        peerAddr || this.client.peerAddr,
+        this.client.token,
+        this.client.protocol
+      );
+      const message = new dcnet.pb.GetCacheValueRequest({});
+      message.key = new TextEncoder().encode(key);
+      const messageBytes =
+        dcnet.pb.GetCacheValueRequest.encode(message).finish();
+      const responseData = await grpcClient.unaryCall(
+        "/dcnet.pb.Service/GetCacheValue",
+        messageBytes,
+        30000
+      );
+      const decoded = dcnet.pb.GetCacheValueReply.decode(responseData);
+      const encodedValue = uint8ArrayToString(decoded.value);
+      return encodedValue;
+    } catch (err) {
+      console.error("GetCacheValue error:", err);
+      throw err;
     }
+  }
 
 
   async setCacheKey(
@@ -49,19 +61,29 @@ export class ThemeClient {
       if (!peerAddr) {
         peerAddr = this.client.peerAddr;
       }
-      const grpcClient = new DCGrpcClient(
+      const grpcClient = new Libp2pGrpcClient(
         this.client.p2pNode,
-        peerAddr,
+        peerAddr || this.client.peerAddr,
         this.client.token,
         this.client.protocol
       );
-      const res = await grpcClient.SetCacheKey(
-        value,
-        blockheight,
-        expire,
-        signature
+      const message = new dcnet.pb.SetCacheKeyRequest({});
+      message.value = new TextEncoder().encode(value);
+      message.blockheight = blockheight;
+      message.expire = expire;
+      message.signature = signature;
+      const messageBytes = dcnet.pb.SetCacheKeyRequest.encode(message).finish();
+      const reply = await grpcClient.unaryCall(
+        "/dcnet.pb.Service/SetCacheKey",
+        messageBytes,
+        30000
       );
-      return res;
+      const decoded = dcnet.pb.SetCacheKeyReply.decode(reply);
+      if (decoded.cacheKey) {
+        const result = uint8ArrayToString(decoded.cacheKey);
+        return result;
+      }
+      throw new Error("SetCacheKey failed,flag: " + decoded.flag);
     } catch (err) {
       console.error("SetCacheKey error:", err);
       throw err;
