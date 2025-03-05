@@ -63,11 +63,6 @@ export class CommonClient {
       appName
     );
     this.privKey = privKey;
-    // 获取token
-    const token = await this.getToken();
-    if (!token) {
-      throw new Error("GetToken error");
-    }
     return privKey;
   }
 

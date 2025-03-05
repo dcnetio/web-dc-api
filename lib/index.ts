@@ -272,6 +272,11 @@ export class DC implements AccountKey{
     );
     if(privKey) {
       this.privKey = privKey;
+      // 获取token
+      const token = await commonClient.getToken();
+      if (!token) {
+        throw new Error("GetToken error");
+      }
       // 存在token， 获取用户备用节点
       const accountManager = new AccountManager(
         this.connectedDc,
