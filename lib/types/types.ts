@@ -33,5 +33,5 @@ export interface DCConnectInfo {
 
 export interface SignHandler {
   sign(payload: Uint8Array): Promise<Uint8Array>;
-  publickey: PublicKey;
+  publickey(): PublicKey;
 }

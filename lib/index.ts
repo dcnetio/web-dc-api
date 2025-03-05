@@ -17,6 +17,7 @@ import { DCClient } from "./dcapi";
 import { DcUtil } from "./dcutil";
 import { ErrInvalidToken } from "./error";
 import {SignHandler} from "./types/types";
+import { PublicKey } from "@libp2p/interface";
 
 const NonceBytes = 12;
 const TagBytes = 16;
@@ -92,8 +93,15 @@ export class DC  implements SignHandler{
     return signature;
   }
 
+  publickey(): PublicKey {
+    if (!this.privKey) {
+      throw new Error("privKey is null");
+    }
+    return this.privKey.publicKey;
+  }
 
-  
+
+
   // 从dc网络获取指定文件
   getFileFromDc = async (cid: string, decryptKey: string) => {
     console.log("first 11111");

@@ -16,7 +16,8 @@ import { SymmetricKey, Key as ThreadKey } from './key';
 
 import {StoreunitInfo} from '../chain';
 import { PrefixTransform,TransformedDatastore} from './transformed-datastore' 
-import {TxnDatastoreExtended,NewOptions,Token,CollectionConfig,ManagedOptions,ThreadInfo,Context} from './core/core';
+import {NewOptions,Token,CollectionConfig,ManagedOptions,ThreadInfo,Context} from './core/core';
+import {TxnDatastoreExtended} from './core/db';
 import type { DCConnectInfo } from "../types/types";
 import { fastExtractPeerId, uint32ToLittleEndianBytes } from "../util/utils";
 import {DcUtil} from '../dcutil';

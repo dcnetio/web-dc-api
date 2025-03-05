@@ -1,13 +1,15 @@
 
-import { Key, Query, QueryFilter, Pair } from 'interface-datastore';  
+import { Key, Query, QueryFilter,Batch, Pair,Datastore } from 'interface-datastore';  
 import { BaseDatastore } from 'datastore-core';  
+import {  
+  Transaction,
+  QueryExt,
+  QueryResult ,
+  TxnDatastoreExtended
+} from './core/db';
+
 import { 
   AbortOptions, 
-  Transaction,
-  TxnDatastoreExtended,
-  KeyTransform,
-  QueryExt,
-  QueryResult 
 } from './core/core';
 
 
@@ -48,7 +50,21 @@ function isPrefixFilter(filter: QueryFilter): filter is PrefixFilter {
          typeof (filter as PrefixFilter).prefix === 'string';  
 }  
 
-// ======== 转换存储实现 ========  
+
+
+
+export interface KeyTransform {  
+  convert(key: Key): Key;  
+  invert(key: Key): Key | null;  
+}  
+
+
+  // 数据存储扩展接口  
+  
+  
+  // 组合接口  
+
+
 class TransformedDatastore extends BaseDatastore {  
   constructor(  
     private readonly child: TxnDatastoreExtended,  

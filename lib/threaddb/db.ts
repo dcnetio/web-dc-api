@@ -3,24 +3,26 @@ import { EventEmitter } from 'events';
 import { } from './transformed-datastore' 
 import { Key,Query } from 'interface-datastore';
 import { Connector } from './core/app';
+import { EventCodec } from './core/db';
 import { 
-  Event,
-  InstanceID,
-  ReduceAction,
-  Action,ActionType,
-  TxnDatastoreExtended,
-  Transaction,
-  IndexFunc,
   JsonSchema,
   NewOptions,
   Index,
   CollectionConfig,
   ThreadInfo } from './core/core';
+import { Event,
+  InstanceID,
+  ReduceAction,
+  Action,ActionType,
+  TxnDatastoreExtended,
+  Transaction,
+  IndexFunc } from './core/db';
 import { ulid } from 'ulid';  
 import {JsonPatcher}  from './json-patcher';
 import { multiaddr, Multiaddr } from '@multiformats/multiaddr';  
 import { ThreadID } from '@textile/threads-id';
 import { PeerId } from '@libp2p/interface';
+import {Net} from './core/core';
 
 
 
@@ -54,32 +56,11 @@ export class CollectionEvent<T = any> implements Event<T> {
     }  
   } 
   
-  // ======== 事件编解码器 ========  
-  export abstract class EventCodec {  
-    abstract reduce(  
-      events: Event[],  
-      store: TxnDatastoreExtended,  
-      baseKey: Key,  
-      indexFn: IndexFunc  
-    ): Promise<ReduceAction[]>;  
-  
-    abstract create(actions: Action[]): Promise<[Event[], Uint8Array]>;  
-  
-    async eventsFromBytes(data: Uint8Array): Promise<Event[]> {  
-      const decoded = JSON.parse(new TextDecoder().decode(data));  
-      return decoded.map((d: any) => new CollectionEvent(  
-        d.i,  
-        d.c,  
-        d.p  
-      ));  
-    }  
-  }  
-  
 
 
   
   // ======== 默认实现示例 ========  
-  export class DefaultEventCodec extends EventCodec {  
+  export class DefaultEventCodec implements EventCodec {  
     async reduce(  
       events: Event[],  
       store: TxnDatastoreExtended,  
@@ -155,6 +136,16 @@ export class CollectionEvent<T = any> implements Event<T> {
           };  
       }  
     }  
+
+   
+    async eventsFromBytes(data: Uint8Array): Promise<Event[]> {  
+      const decoded = JSON.parse(new TextDecoder().decode(data));  
+      return decoded.map((d: any) => new CollectionEvent(  
+        d.i,  
+        d.c,  
+        d.p  
+      ));  
+    }  
 }
 // ======== Error Classes ========  
 class DBError extends Error {  
@@ -221,7 +212,7 @@ export class DB {
   public connector: Connector; // 具体类型请根据实现定义  
   private eventcodec: any; // 抽象的事件编解码机制  
 
-  constructor(datastore: TxnDatastoreExtended, net: any, id: string, opts: NewOptions) {  
+  constructor(datastore: TxnDatastoreExtended, net: Net, id: string, opts: NewOptions) {  
       this.datastore = datastore;  
       this.collections = new Map();  
       this.name = opts.name || 'unnamed';  
@@ -233,6 +224,7 @@ export class DB {
   static async newDB(store: TxnDatastoreExtended, n: Net, id: ThreadID, opts?: NewOptions): Promise<DB > {  
 
       const args = opts || new NewOptions();  
+
       // 添加线程  
 
       const info = await n.addThread({  
@@ -242,11 +234,11 @@ export class DB {
       const dbInstance = new DB(store, n, info.key, args);  
 
       if (args.block) {  
-          await n.PullThread(info.id, { token: args.token });  
+          await n.pullThread(info.id, { token: args.token });  
       } else {  
           setTimeout(async () => {  
               await n.PullThread(info.id, { token: args.token });  
-          }, 5000); // 示例：设置超时  
+          }, 30000); // 示例：设置超时  
       }  
 
       return dbInstance;  
