@@ -16,12 +16,13 @@ import type { DCConnectInfo } from "./types/types";
 import { DCClient } from "./dcapi";
 import { DcUtil } from "./dcutil";
 import { ErrInvalidToken } from "./error";
+import {SignHandler} from "./types/types";
 
 const NonceBytes = 12;
 const TagBytes = 16;
 const protocol = "/dc/thread/0.0.1";
 const { Buffer } = buffer;
-export class DC {
+export class DC  implements SignHandler{
   blockChainAddr: string;
   backChainAddr: string;
   dcChain: ChainUtil;
@@ -81,6 +82,18 @@ export class DC {
     }
   };
 
+
+  // 签名,后续应该改成发送到钱包iframe中签名,发送数据包含payload和用户公钥
+  sign = async (payload: Uint8Array): Promise<Uint8Array> => {
+    if (!this.privKey) {
+      throw new Error("privKey is null");
+    }
+    const signature = this.privKey.sign(payload);
+    return signature;
+  }
+
+
+  
   // 从dc网络获取指定文件
   getFileFromDc = async (cid: string, decryptKey: string) => {
     console.log("first 11111");

@@ -8,12 +8,25 @@ import type { PeerId,PublicKey,PrivateKey } from "@libp2p/interface";
 import { Multiaddr } from '@multiformats/multiaddr'; 
 import { Head } from './head'; 
 import Ajv, { type JSONSchemaType } from "ajv"; 
+import { dcnet } from "../../proto/dcnet_proto";
 
-// ======== 基础类型定义 ========  
-export interface Context extends Record<string, any> {  
-  signal?: AbortSignal;  
+
+// 上下文接口  
+export interface Context {  
+  signal?: AbortSignal  
+  deadline?: Date  
 }  
 
+// 接口定义  
+export interface Net {  
+  createThread( id: ThreadID, ...opts: any[]): Promise<void>;  
+  addThread( addr: Multiaddr, ...opts: any[]): Promise<void>;  
+  getThread( id: ThreadID, ...opts: any[]): Promise<ThreadInfo>;  
+  getThreadFromPeer( id: ThreadID, peer: PeerId, ...opts: any[]): Promise<ThreadInfo>;
+  deleteThread( id: ThreadID, ...opts: any[]): Promise<void>;  
+  pullThread( id: ThreadID,timeout: number, ...opts: any[]): Promise<void>;  
+  getPbLogs( id: ThreadID): Promise<[dcnet.pb.LogInfo[], ThreadInfo]>;  
+}  
 
 export interface JsonSchema {  
   type: string;  

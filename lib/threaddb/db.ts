@@ -2,7 +2,6 @@
 import { EventEmitter } from 'events';  
 import { } from './transformed-datastore' 
 import { Key,Query } from 'interface-datastore';
-import { dcnet } from "../proto/dcnet_proto";
 import { Connector } from './core/app';
 import { 
   Event,
@@ -24,16 +23,7 @@ import { ThreadID } from '@textile/threads-id';
 import { PeerId } from '@libp2p/interface';
 
 
-// 接口定义  
-export interface Net {  
-  createThread( id: ThreadID, ...opts: any[]): Promise<void>;  
-  addThread( addr: Multiaddr, ...opts: any[]): Promise<void>;  
-  getThread( id: ThreadID, ...opts: any[]): Promise<ThreadInfo>;  
-  getThreadFromPeer( id: ThreadID, peer: PeerId, ...opts: any[]): Promise<ThreadInfo>;
-  deleteThread( id: ThreadID, ...opts: any[]): Promise<void>;  
-  pullThread( id: ThreadID,timeout: number, ...opts: any[]): Promise<void>;  
-  getPbLogs( id: ThreadID): Promise<[dcnet.pb.LogInfo[], ThreadInfo]>;  
-}  
+
 
   // ======== 实现类 ========  
 export class CollectionEvent<T = any> implements Event<T> {  

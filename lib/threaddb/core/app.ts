@@ -6,6 +6,8 @@ import {Key as ThreadKey} from '../key';
 import {ThreadInfo } from './core';
 import {ThreadToken} from './identity';
 import {Ed25519PubKey} from '../../dc-key/ed25519';
+import {Net as net_Net} from './core'
+import {Context} from './core'
 
 
 // 类型定义  
@@ -84,7 +86,7 @@ export interface LocalEvent {
 }  
 
 // 网络接口  
-export interface Net {  
+export interface Net extends net_Net {  
   createRecord(  
        
     threadId: ThreadID,  
@@ -98,7 +100,7 @@ export interface Net {
     readOnly: boolean  
   ): Promise<[PubKey | null, Error | null]>  
 
-  exchange( id: ThreadID): Promise<Error | null>  
+  exchange(ctx:Context, id: ThreadID): Promise<Error | null>  
 }  
 
 // 连接器实现  
@@ -110,7 +112,7 @@ export class Connector {
     private app: App,  
     private threadInfo: ThreadInfo  
   ) {  
-    if (!threadInfo.key.canRead()) {  
+    if (!threadInfo.key?.canRead()) {  
       throw new Error(`Read key not found for thread ${threadInfo.id}`)  
     }  
     this.token = this.generateRandomBytes(32)  

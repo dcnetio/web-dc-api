@@ -1,5 +1,6 @@
 import { Multiaddr } from "@multiformats/multiaddr";
 import type { DCClient } from "../dcapi";
+import { PublicKey } from "@libp2p/interface";
 export interface User {
   callMinusNumber: number;
   commentFrozenStatus: number;
@@ -28,4 +29,9 @@ export interface User {
 export interface DCConnectInfo {
   client?: DCClient | undefined;
   nodeAddr?: Multiaddr | undefined;
+}
+
+export interface SignHandler {
+  sign(payload: Uint8Array): Promise<Uint8Array>;
+  publickey: PublicKey;
 }
