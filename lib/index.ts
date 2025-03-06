@@ -29,6 +29,7 @@ import { AccountManager } from "./account/accountmanager";
 import { CommonClient } from "./commonclient";
 import { p } from "./blowfish/const";
 import { FileManager } from "./file/file";
+import type { HeliaLibp2p } from "helia";
 
 const NonceBytes = 12;
 const TagBytes = 16;
@@ -38,7 +39,7 @@ export class DC implements AccountKey{
   blockChainAddr: string;
   backChainAddr: string;
   dcChain: ChainUtil;
-  dcNodeClient: any | undefined; // 什么类型？dc node 对象，主要用于建立连接
+  dcNodeClient: HeliaLibp2p | undefined; // 什么类型？dc node 对象，主要用于建立连接
   dc: DcUtil;
   privKey: Ed25519PrivKey | undefined; // 私钥
 

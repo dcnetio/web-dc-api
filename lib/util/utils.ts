@@ -1,8 +1,8 @@
 import { User } from "../types/types";
 import { base32 } from "multiformats/bases/base32";
 import * as JsCrypto from "jscrypto/es6";
-import { Multiaddr,multiaddr } from "@multiformats/multiaddr";
-import {peerIdFromString} from '@libp2p/peer-id'
+import { Multiaddr, multiaddr } from "@multiformats/multiaddr";
+import { peerIdFromString } from "@libp2p/peer-id";
 import { PeerId } from "@libp2p/interface";
 const { Word32Array, AES, pad, mode, Base64 } = JsCrypto;
 const NonceBytes = 12;
@@ -31,6 +31,14 @@ function concatenateUint8Arrays(...arrays: Uint8Array[]): Uint8Array {
   return result;
 }
 
+// Helper 函数：将 Uint64 转换为小端 Uint8Array
+function uint64ToLittleEndianBytes(value: number): Uint8Array {
+  const buffer = new ArrayBuffer(8);
+  const view = new DataView(buffer);
+  view.setUint32(0, value & 0xffffffff, true);
+  view.setUint32(4, Math.floor(value / 2 ** 32), true);
+  return new Uint8Array(buffer);
+}
 // Helper 函数：将 Uint32 转换为小端 Uint8Array
 function uint32ToLittleEndianBytes(value: number): Uint8Array {
   const buffer = new ArrayBuffer(4);
@@ -43,13 +51,7 @@ function isUser(obj: any): obj is User {
   return true; // or false if the object doesn't conform to User
 }
 
-
-
-
-
-const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms)); 
-
-
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 function decryptContentForBrowser(
   encryptBuffer: Uint8Array,
@@ -102,22 +104,23 @@ function mergeUInt8Arrays(a1: Uint8Array, a2: Uint8Array): Uint8Array {
   mergedArray.set(a2, a1.length);
   return mergedArray;
 }
- function fastExtractPeerId(ma: Multiaddr | string): PeerId | null {  
-  const addr = typeof ma === 'string' ? multiaddr(ma) : ma  
-  const peerIdStr = addr.getPeerId() // 直接使用内置方法  
-  
-  return peerIdStr ? peerIdFromString(peerIdStr) : null  
-}  
+function fastExtractPeerId(ma: Multiaddr | string): PeerId | null {
+  const addr = typeof ma === "string" ? multiaddr(ma) : ma;
+  const peerIdStr = addr.getPeerId(); // 直接使用内置方法
+
+  return peerIdStr ? peerIdFromString(peerIdStr) : null;
+}
 
 export {
   sha256,
   getRandomBytes,
   concatenateUint8Arrays,
   uint32ToLittleEndianBytes,
+  uint64ToLittleEndianBytes,
   isUser,
   sleep,
   decryptContentForBrowser,
   compareByteArrays,
   mergeUInt8Arrays,
-  fastExtractPeerId
+  fastExtractPeerId,
 };
