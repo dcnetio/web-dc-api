@@ -35,7 +35,7 @@ export class ThemeManager{
     this.accountKey = accPrivateSign;
   }
 
-  async getCacheValue(key: string): Promise<[string | null, Error | null]> {
+  async getCacheValue(key: string, peerAddr?: Multiaddr): Promise<[string | null, Error | null]> {
     if (!this.connectedDc?.client) {
       return [null, Errors.ErrNoDcPeerConnected];
     }
@@ -70,7 +70,7 @@ export class ThemeManager{
         return [null, Errors.ErrNodeAddrIsNull];
       }
 
-      const themeClient = new ThemeClient(this.connectedDc.client);
+      const themeClient = new ThemeClient(this.connectedDc.client, peerAddr);
       const reply = await themeClient.getCacheValue(nodeAddr, cacheKey);
       console.log("GetCacheValueReply reply:", reply);
       return [reply, null];
@@ -81,7 +81,7 @@ export class ThemeManager{
   }
 
   // 设置缓存值
-  setCacheKey = async (value: string) : Promise<[string | null, Error | null]> => {
+  setCacheKey = async (value: string, peerAddr?: Multiaddr) : Promise<[string | null, Error | null]> => {
     if (!this.connectedDc.client) {
       return [null, Errors.ErrNoDcPeerConnected];
     }
@@ -116,7 +116,7 @@ export class ThemeManager{
     preSign.set(hashValue, preSignPart1.length);
 
     const signature = this.accountKey.sign(preSign);
-    const themeClient = new ThemeClient(this.connectedDc.client);
+    const themeClient = new ThemeClient(this.connectedDc.client, peerAddr);
     const setCacheValueReply = await themeClient.setCacheKey(
       value,
       blockHeight ? blockHeight : 0,

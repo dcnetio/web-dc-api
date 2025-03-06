@@ -28,6 +28,7 @@ import { ThemeManager } from "./theme/thememanager";
 import { AccountManager } from "./account/accountmanager";
 import { CommonClient } from "./commonclient";
 import { p } from "./blowfish/const";
+import { FileManager } from "./file/file";
 
 const NonceBytes = 12;
 const TagBytes = 16;
@@ -530,5 +531,9 @@ export class DC implements AccountKey{
         }
       }
     }
+  }
+  async uploadFile(path: string) {
+    const fileManager = new FileManager(this.connectedDc);
+    const res = await fileManager.uploadFile(path);
   }
 }
