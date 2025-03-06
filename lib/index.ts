@@ -40,7 +40,6 @@ export class DC implements AccountKey{
   dcNodeClient: any | undefined; // 什么类型？dc node 对象，主要用于建立连接
   dc: DcUtil;
   privKey: Ed25519PrivKey | undefined; // 私钥
-  token: string | undefined;
 
   public TokenTask: boolean = false;
   public connectedDc: DCConnectInfo = {};
