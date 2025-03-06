@@ -1,5 +1,5 @@
 import type { Multiaddr } from "@multiformats/multiaddr";
-import { DCConnectInfo } from "../types/types";
+import { AccountKey, DCConnectInfo } from "../types/types";
 import { FileClient } from "./client";
 import type { HeliaLibp2p } from "helia";
 import { ChainUtil } from "../chain";
@@ -25,16 +25,17 @@ export class FileManager {
   connectedDc: DCConnectInfo = {};
   chainUtil: ChainUtil;
   dcNodeClient: HeliaLibp2p;
-  constructor(connectedDc: DCConnectInfo, chainUtil: ChainUtil, dcNodeClient: HeliaLibp2p) {
+    accountKey : AccountKey;
+  constructor(connectedDc: DCConnectInfo, chainUtil: ChainUtil, dcNodeClient: HeliaLibp2p, accountKey: AccountKey) {
     this.connectedDc = connectedDc;
     this.chainUtil = chainUtil;
     this.dcNodeClient = dcNodeClient;
+    this.accountKey = accountKey;
   }
 
   // 上传文件
   async addFile(
     file: File,
-    signCallback: (payload: Uint8Array) => Uint8Array,
     onUpdateTransmitSize: (status: number, size: number) => void,
   ): Promise<[string | null, Error | null]> {
     if (!this.connectedDc?.client) {
@@ -76,7 +77,7 @@ export class FileManager {
       preSign.set(bhValue, cidIdValue.length + sizeValue.length);
       preSign.set(typeValue, cidIdValue.length + sizeValue.length + bhValue.length);
       preSign.set(peerIdValue, cidIdValue.length + sizeValue.length + bhValue.length + typeValue.length);
-      const signature = signCallback(preSign);
+      const signature = this.accountKey.sign(preSign);
       const fileClient = new FileClient(this.connectedDc.client, this.dcNodeClient);
       const res = await fileClient.storeFile(
         fileSize,

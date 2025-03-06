@@ -27,9 +27,9 @@ import { DCManager } from "./dc/dcmanager";
 import { ThemeManager } from "./theme/thememanager";
 import { AccountManager } from "./account/accountmanager";
 import { CommonClient } from "./commonclient";
-import { p } from "./blowfish/const";
-import { FileManager } from "./file/file";
+import { FileManager } from "./file/filemanager";
 import type { HeliaLibp2p } from "helia";
+import { Libp2p } from "@libp2p/interface";
 
 const NonceBytes = 12;
 const TagBytes = 16;
@@ -39,7 +39,7 @@ export class DC implements AccountKey{
   blockChainAddr: string;
   backChainAddr: string;
   dcChain: ChainUtil;
-  dcNodeClient: HeliaLibp2p | undefined; // 什么类型？dc node 对象，主要用于建立连接
+  dcNodeClient: HeliaLibp2p<Libp2p<any>>; // 什么类型？dc node 对象，主要用于建立连接
   dc: DcUtil;
   privKey: Ed25519PrivKey | undefined; // 私钥
 
@@ -533,8 +533,8 @@ export class DC implements AccountKey{
       }
     }
   }
-  async uploadFile(path: string) {
-    const fileManager = new FileManager(this.connectedDc);
-    const res = await fileManager.uploadFile(path);
+  async addFile(file: File) {
+    const fileManager = new FileManager(this.connectedDc, this.dcChain, this.dcNodeClient);
+    const res = await fileManager.addFile(file);
   }
 }
