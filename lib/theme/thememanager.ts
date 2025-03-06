@@ -17,8 +17,6 @@ export const Errors = {
   ErrKeyNotValid: new ThemeError("key not valid"),
   // nodeAddr is null
   ErrNodeAddrIsNull: new ThemeError("nodeAddr is null"),
-  // privKey is null
-  ErrPrivKeyIsNull: new ThemeError("privKey is null"),
   // chainUtil is null
   ErrChainUtilIsNull: new ThemeError("chainUtil is null"),
   // account privatekey sign is null

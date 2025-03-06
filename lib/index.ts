@@ -25,8 +25,9 @@ import { DcUtil } from "./dcutil";
 import { ErrInvalidToken } from "./error";
 import { DCManager } from "./dc/dcmanager";
 import { ThemeManager } from "./theme/thememanager";
-import { AccountManager } from "./account/account";
+import { AccountManager } from "./account/accountmanager";
 import { CommonClient } from "./commonclient";
+import { p } from "./blowfish/const";
 
 const NonceBytes = 12;
 const TagBytes = 16;
@@ -273,7 +274,13 @@ export class DC implements AccountKey{
     if(privKey) {
       this.privKey = privKey;
       // 获取token
-      const token = await commonClient.getToken();
+      const pubkey = await this.privKey.publicKey;
+      const token = await this.connectedDc?.client.GetToken(
+        pubkey.string(),
+        (payload) => {
+          return this.sign(payload);
+        }
+      );
       if (!token) {
         throw new Error("GetToken error");
       }
@@ -441,9 +448,7 @@ export class DC implements AccountKey{
       await connectInfo.client?.GetToken(
         pubKey.string(),
         (payload: Uint8Array): Uint8Array => {
-          // Implement your signCallback logic here
-          const signature = privKey.sign(payload);
-          return signature;
+          return this.sign(payload);
         }
       );
       console.log("get token end ");
@@ -513,9 +518,7 @@ export class DC implements AccountKey{
           await connectInfo.client?.GetToken(
             pubKey.string(),
             (payload: Uint8Array): Uint8Array => {
-              // Implement your signCallback logic here
-              const signature = privKey.sign(payload);
-              return signature;
+              return this.sign(payload);
             }
           );
           console.log("GetToken end ");

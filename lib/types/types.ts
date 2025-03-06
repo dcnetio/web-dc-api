@@ -33,4 +33,5 @@ export interface DCConnectInfo {
 export interface AccountKey {
   sign: (payload: Uint8Array) => Uint8Array;
   getPubkeyRaw: () => Uint8Array;
+  // getPubkeyString: () => string;
 }
