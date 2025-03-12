@@ -35,3 +35,7 @@ export interface AccountKey {
   getPubkeyRaw: () => Uint8Array;
   // getPubkeyString: () => string;
 }
+// 类型定义  
+export interface FileTransmit {  
+  updateTransmitSize(status: string, size: number): void;  
+}  

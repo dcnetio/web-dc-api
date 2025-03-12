@@ -2,6 +2,8 @@ import type { Multiaddr } from "@multiformats/multiaddr";
 import { ChainUtil } from "../chain";
 import { DcUtil } from "../dcutil";
 import { AccountKey, DCConnectInfo, User } from "../types/types";
+import { AccountClient } from "./client";
+import { uint32ToLittleEndianBytes } from "../util/utils";
 
 // 错误定义
 export class AccountError extends Error {
@@ -41,7 +43,6 @@ export class AccountManager {
       console.log("chainUtil is null");
       return [null, Errors.ErrChainUtilIsNull];
     }
-    // 获取用户备用节点
     if(!this.accountKey) {
       console.log("accountKey is null");
       return [null, Errors.ErrAccountPrivateSignIsNull];
@@ -73,4 +74,39 @@ export class AccountManager {
     console.log("userInfo reply:", userInfo);
     return [userInfo, null];
   };
+  bindAccessPeerToUser = async (peerAddr: Multiaddr): Promise< [boolean | null, Error | null] > => {
+    if (!this.connectedDc.client) {
+      console.log("dcClient is null");
+      return [false, Errors.ErrNoDcPeerConnected];
+    }
+    if (!this.chainUtil) {
+      console.log("chainUtil is null");
+      return [null, Errors.ErrChainUtilIsNull];
+    }
+    if(!this.accountKey) {
+      console.log("accountKey is null");
+      return [null, Errors.ErrAccountPrivateSignIsNull];
+    }
+    // 绑定节点
+    const blockHeight = await this.chainUtil.getBlockHeight();
+    const headerValue = new TextEncoder().encode("add_request_peer_id_to_user");
+    const bhValue = uint32ToLittleEndianBytes(blockHeight ? blockHeight : 0);
+    const peerIdValue = new TextEncoder().encode("12D3KooWEGzh4AcbJrfZMfQb63wncBUpscMEEyiMemSWzEnjVCPf");
+
+    const messageParts = new Uint8Array([
+      ...headerValue,
+      ...bhValue,
+      ...peerIdValue,
+    ]);
+    const signature = await this.accountKey.sign(messageParts);
+    const accountClient = new AccountClient(
+      this.connectedDc.client,
+    );
+    const bindResult = await accountClient.bindAccessPeerToUser(
+      blockHeight ? blockHeight : 0, 
+      signature
+    );
+    console.log("bindAccessPeerToUser bindResult:", bindResult);
+    return [true, null];
+  }
 }

@@ -5,7 +5,7 @@ import { KeyManager } from "./dc-key/keyManager";
 import { CID } from "multiformats";
 import { unixfs } from "@helia/unixfs";
 
-import type { Multiaddr } from "@multiformats/multiaddr";
+import { multiaddr, type Multiaddr } from "@multiformats/multiaddr";
 import toBuffer from "it-to-buffer";
 import * as buffer from "buffer/";
 import {
@@ -35,7 +35,7 @@ const NonceBytes = 12;
 const TagBytes = 16;
 const protocol = "/dc/thread/0.0.1";
 const { Buffer } = buffer;
-export class DC implements AccountKey{
+export class DC implements AccountKey {
   blockChainAddr: string;
   backChainAddr: string;
   dcChain: ChainUtil;
@@ -97,119 +97,35 @@ export class DC implements AccountKey{
       // 如果链节点已经连接
       if (createChain) {
         this.dcNodeClient = await this.dc?._createHeliaNode();
+        // todo 临时测试
+        const peerId = "12D3KooWEGzh4AcbJrfZMfQb63wncBUpscMEEyiMemSWzEnjVCPf";
+        let nodeAddr = await this.dc?._getNodeAddr(peerId);
+        nodeAddr = multiaddr('/ip4/192.168.31.127/udp/4001/webrtc-direct/certhash/uEiBq5Ki7QE5Nl2IPWTOG52RNutWFaB3rfdIEgKAlVcFtHA/p2p/12D3KooWKfJGey3xUcTQ8bCokBxxudoDm3RAeCfdbuq2e34c7TWB')
         // 获取默认dc节点地址
-        const nodeAddr = await this.dc?._getDefaultDcNodeAddr();
+        // const nodeAddr = await this.dc?._getDefaultDcNodeAddr();
         if (nodeAddr) {
           this.connectedDc.nodeAddr = nodeAddr; // 当前地址
           this.connectedDc.client = await this._newDcClient(nodeAddr);
+          this.dcNodeClient.libp2p.dial(nodeAddr);
         }
+
         // 定时维系token
-        this.startDcPeerTokenKeepValidTask();
+        // this.startDcPeerTokenKeepValidTask();
       }
     }
   };
 
   // 从dc网络获取指定文件
   getFileFromDc = async (cid: string, decryptKey: string) => {
-    console.log("first 11111");
-    const res = await this.dc?._connectToObjNodes(cid);
-    if (!res) {
-      console.log("return nulllllllll");
-      return null;
-    }
-    console.log("first 2");
-    const fs = unixfs(this.dcNodeClient);
-    console.log("first 3");
-    let headDealed = false;
-    let waitBuffer = new Uint8Array(0);
-    let fileContent = new Uint8Array(0);
-    console.log("first 31");
-
-    const encryptextLen = (3 << 20) + NonceBytes + TagBytes; //每段密文长度(最后一段可能会短一点)
-    const catOptions = {
-      offset: 0,
-      length: 32,
-      // signal: AbortSignal.timeout(5000),
-    };
-    console.log("first 32");
-    let readCount = 0;
     try {
-      for (;;) {
-        if (!headDealed) {
-          //处理文件头
-          console.log("first 33");
-          const headBuf = await toBuffer(fs.cat(CID.parse(cid), catOptions));
-          console.log("first 4");
-          readCount += headBuf.length;
-          if (headBuf.length > 0) {
-            waitBuffer = mergeUInt8Arrays(waitBuffer, headBuf);
-            if (waitBuffer.length < 32) {
-              catOptions.offset = waitBuffer.length;
-              catOptions.length = 32 - waitBuffer.length;
-              continue;
-            } else {
-              //判断是否是dc网络存储的文件头
-              headDealed = true;
-              if (
-                compareByteArrays(
-                  waitBuffer.subarray(0, 10),
-                  Buffer.from("$$dcfile$$")
-                )
-              ) {
-                //判断是否是dc网络存储的文件头
-                waitBuffer = waitBuffer.subarray(32, waitBuffer.length);
-              }
-            }
-          } else {
-            if (waitBuffer.length > 0) {
-              if (decryptKey != "") {
-                const decrypted = await decryptContent(waitBuffer, decryptKey);
-                fileContent = mergeUInt8Arrays(fileContent, decrypted);
-              } else {
-                fileContent = mergeUInt8Arrays(fileContent, waitBuffer);
-              }
-            }
-            break;
-          }
-          continue;
-        }
-        catOptions.offset = readCount;
-        catOptions.length = encryptextLen;
-        const buf = await toBuffer(fs.cat(CID.parse(cid), catOptions));
-        if (buf.length > 0) {
-          readCount += buf.length;
-        }
-        if (buf.length > 0) {
-          waitBuffer = mergeUInt8Arrays(waitBuffer, buf);
-          while (waitBuffer.length >= encryptextLen) {
-            const encryptBuffer = waitBuffer.subarray(0, encryptextLen);
-            waitBuffer = waitBuffer.subarray(encryptextLen, waitBuffer.length);
-            if (decryptKey == "") {
-              fileContent = mergeUInt8Arrays(fileContent, encryptBuffer);
-              continue;
-            }
-            //解密
-            const decrypted = decryptContentForBrowser(
-              encryptBuffer,
-              decryptKey
-            );
-            fileContent = mergeUInt8Arrays(fileContent, decrypted);
-          }
-        } else {
-          if (waitBuffer.length > 0) {
-            if (decryptKey != "") {
-              const decrypted = decryptContentForBrowser(
-                waitBuffer,
-                decryptKey
-              );
-              fileContent = mergeUInt8Arrays(fileContent, decrypted);
-            } else {
-              fileContent = mergeUInt8Arrays(fileContent, waitBuffer);
-            }
-          }
-          break;
-        }
-      }
+      const fileManager = new FileManager(
+        this.dc,
+        this.connectedDc,
+        this.dcChain,
+        this.dcNodeClient,
+        this
+      );
+      const fileContent = await fileManager.getFileFromDc(cid, decryptKey);
       return fileContent;
     } catch (error) {
       console.log("error", error);
@@ -230,10 +146,13 @@ export class DC implements AccountKey{
   // 从dc网络获取缓存值
   getCacheValueFromDc = async (
     key: string
-  ): Promise<[string | null, Error | null]> => {
+  ): Promise<string | null> => {
     const themeManager = new ThemeManager(this.connectedDc, this.dc);
     const res = await themeManager.getCacheValue(key);
-    return res;
+    if(res[0]){
+      return res[0]
+    }
+    return null;
   };
   // 设置缓存值
   setCacheKey = async (value: string) => {
@@ -272,7 +191,7 @@ export class DC implements AccountKey{
       safecode,
       appName
     );
-    if(privKey) {
+    if (privKey) {
       this.privKey = privKey;
       // 获取token
       const pubkey = await this.privKey.publicKey;
@@ -282,26 +201,36 @@ export class DC implements AccountKey{
           return this.sign(payload);
         }
       );
+      // todo 临时测试
+      // if(this.connectedDc.nodeAddr) {
+      //   const accountManager = new AccountManager(
+      //     this.connectedDc,
+      //     this.dc,
+      //     this.dcChain,
+      //     this,
+      //   );
+      //   accountManager.bindAccessPeerToUser(this.connectedDc.nodeAddr);
+      // }
+
       if (!token) {
         throw new Error("GetToken error");
       }
-      // 存在token， 获取用户备用节点
-      const accountManager = new AccountManager(
-        this.connectedDc,
-        this.dc,
-        this.dcChain,
-        this,
-      );
-      const reply = await accountManager.getAccountNodeAddr();
-      if (reply && reply[0]) {
-        const nodeAddr = reply[0];
-        this.AccountBackupDc.nodeAddr = nodeAddr; // 当前地址
-        this.AccountBackupDc.client = await this._newDcClient(nodeAddr);
-      }
+      // // 存在token， 获取用户备用节点
+      // const accountManager = new AccountManager(
+      //   this.connectedDc,
+      //   this.dc,
+      //   this.dcChain,
+      //   this,
+      // );
+      // const reply = await accountManager.getAccountNodeAddr();
+      // if (reply && reply[0]) {
+      //   const nodeAddr = reply[0];
+      //   this.AccountBackupDc.nodeAddr = nodeAddr; // 当前地址
+      //   this.AccountBackupDc.client = await this._newDcClient(nodeAddr);
+      // }
     }
     return true;
   };
-
 
   // 退出登陆
   // accountLogout = async () => {
@@ -325,7 +254,7 @@ export class DC implements AccountKey{
     const accountManager = new AccountManager(
       this.connectedDc,
       this.dc,
-      this.dcChain,
+      this.dcChain
     );
     const userInfo = await accountManager.getUserInfoWithNft(nftAccount);
     console.log("userInfo reply:", userInfo);
@@ -533,8 +462,18 @@ export class DC implements AccountKey{
       }
     }
   }
-  async addFile(file: File) {
-    const fileManager = new FileManager(this.connectedDc, this.dcChain, this.dcNodeClient);
-    const res = await fileManager.addFile(file);
+  async addFile(
+    file: File,
+    enkey: string,
+    onUpdateTransmitSize: (status: number, size: number) => void
+  ) {
+    const fileManager = new FileManager(
+      this.dc,
+      this.connectedDc,
+      this.dcChain,
+      this.dcNodeClient,
+      this
+    );
+    const res = await fileManager.addFile(file, enkey, onUpdateTransmitSize);
   }
 }

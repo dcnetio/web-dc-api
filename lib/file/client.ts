@@ -49,29 +49,43 @@ export class FileClient {
       message.signature = signature;
       const messageBytes = dcnet.pb.StroeFileRequest.encode(message).finish();
       
+      const signatureDataSource = new DataSource();
       const onDataCallback = async (payload: Uint8Array) => {
-        console.log("onDataCallback:", payload);
         const decodedPayload = dcnet.pb.StroeFileReply.decode(payload);
+        console.log("onDataCallback decodedPayload:", decodedPayload);
+        // todo 需要转换
         if (decodedPayload.status === uploadStatus.OK) {
           // 成功
+          signatureDataSource.close();
         } else if (decodedPayload.status === uploadStatus.ENCRYPTING) {
           // 加密中
         } else if (decodedPayload.status === uploadStatus.UPLOADING) {
           // 上传中
         } else if (decodedPayload.status === uploadStatus.ABNORMAL) {
           // 异常
+          // signatureDataSource.close();
         } else if (decodedPayload.status === uploadStatus.ERROR) {
           // 失败
+          // signatureDataSource.close();
         }
-        onUpdateTransmitSize(decodedPayload.status, Number(decodedPayload.receivesize));
+        // if(onUpdateTransmitSize ) {
+        //   onUpdateTransmitSize(decodedPayload.status, Number(decodedPayload.receivesize));
+        // }
       };
+      // 使用方法
+      const dataSourceCallback = (): AsyncIterable<Uint8Array> => {
+        console.log("dataSourceCallback");
+        return signatureDataSource.getDataSource();
+      };
+
       // 使用方法
       await grpcClient.Call(
         "/dcnet.pb.Service/StoreFile",
         messageBytes,
-        30000,
+        1000 * 1000,
         "client-streaming",
         onDataCallback,
+        dataSourceCallback,
       );
       // const decoded = dcnet.pb.StroeFileReply.decode(responseData);
       // return [decoded.cid, decoded.decryptKey, null];

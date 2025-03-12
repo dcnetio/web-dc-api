@@ -9,17 +9,10 @@ import { toString as uint8ArrayToString } from "uint8arrays/to-string";
 
 export class ThemeClient {
   client: Client;
-  grpcClient: Libp2pGrpcClient;
 
 
   constructor(dcClient: Client, peerAddr?: Multiaddr) {
     this.client = dcClient;
-    this.grpcClient = new Libp2pGrpcClient(
-      this.client.p2pNode,
-      peerAddr || this.client.peerAddr,
-      this.client.token,
-      this.client.protocol
-    );
   }
 
   async getCacheValue(peerAddr: Multiaddr, key: string): Promise<string> {
@@ -34,7 +27,13 @@ export class ThemeClient {
       message.key = new TextEncoder().encode(key);
       const messageBytes =
         dcnet.pb.GetCacheValueRequest.encode(message).finish();
-      const responseData = await this.grpcClient.unaryCall(
+      const grpcClient = new Libp2pGrpcClient(
+        this.client.p2pNode,
+        peerAddr || this.client.peerAddr,
+        this.client.token,
+        this.client.protocol
+      );
+      const responseData = await grpcClient.unaryCall(
         "/dcnet.pb.Service/GetCacheValue",
         messageBytes,
         30000
@@ -69,7 +68,13 @@ export class ThemeClient {
       message.expire = expire;
       message.signature = signature;
       const messageBytes = dcnet.pb.SetCacheKeyRequest.encode(message).finish();
-      const reply = await this.grpcClient.unaryCall(
+      const grpcClient = new Libp2pGrpcClient(
+        this.client.p2pNode,
+        peerAddr || this.client.peerAddr,
+        this.client.token,
+        this.client.protocol
+      );
+      const reply = await grpcClient.unaryCall(
         "/dcnet.pb.Service/SetCacheKey",
         messageBytes,
         30000
