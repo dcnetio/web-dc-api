@@ -6,6 +6,7 @@ import { Buffer } from 'buffer';
 import { Key } from 'interface-datastore';
 import { EventEmitter } from 'events';  
 import { DB as ThreadDb ,Collection} from './db';
+import { Errors } from './core/db';
 import { Net } from './core/app';
 import { ChainUtil } from "../chain";
 import { LevelDatastore } from 'datastore-level' 
@@ -27,6 +28,7 @@ import { NewThreadOptions } from './core/options';
 import {ThreadToken} from './core/identity';
 import { DBGrpcClient } from "./grpcClient";
 import type { DCClient } from "../dcapi";
+
 import { extractPublicKeyFromPeerId } from "../dc-key/keyManager";
 
 import { createTxnDatastore } from './level-adapter';
@@ -42,25 +44,7 @@ export const ThreadProtocol = "/dc/" + Protocol.Name + "/" + Protocol.Version
 const pullThreadBackgroundTimeout = 3600000; // 1 hour in milliseconds
 const PullTimeout = 20000; // 20 seconds in milliseconds
 
-// 错误定义  
-export class DBError extends Error {  
-    constructor(message: string) {  
-        super(message);  
-        this.name = 'DBError';  
-    }  
-}  
 
-export const Errors = {  
-    ErrDBNotFound: new DBError('db not found'),  
-    ErrDBExists: new DBError('db already exists'),  
-    ErrInvalidName: new DBError('invalid name'),  
-    ErrThreadReadKeyRequired: new DBError('thread read key required'), 
-    ErrorThreadIDValidation: new DBError('thread id validation error'),
-    ErrThreadNotFound: new DBError('thread not found'), 
-    ErrP2pNetworkNotInit: new DBError('p2p network not initialized'),
-    ErrNoDbManager: new DBError('no db manager'),
-    ErrNoDcPeerConnected: new DBError('no dc peer connected'),
-};  
 
 // 常量  
 export const MaxLoadConcurrency = 100;  

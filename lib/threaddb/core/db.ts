@@ -2,6 +2,35 @@ import { ulid } from 'ulid';
 import { Key, Query,Batch, Datastore } from 'interface-datastore';  
 
 
+export const Errors = {  
+    ErrDBNotFound: new Error('db not found'),  
+    ErrDBExists: new Error('db already exists'),  
+    ErrInvalidName: new Error('invalid name'),  
+    ErrThreadReadKeyRequired: new Error('thread read key required'), 
+    ErrorThreadIDValidation: new Error('thread id validation error'),
+    ErrThreadNotFound: new Error('thread not found'), 
+    ErrP2pNetworkNotInit: new Error('p2p network not initialized'),
+    ErrNoDbManager: new Error('no db manager'),
+    ErrNoDcPeerConnected: new Error('no dc peer connected'),
+    ErrInvalidCollectionSchema: new Error("the collection schema _id property must be a string"),
+    ErrCannotIndexIDField: new Error(`cannot create custom index `),
+    ErrCollectionNotFound: new Error('collection not found'),
+};  
+
+
+
+export const dsPrefix = new Key("/db");  
+export const DBPrefix = {
+    dsPrefix: dsPrefix,
+    dsName: dsPrefix.child(new Key("name")), 
+    dsSchemas: dsPrefix.child(new Key("schema")), 
+    dsIndexes: dsPrefix.child(new Key("index")),
+    dsValidators: dsPrefix.child(new Key("validator")),
+    dsFilters: dsPrefix.child(new Key("filter")),
+}
+
+ 
+
 
 
 export type InstanceID = string;  
@@ -66,7 +95,7 @@ export  interface Transaction {
     newTransactionExtended( readOnly: boolean): Promise<Transaction>  
     queryExtended( q: QueryExt): AsyncIterable<QueryResult>  
   }  
-  
+
   export  interface TxnDatastoreExtended extends Datastore, DatastoreExtensions {  
       batch(): Batch;  
       newTransactionExtended( readOnly: boolean): Promise<Transaction>

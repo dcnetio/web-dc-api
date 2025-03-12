@@ -11,6 +11,10 @@ import { identify } from "@libp2p/identify";
 import { yamux } from "@chainsafe/libp2p-yamux";
 import { noise } from "@chainsafe/libp2p-noise";
 import type { Multiaddr } from "@multiformats/multiaddr";
+import { kadDHT,removePublicAddressesMapper } from "@libp2p/kad-dht";
+import { createBitswap } from '@helia/bitswap' 
+import { prefixLogger } from '@libp2p/logger' 
+import { ping } from '@libp2p/ping'
 
 
 export class DcUtil {
@@ -133,6 +137,8 @@ export class DcUtil {
       }
     });
   };
+
+
   _createHeliaNode = async () => { 
     console.log("_createHeliaNode=======");
     const datastore = new IDBDatastore('helia-meta')  
@@ -148,14 +154,58 @@ export class DcUtil {
       datastore,
       transports: [webRTCDirect(), circuitRelayTransport()],
       connectionEncrypters: [noise()],
+      addresses: {  
+        listen: ['/webrtc-direct']  
+      }  ,
       connectionGater: {
         denyDialMultiaddr: () => false, // this is necessary to dial local addresses at all
       },
+      connectionManager: {  
+        maxParallelDials: 100,  
+      }, 
       streamMuxers: [yamux()],
       services: {
         identify: identify(),
+        ping: ping(),
+        kadDHT: kadDHT({
+          protocol: '/ipfs/kad/1.0.0', // 标准公网协议  
+          clientMode: false, // 作为全节点参与 
+          maxOutboundStreams: 5, 
+        }) ,
+  
+        
+        
+       
       },
     });
+  
+  
+// 构建依赖项  
+const components = {  
+  libp2p: libp2p,  
+  blockstore: blockstore,  
+  datastore: datastore,  
+  peerId: libp2p.peerId, 
+  routing: kadDHT({  
+    protocol: '/ipfs/kad/1.0.0',   
+  }),  
+  logger: prefixLogger('bitswap')
+} 
+
+
+  // 自定义配置  
+const options = {  
+  protocol: '/ipfs/bitswap/1.3.0',  
+  engine: {  
+    targetMessageSize: 512 * 1024, // 512KB  
+    taskQueueConcurrency: 10  
+  }  
+} 
+
+// 创建实例  
+const bitswap = createBitswap(components, options)  
+libp2p.services.bitswap = bitswap;
+
 
     // libp2p.handle("/dc/thread/0.0.1", async ({ stream, connection }) => {
     //   // 处理入站流
@@ -165,6 +215,9 @@ export class DcUtil {
       datastore,
       blockstore,
       libp2p,
+      metrics: libp2p.metrics,
+      
+      
     })
     this.dcNodeClient = dcNodeClient
     return dcNodeClient;

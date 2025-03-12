@@ -1,9 +1,12 @@
 // db.ts - Complete TypeScript Implementation (Simplified Core)  
 import { EventEmitter } from 'events';  
 import { } from './transformed-datastore' 
-import { Key,Query } from 'interface-datastore';
+import { Key, Query } from 'interface-datastore';
+import {Key as ThreadKey} from './key';
 import { Connector } from './core/app';
-import { EventCodec } from './core/db';
+import { EventCodec ,Errors} from './core/db';
+import {ThreadRecord} from './core/record'
+import {Ed25519PubKey} from '../dc-key/ed25519';
 import { 
   JsonSchema,
   NewOptions,
@@ -16,18 +19,24 @@ import { Event,
   Action,ActionType,
   TxnDatastoreExtended,
   Transaction,
-  IndexFunc } from './core/db';
+  IndexFunc,
+  DBPrefix } from './core/db';
+
 import { ulid } from 'ulid';  
 import {JsonPatcher}  from './json-patcher';
 import { multiaddr, Multiaddr } from '@multiformats/multiaddr';  
 import { ThreadID } from '@textile/threads-id';
 import { PeerId } from '@libp2p/interface';
-import {Net} from './core/core';
+import {Net} from './core/app';
+import { Dispatcher } from './dispatcher';
+import {LocalEventsBus,App} from './core/app'
+import * as dagPB from '@ipld/dag-pb'
+import { DAGNode } from 'ipld-dag-pb';
 
 
 
+ 
 
-  // ======== 实现类 ========  
 export class CollectionEvent<T = any> implements Event<T> {  
     readonly timestamp: number;  
     
@@ -49,17 +58,11 @@ export class CollectionEvent<T = any> implements Event<T> {
     }  
   }  
   
-  // ======== 工具类 ========  
-  class Instance {  
-    static generateID(): InstanceID {  
-      return ulid().toLowerCase();  
-    }  
-  } 
+
   
 
 
   
-  // ======== 默认实现示例 ========  
   export class DefaultEventCodec implements EventCodec {  
     async reduce(  
       events: Event[],  
@@ -146,23 +149,17 @@ export class CollectionEvent<T = any> implements Event<T> {
         d.p  
       ));  
     }  
-}
-// ======== Error Classes ========  
-class DBError extends Error {  
-  constructor(message: string) {  
-    super(message);  
-    this.name = 'DBError';  
-  }  
-}  
+  }
 
-class CollectionExistsError extends DBError {  
+
+class CollectionExistsError extends Error {
+  name: string;
   constructor(name: string) {  
-    super(`Collection ${name} already exists`);  
+    super(`Collection ${name} already exists`);
     this.name = 'CollectionExistsError';  
   }  
 }  
 
-// ======== Core Implementation ========  
 export class Collection {  
   public indexes: Map<string, Index> = new Map();  
 
@@ -170,11 +167,10 @@ export class Collection {
     public readonly name: string,  
     public schema: JsonSchema,  
     public store: TxnDatastoreExtended,  
-    public vm: any // Simplified VM for validation  
   ) {}  
 
   async addIndex(index: Index): Promise<void> {  
-    if (index.path === '_id') throw new DBError('Cannot index _id field');  
+    if (index.path === '_id') throw new Error('Cannot index _id field');  
     this.indexes.set(index.path, index);  
     await this.rebuildIndex(index.path);  
   }  
@@ -205,18 +201,22 @@ export class Collection {
 
 
 
-export class DB {  
+export class DB  implements App {  
   private datastore: TxnDatastoreExtended;  
   private name: string;  
   private collections: Map<string, Collection>;  
-  public connector: Connector; // 具体类型请根据实现定义  
-  private eventcodec: any; // 抽象的事件编解码机制  
+  public connector: Connector; //  
+  public eventcodec: EventCodec; // 抽象的事件编解码机制  
+  public dispatcher:Dispatcher;
+  public localEventsBus: LocalEventsBus;
+  private webLock: string;
 
   constructor(datastore: TxnDatastoreExtended, net: Net, id: string, opts: NewOptions) {  
       this.datastore = datastore;  
       this.collections = new Map();  
       this.name = opts.name || 'unnamed';  
       this.eventcodec = opts.eventCodec || new JsonPatcher(); 
+      this.webLock = "webLock_db_" + id;
 
   }  
 
@@ -224,15 +224,34 @@ export class DB {
   static async newDB(store: TxnDatastoreExtended, n: Net, id: ThreadID, opts?: NewOptions): Promise<DB > {  
 
       const args = opts || new NewOptions();  
+      if (!args.eventCodec) {
+        args.eventCodec = new JsonPatcher(); //DefaultEventCodec()
+      }
+      const dbInstance = new DB(store, n, id.toString(), args)
+      dbInstance.dispatcher = new Dispatcher(store);
+      dbInstance.localEventsBus = new LocalEventsBus();
+      try {
+        await dbInstance.loadName();
+      }catch (error) {
+       throw new Error('Failed to load DB name');
+      }
+      const prevName = dbInstance.name
+      if (args.name)  {
+        dbInstance.name = args.name
+      } else if (prevName == "") {
+        dbInstance.name = "unnamed"
+      }
+      await dbInstance.saveName(prevName);  
+      await dbInstance.reCreateCollections();  
+      dbInstance.dispatcher.register(dbInstance);
+      connector, err := n.connectApp(dbInstance, id)
+      if err != nil {
+        return nil, err
+      }
+      d.connector = connector
 
-      // 添加线程  
 
-      const info = await n.addThread({  
-          // 根据需要提供 context, addr, key 等参数  
-      });  
-
-      const dbInstance = new DB(store, n, info.key, args);  
-
+      const info = await n.infoThread(id);
       if (args.block) {  
           await n.pullThread(info.id, { token: args.token });  
       } else {  
@@ -256,7 +275,7 @@ export class DB {
   // 加载 DB 名称  
   async loadName(): Promise<void> {  
       try {  
-          const nameBuffer = await this.datastore.get(new Key('dbName'));  
+          const nameBuffer = await this.datastore.get(DBPrefix.dsName);  
           if (nameBuffer) {  
               this.name = nameBuffer.toString();  
           }  
@@ -295,9 +314,72 @@ export class DB {
     return collection;  
   }  
 
+
+
+
+  async reCreateCollections(): Promise<void> {  
+    try {  
+        const results = this.datastore.query({
+          prefix: DBPrefix.dsSchemas.toString(),
+        });  
+
+        try {  
+            for await (const res of results) {  
+                const name = res.key.name();  
+                const schema = JSON.parse(res.value.toString()) as JsonSchema;  
+
+                let wv: string | undefined;  
+                try {  
+                    const wvBuffer = await this.datastore.get(DBPrefix.dsValidators.child(new Key(name)));  
+                    wv = wvBuffer.toString();  
+                } catch (err) {  
+                    if (err.code !== 'ERR_NOT_FOUND') throw err;  
+                }  
+
+                let rf: string | undefined;  
+                try {  
+                    const rfBuffer = await this.datastore.get(DBPrefix.dsFilters.child(new Key(name)));  
+                    rf = rfBuffer.toString();  
+                } catch (err) {  
+                    if (err.code !== 'ERR_NOT_FOUND') throw err;  
+                }  
+
+                
+                const c = new Collection(
+                    name,  
+                    schema,  
+                    this.datastore,
+                );  
+
+                let indexes: Record<string, Index> = {};  
+                try {  
+                    const indexBuffer = await this.datastore.get(DBPrefix.dsIndexes.child(new Key(name)));  
+                    indexes = JSON.parse(indexBuffer.toString());  
+                } catch (err) {  
+                    if (err.code !== 'ERR_NOT_FOUND') throw err;  
+                }  
+
+                for (const index of Object.values(indexes)) {  
+                    if (index.path) {  
+                        c.indexes[index.path] = index;  
+                    }  
+                }  
+
+                this.collections[c.name] = c;  
+            }  
+        } catch (err) {
+            throw new Error(`Error re-creating collections: ${err.message}`);
+        }
+    } catch (err) {
+        throw new Error(`Error re-creating collections: ${err.message}`)
+    }
+} 
+
+
+  
   getCollection(name: string): Collection {  
     const collection = this.collections.get(name);  
-    if (!collection) throw new DBError(`Collection ${name} not found`);  
+    if (!collection) throw new Error(`Collection ${name} not found`);  
     return collection;  
   }  
 
@@ -481,18 +563,75 @@ export class DB {
     collection: string,  
     operation: (txn: Transaction) => Promise<void>  
   ): Promise<void> {  
-    const txn = this.datastore.newTransaction();  
+    const txn = await this.datastore.newTransactionExtended(false);
     try {  
       await operation(txn);  
       await txn.commit();  
     } catch (error) {  
-      await txn.rollback();  
+      await txn.discard();
       throw new Error(  
         `Transaction failed in ${collection}: ${error instanceof Error ? error.message : String(error)}`  
       );  
     }  
-  }  
+  }
+
+  
+  
+  async validateNetRecordBody( body: DAGNode, identity: Ed25519PubKey): Promise<Error | null> {  
+    try {  
+        const events: Event[] = await this.eventcodec.eventsFromBytes(body.Data);  
+        if (events.length === 0) {  
+            return null; // 如果没有事件，返回null（这可能需要根据你的错误处理逻辑调整）  
+        }  
+
+        for (const e of events) {  
+            const collection = this.collections[e.collection];  
+            if (!collection) {  
+                return Errors.ErrCollectionNotFound; // 如果没有找到集合，返回对应错误  
+            }  
+        }  
+        return null; // 所有检查通过，返回null  
+
+    } catch (error) {  
+        return error as Error; // 捕获异常并返回  
+    }  
+  }
+
+  async  handleNetRecord(rec: ThreadRecord, key: ThreadKey): Promise<Error | null>  {  
+    let event: any;  
+    try {  
+        // 从记录中解码事件  
+        event = await threadcbor.eventFromRecord( connector.net, rec.value());  
+    } catch (err) {  
+        // 如果解码失败，尝试从块中获取事件  
+        const block = await getBlockWithRetry(ctx, rec.value());  
+        event = await threadcbor.eventFromNode(block);  
+    }  
+
+    try {  
+        // 获取事件的主体  
+        const body = await event.getBody(ctx, connector.net, key.read());  
+
+        // 从字节数据中解码事件  
+        const events = await eventcodec.eventsFromBytes(body.rawData());  
+
+        // 记录调试信息  
+        console.debug(`dispatching new record: ${rec.threadID()}/${rec.logID()}`);  
+
+        // 分发事件  
+        await dispatch(events);  
+    } catch (err) {  
+        throw new Error(`error when processing event: ${err.message}`);  
+    }  
+    return null;
+} 
+
+
+
+
+
 }  
+
  
 
 

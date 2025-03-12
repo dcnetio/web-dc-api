@@ -8,6 +8,7 @@ import {ThreadToken} from './identity';
 import {Ed25519PubKey} from '../../dc-key/ed25519';
 import {Net as net_Net} from './core'
 import {Context} from './core'
+import { DAGNode } from 'ipld-dag-pb';
 
 
 // 类型定义  
@@ -19,9 +20,7 @@ export type Token = Uint8Array
 
 
 
-export interface FormatNode {  
-  // IPLD 节点接口  
-}  
+
 
 // 错误定义  
 export const ErrThreadInUse = new Error('thread is in use')  
@@ -29,7 +28,7 @@ export const ErrInvalidNetRecordBody = new Error('app denied net record body')
 
 // 核心接口  
 export interface App {  
-  validateNetRecordBody( body: FormatNode, identity: PubKey): Promise<Error | null>  
+  validateNetRecordBody( body: DAGNode, identity: PubKey): Promise<Error | null>  
   handleNetRecord( rec: ThreadRecord, key: ThreadKey): Promise<Error | null>  
   getNetRecordCreateTime( rec: ThreadRecord, key: ThreadKey): Promise<[number, Error | null]>  
 }  
@@ -81,16 +80,19 @@ export class LocalEventListener {
 }  
 
 export interface LocalEvent {  
-  node: FormatNode  
+  node: DAGNode  
   token: ThreadToken  
 }  
 
 // 网络接口  
 export interface Net extends net_Net {  
+
+  connectApp(app:App,threadId: ThreadID): Promise<[Connector | null, Error | null]>
+
   createRecord(  
        
     threadId: ThreadID,  
-    body: FormatNode,  
+    body: DAGNode,  
     options?: { threadToken?: ThreadToken, apiToken?: Token }  
   ): Promise<ThreadRecord>  
 
@@ -124,7 +126,7 @@ export class Connector {
 
   async createNetRecord(  
       
-    body: FormatNode,  
+    body: DAGNode,  
     token: ThreadToken  
   ): Promise<[ThreadRecord | null, Error | null]> {  
     try {  

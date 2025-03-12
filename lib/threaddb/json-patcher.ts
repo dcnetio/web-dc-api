@@ -81,7 +81,7 @@ export class JsonPatcher implements EventCodec {
       await txn.commit();  
       return actions;  
     } catch (err) {  
-      await txn.discard();  
+       txn.discard();  
       throw this.wrapError(err as Error);  
     }  
   }  

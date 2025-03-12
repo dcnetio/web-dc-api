@@ -9,6 +9,7 @@ import { Multiaddr } from '@multiformats/multiaddr';
 import { Head } from './head'; 
 import Ajv, { type JSONSchemaType } from "ajv"; 
 import { dcnet } from "../../proto/dcnet_proto";
+import { EventCodec } from "./db";
 
 
 
@@ -62,7 +63,7 @@ export interface DBInfo {
 export class NewOptions {  
   name?: string;  
   collections?: CollectionConfig[];  
-  eventCodec?: any;  
+  eventCodec?: EventCodec;  
   debug?: boolean;  
   key?: ThreadKey;
   logKey?: PrivateKey | PublicKey;
