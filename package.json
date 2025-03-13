@@ -30,6 +30,7 @@
     "@libp2p/keychain": "^5.0.10",
     "@libp2p/peer-id": "^5.0.10",
     "@libp2p/peer-id-factory": "^4.2.4",
+    "@libp2p/pubsub-peer-discovery": "^11.0.1",
     "@libp2p/webrtc-direct": "^6.0.0",
     "@multiformats/multiaddr": "^12.2.3",
     "@noble/curves": "^1.6.0",
