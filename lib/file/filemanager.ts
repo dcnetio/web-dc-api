@@ -12,6 +12,8 @@ import {
   uint64ToBigEndianBytes,
   uint64ToLittleEndianBytes,
 } from '../util/utils'
+
+import {pubsubPeerDiscovery} from "@libp2p/pubsub-peer-discovery";
 import { unixfs } from '@helia/unixfs'
 import { SymmetricKey } from '../threaddb/key'
 import { CID } from 'multiformats/cid'
@@ -133,8 +135,16 @@ export class FileManager {
       path: file.name,
       content: contentGenerator(),
     })
+    // let cid: CID;
+    // for await (const chunk of contentGenerator()) {  
+    //   cid = await fs.addBytes(chunk)
+    // }
 
-    console.log('File cid successfully:', cid.toString())
+    // const chunk = file.slice(0, 20)
+    // const arrayBuffer = await chunk.arrayBuffer()
+    // let content = new Uint8Array(arrayBuffer)
+    // const cid = await fs.addBytes(content)
+    console.log('File cid successfully:',  cid? cid.toString() : null)
     return cid
   }
   // 上传文件
@@ -153,78 +163,87 @@ export class FileManager {
     }
 
     try {
-    //   const fileSize = file.size
-    //   const symKey = enkey && enkey.length > 0 ? SymmetricKey.fromString(enkey) : null
-    //   const fs = unixfs(this.dcNodeClient)
-    //   const pubkeyBytes = this.accountKey.getPubkeyRaw()
+      const fileSize = file.size
+      const symKey = enkey && enkey.length > 0 ? SymmetricKey.fromString(enkey) : null
+      const fs = unixfs(this.dcNodeClient)
+      const pubkeyBytes = this.accountKey.getPubkeyRaw()
 
-    //   const cid = await this._uploadLargeFileAdvanced(
-    //     file,
-    //     { offset: 0, chunkHashes: [] },
-    //     pubkeyBytes,
-    //     symKey,
-    //   )
-    //   console.log('==========_uploadLargeFileAdvanced', cid.toString())
-
-    //   const cidStr = cid.toString()
-    //   console.log('=========cidStr', cidStr)
-    //   // for await (const buf of fs.cat(cid, {
-    //   //   offset: 0,
-    //   //   length: 100,
-    //   // })) {
-    //   //   console.info('=======buf', buf.toString())
-    //   // }
-    //   this.dcNodeClient.libp2p.contentRouting.provide(cid)  
-    //   // 验证 DHT 功能  
-    //   // const providers: PeerInfo[] = []  
-    //   // for await (const peer of this.dcNodeClient.libp2p.contentRouting.findProviders(cid)) {
-    //   //   console.log('=========peer', peer.id)  
-    //   //   providers.push(peer)  
-    //   // }
-    //   // console.log('=========providers', providers)
-    //   const sizeValue = uint64ToLittleEndianBytes(fileSize)
-    //   const bhValue = uint32ToLittleEndianBytes(blockHeight ? blockHeight : 0)
-    //   const typeValue = uint32ToLittleEndianBytes(1)
-    //   // 将字符串 (dc.ConnectedDc.peerid) 转换为字节数组
-    //   const peerIdValue = new TextEncoder().encode(peerId)
-    //   const cidIdValue = new TextEncoder().encode(cidStr)
-    //   // 将 cidIdValue,sizeValue,bhValue,typeValue 和 peerIdValue 连接起来
-
-    //   // 组合所有部分
-    //   const messageParts = new Uint8Array([
-    //     ...cidIdValue,
-    //     ...sizeValue,
-    //     ...bhValue,
-    //     ...typeValue,
-    //     ...peerIdValue,
-    //   ])
-
-    //   const signature = this.accountKey.sign(messageParts)
-    //   const fileClient = new FileClient(this.connectedDc.client, this.dcNodeClient)
-    //   const res = await fileClient.storeFile(
-    //     fileSize,
-    //     blockHeight ? blockHeight : 0,
-    //     signature,
-    //     cidStr,
-    //     onUpdateTransmitSize,
-    //   )
-    //   console.log('addFile res', res)
-
-
-
-      // todo临时测试
       const cid = await this._uploadLargeFileAdvanced(
         file,
         { offset: 0, chunkHashes: [] },
+        pubkeyBytes,
+        symKey,
       )
       console.log('==========_uploadLargeFileAdvanced', cid.toString())
+
       const cidStr = cid.toString()
       console.log('=========cidStr', cidStr)
-      console.log('libp2p getProtocols', this.dcNodeClient.libp2p.getProtocols())
-      console.log('libp2p peerId', this.dcNodeClient.libp2p.peerId.toString())
-      console.log('libp2p 服务列表:', Object.keys(this.dcNodeClient.libp2p.services))  
-      const addrs = this.dcNodeClient.libp2p.getMultiaddrs()
-      console.log("libp2p节点地址:", addrs);  
+      // for await (const buf of fs.cat(cid, {
+      //   offset: 0,
+      //   length: 100,
+      // })) {
+      //   console.info('=======buf', buf.toString())
+      // }
+      const startTime = Date.now()
+      console.log('=========startTime', startTime)
+      this.dcNodeClient.libp2p.contentRouting.provide(cid)  
+      this.dcNodeClient.pins.add(cid)
+      console.log('=========endTime', Date.now() - startTime)
+      pubsubPeerDiscovery()
+
+      this.dc.manualAnnounce(this.dcNodeClient.libp2p, cid)
+      // 验证 DHT 功能  
+      // const providers: PeerInfo[] = []  
+      // for await (const peer of this.dcNodeClient.libp2p.contentRouting.findProviders(cid)) {
+      //   console.log('=========peer', peer.id)  
+      //   providers.push(peer)  
+      // }
+      // console.log('=========providers', providers)
+      const sizeValue = uint64ToLittleEndianBytes(fileSize)
+      const bhValue = uint32ToLittleEndianBytes(blockHeight ? blockHeight : 0)
+      const typeValue = uint32ToLittleEndianBytes(1)
+      // 将字符串 (dc.ConnectedDc.peerid) 转换为字节数组
+      const peerIdValue = new TextEncoder().encode(peerId)
+      const cidIdValue = new TextEncoder().encode(cidStr)
+      // 将 cidIdValue,sizeValue,bhValue,typeValue 和 peerIdValue 连接起来
+
+      // 组合所有部分
+      const messageParts = new Uint8Array([
+        ...cidIdValue,
+        ...sizeValue,
+        ...bhValue,
+        ...typeValue,
+        ...peerIdValue,
+      ])
+
+      const signature = this.accountKey.sign(messageParts)
+      const fileClient = new FileClient(this.connectedDc.client, this.dcNodeClient)
+      const res = await fileClient.storeFile(
+        fileSize,
+        blockHeight ? blockHeight : 0,
+        signature,
+        cidStr,
+        onUpdateTransmitSize,
+      )
+      console.log('addFile res', res)
+
+
+
+      // // todo临时测试
+      // const cid = await this._uploadLargeFileAdvanced(
+      //   file,
+      //   { offset: 0, chunkHashes: [] },
+      // )
+      // console.log('==========_uploadLargeFileAdvanced', cid.toString())
+      // const cidStr = cid.toString()
+      // console.log('=========cidStr', cidStr)
+      // this.dcNodeClient.libp2p.contentRouting.provide(cid)  
+      // pubsubPeerDiscovery()
+      // console.log('libp2p getProtocols', this.dcNodeClient.libp2p.getProtocols())
+      // console.log('libp2p peerId', this.dcNodeClient.libp2p.peerId.toString())
+      // console.log('libp2p 服务列表:', Object.keys(this.dcNodeClient.libp2p.services))  
+      // const addrs = this.dcNodeClient.libp2p.getMultiaddrs()
+      // console.log("libp2p节点地址:", addrs);  
 
 
 

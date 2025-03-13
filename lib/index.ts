@@ -100,7 +100,7 @@ export class DC implements AccountKey {
         // todo 临时测试
         const peerId = "12D3KooWEGzh4AcbJrfZMfQb63wncBUpscMEEyiMemSWzEnjVCPf";
         let nodeAddr = await this.dc?._getNodeAddr(peerId);
-        nodeAddr = multiaddr('/ip4/192.168.31.127/udp/4001/webrtc-direct/certhash/uEiBq5Ki7QE5Nl2IPWTOG52RNutWFaB3rfdIEgKAlVcFtHA/p2p/12D3KooWKfJGey3xUcTQ8bCokBxxudoDm3RAeCfdbuq2e34c7TWB')
+        // nodeAddr = multiaddr('/ip4/192.168.31.127/udp/4001/webrtc-direct/certhash/uEiBq5Ki7QE5Nl2IPWTOG52RNutWFaB3rfdIEgKAlVcFtHA/p2p/12D3KooWKfJGey3xUcTQ8bCokBxxudoDm3RAeCfdbuq2e34c7TWB')
         // 获取默认dc节点地址
         // const nodeAddr = await this.dc?._getDefaultDcNodeAddr();
         if (nodeAddr) {
