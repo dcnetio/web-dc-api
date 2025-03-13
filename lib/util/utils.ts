@@ -1,9 +1,11 @@
 import { User } from "../types/types";
 import { base32 } from "multiformats/bases/base32";
 import * as JsCrypto from "jscrypto/es6";
-import { Multiaddr,multiaddr } from "@multiformats/multiaddr";
-import {peerIdFromString} from '@libp2p/peer-id'
+import { Multiaddr, multiaddr } from "@multiformats/multiaddr";
+import { peerIdFromString } from "@libp2p/peer-id";
 import { PeerId } from "@libp2p/interface";
+import { openDB } from 'idb';
+import { keys } from "@libp2p/crypto";
 const { Word32Array, AES, pad, mode, Base64 } = JsCrypto;
 const NonceBytes = 12;
 const TagBytes = 16;
@@ -30,7 +32,32 @@ function concatenateUint8Arrays(...arrays: Uint8Array[]): Uint8Array {
   }
   return result;
 }
+/**  
+ * 将 64 位无符号整数转换为大端序字节数组（用于文件头）  
+ * @param value 要转换的整数值  
+ * @returns 8 字节的 Uint8Array  
+ */  
+function uint64ToBigEndianBytes(value: number | bigint): Uint8Array {  
+  const buffer = new ArrayBuffer(8);  
+  const view = new DataView(buffer);  
+  
+  // 确保值是 BigInt 类型  
+  const bigIntValue = typeof value === 'number' ? BigInt(value) : value;  
+  
+  // 使用 DataView 设置大端序值  
+  view.setBigUint64(0, bigIntValue, false); // false 表示大端序  
+  
+  return new Uint8Array(buffer);  
+}  
 
+// Helper 函数：将 Uint64 转换为小端 Uint8Array
+function uint64ToLittleEndianBytes(value: number): Uint8Array {
+  const buffer = new ArrayBuffer(8);
+  const view = new DataView(buffer);
+  view.setUint32(0, value & 0xffffffff, true);
+  view.setUint32(4, Math.floor(value / 2 ** 32), true);
+  return new Uint8Array(buffer);
+}
 // Helper 函数：将 Uint32 转换为小端 Uint8Array
 function uint32ToLittleEndianBytes(value: number): Uint8Array {
   const buffer = new ArrayBuffer(4);
@@ -63,13 +90,7 @@ function isUser(obj: any): obj is User {
   return true; // or false if the object doesn't conform to User
 }
 
-
-
-
-
-const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms)); 
-
-
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 function decryptContentForBrowser(
   encryptBuffer: Uint8Array,
@@ -122,12 +143,55 @@ function mergeUInt8Arrays(a1: Uint8Array, a2: Uint8Array): Uint8Array {
   mergedArray.set(a2, a1.length);
   return mergedArray;
 }
- function fastExtractPeerId(ma: Multiaddr | string): PeerId | null {  
-  const addr = typeof ma === 'string' ? multiaddr(ma) : ma  
-  const peerIdStr = addr.getPeerId() // 直接使用内置方法  
-  
-  return peerIdStr ? peerIdFromString(peerIdStr) : null  
-}  
+function fastExtractPeerId(ma: Multiaddr | string): PeerId | null {
+  const addr = typeof ma === "string" ? multiaddr(ma) : ma;
+  const peerIdStr = addr.getPeerId(); // 直接使用内置方法
+
+  return peerIdStr ? peerIdFromString(peerIdStr) : null;
+}
+
+    // 使用 Web Crypto API 安全存储
+    async function saveKeyPair(keyPair) {
+      // 导出密钥（正确参数）  
+      const privateKey = btoa(String.fromCharCode(...keyPair.raw)) 
+      // const publicKey = Buffer.from(keyPair.publicKey.raw).toString('base64')
+      const encode = buffer => btoa(String.fromCharCode(...new Uint8Array(buffer)));  
+      // const keyStorage = {  
+      //   publicKey: encode(publicKey),  
+      //   privateKey: encode(privateKey),  
+      //   createdAt: new Date().toISOString()  
+      // };  
+      // // 打开数据库  
+      // const db = await openDB('cryptoVault', 2, {  
+      //   upgrade(db) {  
+      //     db.createObjectStore('ed25519');  
+      //   }  
+      // });  
+
+      // await db.put("keys", {
+      //   id: "ed25519_key",
+      //   ...keyStorage  
+      // });
+      localStorage.setItem('ed25519_key', privateKey)
+    }
+    async function loadKeyPair() {  
+      // const db = await openDB('cryptoVault');  
+      // const stored = await db.get('ed25519', 'ed25519_key');  
+    
+      // 解码 Base64  
+      const decode = str => Uint8Array.from(atob(str), c => c.charCodeAt(0));  
+      
+      // if(!stored.publicKey || !stored.privateKey) return null
+    
+      // // 导入私钥  
+      // const privateKey = decode(stored.privateKey)
+      const privateKey = localStorage.getItem('ed25519_key')
+      if(privateKey){
+        const keyPair = keys.privateKeyFromRaw(decode(privateKey))
+        return keyPair
+      }
+      return null
+    }  
 
 
 // 同域名跨浏览器锁获取并执行操作,mode  "exclusive" | "shared";
@@ -147,11 +211,15 @@ export {
   uint32ToLittleEndianBytes,
   uint64ToUint8Array,
   uint8ArrayToUint64,
+  uint64ToLittleEndianBytes,
+  uint64ToBigEndianBytes, 
   isUser,
   sleep,
   decryptContentForBrowser,
   compareByteArrays,
   mergeUInt8Arrays,
   fastExtractPeerId,
-  withWebLock
+  withWebLock,
+  saveKeyPair,
+  loadKeyPair
 };

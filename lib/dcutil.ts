@@ -1,21 +1,26 @@
 import { ChainUtil } from "./chain";
 import { isName, multiaddr } from "@multiformats/multiaddr";
-import { IDBDatastore } from 'datastore-idb'  
-import { IDBBlockstore } from 'blockstore-idb' 
+import { IDBDatastore } from "datastore-idb";
+import { IDBBlockstore } from "blockstore-idb";
 import { keys } from "@libp2p/crypto";
 import { circuitRelayTransport } from "@libp2p/circuit-relay-v2";
-import { webRTCDirect } from "@libp2p/webrtc";
-import { createHelia,HeliaLibp2p } from "helia";
+import { webRTC, webRTCDirect } from "@libp2p/webrtc";
+import { createHelia, HeliaLibp2p } from "helia";
 import { createLibp2p, Libp2p } from "libp2p";
 import { identify } from "@libp2p/identify";
 import { yamux } from "@chainsafe/libp2p-yamux";
 import { noise } from "@chainsafe/libp2p-noise";
 import type { Multiaddr } from "@multiformats/multiaddr";
-import { kadDHT,removePublicAddressesMapper } from "@libp2p/kad-dht";
+import { kadDHT, removePublicAddressesMapper } from "@libp2p/kad-dht";
+import { loadKeyPair, saveKeyPair } from "./util/utils";
+import { Ed25519PrivateKey } from "@libp2p/interface";
+import { mplex } from "@libp2p/mplex";
+import { webSockets } from "@libp2p/websockets";
 import { createBitswap } from '@helia/bitswap' 
 import { prefixLogger } from '@libp2p/logger' 
 import { ping } from '@libp2p/ping'
-
+import { Bitswap } from '@helia/bitswap'
+import { createTopology, Topology } from "@libp2p/interface-registrar";
 
 export class DcUtil {
   dcChain: ChainUtil;
@@ -111,16 +116,18 @@ export class DcUtil {
         console.log("nodeAddr", nodeAddr);
 
         try {
-          const res = await this.dcNodeClient.libp2p.dial(nodeAddr);
-          console.log("nodeAddr try return");
-          console.log(res);
-          if (res) {
-            reslove(nodeAddr);
-          } else {
-            num++;
-            if (num >= len) {
-              reslove(false);
+          if (_this.dcNodeClient?.libp2p) {
+            const res = await _this.dcNodeClient.libp2p.dial(nodeAddr);
+            console.log("nodeAddr try return");
+            console.log(res);
+            if (res) {
+              reslove(nodeAddr);
+              return;
             }
+          }
+          num++;
+          if (num >= len) {
+            reslove(false);
           }
         } catch (error) {
           console.log("nodeAddr catch return", error);
@@ -137,22 +144,24 @@ export class DcUtil {
       }
     });
   };
-
-
-  _createHeliaNode = async () => { 
+  _createHeliaNode = async () => {
     console.log("_createHeliaNode=======");
-    const datastore = new IDBDatastore('helia-meta')  
+    const datastore = new IDBDatastore("helia-meta");
     await datastore.open();
-    const blockstore = new IDBBlockstore('helia-blocks')
+    const blockstore = new IDBBlockstore("helia-blocks");
     await blockstore.open();
     // 创建或导入私钥
-    const keyPair = await keys.generateKeyPair("Ed25519");
+    let keyPair = await loadKeyPair();
+    if(!keyPair){
+      keyPair = await keys.generateKeyPair("Ed25519"); 
+      await saveKeyPair(keyPair);
+    }
 
     // libp2p is the networking layer that underpins Helia
     const libp2p = await createLibp2p({
       privateKey: keyPair,
       datastore,
-      transports: [webRTCDirect(), circuitRelayTransport()],
+      transports: [webRTCDirect(), circuitRelayTransport(), webRTC(), webSockets()], // 
       connectionEncrypters: [noise()],
       addresses: {  
         listen: ['/webrtc-direct']  
@@ -165,6 +174,13 @@ export class DcUtil {
       }, 
       streamMuxers: [yamux()],
       services: {
+        // kadDHT: kadDHT({
+        //   protocol: "/ipfs/kad/1.0.0", // 标准公网协议
+        //   clientMode: false, // 作为全节点参与
+        //   maxOutboundStreams: 5,
+        //   maxInboundStreams: 5,
+        // }),
+        dht: kadDHT(),
         identify: identify(),
         ping: ping(),
         kadDHT: kadDHT({
@@ -178,39 +194,29 @@ export class DcUtil {
        
       },
     });
-  
-  
-// 构建依赖项  
-const components = {  
-  libp2p: libp2p,  
-  blockstore: blockstore,  
-  datastore: datastore,  
-  peerId: libp2p.peerId, 
-  routing: kadDHT({  
-    protocol: '/ipfs/kad/1.0.0',   
-  }),  
-  logger: prefixLogger('bitswap')
-} 
-
-
-  // 自定义配置  
-const options = {  
-  protocol: '/ipfs/bitswap/1.3.0',  
-  engine: {  
-    targetMessageSize: 512 * 1024, // 512KB  
-    taskQueueConcurrency: 10  
-  }  
-} 
-
-// 创建实例  
-const bitswap = createBitswap(components, options)  
-libp2p.services.bitswap = bitswap;
-
-
+    console.log('libp2p getProtocols', libp2p.getProtocols())
+    console.log('libp2p peerId', libp2p.peerId.toString())
+    console.log('libp2p 服务列表:', Object.keys(libp2p.services))  
+    const addrs = libp2p.getMultiaddrs()
+    console.log("libp2p节点地址:", addrs);  
     // libp2p.handle("/dc/thread/0.0.1", async ({ stream, connection }) => {
     //   // 处理入站流
     //   this.handleIncomingStream(stream);
     // });
+  // 构建依赖项  
+  const components = {  
+    libp2p: libp2p,  
+    blockstore: blockstore,  
+    datastore: datastore,  
+    peerId: libp2p.peerId, 
+    routing: kadDHT({  
+      protocol: '/ipfs/kad/1.0.0',   
+    }),  
+    logger: prefixLogger('bitswap')
+  } 
+
+
+  
     const dcNodeClient = await createHelia({
       datastore,
       blockstore,
@@ -219,6 +225,15 @@ libp2p.services.bitswap = bitswap;
       
       
     })
+     const bitswap = new Bitswap(helia) 
+    await dcNodeClient.libp2p.register("/ipfs/bitswap/1.2.0", createTopology({
+      onConnect: (peerId: import("@libp2p/interface-peer-id").PeerId, conn: import("@libp2p/interface-connection").Connection) => {
+        console.log("[/ipfs/bitswap/1.2.0] onConnect", `${peerId}`);
+      },
+      onDisconnect: (peerId: import("@libp2p/interface-peer-id").PeerId) => {
+        console.log("[/ipfs/bitswap/1.2.0] onDisconnect", `${peerId}`);
+      },
+    }));
     this.dcNodeClient = dcNodeClient
     return dcNodeClient;
   };

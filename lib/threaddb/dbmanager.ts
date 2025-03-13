@@ -27,7 +27,7 @@ import { SignHandler } from '../types/types';
 import { NewThreadOptions } from './core/options';
 import {ThreadToken} from './core/identity';
 import { DBGrpcClient } from "./grpcClient";
-import type { DCClient } from "../dcapi";
+import type { Client } from "../dcapi";
 
 import { extractPublicKeyFromPeerId } from "../dc-key/keyManager";
 
@@ -53,7 +53,7 @@ export const dsManagerBaseKey = new Key('/manager');
 
 
 
-function newGrpcClient(client: DCClient): DBGrpcClient {
+function newGrpcClient(client: Client): DBGrpcClient {
     if (client.p2pNode == null || client.p2pNode.peerId == null) {
         throw new Error("p2pNode is null or node privateKey is null");
     }        

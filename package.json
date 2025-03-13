@@ -20,6 +20,7 @@
     "@grpc/grpc-js": "~1.10.8",
     "@grpc/proto-loader": "~0.7.13",
     "@helia/bitswap": "^2.0.4",
+    "@helia/interface": "^5.2.0",
     "@helia/strings": "^4.0.1",
     "@helia/unixfs": "^4.0.1",
     "@ipld/dag-cbor": "^9.2.2",
