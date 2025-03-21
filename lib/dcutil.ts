@@ -176,9 +176,9 @@ export class DcUtil {
       datastore: peerstore,
       transports: [webRTCDirect(), circuitRelayTransport(), webRTC(), webSockets()], // 
       connectionEncrypters: [noise()],
-      addresses: {  
-        listen: ['/webrtc-direct']  
-      }  ,
+      // addresses: {  
+      //   listen: ['/webrtc-direct']  
+      // }  ,
       connectionGater: {
         denyDialMultiaddr: () => false, // this is necessary to dial local addresses at all
       },
@@ -211,12 +211,12 @@ export class DcUtil {
         ping: ping(), 
         // upp: uPnPNAT()
       },
-      // addresses: {
-      //   listen: [
-      //     "/p2p-circuit",
-      //     "/webrtc-direct"
-      //   ],
-      // },
+      addresses: {
+        listen: [
+          "/p2p-circuit",
+          "/webrtc-direct"
+        ],
+      },
     });
     console.log('libp2p getProtocols', libp2p.getProtocols())
     console.log('libp2p peerId', libp2p.peerId.toString())
