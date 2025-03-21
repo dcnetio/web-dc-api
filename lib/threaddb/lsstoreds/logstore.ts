@@ -6,7 +6,7 @@ import {newThreadMetadata} from './metadata'
 import {newHeadBook} from './headbook'
 import * as lstore from '../logstore'
 import type { PeerId } from "@libp2p/interface";
-import {  QueryExt, QueryResult, TxnDatastoreExtended,Transaction } from '../core/core'  
+import {  QueryExt, QueryResult, TxnDatastoreExtended,Transaction } from '../core/db'  
 import { peerIdFromString } from "@libp2p/peer-id";
 import { ThreadID } from '@textile/threads-id'; 
 import {  Logstore} from '../core/logstore' // 假设核心接口定义  

@@ -4,7 +4,7 @@ import { Head, HeadBookRecord, serializeHeadBookRecord, deserializeHeadBookRecor
 import {
     TxnDatastoreExtended,
     Transaction,
-} from '../core/core';
+} from '../core/db';
 import { HeadBook, DumpHeadBook } from '../core/logstore';
 import { ThreadID } from '@textile/threads-id';
 import type { PeerId } from "@libp2p/interface";

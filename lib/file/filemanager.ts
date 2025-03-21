@@ -1,5 +1,5 @@
 import type { Multiaddr } from '@multiformats/multiaddr'
-import { AccountKey, DCConnectInfo } from '../types/types'
+import { SignHandler, DCConnectInfo } from '../types/types'
 import { FileClient } from './client'
 import type { HeliaLibp2p } from 'helia'
 import { ChainUtil } from '../chain'
@@ -50,13 +50,13 @@ export class FileManager {
   connectedDc: DCConnectInfo = {}
   chainUtil: ChainUtil
   dcNodeClient: HeliaLibp2p
-  accountKey: AccountKey
+  accountKey: SignHandler
   constructor(
     dc: DcUtil,
     connectedDc: DCConnectInfo,
     chainUtil: ChainUtil,
     dcNodeClient: HeliaLibp2p,
-    accountKey: AccountKey,
+    accountKey: SignHandler,
   ) {
     this.dc = dc;
     this.connectedDc = connectedDc

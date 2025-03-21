@@ -1,5 +1,5 @@
 import type { Multiaddr } from "@multiformats/multiaddr";
-import { AccountKey, DCConnectInfo } from "../types/types";
+import { SignHandler, DCConnectInfo } from "../types/types";
 import { ThemeClient } from "./client";
 import { DcUtil } from "../dcutil";
 import { ChainUtil } from "../chain";
@@ -27,8 +27,8 @@ export class ThemeManager{
   dc: DcUtil;
   chainUtil: ChainUtil | undefined;
   connectedDc: DCConnectInfo = {};
-  accountKey : AccountKey | undefined;
-  constructor(connectedDc: DCConnectInfo, dc: DcUtil, chainUtil?: ChainUtil, accPrivateSign?: AccountKey) {
+  accountKey : SignHandler | undefined;
+  constructor(connectedDc: DCConnectInfo, dc: DcUtil, chainUtil?: ChainUtil, accPrivateSign?: SignHandler) {
     this.connectedDc = connectedDc;
     this.dc = dc;
     this.chainUtil = chainUtil;

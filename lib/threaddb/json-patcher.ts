@@ -3,17 +3,20 @@ import { name,code, encode, decode } from '@ipld/dag-cbor';
 import { sha256 } from 'multiformats/hashes/sha2';  
 import * as Block from 'multiformats/block';  
 import { Key } from 'interface-datastore';
+  
+import {       
+  IndexFunc,    
+  Transaction,  
+  TxnDatastoreExtended
+} from './core/db'; 
 import {   
   EventCodec,  
   Action,  
   Event,  
   ReduceAction,  
-  IndexFunc,  
-  InstanceID,  
-  TxnDatastoreExtended,  
-  Transaction,  
+  InstanceID,     
   ActionType
-} from './core/core';  
+} from './core/db';  
 
 // ==================== 核心数据结构 ====================  
 interface Operation {  
@@ -78,7 +81,7 @@ export class JsonPatcher implements EventCodec {
       await txn.commit();  
       return actions;  
     } catch (err) {  
-      await txn.discard();  
+       txn.discard();  
       throw this.wrapError(err as Error);  
     }  
   }  

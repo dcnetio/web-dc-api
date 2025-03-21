@@ -65,6 +65,26 @@ function uint32ToLittleEndianBytes(value: number): Uint8Array {
   view.setUint32(0, value, true); // true 表示小端
   return new Uint8Array(buffer);
 }
+
+
+// 将 Uint64 转换为大端 Uint8Array  
+function uint64ToUint8Array(value: bigint,littleEndian: boolean = false): Uint8Array {  
+  const buffer = new ArrayBuffer(8); // 64 位需要 8 字节  
+  const view = new DataView(buffer);  
+  view.setBigUint64(0, value, littleEndian); // false 表示大端  
+  return new Uint8Array(buffer);  
+}  
+
+//将 Uint8Array 转换为 uint64  
+function uint8ArrayToUint64(bytes: Uint8Array, littleEndian: boolean = false): bigint {  
+  if (bytes.length !== 8) {  
+    throw new Error("Uint8Array must be exactly 8 bytes long");  
+  }  
+  const buffer = bytes.buffer;  
+  const view = new DataView(buffer);  
+  return view.getBigUint64(0, littleEndian);
+}  
+
 function isUser(obj: any): obj is User {
   // implement checks for required properties here
   return true; // or false if the object doesn't conform to User
@@ -173,11 +193,24 @@ function fastExtractPeerId(ma: Multiaddr | string): PeerId | null {
       return null
     }  
 
+
+// 同域名跨浏览器锁获取并执行操作,mode  "exclusive" | "shared";
+async function withWebLock(lockName: string,mode: LockMode, callback: () => Promise<void>): Promise<void> {  
+  await navigator.locks.request(lockName, { mode: mode }, async (lock) => {  
+      console.log(`Lock "${lockName}" acquired`);  
+      await callback();  
+      console.log(`Lock "${lockName}" released`);  
+  });  
+}  
+
+
 export {
   sha256,
   getRandomBytes,
   concatenateUint8Arrays,
   uint32ToLittleEndianBytes,
+  uint64ToUint8Array,
+  uint8ArrayToUint64,
   uint64ToLittleEndianBytes,
   uint64ToBigEndianBytes, 
   isUser,
@@ -186,6 +219,7 @@ export {
   compareByteArrays,
   mergeUInt8Arrays,
   fastExtractPeerId,
+  withWebLock,
   saveKeyPair,
   loadKeyPair
 };

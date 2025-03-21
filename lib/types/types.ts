@@ -1,4 +1,5 @@
 import { Multiaddr } from "@multiformats/multiaddr";
+import { PublicKey } from "@libp2p/interface";
 import type { Client } from "../dcapi";
 export interface User {
   callMinusNumber: number;
@@ -30,10 +31,10 @@ export interface DCConnectInfo {
   nodeAddr?: Multiaddr | undefined;
 }
 
-export interface AccountKey {
-  sign: (payload: Uint8Array) => Uint8Array;
+export interface SignHandler {
+  sign(payload: Uint8Array): Uint8Array;
+  publickey(): PublicKey;
   getPubkeyRaw: () => Uint8Array;
-  // getPubkeyString: () => string;
 }
 // 类型定义  
 export interface FileTransmit {  

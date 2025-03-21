@@ -34,7 +34,7 @@ export class DBClient {
         this.client.token,
         this.client.protocol
       );
-      const tid = await grpcClient.RequestThreadID();
+      const tid = await grpcClient.requestThreadID();
       return tid;
     } catch (err) {
       console.error("getHostID error:", err);
@@ -54,7 +54,7 @@ export class DBClient {
             this.client.token,
             this.client.protocol
           );
-      const threadInfo = await grpcClient.CreateThread(tid, opts);
+      const threadInfo = await grpcClient.createThread(tid, opts);
       return tid;
     } catch (err) {
       console.error("createThread error:", err);

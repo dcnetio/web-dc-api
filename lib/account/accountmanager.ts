@@ -1,7 +1,7 @@
 import type { Multiaddr } from "@multiformats/multiaddr";
 import { ChainUtil } from "../chain";
 import { DcUtil } from "../dcutil";
-import { AccountKey, DCConnectInfo, User } from "../types/types";
+import { SignHandler, DCConnectInfo, User } from "../types/types";
 import { AccountClient } from "./client";
 import { uint32ToLittleEndianBytes } from "../util/utils";
 
@@ -25,8 +25,8 @@ export class AccountManager {
   dc: DcUtil;
   chainUtil: ChainUtil | undefined;
   connectedDc: DCConnectInfo = {};
-  accountKey : AccountKey | undefined;
-  constructor(connectedDc: DCConnectInfo, dc: DcUtil, chainUtil?: ChainUtil, accPrivateSign?: AccountKey) {
+  accountKey : SignHandler | undefined;
+  constructor(connectedDc: DCConnectInfo, dc: DcUtil, chainUtil?: ChainUtil, accPrivateSign?: SignHandler) {
     this.connectedDc = connectedDc;
     this.dc = dc;
     this.chainUtil = chainUtil;

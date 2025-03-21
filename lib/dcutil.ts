@@ -176,6 +176,9 @@ export class DcUtil {
       datastore: peerstore,
       transports: [webRTCDirect(), circuitRelayTransport(), webRTC(), webSockets()], // 
       connectionEncrypters: [noise()],
+      addresses: {  
+        listen: ['/webrtc-direct']  
+      }  ,
       connectionGater: {
         denyDialMultiaddr: () => false, // this is necessary to dial local addresses at all
       },
@@ -208,12 +211,12 @@ export class DcUtil {
         ping: ping(), 
         // upp: uPnPNAT()
       },
-      addresses: {
-        listen: [
-          "/p2p-circuit",
-          "/webrtc-direct"
-        ],
-      },
+      // addresses: {
+      //   listen: [
+      //     "/p2p-circuit",
+      //     "/webrtc-direct"
+      //   ],
+      // },
     });
     console.log('libp2p getProtocols', libp2p.getProtocols())
     console.log('libp2p peerId', libp2p.peerId.toString())
@@ -237,20 +240,7 @@ export class DcUtil {
   } 
 
 
-    // // 自定义配置  
-    // const options = {  
-    //   protocol: '/ipfs/bitswap/1.3.0',  
-    //   engine: {  
-    //     targetMessageSize: 512 * 1024, // 512KB  
-    //     taskQueueConcurrency: 10  
-    //   }  
-    // } 
-
-    // // 创建实例  
-    // const bitswap = createBitswap(components, options)  
-
-    // // 启动服务  
-    // await bitswap.start()
+  
     const dcNodeClient = await createHelia({
       datastore,
       blockstore,

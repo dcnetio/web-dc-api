@@ -19,10 +19,11 @@ import {
 import { Ed25519PrivKey } from "./dc-key/ed25519";
 import { decryptContent } from "./util/dccrypt";
 import { ChainUtil } from "./chain";
-import type { AccountKey, DCConnectInfo } from "./types/types";
+import type { SignHandler, DCConnectInfo } from "./types/types";
 import { Client } from "./dcapi";
 import { DcUtil } from "./dcutil";
 import { ErrInvalidToken } from "./error";
+import { PublicKey } from "@libp2p/interface";
 import { DCManager } from "./dc/dcmanager";
 import { ThemeManager } from "./theme/thememanager";
 import { AccountManager } from "./account/accountmanager";
@@ -35,7 +36,7 @@ const NonceBytes = 12;
 const TagBytes = 16;
 const protocol = "/dc/thread/0.0.1";
 const { Buffer } = buffer;
-export class DC implements AccountKey {
+export class DC  implements SignHandler {
   blockChainAddr: string;
   backChainAddr: string;
   dcChain: ChainUtil;
@@ -57,12 +58,7 @@ export class DC implements AccountKey {
     this.dc = new DcUtil(this.dcChain);
   }
 
-  sign = (payload: Uint8Array): Uint8Array => {
-    if (!this.privKey) {
-      throw new Error("privKey is null");
-    }
-    return this.privKey.sign(payload);
-  };
+
   getPubkeyRaw() {
     if (!this.privKey) {
       throw new Error("Private key is not initialized");
@@ -114,6 +110,25 @@ export class DC implements AccountKey {
       }
     }
   };
+
+
+  // 签名,后续应该改成发送到钱包iframe中签名,发送数据包含payload和用户公钥
+  sign =  (payload: Uint8Array): Uint8Array => {
+    if (!this.privKey) {
+      throw new Error("privKey is null");
+    }
+    const signature = this.privKey.sign(payload);
+    return signature;
+  }
+
+  publickey(): PublicKey {
+    if (!this.privKey) {
+      throw new Error("privKey is null");
+    }
+    return this.privKey.publicKey;
+  }
+
+
 
   // 从dc网络获取指定文件
   getFileFromDc = async (cid: string, decryptKey: string) => {
@@ -194,10 +209,10 @@ export class DC implements AccountKey {
     if (privKey) {
       this.privKey = privKey;
       // 获取token
-      const pubkey = await this.privKey.publicKey;
+      const pubkey =  this.privKey.publicKey;
       const token = await this.connectedDc?.client.GetToken(
         pubkey.string(),
-        (payload) => {
+        (payload: Uint8Array): Uint8Array => {
           return this.sign(payload);
         }
       );

@@ -2,6 +2,7 @@
 import type { CID } from 'multiformats/cid'  
 import {IPLDNode} from './record'
 import { SymmetricKey } from '../key'
+import { Context } from './core'
 
 
 // 事件头接口  
@@ -40,11 +41,6 @@ export interface ThreadEvent extends IPLDNode {
   ): Promise<IPLDNode>  
 }  
 
-// 上下文接口  
-export interface Context {  
-  signal?: AbortSignal  
-  deadline?: Date  
-}  
 
 // 加密错误类型  
 export class CryptoError extends Error {  

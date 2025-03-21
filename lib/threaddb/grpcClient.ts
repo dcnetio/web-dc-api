@@ -30,7 +30,8 @@ export class DBGrpcClient {
         this.token = token;
     }
 
-    async RequestThreadID(): Promise<string> {
+    
+    async requestThreadID(): Promise<string> {
         try {
             const message = new dcnet_proto.pb.ThreadIDRequest({});
             const messageBytes = dcnet_proto.pb.ThreadIDRequest.encode(message).finish();
@@ -47,11 +48,14 @@ export class DBGrpcClient {
         }
     }
 
-    async CreateThread(tid: string,opts:NewThreadOptions): Promise<ThreadInfo> {
+    async createThread(tid: string,opts:NewThreadOptions): Promise<ThreadInfo> {
         try {
      
             if (this.grpcClient.node == null || this.grpcClient.node.peerId == null) {
                 throw new Error("p2pNode is null or node privateKey is null");
+            }
+            if (opts.threadKey == null) {
+                throw new Error("threadKey is null");
             }
             const serverPeerId = this.grpcClient.node.peerId;
             const sPubkey = await extractPublicKeyFromPeerId(serverPeerId);
@@ -72,6 +76,32 @@ export class DBGrpcClient {
             return threadInfo;
         } catch (err) {
             console.error("CreateThread error:", err);
+            throw err;
+        }
+    }
+
+    async addLogToThread(tid: string, lid: string, opts: NewThreadOptions): Promise<void> {
+        try {
+
+            if (this.grpcClient.node == null || this.grpcClient.node.peerId == null) {
+                throw new Error("p2pNode is null or node privateKey is null");
+            }
+            const serverPeerId = this.grpcClient.node.peerId;
+            const sPubkey = await extractPublicKeyFromPeerId(serverPeerId);
+            const message = new dcnet_proto.pb.AddLogToThreadRequest({});
+            message.threadID = new TextEncoder().encode(tid);
+            message.logID = new TextEncoder().encode(lid);
+            message.peerid = new TextEncoder().encode(serverPeerId.toString());
+            message.blockheight = opts.blockHeight;
+            message.signature = opts.signature;
+            const messageBytes = dcnet_proto.pb.AddLogToThreadRequest.encode(message).finish();
+            await this.grpcClient.unaryCall(
+                "/dcnet.pb.Service/AddLogToThread",
+                messageBytes,
+                30000
+            );
+        } catch (err) {
+            console.error("AddLogToThread error:", err);  
             throw err;
         }
     }

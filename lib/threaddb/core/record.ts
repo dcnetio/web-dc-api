@@ -3,6 +3,7 @@ import type { CID } from 'multiformats/cid'
 import {ThreadID} from '@textile/threads-id'
 import type { PeerId } from "@libp2p/interface";
 import type { PublicKey as CryptoPubKey } from '@libp2p/interface-keys'  
+import * as dagPB from '@ipld/dag-pb'
 
 
 
@@ -19,6 +20,7 @@ export interface IPLDNode {
   size: number  
   data: Uint8Array  
 } 
+
   
 export type Signature = Uint8Array  
 
