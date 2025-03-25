@@ -211,12 +211,12 @@ export class DcUtil {
         ping: ping(), 
         // upp: uPnPNAT()
       },
-      // addresses: {
-      //   listen: [
-      //     "/p2p-circuit",
-      //     "/webrtc-direct"
-      //   ],
-      // },
+      addresses: {
+        listen: [
+          "/p2p-circuit",
+          "/webrtc-direct"
+        ],
+      },
     });
     console.log('libp2p getProtocols', libp2p.getProtocols())
     console.log('libp2p peerId', libp2p.peerId.toString())

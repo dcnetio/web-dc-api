@@ -16,7 +16,7 @@ import {
   sleep,
   uint32ToLittleEndianBytes,
 } from "./util/utils";
-import { Ed25519PrivKey } from "./dc-key/ed25519";
+import { Ed25519PrivKey, Ed25519PubKey } from "./dc-key/ed25519";
 import { decryptContent } from "./util/dccrypt";
 import { ChainUtil } from "./chain";
 import type { SignHandler, DCConnectInfo } from "./types/types";
@@ -59,14 +59,6 @@ export class DC  implements SignHandler {
     this.dc = new DcUtil(this.dcChain);
   }
 
-
-  getPubkeyRaw() {
-    if (!this.privKey) {
-      throw new Error("Private key is not initialized");
-    }
-    const pubKey = this.privKey.publicKey;
-    return pubKey.raw;
-  }
 
   // 初始化
   init = async () => {
@@ -122,13 +114,21 @@ export class DC  implements SignHandler {
     return signature;
   }
 
-  publickey(): PublicKey {
+  publickey(): Ed25519PubKey {
     if (!this.privKey) {
       throw new Error("privKey is null");
     }
     return this.privKey.publicKey;
   }
 
+
+  getPubkeyRaw() {
+    if (!this.privKey) {
+      throw new Error("Private key is not initialized");
+    }
+    const pubKey = this.privKey.publicKey;
+    return pubKey.raw;
+  }
 
 
   // 从dc网络获取指定文件

@@ -76,7 +76,7 @@ export class CommentManager {
         this.dcNodeClient
       );
       const res = await commentClient.addUserOffChainSpace(
-        userPubkey.toString(),
+        userPubkey.string(),
         blockHeight || 0,
         peerId.toString(),
         signature
