@@ -35,13 +35,6 @@ export class FileClient {
       if (this.client.p2pNode == null) {
         throw new Error("p2pNode is null");
       }
-      const grpcClient = new Libp2pGrpcClient(
-        this.client.p2pNode,
-        this.client.peerAddr,
-        this.client.token,
-        this.client.protocol
-      );
-
       const message = new dcnet.pb.StroeFileRequest({});
       message.cid = new TextEncoder().encode(cid);
       message.filesize = fileSize;
@@ -79,6 +72,13 @@ export class FileClient {
       };
 
       // 使用方法
+      const grpcClient = new Libp2pGrpcClient(
+        this.client.p2pNode,
+        this.client.peerAddr,
+        this.client.token,
+        this.client.protocol
+      );
+
       await grpcClient.Call(
         "/dcnet.pb.Service/StoreFile",
         messageBytes,

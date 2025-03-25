@@ -33,6 +33,23 @@ export class CommonClient {
     this.client = dcClient;
   }
 
+  // // 注册
+  // async register(
+  //   appName: string
+  // ): Promise<Ed25519PrivKey> {
+  //   //生成助记词
+  //    const mnemonic = KeyManager.generateMnemonic();
+  //   const keymanager = new KeyManager();
+  //   const privKey = await keymanager.getEd25519KeyFromMnemonic(
+  //     mnemonic,
+  //     appName,
+  //   );
+  //   this.privKey = privKey;
+  //   console.log("Mnemonic:", mnemonic);
+  //   console.log("PrivateKey:", privKey);
+  //   return privKey;
+  // }
+
   // 登陆
   async accountLogin(
     nftAccount: string,

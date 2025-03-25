@@ -31,6 +31,7 @@ import { CommonClient } from "./commonclient";
 import { FileManager } from "./file/filemanager";
 import type { HeliaLibp2p } from "helia";
 import { Libp2p } from "@libp2p/interface";
+import { CommentManager } from "./comment/manager";
 
 const NonceBytes = 12;
 const TagBytes = 16;
@@ -180,13 +181,16 @@ export class DC  implements SignHandler {
     const res = await themeManager.setCacheKey(value);
     return res;
   };
-  register = async () => {
-    // //生成助记词
-    //  const mnemonic = KeyManager.generateMnemonic();
-    //  //生成私钥
-    // const privKey = KeyManager.getEd25519KeyFromMnemonic(mnemonic);
-    // const pubKey = privKey.publicKey;
-  };
+  // register = async (
+  //   appName: string
+  // ) => {
+  //   if (!this.connectedDc?.client) {
+  //     throw new Error("dcClient is null");
+  //   }
+  //   const commonClient = new CommonClient(this.connectedDc.client);
+  //   const privKey = await commonClient.register(appName);
+  //   this.privKey = privKey;
+  // };
 
   // 登陆
   accountLogin = async (
@@ -276,43 +280,138 @@ export class DC  implements SignHandler {
     return userInfo;
   };
 
+  // todo 失败
   // 获取用户数据列表
 
   // 添加用户评论空间
   addUserOffChainSpace = async () => {
-    if (!this.connectedDc.client) {
-      console.log("dcClient is null");
-      return;
-    }
-    if (!this.connectedDc.nodeAddr) {
-      console.log("nodeAddr is null");
-      return;
-    }
-    if (!this.privKey) {
-      console.log("privKey is null");
-      return;
-    }
-    const blockHeight = (await this.dcChain.getBlockHeight()) || 0;
-    const hValue: Uint8Array = uint32ToLittleEndianBytes(
-      blockHeight ? blockHeight : 0
+    const commentManager = new CommentManager(
+      this.connectedDc,
+      this.dcNodeClient,
+      this.dcChain,
+      this
     );
-    const peerIdValue: Uint8Array = new TextEncoder().encode(
-      this.connectedDc.nodeAddr.getPeerId() || ""
-    );
+    const res = await commentManager.addUserOffChainSpace();
+    console.log("AddUserOffChainSpace end", res);
+    return res;
+  };
 
-    // 将 hValue 和 peerIdValue 连接起来
-    const preSign = new Uint8Array(peerIdValue.length + hValue.length);
-    preSign.set(peerIdValue, 0);
-    preSign.set(hValue, peerIdValue.length);
-    const signature = this.privKey.sign(preSign);
-    const pubKey = this.privKey.publicKey;
-    this.connectedDc.client.AddUserOffChainSpace(
-      pubKey.string(),
-      blockHeight,
-      signature,
-      this.connectedDc.nodeAddr
-    );
-    console.log("AddUserOffChainSpace end");
+  // todo 
+	// Comment_AddThemeObj 为指定对象开通评论功能，
+	//    Theme 要开通评论对象的cid
+  //    openFlag 开放标志 0-开放 1-私密
+	//    commentSpace 评论空间大小
+	//    返回res-0:成功 1:评论空间没有配置 2:评论空间不足 3:评论数据同步中
+  addThemeObj = async (
+    theme: string,
+    openFlag:number,
+    commentSpace: number,
+  ) => {
+  };
+
+  // todo
+	// Comment_AddThemeSpace 为开通评论的对象增加评论空间，
+	//    Theme 要开通评论对象的cid
+	//    commentSpace 评论空间大小
+	//    返回 res-0:成功 1:评论空间没有配置 2:评论空间不足 3:评论数据同步中
+  addThemeSpace = async (
+    theme: string,
+    addSpace: number,
+  ) => {
+  };
+
+  //todo
+	// Comment_PublishCommentToTheme 发布对指定对象的评论
+	//    Theme 被评论对象ID
+	//    ThemeAuthor 被发布评论的对象的用户pubkey base32编码,或者pubkey经过libp2p-crypto protobuf编码后再base32编码
+	//    commentType:评论类型 0:普通评论 1:点赞 2:推荐 3:踩
+	//    comment 评论内容
+	//    referCommentkey 被引用的评论
+	//    openFlag 开放标志 0-开放 1-私密
+	//	  返回评论key,格式为:commentBlockHeight/commentCid
+  publishCommentToTheme = async (
+    theme: string,
+    themeAuthor: string,
+    commentType: number,
+    commentCid: string,
+    comment: string,
+    refercommentkey: string
+  ) => {
+  };
+
+  // todo
+  // Comment_DeleteSelfComment 删除已发布的评论
+	//    Theme 被评论对象ID
+	//    objAuthor 被发布评论的对象的用户pubkey base32编码,或者pubkey经过libp2p-crypto protobuf编码后再base32编码
+	//    commentKey 要删除的评论key
+	//    返回是否删除成功
+  deleteSelfComment = async (
+    theme: string,
+    themeAuthor: string,
+    commentCid: string,
+    commentBlockheight: number,
+  ) => {
+  };
+
+  // todo
+	// Comment_GetCommentableObj 获取指定用户已开通评论的对象列表
+	//    objAuthor 被发布评论的对象的用户pubkey base32编码,或者pubkey经过libp2p-crypto protobuf编码后再base32编码
+	//    startBlockheight 开始区块高度
+	//    direction 方向 0:向前 1:向后
+	//    offset 偏移量
+	//    seekKey 起始key
+	//    limit 限制条数
+	//	  返回已开通评论的对象列表,格式：[{"Theme":"YmF...bXk=","appId":"dGVzdGFwcA==","blockheight":2904,"commentSpace":1000,"userPubkey":"YmJh...vZGU=","signature":"oCY1...Y8sO/lkDac/nLu...Rm/xm...CQ=="}]
+  getThemeObj = async (
+    appId: string,
+    themeAuthor: string,
+    startHeight: number,
+    direction: number,
+    offset: number,
+    limit: number,
+    seekKey: string,
+  ) => {
+  };
+
+  // todo	
+  // Comment_GetThemeComments 获取指定已开通对象的评论列表，私密评论只有评论者和被评论者可见
+	//    Theme 被评论对象ID
+	//    objAuthor 被发布评论的对象的用户pubkey base32编码,或者pubkey经过libp2p-crypto protobuf编码后再base32编码
+	//    startBlockheight 开始区块高度
+	//    direction 方向 0:向前 1:向后
+	//    offset 偏移量
+	//    seekKey 起始key
+	//    limit 限制条数
+	//    返回对象下的评论列表，格式[{"Theme":"bafk...6q","AppId":"testapp","ThemeAuthor":"bba...6u","Blockheight":3116,"UserPubkey":"bba...y6u","CommentCid":"ba...aygu","Comment":"hello worldd","CommentSize":11,"Status":0,"Signature":"blo...cwpada","Refercommentkey":"","CCount":0,"UpCount":0,"DownCount":0,"TCount":0}]
+  getThemeComments = async (
+    appId: string,
+    themeAuthor: string,
+    startHeight: number,
+    direction: number,
+    offset: number,
+    limit: number,
+    seekKey: string,
+  ) => {
+  };
+
+  //todo
+	// Comment_GetUserComments 获取指定用户发布过的评论，私密评论只有评论者和被评论者可见
+	//    userPubkey 用户pubkey base32编码,或者pubkey经过libp2p-crypto protobuf编码后再base32编码或者账号的16进制编码(0x开头)
+	//    startBlockheight 开始区块高度
+	//    direction 方向 0:向前 1:向后
+	//    offset 偏移量
+	//    seekKey 起始key
+	//    limit 限制条数
+	//    返回用户评论列表，格式：[{"Theme":"bafk...fpy","AppId":"testapp","ThemeAuthor":"bbaa...jkhmm","Blockheight":3209,"UserPubkey":"bba...2hzm","CommentCid":"baf...2aygu","Comment":"hello world","CommentSize":11,"Status":0,"Signature":"bkqy...b6dkda","Refercommentkey":"","CCount":0,"UpCount":0,"DownCount":0,"TCount":0}]
+	getUserComments = async (
+    appId: string,
+    userPubkey: string,
+    startHeight: number,
+    direction: number,
+    offset: number,
+    limit: number,
+    seekKey: string,
+  ) => {
   };
 
   /**
