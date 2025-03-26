@@ -4,7 +4,7 @@ import { dcnet } from "../proto/dcnet_proto";
 import { DataSource } from "../proto/datasource";
 import { HeliaLibp2p } from "helia";
 import { unixfs } from "@helia/unixfs";
-import { uint32ToLittleEndianBytes, uint64ToLittleEndianBytes } from "../util/utils";
+import { toString as uint8ArrayToString } from "uint8arrays/to-string";
 
 
 export class CommentClient {
@@ -49,7 +49,7 @@ export class CommentClient {
       console.log("AddUserOffChainSpace2 reply", reply);
       const decoded = dcnet.pb.AddUserOffChainSpaceReply.decode(reply);
       console.log("AddUserOffChainSpace2 decoded", decoded);
-      return;
+      return ;
     } catch (err) {
       console.error("AddUserOffChainSpace error:", err);
       throw err;
@@ -57,11 +57,10 @@ export class CommentClient {
   }
 
   async addThemeObj(
-    theme: string,
     appId: string,
+    theme: string,
     blockheight: number,
     commentSpace: number,
-    allowSpace: number,
     userPubkey: string,
     openFlag:number,
     signature: Uint8Array,
@@ -72,7 +71,6 @@ export class CommentClient {
       message.appId = new TextEncoder().encode(appId);
       message.blockheight = blockheight;
       message.commentSpace = commentSpace;
-      message.allowSpace = allowSpace;
       message.userPubkey = new TextEncoder().encode(userPubkey);
       message.openFlag = openFlag;
       message.signature = signature;
@@ -92,7 +90,7 @@ export class CommentClient {
       console.log("AddThemeObj reply", reply);
       const decoded = dcnet.pb.AddThemeObjReply.decode(reply);
       console.log("AddThemeObj decoded", decoded);
-      return decoded.flag;
+      return decoded;
     }catch (err) {
       console.error("AddThemeObj error:", err);
       throw err;
@@ -100,8 +98,8 @@ export class CommentClient {
   }
 
   async addThemeSpace(
-    theme: string,
     appId: string,
+    theme: string,
     blockheight: number,
     addSpace: number,
     userPubkey: string,
@@ -131,7 +129,7 @@ export class CommentClient {
       console.log("AddThemeSpace reply", reply);
       const decoded = dcnet.pb.AddThemeSpaceReply.decode(reply);
       console.log("AddThemeSpace decoded", decoded);
-      return decoded.flag;
+      return decoded;
     }catch (err) {
       console.error("AddThemeSpace error:", err);
       throw err;
@@ -139,8 +137,8 @@ export class CommentClient {
   }
 
   async publishCommentToTheme(
-    theme: string,
     appId: string,
+    theme: string,
     themeAuthor: string,
     blockheight: number,
     userPubkey: string,
@@ -160,6 +158,7 @@ export class CommentClient {
       message.type = commentType;
       message.commentCid = new TextEncoder().encode(commentCid);
       message.comment = new TextEncoder().encode(comment);
+      message.commentSize = comment.length;
       message.refercommentkey = new TextEncoder().encode(refercommentkey);
       message.signature = signature;
       const messageBytes =
@@ -178,7 +177,7 @@ export class CommentClient {
       console.log("PublishCommentToTheme reply", reply);
       const decoded = dcnet.pb.PublishCommentToThemeReply.decode(reply);
       console.log("PublishCommentToTheme decoded", decoded);
-      return decoded.flag;
+      return decoded;
     }catch (err) {
       console.error("PublishCommentToTheme error:", err);
       throw err;
@@ -186,13 +185,13 @@ export class CommentClient {
   }
 
   async deleteSelfComment(
-    theme: string,
     appId: string,
+    theme: string,
     themeAuthor: string,
     blockheight: number,
     userPubkey: string,
-    commentBlockheight:number,
     commentCid: string,
+    commentBlockHeight: number,
     signature: Uint8Array,
   ){
     try {
@@ -202,8 +201,8 @@ export class CommentClient {
       message.themeAuthor = new TextEncoder().encode(themeAuthor);
       message.blockheight = blockheight;
       message.userPubkey = new TextEncoder().encode(userPubkey);
-      message.commentBlockheight = commentBlockheight;
       message.commentCid = new TextEncoder().encode(commentCid);
+      message.commentBlockheight = commentBlockHeight;
       message.signature = signature;
       const messageBytes =
       dcnet.pb.DeleteSelfCommentRequest.encode(message).finish();
@@ -262,7 +261,8 @@ export class CommentClient {
       console.log("GetThemeObj reply", reply);
       const decoded = dcnet.pb.GetThemeObjReply.decode(reply);
       console.log("GetThemeObj decoded", decoded);
-      return decoded.flag;
+      console.log("GetThemeObj decoded.toJSON()", decoded.toJSON());
+      return decoded.toJSON();
     }catch (err) {
       console.error("GetThemeObj error:", err);
       throw err;
@@ -271,6 +271,7 @@ export class CommentClient {
 
   async getThemeComments(
     appId: string,
+    theme: string,
     themeAuthor: string,
     startHeight: number,
     direction: number,
@@ -281,6 +282,7 @@ export class CommentClient {
     try {
       const message = new dcnet.pb.GetThemeCommentsRequest({});
       message.appId = new TextEncoder().encode(appId);
+      message.theme = new TextEncoder().encode(theme);
       message.themeAuthor = new TextEncoder().encode(themeAuthor);
       message.startHeight = startHeight;
       message.direction = direction;
@@ -303,7 +305,8 @@ export class CommentClient {
       console.log("GetThemeComments reply", reply);
       const decoded = dcnet.pb.GetThemeCommentsReply.decode(reply);
       console.log("GetThemeComments decoded", decoded);
-      return decoded.flag;
+      console.log("GetThemeComments decoded.toJSON()", decoded.toJSON());
+      return decoded.toJSON();
     }catch (err) {
       console.error("GetThemeComments error:", err);
       throw err;
@@ -344,7 +347,8 @@ export class CommentClient {
       console.log("GetUserComments reply", reply);
       const decoded = dcnet.pb.GetUserCommentsReply.decode(reply);
       console.log("GetUserComments decoded", decoded);
-      return decoded.flag;
+      console.log("GetUserComments decoded.toJSON()", decoded.toJSON());
+      return decoded.toJSON();
     }catch (err) {
       console.error("GetUserComments error:", err);
       throw err;

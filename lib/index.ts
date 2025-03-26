@@ -280,7 +280,7 @@ export class DC  implements SignHandler {
     return userInfo;
   };
 
-  // todo 失败
+  // todo
   // 获取用户数据列表
 
   // 添加用户评论空间
@@ -292,65 +292,121 @@ export class DC  implements SignHandler {
       this
     );
     const res = await commentManager.addUserOffChainSpace();
-    console.log("AddUserOffChainSpace end", res);
+    console.log("AddUserOffChainSpace res:", res);
     return res;
   };
 
-  // todo 
 	// Comment_AddThemeObj 为指定对象开通评论功能，
 	//    Theme 要开通评论对象的cid
   //    openFlag 开放标志 0-开放 1-私密
 	//    commentSpace 评论空间大小
 	//    返回res-0:成功 1:评论空间没有配置 2:评论空间不足 3:评论数据同步中
   addThemeObj = async (
+    appName: string,
     theme: string,
     openFlag:number,
-    commentSpace: number,
+    commentSpace?: number,
   ) => {
+    const commentManager = new CommentManager(
+      this.connectedDc,
+      this.dcNodeClient,
+      this.dcChain,
+      this
+    );
+    const res = await commentManager.addThemeObj(
+      appName,
+      theme,
+      openFlag,
+      commentSpace || 20 * 1024 * 1024, // 20M
+    );
+    console.log("addThemeObj res:", res);
+    return res;
   };
 
-  // todo
 	// Comment_AddThemeSpace 为开通评论的对象增加评论空间，
 	//    Theme 要开通评论对象的cid
 	//    commentSpace 评论空间大小
 	//    返回 res-0:成功 1:评论空间没有配置 2:评论空间不足 3:评论数据同步中
   addThemeSpace = async (
+    appName: string,
     theme: string,
     addSpace: number,
   ) => {
+    const commentManager = new CommentManager(
+      this.connectedDc,
+      this.dcNodeClient,
+      this.dcChain,
+      this
+    );
+    const res = await commentManager.addThemeSpace(
+      appName,
+      theme,
+      addSpace,
+    );
+    console.log("addThemeSpace res:", res);
+    return res;
   };
 
-  //todo
 	// Comment_PublishCommentToTheme 发布对指定对象的评论
 	//    Theme 被评论对象ID
 	//    ThemeAuthor 被发布评论的对象的用户pubkey base32编码,或者pubkey经过libp2p-crypto protobuf编码后再base32编码
 	//    commentType:评论类型 0:普通评论 1:点赞 2:推荐 3:踩
 	//    comment 评论内容
 	//    referCommentkey 被引用的评论
-	//    openFlag 开放标志 0-开放 1-私密
+	//    openFlag 开放标志 0-开放 1-私密 // todo ?这里没有
 	//	  返回评论key,格式为:commentBlockHeight/commentCid
   publishCommentToTheme = async (
+    appName: string,
     theme: string,
     themeAuthor: string,
     commentType: number,
-    commentCid: string,
     comment: string,
-    refercommentkey: string
+    refercommentkey?: string,
   ) => {
+    const commentManager = new CommentManager(
+      this.connectedDc,
+      this.dcNodeClient,
+      this.dcChain,
+      this
+    );
+    const res = await commentManager.publishCommentToTheme(
+      appName,
+      theme,
+      themeAuthor,
+      commentType,
+      comment,
+      refercommentkey || '',
+    );
+    console.log("publishCommentToTheme res:", res);
+    return res;
   };
 
   // todo
   // Comment_DeleteSelfComment 删除已发布的评论
 	//    Theme 被评论对象ID
 	//    objAuthor 被发布评论的对象的用户pubkey base32编码,或者pubkey经过libp2p-crypto protobuf编码后再base32编码
-	//    commentKey 要删除的评论key
+	//    commentKey 要删除的评论key,格式为:commentBlockHeight/commentCid
 	//    返回是否删除成功
   deleteSelfComment = async (
+    appName: string,
     theme: string,
     themeAuthor: string,
-    commentCid: string,
-    commentBlockheight: number,
+    commentKey: string,
   ) => {
+    const commentManager = new CommentManager(
+      this.connectedDc,
+      this.dcNodeClient,
+      this.dcChain,
+      this
+    );
+    const res = await commentManager.deleteSelfComment(
+      appName,
+      theme,
+      themeAuthor,
+      commentKey,
+    );
+    console.log("deleteSelfComment res:", res);
+    return res;
   };
 
   // todo
@@ -363,14 +419,31 @@ export class DC  implements SignHandler {
 	//    limit 限制条数
 	//	  返回已开通评论的对象列表,格式：[{"Theme":"YmF...bXk=","appId":"dGVzdGFwcA==","blockheight":2904,"commentSpace":1000,"userPubkey":"YmJh...vZGU=","signature":"oCY1...Y8sO/lkDac/nLu...Rm/xm...CQ=="}]
   getThemeObj = async (
-    appId: string,
+    appName: string,
     themeAuthor: string,
-    startHeight: number,
-    direction: number,
-    offset: number,
-    limit: number,
-    seekKey: string,
+    startHeight?: number,
+    direction?: number,
+    offset?: number,
+    limit?: number,
+    seekKey?: string,
   ) => {
+    const commentManager = new CommentManager(
+      this.connectedDc,
+      this.dcNodeClient,
+      this.dcChain,
+      this
+    );
+    const res = await commentManager.getThemeObj(
+      appName,
+      themeAuthor,
+      startHeight || 0,
+      direction || 0,
+      offset || 0,
+      limit || 100,
+      seekKey || '',
+    );
+    console.log("getThemeObj res:", res);
+    return res;
   };
 
   // todo	
@@ -384,14 +457,33 @@ export class DC  implements SignHandler {
 	//    limit 限制条数
 	//    返回对象下的评论列表，格式[{"Theme":"bafk...6q","AppId":"testapp","ThemeAuthor":"bba...6u","Blockheight":3116,"UserPubkey":"bba...y6u","CommentCid":"ba...aygu","Comment":"hello worldd","CommentSize":11,"Status":0,"Signature":"blo...cwpada","Refercommentkey":"","CCount":0,"UpCount":0,"DownCount":0,"TCount":0}]
   getThemeComments = async (
-    appId: string,
+    appName: string,
+    theme: string,
     themeAuthor: string,
-    startHeight: number,
-    direction: number,
-    offset: number,
-    limit: number,
-    seekKey: string,
+    startHeight?: number,
+    direction?: number,
+    offset?: number,
+    limit?: number,
+    seekKey?: string,
   ) => {
+    const commentManager = new CommentManager(
+      this.connectedDc,
+      this.dcNodeClient,
+      this.dcChain,
+      this
+    );
+    const res = await commentManager.getThemeComments(
+      appName,
+      theme,
+      themeAuthor,
+      startHeight || 0,
+      direction || 0,
+      offset || 0,
+      limit || 100,
+      seekKey || '',
+    );
+    console.log("getThemeComments res:", res);
+    return res;
   };
 
   //todo
@@ -404,14 +496,31 @@ export class DC  implements SignHandler {
 	//    limit 限制条数
 	//    返回用户评论列表，格式：[{"Theme":"bafk...fpy","AppId":"testapp","ThemeAuthor":"bbaa...jkhmm","Blockheight":3209,"UserPubkey":"bba...2hzm","CommentCid":"baf...2aygu","Comment":"hello world","CommentSize":11,"Status":0,"Signature":"bkqy...b6dkda","Refercommentkey":"","CCount":0,"UpCount":0,"DownCount":0,"TCount":0}]
 	getUserComments = async (
-    appId: string,
+    appName: string,
     userPubkey: string,
-    startHeight: number,
-    direction: number,
-    offset: number,
-    limit: number,
-    seekKey: string,
+    startHeight?: number,
+    direction?: number,
+    offset?: number,
+    limit?: number,
+    seekKey?: string,
   ) => {
+    const commentManager = new CommentManager(
+      this.connectedDc,
+      this.dcNodeClient,
+      this.dcChain,
+      this
+    );
+    const res = await commentManager.getUserComments(
+      appName,
+      userPubkey,
+      startHeight || 0,
+      direction || 0,
+      offset || 0,
+      limit || 100,
+      seekKey || '',
+    );
+    console.log("getUserComments res:", res);
+    return res;
   };
 
   /**

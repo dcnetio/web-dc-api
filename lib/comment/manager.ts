@@ -1,13 +1,14 @@
-import { AccountKey, DCConnectInfo, SignHandler } from "../types/types";
+import { DCConnectInfo, SignHandler } from "../types/types";
 import type { HeliaLibp2p } from "helia";
 import { ChainUtil } from "../chain";
+import { base32 } from 'multiformats/bases/base32' 
 
 import { DcUtil } from "../dcutil";
 import * as buffer from "buffer/";
 import { extractPeerIdFromMultiaddr } from "../dc-key/keyManager";
 import { Multiaddr } from "@multiformats/multiaddr";
 import { CommentClient } from "./client";
-import { uint32ToLittleEndianBytes } from "../util/utils";
+import { parseUint32, sha256, uint32ToLittleEndianBytes } from "../util/utils";
 const { Buffer } = buffer;
 
 // 创建一个可以取消的信号
@@ -89,11 +90,10 @@ export class CommentManager {
   }
 
   async addThemeObj(
+    appName: string,
     theme: string,
-    appId: string,
     openFlag:number,
     commentSpace: number,
-    allowSpace: number,
   ): Promise<[number | null, Error | null]> {
     try {
       if (!this.connectedDc?.client) {
@@ -107,7 +107,7 @@ export class CommentManager {
       const statusValue: Uint8Array = uint32ToLittleEndianBytes(openFlag);
 
       const themeValue: Uint8Array = new TextEncoder().encode(theme);
-      const appIdValue: Uint8Array = new TextEncoder().encode(appId);
+      const appIdValue: Uint8Array = new TextEncoder().encode(appName);
       const preSign = new Uint8Array([
         ...themeValue,
         ...appIdValue,
@@ -122,12 +122,11 @@ export class CommentManager {
         this.dcNodeClient
       );
       const res = await commentClient.addThemeObj(
+        appName,
         theme,
-        appId,
         blockHeight || 0,
         commentSpace,
-        allowSpace,
-        userPubkey.toString(),
+        userPubkey.string(),
         openFlag,
         signature,
       );
@@ -139,8 +138,8 @@ export class CommentManager {
   }
 
   async addThemeSpace(
+    appName: string,
     theme: string,
-    appId: string,
     addSpace: number,
   ): Promise<[number | null, Error | null]> {
     try {
@@ -154,7 +153,7 @@ export class CommentManager {
       const spaceValue: Uint8Array = uint32ToLittleEndianBytes(addSpace);
 
       const themeValue: Uint8Array = new TextEncoder().encode(theme);
-      const appIdValue: Uint8Array = new TextEncoder().encode(appId);
+      const appIdValue: Uint8Array = new TextEncoder().encode(appName);
       const preSign = new Uint8Array([
         ...themeValue,
         ...appIdValue,
@@ -168,11 +167,11 @@ export class CommentManager {
         this.dcNodeClient
       );
       const res = await commentClient.addThemeSpace(
+        appName,
         theme,
-        appId,
         blockHeight || 0,
         addSpace,
-        userPubkey.toString(),
+        userPubkey.string(),
         signature,
       );
       return [res, null];
@@ -183,14 +182,13 @@ export class CommentManager {
   }
 
   async publishCommentToTheme(
+    appName: string,
     theme: string,
-    appId: string,
     themeAuthor: string,
     commentType: number,
-    commentCid: string,
     comment: string,
-    refercommentkey: string
-  ): Promise<[number | null, Error | null]> {
+    refercommentkey: string,
+  ): Promise<[string | null, Error | null]> {
     try {
       if (!this.connectedDc?.client) {
         return [null, Errors.ErrNoDcPeerConnected];
@@ -201,10 +199,14 @@ export class CommentManager {
       );
       const typeValue: Uint8Array = uint32ToLittleEndianBytes(commentType);
 
+      const commentUint8 = new TextEncoder().encode(comment);
+      const commenthash = await sha256(commentUint8);
+      const commentCidBase32 = base32.encode(commenthash)
+
       const themeValue: Uint8Array = new TextEncoder().encode(theme);
-      const appIdValue: Uint8Array = new TextEncoder().encode(appId);
+      const appIdValue: Uint8Array = new TextEncoder().encode(appName);
       const authValue: Uint8Array = new TextEncoder().encode(themeAuthor);
-      const cidValue: Uint8Array = new TextEncoder().encode(commentCid);
+      const cidValue: Uint8Array = new TextEncoder().encode(commentCidBase32);
       const referValue: Uint8Array = new TextEncoder().encode(refercommentkey);
       const preSign = new Uint8Array([
         ...themeValue,
@@ -222,18 +224,21 @@ export class CommentManager {
         this.dcNodeClient
       );
       const res = await commentClient.publishCommentToTheme(
+        appName,
         theme,
-        appId,
         themeAuthor,
         blockHeight || 0,
-        userPubkey.toString(),
+        userPubkey.string(),
         commentType,
-        commentCid,
+        commentCidBase32,
         comment,
         refercommentkey,
         signature,
       );
-      return [res, null];
+      // 获取高度
+      const commentBlockHeight = (await this.chainUtil.getBlockHeight()) || 0;
+      const commentKey = `${commentBlockHeight}/${commentCidBase32}`
+      return [commentKey, null];
     } catch (err) {
       console.error("publishCommentToTheme error:", err);
       throw err;
@@ -241,22 +246,25 @@ export class CommentManager {
   }
 
   async deleteSelfComment(
+    appName: string,
     theme: string,
-    appId: string,
     themeAuthor: string,
-    commentCid: string,
-    commentBlockheight: number,
+    commentKey: string,
   ): Promise<[number | null, Error | null]> {
     try {
       if (!this.connectedDc?.client) {
         return [null, Errors.ErrNoDcPeerConnected];
       }
       const blockHeight = (await this.chainUtil.getBlockHeight()) || 0;
+      const commentCid = commentKey.split("/")[1];
+      const commentBlockHeight = commentKey.split("/")[0];
+      // commentBlockHeight 转32位无符号整数
+      const commentBlockHeightUint32 = parseUint32(commentBlockHeight);
       const hValue: Uint8Array = uint32ToLittleEndianBytes(
         blockHeight ? blockHeight : 0
       );
       const themeValue: Uint8Array = new TextEncoder().encode(theme);
-      const appIdValue: Uint8Array = new TextEncoder().encode(appId);
+      const appIdValue: Uint8Array = new TextEncoder().encode(appName);
       const authValue: Uint8Array = new TextEncoder().encode(themeAuthor);
       const cidValue: Uint8Array = new TextEncoder().encode(commentCid);
       const preSign = new Uint8Array([
@@ -273,13 +281,13 @@ export class CommentManager {
         this.dcNodeClient
       );
       const res = await commentClient.deleteSelfComment(
+        appName,
         theme,
-        appId,
         themeAuthor,
         blockHeight || 0,
-        userPubkey.toString(),
-        commentBlockheight || 0,
+        userPubkey.string(),
         commentCid,
+        commentBlockHeightUint32,
         signature,
       );
       return [res, null];
@@ -290,14 +298,14 @@ export class CommentManager {
   }
 
   async getThemeObj(
-    appId: string,
+    appName: string,
     themeAuthor: string,
     startHeight: number,
     direction: number,
     offset: number,
     limit: number,
     seekKey: string,
-  ): Promise<[number | null, Error | null]> {
+  ): Promise<[{ [k: string]: any; } | null, Error | null]> {
     try {
       if (!this.connectedDc?.client) {
         return [null, Errors.ErrNoDcPeerConnected];
@@ -311,13 +319,13 @@ export class CommentManager {
         this.dcNodeClient
       );
       const res = await commentClient.getThemeObj(
-        appId,
+        appName,
         themeAuthor,
         startHeight || 0,
         direction || 0,
         offset || 0,
         limit || 0,
-        seekKey,
+        seekKey || '',
       );
       return [res, null];
     } catch (err) {
@@ -327,14 +335,15 @@ export class CommentManager {
   }
 
   async getThemeComments(
-    appId: string,
+    appName: string,
+    theme: string,
     themeAuthor: string,
     startHeight: number,
     direction: number,
     offset: number,
     limit: number,
     seekKey: string,
-  ): Promise<[number | null, Error | null]> {
+  ): Promise<[{ [k: string]: any; } | null, Error | null]> {
     try {
       if (!this.connectedDc?.client) {
         return [null, Errors.ErrNoDcPeerConnected];
@@ -344,13 +353,14 @@ export class CommentManager {
         this.dcNodeClient
       );
       const res = await commentClient.getThemeComments(
-        appId,
+        appName,
+        theme,
         themeAuthor,
         startHeight || 0,
         direction || 0,
         offset || 0,
         limit || 0,
-        seekKey,
+        seekKey || '',
       );
       return [res, null];
     } catch (err) {
@@ -360,7 +370,7 @@ export class CommentManager {
   }
 
   async getUserComments(
-    appId: string,
+    appName: string,
     userPubkey: string,
     startHeight: number,
     direction: number,
@@ -377,7 +387,7 @@ export class CommentManager {
         this.dcNodeClient
       );
       const res = await commentClient.getUserComments(
-        appId,
+        appName,
         userPubkey,
         startHeight || 0,
         direction || 0,
