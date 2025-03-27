@@ -19,6 +19,7 @@ export class FileClient {
   client: Client;
   dcNodeClient: HeliaLibp2p;
 
+
   constructor(dcClient: Client, dcNodeClient: HeliaLibp2p) {
     this.client = dcClient;
     this.dcNodeClient = dcNodeClient;
@@ -65,6 +66,7 @@ export class FileClient {
           // 异常
           // signatureDataSource.close();
         } else if (decodedPayload.status === uploadStatus.ERROR) {
+          onUpdateTransmitSize(decodedPayload.status, Number(decodedPayload.receivesize));
           // 失败
           // signatureDataSource.close();
         }
@@ -82,11 +84,12 @@ export class FileClient {
       await grpcClient.Call(
         "/dcnet.pb.Service/StoreFile",
         messageBytes,
-        1000 * 1000,
-        "client-streaming",
+        1000000,
+        "server-streaming",
         onDataCallback,
         dataSourceCallback,
       );
+      return;
       // const decoded = dcnet.pb.StroeFileReply.decode(responseData);
       // return [decoded.cid, decoded.decryptKey, null];
     } catch (err) {

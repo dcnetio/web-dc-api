@@ -41,6 +41,7 @@ export class DC  implements SignHandler {
   backChainAddr: string;
   dcChain: ChainUtil;
   dcNodeClient: HeliaLibp2p<Libp2p<any>>; // 什么类型？dc node 对象，主要用于建立连接
+  dcNodeClient2: HeliaLibp2p<Libp2p<any>>; // 什么类型？dc node 对象，主要用于建立连接
   dc: DcUtil;
   privKey: Ed25519PrivKey | undefined; // 私钥
 
@@ -93,18 +94,37 @@ export class DC  implements SignHandler {
       // 如果链节点已经连接
       if (createChain) {
         this.dcNodeClient = await this.dc?._createHeliaNode();
+        if (this.dc && this.dc.dcNodeClient2) {
+          this.dcNodeClient2 =  this.dc?.dcNodeClient2
+        }
+        
+        this.dcNodeClient2.libp2p.dial(multiaddr('/ip4/192.168.31.42/udp/4001/webrtc-direct/certhash/uEiC0gvgyNTw3ILj1wLmsp4qRNU-Y5CTi0_8xWB3UM6MMpw/p2p/12D3KooWSLrNATF3je2SZxGHqEEe8LofXuW4fPtD6SC3QCfWxbMz'));
+      
         // todo 临时测试
         const peerId = "12D3KooWEGzh4AcbJrfZMfQb63wncBUpscMEEyiMemSWzEnjVCPf";
         let nodeAddr = await this.dc?._getNodeAddr(peerId);
-        nodeAddr = multiaddr('/ip4/192.168.31.127/udp/4001/webrtc-direct/certhash/uEiBq5Ki7QE5Nl2IPWTOG52RNutWFaB3rfdIEgKAlVcFtHA/p2p/12D3KooWKfJGey3xUcTQ8bCokBxxudoDm3RAeCfdbuq2e34c7TWB')
+        // nodeAddr = multiaddr('/ip4/192.168.31.42/udp/4001/webrtc-direct/certhash/uEiBq5Ki7QE5Nl2IPWTOG52RNutWFaB3rfdIEgKAlVcFtHA/p2p/12D3KooWKfJGey3xUcTQ8bCokBxxudoDm3RAeCfdbuq2e34c7TWB')
         // 获取默认dc节点地址
         // const nodeAddr = await this.dc?._getDefaultDcNodeAddr();
         if (nodeAddr) {
+          console.log("--------nodeAddr---------", nodeAddr.toString());
           this.connectedDc.nodeAddr = nodeAddr; // 当前地址
           this.connectedDc.client = await this._newDcClient(nodeAddr);
-          this.dcNodeClient.libp2p.dial(nodeAddr);
+          const connection =await this.dcNodeClient.libp2p.dial(nodeAddr);
+          await this.dcNodeClient2.libp2p.dial(nodeAddr);
+          console.log("--------connection---------", connection);
+          console.log('libp2p 已连接节点列表:', Object.keys(this.dcNodeClient.libp2p.getPeers()))
+          console.log('libp2p 已连接连接列表:', Object.keys(this.dcNodeClient.libp2p.getConnections()))
+          await sleep(5000);
+         
+          this.dcNodeClient2.libp2p.dial(multiaddr('/ip4/192.168.31.42/udp/4001/webrtc-direct/certhash/uEiC0gvgyNTw3ILj1wLmsp4qRNU-Y5CTi0_8xWB3UM6MMpw/p2p/12D3KooWSLrNATF3je2SZxGHqEEe8LofXuW4fPtD6SC3QCfWxbMz'));
         }
-
+        console.log("--------dial success begin---------");
+        this.dcNodeClient.libp2p.getMultiaddrs().forEach((addr) => {
+          console.log("--------addr---------", addr.toString());
+        });
+        console.log("--------dial success end---------");
+    
         // 定时维系token
         // this.startDcPeerTokenKeepValidTask();
       }
@@ -138,6 +158,7 @@ export class DC  implements SignHandler {
         this.connectedDc,
         this.dcChain,
         this.dcNodeClient,
+        this.dcNodeClient2,
         this
       );
       const fileContent = await fileManager.getFileFromDc(cid, decryptKey);
@@ -487,8 +508,11 @@ export class DC  implements SignHandler {
       this.connectedDc,
       this.dcChain,
       this.dcNodeClient,
+      this.dcNodeClient2,
       this
     );
     const res = await fileManager.addFile(file, enkey, onUpdateTransmitSize);
+    // console.log("addFile res:", res);
+    return res;
   }
 }

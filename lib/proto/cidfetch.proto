@@ -1,0 +1,24 @@
+syntax = "proto3";
+package cidfetch.pb;
+
+
+ message InitRequset {  //字段为空
+} 
+message InitReply {  //字段为空
+  bytes cid = 1;  //  需要处理的文件cid或者文件夹cid或者数据库的threadID
+}
+message FetchRequest {  
+  bytes cid = 1;          //  要获取数据的块的cid
+}  
+  
+message FetchReply {  
+    bytes data = 1;         //  获取的cid对应的数据
+}
+
+
+message ErrorInformRequest {  
+    string error = 1;         //  错误信息
+}
+
+message ErrorInformReply {
+}

@@ -151,7 +151,7 @@ function fastExtractPeerId(ma: Multiaddr | string): PeerId | null {
 }
 
     // 使用 Web Crypto API 安全存储
-    async function saveKeyPair(keyPair) {
+    async function saveKeyPair(key,keyPair) {
       // 导出密钥（正确参数）  
       const privateKey = btoa(String.fromCharCode(...keyPair.raw)) 
       // const publicKey = Buffer.from(keyPair.publicKey.raw).toString('base64')
@@ -172,9 +172,9 @@ function fastExtractPeerId(ma: Multiaddr | string): PeerId | null {
       //   id: "ed25519_key",
       //   ...keyStorage  
       // });
-      localStorage.setItem('ed25519_key', privateKey)
+      localStorage.setItem('ed25519_key'+key, privateKey)
     }
-    async function loadKeyPair() {  
+    async function loadKeyPair(key) {  
       // const db = await openDB('cryptoVault');  
       // const stored = await db.get('ed25519', 'ed25519_key');  
     
@@ -185,7 +185,7 @@ function fastExtractPeerId(ma: Multiaddr | string): PeerId | null {
     
       // // 导入私钥  
       // const privateKey = decode(stored.privateKey)
-      const privateKey = localStorage.getItem('ed25519_key')
+      const privateKey = localStorage.getItem('ed25519_key'+key)
       if(privateKey){
         const keyPair = keys.privateKeyFromRaw(decode(privateKey))
         return keyPair
