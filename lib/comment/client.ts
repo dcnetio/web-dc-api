@@ -5,6 +5,7 @@ import { DataSource } from "../proto/datasource";
 import { HeliaLibp2p } from "helia";
 import { unixfs } from "@helia/unixfs";
 import { toString as uint8ArrayToString } from "uint8arrays/to-string";
+import { FileManager } from "../file/filemanager";
 
 
 export class CommentClient {
@@ -262,7 +263,8 @@ export class CommentClient {
       const decoded = dcnet.pb.GetThemeObjReply.decode(reply);
       console.log("GetThemeObj decoded", decoded);
       console.log("GetThemeObj decoded.toJSON()", decoded.toJSON());
-      return decoded.toJSON();
+      const objsCid = decoded.objsCid ? uint8ArrayToString(decoded.objsCid) : '';
+      return objsCid;
     }catch (err) {
       console.error("GetThemeObj error:", err);
       throw err;
@@ -306,7 +308,8 @@ export class CommentClient {
       const decoded = dcnet.pb.GetThemeCommentsReply.decode(reply);
       console.log("GetThemeComments decoded", decoded);
       console.log("GetThemeComments decoded.toJSON()", decoded.toJSON());
-      return decoded.toJSON();
+      const commentsCid = decoded.commentsCid ? uint8ArrayToString(decoded.commentsCid) : '';
+      return commentsCid;
     }catch (err) {
       console.error("GetThemeComments error:", err);
       throw err;
@@ -348,7 +351,8 @@ export class CommentClient {
       const decoded = dcnet.pb.GetUserCommentsReply.decode(reply);
       console.log("GetUserComments decoded", decoded);
       console.log("GetUserComments decoded.toJSON()", decoded.toJSON());
-      return decoded.toJSON();
+      const commentsCid = decoded.commentsCid ? uint8ArrayToString(decoded.commentsCid) : '';
+      return commentsCid;
     }catch (err) {
       console.error("GetUserComments error:", err);
       throw err;

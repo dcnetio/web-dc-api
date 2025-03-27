@@ -22,6 +22,7 @@ import { DcUtil } from '../dcutil'
 import toBuffer from "it-to-buffer";
 import { decryptContent } from '../util/dccrypt'
 import * as buffer from "buffer/";
+import { cidNeedConnect } from '../util/contant'
 const { Buffer } = buffer;
 
 const NonceBytes = 12;
@@ -255,12 +256,15 @@ export class FileManager {
   }
 
   // 从dc网络获取指定文件
-  getFileFromDc = async (cid: string, decryptKey: string) => {
+  // flag 是否需要连接节点，0-获取，1-不获取
+  getFileFromDc = async (cid: string, decryptKey: string, flag?: number) => {
     console.log("first 11111");
-    const res = await this.dc?._connectToObjNodes(cid);
-    if (!res) {
-      console.log("return nulllllllll");
-      return null;
+    if(flag !== cidNeedConnect.NOT_NEED){
+      const res = await this.dc?._connectToObjNodes(cid);
+      if (!res) {
+        console.log("return nulllllllll");
+        return null;
+      }
     }
     console.log("first 2");
     const fs = unixfs(this.dcNodeClient);

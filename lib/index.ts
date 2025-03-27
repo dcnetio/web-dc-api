@@ -2,6 +2,8 @@
 
 import { KeyManager } from "./dc-key/keyManager";
 
+import { toString as uint8ArrayToString } from "uint8arrays/to-string";
+import { base32 } from 'multiformats/bases/base32' 
 import { CID } from "multiformats";
 import { unixfs } from "@helia/unixfs";
 
@@ -32,6 +34,10 @@ import { FileManager } from "./file/filemanager";
 import type { HeliaLibp2p } from "helia";
 import { Libp2p } from "@libp2p/interface";
 import { CommentManager } from "./comment/manager";
+import { cidNeedConnect } from "./util/contant";
+import { dcnet } from "./proto/dcnet_proto";
+import { BrowserLineReader, readLine } from "./util/BrowserLineReader";
+import { bytesToHex } from "@noble/curves/abstract/utils";
 
 const NonceBytes = 12;
 const TagBytes = 16;
@@ -409,6 +415,64 @@ export class DC  implements SignHandler {
     return res;
   };
 
+  _handleThemeObj = async (
+    fileContentString: string,
+  ) => {
+    const reader = new BrowserLineReader(fileContentString);  
+
+    let allContent: Array<{
+      theme: string,
+      appId: string,
+      blockheight: number,
+      commentSpace: number,
+      allowSpace: number,
+      userPubkey: string,
+      openFlag: number,
+      signature: string,
+      CCount: number,
+      UpCount: number,
+      DownCount: number,
+      TCount: number,
+      vaccount: string,
+    }> = [];
+    // readLine 循环
+    while (true) {  
+      const { line, error } = readLine(reader);  
+      if (error && error.message !== 'EOF') {  
+        console.error('读取错误:', error);  
+        break;  
+      } else if (line) {  
+        // 将Uint8Array转回字符串  
+        const decoder = new TextDecoder();  
+        const lineString = decoder.decode(line);
+        console.log('读取的行:', lineString);  
+        if(!lineString) {
+          console.error('结束');  
+          break;  
+        }
+        const fileContentUint8Array = base32.decode(lineString)
+        const content = dcnet.pb.AddThemeObjRequest.decode(fileContentUint8Array)
+        console.log("content:", content);
+        allContent.push({
+          theme: uint8ArrayToString(content.theme),
+          appId: uint8ArrayToString(content.appId),
+          blockheight: content.blockheight,
+          commentSpace: content.commentSpace,
+          allowSpace: content.allowSpace,
+          userPubkey: uint8ArrayToString(content.userPubkey),
+          openFlag: content.openFlag,
+          signature: bytesToHex(content.signature),
+          CCount: content.CCount,
+          UpCount: content.UpCount,
+          DownCount: content.DownCount,
+          TCount: content.TCount,
+          vaccount: uint8ArrayToString(content.vaccount),
+        });
+      }
+    }
+    return allContent;
+  };
+
   // todo
 	// Comment_GetCommentableObj 获取指定用户已开通评论的对象列表
 	//    objAuthor 被发布评论的对象的用户pubkey base32编码,或者pubkey经过libp2p-crypto protobuf编码后再base32编码
@@ -443,8 +507,97 @@ export class DC  implements SignHandler {
       seekKey || '',
     );
     console.log("getThemeObj res:", res);
-    return res;
+
+    if(res[0] == null){
+      return ['', null];
+    }
+    const fileManager = new FileManager(
+      this.dc,
+      this.connectedDc,
+      this.dcChain,
+      this.dcNodeClient,
+      this
+    );
+    const cid = Buffer.from(res[0]).toString();
+    const fileContent = await fileManager.getFileFromDc(cid, '', cidNeedConnect.NOT_NEED);
+    if(!fileContent) {
+      return ['', null];
+    }
+    const fileContentString = uint8ArrayToString(fileContent);
+    const allContent = await this._handleThemeObj(fileContentString);
+    console.log("getThemeObj allContent:", allContent);
+    return [allContent, null];
   };
+  _handleThemeComments = async (
+    fileContentString: string,
+  ) => {
+    const reader = new BrowserLineReader(fileContentString);  
+    let allContent: Array<{
+      theme: string,
+      appId: string,
+      themeAuthor: string,
+      blockheight: number,
+      userPubkey: string,
+      commentCid: string,
+      comment: string,
+      commentSize: number,
+      status: number,
+      refercommentkey: string,
+      CCount: number,
+      UpCount: number,
+      DownCount: number,
+      TCount: number,
+      type: number,
+      signature: string,
+      vaccount: string,
+    }> = [];
+    if (!this.privKey) {
+      return;
+    }
+    // readLine 循环
+    while (true) {  
+      const { line, error } = readLine(reader);  
+      if (error && error.message !== 'EOF') {  
+        console.error('读取错误:', error);  
+        break;  
+      } else if (line) {  
+        // 将Uint8Array转回字符串  
+        const decoder = new TextDecoder();  
+        const lineString = decoder.decode(line);
+        console.log('读取的行:', lineString);  
+        if(!lineString) {
+          console.error('结束');  
+          break;  
+        }
+        const lineContent = base32.decode(lineString)
+        const plainContent = await this.privKey.decrypt(lineContent)
+        const content = dcnet.pb.PublishCommentToThemeRequest.decode(plainContent)
+        console.log("content:", content);
+
+        allContent.push({
+          theme: uint8ArrayToString(content.theme),
+          appId: uint8ArrayToString(content.appId),
+          themeAuthor: uint8ArrayToString(content.themeAuthor),
+          blockheight: content.blockheight,
+          userPubkey: uint8ArrayToString(content.userPubkey),
+          commentCid: uint8ArrayToString(content.commentCid),
+          comment: uint8ArrayToString(content.comment),
+          commentSize: content.commentSize,
+          status: content.status,
+          refercommentkey: uint8ArrayToString(content.refercommentkey),
+          CCount: content.CCount,
+          UpCount: content.UpCount,
+          DownCount: content.DownCount,
+          TCount: content.TCount,
+          type: content.type,
+          signature: bytesToHex(content.signature),
+          vaccount: bytesToHex(content.vaccount),
+        });
+      }
+    }
+    return allContent;
+  };
+
 
   // todo	
   // Comment_GetThemeComments 获取指定已开通对象的评论列表，私密评论只有评论者和被评论者可见
@@ -483,7 +636,26 @@ export class DC  implements SignHandler {
       seekKey || '',
     );
     console.log("getThemeComments res:", res);
-    return res;
+    if(res[0] == null){
+      return ['', null];
+    }
+    const fileManager = new FileManager(
+      this.dc,
+      this.connectedDc,
+      this.dcChain,
+      this.dcNodeClient,
+      this
+    );
+    const cid = Buffer.from(res[0]).toString();
+    const fileContent = await fileManager.getFileFromDc(cid, '', cidNeedConnect.NOT_NEED);
+    console.log("getThemeComments fileContent:", fileContent);
+    if(!fileContent) {
+      return ['', null];
+    }
+    const fileContentString = uint8ArrayToString(fileContent);
+    const allContent = await this._handleThemeComments(fileContentString);
+    console.log("getThemeComments allContent:", allContent);
+    return [allContent, null];
   };
 
   //todo
@@ -520,7 +692,26 @@ export class DC  implements SignHandler {
       seekKey || '',
     );
     console.log("getUserComments res:", res);
-    return res;
+    if(res[0] == null){
+      return ['', null];
+    }
+    const fileManager = new FileManager(
+      this.dc,
+      this.connectedDc,
+      this.dcChain,
+      this.dcNodeClient,
+      this
+    );
+    const cid = Buffer.from(res[0]).toString();
+    const fileContent = await fileManager.getFileFromDc(cid, '', cidNeedConnect.NOT_NEED);
+    console.log("getUserComments fileContent:", fileContent);
+    if(!fileContent) {
+      return ['', null];
+    }
+    const fileContentString = uint8ArrayToString(fileContent);
+    const allContent = await this._handleThemeComments(fileContentString);
+    console.log("getUserComments allContent:", allContent);
+    return [allContent, null];
   };
 
   /**
@@ -700,3 +891,4 @@ export class DC  implements SignHandler {
     const res = await fileManager.addFile(file, enkey, onUpdateTransmitSize);
   }
 }
+

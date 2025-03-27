@@ -9,6 +9,7 @@ import { extractPeerIdFromMultiaddr } from "../dc-key/keyManager";
 import { Multiaddr } from "@multiformats/multiaddr";
 import { CommentClient } from "./client";
 import { parseUint32, sha256, uint32ToLittleEndianBytes } from "../util/utils";
+import { FileManager } from "../file/filemanager";
 const { Buffer } = buffer;
 
 // 创建一个可以取消的信号
@@ -305,7 +306,7 @@ export class CommentManager {
     offset: number,
     limit: number,
     seekKey: string,
-  ): Promise<[{ [k: string]: any; } | null, Error | null]> {
+  ): Promise<[string | null, Error | null]> {
     try {
       if (!this.connectedDc?.client) {
         return [null, Errors.ErrNoDcPeerConnected];
@@ -326,7 +327,7 @@ export class CommentManager {
         offset || 0,
         limit || 0,
         seekKey || '',
-      );
+      ); 
       return [res, null];
     } catch (err) {
       console.error("getThemeObj error:", err);
@@ -343,7 +344,7 @@ export class CommentManager {
     offset: number,
     limit: number,
     seekKey: string,
-  ): Promise<[{ [k: string]: any; } | null, Error | null]> {
+  ): Promise<[string | null, Error | null]> {
     try {
       if (!this.connectedDc?.client) {
         return [null, Errors.ErrNoDcPeerConnected];
@@ -377,7 +378,7 @@ export class CommentManager {
     offset: number,
     limit: number,
     seekKey: string,
-  ): Promise<[number | null, Error | null]> {
+  ): Promise<[string | null, Error | null]> {
     try {
       if (!this.connectedDc?.client) {
         return [null, Errors.ErrNoDcPeerConnected];
@@ -393,7 +394,7 @@ export class CommentManager {
         direction || 0,
         offset || 0,
         limit || 0,
-        seekKey,
+        seekKey || '',
       );
       return [res, null];
     } catch (err) {
