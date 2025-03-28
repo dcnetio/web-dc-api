@@ -53,6 +53,7 @@ export const Errors = {
   ErrNoDcPeerConnected: new FileError('no dc peer connected'),
   ErrNoFileChose: new FileError('no file choose'),
   ErrNoPeerIdIsNull: new FileError('peerId is null'),
+  ErrNoNeedUpload: new FileError('no need upload'),
 }
 
 
@@ -154,12 +155,9 @@ export class FileManager {
         yield content  
       }  
     }  
-  
-    // 流式上传（关键修改点）  
     const cid = await fs.addByteStream(contentStream(),{     
       rawLeaves: false ,leafType: 'file',shardSplitThresholdBytes:256*1024,
-    })   
-    console.log('File CID:', cid.toString())  
+    })    
     return cid  
   }  
 
@@ -184,7 +182,7 @@ export class FileManager {
     if (!peerId) {
       return [null, Errors.ErrNoPeerIdIsNull]
     }
-
+    let resCid = ''
     try {
       const fileSize = file.size
       const symKey = enkey && enkey.length > 0 ? SymmetricKey.fromString(enkey) : null
@@ -204,10 +202,10 @@ export class FileManager {
       )
       console.log('==========_uploadLargeFileAdvanced', cid.toString())
       if (!cid) {
-        return [null, Errors.ErrNoFileChose]
+        return [resCid, Errors.ErrNoFileChose]
       }
-      const cidStr = cid.toString()
-      console.log('=========cidStr', cidStr)
+      resCid = cid.toString()
+      console.log('=========resCid', resCid)
       const startTime = Date.now()
       console.log('=========startTime', startTime)
     
@@ -226,7 +224,7 @@ export class FileManager {
       const typeValue = uint32ToLittleEndianBytes(1)
       // 将字符串 (dc.ConnectedDc.peerid) 转换为字节数组
       const peerIdValue = new TextEncoder().encode(peerId)
-      const cidIdValue = new TextEncoder().encode(cidStr)
+      const cidIdValue = new TextEncoder().encode(resCid)
 
       // 组合所有部分
       const messageParts = new Uint8Array([
@@ -239,15 +237,27 @@ export class FileManager {
 
       const signature = this.accountKey.sign(messageParts)
       const fileClient = new FileClient(this.connectedDc.client, this.dcNodeClient)
+      let resStatus = 0
+      let resFlag = false
       fileClient.storeFile(
         dagFileSize,
         blockHeight ? blockHeight : 0,
         signature,
-        cidStr,
-        onUpdateTransmitSize,
+        resCid,
+        (status: number, size: number): void => {
+          resFlag = true;
+          resStatus = status
+          onUpdateTransmitSize(status, size);
+        }
       )
+     //等待storeRes 为true
+      while (!resFlag) {
+        await sleep(100)
+      }
+      if (resStatus !== 3) {//不是上传中，不需要操作
+        return [null, Errors.ErrNoNeedUpload]
+      }
      
-      await sleep(1000)
      //创建文件主动上报流
      const stream = await nodeConn.newStream("/dc/transfer/1.0.0")
      const writer =  new StreamWriter(stream.sink) 
@@ -274,11 +284,13 @@ export class FileManager {
           if (!handshakeFlag){
             // 解析消息
             const initRequest = cidfetch.pb.InitRequset.decode(parsedMessage.payload)
-            console.log('Received message:', initRequest.toJSON())
+            if (!initRequest) {
+              continue
+            }
             //mParts 清空
             mParts.length = 0
             //发送数据到服务器
-            const message = new TextEncoder().encode(cidStr)
+            const message = new TextEncoder().encode(resCid)
             const initReply  = new cidfetch.pb.InitReply({cid: message})
             //组装数据
             const initReplyBytes = cidfetch.pb.InitReply.encode(initReply).finish()
@@ -296,7 +308,7 @@ export class FileManager {
               const resCid =  new TextDecoder().decode(fetchRequest.cid)
               //获取resCid对应的block
               const cid = CID.parse(resCid);  
-              console.log('Received cid:', resCid)
+          //    console.log('Received cid:', resCid)
   
               // 通过 blockstore 获取该 CID 对应的区块  
               try {  
@@ -308,9 +320,7 @@ export class FileManager {
                   version: 1,  
                   payload: fetchReplyBytes,  
                 })
-                console.log('Sending message start:',  Date.now())
                 await writer.write(messageData)
-                console.log('Sending message end:',  Date.now())
                 mParts.length = 0
               } catch (error) {  
                 console.error('Error retrieving block:', error);  
@@ -318,11 +328,11 @@ export class FileManager {
           }
         }
       }
-      stream.close()
+        stream.close()
       } catch (error) {
-      console.log('=========stream close')
+        console.log('=========stream close')
       }
-      return ["", null]
+      return [resCid, null]
  }
   
  private async *chunkGenerator(stream: Stream): AsyncGenerator<Uint8Array> {

@@ -14,6 +14,22 @@ const uploadStatus = {
   ABNORMAL: 4,
 };
 
+const uploadRespondStatus = {
+  FilePulling: 3, //文件拉取中
+  PullFail: 4, //拉取失败
+  PullSuccess: 5, //拉取成功
+  BlockFinality: 6, //区块已经最终
+  FinalityTimeout: 7, //最终化超时
+  FaultSize: 8, //文件大小错误
+  FaultCount: 9, //文件总数错误
+  NoUserSpace: 10, //用户存储空间不足
+  NoPeerSpace: 11, //节点空间不足
+  SpaceExpire: 12, //用户空间过期
+  Error: 13, //内部错误
+  TooManyBackups: 14, //备份过多
+  VAccountParseError: 15, //Virth Account解析错误
+};
+ 
 
 export class FileClient {
   client: Client;
@@ -50,44 +66,54 @@ export class FileClient {
       message.signature = signature;
       const messageBytes = dcnet.pb.StroeFileRequest.encode(message).finish();
       
-      const signatureDataSource = new DataSource();
+     // const signatureDataSource = new DataSource();
       const onDataCallback = async (payload: Uint8Array) => {
         const decodedPayload = dcnet.pb.StroeFileReply.decode(payload);
-        console.log("onDataCallback decodedPayload:", decodedPayload);
+        let resStatus = uploadStatus.UPLOADING;
         // todo 需要转换
-        if (decodedPayload.status === uploadStatus.OK) {
-          // 成功
-          signatureDataSource.close();
-        } else if (decodedPayload.status === uploadStatus.ENCRYPTING) {
-          // 加密中
-        } else if (decodedPayload.status === uploadStatus.UPLOADING) {
-          // 上传中
-        } else if (decodedPayload.status === uploadStatus.ABNORMAL) {
-          // 异常
-          // signatureDataSource.close();
-        } else if (decodedPayload.status === uploadStatus.ERROR) {
-          onUpdateTransmitSize(decodedPayload.status, Number(decodedPayload.receivesize));
-          // 失败
-          // signatureDataSource.close();
+        switch (decodedPayload.status) {
+          case uploadRespondStatus.FilePulling:
+            resStatus = uploadStatus.UPLOADING;
+            break;
+          case uploadRespondStatus.PullFail:
+            resStatus = uploadStatus.ERROR;
+            break;
+          case uploadRespondStatus.PullSuccess:
+            resStatus = uploadStatus.OK;
+            break;
+          case uploadRespondStatus.BlockFinality:
+            resStatus = uploadStatus.OK;
+            break;
+          case uploadRespondStatus.FinalityTimeout:
+            resStatus = uploadStatus.ABNORMAL;
+            break;
+          case uploadRespondStatus.FaultSize:
+            resStatus = uploadStatus.ERROR;
+            break;
+          case uploadRespondStatus.FaultCount:
+            resStatus = uploadStatus.ERROR;
+            break;
+          case uploadRespondStatus.NoUserSpace:
+            resStatus = uploadStatus.ERROR;
+            break;
         }
-        // if(onUpdateTransmitSize ) {
-        //   onUpdateTransmitSize(decodedPayload.status, Number(decodedPayload.receivesize));
-        // }
+        if(onUpdateTransmitSize ) {
+          onUpdateTransmitSize(resStatus, Number(decodedPayload.receivesize));
+        }
       };
-      // 使用方法
-      const dataSourceCallback = (): AsyncIterable<Uint8Array> => {
-        console.log("dataSourceCallback");
-        return signatureDataSource.getDataSource();
-      };
+    
+      // const dataSourceCallback = (): AsyncIterable<Uint8Array> => {
+      //   console.log("dataSourceCallback");
+      //   return signatureDataSource.getDataSource();
+      // };
 
-      // 使用方法
+    
       await grpcClient.Call(
         "/dcnet.pb.Service/StoreFile",
         messageBytes,
-        1000000,
+        100000,
         "server-streaming",
         onDataCallback,
-        dataSourceCallback,
       );
       return;
       // const decoded = dcnet.pb.StroeFileReply.decode(responseData);
