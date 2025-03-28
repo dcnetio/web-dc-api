@@ -5,7 +5,8 @@ import type { HeliaLibp2p } from 'helia'
 import { ChainUtil } from '../chain'
 import { fixedSize }  from 'ipfs-unixfs-importer/chunker'
 import  { cidfetch } from "../proto/cidfetch_proto";
-import {EnhancedStreamWriter as StreamWriter } from './streamwriter'
+//import {StreamWriter } from 'grpc-libp2p-client/dc-http2/stream'
+import {StreamWriter } from './streamwriter'
 
 import {
   compareByteArrays,
@@ -67,21 +68,18 @@ export class FileManager {
   connectedDc: DCConnectInfo = {}
   chainUtil: ChainUtil
   dcNodeClient: HeliaLibp2p
-  dcNodeClient2: HeliaLibp2p
   accountKey: SignHandler
   constructor(
     dc: DcUtil,
     connectedDc: DCConnectInfo,
     chainUtil: ChainUtil,
     dcNodeClient: HeliaLibp2p,
-    dcNodeClient2: HeliaLibp2p,
     accountKey: SignHandler,
   ) {
     this.dc = dc;
     this.connectedDc = connectedDc
     this.chainUtil = chainUtil
     this.dcNodeClient = dcNodeClient
-    this.dcNodeClient2= dcNodeClient
     this.accountKey = accountKey
   }
   // 处理文件头
@@ -117,7 +115,7 @@ export class FileManager {
     pubkeyBytes?: Uint8Array,  
     symKey?: SymmetricKey | null,  
   ) {  
-    const fs = unixfs(this.dcNodeClient2)  
+    const fs = unixfs(this.dcNodeClient)  
   
     let offset = resumeState.offset || 0  
     const chunkHashes = resumeState.chunkHashes || {}  
@@ -159,30 +157,11 @@ export class FileManager {
   
     // 流式上传（关键修改点）  
     const cid = await fs.addByteStream(contentStream(),{     
-      rawLeaves: true,  
-      reduceSingleLeafToSelf: false,  
-      chunker: fixedSize() // 保持与之前相同的分块策略  
-    })  
-    // const pin =  this.dcNodeClient.pins.add(cid, {
-    //   onProgress: (evt) => {
-    //   console.info('pin event', evt.type, evt.detail)
-    // }});
-    // try {  
-    //   for await (const cid of pin) {  
-    //     console.log('获取的cid值:', cid.toString());  
-    //     this.dc.manualAnnounce(this.dcNodeClient2, cid,false) 
-    //   }  
-    //   console.log('遍历完成');  
-    // } catch (error) {  
-    //   console.error('遍历出错:', error);  
-    // }  
-
-  
+      rawLeaves: false ,leafType: 'file',shardSplitThresholdBytes:256*1024,
+    })   
     console.log('File CID:', cid.toString())  
     return cid  
   }  
-
-
 
 
   // 上传文件
@@ -209,14 +188,14 @@ export class FileManager {
     try {
       const fileSize = file.size
       const symKey = enkey && enkey.length > 0 ? SymmetricKey.fromString(enkey) : null
-      const fs = unixfs(this.dcNodeClient2)
+      const fs = unixfs(this.dcNodeClient)
       const pubkeyBytes = this.accountKey.getPubkeyRaw()
       const peerId = "12D3KooWEGzh4AcbJrfZMfQb63wncBUpscMEEyiMemSWzEnjVCPf";
       let nodeAddr = await this.dc?._getNodeAddr(peerId);
       if (!nodeAddr) {
         return [null, Errors.ErrNoDcPeerConnected]
       }
-       const nodeConn = await this.dcNodeClient2.libp2p.dial(nodeAddr,{force: true});
+      const nodeConn = await this.dcNodeClient.libp2p.dial(nodeAddr);
       const cid = await this._uploadLargeFileAdvanced(
         file,
         { offset: 0, chunkHashes: [] },
@@ -232,36 +211,22 @@ export class FileManager {
       const startTime = Date.now()
       console.log('=========startTime', startTime)
     
-   //  this.dc.manualAnnounce(this.dcNodeClient2, cid,true)
       console.log('libp2p getProtocols', this.dcNodeClient.libp2p.getProtocols())
       console.log('libp2p peerId', this.dcNodeClient.libp2p.peerId.toString())
       console.log('libp2p 服务列表:', Object.keys(this.dcNodeClient.libp2p.services))  
       console.log('libp2p 已连接节点列表:', Object.keys(this.dcNodeClient.libp2p.getPeers()))
       console.log('libp2p 已连接连接列表:', Object.keys(this.dcNodeClient.libp2p.getConnections()))
-    //  const peerInfo = await this.dcNodeClient.libp2p.dial(this.connectedDc.nodeAddr)
-    //  console.log('=========peerInfo', peerInfo)
-    
-
-     
-
-   
-      // 验证 DHT 功能  
-      // const providers: PeerInfo[] = []  
-      // for await (const peer of this.dcNodeClient.libp2p.contentRouting.findProviders(cid)) {
-      //   console.log('=========peer', peer.id)  
-      //   providers.push(peer)  
-      // }
-      // console.log('=========providers', providers)
       const stats = await fs.stat(cid)
-      console.log('=========stats', stats)
-      const dagFileSize  = Number(stats.dagSize)
+      const filesize =stats.unixfs?.fileSize()
+      console.log('=========stats', stats.localDagSize, stats.localFileSize, stats.fileSize, stats.dagSize,filesize)
+      const dagFileSize  = Number(stats.localDagSize)
+
       const sizeValue = uint64ToLittleEndianBytes(dagFileSize)
       const bhValue = uint32ToLittleEndianBytes(blockHeight ? blockHeight : 0)
       const typeValue = uint32ToLittleEndianBytes(1)
       // 将字符串 (dc.ConnectedDc.peerid) 转换为字节数组
       const peerIdValue = new TextEncoder().encode(peerId)
       const cidIdValue = new TextEncoder().encode(cidStr)
-      // 将 cidIdValue,sizeValue,bhValue,typeValue 和 peerIdValue 连接起来
 
       // 组合所有部分
       const messageParts = new Uint8Array([
@@ -317,34 +282,35 @@ export class FileManager {
             const initReply  = new cidfetch.pb.InitReply({cid: message})
             //组装数据
             const initReplyBytes = cidfetch.pb.InitReply.encode(initReply).finish()
-            const testBytes = new Uint8Array(40850)
             const messageData = this.assembleCustomMessage({  
               type: 2,  
               version: 1,  
-              payload: testBytes,  
+              payload: initReplyBytes,  
             })
             await writer.write(messageData)
             handshakeFlag = true
           }else{
               // 解析消息
               const fetchRequest = cidfetch.pb.FetchRequest.decode(parsedMessage.payload)
-              console.log('Received message:', fetchRequest.toJSON())
+              
               const resCid =  new TextDecoder().decode(fetchRequest.cid)
               //获取resCid对应的block
               const cid = CID.parse(resCid);  
+              console.log('Received cid:', resCid)
   
               // 通过 blockstore 获取该 CID 对应的区块  
               try {  
-                const block = await this.dcNodeClient2.blockstore.get(cid);  
+                const block = await this.dcNodeClient.blockstore.get(cid);  
                 const fetchReply = new cidfetch.pb.FetchReply({data: block})
                 const fetchReplyBytes = cidfetch.pb.FetchReply.encode(fetchReply).finish()
-                const testBytes = new Uint8Array(40840)
                 const messageData = this.assembleCustomMessage({  
                   type: 2,  
                   version: 1,  
-                  payload: testBytes,  
+                  payload: fetchReplyBytes,  
                 })
+                console.log('Sending message start:',  Date.now())
                 await writer.write(messageData)
+                console.log('Sending message end:',  Date.now())
                 mParts.length = 0
               } catch (error) {  
                 console.error('Error retrieving block:', error);  

@@ -25,8 +25,8 @@ interface EnhancedPushable<T> extends Pushable<T> {
   }  
   
 
-const MaxChunkSize = 4 * 1024 - 5 
-export class EnhancedStreamWriter {  
+const MaxChunkSize = 4*1024 -5
+export class StreamWriter {  
   private p: EnhancedPushable<Uint8Array>  
   //private p = pushable({ objectMode: false }) 
   
@@ -193,8 +193,9 @@ export class EnhancedStreamWriter {
 
     while (true) {  
         const currentSize = this.queueSize // 空值合并运算符  
-        this.backpressureHistory.push(currentSize)  
-      
+        if (currentSize>0){
+          this.backpressureHistory.push(currentSize)  
+        }
       if (this.backpressureHistory.length > historySize) {  
         this.backpressureHistory.shift()  
       }  
@@ -233,7 +234,7 @@ export class EnhancedStreamWriter {
       }  
 
       const waitTime = Math.min(  
-        1000,   
+        10,   
         checkInterval * Math.pow(2, currentSize / dynamicThreshold)  
       )  
       await new Promise(r => setTimeout(r, waitTime))  
@@ -244,8 +245,8 @@ export class EnhancedStreamWriter {
 
 
   private calculateRetryDelay(attempt: number): number {  
-    const baseDelay = 100  
-    const maxDelay = 5000  
+    const baseDelay = 10  
+    const maxDelay = 100  
     return Math.min(  
       baseDelay * Math.pow(2, attempt) + Math.random() * 100,  
       maxDelay  
