@@ -183,7 +183,7 @@ export class FileManager {
       const symKey = enkey && enkey.length > 0 ? SymmetricKey.fromString(enkey) : null
       const fs = unixfs(this.dcNodeClient)
       const pubkeyBytes = this.accountKey.getPubkeyRaw()
-      const peerId = "12D3KooWEGzh4AcbJrfZMfQb63wncBUpscMEEyiMemSWzEnjVCPf";
+      // const peerId = "12D3KooWEGzh4AcbJrfZMfQb63wncBUpscMEEyiMemSWzEnjVCPf";
       let nodeAddr = await this.dc?._getNodeAddr(peerId);
       if (!nodeAddr) {
         return [null, Errors.ErrNoDcPeerConnected]

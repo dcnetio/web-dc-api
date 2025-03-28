@@ -94,11 +94,11 @@ export class DC  implements SignHandler {
         this.dcNodeClient = await this.dc?._createHeliaNode();
        
         // todo 临时测试
-        const peerId = "12D3KooWEGzh4AcbJrfZMfQb63wncBUpscMEEyiMemSWzEnjVCPf";
-        let nodeAddr = await this.dc?._getNodeAddr(peerId);
+        // const peerId = "12D3KooWEGzh4AcbJrfZMfQb63wncBUpscMEEyiMemSWzEnjVCPf";
+        // let nodeAddr = await this.dc?._getNodeAddr(peerId);
         // nodeAddr = multiaddr('/ip4/192.168.31.42/udp/4001/webrtc-direct/certhash/uEiBq5Ki7QE5Nl2IPWTOG52RNutWFaB3rfdIEgKAlVcFtHA/p2p/12D3KooWKfJGey3xUcTQ8bCokBxxudoDm3RAeCfdbuq2e34c7TWB')
         // 获取默认dc节点地址
-        //const nodeAddr = await this.dc?._getDefaultDcNodeAddr();
+        const nodeAddr = await this.dc?._getDefaultDcNodeAddr();
         if (nodeAddr) {
           console.log("--------nodeAddr---------", nodeAddr.toString());
           this.connectedDc.nodeAddr = nodeAddr; // 当前地址

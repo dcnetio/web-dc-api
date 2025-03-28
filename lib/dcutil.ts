@@ -2,43 +2,25 @@ import { ChainUtil } from "./chain";
 import { isName, multiaddr } from "@multiformats/multiaddr";
 import { IDBDatastore } from "datastore-idb";
 import { IDBBlockstore } from "blockstore-idb";
-import {MemoryDatastore} from "datastore-core";
-import {MemoryBlockstore} from "blockstore-core";
 import { keys } from "@libp2p/crypto";
-import { bootstrap } from '@libp2p/bootstrap'
 import { circuitRelayTransport } from "@libp2p/circuit-relay-v2";
 import { webRTC, webRTCDirect } from "@libp2p/webrtc";
-import { webTransport } from "@libp2p/webtransport";
-import { createHelia, HeliaLibp2p, libp2pDefaults } from "helia";
+import { createHelia, HeliaLibp2p } from "helia";
 import { createLibp2p, Libp2p } from "libp2p";
 import { identify, identifyPush } from "@libp2p/identify";
-import { gossipsub } from '@chainsafe/libp2p-gossipsub' 
 
 import { yamux } from "@chainsafe/libp2p-yamux";
 import { noise } from "@chainsafe/libp2p-noise";
 import type { Multiaddr } from "@multiformats/multiaddr";
-import { kadDHT, removePublicAddressesMapper } from "@libp2p/kad-dht";
+import { kadDHT } from "@libp2p/kad-dht";
 import { loadKeyPair, saveKeyPair } from "./util/utils";
 import { Ed25519PrivateKey } from "@libp2p/interface";
-import { webSockets } from "@libp2p/websockets";
-import { createBitswap } from '@helia/bitswap' 
-import { prefixLogger } from '@libp2p/logger' 
 import { ping } from '@libp2p/ping'
-import { Bitswap } from '@helia/bitswap'
 // import {mdns} from '@libp2p/mdns'
 import {autoNAT} from '@libp2p/autonat'
 import { dcutr } from '@libp2p/dcutr'
-import { ipnsSelector } from 'ipns/selector'
-import { ipnsValidator } from 'ipns/validator'
-import { bitswap ,trustlessGateway} from '@helia/block-brokers'
-import { CID } from "multiformats/cid";
-import { ProviderEvent,PeerResponseEvent } from "@libp2p/kad-dht"; 
-import { pushable } from 'it-pushable' 
+import { bitswap} from '@helia/block-brokers'
 
-import { pipe } from 'it-pipe'  
-import { fromString } from 'uint8arrays/from-string'  
-import { peerIdFromString } from "@libp2p/peer-id";
-import { truncate } from "fs";
 
 
 

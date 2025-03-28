@@ -87,11 +87,16 @@ export class AccountManager {
       console.log("accountKey is null");
       return [null, Errors.ErrAccountPrivateSignIsNull];
     }
+    const peerId = peerAddr.getPeerId();
+    if(!peerId) {
+      console.log("peerId is null");
+      return [null, Errors.ErrNoAccountPeerConnected];
+    }
     // 绑定节点
     const blockHeight = await this.chainUtil.getBlockHeight();
     const headerValue = new TextEncoder().encode("add_request_peer_id_to_user");
     const bhValue = uint32ToLittleEndianBytes(blockHeight ? blockHeight : 0);
-    const peerIdValue = new TextEncoder().encode("12D3KooWEGzh4AcbJrfZMfQb63wncBUpscMEEyiMemSWzEnjVCPf");
+    const peerIdValue = new TextEncoder().encode(peerId.toString());
 
     const messageParts = new Uint8Array([
       ...headerValue,
