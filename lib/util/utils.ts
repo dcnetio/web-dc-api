@@ -202,6 +202,31 @@ async function withWebLock(lockName: string,mode: LockMode, callback: () => Prom
       console.log(`Lock "${lockName}" released`);  
   });  
 }  
+// 函数：解析32位无符号整数  
+function parseUint32(str) {  
+  try {  
+    // 尝试解析为数值  
+    const num = parseInt(str, 10);  
+    
+    // 验证解析结果  
+    if (isNaN(num)) {  
+      throw new Error("invalid syntax");  
+    }  
+    
+    if (num < 0) {  
+      throw new Error("invalid syntax for uint");  
+    }  
+    
+    if (num > 0xFFFFFFFF) { // 检查是否超出32位无符号范围  
+      throw new Error("value out of range") ;  
+    }  
+    
+    // 转换为32位无符号整数  
+    return num >>> 0;  
+  } catch (error) {  
+    throw error ;  
+  }  
+}  
 
 
 export {
@@ -221,5 +246,6 @@ export {
   fastExtractPeerId,
   withWebLock,
   saveKeyPair,
-  loadKeyPair
+  loadKeyPair,
+  parseUint32
 };

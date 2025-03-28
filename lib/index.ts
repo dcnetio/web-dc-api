@@ -2,6 +2,8 @@
 
 import { KeyManager } from "./dc-key/keyManager";
 
+import { toString as uint8ArrayToString } from "uint8arrays/to-string";
+import { base32 } from 'multiformats/bases/base32' 
 import { CID } from "multiformats";
 import { unixfs } from "@helia/unixfs";
 
@@ -16,7 +18,7 @@ import {
   sleep,
   uint32ToLittleEndianBytes,
 } from "./util/utils";
-import { Ed25519PrivKey } from "./dc-key/ed25519";
+import { Ed25519PrivKey, Ed25519PubKey } from "./dc-key/ed25519";
 import { decryptContent } from "./util/dccrypt";
 import { ChainUtil } from "./chain";
 import type { SignHandler, DCConnectInfo } from "./types/types";
@@ -31,6 +33,11 @@ import { CommonClient } from "./commonclient";
 import { FileManager } from "./file/filemanager";
 import type { HeliaLibp2p } from "helia";
 import { Libp2p } from "@libp2p/interface";
+import { CommentManager } from "./comment/manager";
+import { cidNeedConnect } from "./util/contant";
+import { dcnet } from "./proto/dcnet_proto";
+import { BrowserLineReader, readLine } from "./util/BrowserLineReader";
+import { bytesToHex } from "@noble/curves/abstract/utils";
 
 const NonceBytes = 12;
 const TagBytes = 16;
@@ -58,14 +65,6 @@ export class DC  implements SignHandler {
     this.dc = new DcUtil(this.dcChain);
   }
 
-
-  getPubkeyRaw() {
-    if (!this.privKey) {
-      throw new Error("Private key is not initialized");
-    }
-    const pubKey = this.privKey.publicKey;
-    return pubKey.raw;
-  }
 
   // 初始化
   init = async () => {
@@ -99,7 +98,7 @@ export class DC  implements SignHandler {
         let nodeAddr = await this.dc?._getNodeAddr(peerId);
         // nodeAddr = multiaddr('/ip4/192.168.31.42/udp/4001/webrtc-direct/certhash/uEiBq5Ki7QE5Nl2IPWTOG52RNutWFaB3rfdIEgKAlVcFtHA/p2p/12D3KooWKfJGey3xUcTQ8bCokBxxudoDm3RAeCfdbuq2e34c7TWB')
         // 获取默认dc节点地址
-        // const nodeAddr = await this.dc?._getDefaultDcNodeAddr();
+        //const nodeAddr = await this.dc?._getDefaultDcNodeAddr();
         if (nodeAddr) {
           console.log("--------nodeAddr---------", nodeAddr.toString());
           this.connectedDc.nodeAddr = nodeAddr; // 当前地址
@@ -133,13 +132,21 @@ export class DC  implements SignHandler {
     return signature;
   }
 
-  publickey(): PublicKey {
+  publickey(): Ed25519PubKey {
     if (!this.privKey) {
       throw new Error("privKey is null");
     }
     return this.privKey.publicKey;
   }
 
+
+  getPubkeyRaw() {
+    if (!this.privKey) {
+      throw new Error("Private key is not initialized");
+    }
+    const pubKey = this.privKey.publicKey;
+    return pubKey.raw;
+  }
 
 
   // 从dc网络获取指定文件
@@ -192,13 +199,16 @@ export class DC  implements SignHandler {
     const res = await themeManager.setCacheKey(value);
     return res;
   };
-  register = async () => {
-    // //生成助记词
-    //  const mnemonic = KeyManager.generateMnemonic();
-    //  //生成私钥
-    // const privKey = KeyManager.getEd25519KeyFromMnemonic(mnemonic);
-    // const pubKey = privKey.publicKey;
-  };
+  // register = async (
+  //   appName: string
+  // ) => {
+  //   if (!this.connectedDc?.client) {
+  //     throw new Error("dcClient is null");
+  //   }
+  //   const commonClient = new CommonClient(this.connectedDc.client);
+  //   const privKey = await commonClient.register(appName);
+  //   this.privKey = privKey;
+  // };
 
   // 登陆
   accountLogin = async (
@@ -288,43 +298,432 @@ export class DC  implements SignHandler {
     return userInfo;
   };
 
+  // todo
   // 获取用户数据列表
 
   // 添加用户评论空间
   addUserOffChainSpace = async () => {
-    if (!this.connectedDc.client) {
-      console.log("dcClient is null");
-      return;
-    }
-    if (!this.connectedDc.nodeAddr) {
-      console.log("nodeAddr is null");
-      return;
-    }
-    if (!this.privKey) {
-      console.log("privKey is null");
-      return;
-    }
-    const blockHeight = (await this.dcChain.getBlockHeight()) || 0;
-    const hValue: Uint8Array = uint32ToLittleEndianBytes(
-      blockHeight ? blockHeight : 0
+    const commentManager = new CommentManager(
+      this.connectedDc,
+      this.dcNodeClient,
+      this.dcChain,
+      this
     );
-    const peerIdValue: Uint8Array = new TextEncoder().encode(
-      this.connectedDc.nodeAddr.getPeerId() || ""
-    );
+    const res = await commentManager.addUserOffChainSpace();
+    console.log("AddUserOffChainSpace res:", res);
+    return res;
+  };
 
-    // 将 hValue 和 peerIdValue 连接起来
-    const preSign = new Uint8Array(peerIdValue.length + hValue.length);
-    preSign.set(peerIdValue, 0);
-    preSign.set(hValue, peerIdValue.length);
-    const signature = this.privKey.sign(preSign);
-    const pubKey = this.privKey.publicKey;
-    this.connectedDc.client.AddUserOffChainSpace(
-      pubKey.string(),
-      blockHeight,
-      signature,
-      this.connectedDc.nodeAddr
+	// Comment_AddThemeObj 为指定对象开通评论功能，
+	//    Theme 要开通评论对象的cid
+  //    openFlag 开放标志 0-开放 1-私密
+	//    commentSpace 评论空间大小
+	//    返回res-0:成功 1:评论空间没有配置 2:评论空间不足 3:评论数据同步中
+  addThemeObj = async (
+    appName: string,
+    theme: string,
+    openFlag:number,
+    commentSpace?: number,
+  ) => {
+    const commentManager = new CommentManager(
+      this.connectedDc,
+      this.dcNodeClient,
+      this.dcChain,
+      this
     );
-    console.log("AddUserOffChainSpace end");
+    const res = await commentManager.addThemeObj(
+      appName,
+      theme,
+      openFlag,
+      commentSpace || 20 * 1024 * 1024, // 20M
+    );
+    console.log("addThemeObj res:", res);
+    return res;
+  };
+
+	// Comment_AddThemeSpace 为开通评论的对象增加评论空间，
+	//    Theme 要开通评论对象的cid
+	//    commentSpace 评论空间大小
+	//    返回 res-0:成功 1:评论空间没有配置 2:评论空间不足 3:评论数据同步中
+  addThemeSpace = async (
+    appName: string,
+    theme: string,
+    addSpace: number,
+  ) => {
+    const commentManager = new CommentManager(
+      this.connectedDc,
+      this.dcNodeClient,
+      this.dcChain,
+      this
+    );
+    const res = await commentManager.addThemeSpace(
+      appName,
+      theme,
+      addSpace,
+    );
+    console.log("addThemeSpace res:", res);
+    return res;
+  };
+
+	// Comment_PublishCommentToTheme 发布对指定对象的评论
+	//    Theme 被评论对象ID
+	//    ThemeAuthor 被发布评论的对象的用户pubkey base32编码,或者pubkey经过libp2p-crypto protobuf编码后再base32编码
+	//    commentType:评论类型 0:普通评论 1:点赞 2:推荐 3:踩
+	//    comment 评论内容
+	//    referCommentkey 被引用的评论
+	//    openFlag 开放标志 0-开放 1-私密 // todo ?这里没有
+	//	  返回评论key,格式为:commentBlockHeight/commentCid
+  publishCommentToTheme = async (
+    appName: string,
+    theme: string,
+    themeAuthor: string,
+    commentType: number,
+    comment: string,
+    refercommentkey?: string,
+  ) => {
+    const commentManager = new CommentManager(
+      this.connectedDc,
+      this.dcNodeClient,
+      this.dcChain,
+      this
+    );
+    const res = await commentManager.publishCommentToTheme(
+      appName,
+      theme,
+      themeAuthor,
+      commentType,
+      comment,
+      refercommentkey || '',
+    );
+    console.log("publishCommentToTheme res:", res);
+    return res;
+  };
+
+  // todo
+  // Comment_DeleteSelfComment 删除已发布的评论
+	//    Theme 被评论对象ID
+	//    objAuthor 被发布评论的对象的用户pubkey base32编码,或者pubkey经过libp2p-crypto protobuf编码后再base32编码
+	//    commentKey 要删除的评论key,格式为:commentBlockHeight/commentCid
+	//    返回是否删除成功
+  deleteSelfComment = async (
+    appName: string,
+    theme: string,
+    themeAuthor: string,
+    commentKey: string,
+  ) => {
+    const commentManager = new CommentManager(
+      this.connectedDc,
+      this.dcNodeClient,
+      this.dcChain,
+      this
+    );
+    const res = await commentManager.deleteSelfComment(
+      appName,
+      theme,
+      themeAuthor,
+      commentKey,
+    );
+    console.log("deleteSelfComment res:", res);
+    return res;
+  };
+
+  _handleThemeObj = async (
+    fileContentString: string,
+  ) => {
+    const reader = new BrowserLineReader(fileContentString);  
+
+    let allContent: Array<{
+      theme: string,
+      appId: string,
+      blockheight: number,
+      commentSpace: number,
+      allowSpace: number,
+      userPubkey: string,
+      openFlag: number,
+      signature: string,
+      CCount: number,
+      UpCount: number,
+      DownCount: number,
+      TCount: number,
+      vaccount: string,
+    }> = [];
+    // readLine 循环
+    while (true) {  
+      const { line, error } = readLine(reader);  
+      if (error && error.message !== 'EOF') {  
+        console.error('读取错误:', error);  
+        break;  
+      } else if (line) {  
+        // 将Uint8Array转回字符串  
+        const decoder = new TextDecoder();  
+        const lineString = decoder.decode(line);
+        console.log('读取的行:', lineString);  
+        if(!lineString) {
+          console.error('结束');  
+          break;  
+        }
+        const fileContentUint8Array = base32.decode(lineString)
+        const content = dcnet.pb.AddThemeObjRequest.decode(fileContentUint8Array)
+        console.log("content:", content);
+        allContent.push({
+          theme: uint8ArrayToString(content.theme),
+          appId: uint8ArrayToString(content.appId),
+          blockheight: content.blockheight,
+          commentSpace: content.commentSpace,
+          allowSpace: content.allowSpace,
+          userPubkey: uint8ArrayToString(content.userPubkey),
+          openFlag: content.openFlag,
+          signature: bytesToHex(content.signature),
+          CCount: content.CCount,
+          UpCount: content.UpCount,
+          DownCount: content.DownCount,
+          TCount: content.TCount,
+          vaccount: uint8ArrayToString(content.vaccount),
+        });
+      }
+    }
+    return allContent;
+  };
+
+  // todo
+	// Comment_GetCommentableObj 获取指定用户已开通评论的对象列表
+	//    objAuthor 被发布评论的对象的用户pubkey base32编码,或者pubkey经过libp2p-crypto protobuf编码后再base32编码
+	//    startBlockheight 开始区块高度
+	//    direction 方向 0:向前 1:向后
+	//    offset 偏移量
+	//    seekKey 起始key
+	//    limit 限制条数
+	//	  返回已开通评论的对象列表,格式：[{"Theme":"YmF...bXk=","appId":"dGVzdGFwcA==","blockheight":2904,"commentSpace":1000,"userPubkey":"YmJh...vZGU=","signature":"oCY1...Y8sO/lkDac/nLu...Rm/xm...CQ=="}]
+  getThemeObj = async (
+    appName: string,
+    themeAuthor: string,
+    startHeight?: number,
+    direction?: number,
+    offset?: number,
+    limit?: number,
+    seekKey?: string,
+  ) => {
+    const commentManager = new CommentManager(
+      this.connectedDc,
+      this.dcNodeClient,
+      this.dcChain,
+      this
+    );
+    const res = await commentManager.getThemeObj(
+      appName,
+      themeAuthor,
+      startHeight || 0,
+      direction || 0,
+      offset || 0,
+      limit || 100,
+      seekKey || '',
+    );
+    console.log("getThemeObj res:", res);
+
+    if(res[0] == null){
+      return ['', null];
+    }
+    const fileManager = new FileManager(
+      this.dc,
+      this.connectedDc,
+      this.dcChain,
+      this.dcNodeClient,
+      this
+    );
+    const cid = Buffer.from(res[0]).toString();
+    const fileContent = await fileManager.getFileFromDc(cid, '', cidNeedConnect.NOT_NEED);
+    if(!fileContent) {
+      return ['', null];
+    }
+    const fileContentString = uint8ArrayToString(fileContent);
+    const allContent = await this._handleThemeObj(fileContentString);
+    console.log("getThemeObj allContent:", allContent);
+    return [allContent, null];
+  };
+  _handleThemeComments = async (
+    fileContentString: string,
+  ) => {
+    const reader = new BrowserLineReader(fileContentString);  
+    let allContent: Array<{
+      theme: string,
+      appId: string,
+      themeAuthor: string,
+      blockheight: number,
+      userPubkey: string,
+      commentCid: string,
+      comment: string,
+      commentSize: number,
+      status: number,
+      refercommentkey: string,
+      CCount: number,
+      UpCount: number,
+      DownCount: number,
+      TCount: number,
+      type: number,
+      signature: string,
+      vaccount: string,
+    }> = [];
+    if (!this.privKey) {
+      return;
+    }
+    // readLine 循环
+    while (true) {  
+      const { line, error } = readLine(reader);  
+      if (error && error.message !== 'EOF') {  
+        console.error('读取错误:', error);  
+        break;  
+      } else if (line) {  
+        // 将Uint8Array转回字符串  
+        const decoder = new TextDecoder();  
+        const lineString = decoder.decode(line);
+        console.log('读取的行:', lineString);  
+        if(!lineString) {
+          console.error('结束');  
+          break;  
+        }
+        const lineContent = base32.decode(lineString)
+        const plainContent = await this.privKey.decrypt(lineContent)
+        const content = dcnet.pb.PublishCommentToThemeRequest.decode(plainContent)
+        console.log("content:", content);
+
+        allContent.push({
+          theme: uint8ArrayToString(content.theme),
+          appId: uint8ArrayToString(content.appId),
+          themeAuthor: uint8ArrayToString(content.themeAuthor),
+          blockheight: content.blockheight,
+          userPubkey: uint8ArrayToString(content.userPubkey),
+          commentCid: uint8ArrayToString(content.commentCid),
+          comment: uint8ArrayToString(content.comment),
+          commentSize: content.commentSize,
+          status: content.status,
+          refercommentkey: uint8ArrayToString(content.refercommentkey),
+          CCount: content.CCount,
+          UpCount: content.UpCount,
+          DownCount: content.DownCount,
+          TCount: content.TCount,
+          type: content.type,
+          signature: bytesToHex(content.signature),
+          vaccount: bytesToHex(content.vaccount),
+        });
+      }
+    }
+    return allContent;
+  };
+
+
+  // todo	
+  // Comment_GetThemeComments 获取指定已开通对象的评论列表，私密评论只有评论者和被评论者可见
+	//    Theme 被评论对象ID
+	//    objAuthor 被发布评论的对象的用户pubkey base32编码,或者pubkey经过libp2p-crypto protobuf编码后再base32编码
+	//    startBlockheight 开始区块高度
+	//    direction 方向 0:向前 1:向后
+	//    offset 偏移量
+	//    seekKey 起始key
+	//    limit 限制条数
+	//    返回对象下的评论列表，格式[{"Theme":"bafk...6q","AppId":"testapp","ThemeAuthor":"bba...6u","Blockheight":3116,"UserPubkey":"bba...y6u","CommentCid":"ba...aygu","Comment":"hello worldd","CommentSize":11,"Status":0,"Signature":"blo...cwpada","Refercommentkey":"","CCount":0,"UpCount":0,"DownCount":0,"TCount":0}]
+  getThemeComments = async (
+    appName: string,
+    theme: string,
+    themeAuthor: string,
+    startHeight?: number,
+    direction?: number,
+    offset?: number,
+    limit?: number,
+    seekKey?: string,
+  ) => {
+    const commentManager = new CommentManager(
+      this.connectedDc,
+      this.dcNodeClient,
+      this.dcChain,
+      this
+    );
+    const res = await commentManager.getThemeComments(
+      appName,
+      theme,
+      themeAuthor,
+      startHeight || 0,
+      direction || 0,
+      offset || 0,
+      limit || 100,
+      seekKey || '',
+    );
+    console.log("getThemeComments res:", res);
+    if(res[0] == null){
+      return ['', null];
+    }
+    const fileManager = new FileManager(
+      this.dc,
+      this.connectedDc,
+      this.dcChain,
+      this.dcNodeClient,
+      this
+    );
+    const cid = Buffer.from(res[0]).toString();
+    const fileContent = await fileManager.getFileFromDc(cid, '', cidNeedConnect.NOT_NEED);
+    console.log("getThemeComments fileContent:", fileContent);
+    if(!fileContent) {
+      return ['', null];
+    }
+    const fileContentString = uint8ArrayToString(fileContent);
+    const allContent = await this._handleThemeComments(fileContentString);
+    console.log("getThemeComments allContent:", allContent);
+    return [allContent, null];
+  };
+
+  //todo
+	// Comment_GetUserComments 获取指定用户发布过的评论，私密评论只有评论者和被评论者可见
+	//    userPubkey 用户pubkey base32编码,或者pubkey经过libp2p-crypto protobuf编码后再base32编码或者账号的16进制编码(0x开头)
+	//    startBlockheight 开始区块高度
+	//    direction 方向 0:向前 1:向后
+	//    offset 偏移量
+	//    seekKey 起始key
+	//    limit 限制条数
+	//    返回用户评论列表，格式：[{"Theme":"bafk...fpy","AppId":"testapp","ThemeAuthor":"bbaa...jkhmm","Blockheight":3209,"UserPubkey":"bba...2hzm","CommentCid":"baf...2aygu","Comment":"hello world","CommentSize":11,"Status":0,"Signature":"bkqy...b6dkda","Refercommentkey":"","CCount":0,"UpCount":0,"DownCount":0,"TCount":0}]
+	getUserComments = async (
+    appName: string,
+    userPubkey: string,
+    startHeight?: number,
+    direction?: number,
+    offset?: number,
+    limit?: number,
+    seekKey?: string,
+  ) => {
+    const commentManager = new CommentManager(
+      this.connectedDc,
+      this.dcNodeClient,
+      this.dcChain,
+      this
+    );
+    const res = await commentManager.getUserComments(
+      appName,
+      userPubkey,
+      startHeight || 0,
+      direction || 0,
+      offset || 0,
+      limit || 100,
+      seekKey || '',
+    );
+    console.log("getUserComments res:", res);
+    if(res[0] == null){
+      return ['', null];
+    }
+    const fileManager = new FileManager(
+      this.dc,
+      this.connectedDc,
+      this.dcChain,
+      this.dcNodeClient,
+      this
+    );
+    const cid = Buffer.from(res[0]).toString();
+    const fileContent = await fileManager.getFileFromDc(cid, '', cidNeedConnect.NOT_NEED);
+    console.log("getUserComments fileContent:", fileContent);
+    if(!fileContent) {
+      return ['', null];
+    }
+    const fileContentString = uint8ArrayToString(fileContent);
+    const allContent = await this._handleThemeComments(fileContentString);
+    console.log("getUserComments allContent:", allContent);
+    return [allContent, null];
   };
 
   /**
@@ -506,3 +905,4 @@ export class DC  implements SignHandler {
     return res;
   }
 }
+

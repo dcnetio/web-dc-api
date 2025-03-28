@@ -1,11 +1,9 @@
-import type { Multiaddr } from '@multiformats/multiaddr'
 import type { SignHandler, DCConnectInfo } from '../types/types'
 import { FileClient } from './client'
 import type { HeliaLibp2p } from 'helia'
 import { ChainUtil } from '../chain'
-import { fixedSize }  from 'ipfs-unixfs-importer/chunker'
+import { cidNeedConnect } from "../util/contant";
 import  { cidfetch } from "../proto/cidfetch_proto";
-//import {StreamWriter } from 'grpc-libp2p-client/dc-http2/stream'
 import {StreamWriter } from './streamwriter'
 
 import {
@@ -20,7 +18,6 @@ import {
   concatenateUint8Arrays,
 } from '../util/utils'
 
-import {pubsubPeerDiscovery} from "@libp2p/pubsub-peer-discovery";
 import { UnixFS, unixfs } from '@helia/unixfs'
 import { SymmetricKey } from '../threaddb/key'
 import { CID } from 'multiformats/cid'
@@ -28,9 +25,7 @@ import { DcUtil } from '../dcutil'
 import toBuffer from "it-to-buffer";
 import { decryptContent } from '../util/dccrypt'
 import * as buffer from "buffer/";
-import { map } from 'streaming-iterables'
 import { Uint8ArrayList } from 'uint8arraylist'; 
-import { Init } from '@polkadot/api/base/Init'
 import { Stream } from '@libp2p/interface'
 const { Buffer } = buffer;
 
@@ -254,7 +249,7 @@ export class FileManager {
       while (!resFlag) {
         await sleep(100)
       }
-      if (resStatus !== 3) {//不是上传中，不需要操作
+      if (resStatus !== 2) {//不是上传中，不需要操作
         return [null, Errors.ErrNoNeedUpload]
       }
      
@@ -408,12 +403,15 @@ export class FileManager {
 
 
   // 从dc网络获取指定文件
-  getFileFromDc = async (cid: string, decryptKey: string) => {
+  // flag 是否需要连接节点，0-获取，1-不获取
+  getFileFromDc = async (cid: string, decryptKey: string, flag?: number) => {
     console.log("first 11111");
-    const res = await this.dc?._connectToObjNodes(cid);
-    if (!res) {
-      console.log("return nulllllllll");
-      return null;
+    if(flag !== cidNeedConnect.NOT_NEED){
+      const res = await this.dc?._connectToObjNodes(cid);
+      if (!res) {
+        console.log("return nulllllllll");
+        return null;
+      }
     }
     console.log("first 2");
     const fs = unixfs(this.dcNodeClient);
