@@ -98,7 +98,7 @@ export class DC  implements SignHandler {
         // let nodeAddr = await this.dc?._getNodeAddr(peerId);
         // nodeAddr = multiaddr('/ip4/192.168.31.42/udp/4001/webrtc-direct/certhash/uEiBq5Ki7QE5Nl2IPWTOG52RNutWFaB3rfdIEgKAlVcFtHA/p2p/12D3KooWKfJGey3xUcTQ8bCokBxxudoDm3RAeCfdbuq2e34c7TWB')
         // 获取默认dc节点地址
-        const nodeAddr = await this.dc?._getDefaultDcNodeAddr();
+        const nodeAddr = await this.dc?.getDefaultDcNodeAddr();
         if (nodeAddr) {
           console.log("--------nodeAddr---------", nodeAddr.toString());
           this.connectedDc.nodeAddr = nodeAddr; // 当前地址
@@ -110,11 +110,11 @@ export class DC  implements SignHandler {
           await sleep(5000);
          
         }
-        console.log("--------dial success begin---------");
-        this.dcNodeClient.libp2p.getMultiaddrs().forEach((addr) => {
-          console.log("--------addr---------", addr.toString());
-        });
-        console.log("--------dial success end---------");
+        // console.log("--------dial success begin---------");
+        // this.dcNodeClient.libp2p.getMultiaddrs().forEach((addr) => {
+        //   console.log("--------addr---------", addr.toString());
+        // });
+        // console.log("--------dial success end---------");
     
         // 定时维系token
         // this.startDcPeerTokenKeepValidTask();
