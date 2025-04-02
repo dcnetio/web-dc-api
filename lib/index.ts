@@ -38,10 +38,11 @@ import { cidNeedConnect } from "./util/contant";
 import { dcnet } from "./proto/dcnet_proto";
 import { BrowserLineReader, readLine } from "./util/BrowserLineReader";
 import { bytesToHex } from "@noble/curves/abstract/utils";
+import {dc_protocol} from "./define";
 
 const NonceBytes = 12;
 const TagBytes = 16;
-const protocol = "/dc/thread/0.0.1";
+
 const { Buffer } = buffer;
 export class DC  implements SignHandler {
   blockChainAddr: string;
@@ -759,7 +760,7 @@ export class DC  implements SignHandler {
     if (!this.connectedDc.nodeAddr) {
       return;
     }
-    const dcClient = new Client(this.dcNodeClient.libp2p, nodeAddr, protocol);
+    const dcClient = new Client(this.dcNodeClient.libp2p, nodeAddr, dc_protocol);
     return dcClient;
   };
   async _getTokenWithDCConnectInfo(connectInfo: DCConnectInfo) {
