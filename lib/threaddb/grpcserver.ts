@@ -1,10 +1,23 @@
 import { Libp2p } from "@libp2p/interface";
+import { CID } from 'multiformats/cid';
+import {multiaddr} from '@multiformats/multiaddr'
 import { Uint8ArrayList } from 'uint8arraylist'; 
 import {StreamWriter } from 'grpc-libp2p-client/dc-http2/stream'
 import { Http2Frame } from 'grpc-libp2p-client/dc-http2/frame';
  import  * as net_pb from './pb/net_pb'
  import { HTTP2Parser } from "grpc-libp2p-client/dc-http2/parser";
 import { HPACK } from "grpc-libp2p-client/dc-http2/hpack";
+import { keys } from "@libp2p/crypto";
+import {   
+    PeerIDConverter,  
+    MultiaddrConverter,  
+    CidConverter,  
+    ThreadIDConverter,  
+    KeyConverter,  
+    ProtoKeyConverter,
+    json,  
+    ProtoPeerID
+  } from './pb/proto-custom-types' 
 export class DCGrpcServer {
     constructor(private libp2p: Libp2p, private protocol: string) {}
   
@@ -19,12 +32,18 @@ export class DCGrpcServer {
             this.protocol,
             stream.id
           );
+          //生成number的streamId
+          
+        
+          let method = "";
           const writer =  new StreamWriter(stream.sink) 
           const http2Parser = new HTTP2Parser(writer)
           http2Parser.onData = async (payload, frameHeader) => {
             const requestData = payload.subarray(5) // 去除帧头部分
-            const req = net_pb.net.pb.GetLogsRequest.decode(requestData)
-            console.log(req)
+            if (method === "/net.pb.Service/GetLogs") {
+                this.getLogs(frameHeader.streamId,requestData,writer)
+            }
+            
           };
             http2Parser.onSettings = async () => {
                 console.log('Settings received')
@@ -34,13 +53,7 @@ export class DCGrpcServer {
             http2Parser.onHeaders = (headers,header) => {
                 const plainHeaders = hpack.decodeHeaderFields(headers)
                 console.log('Received headers:', plainHeaders);
-                if (plainHeaders.get('grpc-status') === '0') {
-                    console.log('gRPC call success')
-                } else if (plainHeaders.get('grpc-status') !== undefined) {
-                    exitFlag = true
-                    errMsg = plainHeaders.get('grpc-message') || 'gRPC call failed'
-                    console.log('gRPC call failed:', errMsg)
-                }
+                method = plainHeaders.get(':path')
             }
 
           http2Parser.processStream(stream)
@@ -66,46 +79,72 @@ export class DCGrpcServer {
         };
       }
       
-      /**
-       * 处理完整的 gRPC 请求
-       */
-      private async processGrpcRequest(
-        method: string,
-        headers: Record<string, string>,
-        body: Uint8Array,
-        writer: StreamWriter
-      ) {
-        if (method === "GetLogs") {
-          const response = await this.getLogs(body);
-          await this.sendGrpcResponse(response, writer);
-        } else {
-          throw new Error(`Unknown gRPC method: ${method}`);
-        }
-      }
   
-    private async getLogs(request: any): Promise<any> {
+    private async getLogs(streamId: number,request: any,writer: StreamWriter): Promise<any> {
+        console.log('Received GetLogs request')
         const req = net_pb.net.pb.GetLogsRequest.decode(request)
-        console.log(req)
+        if (req.body?.threadID) {
+            const threadId = ThreadIDConverter.fromBytes(req.body?.threadID)
+            console.log('Thread ID:', threadId.toString())
+        }
+        if (req.body?.serviceKey) {
+            const serviceKey = ProtoKeyConverter.fromBytes(req.body?.serviceKey)
+            console.log('Service Key:', serviceKey.toString())
+        }
        const response = new net_pb.net.pb.GetLogsReply()
+       const keyPair = await keys.generateKeyPair("Ed25519");
+        
+           // 获取公钥
+        const publicKey = keyPair.publicKey;
+        const pid = this.libp2p.peerId.toString()
+      // const headBytes  = new TextEncoder().encode("bafybeiai3u5rmdsbmqklo7icdn3x5suoyepu2mqms3vgj4rvnkuyjnivmy")
+        const head = CID.parse("bafybeiai3u5rmdsbmqklo7icdn3x5suoyepu2mqms3vgj4rvnkuyjnivmy")
+        const addr = MultiaddrConverter.toBytes(multiaddr('/ip4/10.0.0.1/tcp/4001/p2p/'+pid))
+        let pubkeyBytes = await KeyConverter.publicToBytes(publicKey)
+        const addrs: Uint8Array[] = []
+        addrs.push(addr)
+       
        const log = new net_pb.net.pb.Log({
         /** Log ID */
-        ID: new Uint8Array(),
+        ID: PeerIDConverter.toBytes(pid as ProtoPeerID),
 
         /** Log pubKey */
-        pubKey:new Uint8Array(),
+        pubKey: pubkeyBytes,
 
         /** Log addrs */
-        addrs: null,
+        addrs: addrs,
 
         /** Log head */
-        head: new Uint8Array(),
+        head: CidConverter.toBytes(head),
 
         /** Log counter */
         counter: 0,
     })
+    
     response.logs.push(log)
-    const bytes =  net_pb.net.pb.GetLogsReply.encode(response).finish()
-      return bytes
+    const headlist = { 
+        ':status': '200',
+        'content-type': 'application/grpc',
+        'grpc-status': '0', // 表示成功
+    }
+    // 设置响应头部
+    const headerResponseFrame = Http2Frame.createResponseHeadersFrame(streamId, headlist,true)
+    writer.write(headerResponseFrame)
+     // 创建数据帧
+     const bytes =  net_pb.net.pb.GetLogsReply.encode(response).finish()
+     const dataFrame = Http2Frame.createDataFrame( streamId,bytes, false)
+     writer.write(dataFrame)
+     //发送tailer
+     const trailers = {
+        ':status': '200',
+        'content-type': 'application/grpc',
+        'grpc-status': '0', // 表示成功
+        'grpc-message': 'Operation completed successfully'
+    };
+    const trailersFrame = Http2Frame.createTrailersFrame(streamId, trailers);
+    console.log('Trailers Frame:', trailersFrame);
+    writer.write(trailersFrame)
+      return 
     }
   
     private async sendGrpcResponse(response: any, writer: StreamWriter) {
