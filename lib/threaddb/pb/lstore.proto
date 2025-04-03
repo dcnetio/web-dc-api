@@ -1,19 +1,20 @@
 syntax = "proto3";
+package net.pb;
 
 // AddrBookRecord represents a record for a log in the address book.
 message AddrBookRecord {
     // Thread ID.
-    bytes threadID = 1;
+    bytes threadID = 1; // TS类型: ProtoThreadID
 
 	// The peer ID.
-    bytes peerID = 2 ;
+    bytes peerID = 2; // TS类型: ProtoPeerID
 
 	// The multiaddresses. This is a sorted list where element 0 expires the soonest.
 	repeated AddrEntry addrs = 3;
 
 	// AddrEntry represents a single multiaddress.
 	message AddrEntry {
-		bytes addr = 1 ;
+		bytes addr = 1 ;  // TS类型: ProtoAddr
 
 		// The point in time when this address expires.
 		int64 expiry = 2;
@@ -30,7 +31,7 @@ message HeadBookRecord {
 
 	// HeadEntry represents a single cid.
 	message HeadEntry {
-		bytes cid = 1 ;
+		bytes cid = 1 ; // TS类型: ProtoCid
 
 		int64 counter = 2;
 	}

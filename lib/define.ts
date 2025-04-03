@@ -1,0 +1,1 @@
+export const dc_protocol = "/dc/thread/0.0.1";

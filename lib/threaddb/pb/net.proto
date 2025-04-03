@@ -1,0 +1,194 @@
+syntax = "proto3";
+package net.pb;
+
+
+
+
+// Log represents a thread log.
+message Log {
+    // ID of the log.
+    bytes ID = 1;  // TS类型: ProtoPeerID  
+    // pubKey of the log.
+    bytes pubKey = 2;  // TS类型: ProtoPubKey
+    // addrs of the log.
+    repeated bytes addrs = 3;  // TS类型: ProtoAddr
+    // head of the log.
+    bytes head = 4 ; // TS类型: ProtoCid
+    // position of the log
+    int64 counter = 5; // TS类型: BigInt
+
+    // Record is a thread record containing link data.
+    message Record {
+        // recordNode is the top-level node's raw data.
+        bytes recordNode = 1;
+        // eventNode is the event node's raw data.
+        bytes eventNode = 2;
+        // headerNode is the header node's raw data.
+        bytes headerNode = 3;
+        // bodyNode is the body node's raw data.
+        bytes bodyNode = 4;
+    }
+}
+
+// GetLogsRequest is used to request thread logs.
+message GetLogsRequest {
+    // this was the message header.
+    reserved 1;
+    // body is the message body.
+    Body body = 2;
+
+    message Body {
+        // threadID is the target thread's ID.
+        bytes threadID = 1; // TS类型: ProtoThreadID
+        // serviceKey for the thread.
+        bytes serviceKey = 2 ;// TS类型: ProtoKey
+    }
+}
+
+// GetLogsReply is the response from a GetLogsRequest.
+message GetLogsReply {
+    // logs are the result of the request.
+    repeated Log logs = 1;
+}
+
+// PushLogRequest is used to push a thread log to a peer.
+message PushLogRequest {
+    // this was the message header.
+    reserved 1;
+    // body is the message body.
+    Body body = 2;
+
+    message Body {
+        // threadID is the target thread's ID.
+        bytes threadID = 1; // TS类型: ProtoThreadID
+        // serviceKey for the thread.
+        bytes serviceKey = 2 ;// TS类型: ProtoKey
+        // readKey for the thread.
+        bytes readKey = 3 ;// TS类型: ProtoKey
+        // log is the actual log payload.
+        Log log = 4;
+    }
+}
+
+// PushLogReply is the response from a PushLogRequest.
+message PushLogReply {}
+
+// GetRecordsRequest is used to request records from a log address.
+message GetRecordsRequest {
+    // this was the message header.
+    reserved 1;
+    // body is the message body.
+    Body body = 2;
+
+    message Body {
+        // threadID is the target thread's ID.
+        bytes threadID = 1 ; // TS类型: ProtoThreadID
+        // serviceKey for the thread.
+        bytes serviceKey = 2 ;// TS类型: ProtoKey
+        // List of requested logs.
+        repeated LogEntry logs = 3;
+
+        // LogEntry represents a single log.
+        message LogEntry {
+            // logID of this entry.
+            bytes logID = 1 ;  // TS类型: ProtoPeerID  
+            // offset tells the recipient at which point to consider records new for the reply.
+            bytes offset = 2 ; // TS类型: ProtoCid
+            // limit indicates the max number of records to return.
+            int32 limit = 3;
+            // counter indicates the position of record
+            int64 counter = 4;
+        }
+    }
+}
+
+// GetRecordsReply contains records requested with a GetRecordsRequest.
+message GetRecordsReply {
+    // records are the result of the request.
+    repeated LogEntry logs = 1;
+
+    // LogEntry represents a single log.
+    message LogEntry {
+        // logID of this entry.
+        bytes logID = 1 ;  // TS类型: ProtoPeerID  
+        // records returned for this entry.
+        repeated Log.Record records = 2;
+        // log contains new log info that was missing from the request.
+        Log log = 3;
+    }
+}
+
+// PushRecordRequest is used to push a log record to a peer.
+message PushRecordRequest {
+    // this was the message header.
+    reserved 1;
+    // body is the message body.
+    Body body = 2;
+    // position of the record
+    int64 counter = 3;
+
+    message Body {
+        // threadID is the target thread's ID.
+        bytes threadID = 1 ; // TS类型: ProtoThreadID
+        // logID is the target log's ID.
+        bytes logID = 2 ;  // TS类型: ProtoPeerID  
+        // record is the actual record payload.
+        Log.Record record = 3;
+    }
+}
+
+// PushRecordReply is the response from a PushRecordRequest.
+message PushRecordReply {}
+
+// ExchangeEdgesRequest is used to exchange address/heads edges with a peer.
+message ExchangeEdgesRequest {
+    // this was the message header.
+    reserved 1;
+    // body is the message body.
+    Body body = 2;
+
+    message Body {
+        // threads is a list of requested thread IDs with its local edges.
+        repeated ThreadEntry threads = 1;
+
+        message ThreadEntry {
+            // threadID is the target thread's ID.
+            bytes threadID = 1 ; // TS类型: ProtoThreadID
+            // addressEdge is the current hash of peers addresses stored on a requester.
+            uint64 addressEdge = 2;
+            // headsEdge is the current hash of the log's heads stored on a requester.
+            uint64 headsEdge = 3;
+        }
+    }
+}
+
+// ExchangeEdgesReply contains edges requested with an ExchangeEdgesRequest.
+message ExchangeEdgesReply {
+    // edges contains edge information about requested threads.
+    repeated ThreadEdges edges = 1;
+
+    message ThreadEdges {
+        // threadID is the requested thread's ID.
+        bytes threadID = 1 ; // TS类型: ProtoThreadID
+        // deprecated, use default values for addressEdge and headsEdge
+        bool exists = 2;
+        // addressEdge is the current hash of peers addresses stored on a respondent.
+        uint64 addressEdge = 3;
+        // headsEdge is the current hash of the log's heads stored on a respondent.
+        uint64 headsEdge = 4;
+    }
+}
+
+// Service is the peer-to-peer network API for thread orchestration.
+service Service {
+    // GetLogs from a peer.
+    rpc GetLogs(GetLogsRequest) returns (GetLogsReply) {}
+    // PushLog to a peer.
+    rpc PushLog(PushLogRequest) returns (PushLogReply) {}
+    // GetRecords from a peer.
+    rpc GetRecords(GetRecordsRequest) returns (GetRecordsReply) {}
+    // PushRecord to a peer.
+    rpc PushRecord(PushRecordRequest) returns (PushRecordReply) {}
+    // ExchangeEdges with a peer.
+    rpc ExchangeEdges(ExchangeEdgesRequest) returns (ExchangeEdgesReply) {}
+}
