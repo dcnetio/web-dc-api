@@ -1,102 +1,111 @@
 import { Libp2p } from "@libp2p/interface";
 import { Uint8ArrayList } from 'uint8arraylist'; 
-import {StreamWriter } from '../file/streamwriter'
-
+import {StreamWriter } from 'grpc-libp2p-client/dc-http2/stream'
+import { Http2Frame } from 'grpc-libp2p-client/dc-http2/frame';
+ import  * as net_pb from './pb/net_pb'
+ import { HTTP2Parser } from "grpc-libp2p-client/dc-http2/parser";
+import { HPACK } from "grpc-libp2p-client/dc-http2/hpack";
 export class DCGrpcServer {
     constructor(private libp2p: Libp2p, private protocol: string) {}
   
     start() {
       this.libp2p.handle(this.protocol, async ({ stream }) => {
         try {
+             let exitFlag = false
+        let errMsg = ''
+            const hpack = new HPACK()
           console.log(
             "Received a request on %s protocol, streamId: %s",
             this.protocol,
             stream.id
           );
           const writer =  new StreamWriter(stream.sink) 
-  
-          let state = "PREFACE"; // 初始状态为等待 PREFACE 帧
-          let requestBuffer = new Uint8Array(0); // 用于存储接收到的数据
-  
-          for await (const chunk of stream.source) {
-            const data =
-              chunk instanceof Uint8ArrayList ? chunk.subarray() : chunk;
-  
-            // 将新接收到的数据追加到 requestBuffer
-            requestBuffer = this.concatUint8Arrays([requestBuffer, data]);
-  
-            while (requestBuffer.length > 0) {
-              // 检测 SETTINGS ACK 帧，无论当前状态为何
-              if (requestBuffer.length >= 9 && this.isHttp2SettingsAckFrame(requestBuffer)) {
-                console.log("Received HTTP/2 SETTINGS ACK frame");
-                requestBuffer = requestBuffer.slice(9); // 移除已处理的 SETTINGS ACK 帧
-                continue;
-              }
-  
-              if (state === "PREFACE" && requestBuffer.length >= 24) {
-                if (this.isHttp2Preface(requestBuffer)) {
-                  console.log("Received HTTP/2 PREFACE frame");
-                  await this.sendHttp2Settings(writer);
-                  state = "SETTINGS"; // 切换到等待 SETTINGS 帧的状态
-                  requestBuffer = requestBuffer.slice(24); // 移除已处理的 PREFACE 帧
-                  continue;
-                } else {
-                  throw new Error("Invalid HTTP/2 PREFACE frame");
+          const http2Parser = new HTTP2Parser(writer)
+          http2Parser.onData = async (payload, frameHeader) => {
+            const requestData = payload.subarray(5) // 去除帧头部分
+            const req = net_pb.net.pb.GetLogsRequest.decode(requestData)
+            console.log(req)
+          };
+            http2Parser.onSettings = async () => {
+                console.log('Settings received')
+                const ackSettingFrame = Http2Frame.createSettingsAckFrame()
+                writer.write(ackSettingFrame)
+            };
+            http2Parser.onHeaders = (headers,header) => {
+                const plainHeaders = hpack.decodeHeaderFields(headers)
+                console.log('Received headers:', plainHeaders);
+                if (plainHeaders.get('grpc-status') === '0') {
+                    console.log('gRPC call success')
+                } else if (plainHeaders.get('grpc-status') !== undefined) {
+                    exitFlag = true
+                    errMsg = plainHeaders.get('grpc-message') || 'gRPC call failed'
+                    console.log('gRPC call failed:', errMsg)
                 }
-              }
-  
-              if (state === "SETTINGS" && requestBuffer.length >= 9) {
-                if (this.isHttp2SettingsFrame(requestBuffer)) {
-                  console.log("Received HTTP/2 SETTINGS frame");
-                  await this.sendHttp2SettingsAck(writer);
-                  state = "READY"; // 切换到准备处理 gRPC 请求的状态
-                  requestBuffer = requestBuffer.slice(9); // 移除已处理的 SETTINGS 帧
-                  continue;
-                } else {
-                  throw new Error("Invalid HTTP/2 SETTINGS frame");
-                }
-              }
-  
-              if (state === "READY") {
-                // 假设 gRPC 请求的最小长度为 5 字节（根据实际协议调整）
-                if (requestBuffer.length >= 5) {
-                  await this.handleGrpcRequest(requestBuffer, writer);
-                  requestBuffer = new Uint8Array(0); // 假设整个请求已处理完
-                }
-              }
-  
-              break; // 如果没有匹配的帧类型，退出循环等待更多数据
             }
-          }
+
+          http2Parser.processStream(stream)
         } catch (err) {
           console.error("Error handling request:", err);
         }
       });
     }
   
-    private async handleGrpcRequest(requestBuffer: Uint8Array,writer: StreamWriter) {
-      try {
-        const { method, headers, body } = this.parseGrpcRequest(requestBuffer);
-  
+    _parseFrameHeader(buffer: Uint8Array) {
+        const length = (buffer[0] << 16) | (buffer[1] << 8) | buffer[2];
+        const type = buffer[3];
+        const flags = buffer[4];
+        const streamId =
+          (buffer[5] << 24) | (buffer[6] << 16) | (buffer[7] << 8) | buffer[8];
+    
+        return {
+          length,
+          type,
+          flags,
+          streamId,
+          payload: buffer.slice(0, 9),
+        };
+      }
+      
+      /**
+       * 处理完整的 gRPC 请求
+       */
+      private async processGrpcRequest(
+        method: string,
+        headers: Record<string, string>,
+        body: Uint8Array,
+        writer: StreamWriter
+      ) {
         if (method === "GetLogs") {
           const response = await this.getLogs(body);
           await this.sendGrpcResponse(response, writer);
         } else {
           throw new Error(`Unknown gRPC method: ${method}`);
         }
-      } catch (err) {
-        console.error("Error parsing gRPC request:", err);
-        await this.sendGrpcError(err, writer);
       }
-    }
   
     private async getLogs(request: any): Promise<any> {
-      return {
-        logs: [
-          { id: "1", message: "Log 1" },
-          { id: "2", message: "Log 2" },
-        ],
-      };
+        const req = net_pb.net.pb.GetLogsRequest.decode(request)
+        console.log(req)
+       const response = new net_pb.net.pb.GetLogsReply()
+       const log = new net_pb.net.pb.Log({
+        /** Log ID */
+        ID: new Uint8Array(),
+
+        /** Log pubKey */
+        pubKey:new Uint8Array(),
+
+        /** Log addrs */
+        addrs: null,
+
+        /** Log head */
+        head: new Uint8Array(),
+
+        /** Log counter */
+        counter: 0,
+    })
+    response.logs.push(log)
+    const bytes =  net_pb.net.pb.GetLogsReply.encode(response).finish()
+      return bytes
     }
   
     private async sendGrpcResponse(response: any, writer: StreamWriter) {
@@ -112,12 +121,81 @@ export class DCGrpcServer {
     }
   
     private parseGrpcRequest(buffer: Uint8Array) {
-      const decoder = new TextDecoder();
-      const headers = {}; // 模拟解析 HTTP/2 头部
-      const body = decoder.decode(buffer.slice(5)); // 假设前 5 个字节是头部
-      const method = "GetLogs"; // 模拟解析方法名
-      return { method, headers, body };
-    }
+        const decoder = new TextDecoder();
+      
+        // HTTP/2 帧头部解析
+        if (buffer.length < 9) {
+          throw new Error("Incomplete HTTP/2 frame");
+        }
+      
+        const length = (buffer[0] << 16) | (buffer[1] << 8) | buffer[2]; // 帧长度
+        const type = buffer[3]; // 帧类型
+        const flags = buffer[4]; // 帧标志
+        const streamId = (buffer[5] << 24) | (buffer[6] << 16) | (buffer[7] << 8) | buffer[8]; // 流 ID
+      
+        if (buffer.length < 9 + length) {
+          throw new Error("Incomplete HTTP/2 frame payload");
+        }
+      
+        const payload = buffer.slice(9, 9 + length); // 提取帧的有效载荷
+      
+        // 检查帧类型是否为 HEADERS 或 DATA（根据 HTTP/2 协议）
+        if (type !== 0x01 && type !== 0x00) {
+          throw new Error(`Unsupported HTTP/2 frame type: ${type}`);
+        }
+      
+        // 解析 HTTP/2 头部
+        const headers = this.parseHttp2Headers(payload);
+      
+        // 提取 gRPC 方法名
+        const method = headers[":path"] || "UnknownMethod";
+      
+        // 提取 gRPC 请求体
+        const headerLength = this.calculateHeaderLength(headers); // 计算头部长度
+        const body = payload.slice(headerLength); // 提取请求体
+      
+        return { method, headers, body };
+      }
+      
+      /**
+       * 计算 HTTP/2 头部的长度
+       * @param headers HTTP/2 头部对象
+       * @returns 头部长度
+       */
+      private calculateHeaderLength(headers: Record<string, string>): number {
+        // 模拟计算头部长度（实际需要根据 HPACK 解码的结果计算）
+        let length = 0;
+        for (const key in headers) {
+          length += key.length + headers[key].length + 2; // 假设每个键值对有 2 字节的长度字段
+        }
+        return length;
+      }
+      
+      /**
+       * 模拟解析 HTTP/2 头部
+       * @param payload HTTP/2 帧的有效载荷
+       * @returns 解析后的头部对象
+       */
+      private parseHttp2Headers(payload: Uint8Array): Record<string, string> {
+        const decoder = new TextDecoder();
+        const headers: Record<string, string> = {};
+      
+        // 假设头部是简单的键值对（实际需要根据 HPACK 解码）
+        let offset = 0;
+        while (offset < payload.length) {
+          const keyLength = payload[offset++];
+          const key = decoder.decode(payload.slice(offset, offset + keyLength));
+          offset += keyLength;
+      
+          const valueLength = payload[offset++];
+          const value = decoder.decode(payload.slice(offset, offset + valueLength));
+          offset += valueLength;
+      
+          headers[key] = value;
+        }
+      
+        return headers;
+      }
   
     private concatUint8Arrays(arrays: Uint8Array[]): Uint8Array {
       const totalLength = arrays.reduce((sum, arr) => sum + arr.length, 0);

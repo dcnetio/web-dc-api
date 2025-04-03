@@ -20,6 +20,8 @@ import { ping } from '@libp2p/ping'
 import {autoNAT} from '@libp2p/autonat'
 import { dcutr } from '@libp2p/dcutr'
 import { bitswap} from '@helia/block-brokers'
+import {DCGrpcServer} from "./threaddb/grpcserver";
+import { dc_protocol } from "./define";
 
 
 
@@ -220,7 +222,8 @@ export class DcUtil {
     console.log('libp2p 服务列表:', Object.keys(libp2p.services))  
     console.log('libp2p 已连接节点列表:', Object.keys(libp2p.getPeers()))
   
-  
+    const grpcServer = new DCGrpcServer(libp2p,dc_protocol)
+    grpcServer.start()
     const dcNodeClient = await createHelia({
       blockBrokers: [  
         bitswap({  

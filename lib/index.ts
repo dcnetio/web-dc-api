@@ -40,6 +40,7 @@ import { BrowserLineReader, readLine } from "./util/BrowserLineReader";
 import { bytesToHex } from "@noble/curves/abstract/utils";
 import {dc_protocol} from "./define";
 
+
 const NonceBytes = 12;
 const TagBytes = 16;
 
