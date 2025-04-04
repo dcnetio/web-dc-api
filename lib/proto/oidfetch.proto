@@ -1,11 +1,12 @@
 syntax = "proto3";
-package cidfetch.pb;
+package oidfetch.pb;
 
 
- message InitRequset {  //字段为空
+message InitRequset {  //字段为空
 } 
 message InitReply {  //字段为空
-  bytes cid = 1;  //  需要处理的文件cid或者文件夹cid或者数据库的threadID
+  int32 type = 1;  // 1:表示cid，2:表示数据库threadid
+  bytes oid = 2;  //  需要处理的文件cid或者文件夹cid或者数据库的threadID
 }
 message FetchRequest {  
   bytes cid = 1;          //  要获取数据的块的cid

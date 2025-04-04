@@ -3,7 +3,7 @@ import { FileClient } from './client'
 import type { HeliaLibp2p } from 'helia'
 import { ChainUtil } from '../chain'
 import { cidNeedConnect } from "../util/contant";
-import  { cidfetch } from "../proto/cidfetch_proto";
+import  { oidfetch } from "../proto/oidfetch_proto";
 import {StreamWriter } from './streamwriter'
 
 import {
@@ -278,7 +278,7 @@ export class FileManager {
           }
           if (!handshakeFlag){
             // 解析消息
-            const initRequest = cidfetch.pb.InitRequset.decode(parsedMessage.payload)
+            const initRequest = oidfetch.pb.InitRequset.decode(parsedMessage.payload)
             if (!initRequest) {
               continue
             }
@@ -286,9 +286,9 @@ export class FileManager {
             mParts.length = 0
             //发送数据到服务器
             const message = new TextEncoder().encode(resCid)
-            const initReply  = new cidfetch.pb.InitReply({cid: message})
+            const initReply  = new oidfetch.pb.InitReply({type: 1, oid: message})
             //组装数据
-            const initReplyBytes = cidfetch.pb.InitReply.encode(initReply).finish()
+            const initReplyBytes = oidfetch.pb.InitReply.encode(initReply).finish()
             const messageData = this.assembleCustomMessage({  
               type: 2,  
               version: 1,  
@@ -298,7 +298,7 @@ export class FileManager {
             handshakeFlag = true
           }else{
               // 解析消息
-              const fetchRequest = cidfetch.pb.FetchRequest.decode(parsedMessage.payload)
+              const fetchRequest = oidfetch.pb.FetchRequest.decode(parsedMessage.payload)
               
               const resCid =  new TextDecoder().decode(fetchRequest.cid)
               //获取resCid对应的block
@@ -308,8 +308,8 @@ export class FileManager {
               // 通过 blockstore 获取该 CID 对应的区块  
               try {  
                 const block = await this.dcNodeClient.blockstore.get(cid);  
-                const fetchReply = new cidfetch.pb.FetchReply({data: block})
-                const fetchReplyBytes = cidfetch.pb.FetchReply.encode(fetchReply).finish()
+                const fetchReply = new oidfetch.pb.FetchReply({data: block})
+                const fetchReplyBytes = oidfetch.pb.FetchReply.encode(fetchReply).finish()
                 const messageData = this.assembleCustomMessage({  
                   type: 2,  
                   version: 1,  
