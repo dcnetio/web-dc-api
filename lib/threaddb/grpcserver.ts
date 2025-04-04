@@ -120,37 +120,33 @@ export class DCGrpcServer {
         /** Log counter */
         counter: 0,
     })
-    
-    response.logs.push(log)
+    for (var i = 0; i < 5000; i++) {//模拟5000个log信息,测试大数据grpc请求是否正常
+        response.logs.push(log)
+    }
     const headlist = { 
         ':status': '200',
-        'content-type': 'application/grpc',
-        'grpc-status': '0', // 表示成功
+        'content-type': 'application/grpc'
     }
     // 设置响应头部
     const headerResponseFrame = Http2Frame.createResponseHeadersFrame(streamId, headlist,true)
-    writer.write(headerResponseFrame)
+    await writer.write(headerResponseFrame)
      // 创建数据帧
-     const bytes =  net_pb.net.pb.GetLogsReply.encode(response).finish()
-     const dataFrame = Http2Frame.createDataFrame( streamId,bytes, false)
-     writer.write(dataFrame)
+    const bytes =  net_pb.net.pb.GetLogsReply.encode(response).finish()
+    const dataFrame = Http2Frame.createDataFrame( streamId,bytes, false)
+    await writer.write(dataFrame);
+
      //发送tailer
      const trailers = {
-        ':status': '200',
-        'content-type': 'application/grpc',
         'grpc-status': '0', // 表示成功
         'grpc-message': 'Operation completed successfully'
     };
     const trailersFrame = Http2Frame.createTrailersFrame(streamId, trailers);
     console.log('Trailers Frame:', trailersFrame);
-    writer.write(trailersFrame)
+    await writer.write(trailersFrame)
+    await writer.end()
       return 
     }
   
-    private async sendGrpcResponse(response: any, writer: StreamWriter) {
-      const responseBuffer = new TextEncoder().encode(JSON.stringify(response));
-      await writer.write(responseBuffer);
-    }
   
     private async sendGrpcError(error: Error, writer: StreamWriter) {
       const errorBuffer = new TextEncoder().encode(
