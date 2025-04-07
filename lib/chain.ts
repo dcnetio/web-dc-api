@@ -44,6 +44,7 @@ export class ChainUtil {
   }
   // 获取用户钱包信息
   async getUserInfoWithAccount(account: string): Promise<User> {
+    console.log("=========getUserInfoWithAccount account", account);
     const walletAccountStorage =
       await this.dcchainapi?.query.dcNode.walletAccountStorage(account);
     console.log("=========walletAccountStorage", walletAccountStorage);
@@ -75,6 +76,13 @@ export class ChainUtil {
       userInfo.usedSpace = parentUserInfo.usedSpace;
       userInfo.expireNumber = parentUserInfo.expireNumber;
       userInfo.purchaseNumber = parentUserInfo.purchaseNumber;
+      // 冻结不为0则更新
+      if(parentUserInfo.commentFrozenStatus != 0){
+        userInfo.commentFrozenStatus = parentUserInfo.commentFrozenStatus;
+      }
+      if(parentUserInfo.spamFrozenStatus != 0){
+        userInfo.spamFrozenStatus = parentUserInfo.spamFrozenStatus;
+      }
       return userInfo;
     }
     return userInfo;

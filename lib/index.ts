@@ -24,13 +24,13 @@ import { ChainUtil } from "./chain";
 import type { SignHandler, DCConnectInfo } from "./types/types";
 import { Client } from "./dcapi";
 import { DcUtil } from "./dcutil";
-import { ErrInvalidToken } from "./error";
+import { Errors } from "./error";
 import { PublicKey } from "@libp2p/interface";
-import { DCManager } from "./dc/dcmanager";
-import { ThemeManager } from "./theme/thememanager";
-import { AccountManager } from "./account/accountmanager";
+import { DCManager } from "./dc/manager";
+import { ThemeManager } from "./theme/manager";
+import { AccountManager } from "./account/manager";
 import { CommonClient } from "./commonclient";
-import { FileManager } from "./file/filemanager";
+import { FileManager } from "./file/manager";
 import type { HeliaLibp2p } from "helia";
 import { Libp2p } from "@libp2p/interface";
 import { CommentManager } from "./comment/manager";
@@ -39,6 +39,7 @@ import { dcnet } from "./proto/dcnet_proto";
 import { BrowserLineReader, readLine } from "./util/BrowserLineReader";
 import { bytesToHex } from "@noble/curves/abstract/utils";
 import {dc_protocol} from "./define";
+import { BCManager } from "./bc/manager";
 
 
 const NonceBytes = 12;
@@ -299,6 +300,36 @@ export class DC  implements SignHandler {
     console.log("userInfo reply:", userInfo);
     return userInfo;
   };
+
+  ifEnoughUserSpace = async (
+    needSize?: number
+  ) => {
+    const bcManager = new BCManager(
+      this.connectedDc,
+      this.dcChain,
+      this
+    );
+    return bcManager.ifEnoughUserSpace(needSize);
+  }
+
+  refreshUserInfo = async () => {
+    const bcManager = new BCManager(
+      this.connectedDc,
+      this.dcChain,
+      this
+    );
+    return bcManager.refreshUserInfo();
+  };
+
+  getBlockHeight = async () => {
+    const bcManager = new BCManager(
+      this.connectedDc,
+      this.dcChain,
+      this
+    );
+    return bcManager.getBlockHeight();
+  };
+  }
 
   // todo
   // 获取用户数据列表
@@ -820,7 +851,7 @@ export class DC  implements SignHandler {
       console.log("ValidToken end ");
     } catch (err: any) {
       // 若 token 无效，需要刷新；否则重连
-      if (err?.message && err.message.endsWith(ErrInvalidToken.message)) {
+      if (err?.message && err.message.endsWith(Errors.INVALID_TOKEN.message)) {
         if (!this.privKey) {
           return;
         }

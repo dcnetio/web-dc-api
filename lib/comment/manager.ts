@@ -9,7 +9,7 @@ import { extractPeerIdFromMultiaddr } from "../dc-key/keyManager";
 import { Multiaddr } from "@multiformats/multiaddr";
 import { CommentClient } from "./client";
 import { parseUint32, sha256, uint32ToLittleEndianBytes } from "../util/utils";
-import { FileManager } from "../file/filemanager";
+import { FileManager } from "../file/manager";
 const { Buffer } = buffer;
 
 // 创建一个可以取消的信号
@@ -28,6 +28,8 @@ export const Errors = {
   ErrNodeAddrIsNull: new FileError("nodeAddr is null"),
   ErrNoFileChose: new FileError("no file choose"),
   ErrNoPeerIdIsNull: new FileError("peerId is null"),
+  ErrAddThemeObj: new FileError("add theme obj error"),
+  ErrPublishCommentToTheme: new FileError("publish comment error"),
 };
 
 export class CommentManager {
@@ -75,7 +77,8 @@ export class CommentManager {
       console.log("AddUserOffChainSpace peerId", peerId);
       const commentClient = new CommentClient(
         this.connectedDc.client,
-        this.dcNodeClient
+        this.dcNodeClient,
+        this.signHandler
       );
       const res = await commentClient.addUserOffChainSpace(
         userPubkey.string(),
@@ -120,9 +123,10 @@ export class CommentManager {
       const userPubkey = this.signHandler.publickey();
       const commentClient = new CommentClient(
         this.connectedDc.client,
-        this.dcNodeClient
+        this.dcNodeClient,
+        this.signHandler
       );
-      const res = await commentClient.addThemeObj(
+      let res = await commentClient.addThemeObj(
         appName,
         theme,
         blockHeight || 0,
@@ -131,7 +135,28 @@ export class CommentManager {
         openFlag,
         signature,
       );
-      return [res, null];
+      // res 0:成功 1:评论空间没有配置 2:评论空间不足 3:评论数据同步中
+      if(res === 0){
+        return [res, null];
+      }
+      if(res === 1 || res === 2){
+        // 添加空间
+        await this.addUserOffChainSpace();
+        // 继续调用
+        res = await commentClient.addThemeObj(
+          appName,
+          theme,
+          blockHeight || 0,
+          commentSpace,
+          userPubkey.string(),
+          openFlag,
+          signature,
+        );
+        if(res === 0){
+          return [res, null];
+        }
+      }
+      return [null, Errors.ErrAddThemeObj]
     } catch (err) {
       console.error("addThemeObj error:", err);
       throw err;
@@ -165,7 +190,8 @@ export class CommentManager {
       const userPubkey = this.signHandler.publickey();
       const commentClient = new CommentClient(
         this.connectedDc.client,
-        this.dcNodeClient
+        this.dcNodeClient,
+        this.signHandler
       );
       const res = await commentClient.addThemeSpace(
         appName,
@@ -222,9 +248,10 @@ export class CommentManager {
       const userPubkey = this.signHandler.publickey();
       const commentClient = new CommentClient(
         this.connectedDc.client,
-        this.dcNodeClient
+        this.dcNodeClient,
+        this.signHandler
       );
-      const res = await commentClient.publishCommentToTheme(
+      let res = await commentClient.publishCommentToTheme(
         appName,
         theme,
         themeAuthor,
@@ -236,10 +263,37 @@ export class CommentManager {
         refercommentkey,
         signature,
       );
-      // 获取高度
-      const commentBlockHeight = (await this.chainUtil.getBlockHeight()) || 0;
-      const commentKey = `${commentBlockHeight}/${commentCidBase32}`
-      return [commentKey, null];
+      // res 0:成功 1:评论空间没有配置 2:评论空间不足
+      if(res === 0){
+        // 获取高度
+        const commentBlockHeight = (await this.chainUtil.getBlockHeight()) || 0;
+        const commentKey = `${commentBlockHeight}/${commentCidBase32}`
+        return [commentKey, null];
+      }
+      if(res === 1 || res === 2){
+        // 添加空间
+        await this.addUserOffChainSpace();
+        // 继续调用
+        res = await commentClient.publishCommentToTheme(
+          appName,
+          theme,
+          themeAuthor,
+          blockHeight || 0,
+          userPubkey.string(),
+          commentType,
+          commentCidBase32,
+          comment,
+          refercommentkey,
+          signature,
+        );
+        if(res === 0){
+          // 获取高度
+          const commentBlockHeight = (await this.chainUtil.getBlockHeight()) || 0;
+          const commentKey = `${commentBlockHeight}/${commentCidBase32}`
+          return [commentKey, null];
+        }
+      }
+      return [null, Errors.ErrPublishCommentToTheme]
     } catch (err) {
       console.error("publishCommentToTheme error:", err);
       throw err;
@@ -279,7 +333,8 @@ export class CommentManager {
       const userPubkey = this.signHandler.publickey();
       const commentClient = new CommentClient(
         this.connectedDc.client,
-        this.dcNodeClient
+        this.dcNodeClient,
+        this.signHandler
       );
       const res = await commentClient.deleteSelfComment(
         appName,
@@ -317,7 +372,8 @@ export class CommentManager {
       );
       const commentClient = new CommentClient(
         this.connectedDc.client,
-        this.dcNodeClient
+        this.dcNodeClient,
+        this.signHandler
       );
       const res = await commentClient.getThemeObj(
         appName,
@@ -351,7 +407,8 @@ export class CommentManager {
       }
       const commentClient = new CommentClient(
         this.connectedDc.client,
-        this.dcNodeClient
+        this.dcNodeClient,
+        this.signHandler
       );
       const res = await commentClient.getThemeComments(
         appName,
@@ -385,7 +442,8 @@ export class CommentManager {
       }
       const commentClient = new CommentClient(
         this.connectedDc.client,
-        this.dcNodeClient
+        this.dcNodeClient,
+        this.signHandler
       );
       const res = await commentClient.getUserComments(
         appName,
