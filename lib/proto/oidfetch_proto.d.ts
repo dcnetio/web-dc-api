@@ -1,7 +1,7 @@
 import * as $protobuf from "protobufjs";
 import Long = require("long");
-/** Namespace cidfetch. */
-export namespace cidfetch {
+/** Namespace oidfetch. */
+export namespace oidfetch {
 
     /** Namespace pb. */
     namespace pb {
@@ -17,30 +17,30 @@ export namespace cidfetch {
              * Constructs a new InitRequset.
              * @param [properties] Properties to set
              */
-            constructor(properties?: cidfetch.pb.IInitRequset);
+            constructor(properties?: oidfetch.pb.IInitRequset);
 
             /**
              * Creates a new InitRequset instance using the specified properties.
              * @param [properties] Properties to set
              * @returns InitRequset instance
              */
-            public static create(properties?: cidfetch.pb.IInitRequset): cidfetch.pb.InitRequset;
+            public static create(properties?: oidfetch.pb.IInitRequset): oidfetch.pb.InitRequset;
 
             /**
-             * Encodes the specified InitRequset message. Does not implicitly {@link cidfetch.pb.InitRequset.verify|verify} messages.
+             * Encodes the specified InitRequset message. Does not implicitly {@link oidfetch.pb.InitRequset.verify|verify} messages.
              * @param message InitRequset message or plain object to encode
              * @param [writer] Writer to encode to
              * @returns Writer
              */
-            public static encode(message: cidfetch.pb.IInitRequset, writer?: $protobuf.Writer): $protobuf.Writer;
+            public static encode(message: oidfetch.pb.IInitRequset, writer?: $protobuf.Writer): $protobuf.Writer;
 
             /**
-             * Encodes the specified InitRequset message, length delimited. Does not implicitly {@link cidfetch.pb.InitRequset.verify|verify} messages.
+             * Encodes the specified InitRequset message, length delimited. Does not implicitly {@link oidfetch.pb.InitRequset.verify|verify} messages.
              * @param message InitRequset message or plain object to encode
              * @param [writer] Writer to encode to
              * @returns Writer
              */
-            public static encodeDelimited(message: cidfetch.pb.IInitRequset, writer?: $protobuf.Writer): $protobuf.Writer;
+            public static encodeDelimited(message: oidfetch.pb.IInitRequset, writer?: $protobuf.Writer): $protobuf.Writer;
 
             /**
              * Decodes an InitRequset message from the specified reader or buffer.
@@ -50,7 +50,7 @@ export namespace cidfetch {
              * @throws {Error} If the payload is not a reader or valid buffer
              * @throws {$protobuf.util.ProtocolError} If required fields are missing
              */
-            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): cidfetch.pb.InitRequset;
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): oidfetch.pb.InitRequset;
 
             /**
              * Decodes an InitRequset message from the specified reader or buffer, length delimited.
@@ -59,7 +59,7 @@ export namespace cidfetch {
              * @throws {Error} If the payload is not a reader or valid buffer
              * @throws {$protobuf.util.ProtocolError} If required fields are missing
              */
-            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): cidfetch.pb.InitRequset;
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): oidfetch.pb.InitRequset;
 
             /**
              * Verifies an InitRequset message.
@@ -73,7 +73,7 @@ export namespace cidfetch {
              * @param object Plain object
              * @returns InitRequset
              */
-            public static fromObject(object: { [k: string]: any }): cidfetch.pb.InitRequset;
+            public static fromObject(object: { [k: string]: any }): oidfetch.pb.InitRequset;
 
             /**
              * Creates a plain object from an InitRequset message. Also converts values to other types if specified.
@@ -81,7 +81,7 @@ export namespace cidfetch {
              * @param [options] Conversion options
              * @returns Plain object
              */
-            public static toObject(message: cidfetch.pb.InitRequset, options?: $protobuf.IConversionOptions): { [k: string]: any };
+            public static toObject(message: oidfetch.pb.InitRequset, options?: $protobuf.IConversionOptions): { [k: string]: any };
 
             /**
              * Converts this InitRequset to JSON.
@@ -100,8 +100,11 @@ export namespace cidfetch {
         /** Properties of an InitReply. */
         interface IInitReply {
 
-            /** InitReply cid */
-            cid?: (Uint8Array|null);
+            /** InitReply type */
+            type?: (number|null);
+
+            /** InitReply oid */
+            oid?: (Uint8Array|null);
         }
 
         /** Represents an InitReply. */
@@ -111,33 +114,36 @@ export namespace cidfetch {
              * Constructs a new InitReply.
              * @param [properties] Properties to set
              */
-            constructor(properties?: cidfetch.pb.IInitReply);
+            constructor(properties?: oidfetch.pb.IInitReply);
 
-            /** InitReply cid. */
-            public cid: Uint8Array;
+            /** InitReply type. */
+            public type: number;
+
+            /** InitReply oid. */
+            public oid: Uint8Array;
 
             /**
              * Creates a new InitReply instance using the specified properties.
              * @param [properties] Properties to set
              * @returns InitReply instance
              */
-            public static create(properties?: cidfetch.pb.IInitReply): cidfetch.pb.InitReply;
+            public static create(properties?: oidfetch.pb.IInitReply): oidfetch.pb.InitReply;
 
             /**
-             * Encodes the specified InitReply message. Does not implicitly {@link cidfetch.pb.InitReply.verify|verify} messages.
+             * Encodes the specified InitReply message. Does not implicitly {@link oidfetch.pb.InitReply.verify|verify} messages.
              * @param message InitReply message or plain object to encode
              * @param [writer] Writer to encode to
              * @returns Writer
              */
-            public static encode(message: cidfetch.pb.IInitReply, writer?: $protobuf.Writer): $protobuf.Writer;
+            public static encode(message: oidfetch.pb.IInitReply, writer?: $protobuf.Writer): $protobuf.Writer;
 
             /**
-             * Encodes the specified InitReply message, length delimited. Does not implicitly {@link cidfetch.pb.InitReply.verify|verify} messages.
+             * Encodes the specified InitReply message, length delimited. Does not implicitly {@link oidfetch.pb.InitReply.verify|verify} messages.
              * @param message InitReply message or plain object to encode
              * @param [writer] Writer to encode to
              * @returns Writer
              */
-            public static encodeDelimited(message: cidfetch.pb.IInitReply, writer?: $protobuf.Writer): $protobuf.Writer;
+            public static encodeDelimited(message: oidfetch.pb.IInitReply, writer?: $protobuf.Writer): $protobuf.Writer;
 
             /**
              * Decodes an InitReply message from the specified reader or buffer.
@@ -147,7 +153,7 @@ export namespace cidfetch {
              * @throws {Error} If the payload is not a reader or valid buffer
              * @throws {$protobuf.util.ProtocolError} If required fields are missing
              */
-            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): cidfetch.pb.InitReply;
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): oidfetch.pb.InitReply;
 
             /**
              * Decodes an InitReply message from the specified reader or buffer, length delimited.
@@ -156,7 +162,7 @@ export namespace cidfetch {
              * @throws {Error} If the payload is not a reader or valid buffer
              * @throws {$protobuf.util.ProtocolError} If required fields are missing
              */
-            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): cidfetch.pb.InitReply;
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): oidfetch.pb.InitReply;
 
             /**
              * Verifies an InitReply message.
@@ -170,7 +176,7 @@ export namespace cidfetch {
              * @param object Plain object
              * @returns InitReply
              */
-            public static fromObject(object: { [k: string]: any }): cidfetch.pb.InitReply;
+            public static fromObject(object: { [k: string]: any }): oidfetch.pb.InitReply;
 
             /**
              * Creates a plain object from an InitReply message. Also converts values to other types if specified.
@@ -178,7 +184,7 @@ export namespace cidfetch {
              * @param [options] Conversion options
              * @returns Plain object
              */
-            public static toObject(message: cidfetch.pb.InitReply, options?: $protobuf.IConversionOptions): { [k: string]: any };
+            public static toObject(message: oidfetch.pb.InitReply, options?: $protobuf.IConversionOptions): { [k: string]: any };
 
             /**
              * Converts this InitReply to JSON.
@@ -208,7 +214,7 @@ export namespace cidfetch {
              * Constructs a new FetchRequest.
              * @param [properties] Properties to set
              */
-            constructor(properties?: cidfetch.pb.IFetchRequest);
+            constructor(properties?: oidfetch.pb.IFetchRequest);
 
             /** FetchRequest cid. */
             public cid: Uint8Array;
@@ -218,23 +224,23 @@ export namespace cidfetch {
              * @param [properties] Properties to set
              * @returns FetchRequest instance
              */
-            public static create(properties?: cidfetch.pb.IFetchRequest): cidfetch.pb.FetchRequest;
+            public static create(properties?: oidfetch.pb.IFetchRequest): oidfetch.pb.FetchRequest;
 
             /**
-             * Encodes the specified FetchRequest message. Does not implicitly {@link cidfetch.pb.FetchRequest.verify|verify} messages.
+             * Encodes the specified FetchRequest message. Does not implicitly {@link oidfetch.pb.FetchRequest.verify|verify} messages.
              * @param message FetchRequest message or plain object to encode
              * @param [writer] Writer to encode to
              * @returns Writer
              */
-            public static encode(message: cidfetch.pb.IFetchRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+            public static encode(message: oidfetch.pb.IFetchRequest, writer?: $protobuf.Writer): $protobuf.Writer;
 
             /**
-             * Encodes the specified FetchRequest message, length delimited. Does not implicitly {@link cidfetch.pb.FetchRequest.verify|verify} messages.
+             * Encodes the specified FetchRequest message, length delimited. Does not implicitly {@link oidfetch.pb.FetchRequest.verify|verify} messages.
              * @param message FetchRequest message or plain object to encode
              * @param [writer] Writer to encode to
              * @returns Writer
              */
-            public static encodeDelimited(message: cidfetch.pb.IFetchRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+            public static encodeDelimited(message: oidfetch.pb.IFetchRequest, writer?: $protobuf.Writer): $protobuf.Writer;
 
             /**
              * Decodes a FetchRequest message from the specified reader or buffer.
@@ -244,7 +250,7 @@ export namespace cidfetch {
              * @throws {Error} If the payload is not a reader or valid buffer
              * @throws {$protobuf.util.ProtocolError} If required fields are missing
              */
-            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): cidfetch.pb.FetchRequest;
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): oidfetch.pb.FetchRequest;
 
             /**
              * Decodes a FetchRequest message from the specified reader or buffer, length delimited.
@@ -253,7 +259,7 @@ export namespace cidfetch {
              * @throws {Error} If the payload is not a reader or valid buffer
              * @throws {$protobuf.util.ProtocolError} If required fields are missing
              */
-            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): cidfetch.pb.FetchRequest;
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): oidfetch.pb.FetchRequest;
 
             /**
              * Verifies a FetchRequest message.
@@ -267,7 +273,7 @@ export namespace cidfetch {
              * @param object Plain object
              * @returns FetchRequest
              */
-            public static fromObject(object: { [k: string]: any }): cidfetch.pb.FetchRequest;
+            public static fromObject(object: { [k: string]: any }): oidfetch.pb.FetchRequest;
 
             /**
              * Creates a plain object from a FetchRequest message. Also converts values to other types if specified.
@@ -275,7 +281,7 @@ export namespace cidfetch {
              * @param [options] Conversion options
              * @returns Plain object
              */
-            public static toObject(message: cidfetch.pb.FetchRequest, options?: $protobuf.IConversionOptions): { [k: string]: any };
+            public static toObject(message: oidfetch.pb.FetchRequest, options?: $protobuf.IConversionOptions): { [k: string]: any };
 
             /**
              * Converts this FetchRequest to JSON.
@@ -305,7 +311,7 @@ export namespace cidfetch {
              * Constructs a new FetchReply.
              * @param [properties] Properties to set
              */
-            constructor(properties?: cidfetch.pb.IFetchReply);
+            constructor(properties?: oidfetch.pb.IFetchReply);
 
             /** FetchReply data. */
             public data: Uint8Array;
@@ -315,23 +321,23 @@ export namespace cidfetch {
              * @param [properties] Properties to set
              * @returns FetchReply instance
              */
-            public static create(properties?: cidfetch.pb.IFetchReply): cidfetch.pb.FetchReply;
+            public static create(properties?: oidfetch.pb.IFetchReply): oidfetch.pb.FetchReply;
 
             /**
-             * Encodes the specified FetchReply message. Does not implicitly {@link cidfetch.pb.FetchReply.verify|verify} messages.
+             * Encodes the specified FetchReply message. Does not implicitly {@link oidfetch.pb.FetchReply.verify|verify} messages.
              * @param message FetchReply message or plain object to encode
              * @param [writer] Writer to encode to
              * @returns Writer
              */
-            public static encode(message: cidfetch.pb.IFetchReply, writer?: $protobuf.Writer): $protobuf.Writer;
+            public static encode(message: oidfetch.pb.IFetchReply, writer?: $protobuf.Writer): $protobuf.Writer;
 
             /**
-             * Encodes the specified FetchReply message, length delimited. Does not implicitly {@link cidfetch.pb.FetchReply.verify|verify} messages.
+             * Encodes the specified FetchReply message, length delimited. Does not implicitly {@link oidfetch.pb.FetchReply.verify|verify} messages.
              * @param message FetchReply message or plain object to encode
              * @param [writer] Writer to encode to
              * @returns Writer
              */
-            public static encodeDelimited(message: cidfetch.pb.IFetchReply, writer?: $protobuf.Writer): $protobuf.Writer;
+            public static encodeDelimited(message: oidfetch.pb.IFetchReply, writer?: $protobuf.Writer): $protobuf.Writer;
 
             /**
              * Decodes a FetchReply message from the specified reader or buffer.
@@ -341,7 +347,7 @@ export namespace cidfetch {
              * @throws {Error} If the payload is not a reader or valid buffer
              * @throws {$protobuf.util.ProtocolError} If required fields are missing
              */
-            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): cidfetch.pb.FetchReply;
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): oidfetch.pb.FetchReply;
 
             /**
              * Decodes a FetchReply message from the specified reader or buffer, length delimited.
@@ -350,7 +356,7 @@ export namespace cidfetch {
              * @throws {Error} If the payload is not a reader or valid buffer
              * @throws {$protobuf.util.ProtocolError} If required fields are missing
              */
-            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): cidfetch.pb.FetchReply;
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): oidfetch.pb.FetchReply;
 
             /**
              * Verifies a FetchReply message.
@@ -364,7 +370,7 @@ export namespace cidfetch {
              * @param object Plain object
              * @returns FetchReply
              */
-            public static fromObject(object: { [k: string]: any }): cidfetch.pb.FetchReply;
+            public static fromObject(object: { [k: string]: any }): oidfetch.pb.FetchReply;
 
             /**
              * Creates a plain object from a FetchReply message. Also converts values to other types if specified.
@@ -372,7 +378,7 @@ export namespace cidfetch {
              * @param [options] Conversion options
              * @returns Plain object
              */
-            public static toObject(message: cidfetch.pb.FetchReply, options?: $protobuf.IConversionOptions): { [k: string]: any };
+            public static toObject(message: oidfetch.pb.FetchReply, options?: $protobuf.IConversionOptions): { [k: string]: any };
 
             /**
              * Converts this FetchReply to JSON.
@@ -402,7 +408,7 @@ export namespace cidfetch {
              * Constructs a new ErrorInformRequest.
              * @param [properties] Properties to set
              */
-            constructor(properties?: cidfetch.pb.IErrorInformRequest);
+            constructor(properties?: oidfetch.pb.IErrorInformRequest);
 
             /** ErrorInformRequest error. */
             public error: string;
@@ -412,23 +418,23 @@ export namespace cidfetch {
              * @param [properties] Properties to set
              * @returns ErrorInformRequest instance
              */
-            public static create(properties?: cidfetch.pb.IErrorInformRequest): cidfetch.pb.ErrorInformRequest;
+            public static create(properties?: oidfetch.pb.IErrorInformRequest): oidfetch.pb.ErrorInformRequest;
 
             /**
-             * Encodes the specified ErrorInformRequest message. Does not implicitly {@link cidfetch.pb.ErrorInformRequest.verify|verify} messages.
+             * Encodes the specified ErrorInformRequest message. Does not implicitly {@link oidfetch.pb.ErrorInformRequest.verify|verify} messages.
              * @param message ErrorInformRequest message or plain object to encode
              * @param [writer] Writer to encode to
              * @returns Writer
              */
-            public static encode(message: cidfetch.pb.IErrorInformRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+            public static encode(message: oidfetch.pb.IErrorInformRequest, writer?: $protobuf.Writer): $protobuf.Writer;
 
             /**
-             * Encodes the specified ErrorInformRequest message, length delimited. Does not implicitly {@link cidfetch.pb.ErrorInformRequest.verify|verify} messages.
+             * Encodes the specified ErrorInformRequest message, length delimited. Does not implicitly {@link oidfetch.pb.ErrorInformRequest.verify|verify} messages.
              * @param message ErrorInformRequest message or plain object to encode
              * @param [writer] Writer to encode to
              * @returns Writer
              */
-            public static encodeDelimited(message: cidfetch.pb.IErrorInformRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+            public static encodeDelimited(message: oidfetch.pb.IErrorInformRequest, writer?: $protobuf.Writer): $protobuf.Writer;
 
             /**
              * Decodes an ErrorInformRequest message from the specified reader or buffer.
@@ -438,7 +444,7 @@ export namespace cidfetch {
              * @throws {Error} If the payload is not a reader or valid buffer
              * @throws {$protobuf.util.ProtocolError} If required fields are missing
              */
-            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): cidfetch.pb.ErrorInformRequest;
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): oidfetch.pb.ErrorInformRequest;
 
             /**
              * Decodes an ErrorInformRequest message from the specified reader or buffer, length delimited.
@@ -447,7 +453,7 @@ export namespace cidfetch {
              * @throws {Error} If the payload is not a reader or valid buffer
              * @throws {$protobuf.util.ProtocolError} If required fields are missing
              */
-            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): cidfetch.pb.ErrorInformRequest;
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): oidfetch.pb.ErrorInformRequest;
 
             /**
              * Verifies an ErrorInformRequest message.
@@ -461,7 +467,7 @@ export namespace cidfetch {
              * @param object Plain object
              * @returns ErrorInformRequest
              */
-            public static fromObject(object: { [k: string]: any }): cidfetch.pb.ErrorInformRequest;
+            public static fromObject(object: { [k: string]: any }): oidfetch.pb.ErrorInformRequest;
 
             /**
              * Creates a plain object from an ErrorInformRequest message. Also converts values to other types if specified.
@@ -469,7 +475,7 @@ export namespace cidfetch {
              * @param [options] Conversion options
              * @returns Plain object
              */
-            public static toObject(message: cidfetch.pb.ErrorInformRequest, options?: $protobuf.IConversionOptions): { [k: string]: any };
+            public static toObject(message: oidfetch.pb.ErrorInformRequest, options?: $protobuf.IConversionOptions): { [k: string]: any };
 
             /**
              * Converts this ErrorInformRequest to JSON.
@@ -496,30 +502,30 @@ export namespace cidfetch {
              * Constructs a new ErrorInformReply.
              * @param [properties] Properties to set
              */
-            constructor(properties?: cidfetch.pb.IErrorInformReply);
+            constructor(properties?: oidfetch.pb.IErrorInformReply);
 
             /**
              * Creates a new ErrorInformReply instance using the specified properties.
              * @param [properties] Properties to set
              * @returns ErrorInformReply instance
              */
-            public static create(properties?: cidfetch.pb.IErrorInformReply): cidfetch.pb.ErrorInformReply;
+            public static create(properties?: oidfetch.pb.IErrorInformReply): oidfetch.pb.ErrorInformReply;
 
             /**
-             * Encodes the specified ErrorInformReply message. Does not implicitly {@link cidfetch.pb.ErrorInformReply.verify|verify} messages.
+             * Encodes the specified ErrorInformReply message. Does not implicitly {@link oidfetch.pb.ErrorInformReply.verify|verify} messages.
              * @param message ErrorInformReply message or plain object to encode
              * @param [writer] Writer to encode to
              * @returns Writer
              */
-            public static encode(message: cidfetch.pb.IErrorInformReply, writer?: $protobuf.Writer): $protobuf.Writer;
+            public static encode(message: oidfetch.pb.IErrorInformReply, writer?: $protobuf.Writer): $protobuf.Writer;
 
             /**
-             * Encodes the specified ErrorInformReply message, length delimited. Does not implicitly {@link cidfetch.pb.ErrorInformReply.verify|verify} messages.
+             * Encodes the specified ErrorInformReply message, length delimited. Does not implicitly {@link oidfetch.pb.ErrorInformReply.verify|verify} messages.
              * @param message ErrorInformReply message or plain object to encode
              * @param [writer] Writer to encode to
              * @returns Writer
              */
-            public static encodeDelimited(message: cidfetch.pb.IErrorInformReply, writer?: $protobuf.Writer): $protobuf.Writer;
+            public static encodeDelimited(message: oidfetch.pb.IErrorInformReply, writer?: $protobuf.Writer): $protobuf.Writer;
 
             /**
              * Decodes an ErrorInformReply message from the specified reader or buffer.
@@ -529,7 +535,7 @@ export namespace cidfetch {
              * @throws {Error} If the payload is not a reader or valid buffer
              * @throws {$protobuf.util.ProtocolError} If required fields are missing
              */
-            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): cidfetch.pb.ErrorInformReply;
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): oidfetch.pb.ErrorInformReply;
 
             /**
              * Decodes an ErrorInformReply message from the specified reader or buffer, length delimited.
@@ -538,7 +544,7 @@ export namespace cidfetch {
              * @throws {Error} If the payload is not a reader or valid buffer
              * @throws {$protobuf.util.ProtocolError} If required fields are missing
              */
-            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): cidfetch.pb.ErrorInformReply;
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): oidfetch.pb.ErrorInformReply;
 
             /**
              * Verifies an ErrorInformReply message.
@@ -552,7 +558,7 @@ export namespace cidfetch {
              * @param object Plain object
              * @returns ErrorInformReply
              */
-            public static fromObject(object: { [k: string]: any }): cidfetch.pb.ErrorInformReply;
+            public static fromObject(object: { [k: string]: any }): oidfetch.pb.ErrorInformReply;
 
             /**
              * Creates a plain object from an ErrorInformReply message. Also converts values to other types if specified.
@@ -560,7 +566,7 @@ export namespace cidfetch {
              * @param [options] Conversion options
              * @returns Plain object
              */
-            public static toObject(message: cidfetch.pb.ErrorInformReply, options?: $protobuf.IConversionOptions): { [k: string]: any };
+            public static toObject(message: oidfetch.pb.ErrorInformReply, options?: $protobuf.IConversionOptions): { [k: string]: any };
 
             /**
              * Converts this ErrorInformReply to JSON.
