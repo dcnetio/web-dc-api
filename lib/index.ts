@@ -329,7 +329,6 @@ export class DC  implements SignHandler {
     );
     return bcManager.getBlockHeight();
   };
-  }
 
   // todo
   // 获取用户数据列表
