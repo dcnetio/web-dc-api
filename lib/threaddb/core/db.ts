@@ -17,7 +17,8 @@ export const Errors = {
     ErrCollectionNotFound: new Error('collection not found'),
 };  
 
-
+export const pullThreadBackgroundTimeout = 3600000; // 1 hour in milliseconds
+export const PullTimeout = 20000; // 20 seconds in milliseconds
 
 export const dsPrefix = new Key("/db");  
 export const DBPrefix = {
@@ -56,7 +57,7 @@ export enum ActionType {
 
 export interface Event<T = any> {  
   /** 事件时间戳 (Unix毫秒时间戳) */  
-  readonly timestamp: number;  
+  readonly timestamp: bigint;  
   /** 关联的实例ID */  
   readonly instanceID: InstanceID;  
   /** 所属集合名称 */  

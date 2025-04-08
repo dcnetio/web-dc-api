@@ -3,14 +3,15 @@
 import { Key,Datastore,Query,Batch } from 'interface-datastore';
 import { Key as ThreadKey } from '../key';
 import { ThreadID } from '@textile/threads-id';
-import { Ed25519PrivKey,Ed25519PubKey } from "../../dc-key/ed25519";
 import type { PeerId,PublicKey,PrivateKey } from "@libp2p/interface"; 
 import { Multiaddr } from '@multiformats/multiaddr'; 
 import { Head } from './head'; 
-import Ajv, { type JSONSchemaType } from "ajv"; 
+import { type JSONSchemaType } from "ajv"; 
 import { dcnet } from "../../proto/dcnet_proto";
 import { EventCodec } from "./db";
-
+import type { CID } from 'multiformats/cid'  
+import { Link } from 'multiformats/link'
+import { DAGCBOR} from '@helia/dag-cbor'
 
 
 
@@ -20,8 +21,22 @@ export interface Context {
   deadline?: Date  
 }  
 
+export interface IPLDNode {  
+  cid(): CID
+  links(): Link[]
+  size(): number
+  data(): Uint8Array
+} 
+
+
+export interface IBlock {
+    data(): Uint8Array;
+    cid(): CID;
+}
+
+
 // 接口定义  
-export interface Net {  
+export interface INet extends DAGCBOR{  
   createThread( id: ThreadID, ...opts: any[]): Promise<void>;  
   addThread( addr: Multiaddr, ...opts: any[]): Promise<void>;  
   getThread( id: ThreadID, ...opts: any[]): Promise<ThreadInfo>;  
@@ -31,11 +46,11 @@ export interface Net {
   getPbLogs( id: ThreadID): Promise<[dcnet.pb.LogInfo[], ThreadInfo]>;  
 }  
 
-export interface JsonSchema {  
-  type: string;  
-  properties?: Record<string, JsonSchema>;  
-  required?: string[];  
-}  
+// export interface JsonSchema {  
+//   type: string;  
+//   properties?: Record<string, JsonSchema>;  
+//   required?: string[];  
+// }  
 
 
 export interface CollectionConfig {  

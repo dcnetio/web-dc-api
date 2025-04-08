@@ -18,7 +18,7 @@ import { SymmetricKey, Key as ThreadKey } from './key';
 import {StoreunitInfo} from '../chain';
 import { PrefixTransform,TransformedDatastore} from './transformed-datastore' 
 import {NewOptions,Token,CollectionConfig,ManagedOptions,ThreadInfo,Context} from './core/core';
-import {TxnDatastoreExtended} from './core/db';
+import {TxnDatastoreExtended,pullThreadBackgroundTimeout,PullTimeout} from './core/db';
 import type { DCConnectInfo } from "../types/types";
 import { fastExtractPeerId, uint32ToLittleEndianBytes } from "../util/utils";
 import {DcUtil} from '../dcutil';
@@ -28,6 +28,7 @@ import { NewThreadOptions } from './core/options';
 import {ThreadToken} from './core/identity';
 import { DBGrpcClient } from "./grpcClient";
 import type { Client } from "../dcapi";
+
 
 import { extractPublicKeyFromPeerId } from "../dc-key/keyManager";
 
@@ -41,9 +42,6 @@ export const Protocol = {
   } 
 
 export const ThreadProtocol = "/dc/" + Protocol.Name + "/" + Protocol.Version
-const pullThreadBackgroundTimeout = 3600000; // 1 hour in milliseconds
-const PullTimeout = 20000; // 20 seconds in milliseconds
-
 
 
 // 常量  

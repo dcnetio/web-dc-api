@@ -113,11 +113,14 @@ class Logstore implements CoreLogstore {
                 const i = await this.getLog(id, l);
                 logs.push(i);
             }
-
+            let threadKey = new ThreadKey(SymmetricKey.fromSymKey(sk));
+            if(rk) {
+                threadKey = new ThreadKey(SymmetricKey.fromSymKey(sk), SymmetricKey.fromSymKey(rk));
+            }
             return {
                 id,
                 logs,
-                key: new ThreadKey(SymmetricKey.fromSymKey(sk), rk?SymmetricKey.fromSymKey(rk):null),
+                key: threadKey,
                 addrs:[]
             };
         });

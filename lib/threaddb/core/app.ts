@@ -1,26 +1,19 @@
 // app.ts  
 import { EventEmitter } from 'events'  
-import {ThreadID} from '@textile/threads-id'
-import {ThreadRecord} from './record'
-import {Key as ThreadKey} from '../key';
-import {ThreadInfo } from './core';
-import {ThreadToken} from './identity';
-import {Ed25519PubKey} from '../../dc-key/ed25519';
-import {Net as net_Net} from './core'
-import {Context} from './core'
+import { ThreadID } from '@textile/threads-id'
+import { ThreadRecord } from './record'
+import { Key as ThreadKey } from '../key';
+import { ThreadInfo } from './core';
+import { ThreadToken } from './identity';
+import { Ed25519PubKey } from '../../dc-key/ed25519';
+import { INet as net_Net } from './core'
+import { Context } from './core'
 import { DAGNode } from 'ipld-dag-pb';
 
 
 // 类型定义  
-
- 
 export type PubKey = Ed25519PubKey  
 export type Token = Uint8Array
-
-
-
-
-
 
 // 错误定义  
 export const ErrThreadInUse = new Error('thread is in use')  
@@ -28,12 +21,10 @@ export const ErrInvalidNetRecordBody = new Error('app denied net record body')
 
 // 核心接口  
 export interface App {  
-  validateNetRecordBody( body: DAGNode, identity: PubKey): Promise<Error | null>  
-  handleNetRecord( rec: ThreadRecord, key: ThreadKey): Promise<Error | null>  
-  getNetRecordCreateTime( rec: ThreadRecord, key: ThreadKey): Promise<[number, Error | null]>  
+  validateNetRecordBody( body: DAGNode, identity: PubKey): Promise<Error | undefined>  
+  handleNetRecord( rec: ThreadRecord, key?: ThreadKey): Promise<Error | undefined>  
+  getNetRecordCreateTime(rec: ThreadRecord, key?: ThreadKey): Promise<bigint>  
 }  
-
-
 
 // 本地事件总线实现  
 export class LocalEventsBus {  
@@ -86,31 +77,31 @@ export interface LocalEvent {
 
 // 网络接口  
 export interface Net extends net_Net {  
-
-  connectApp(app:App,threadId: ThreadID): Promise<[Connector | null, Error | null]>
+  connectApp(app: App, threadId: ThreadID): Promise<Connector>
 
   createRecord(  
-       
+    ctx: Context,
     threadId: ThreadID,  
     body: DAGNode,  
     options?: { threadToken?: ThreadToken, apiToken?: Token }  
   ): Promise<ThreadRecord>  
 
   validate(  
+    ctx: Context,
     id: ThreadID,  
     token: ThreadToken,  
     readOnly: boolean  
   ): Promise<[PubKey | null, Error | null]>  
 
-  exchange(ctx:Context, id: ThreadID): Promise<Error | null>  
+  exchange(ctx: Context, id: ThreadID): Promise<Error | null>  
 }  
 
 // 连接器实现  
 export class Connector {  
-  public readonly token: Token  
+  public readonly token: Token
   
   constructor(  
-    private net: Net,  
+    public net: Net,  
     private app: App,  
     private threadInfo: ThreadInfo  
   ) {  
@@ -122,28 +113,64 @@ export class Connector {
 
   get threadId(): ThreadID {  
     return this.threadInfo.id  
-  }  
+  }
 
-  async createNetRecord(  
-      
-    body: DAGNode,  
-    token: ThreadToken  
-  ): Promise<[ThreadRecord | null, Error | null]> {  
-    try {  
-      const rec = await this.net.createRecord( this.threadId, body, {  
-        threadToken: token,  
-        apiToken: this.token  
-      })  
-      return [rec, null]  
-    } catch (err) {  
-      return [null, err as Error]  
-    }  
-  }  
+  get threadKey(): ThreadKey|undefined {
+    return this.threadInfo.key
+  }
 
-  async validate(token: ThreadToken, readOnly: boolean): Promise<Error | null> {  
-    const [_, err] = await this.net.validate(this.threadId, token, readOnly)  
-    return err  
-  }  
+
+  // 调用 net.createRecord 并提供线程 ID 和 API 令牌
+  async createNetRecord(
+    ctx: Context, 
+    body: DAGNode, 
+    token: ThreadToken
+  ): Promise<ThreadRecord> {
+    return this.net.createRecord(
+      ctx,
+      this.threadId, 
+      body, 
+      {
+        threadToken: token,
+        apiToken: this.token
+      }
+    );
+  }
+
+  // 验证线程令牌
+  async validate(
+    ctx: Context,
+    token: ThreadToken, 
+    readOnly: boolean
+  ): Promise<Error | null> {
+    const [_, err] = await this.net.validate(ctx, this.threadId, token, readOnly);
+    return err;
+  }
+
+  // 调用连接应用的 ValidateNetRecordBody
+  async validateNetRecordBody(
+    ctx: Context,
+    body: DAGNode, 
+    identity: PubKey
+  ): Promise<Error|undefined> {
+    return this.app.validateNetRecordBody( body, identity);
+  }
+
+  // 调用连接应用的 HandleNetRecord 并提供线程密钥
+  async handleNetRecord(
+    ctx: Context,
+    rec: ThreadRecord
+  ): Promise<Error | undefined> {
+    return this.app.handleNetRecord( rec, this.threadKey);
+  }
+
+  // 调用连接应用的 GetNetRecordCreateTime 解析记录创建时间
+  async getNetRecordCreateTime(
+    ctx: Context,
+    rec: ThreadRecord
+  ): Promise<bigint> {
+    return this.app.getNetRecordCreateTime(rec, this.threadKey);
+  }
 
   private generateRandomBytes(size: number): Uint8Array {  
     return crypto.getRandomValues(new Uint8Array(size))  
@@ -161,4 +188,4 @@ export function NewConnector(
   } catch (err) {  
     return [null, err as Error]  
   }  
-}  
+}

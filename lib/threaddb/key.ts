@@ -1,5 +1,4 @@
-// 安装依赖  
-// npm install multiformats tweetnacl @stablelib/base64  
+ 
 
 import { base32 } from 'multiformats/bases/base32'  
 import { secretbox, randomBytes } from 'tweetnacl'  
@@ -69,15 +68,15 @@ export class SymmetricKey {
 export type LogKey = PrivateKey | PublicKey 
 
 export class Key {  
-  private sk: SymmetricKey | null  
-  private rk: SymmetricKey | null  
+  private sk?: SymmetricKey 
+  private rk?: SymmetricKey
 
-  constructor(sk: SymmetricKey | null = null, rk: SymmetricKey | null = null) {  
+  constructor(sk: SymmetricKey , rk?: SymmetricKey ) {  
     this.sk = sk  
     this.rk = rk  
   }  
 
-  static new(sk: SymmetricKey, rk: SymmetricKey | null): Key {  
+  static new(sk: SymmetricKey, rk?: SymmetricKey ): Key {  
     if (!sk) {  
       throw new Error('service-key must not be null')  
     }  
@@ -97,14 +96,12 @@ export class Key {
       throw new Error('invalid key')  
     }  
 
-    const sk = SymmetricKey.fromBytes(b.slice(0, SymmetricKey.keyBytes))  
-    let rk: SymmetricKey | null = null  
-
+    const sk = SymmetricKey.fromBytes(b.slice(0, SymmetricKey.keyBytes))   
     if (b.length === SymmetricKey.keyBytes * 2) {  
-      rk = SymmetricKey.fromBytes(b.slice(SymmetricKey.keyBytes))  
+      const rk = SymmetricKey.fromBytes(b.slice(SymmetricKey.keyBytes))  
+      return new Key(sk,rk)
     }  
-
-    return new Key(sk, rk)  
+    return new Key(sk)  
   }  
 
   static fromString(s: string): Key {  
@@ -112,11 +109,11 @@ export class Key {
     return Key.fromBytes(decoded)  
   }  
 
-  service(): SymmetricKey | null {  
+  service(): SymmetricKey|undefined {  
     return this.sk  
   }  
 
-  read(): SymmetricKey | null {  
+  read(): SymmetricKey|undefined  {  
     return this.rk  
   }  
 
@@ -129,9 +126,9 @@ export class Key {
   }  
 
   toBytes(): Uint8Array {  
-    if (this.rk !== null && this.sk !== null) {  
+    if (this.rk  && this.sk) {  
       return new Uint8Array([...this.sk.toBytes(), ...this.rk.toBytes()])  
-    } else if (this.sk !== null) {  
+    } else if (this.sk ) {  
       return this.sk.toBytes()  
     } else {  
       return new Uint8Array(0)  

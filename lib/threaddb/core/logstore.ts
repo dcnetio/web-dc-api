@@ -45,13 +45,13 @@ export interface ThreadMetadata {
 }  
 
 export interface KeyBook {  
-  pubKey(threadId: ThreadID, peerId: PeerId): Promise<PublicKey | null>;  
+  pubKey(threadId: ThreadID, peerId: PeerId): Promise<PublicKey | undefined>;  
   addPubKey(threadId: ThreadID, peerId: PeerId, key: PublicKey): Promise<void>;  
   privKey(threadId: ThreadID, peerId: PeerId): Promise<PrivateKey | null>;  
   addPrivKey(threadId: ThreadID, peerId: PeerId, key: PrivateKey): Promise<void>;  
-  readKey(threadId: ThreadID): Promise<SymKey | null>;  
+  readKey(threadId: ThreadID): Promise<SymKey|undefined>;  
   addReadKey(threadId: ThreadID, key: SymKey): Promise<void>;  
-  serviceKey(threadId: ThreadID): Promise<SymKey | null>;  
+  serviceKey(threadId: ThreadID): Promise<SymKey | undefined>;  
   addServiceKey(threadId: ThreadID, key: SymKey): Promise<void>;  
   clearKeys(threadId: ThreadID): Promise<void>;  
   clearLogKeys(threadId: ThreadID, peerId: PeerId): Promise<void>;  

@@ -1,8 +1,8 @@
 // net.ts  
 import type { CID } from 'multiformats/cid'  
-import {IPLDNode} from './record'
+import {IPLDNode} from './core'
 import { SymmetricKey } from '../key'
-import { Context } from './core'
+import {DAGCBOR} from '@helia/dag-cbor'
 
 
 // 事件头接口  
@@ -17,27 +17,27 @@ export interface EventHeader extends IPLDNode {
 // 线程事件接口  
 export interface ThreadEvent extends IPLDNode {  
   /** 获取事件头的 CID */  
-  headerCID: CID  
+  headerCID(): CID  
 
   /**  
    * 异步加载事件头  
    * @param decryptKey 可选的解密密钥（用于加密头）  
    */  
-  getHeader(  
-    ctx: Context,   
+  getHeader(   
+    dag: DAGCBOR,
     decryptKey?: SymmetricKey  
   ): Promise<EventHeader>  
 
   /** 获取事件体的 CID */  
-  bodyCID: CID  
+  bodyCID(): CID  
 
   /**  
    * 异步加载事件体  
    * @param decryptKey 必须提供头密钥才能解密  
    */  
-  getBody(  
-    ctx: Context,  
-    decryptKey: SymmetricKey  
+  getBody(   
+    dag: DAGCBOR,
+    decryptKey?: SymmetricKey  
   ): Promise<IPLDNode>  
 }  
 

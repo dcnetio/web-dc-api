@@ -31,14 +31,14 @@ class DsKeyBook implements KeyBook {
  
  
 
-  async pubKey(t: ThreadID, p: PeerId): Promise<PublicKey|null> {  
+  async pubKey(t: ThreadID, p: PeerId): Promise<PublicKey|undefined> {  
     const key = dsLogKey(t, p, KB_BASE).child(PUB_SUFFIX)  
     
     try {  
       const value = await this.ds.get(key)  
       return keys.publicKeyFromRaw(value)  
     } catch (err) {  
-      if ((err as { code?: string }).code === 'ERR_NOT_FOUND') return null  
+      if ((err as { code?: string }).code === 'ERR_NOT_FOUND') return   
       throw new Error(`Error getting public key: ${(err as Error).message}`)  
     }  
   }  
@@ -82,14 +82,14 @@ class DsKeyBook implements KeyBook {
   }  
 
 
-  async readKey(t: ThreadID): Promise<SymKey | null> {  
+  async readKey(t: ThreadID): Promise<SymKey|undefined> {  
     const key = dsThreadKey(t, KB_BASE).child(READ_SUFFIX)  
     try {  
       const value = await this.ds.get(key)  
       let symkey = await symKeyFromBytes(value)
       return symkey 
     } catch (err) {  
-      if ((err as { code?: string }).code === 'ERR_NOT_FOUND') return null  
+      if ((err as { code?: string }).code === 'ERR_NOT_FOUND') return 
       throw new Error(`Error getting read key: ${(err as Error).message}`)  
     }  
   }  
@@ -101,7 +101,7 @@ class DsKeyBook implements KeyBook {
     await this.ds.put(key, value)  
   }  
 
-  async serviceKey(t: ThreadID): Promise<SymKey | null> {  
+  async serviceKey(t: ThreadID): Promise<SymKey | undefined> {  
     const key = dsThreadKey(t, KB_BASE).child(SERVICE_SUFFIX)  
     
     try {  
@@ -109,7 +109,7 @@ class DsKeyBook implements KeyBook {
       const symkey = await symKeyFromBytes(value)
       return symkey 
     } catch (err) {  
-      if ((err as { code?: string }).code === 'ERR_NOT_FOUND') return null  
+      if ((err as { code?: string }).code === 'ERR_NOT_FOUND') return   
       throw new Error(`Error getting service key: ${(err as Error).message}`)  
     }  
   }  
