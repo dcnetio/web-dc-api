@@ -5,7 +5,7 @@ import { peerIdFromPrivateKey, peerIdFromString } from "@libp2p/peer-id";
 import { Buffer } from 'buffer';  
 import { Key } from 'interface-datastore';
 import { EventEmitter } from 'events';  
-import { DB as ThreadDb ,Collection} from './db';
+import { DB as ThreadDb ,Collection} from './db/db';
 import { Errors } from './core/db';
 import { Net } from './core/app';
 import { ChainUtil } from "../chain";
@@ -13,10 +13,10 @@ import { LevelDatastore } from 'datastore-level'
 import { Ed25519PrivKey } from "../dc-key/ed25519";
 import type { Connection, PrivateKey }  from '@libp2p/interface'
 import { keys } from "@libp2p/crypto";
-import { SymmetricKey, Key as ThreadKey } from './key';
+import { SymmetricKey, Key as ThreadKey } from './common/key';
 
 import {StoreunitInfo} from '../chain';
-import { PrefixTransform,TransformedDatastore} from './transformed-datastore' 
+import { PrefixTransform,TransformedDatastore} from './common/transformed-datastore' 
 import {NewOptions,Token,CollectionConfig,ManagedOptions,ThreadInfo,Context} from './core/core';
 import {TxnDatastoreExtended,pullThreadBackgroundTimeout,PullTimeout} from './core/db';
 import type { DCConnectInfo } from "../types/types";
@@ -26,13 +26,13 @@ import {Type} from '../constants';
 import { SignHandler } from '../types/types';
 import { NewThreadOptions } from './core/options';
 import {ThreadToken} from './core/identity';
-import { DBGrpcClient } from "./grpcClient";
+import { DBGrpcClient } from "./common/grpcClient";
 import type { Client } from "../dcapi";
 
 
 import { extractPublicKeyFromPeerId } from "../dc-key/keyManager";
 
-import { createTxnDatastore } from './level-adapter';
+import { createTxnDatastore } from './common/level-adapter';
 import { time } from 'console';
 // 协议常量定义  
 export const Protocol = {  

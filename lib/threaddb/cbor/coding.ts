@@ -1,5 +1,5 @@
 
-import { SymmetricKey } from '../key'
+import { SymmetricKey } from '../common/key'
 import {Node} from './node';  
 import * as cbornode from './node';
 import { IBlock } from '../core/core';

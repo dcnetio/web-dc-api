@@ -1,19 +1,19 @@
 // db.ts - Complete TypeScript Implementation (Simplified Core)  
 import { EventEmitter } from 'events';  
-import { } from './transformed-datastore' 
+import { } from '../common/transformed-datastore' 
 import { Key, Query } from 'interface-datastore';
-import { Key as ThreadKey } from './key';
-import { Connector } from './core/app';
-import {Context} from './core/core';
-import { EventCodec, Errors,pullThreadBackgroundTimeout ,PullTimeout} from './core/db';
-import { ThreadRecord } from './core/record'
-import { Ed25519PubKey } from '../dc-key/ed25519';
+import { Key as ThreadKey } from '../common/key';
+import { Connector } from '../core/app';
+import {Context} from '../core/core';
+import { EventCodec, Errors,pullThreadBackgroundTimeout ,PullTimeout} from '../core/db';
+import { ThreadRecord } from '../core/record'
+import { Ed25519PubKey } from '../../dc-key/ed25519';
 import  {JSONSchemaType} from 'ajv';
-import { ThreadEvent  } from './core/event';
+import { ThreadEvent  } from '../core/event';
 import { 
   NewOptions,
   Index,
-  CollectionConfig} from './core/core';
+  CollectionConfig} from '../core/core';
 import { Event,
   InstanceID,
   ReduceAction,
@@ -21,21 +21,21 @@ import { Event,
   TxnDatastoreExtended,
   Transaction,
   IndexFunc,
-  DBPrefix } from './core/db';
+  DBPrefix } from '../core/db';
 
 import { ulid } from 'ulid';  
-import { JsonPatcher } from './json-patcher';
+import { JsonPatcher } from '../common/json-patcher';
 import { multiaddr, Multiaddr } from '@multiformats/multiaddr';  
 import { ThreadID } from '@textile/threads-id';
 import { PeerId } from '@libp2p/interface';
-import { Net } from './core/app';
-import { Dispatcher } from './dispatcher';
-import { LocalEventsBus, App } from './core/app'
+import { Net } from '../core/app';
+import { Dispatcher } from '../common/dispatcher';
+import { LocalEventsBus, App } from '../core/app'
 import * as dagPB from '@ipld/dag-pb'
 import { DAGNode } from 'ipld-dag-pb';
-import * as threadEvent from './cbor/event'
-import {IRecord} from './core/record'
-import {IPLDNode} from './core/core'
+import * as threadEvent from '../cbor/event'
+import {IRecord} from '../core/record'
+import {IPLDNode} from '../core/core'
 
 
 const getBlockInitialTimeout      =  500 
@@ -305,7 +305,6 @@ export class DB implements App {
     await dbInstance.reCreateCollections();  
     dbInstance.dispatcher.register(dbInstance);
     
-    // 修复 Go 代码
     try {
       const connector = await n.connectApp(dbInstance, id);
       dbInstance.connector = connector;

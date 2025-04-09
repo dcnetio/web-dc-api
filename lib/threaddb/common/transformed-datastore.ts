@@ -6,11 +6,11 @@ import {
   QueryExt,
   QueryResult ,
   TxnDatastoreExtended
-} from './core/db';
+} from '../core/db';
 
 import { 
   AbortOptions, 
-} from './core/core';
+} from '../core/core';
 
 
 // ======== 类型扩展声明 ========  
@@ -157,7 +157,7 @@ class TransformedTransaction implements Transaction {
     return this.txn.delete(this.transform.convert(key));  
   }  
 
-  async get( key: Key): Promise<Uint8Array | null> {  
+  async get( key: Key): Promise<Uint8Array|undefined > {  
     return this.txn.get(this.transform.convert(key));  
   }  
 

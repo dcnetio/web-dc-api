@@ -3,14 +3,14 @@ import crypto from 'crypto';
 import { peerIdFromPublicKey,peerIdFromPrivateKey } from "@libp2p/peer-id";
 import { keys } from "@libp2p/crypto";
 import { Multiaddr, multiaddr } from '@multiformats/multiaddr'; // 多地址库  
-import { Head } from './core/head'; 
+import { Head } from '../core/head'; 
 import { ThreadID } from '@textile/threads-id'; 
-import { Ed25519PrivKey,Ed25519PubKey } from "../dc-key/ed25519";
+import { Ed25519PrivKey,Ed25519PubKey } from "../../dc-key/ed25519";
 import type { PeerId,PublicKey,PrivateKey } from "@libp2p/interface"; 
 import { SymmetricKey, Key as ThreadKey } from './key';
-import {validateIDData} from './lsstoreds/global';
-import {  ThreadInfo, ThreadLogInfo,Store} from './core/core';
-import {ThreadToken} from './core/identity';
+import {validateIDData} from '../lsstoreds/global';
+import {  ThreadInfo, ThreadLogInfo,Store} from '../core/core';
+import {ThreadToken} from '../core/identity';
 
 
 

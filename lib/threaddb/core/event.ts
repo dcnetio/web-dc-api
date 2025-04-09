@@ -1,7 +1,7 @@
 // net.ts  
 import type { CID } from 'multiformats/cid'  
 import {IPLDNode} from './core'
-import { SymmetricKey } from '../key'
+import { SymmetricKey } from '../common/key'
 import {DAGCBOR} from '@helia/dag-cbor'
 
 

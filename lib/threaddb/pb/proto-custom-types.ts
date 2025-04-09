@@ -3,7 +3,7 @@ import { Multiaddr,multiaddr } from '@multiformats/multiaddr'
 import { CID } from 'multiformats/cid'  
 import  { keys } from '@libp2p/crypto'
 import type { PrivateKey, PublicKey, KeyType, RSAPrivateKey, Secp256k1PrivateKey, Ed25519PrivateKey, Secp256k1PublicKey, Ed25519PublicKey } from '@libp2p/interface'
-import {  Key} from '../key'
+import {  Key} from '../common/key'
 import { ThreadID } from '@textile/threads-id';
 import { peerIdFromMultihash, peerIdFromString } from '@libp2p/peer-id'
 

@@ -1,14 +1,14 @@
 // Package logstore provides local store for thread logs. The subpackages provide creators for different types of store implementations.
 
 import { Mutex } from 'async-mutex';
-import { KeyBook, AddrBook, ThreadMetadata, HeadBook, Logstore as CoreLogstore, ErrThreadNotFound, ErrLogNotFound, ErrLogExists } from './core/logstore';
-import {ThreadInfo,ThreadLogInfo} from './core/core';
+import { KeyBook, AddrBook, ThreadMetadata, HeadBook, Logstore as CoreLogstore, ErrThreadNotFound, ErrLogNotFound, ErrLogExists } from '../core/logstore';
+import {ThreadInfo,ThreadLogInfo} from '../core/core';
 import {SymmetricKey} from './key';
 import { ThreadID } from '@textile/threads-id'; 
 import type { PeerId } from "@libp2p/interface";
-import { compareByteArrays } from '../util/utils';
+import { compareByteArrays } from '../../util/utils';
 import {Key as ThreadKey} from './key';
-import { symKeyFromBytes } from '../dc-key/keyManager';
+import { symKeyFromBytes } from '../../dc-key/keyManager';
 import { CID } from 'multiformats';
 
 const PermanentAddrTTL = 2^53-1; // 使用 bigint 精确表示 64 位整数  

@@ -1,7 +1,7 @@
 
  
 import { Key,Datastore,Query,Batch } from 'interface-datastore';
-import { Key as ThreadKey } from '../key';
+import { Key as ThreadKey } from '../common/key';
 import { ThreadID } from '@textile/threads-id';
 import type { PeerId,PublicKey,PrivateKey } from "@libp2p/interface"; 
 import { Multiaddr } from '@multiformats/multiaddr'; 
@@ -46,11 +46,6 @@ export interface INet extends DAGCBOR{
   getPbLogs( id: ThreadID): Promise<[dcnet.pb.LogInfo[], ThreadInfo]>;  
 }  
 
-// export interface JsonSchema {  
-//   type: string;  
-//   properties?: Record<string, JsonSchema>;  
-//   required?: string[];  
-// }  
 
 
 export interface CollectionConfig {  

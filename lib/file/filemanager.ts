@@ -19,7 +19,7 @@ import {
 } from '../util/utils'
 
 import { UnixFS, unixfs } from '@helia/unixfs'
-import { SymmetricKey } from '../threaddb/key'
+import { SymmetricKey } from '../threaddb/common/key'
 import { CID } from 'multiformats/cid'
 import { DcUtil } from '../dcutil'
 import toBuffer from "it-to-buffer";

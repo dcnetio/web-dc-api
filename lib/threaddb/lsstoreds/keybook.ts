@@ -8,7 +8,7 @@ import { DumpKeyBook,KeyBook} from '../core/logstore'
 import { ThreadID } from '@textile/threads-id';
 import type { PeerId,PrivateKey,PublicKey } from "@libp2p/interface";
 import {uniqueLogIds,uniqueThreadIds,AllowEmptyRestore,dsLogKey,dsThreadKey } from './global'
-import { SymmetricKey } from '../key';
+import { SymmetricKey } from '../common/key';
 import { symKeyFromBytes } from '../../dc-key/keyManager';
 import { publicKeyFromRaw ,privateKeyFromRaw} from '@libp2p/crypto/keys'
 

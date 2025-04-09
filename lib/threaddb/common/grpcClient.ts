@@ -1,17 +1,17 @@
 import type { Libp2p } from "libp2p";
 import { ThreadID } from "@textile/threads-id";
 import { multiaddr, Multiaddr } from "@multiformats/multiaddr";
-import { dcnet as dcnet_proto } from "../proto/dcnet_proto";
+import { dcnet as dcnet_proto } from "../../proto/dcnet_proto";
 import { base58btc } from "multiformats/bases/base58";
 import { Libp2pGrpcClient } from "grpc-libp2p-client";
 import { toString as uint8ArrayToString } from "uint8arrays/to-string";
 import { Key as ThreadKey } from './key';
-import { DataSource } from "../proto/datasource";
-import { Ed25519PubKey,Ed25519PrivKey } from "../dc-key/ed25519";
+import { DataSource } from "../../proto/datasource";
+import { Ed25519PubKey,Ed25519PrivKey } from "../../dc-key/ed25519";
 import type { PublicKey,PrivateKey } from "@libp2p/interface"; 
-import { extractPublicKeyFromPeerId } from "../dc-key/keyManager";
-import { NewThreadOptions } from './core/options';
-import {ThreadInfo,ThreadLogInfo } from './core/core';
+import { extractPublicKeyFromPeerId } from "../../dc-key/keyManager";
+import { NewThreadOptions } from '../core/options';
+import {ThreadInfo,ThreadLogInfo } from '../core/core';
 import { peerIdFromString } from "@libp2p/peer-id";
 import { CID } from 'multiformats/cid';
 

@@ -8,7 +8,7 @@ import {
   IndexFunc,    
   Transaction,  
   TxnDatastoreExtended
-} from './core/db'; 
+} from '../core/db'; 
 import {   
   EventCodec,  
   Action,  
@@ -16,7 +16,7 @@ import {
   ReduceAction,  
   InstanceID,     
   ActionType
-} from './core/db';  
+} from '../core/db';  
 
 // ==================== 核心数据结构 ====================  
 interface Operation {  

@@ -1,8 +1,8 @@
 import { Buffer } from 'buffer';
 import {  Key, Query,Pair } from 'interface-datastore';
-import {DBPrefix } from './core/db';
+import {DBPrefix } from '../core/db';
 
-import { Event ,TxnDatastoreExtended, Transaction} from './core/db'; // Assuming Event is defined in a core module
+import { Event ,TxnDatastoreExtended, Transaction} from '../core/db'; // Assuming Event is defined in a core module
  
 const dsDispatcherPrefix = DBPrefix.dsPrefix.child(new Key('dispatcher'));
 

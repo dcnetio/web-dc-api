@@ -3,7 +3,7 @@ import { IRecord } from '../core/record';
 import { ThreadEvent as NetEvent, EventHeader as NetEventHeader } from '../core/event';
 import { Ed25519PrivKey  as PrivKey,Ed25519PubKey as PubKey} from "../../dc-key/ed25519";
 import type { PublicKey  } from '@libp2p/interface-keys' 
-import { SymmetricKey } from '../key';
+import { SymmetricKey } from '../common/key';
 import { CID, Link } from 'multiformats/cid';
 import * as dagCBOR from '@ipld/dag-cbor';
 import { sha256 } from 'multiformats/hashes/sha2';

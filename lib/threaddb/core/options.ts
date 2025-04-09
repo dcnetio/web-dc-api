@@ -1,4 +1,4 @@
-import {Key as ThreadKey,LogKey} from '../key';
+import {Key as ThreadKey,LogKey} from '../common/key';
 import { Ed25519PubKey } from "../../dc-key/ed25519";
 import {ThreadToken} from './identity';
 

@@ -2,7 +2,7 @@
 import EventEmitter from 'eventemitter3';
 import { ThreadID } from '@textile/threads-id'
 import { ThreadRecord } from './record'
-import { Key as ThreadKey } from '../key';
+import { Key as ThreadKey } from '../common/key';
 import { ThreadInfo } from './core';
 import { ThreadToken } from './identity';
 import { Ed25519PubKey } from '../../dc-key/ed25519';

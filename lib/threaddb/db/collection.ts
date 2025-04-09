@@ -4,15 +4,15 @@ import Ajv from 'ajv';
 import { nanoid } from 'nanoid';
 import EventEmitter from 'eventemitter3';
 
-import { TxnDatastoreExtended, Transaction } from './core/db';
-import { Ed25519PrivKey  as PrivKey,Ed25519PubKey as PubKey} from "../dc-key/ed25519";
-import { Action, ActionType, Event } from './core/db';
+import { TxnDatastoreExtended, Transaction } from '../core/db';
+import { Ed25519PrivKey  as PrivKey,Ed25519PubKey as PubKey} from "../../dc-key/ed25519";
+import { Action, ActionType, Event } from '../core/db';
 import { ThreadID } from '@textile/threads-id';
-import { EventCodec } from './core/db';
+import { EventCodec } from '../core/db';
 import { DAGNode } from 'ipld-dag-pb';
-import { CollectionConfig } from './core/core';
-import {dsPrefix} from './core/db';
-import {ThreadToken} from './core/identity';
+import { CollectionConfig } from '../core/core';
+import {dsPrefix} from '../core/db';
+import {ThreadToken} from '../core/identity';
 
 
 // Error definitions

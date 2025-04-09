@@ -20,7 +20,7 @@ import { ping } from '@libp2p/ping'
 import {autoNAT} from '@libp2p/autonat'
 import { dcutr } from '@libp2p/dcutr'
 import { bitswap} from '@helia/block-brokers'
-import {DCGrpcServer} from "./threaddb/grpcserver";
+import {DCGrpcServer} from "./threaddb/common/grpcserver";
 import { dc_protocol } from "./define";
 
 

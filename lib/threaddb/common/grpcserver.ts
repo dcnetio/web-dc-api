@@ -4,7 +4,7 @@ import {multiaddr} from '@multiformats/multiaddr'
 import { Uint8ArrayList } from 'uint8arraylist'; 
 import {StreamWriter } from 'grpc-libp2p-client/dc-http2/stream'
 import { Http2Frame } from 'grpc-libp2p-client/dc-http2/frame';
- import  * as net_pb from './pb/net_pb'
+ import  * as net_pb from '../pb/net_pb'
  import { HTTP2Parser } from "grpc-libp2p-client/dc-http2/parser";
 import { HPACK } from "grpc-libp2p-client/dc-http2/hpack";
 import { keys } from "@libp2p/crypto";
@@ -17,7 +17,7 @@ import {
     ProtoKeyConverter,
     json,  
     ProtoPeerID
-  } from './pb/proto-custom-types' 
+  } from '../pb/proto-custom-types' 
 export class DCGrpcServer {
     constructor(private libp2p: Libp2p, private protocol: string) {}
   

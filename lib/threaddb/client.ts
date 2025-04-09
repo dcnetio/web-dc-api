@@ -1,10 +1,10 @@
 import type { Client } from "../dcapi";
-import { DBGrpcClient } from "./grpcClient";
+import { DBGrpcClient } from "./common/grpcClient";
 import type { Multiaddr } from "@multiformats/multiaddr";
 import { extractPublicKeyFromPeerId } from "../dc-key/keyManager";
 import { Ed25519PubKey } from "../dc-key/ed25519";
 import { dcnet  as dcnet_proto} from "../proto/dcnet_proto";
-import { Key as ThreadKey } from './key';
+import { Key as ThreadKey } from './common/key';
 import type { PublicKey,PrivateKey } from "@libp2p/interface"; 
 import { NewThreadOptions } from './core/options';
 
