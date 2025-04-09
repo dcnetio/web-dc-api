@@ -21,7 +21,7 @@ export class Dispatcher {
     constructor(store: TxnDatastoreExtended) {
         this.store = store;
         this.reducers = [];
-        this.lock = { lock: () => {}, unlock: () => {} }; // Placeholder for actual lock implementation
+        this.lock = { lock: () => {}, unlock: () => {} }; 
         this.lastID = 0;
     }
 

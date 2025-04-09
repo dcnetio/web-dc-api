@@ -79,6 +79,35 @@ export class ThreadToken {
     )  
   }  
 
+  // PubKey returns the public key encoded in the token.
+
+async pubKey(): Promise<Ed25519PubKey|undefined > {
+  if (this.value) {
+    try {
+      // Parse token without verification
+      const decoded = jwtDecode<{ sub: string }>(this.value);
+      
+      if (!decoded.sub) {
+        throw new Error('Token subject is missing');
+      }
+      // Create public key from subject
+      try {
+        // Assuming subject contains the base32-encoded public key
+        return Ed25519PubKey.unmarshalString(decoded.sub);
+      } catch (err) {
+        throw new Error(`Failed to unmarshal public key: ${err instanceof Error ? err.message : String(err)}`);
+      }
+    } catch (err) {
+      if (err instanceof Error && err.message.includes('Invalid token')) {
+        throw new Error('Invalid token format');
+      } else {
+        throw new Error('Token not found or invalid');
+      }
+    }
+  }
+}
+
+
   async validate(issuerPrivateKey: Ed25519PrivateKey): Promise<Ed25519PubKey | null> {  
     try {  
       const privateKey = await ed25519PrivateKeyToCryptoKey(issuerPrivateKey.raw, 'raw') 

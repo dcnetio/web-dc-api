@@ -56,7 +56,7 @@ export enum ActionType {
   }  
 
 export interface Event<T = any> {  
-  /** 事件时间戳 (Unix毫秒时间戳) */  
+  /** 事件时间戳 (Unix纳秒时间戳) */  
   readonly timestamp: bigint;  
   /** 关联的实例ID */  
   readonly instanceID: InstanceID;  
@@ -83,7 +83,7 @@ export interface QueryResult {
 export  interface Transaction {  
     put( key: Key, value: Uint8Array): Promise<Key>;  
     delete( key: Key): Promise<void>;  
-    get( key: Key): Promise<Uint8Array | null>;  
+    get( key: Key): Promise<Uint8Array|undefined>;  
     has( key: Key): Promise<boolean>;  
     commit(): Promise<void>;  
     discard(): void;  
@@ -105,17 +105,18 @@ export  interface Transaction {
 export type IndexFunc = (  
     collection: string,  
     key: Key,  
-    oldData: Uint8Array | null,  
-    newData: Uint8Array | null,  
-    txn: Transaction  
+    txn: Transaction  ,
+    oldData?: Uint8Array,  
+    newData?: Uint8Array,  
+   
   ) => Promise<void>;  
 
 export interface Action {  
     type: ActionType;  
     instanceID: InstanceID;  
     collectionName: string;  
-    previous: Uint8Array | null;  
-    current: Uint8Array | null;  
+    previous?: Uint8Array;  
+    current?: Uint8Array;  
   }  
   
   export interface ReduceAction {  

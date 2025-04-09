@@ -1,5 +1,5 @@
 // app.ts  
-import { EventEmitter } from 'events'  
+import EventEmitter from 'eventemitter3';
 import { ThreadID } from '@textile/threads-id'
 import { ThreadRecord } from './record'
 import { Key as ThreadKey } from '../key';

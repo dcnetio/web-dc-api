@@ -243,7 +243,6 @@ async  wrapDB(
     name: string,  
     collections: CollectionConfig[]  
   ): Promise<[TxnDatastoreExtended, NewOptions, Error | null]> {  
-    // 验证线程 ID  
     const isValid = await this.validateThreadId(id.toString());  
     if (!isValid) {  
       return [null as unknown as TxnDatastoreExtended, null as unknown as NewOptions, new Error('Invalid Thread ID')];  
@@ -431,18 +430,26 @@ async syncDBFromDC(
     }  
 }  
 
-async getDBRecordsCount(threadid: string): Promise<[number, Error | null]> {  
-
+async getDBRecordsCount(threadid: string): Promise<number> {  
+    let count = 0;
     try {  
         const tid = await this.decodeThreadId(threadid);  
-        const count = await this.getDBRecordsCount( tid.toString());  
-        return count;  
-    } catch (error) {  
-        if (error.message == Errors.ErrorThreadIDValidation.message) {  
-            return [0, error];  
+        const threadInfo = await this.network.getThread( tid);  
+        if (!threadInfo) {
+            return count;  
         }  
-        return [0, error as Error];  
+        for (const logInfo of  threadInfo.logs ) {
+            if (!logInfo.head) {
+                continue;
+            }
+            if (count < logInfo.head.counter) {
+                count = logInfo.head.counter;
+            }
+        } 
+    } catch (error) {
+        console.error(`Error getting records count for thread ${threadid}:`, error);     
     }  
+    return count; 
 } 
 
 
@@ -592,7 +599,7 @@ async newDB(
             ...typeValue,
             ...peerIdValue
         ]);
-        const signature = await this.signHandler.sign(preSign);
+        const signature =  this.signHandler.sign(preSign);
        
         // Create thread options  
         const opts: NewThreadOptions = {
@@ -690,7 +697,7 @@ private async decodeThreadId(threadid: string): Promise<ThreadID> {
 
         // 验证长度  
         const bytes = threadID.toBytes();  
-        if (bytes.length < 32) { // 假设最小长度为32字节  
+        if (bytes.length < 32) { 
             throw new Error('Thread ID too short');  
         }  
 

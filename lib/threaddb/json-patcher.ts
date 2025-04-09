@@ -22,11 +22,11 @@ import {
 interface Operation {  
   type: ActionType; 
   instanceID: InstanceID;  
-  jsonPatch: Uint8Array | null;  
+  jsonPatch?: Uint8Array ;  
 }  
 
 interface PatchEvent {  
-  timestamp: number;  
+  timestamp: bigint;  
   id: InstanceID;  
   collection: string;  
   operation: Operation;  
@@ -97,13 +97,13 @@ export class JsonPatcher implements EventCodec {
   // ==================== 私有方法 ====================  
   private convertActions(actions: Action[]): PatchEvent[] {  
     return actions.map(action => ({  
-      timestamp: Date.now() * 1e6,  
+      timestamp: BigInt(Date.now()) * 1000000n + BigInt(Math.floor(Math.random() * 1000000)),
       id: action.instanceID,  
       collection: action.collectionName || 'default',  
       operation: {  
         type: this.normalizeActionType(action.type),  
         instanceID: action.instanceID,  
-        jsonPatch: action.current || null  
+        jsonPatch: action.current  
       }  
     }));  
   }  
@@ -134,8 +134,12 @@ export class JsonPatcher implements EventCodec {
   }  
 
   private sortEvents(events: Event[]): Event[] {  
-    return [...events].sort((a, b) => a.timestamp - b.timestamp);  
-  }  
+    return [...events].sort((a, b) => {
+      if (a.timestamp < b.timestamp) return -1;
+      if (a.timestamp > b.timestamp) return 1;
+      return 0;
+    });  
+  } 
 
   private async parseEvent(event: Event): Promise<PatchEvent> {  
     const data = decode(await event.marshal()) as any;  
@@ -146,7 +150,7 @@ export class JsonPatcher implements EventCodec {
       operation: {  
         type: data.op.typ,  
         instanceID: data.op.id,  
-        jsonPatch: data.op.patch ? encode(data.op.patch) : null  
+        jsonPatch: data.op.patch ? encode(data.op.patch) : undefined  
       }  
     };  
   }  
@@ -159,17 +163,17 @@ export class JsonPatcher implements EventCodec {
   ): Promise<void> {  
     const recordKey = baseKey.child(new Key(event.collection)).child(new Key(event.id));  
     
-    const oldData = await txn.get(recordKey).catch(() => null);  
+    const oldData = await txn.get(recordKey).catch(() => undefined);  
     const newData = event.operation.type === 'delete'   
-      ? null   
+      ? undefined   
       : event.operation.jsonPatch;  
 
     await indexFunc(  
       event.collection,  
       recordKey,  
+      txn ,  
       oldData,  
-      newData,  
-      txn  
+      newData
     );  
 
     if (event.operation.type === 'delete') {  

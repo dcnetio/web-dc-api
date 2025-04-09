@@ -35,6 +35,7 @@ import * as dagPB from '@ipld/dag-pb'
 import { DAGNode } from 'ipld-dag-pb';
 import * as threadEvent from './cbor/event'
 import {IRecord} from './core/record'
+import {IPLDNode} from './core/core'
 
 
 const getBlockInitialTimeout      =  500 
@@ -99,9 +100,9 @@ export class DefaultEventCodec implements EventCodec {
       // 使用事务处理数据变更  
       const txn = await store.newTransactionExtended(false);
       const oldData = await txn.get(key);  
-      const newData = event.payload ? new TextEncoder().encode(JSON.stringify(event.payload)) : null;  
+      const newData = event.payload ? new TextEncoder().encode(JSON.stringify(event.payload)) : undefined;  
         // 应用索引更新  
-      await indexFn(event.collection, key, oldData, newData, txn);  
+      await indexFn(event.collection, key, txn, oldData, newData);  
         // 保存数据  
         if (newData) {  
           await txn.put(key, newData);  
@@ -324,7 +325,7 @@ export class DB implements App {
     return dbInstance;
   }  
 
-  // 保存 DB 名称  
+
   async saveName(prevName: string): Promise<void> {  
     if (this.name === prevName) return;  
     if (!this.name.match(/a-zA-Z0-9+/)) { // 根据需求定义规则  
@@ -333,7 +334,7 @@ export class DB implements App {
     await this.datastore.put(new Key('dbName'), new TextEncoder().encode(this.name)); 
   }  
 
-  // 加载 DB 名称  
+ 
   async loadName(): Promise<void> {  
     try {  
       const nameBuffer = await this.datastore.get(DBPrefix.dsName);  
@@ -439,17 +440,92 @@ export class DB implements App {
   }  
 
   async close(): Promise<void> {  
-    // 实现清理逻辑
-    if (this.connector) {
-      // 关闭连接
-    }
+   
+  
   }  
 
   async reduce(events: Event[]): Promise<void> {  
-    for (const event of events) {  
-      await this.processCollectionEvent(event);  
-    }  
-  }  
+    console.debug(`reducing events in ${this.name}`);
+    const baseKey = new Key('/');
+    
+    try {
+      // 调用事件编解码器的 reduce 方法获取处理结果
+      const codecActions = await this.eventcodec.reduce(
+        events, 
+        this.datastore, 
+        baseKey, 
+        this.defaultIndexFunc()
+      );
+      
+      // 创建 actions 数组并映射处理结果
+      const actions: Action[] = codecActions.map(ca => {
+        let actionType: ActionType;
+        
+        // 根据类型转换为对应的操作类型
+        switch (ca.type) {
+          case 'create':
+            actionType = ActionType.Create;
+            break;
+          case 'save':
+            actionType = ActionType.Save;
+            break;
+          case 'delete':
+            actionType = ActionType.Delete;
+            break;
+          default:
+            throw new Error(`eventcodec action not recognized: ${ca.type}`);
+        }
+        
+        // 返回转换后的 Action 对象
+        return {
+          collectionName: ca.collection,
+          type: actionType,
+          instanceID: ca.instanceID
+        };
+      });
+      
+      // 通知状态变更
+      this.notifyStateChanged(actions);
+      
+    } catch (err) {
+      throw new Error(`Error reducing events: ${err instanceof Error ? err.message : String(err)}`);
+    }
+  }
+  
+  // 添加私有方法以支持索引功能
+  private defaultIndexFunc(): IndexFunc {
+    return async (collection: string, key: Key, txn: Transaction, oldData?: Uint8Array , newData?: Uint8Array ) => {
+      const c = this.collections.get(collection);
+      if (!c) return;
+      
+      if (newData && oldData) {
+        // 更新模式
+        const oldDoc = oldData ? this.decodeDocument(oldData) : null;
+        const newDoc = newData ? this.decodeDocument(newData) : null;
+        if (oldDoc && newDoc) {
+          await c.updateIndexes(txn, newDoc, oldDoc);
+        }
+      } else if (newData && !oldData) {
+        // 创建模式
+        const doc = this.decodeDocument(newData);
+        await c.updateIndexes(txn, doc, null);
+      } else if (!newData && oldData) {
+        // 删除模式
+        const doc = this.decodeDocument(oldData);
+        await c.clearIndexes(txn, doc);
+      }
+    };
+  }
+  
+  // 添加通知状态变更的方法
+  private notifyStateChanged(actions: Action[]): void {
+    // 发送状态变更事件
+    if (this.localEventsBus) {
+      // 这里可以发送事件通知其他订阅者
+      // 例如: this.localEventsBus.emit('state-changed', actions);
+      console.debug(`State changed with ${actions.length} actions`);
+    }
+  }
 
   private async processCollectionEvent(event: Event): Promise<void> {  
     const collectionName = event.collection;  
@@ -488,7 +564,6 @@ export class DB implements App {
           throw new Error(`Unsupported event type: ${(event as CoreEvent).type}`);  
       }
     } else {
-      // 基于 payload 的传统判断逻辑
       if (payload.created) {
         await this.handleCreateEvent(
           collection,
@@ -514,13 +589,11 @@ export class DB implements App {
     }
   }  
 
-  // ===== 创建事件处理器 =====  
   private async handleCreateEvent(  
     collection: Collection,  
     documentId: string,  
     payload: Record<string, unknown>  
   ): Promise<void> {  
-    // 合法性检查  
     if (!documentId || !payload) {  
       throw new Error(`Invalid create payload for document ${documentId}`);  
     }  
@@ -533,29 +606,21 @@ export class DB implements App {
       _version: 1  
     };  
 
-    // 执行数据存取  
     await this.withTransaction(collection.name, async (txn) => {  
-      // 验证Schema  
       if (!collection.validateSchema(doc)) {  
         throw new Error(`Schema validation failed for document ${documentId}`);  
       }  
-
-      // 触发前置钩子  
+ 
       await collection.hooks.beforeCreate?.(doc, txn);  
 
-      // 保存文档  
       const key = `/${collection.name}/${documentId}`;  
       await txn.put(new Key(key), this.encodeDocument(doc));  
 
-      // 更新索引  
       await collection.updateIndexes(txn, doc, null);  
-
-      // 触发后置钩子  
       await collection.hooks.afterCreate?.(doc, txn);  
     });  
   }  
-
-  // ===== 更新事件处理器 =====  
+ 
   private async handleUpdateEvent(  
     collection: Collection,  
     documentId: string,  
@@ -563,7 +628,6 @@ export class DB implements App {
     previousState?: Record<string, unknown>  
   ): Promise<void> {  
     await this.withTransaction(collection.name, async (txn) => {  
-      // 获取现有文档  
       const existing = await this.getDocument(collection, documentId);  
       if (!existing) {  
         throw new Error(`Cannot update non-existing document ${documentId}`);  
@@ -702,7 +766,6 @@ export class DB implements App {
         return blockErr as Error;
       }
     }  
-
     try {  
       // 获取事件的主体  
       const body = await event.getBody( this.connector.net, key.read());  
@@ -739,7 +802,7 @@ export class DB implements App {
       }
     }
 
-    let body;
+    let body:IPLDNode;
     try {
       // 获取事件的主体
       body = await event.getBody( this.connector.net, key.read());
@@ -752,7 +815,7 @@ export class DB implements App {
     let events:Event<any>[];
     try {
       // 从字节数据中解码事件
-      events = await this.eventcodec.eventsFromBytes(body.rawData());
+      events = await this.eventcodec.eventsFromBytes(body.data());
     } catch (err) {
       throw new Error(`Error when unmarshaling event from bytes: ${err instanceof Error ? err.message : String(err)}`);
     }
@@ -760,13 +823,7 @@ export class DB implements App {
     if (events.length === 0) {
       throw new Error('No events found in record');
     }
-
-    const coreEvent = events[0];
-    if (typeof coreEvent.timestamp === 'bigint') {
-      return coreEvent.timestamp;
-    }
-    return 0n;
- 
+    return events[0].timestamp;
   }
 
   private async getBlockWithRetry(rec: IRecord): Promise<any> {
