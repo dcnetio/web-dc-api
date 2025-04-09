@@ -161,7 +161,7 @@ export class CommentClient {
         console.log("AddThemeSpace reply", reply);
         const decoded = dcnet.pb.AddThemeSpaceReply.decode(reply);
         console.log("AddThemeSpace decoded", decoded);
-        return decoded;
+        return decoded.flag;
       } catch (error) {
         if (error.message.indexOf(Errors.INVALID_TOKEN.message) != -1) {
           // try to get token
@@ -183,7 +183,7 @@ export class CommentClient {
         console.log("AddThemeSpace reply", reply);
         const decoded = dcnet.pb.AddThemeSpaceReply.decode(reply);
         console.log("AddThemeSpace decoded", decoded);
-        return decoded;
+        return decoded.flag;
       }
     } catch (err) {
       console.error("AddThemeSpace error:", err);

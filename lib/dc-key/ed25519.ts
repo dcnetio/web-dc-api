@@ -178,6 +178,16 @@ export class Ed25519PubKey implements Ed25519PublicKey {
         }
         return Ed25519PubKey.fromMultihash(mh)  
     }  
+
+    static pubkeyToEdStr (pubkey: string) {  
+        if(pubkey.indexOf('0x') === 0){
+          // hex
+          return Ed25519PubKey.fromString(pubkey.substring(2));
+        }else {
+          // base32
+          return Ed25519PubKey.unmarshalString(pubkey);
+        }
+    }
 } 
 
 

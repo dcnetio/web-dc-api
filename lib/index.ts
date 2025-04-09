@@ -40,6 +40,7 @@ import { BrowserLineReader, readLine } from "./util/BrowserLineReader";
 import { bytesToHex } from "@noble/curves/abstract/utils";
 import {dc_protocol} from "./define";
 import { BCManager } from "./bc/manager";
+import { MessageManager } from "./message/manager";
 
 
 const NonceBytes = 12;
@@ -120,7 +121,7 @@ export class DC  implements SignHandler {
         // console.log("--------dial success end---------");
     
         // 定时维系token
-        // this.startDcPeerTokenKeepValidTask();
+        this.startDcPeerTokenKeepValidTask();
       }
     }
   };
@@ -255,19 +256,19 @@ export class DC  implements SignHandler {
       if (!token) {
         throw new Error("GetToken error");
       }
-      // // 存在token， 获取用户备用节点
-      // const accountManager = new AccountManager(
-      //   this.connectedDc,
-      //   this.dc,
-      //   this.dcChain,
-      //   this,
-      // );
-      // const reply = await accountManager.getAccountNodeAddr();
-      // if (reply && reply[0]) {
-      //   const nodeAddr = reply[0];
-      //   this.AccountBackupDc.nodeAddr = nodeAddr; // 当前地址
-      //   this.AccountBackupDc.client = await this._newDcClient(nodeAddr);
-      // }
+      // 存在token， 获取用户备用节点
+      const accountManager = new AccountManager(
+        this.connectedDc,
+        this.dc,
+        this.dcChain,
+        this,
+      );
+      const reply = await accountManager.getAccountNodeAddr();
+      if (reply && reply[0]) {
+        const nodeAddr = reply[0];
+        this.AccountBackupDc.nodeAddr = nodeAddr; // 当前地址
+        this.AccountBackupDc.client = await this._newDcClient(nodeAddr);
+      }
     }
     return true;
   };
@@ -756,6 +757,24 @@ export class DC  implements SignHandler {
     const allContent = await this._handleThemeComments(fileContentString);
     console.log("getUserComments allContent:", allContent);
     return [allContent, null];
+  };
+
+
+  // 发送消息到用户消息盒子
+  sendMsgToUserBox = async (
+    appName: string,
+    receiver: string, 
+    msg: string
+  ) => {
+    const messageManager = new MessageManager(
+      this.AccountBackupDc, 
+      this.dc, 
+      this.dcChain, 
+      this.dcNodeClient,
+      this);
+    const res = await messageManager.sendMsgToUserBox(appName, receiver, msg);
+    return res;
+    
   };
 
   /**
