@@ -15,13 +15,11 @@ import type { Multiaddr } from "@multiformats/multiaddr";
 import { kadDHT } from "@libp2p/kad-dht";
 import { loadKeyPair, saveKeyPair } from "./util/utils";
 import { Ed25519PrivateKey } from "@libp2p/interface";
-import { ping } from '@libp2p/ping'
+import { ping } from "@libp2p/ping";
 // import {mdns} from '@libp2p/mdns'
 import {autoNAT} from '@libp2p/autonat'
 import { dcutr } from '@libp2p/dcutr'
 import { bitswap} from '@helia/block-brokers'
-import {DCGrpcServer} from "./threaddb/common/grpcserver";
-import { dc_protocol } from "./define";
 
 
 
@@ -150,100 +148,89 @@ export class DcUtil {
     });
   };
 
-
-
   _createHeliaNode = async () => {
     console.log("_createHeliaNode=======");
     const datastore = new IDBDatastore("helia-meta");
     await datastore.open();
     const blockstore = new IDBBlockstore("helia-blocks");
     await blockstore.open();
-    
-  
-   // const memoryDatastore = new MemoryDatastore();
+
+    // const memoryDatastore = new MemoryDatastore();
     // 创建或导入私钥
-    let keyPair = await loadKeyPair("1") as Ed25519PrivateKey;
-    if(!keyPair){
-      keyPair = await keys.generateKeyPair("Ed25519"); 
-      await saveKeyPair("1",keyPair);
+    let keyPair = (await loadKeyPair("Ed25519PrivateKey")) as Ed25519PrivateKey;
+    if (!keyPair) {
+      keyPair = await keys.generateKeyPair("Ed25519");
+      await saveKeyPair("Ed25519PrivateKey", keyPair);
     }
     // libp2p is the networking layer that underpins Helia
     const libp2p = await createLibp2p({
       privateKey: keyPair,
       datastore: datastore,
-      transports: [webRTCDirect(), circuitRelayTransport(),webRTC()  ], // 
+      transports: [webRTCDirect(), circuitRelayTransport(), webRTC()], //
       connectionEncrypters: [noise()],
       connectionGater: {
         denyDialMultiaddr: () => false, // this is necessary to dial local addresses at all
       },
-      
-      connectionManager: {  
-        maxParallelDials: 100,  
+
+      connectionManager: {
+        maxParallelDials: 100,
         maxConnections: 1000,
-        inboundConnectionThreshold:100,
+        inboundConnectionThreshold: 100,
       },
 
-      streamMuxers: [yamux({  
-        maxStreamWindowSize: 256 * 1024, // 流窗口大小  
-        maxMessageSize:  16 * 1024,     // 消息分片阈值  
-        keepAliveInterval: 15_000,            // 保活检测间隔 (ms) 
-        maxInboundStreams:100,
-        maxOutboundStreams:100,
-        initialStreamWindowSize: 256 * 1024,
-        enableKeepAlive: false,
-        
-          
-      })],
+      streamMuxers: [
+        yamux({
+          maxStreamWindowSize: 256 * 1024, // 流窗口大小
+          maxMessageSize: 16 * 1024, // 消息分片阈值
+          keepAliveInterval: 15_000, // 保活检测间隔 (ms)
+          maxInboundStreams: 100,
+          maxOutboundStreams: 100,
+          initialStreamWindowSize: 256 * 1024,
+          enableKeepAlive: false,
+        }),
+      ],
       services: {
-        dht: kadDHT({        // 启用 DHT 加强节点发现  
-          clientMode: true  
-        }),  
+        dht: kadDHT({
+          // 启用 DHT 加强节点发现
+          clientMode: true,
+        }),
         autoNAT: autoNAT(),
         dcutr: dcutr(),
-        identify: identify(), 
-        identifyPush: identifyPush(), 
-        ping: ping(), 
-        autoRelay: (components) => ({  // 使用函数式配置  
-          enabled: true,               // 通过闭包传递参数  
-          maxListeners: 2,  
-          peerSource: components.peerStore  // 注入依赖组件  
-        })
+        identify: identify(),
+        identifyPush: identifyPush(),
+        ping: ping(),
+        autoRelay: (components) => ({
+          // 使用函数式配置
+          enabled: true, // 通过闭包传递参数
+          maxListeners: 2,
+          peerSource: components.peerStore, // 注入依赖组件
+        }),
       },
       addresses: {
-        listen: [
-          '/webrtc-direct',
-          '/p2p-circuit',
-          '/webrtc'
-        ],
+        listen: ["/webrtc-direct", "/p2p-circuit", "/webrtc"],
       },
     });
-    console.log('libp2p getProtocols', libp2p.getProtocols())
-    console.log('libp2p peerId', libp2p.peerId.toString())
-    console.log('libp2p 服务列表:', Object.keys(libp2p.services))  
-    console.log('libp2p 已连接节点列表:', Object.keys(libp2p.getPeers()))
-  
-    const grpcServer = new DCGrpcServer(libp2p,dc_protocol)
-    grpcServer.start()
+    console.log("libp2p getProtocols", libp2p.getProtocols());
+    console.log("libp2p peerId", libp2p.peerId.toString());
+    console.log("libp2p 服务列表:", Object.keys(libp2p.services));
+    console.log("libp2p 已连接节点列表:", Object.keys(libp2p.getPeers()));
+
     const dcNodeClient = await createHelia({
-      blockBrokers: [  
-        bitswap({  
-          maxInboundStreams: 64,  
-          maxOutboundStreams: 128,   
-        })  
+      blockBrokers: [
+        bitswap({
+          maxInboundStreams: 64,
+          maxOutboundStreams: 128,
+        }),
       ],
       datastore,
       blockstore,
       libp2p,
     });
 
-  
     this.dcNodeClient = dcNodeClient;
 
-   
     return dcNodeClient;
   };
-
-
 
   // 获取链接过的peerid
   _getConnectedPeerId = async (): Promise<string> => {
@@ -271,31 +258,33 @@ export class DcUtil {
     return nodeAddr;
   };
 
-  _getDefaultDcNodeAddr = async (): Promise<Multiaddr | undefined> => {
+  getDefaultDcNodeAddr = async (): Promise<Multiaddr | undefined> => {
     const peerId = await this._getConnectedPeerId();
     if (peerId) {
       let nodeAddr = await this._getNodeAddr(peerId);
-      return nodeAddr;
-    } else {
-      // 获取节点上的默认节点列表，随机获取几个，批量连接节点，得到最快的节点
-      const allNodeList = await this.dcChain.getDcNodeList();
-      if (!allNodeList) {
-        return;
+      if (nodeAddr) {
+        return nodeAddr;
       }
-      // 连接节点，得到最快的节点（随机取几个连接取最快，如果都没有连接上继续随机取）
-      const nodeAddr = await this._getConnectDcNodeList(allNodeList);
-      if (!nodeAddr) {
-        console.log("no node connected");
-        return;
-      }
-
-      // 保存默认节点
-      const defaultPeerId = (nodeAddr as Multiaddr).getPeerId();
-      if (defaultPeerId) {
-        localStorage.setItem("defaultPeerId", defaultPeerId.toString());
-      }
-      return nodeAddr as Multiaddr;
+      localStorage.removeItem("defaultPeerId");
     }
+    // 获取节点上的默认节点列表，随机获取几个，批量连接节点，得到最快的节点
+    const allNodeList = await this.dcChain.getDcNodeList();
+    if (!allNodeList) {
+      return;
+    }
+    // 连接节点，得到最快的节点（随机取几个连接取最快，如果都没有连接上继续随机取）
+    const nodeAddr = await this._getConnectDcNodeList(allNodeList);
+    if (!nodeAddr) {
+      console.log("no node connected");
+      return;
+    }
+
+    // 保存默认节点
+    const defaultPeerId = (nodeAddr as Multiaddr).getPeerId();
+    if (defaultPeerId) {
+      localStorage.setItem("defaultPeerId", defaultPeerId.toString());
+    }
+    return nodeAddr as Multiaddr;
   };
 
   _getConnectDcNodeList = async (

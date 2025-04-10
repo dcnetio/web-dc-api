@@ -24,13 +24,13 @@ import { ChainUtil } from "./chain";
 import type { SignHandler, DCConnectInfo } from "./types/types";
 import { Client } from "./dcapi";
 import { DcUtil } from "./dcutil";
-import { ErrInvalidToken } from "./error";
+import { Errors } from "./error";
 import { PublicKey } from "@libp2p/interface";
-import { DCManager } from "./dc/dcmanager";
-import { ThemeManager } from "./theme/thememanager";
-import { AccountManager } from "./account/accountmanager";
+import { DCManager } from "./dc/manager";
+import { ThemeManager } from "./theme/manager";
+import { AccountManager } from "./account/manager";
 import { CommonClient } from "./commonclient";
-import { FileManager } from "./file/filemanager";
+import { FileManager } from "./file/manager";
 import type { HeliaLibp2p } from "helia";
 import { Libp2p } from "@libp2p/interface";
 import { CommentManager } from "./comment/manager";
@@ -39,6 +39,8 @@ import { dcnet } from "./proto/dcnet_proto";
 import { BrowserLineReader, readLine } from "./util/BrowserLineReader";
 import { bytesToHex } from "@noble/curves/abstract/utils";
 import {dc_protocol} from "./define";
+import { BCManager } from "./bc/manager";
+import { MessageManager } from "./message/manager";
 
 
 const NonceBytes = 12;
@@ -100,7 +102,7 @@ export class DC  implements SignHandler {
         // let nodeAddr = await this.dc?._getNodeAddr(peerId);
         // nodeAddr = multiaddr('/ip4/192.168.31.42/udp/4001/webrtc-direct/certhash/uEiBq5Ki7QE5Nl2IPWTOG52RNutWFaB3rfdIEgKAlVcFtHA/p2p/12D3KooWKfJGey3xUcTQ8bCokBxxudoDm3RAeCfdbuq2e34c7TWB')
         // 获取默认dc节点地址
-        const nodeAddr = await this.dc?._getDefaultDcNodeAddr();
+        const nodeAddr = await this.dc?.getDefaultDcNodeAddr();
         if (nodeAddr) {
           console.log("--------nodeAddr---------", nodeAddr.toString());
           this.connectedDc.nodeAddr = nodeAddr; // 当前地址
@@ -112,14 +114,14 @@ export class DC  implements SignHandler {
           await sleep(5000);
          
         }
-        console.log("--------dial success begin---------");
-        this.dcNodeClient.libp2p.getMultiaddrs().forEach((addr) => {
-          console.log("--------addr---------", addr.toString());
-        });
-        console.log("--------dial success end---------");
+        // console.log("--------dial success begin---------");
+        // this.dcNodeClient.libp2p.getMultiaddrs().forEach((addr) => {
+        //   console.log("--------addr---------", addr.toString());
+        // });
+        // console.log("--------dial success end---------");
     
         // 定时维系token
-        // this.startDcPeerTokenKeepValidTask();
+        this.startDcPeerTokenKeepValidTask();
       }
     }
   };
@@ -254,19 +256,19 @@ export class DC  implements SignHandler {
       if (!token) {
         throw new Error("GetToken error");
       }
-      // // 存在token， 获取用户备用节点
-      // const accountManager = new AccountManager(
-      //   this.connectedDc,
-      //   this.dc,
-      //   this.dcChain,
-      //   this,
-      // );
-      // const reply = await accountManager.getAccountNodeAddr();
-      // if (reply && reply[0]) {
-      //   const nodeAddr = reply[0];
-      //   this.AccountBackupDc.nodeAddr = nodeAddr; // 当前地址
-      //   this.AccountBackupDc.client = await this._newDcClient(nodeAddr);
-      // }
+      // 存在token， 获取用户备用节点
+      const accountManager = new AccountManager(
+        this.connectedDc,
+        this.dc,
+        this.dcChain,
+        this,
+      );
+      const reply = await accountManager.getAccountNodeAddr();
+      if (reply && reply[0]) {
+        const nodeAddr = reply[0];
+        this.AccountBackupDc.nodeAddr = nodeAddr; // 当前地址
+        this.AccountBackupDc.client = await this._newDcClient(nodeAddr);
+      }
     }
     return true;
   };
@@ -298,6 +300,35 @@ export class DC  implements SignHandler {
     const userInfo = await accountManager.getUserInfoWithNft(nftAccount);
     console.log("userInfo reply:", userInfo);
     return userInfo;
+  };
+
+  ifEnoughUserSpace = async (
+    needSize?: number
+  ) => {
+    const bcManager = new BCManager(
+      this.connectedDc,
+      this.dcChain,
+      this
+    );
+    return bcManager.ifEnoughUserSpace(needSize);
+  }
+
+  refreshUserInfo = async () => {
+    const bcManager = new BCManager(
+      this.connectedDc,
+      this.dcChain,
+      this
+    );
+    return bcManager.refreshUserInfo();
+  };
+
+  getBlockHeight = async () => {
+    const bcManager = new BCManager(
+      this.connectedDc,
+      this.dcChain,
+      this
+    );
+    return bcManager.getBlockHeight();
   };
 
   // todo
@@ -728,6 +759,24 @@ export class DC  implements SignHandler {
     return [allContent, null];
   };
 
+
+  // 发送消息到用户消息盒子
+  sendMsgToUserBox = async (
+    appName: string,
+    receiver: string, 
+    msg: string
+  ) => {
+    const messageManager = new MessageManager(
+      this.AccountBackupDc, 
+      this.dc, 
+      this.dcChain, 
+      this.dcNodeClient,
+      this);
+    const res = await messageManager.sendMsgToUserBox(appName, receiver, msg);
+    return res;
+    
+  };
+
   /**
    * 开启定时验证 token 线程
    * 对应 Go 中的 dcPeerTokenKeepValidTask()
@@ -820,7 +869,7 @@ export class DC  implements SignHandler {
       console.log("ValidToken end ");
     } catch (err: any) {
       // 若 token 无效，需要刷新；否则重连
-      if (err?.message && err.message.endsWith(ErrInvalidToken.message)) {
+      if (err?.message && err.message.endsWith(Errors.INVALID_TOKEN.message)) {
         if (!this.privKey) {
           return;
         }
