@@ -4,7 +4,7 @@ import {DBPrefix } from '../core/db';
 
 import { Event ,TxnDatastoreExtended, Transaction} from '../core/db'; // Assuming Event is defined in a core module
  
-const dsDispatcherPrefix = DBPrefix.dsPrefix.child(new Key('dispatcher'));
+export const dsDispatcherPrefix = DBPrefix.dsPrefix.child(new Key('dispatcher'));
 
 // Reducer applies an event to an existing state.
 interface Reducer {

@@ -10,6 +10,8 @@ import { ThreadRecord } from '../core/record'
 import { Ed25519PubKey } from '../../dc-key/ed25519';
 import  {JSONSchemaType} from 'ajv';
 import { ThreadEvent  } from '../core/event';
+import {Collection,Txn} from './collection'
+import { ThreadToken } from '../core/identity';
 import { 
   NewOptions,
   Index,
@@ -21,7 +23,9 @@ import { Event,
   TxnDatastoreExtended,
   Transaction,
   IndexFunc,
-  DBPrefix } from '../core/db';
+  DBPrefix,
+  IDB,
+  ITxn } from '../core/db';
 
 import { ulid } from 'ulid';  
 import { JsonPatcher } from '../common/json-patcher';
@@ -182,91 +186,13 @@ class CollectionExistsError extends Error {
   }  
 }  
 
-export class Collection {  
-  public indexes: Map<string, Index> = new Map();  
-  public hooks: {
-    beforeCreate?: (doc: Record<string, unknown>, txn: Transaction) => Promise<void>;
-    afterCreate?: (doc: Record<string, unknown>, txn: Transaction) => Promise<void>;
-    beforeUpdate?: (doc: Record<string, unknown>, old: Record<string, unknown>, txn: Transaction) => Promise<void>;
-    afterUpdate?: (doc: Record<string, unknown>, old: Record<string, unknown>, txn: Transaction) => Promise<void>;
-    beforeDelete?: (doc: Record<string, unknown>, txn: Transaction) => Promise<void>;
-    afterDelete?: (doc: Record<string, unknown>, txn: Transaction) => Promise<void>;
-  } = {};
-
-  constructor(  
-    public readonly name: string,  
-    public schema: JSONSchemaType<any>,  
-    public store: TxnDatastoreExtended,  
-  ) {}  
-
-  validateSchema(doc: Record<string, unknown>): boolean {
-    // 简化的架构验证实现
-    return true;
-  }
-
-  async addIndex(index: Index): Promise<void> {  
-    if (index.path === '_id') throw new Error('Cannot index _id field');  
-    this.indexes.set(index.path, index);  
-    await this.rebuildIndex(index.path);  
-  }  
-
-  async updateIndexes(txn: Transaction, doc: Record<string, unknown>, old: Record<string, unknown> | null): Promise<void> {
-    // 更新所有索引
-    for (const [path, index] of this.indexes.entries()) {
-      const value = this.getIndexValue(doc, path);
-      const key = `/${this.name}/_index/${path}/${value}/${doc._id}`;
-      await txn.put(new Key(key), new Uint8Array());
-      
-      // 如果有旧文档且值已更改，删除旧索引
-      if (old) {
-        const oldValue = this.getIndexValue(old, path);
-        if (oldValue !== value) {
-          const oldKey = `/${this.name}/_index/${path}/${oldValue}/${doc._id}`;
-          await txn.delete(new Key(oldKey));
-        }
-      }
-    }
-  }
-
-  async clearIndexes(txn: Transaction, doc: Record<string, unknown>): Promise<void> {
-    // 删除文档的所有索引
-    for (const [path, index] of this.indexes.entries()) {
-      const value = this.getIndexValue(doc, path);
-      const key = `/${this.name}/_index/${path}/${value}/${doc._id}`;
-      await txn.delete(new Key(key));
-    }
-  }
-
-  private async rebuildIndex(path: string): Promise<void> {  
-    const entries = this.store.query({prefix:`/${this.name}/`});  
-    for await (const entry of entries) {  
-      const doc = this.parseDocument(entry.value);  
-      await this.updateIndex(path, doc, entry.key.toString());  
-    }  
-  }  
-
-  private parseDocument(data: Uint8Array): any {  
-    return JSON.parse(new TextDecoder().decode(data));  
-  }  
-
-  private async updateIndex(path: string, doc: any, key: string): Promise<void> {  
-    const value = this.getIndexValue(doc, path);  
-    const indexKey = `/${this.name}/_index/${path}/${value}/${doc._id}`;  
-    if (value) await this.store.put(new Key(indexKey), new Uint8Array());  
-  }  
-
-  private getIndexValue(doc: any, path: string): any {  
-    return path.split('.').reduce((obj, part) => obj?.[part], doc);  
-  }  
-}  
-
-export class DB implements App {  
-  private datastore: TxnDatastoreExtended;  
+export class DB implements App,IDB {  
   private name: string;  
-  private collections: Map<string, Collection> = new Map();
-  public connector: Connector; //  
-  public eventcodec: EventCodec; // 抽象的事件编解码机制  
-  public dispatcher: Dispatcher;
+  public connector: Connector; // 
+  public datastore: TxnDatastoreExtended; 
+  public dispatcher: Dispatcher;   
+  public eventcodec: EventCodec; 
+  public collections: Map<string, Collection> = new Map();
   public localEventsBus: LocalEventsBus;
   private webLock: string;
 
@@ -358,7 +284,7 @@ export class DB implements App {
     const collection = new Collection(  
       config.name,  
       config.schema,  
-      this.datastore  
+      this  
     );
     
     // Add default _id index  
@@ -403,7 +329,7 @@ export class DB implements App {
           const c = new Collection(
             name,  
             schema,  
-            this.datastore
+            this
           );  
 
           // 修复索引对象
@@ -491,238 +417,47 @@ export class DB implements App {
     }
   }
   
-  // 添加私有方法以支持索引功能
-  private defaultIndexFunc(): IndexFunc {
-    return async (collection: string, key: Key, txn: Transaction, oldData?: Uint8Array , newData?: Uint8Array ) => {
-      const c = this.collections.get(collection);
-      if (!c) return;
-      
-      if (newData && oldData) {
-        // 更新模式
-        const oldDoc = oldData ? this.decodeDocument(oldData) : null;
-        const newDoc = newData ? this.decodeDocument(newData) : null;
-        if (oldDoc && newDoc) {
-          await c.updateIndexes(txn, newDoc, oldDoc);
-        }
-      } else if (newData && !oldData) {
-        // 创建模式
-        const doc = this.decodeDocument(newData);
-        await c.updateIndexes(txn, doc, null);
-      } else if (!newData && oldData) {
-        // 删除模式
-        const doc = this.decodeDocument(oldData);
-        await c.clearIndexes(txn, doc);
-      }
-    };
-  }
+/**
+ * 默认索引函数
+ * 创建一个处理集合索引更新的函数
+ */
+defaultIndexFunc(): (collection: string, key: Key, txn: any, oldData?: Uint8Array, newData?: Uint8Array) => Promise<void> {
+  return async (collection: string, key: Key, txn: any, oldData?: Uint8Array, newData?: Uint8Array): Promise<void> => {
+    const c = this.collections.get(collection);
+    if (!c) {
+      throw new Error(`collection (${collection}) not found`);
+    }
+    if (oldData) {
+      await c.indexDelete(txn, key, oldData);
+    }
+    if (!newData) {
+      return;
+    }
+    await c.indexAdd(txn, key, newData);
+  };
+}
   
   // 添加通知状态变更的方法
   private notifyStateChanged(actions: Action[]): void {
     // 发送状态变更事件
-    if (this.localEventsBus) {
-      // 这里可以发送事件通知其他订阅者
-      // 例如: this.localEventsBus.emit('state-changed', actions);
+    if (this.localEventsBus) {//浏览器侧暂不实现
       console.debug(`State changed with ${actions.length} actions`);
     }
   }
-
-  private async processCollectionEvent(event: Event): Promise<void> {  
-    const collectionName = event.collection;  
-    const collection = this.getCollection(collectionName);  
-    const payload = event.payload as any;
-    
-    // 根据payload内容判断操作类型
-    if ((event as CoreEvent).type) {
-      switch((event as CoreEvent).type) {  
-        case 'create':  
-          await this.handleCreateEvent(  
-            collection,  
-            (event as CreateEvent).documentId,  
-            (event as CreateEvent).payload.fullDocument  
-          );  
-          break;  
-        
-        case 'update':  
-          await this.handleUpdateEvent(  
-            collection,  
-            (event as UpdateEvent).documentId,  
-            (event as UpdateEvent).payload.patch,  
-            (event as UpdateEvent).previousState  
-          );  
-          break;
-        
-        case 'delete':  
-          await this.handleDeleteEvent(  
-            collection,  
-            (event as DeleteEvent).documentId,  
-            (event as DeleteEvent).previousState  
-          );  
-          break;  
-
-        default:  
-          throw new Error(`Unsupported event type: ${(event as CoreEvent).type}`);  
-      }
-    } else {
-      if (payload.created) {
-        await this.handleCreateEvent(
-          collection,
-          payload.created._id,
-          payload.created
-        );
-      } else if (payload.current) {
-        await this.handleUpdateEvent(
-          collection,
-          payload.current._id,
-          payload.current,
-          payload.previous
-        );
-      } else if (payload.deleted) {
-        await this.handleDeleteEvent(
-          collection,
-          payload.deleted._id,
-          payload.deleted
-        );
-      } else {
-        throw new Error(`Unknown event payload structure`);
-      }
-    }
-  }  
-
-  private async handleCreateEvent(  
-    collection: Collection,  
-    documentId: string,  
-    payload: Record<string, unknown>  
-  ): Promise<void> {  
-    if (!documentId || !payload) {  
-      throw new Error(`Invalid create payload for document ${documentId}`);  
-    }  
-
-    // 生成最终文档  
-    const doc = {  
-      _id: documentId,  
-      ...payload,  
-      _createdAt: Date.now(),  
-      _version: 1  
-    };  
-
-    await this.withTransaction(collection.name, async (txn) => {  
-      if (!collection.validateSchema(doc)) {  
-        throw new Error(`Schema validation failed for document ${documentId}`);  
-      }  
- 
-      await collection.hooks.beforeCreate?.(doc, txn);  
-
-      const key = `/${collection.name}/${documentId}`;  
-      await txn.put(new Key(key), this.encodeDocument(doc));  
-
-      await collection.updateIndexes(txn, doc, null);  
-      await collection.hooks.afterCreate?.(doc, txn);  
-    });  
-  }  
- 
-  private async handleUpdateEvent(  
-    collection: Collection,  
-    documentId: string,  
-    patch: Record<string, unknown>,  
-    previousState?: Record<string, unknown>  
-  ): Promise<void> {  
-    await this.withTransaction(collection.name, async (txn) => {  
-      const existing = await this.getDocument(collection, documentId);  
-      if (!existing) {  
-        throw new Error(`Cannot update non-existing document ${documentId}`);  
-      }  
-
-      // 应用数据修改  
-      const updatedDoc = {   
-        ...existing,   
-        ...patch,   
-        _version: (existing._version as number) + 1,  
-        _updatedAt: Date.now()   
-      };  
-
-      // 数据验证  
-      if (!collection.validateSchema(updatedDoc)) {  
-        throw new Error(`Update violates schema for document ${documentId}`);  
-      }  
-
-      // 触发前置钩子  
-      await collection.hooks.beforeUpdate?.(updatedDoc, existing, txn);  
-
-      // 保存更新  
-      const key = `/${collection.name}/${documentId}`;  
-      await txn.put(new Key(key), this.encodeDocument(updatedDoc));  
-
-      // 更新索引  
-      await collection.updateIndexes(txn, updatedDoc, existing);  
-
-      // 触发后置钩子  
-      await collection.hooks.afterUpdate?.(updatedDoc, existing, txn);  
-    });  
-  }  
-
-  // ===== 删除事件处理器 =====   
-  private async handleDeleteEvent(  
-    collection: Collection,  
-    documentId: string,  
-    previousState?: Record<string, unknown>  
-  ): Promise<void> {  
-    await this.withTransaction(collection.name, async (txn) => {  
-      const existing = await this.getDocument(collection, documentId);  
-      if (!existing) return;  
-
-      // 触发前置钩子  
-      await collection.hooks.beforeDelete?.(existing, txn);  
-
-      // 删除数据  
-      const key = `/${collection.name}/${documentId}`;  
-      await txn.delete(new Key(key));  
-
-      // 清理索引  
-      await collection.clearIndexes(txn, existing);  
-
-      // 触发后置钩子  
-      await collection.hooks.afterDelete?.(existing, txn);  
-    });  
-  }  
-
-  // ===== 辅助方法 =====  
-  private async getDocument(  
-    collection: Collection,   
-    documentId: string  
-  ): Promise<Record<string, unknown> | null> {  
-    const key = `/${collection.name}/${documentId}`;  
-    try {
-      const data = await this.datastore.get(new Key(key));  
-      return data ? this.decodeDocument(data) : null;
-    } catch (err: any) {
-      if (err.code === 'ERR_NOT_FOUND') return null;
-      throw err;
-    }
-  }  
-
-  private encodeDocument(doc: Record<string, unknown>): Uint8Array {  
-    return new TextEncoder().encode(JSON.stringify(doc));  
-  }  
-
-  private decodeDocument(data: Uint8Array): Record<string, unknown> {  
-    return JSON.parse(new TextDecoder().decode(data));  
-  }  
-
-  private async withTransaction(  
-    collection: string,  
-    operation: (txn: Transaction) => Promise<void>  
-  ): Promise<void> {  
-    const txn = await this.datastore.newTransactionExtended(false);
-    try {  
-      await operation(txn);  
-      await txn.commit();  
-    } catch (error) {  
-      await txn.discard();
-      throw new Error(  
-        `Transaction failed in ${collection}: ${error instanceof Error ? error.message : String(error)}`  
-      );  
-    }  
+/**
+ * 通知事务事件
+ * 将事务相关的节点和令牌发送到本地事件总线
+ */
+async notifyTxnEvents(node: DAGNode, token: ThreadToken): Promise<void> {
+  try {
+    await this.localEventsBus.send({
+      node: node,
+      token: token
+    });
+  } catch (err) {
+    throw new Error(`Failed to notify transaction events: ${err instanceof Error ? err.message : String(err)}`);
   }
+}
 
   async dispatch(events: Event[]): Promise<void> {
     // 实现事件分发逻辑
@@ -842,6 +577,64 @@ export class DB implements App {
         backoff *= 2;
       }
     }
-}  
+  }  
+
+
+async readTxn(
+  collection: Collection, 
+  fn: (txn: ITxn) => Promise<void> | void, 
+  token?: ThreadToken
+): Promise<void> {
+  console.debug(`starting read txn in ${this.name}`);
+  
+  // 创建事务选项
+  const args = { token: undefined } as any;
+ 
+  
+  // 创建只读事务
+  const txn = new Txn( collection, token,  true);
+  
+  try {
+    // 执行事务函数
+    await fn(txn);
+    console.debug(`ending read txn in ${this.name}`);
+  } finally {
+    // 确保事务被丢弃
+    txn.discard();
+  }
+}
+
+// 使用队列确保写入操作按顺序执行
+private writeQueue = Promise.resolve();
+
+async writeTxn(
+  collection: Collection, 
+  fn: (txn: ITxn) => Promise<void> | void, 
+  token?: ThreadToken
+): Promise<void> {
+  // 将写入操作添加到队列
+  this.writeQueue = this.writeQueue.then(async () => {
+    console.debug(`starting write txn in ${this.name}`);
+    // 创建可写事务
+    const txn = new Txn(collection, token, false);
+    try {
+      // 执行事务函数
+      await fn(txn);
+      
+      // 提交事务
+      await txn.commit();
+      console.debug(`ending write txn in ${this.name}`);
+    } finally {
+      // 确保事务被丢弃
+      txn.discard();
+    }
+  });
+  
+  // 等待当前事务完成
+  return this.writeQueue;
+}
+
+
+
  
 }

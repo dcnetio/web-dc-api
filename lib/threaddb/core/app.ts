@@ -80,20 +80,18 @@ export interface Net extends net_Net {
   connectApp(app: App, threadId: ThreadID): Promise<Connector>
 
   createRecord(  
-    ctx: Context,
     threadId: ThreadID,  
     body: DAGNode,  
     options?: { threadToken?: ThreadToken, apiToken?: Token }  
   ): Promise<ThreadRecord>  
 
   validate(  
-    ctx: Context,
     id: ThreadID,  
     token: ThreadToken,  
     readOnly: boolean  
   ): Promise<[PubKey | null, Error | null]>  
 
-  exchange(ctx: Context, id: ThreadID): Promise<Error | null>  
+  exchange(id: ThreadID): Promise<Error | null>  
 }  
 
 // 连接器实现  
@@ -122,12 +120,10 @@ export class Connector {
 
   // 调用 net.createRecord 并提供线程 ID 和 API 令牌
   async createNetRecord(
-    ctx: Context, 
     body: DAGNode, 
     token: ThreadToken
   ): Promise<ThreadRecord> {
     return this.net.createRecord(
-      ctx,
       this.threadId, 
       body, 
       {
@@ -139,17 +135,15 @@ export class Connector {
 
   // 验证线程令牌
   async validate(
-    ctx: Context,
     token: ThreadToken, 
     readOnly: boolean
   ): Promise<Error | null> {
-    const [_, err] = await this.net.validate(ctx, this.threadId, token, readOnly);
+    const [_, err] = await this.net.validate( this.threadId, token, readOnly);
     return err;
   }
 
   // 调用连接应用的 ValidateNetRecordBody
   async validateNetRecordBody(
-    ctx: Context,
     body: DAGNode, 
     identity: PubKey
   ): Promise<Error|undefined> {
@@ -158,7 +152,6 @@ export class Connector {
 
   // 调用连接应用的 HandleNetRecord 并提供线程密钥
   async handleNetRecord(
-    ctx: Context,
     rec: ThreadRecord
   ): Promise<Error | undefined> {
     return this.app.handleNetRecord( rec, this.threadKey);
@@ -166,7 +159,6 @@ export class Connector {
 
   // 调用连接应用的 GetNetRecordCreateTime 解析记录创建时间
   async getNetRecordCreateTime(
-    ctx: Context,
     rec: ThreadRecord
   ): Promise<bigint> {
     return this.app.getNetRecordCreateTime(rec, this.threadKey);

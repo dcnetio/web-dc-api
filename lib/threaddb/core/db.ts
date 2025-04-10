@@ -1,6 +1,12 @@
 import { ulid } from 'ulid';
 import { Key, Query,Batch, Datastore } from 'interface-datastore';  
 
+import { DAGNode } from 'ipld-dag-pb';
+import {ThreadToken} from './identity';
+import { Ed25519PubKey as PubKey} from "../../dc-key/ed25519";
+import { Connector,LocalEventsBus } from '../core/app';
+import { Dispatcher } from '../common/dispatcher';
+
 
 export const Errors = {  
     ErrDBNotFound: new Error('db not found'),  
@@ -29,6 +35,8 @@ export const DBPrefix = {
     dsValidators: dsPrefix.child(new Key("validator")),
     dsFilters: dsPrefix.child(new Key("filter")),
 }
+export const idFieldName = "_id";
+export const modFieldName = "_mod";
 
  
 
@@ -54,6 +62,100 @@ export enum ActionType {
     Save = 'save',  
     Delete = 'delete'  
   }  
+
+
+
+/**
+ * Transaction class for collections
+ */
+export interface ITxn{
+  /**
+   * Create new instances
+   */
+  create(...newInstances: Uint8Array[]): Promise<InstanceID[]>;
+  /**
+   * Verify instance changes without saving them
+   */
+  verify(...updated: Uint8Array[]): Promise<void>;
+  /**
+   * Save instance changes
+   */
+  save(...updated: Uint8Array[]): Promise<void>;
+  /**
+   * Delete instances
+   */
+  delete(...ids: InstanceID[]): Promise<void>;
+  /**
+   * Check if instances exist
+   */
+  has(...ids: InstanceID[]): Promise<boolean>;
+  /**
+   * Find instance by ID
+   */
+  findByID(id: InstanceID): Promise<Uint8Array> ;
+  /**
+   * Find instances matching a query
+   */
+  find(q?: Query): Promise<Uint8Array[]>;
+  /**
+ * Get instances modified since a specific time
+ * 
+ * The _mod field tracks modified instances, but not those that have been deleted, so we need
+ * to query the dispatcher for all (unique) instances in this collection that have been modified
+ * at all since `time`.
+ */
+  modifiedSince(time: number): Promise<InstanceID[]>;
+  /**
+   * Commit the transaction
+   */
+  commit(): Promise<void>;
+
+  /**
+   * Discard the transaction
+   */
+  discard(): void;
+  /**
+   * Refresh collection reference
+   */
+  refreshCollection(): void 
+}
+  export interface ICollection  {
+    baseKey(): Key ;
+    getName(): string ;
+    getSchema(): Uint8Array;
+    getWriteValidator(): Uint8Array;
+    getReadFilter(): Uint8Array;
+    readTxn(fn: (txn: ITxn) => Promise<void> | void, token?: ThreadToken): Promise<void> ;
+    writeTxn(fn: (txn: ITxn) => Promise<void> | void, token?: ThreadToken): Promise<void>
+    findByID(id: InstanceID, token?: ThreadToken): Promise<Uint8Array> ;
+    create(v: Uint8Array, token?: ThreadToken): Promise<InstanceID> ;
+    createMany(vs: Uint8Array[], token?: ThreadToken): Promise<InstanceID[]> ;
+    delete(id: InstanceID, token?: ThreadToken): Promise<void> ;
+    deleteMany(ids: InstanceID[], token?: ThreadToken): Promise<void> ;
+    save(v: Uint8Array, token?: ThreadToken): Promise<void> ;
+    saveMany(vs: Uint8Array[], token?: ThreadToken): Promise<void> ;
+    verify(v: Uint8Array, token?: ThreadToken): Promise<void>;
+    verifyMany(vs: Uint8Array[], token?: ThreadToken): Promise<void> ;
+    has(id: InstanceID, token?: ThreadToken): Promise<boolean>;
+    hasMany(ids: InstanceID[], token?: ThreadToken): Promise<boolean> ;
+    find(q: Query, token?: ThreadToken): Promise<Uint8Array[]>
+    modifiedSince(time: number, token?: ThreadToken): Promise<InstanceID[]>;
+    validInstance(v: Uint8Array): void;
+    validWrite(identity: PubKey, e: Event): Promise<void>;
+    filterRead(identity: PubKey, instance: Uint8Array): Promise<Uint8Array | null>;
+  }
+export interface IDB {
+  datastore: TxnDatastoreExtended; 
+  connector: Connector; // 
+   dispatcher: Dispatcher;   
+   eventcodec: EventCodec; 
+  localEventsBus: LocalEventsBus;
+  collections: Map<string, ICollection> ;
+  readTxn(collection: ICollection, fn: (txn: ITxn) => Promise<void> | void, token?: ThreadToken): Promise<void>;
+  writeTxn(collection: ICollection, fn: (txn: ITxn) => Promise<void> | void, token?: ThreadToken): Promise<void>;
+  notifyTxnEvents(node: DAGNode, token: ThreadToken): Promise<void>;
+}
+
 
 export interface Event<T = any> {  
   /** 事件时间戳 (Unix纳秒时间戳) */  

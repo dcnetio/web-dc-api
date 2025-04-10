@@ -5,7 +5,7 @@ import { peerIdFromPrivateKey, peerIdFromString } from "@libp2p/peer-id";
 import { Buffer } from 'buffer';  
 import { Key } from 'interface-datastore';
 import { EventEmitter } from 'events';  
-import { DB as ThreadDb ,Collection} from './db/db';
+import { DB as ThreadDb } from './db/db';
 import { Errors } from './core/db';
 import { Net } from './core/app';
 import { ChainUtil } from "../chain";
@@ -671,8 +671,7 @@ async syncDBToDC(tId: ThreadID): Promise<Error | null> {
         return Errors.ErrP2pNetworkNotInit;  
     }  
     try {  
-        const ctx = createContext(60000);
-        await this.network.exchange( ctx, tId);  
+        await this.network.exchange( tId);  
         return null;  
     } catch (error) {  
         return error as Error;  
