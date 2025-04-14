@@ -1,7 +1,7 @@
 import { ThreadID } from '@textile/threads-id';
 import type { PeerId, PrivateKey, PublicKey } from "@libp2p/interface";
 import { Ed25519PrivKey } from "../../dc-key/ed25519"; 
-import { SymKey, ThreadInfo, ThreadLogInfo } from "./core";
+import { SymKey, IThreadInfo, IThreadLogInfo } from "./core";
 import type { Multiaddr } from "@multiformats/multiaddr";
 import { multiaddr } from '@multiformats/multiaddr';
 import { Head } from './head.ts'; 
@@ -30,15 +30,15 @@ export class ErrEdgeUnavailable extends Error {
 }  
 
 // 接口定义  
-export interface ThreadMetadata {  
+export interface IThreadMetadata {  
   getInt64(t: ThreadID, key: string): Promise<number | null>;  
   putInt64(t: ThreadID, key: string, val: number): Promise<void>;  
   getString(t: ThreadID, key: string): Promise<string | null>;  
   putString(t: ThreadID, key: string, val: string): Promise<void>;  
   getBool(t: ThreadID, key: string): Promise<boolean | null>;  
   putBool(t: ThreadID, key: string, val: boolean): Promise<void>;  
-  getBytes(t: ThreadID, key: string): Promise<Buffer | null>;  
-  putBytes(t: ThreadID, key: string, val: Buffer): Promise<void>;  
+  getBytes(t: ThreadID, key: string): Promise<Uint8Array | null>;  
+  putBytes(t: ThreadID, key: string, val: Uint8Array): Promise<void>;  
   clearMetadata(t: ThreadID): Promise<void>;  
   dumpMeta(): Promise<DumpMetadata>;  
   restoreMeta(book: DumpMetadata): Promise<void>;  
@@ -92,15 +92,19 @@ export interface HeadBook {
   restoreHeads(book: DumpHeadBook): Promise<void>;  
 }  
 
-export interface Logstore  {  
+export interface ILogstore {
+  metadata: IThreadMetadata;
+  keyBook: KeyBook;
+  addrBook: AddrBook;
+  headBook: HeadBook;
   close(): Promise<void>;  
   threads(): Promise<ThreadID[]>;  
-  addThread(info: ThreadInfo): Promise<void>;  
-  getThread(threadId: ThreadID): Promise<ThreadInfo>;  
+  addThread(info: IThreadInfo): Promise<void>;  
+  getThread(threadId: ThreadID): Promise<IThreadInfo>;  
   deleteThread(threadId: ThreadID): Promise<void>;  
-  addLog(threadId: ThreadID, logInfo: ThreadLogInfo): Promise<void>;  
-  getLog(threadId: ThreadID, peerId: PeerId): Promise<ThreadLogInfo>;  
-  getManagedLogs(threadId: ThreadID): Promise<ThreadLogInfo[]>;  
+  addLog(threadId: ThreadID, logInfo: IThreadLogInfo): Promise<void>;  
+  getLog(threadId: ThreadID, peerId: PeerId): Promise<IThreadLogInfo>;  
+  getManagedLogs(threadId: ThreadID): Promise<IThreadLogInfo[]>;  
   deleteLog(threadId: ThreadID, peerId: PeerId): Promise<void>;  
 }  
 
@@ -125,8 +129,8 @@ export interface DumpKeyBook {
   data: {  
     public: Record<string, Record<string, PublicKey>>;  
     private: Record<string, Record<string, PrivateKey>>;  
-    read: Record<string, Buffer>;  
-    service: Record<string, Buffer>;  
+    read: Record<string, Uint8Array>;  
+    service: Record<string, Uint8Array>;  
   };  
 }  
 
@@ -140,6 +144,6 @@ export interface DumpMetadata {
     int64: Record<string, number>;   
     bool: Record<string, boolean>;  
     string: Record<string, string>;  
-    bytes: Record<string, Buffer>;  
+    bytes: Record<string, Uint8Array>;  
   };  
 }

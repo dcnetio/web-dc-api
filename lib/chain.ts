@@ -178,7 +178,9 @@ export class ChainUtil {
   //   console.log("newNodeAddr", newNodeAddr);
   //   return addr;
   // };
-  // 链上查询节点webrtc direct的地址信息
+  // 链上查询节点webrtc direct的地址信息,
+  // peerid: 节点的peerid
+  // 直接连接节点的地址
   getDcNodeWebrtcDirectAddr = async (peerid: string) => {
     const peerInfo = await this.dcchainapi?.query.dcNode.peers(peerid);
     const peerInfoJson = peerInfo?.toJSON();

@@ -13,6 +13,7 @@ export interface Head {
 // 常量转换  
 export const CounterUndef: number = 0  
 
+
 // HeadUndef转换方案  
 const emptyMultihash = await sha256.digest(new Uint8Array())
 export const HeadUndef: Head = {  
@@ -20,6 +21,8 @@ export const HeadUndef: Head = {
   id: CID.create(1, 0x55, emptyMultihash),  // 1表示CID版本，0x55表示raw
   counter: CounterUndef  
 }  
+
+export const CIDUndef:CID = CID.create(1, 0x55, emptyMultihash)
 
 
 

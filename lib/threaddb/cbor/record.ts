@@ -1,6 +1,6 @@
 import { Context } from '../core/core';
 import { IRecord } from '../core/record';
-import { ThreadEvent as NetEvent, EventHeader as NetEventHeader } from '../core/event';
+import { IThreadEvent as NetEvent, EventHeader as NetEventHeader } from '../core/event';
 import { Ed25519PrivKey  as PrivKey,Ed25519PubKey as PubKey} from "../../dc-key/ed25519";
 import type { PublicKey  } from '@libp2p/interface-keys' 
 import { SymmetricKey } from '../common/key';
@@ -110,7 +110,6 @@ export async function CreateRecord(
  * @returns 获取的记录
  */
 export async function GetRecord(
-  ctx: Context,
   dag: DAGCBOR,
   id: CID,
   key: SymmetricKey

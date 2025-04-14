@@ -101,9 +101,9 @@ export class KeyConverter {
  
 
   // Public Key  
-  static async publicFromBytes(bytes: Uint8Array): Promise<PublicKey> {  
+  static async publicFromBytes<T extends PublicKey >(bytes: Uint8Array): Promise<T> {  
     try {  
-      return  keys.publicKeyFromProtobuf(bytes) 
+      return  keys.publicKeyFromProtobuf(bytes)  as T
     } catch {  
       throw new Error('Invalid public key')  
     }  

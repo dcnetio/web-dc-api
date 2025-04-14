@@ -1,7 +1,7 @@
 // app.ts  
 import EventEmitter from 'eventemitter3';
 import { ThreadID } from '@textile/threads-id'
-import { ThreadRecord } from './record'
+import { IThreadRecord } from './record'
 import { Key as ThreadKey } from '../common/key';
 import { ThreadInfo } from './core';
 import { ThreadToken } from './identity';
@@ -22,8 +22,8 @@ export const ErrInvalidNetRecordBody = new Error('app denied net record body')
 // 核心接口  
 export interface App {  
   validateNetRecordBody( body: DAGNode, identity: PubKey): Promise<Error | undefined>  
-  handleNetRecord( rec: ThreadRecord, key?: ThreadKey): Promise<Error | undefined>  
-  getNetRecordCreateTime(rec: ThreadRecord, key?: ThreadKey): Promise<bigint>  
+  handleNetRecord( rec: IThreadRecord, key?: ThreadKey): Promise<Error | undefined>  
+  getNetRecordCreateTime(rec: IThreadRecord, key?: ThreadKey): Promise<bigint>  
 }  
 
 // 本地事件总线实现  
@@ -83,7 +83,7 @@ export interface Net extends net_Net {
     threadId: ThreadID,  
     body: DAGNode,  
     options?: { threadToken?: ThreadToken, apiToken?: Token }  
-  ): Promise<ThreadRecord>  
+  ): Promise<IThreadRecord>  
 
   validate(  
     id: ThreadID,  
@@ -122,7 +122,7 @@ export class Connector {
   async createNetRecord(
     body: DAGNode, 
     token: ThreadToken
-  ): Promise<ThreadRecord> {
+  ): Promise<IThreadRecord> {
     return this.net.createRecord(
       this.threadId, 
       body, 
@@ -152,14 +152,14 @@ export class Connector {
 
   // 调用连接应用的 HandleNetRecord 并提供线程密钥
   async handleNetRecord(
-    rec: ThreadRecord
+    rec: IThreadRecord
   ): Promise<Error | undefined> {
     return this.app.handleNetRecord( rec, this.threadKey);
   }
 
   // 调用连接应用的 GetNetRecordCreateTime 解析记录创建时间
   async getNetRecordCreateTime(
-    rec: ThreadRecord
+    rec: IThreadRecord
   ): Promise<bigint> {
     return this.app.getNetRecordCreateTime(rec, this.threadKey);
   }

@@ -15,7 +15,7 @@ export interface EventHeader extends IPLDNode {
 }  
 
 // 线程事件接口  
-export interface ThreadEvent extends IPLDNode {  
+export interface IThreadEvent extends IPLDNode {  
   /** 获取事件头的 CID */  
   headerCID(): CID  
 

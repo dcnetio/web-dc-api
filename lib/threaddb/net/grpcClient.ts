@@ -2,18 +2,22 @@ import type { Libp2p } from "libp2p";
 import { ThreadID } from "@textile/threads-id";
 import { multiaddr, Multiaddr } from "@multiformats/multiaddr";
 import { dcnet as dcnet_proto } from "../../proto/dcnet_proto";
+import {net as net_pb} from "../pb/net_pb";
 import { base58btc } from "multiformats/bases/base58";
 import { Libp2pGrpcClient } from "grpc-libp2p-client";
 import { toString as uint8ArrayToString } from "uint8arrays/to-string";
-import { Key as ThreadKey } from './key';
+import { Key as ThreadKey } from '../common/key';
 import { DataSource } from "../../proto/datasource";
 import { Ed25519PubKey,Ed25519PrivKey } from "../../dc-key/ed25519";
 import type { PublicKey,PrivateKey } from "@libp2p/interface"; 
 import { extractPublicKeyFromPeerId } from "../../dc-key/keyManager";
 import { NewThreadOptions } from '../core/options';
-import {ThreadInfo,ThreadLogInfo } from '../core/core';
+import {ThreadInfo,IThreadInfo } from '../core/core';
 import { peerIdFromString } from "@libp2p/peer-id";
 import { CID } from 'multiformats/cid';
+import { PeerRecords} from "./define";
+import {RecordFromProto} from "../cbor/record";
+import { IRecord } from "../core/record";
 
 export class DBGrpcClient {
     grpcClient: Libp2pGrpcClient;
@@ -150,11 +154,12 @@ export class DBGrpcClient {
           : [];  
       
         const addrs = reply.addrs?.map(addr => multiaddr(addr)) || [];  
-        return {  
-          id: threadID,  
-          logs,  
-          addrs,  
-        };  
+        const threadInfo = new ThreadInfo(
+          threadID,
+          logs,
+          addrs
+        );
+        return threadInfo;  
       }  
 
 
@@ -174,5 +179,59 @@ export class DBGrpcClient {
         throw err;
     }
  } 
+
+  
+
+  
+  
+  /**
+   * 从特定对等点获取记录
+   * 注意: 这是一个假设的实现，需要根据你的实际gRPC客户端实现来调整
+   */
+   async getRecordsFromPeer(
+    tid: ThreadID,
+    peerId: string,
+    req: any,
+    serviceKey: any
+  ): Promise<Record<string, PeerRecords>> {
+    try {
+      // 编码请求消息
+      const messageBytes = net_pb.pb.GetRecordsRequest.encode(req).finish();
+      
+      // 调用 gRPC 方法
+      const responseData = await this.grpcClient.unaryCall(
+        "/dcnet.pb.Service/GetRecords",
+        messageBytes,
+        30000
+      );
+      
+      // 解码响应
+      const response = net_pb.pb.GetRecordsReply.decode(responseData);
+      
+      // 处理响应数据
+      const result: Record<string, PeerRecords> = {};
+      
+      for (const logInfo of response.logs || []) {
+        if (!logInfo.logID) continue;
+        
+        const logId = uint8ArrayToString(logInfo.logID);
+        const records:IRecord[] = [];
+        
+        for (const rec of logInfo.records || []) {
+          records.push(await RecordFromProto(rec as net_pb.pb.Log.Record, serviceKey));
+        }
+        
+        result[logId] = {
+          records,
+          counter: logInfo.log?.counter as number || 0
+        };
+      }
+      
+      return result;
+    } catch (err) {
+      console.error(`getRecordsFromPeer error for peer ${peerId}:`, err);
+      throw err;
+    }
+  }
 
 }

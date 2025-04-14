@@ -39,7 +39,7 @@ export interface IRecord extends IPLDNode {
 }  
 
 // 线程记录包装器  
-export interface ThreadRecord {  
+export interface IThreadRecord {  
   /** 获取底层记录对象 */  
   value: () => IRecord  
   

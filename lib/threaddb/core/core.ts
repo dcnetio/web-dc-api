@@ -39,11 +39,11 @@ export interface IBlock {
 export interface INet extends DAGCBOR{  
   createThread( id: ThreadID, ...opts: any[]): Promise<void>;  
   addThread( addr: Multiaddr, ...opts: any[]): Promise<void>;  
-  getThread( id: ThreadID, ...opts: any[]): Promise<ThreadInfo>;  
-  getThreadFromPeer( id: ThreadID, peer: PeerId, ...opts: any[]): Promise<ThreadInfo>;
+  getThread( id: ThreadID, ...opts: any[]): Promise<IThreadInfo>;  
+  getThreadFromPeer( id: ThreadID, peer: PeerId, ...opts: any[]): Promise<IThreadInfo>;
   deleteThread( id: ThreadID, ...opts: any[]): Promise<void>;  
   pullThread( id: ThreadID,timeout: number, ...opts: any[]): Promise<void>;  
-  getPbLogs( id: ThreadID): Promise<[dcnet.pb.LogInfo[], ThreadInfo]>;  
+  getPbLogs( id: ThreadID): Promise<[dcnet.pb.LogInfo[], IThreadInfo]>;  
 }  
 
 
@@ -136,18 +136,36 @@ export interface SymKey {
 
 
 
-
-
-
 // 定义 Thread Info 的接口  
-export interface ThreadInfo {  
+export interface IThreadInfo {  
   id: ThreadID;  
   key?: ThreadKey;  
-  logs: ThreadLogInfo[];
+  logs: IThreadLogInfo[];
 	addrs: Multiaddr[];
+  getFirstPrivKeyLog() :IThreadLogInfo | undefined
 }  
 
-export interface ThreadLogInfo {  
+export class ThreadInfo  implements IThreadInfo {  
+  constructor(  
+    public id: ThreadID, 
+    public logs: IThreadLogInfo[],  
+    public addrs: Multiaddr[] ,
+    public key?: ThreadKey,  
+  ) {}
+
+
+public getFirstPrivKeyLog() :IThreadLogInfo | undefined {
+  for (const lg of this.logs) {
+    if (lg.privKey) {
+      return lg
+    }
+  }
+  return 
+}
+  
+} 
+
+export interface IThreadLogInfo {  
 // id is the log's identifier.
   id: PeerId;  
 // privKey is the log's private key.
@@ -164,8 +182,8 @@ export interface ThreadLogInfo {
 
 // 定义 Store 接口  
 export interface Store {  
-  addThread(info: ThreadInfo): Promise<void>;  
-  addLog(id: ThreadID, logInfo: ThreadLogInfo): Promise<void>;  
+  addThread(info: IThreadInfo): Promise<void>;  
+  addLog(id: ThreadID, logInfo: IThreadLogInfo): Promise<void>;  
   putBytes(id: ThreadID, identity: string, bytes: Uint8Array): Promise<void>;  
 }  
 

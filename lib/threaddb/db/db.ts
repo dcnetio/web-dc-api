@@ -6,10 +6,10 @@ import { Key as ThreadKey } from '../common/key';
 import { Connector } from '../core/app';
 import {Context} from '../core/core';
 import { EventCodec, Errors,pullThreadBackgroundTimeout ,PullTimeout} from '../core/db';
-import { ThreadRecord } from '../core/record'
+import { IThreadRecord } from '../core/record'
 import { Ed25519PubKey } from '../../dc-key/ed25519';
 import  {JSONSchemaType} from 'ajv';
-import { ThreadEvent  } from '../core/event';
+import { IThreadEvent  } from '../core/event';
 import {Collection,Txn} from './collection'
 import { ThreadToken } from '../core/identity';
 import { 
@@ -486,7 +486,7 @@ async notifyTxnEvents(node: DAGNode, token: ThreadToken): Promise<void> {
     }  
   }
 
-  async handleNetRecord(rec: ThreadRecord, key: ThreadKey): Promise<Error | undefined> {  
+  async handleNetRecord(rec: IThreadRecord, key: ThreadKey): Promise<Error | undefined> {  
     let event: any;
     try {  
       // 从记录中解码事件  
@@ -519,10 +519,10 @@ async notifyTxnEvents(node: DAGNode, token: ThreadToken): Promise<void> {
   }
 
   async getNetRecordCreateTime(
-    rec: ThreadRecord,
+    rec: IThreadRecord,
     key: ThreadKey
   ): Promise<bigint> {
-    let event :ThreadEvent;
+    let event :IThreadEvent;
     try {
       // 从记录中解码事件
       event = await threadEvent.EventFromRecord(this.connector.net, rec.value());

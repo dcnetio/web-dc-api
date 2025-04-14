@@ -20,6 +20,7 @@ import { ping } from "@libp2p/ping";
 import {autoNAT} from '@libp2p/autonat'
 import { dcutr } from '@libp2p/dcutr'
 import { bitswap} from '@helia/block-brokers'
+import {Client} from './dcapi'
 
 
 
@@ -147,6 +148,8 @@ export class DcUtil {
       }
     });
   };
+
+
 
   _createHeliaNode = async () => {
     console.log("_createHeliaNode=======");

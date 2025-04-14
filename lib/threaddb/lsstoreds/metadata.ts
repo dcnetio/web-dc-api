@@ -1,7 +1,6 @@
 import { Key, Datastore, Query } from 'interface-datastore'  
-import { ThreadMetadata, DumpMetadata, MetadataKey } from '../core/logstore'
+import { IThreadMetadata, DumpMetadata, MetadataKey } from '../core/logstore'
 import { ThreadID } from '@textile/threads-id';
-import { buffer } from 'stream/consumers';
 
 const AllowEmptyRestore = false  
 
@@ -13,7 +12,7 @@ export function newThreadMetadata(ds: Datastore): DsThreadMetadata {
     return new DsThreadMetadata(ds);
 }
 
-export class DsThreadMetadata implements ThreadMetadata {  
+export class DsThreadMetadata implements IThreadMetadata {  
   constructor(private readonly ds: Datastore) {}  
 
   async getInt64(t: ThreadID, key: string): Promise<number | null> {  

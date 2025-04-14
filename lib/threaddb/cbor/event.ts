@@ -1,5 +1,5 @@
 import { Context } from '../core/core';
-import { ThreadEvent as NetEvent, EventHeader as NetEventHeader } from '../core/event';
+import { IThreadEvent as NetEvent, EventHeader as NetEventHeader } from '../core/event';
 import {  IRecord } from '../core/record';
 import { SymmetricKey } from '../common/key'
 import { CID } from 'multiformats/cid';

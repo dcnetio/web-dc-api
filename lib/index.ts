@@ -41,7 +41,10 @@ import { bytesToHex } from "@noble/curves/abstract/utils";
 import {dc_protocol} from "./define";
 import { BCManager } from "./bc/manager";
 import { MessageManager } from "./message/manager";
-
+import {DBManager} from "./threaddb/dbmanager";
+import {createTxnDatastore} from "./threaddb/common/idbstore-adapter";
+import {App,Connector}  from "./threaddb/core/app";
+import { ThreadID } from '@textile/threads-id';
 
 const NonceBytes = 12;
 const TagBytes = 16;
@@ -52,7 +55,7 @@ export class DC  implements SignHandler {
   backChainAddr: string;
   dcChain: ChainUtil;
   dcNodeClient: HeliaLibp2p<Libp2p<any>>; // 什么类型？dc node 对象，主要用于建立连接
-  dc: DcUtil;
+  dcutil: DcUtil;
   privKey: Ed25519PrivKey | undefined; // 私钥
 
   public TokenTask: boolean = false;
@@ -66,7 +69,7 @@ export class DC  implements SignHandler {
     this.blockChainAddr = options.wssUrl;
     this.backChainAddr = options.backWssUrl;
     this.dcChain = new ChainUtil();
-    this.dc = new DcUtil(this.dcChain);
+    this.dcutil = new DcUtil(this.dcChain);
   }
 
 
@@ -196,7 +199,7 @@ export class DC  implements SignHandler {
   setCacheKey = async (value: string) => {
     const themeManager = new ThemeManager(
       this.connectedDc,
-      this.dc,
+      this.dcutil,
       this.dcChain,
       this
     );
@@ -259,7 +262,7 @@ export class DC  implements SignHandler {
       // 存在token， 获取用户备用节点
       const accountManager = new AccountManager(
         this.connectedDc,
-        this.dc,
+        this.dcutil,
         this.dcChain,
         this,
       );
@@ -273,6 +276,39 @@ export class DC  implements SignHandler {
     return true;
   };
 
+/**
+ * 连接应用到指定线程
+ * @param app 应用程序对象
+ * @param id 线程ID
+ * @returns 返回一个应用连接器
+ * @throws 如果验证失败或获取线程信息出错则抛出异常
+ */
+async connectApp(app: App, id: ThreadID): Promise<Connector> {
+  // 验证线程ID
+ if (!id.isDefined()) {
+   throw new Error("Invalid thread ID");
+ }
+  // 获取threaddb信息
+  let info;
+  try {
+    info = await this.getThreadWithAddrs(id);
+  } catch (err) {
+    throw new Error(`Error getting thread ${id.toString()}: ${err instanceof Error ? err.message : String(err)}`);
+  }
+  
+  // 创建应用连接器
+  let con;
+  try {
+    con =  new Connector(this, app, info);
+  } catch (err) {
+    throw new Error(`Error making connector ${id.toString()}: ${err instanceof Error ? err.message : String(err)}`);
+  }
+  
+  // 添加连接器到网络
+  this.addConnector(id, con);
+  
+  return con;
+}
   // 退出登陆
   // accountLogout = async () => {
   //   if (!this.connectedDc.client) {
@@ -955,5 +991,73 @@ export class DC  implements SignHandler {
     // console.log("addFile res:", res);
     return res;
   }
+
+  async newDB(
+    name: string,
+    b32Rk: string,  
+    b32Sk: string,  
+    jsonCollections: string 
+  ): Promise<string> {
+    const tdatastore = await createTxnDatastore(name)
+    const dbmanager = new DBManager(
+      tdatastore,
+      this.dcNodeClient,
+      this.dc,
+      this.connectedDc,
+      this.opts,
+      this.chainUtil,
+      this.storagePrefix
+    )
+    const db = await dbmanager.newDB(id, opts);
+    return await DB.newDB(store, n, id, opts);
+  }
+
+
+/**
+ * 获取线程信息并添加地址
+ * @param id 线程ID
+ * @returns 带有地址的线程信息
+ * @throws 如果获取线程信息或创建组件失败则抛出异常
+ */
+async getThreadWithAddrs(id: ThreadID): Promise<ThreadInfo> {
+  // 获取线程信息
+  let tinfo: ThreadInfo;
+  try {
+    tinfo = await this.store.getThread(id);
+  } catch (err) {
+    throw new Error(`Failed to get thread: ${err instanceof Error ? err.message : String(err)}`);
+  }
+  
+  // 创建P2P组件
+  let peerID;
+  try {
+    peerID = multiaddr.protocols.getProtocol('p2p').createComponent(this.host.ID().toString());
+  } catch (err) {
+    throw new Error(`Failed to create peer component: ${err instanceof Error ? err.message : String(err)}`);
+  }
+  
+  // 创建Thread组件
+  let threadID;
+  try {
+    threadID = multiaddr.protocols.getProtocol('thread').createComponent(tinfo.id.toString());
+  } catch (err) {
+    throw new Error(`Failed to create thread component: ${err instanceof Error ? err.message : String(err)}`);
+  }
+  
+  // 获取主机地址并封装
+  const addrs = this.host.getAddrs();
+  const res: Multiaddr[] = [];
+  
+  for (const addr of addrs) {
+    // 封装地址与peer ID和thread ID
+    const encapsulatedAddr = addr.encapsulate(`/p2p/${this.host.ID().toString()}/thread/${tinfo.id.toString()}`);
+    res.push(encapsulatedAddr);
+  }
+  
+  // 更新线程信息中的地址
+  tinfo.addrs = res;
+  
+  return tinfo;
+}
 }
 

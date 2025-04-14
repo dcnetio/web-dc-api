@@ -1,8 +1,8 @@
 // Package logstore provides local store for thread logs. The subpackages provide creators for different types of store implementations.
 
 import { Mutex } from 'async-mutex';
-import { KeyBook, AddrBook, ThreadMetadata, HeadBook, Logstore as CoreLogstore, ErrThreadNotFound, ErrLogNotFound, ErrLogExists } from '../core/logstore';
-import {ThreadInfo,ThreadLogInfo} from '../core/core';
+import { KeyBook, AddrBook, IThreadMetadata, HeadBook, ILogstore, ErrThreadNotFound, ErrLogNotFound, ErrLogExists } from '../core/logstore';
+import {IThreadInfo,IThreadLogInfo} from '../core/core';
 import {SymmetricKey} from './key';
 import { ThreadID } from '@textile/threads-id'; 
 import type { PeerId } from "@libp2p/interface";
@@ -10,6 +10,7 @@ import { compareByteArrays } from '../../util/utils';
 import {Key as ThreadKey} from './key';
 import { symKeyFromBytes } from '../../dc-key/keyManager';
 import { CID } from 'multiformats';
+import {ThreadInfo} from '../core/core';
 
 const PermanentAddrTTL = 2^53-1; // 使用 bigint 精确表示 64 位整数  
 
@@ -18,20 +19,21 @@ const managedSuffix = "/managed";
 
 
 // NewLogstore creates a new log store from the given books.
- export function newLogstore(kb: KeyBook, ab: AddrBook, hb: HeadBook, md: ThreadMetadata): Logstore {
+ export function newLogstore(kb: KeyBook, ab: AddrBook, hb: HeadBook, md: IThreadMetadata): ILogstore {
     return new Logstore(kb, ab, hb, md);
 }
 
 // logstore is a collection of books for storing thread logs.
-class Logstore implements CoreLogstore {
+class Logstore implements ILogstore {
     private mutex = new Mutex();
 
     constructor(
-        private keyBook: KeyBook,
-        private addrBook: AddrBook,
-        private headBook: HeadBook,
-        private threadMetadata: ThreadMetadata
+        public keyBook: KeyBook,
+        public addrBook: AddrBook,
+        public headBook: HeadBook,
+        public metadata: IThreadMetadata
     ) {}
+  
 
     // Close the logstore.
     async close(): Promise<void> {
@@ -49,7 +51,7 @@ class Logstore implements CoreLogstore {
         await weakClose("keybook", this.keyBook);
         await weakClose("addressbook", this.addrBook);
         await weakClose("headbook", this.headBook);
-        await weakClose("threadmetadata", this.threadMetadata);
+        await weakClose("threadmetadata", this.metadata);
 
         if (errs.length > 0) {
             throw new Error(`failed while closing logstore; err(s): ${errs.map(e => e.message).join(', ')}`);
@@ -69,7 +71,7 @@ class Logstore implements CoreLogstore {
     }
 
     // AddThread adds a thread with keys.
-    async addThread(info: ThreadInfo): Promise<void> {
+    async addThread(info: IThreadInfo): Promise<void> {
         return this.mutex.runExclusive(async () => {
             if (!info.key?.service()) {
                 throw new Error("a service-key is required to add a thread");
@@ -100,7 +102,7 @@ class Logstore implements CoreLogstore {
     }
 
     // GetThread returns thread info of the given id.
-    async getThread(id: ThreadID):Promise<ThreadInfo> {
+    async getThread(id: ThreadID):Promise<IThreadInfo> {
         return this.mutex.runExclusive(async () => {
             const sk = await this.keyBook.serviceKey(id);
             if (!sk) {
@@ -108,7 +110,7 @@ class Logstore implements CoreLogstore {
             }
             const rk = await this.keyBook.readKey(id);
             const set = await this.getLogIDs(id);
-            const logs: ThreadLogInfo[] = [];
+            const logs: IThreadLogInfo[] = [];
             for (const l of set) {
                 const i = await this.getLog(id, l);
                 logs.push(i);
@@ -117,12 +119,8 @@ class Logstore implements CoreLogstore {
             if(rk) {
                 threadKey = new ThreadKey(SymmetricKey.fromSymKey(sk), SymmetricKey.fromSymKey(rk));
             }
-            return {
-                id,
-                logs,
-                key: threadKey,
-                addrs:[]
-            };
+            const threadInfo = new ThreadInfo(id, logs, [], threadKey );
+            return threadInfo;
         });
     }
 
@@ -139,7 +137,7 @@ class Logstore implements CoreLogstore {
     async deleteThread(id: ThreadID): Promise<void> {
         return this.mutex.runExclusive(async () => {
             await this.keyBook.clearKeys(id);
-            await this.threadMetadata.clearMetadata(id);
+            await this.metadata.clearMetadata(id);
             const set = await this.getLogIDs(id);
             for (const l of set) {
                 await this.addrBook.clearAddrs(id, l);
@@ -149,7 +147,7 @@ class Logstore implements CoreLogstore {
     }
 
     // AddLog adds a log under the given thread.
-    async addLog(id: ThreadID, lg: ThreadLogInfo): Promise<void> {
+    async addLog(id: ThreadID, lg: IThreadLogInfo): Promise<void> {
         return this.mutex.runExclusive(async () => {
             if (lg.privKey) {
                 const pk = await this.keyBook.privKey(id, lg.id);
@@ -167,19 +165,19 @@ class Logstore implements CoreLogstore {
                 await this.headBook.setHead(id, lg.id, lg.head);
             }
             if (lg.managed || lg.privKey) {
-                await this.threadMetadata.putBool(id, lg.id.toString() + managedSuffix, true);
+                await this.metadata.putBool(id, lg.id.toString() + managedSuffix, true);
             }
         });
     }
 
     // GetLog returns info about the given thread.
-    async getLog(id: ThreadID, lid: PeerId): Promise<ThreadLogInfo> {
+    async getLog(id: ThreadID, lid: PeerId): Promise<IThreadLogInfo> {
         return this.mutex.runExclusive(async () => {
             return this.getLogInternal(id, lid);
         });
     }
 
-    private async getLogInternal(id: ThreadID, lid: PeerId): Promise<ThreadLogInfo> {
+    private async getLogInternal(id: ThreadID, lid: PeerId): Promise<IThreadLogInfo> {
         const pk = await this.keyBook.pubKey(id, lid);
         if (!pk) {
             throw ErrLogNotFound;
@@ -187,7 +185,7 @@ class Logstore implements CoreLogstore {
         const sk = await this.keyBook.privKey(id, lid);
         const addrs = await this.addrBook.addrs(id, lid);
         const heads = await this.headBook.heads(id, lid);
-        const managed = await this.threadMetadata.getBool(id, lid.toString() + managedSuffix);
+        const managed = await this.metadata.getBool(id, lid.toString() + managedSuffix);
         return {
             id: lid,
             pubKey: pk,
@@ -199,9 +197,9 @@ class Logstore implements CoreLogstore {
     }
 
     // GetManagedLogs returns the logs the host is 'managing' under the given thread.
-    async getManagedLogs(id: ThreadID): Promise<ThreadLogInfo[]> {
+    async getManagedLogs(id: ThreadID): Promise<IThreadLogInfo[]> {
         const logs = await this.keyBook.logsWithKeys(id);
-        const managed: ThreadLogInfo[] = [];
+        const managed: IThreadLogInfo[] = [];
         for (const lid of logs) {
             const lg = await this.getLog(id, lid);
             if (lg.managed || lg.privKey) {

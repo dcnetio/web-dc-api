@@ -26,7 +26,7 @@ import {Type} from '../constants';
 import { SignHandler } from '../types/types';
 import { NewThreadOptions } from './core/options';
 import {ThreadToken} from './core/identity';
-import { DBGrpcClient } from "./common/grpcClient";
+import { DBGrpcClient } from "./net/grpcClient";
 import type { Client } from "../dcapi";
 
 

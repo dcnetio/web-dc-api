@@ -4,12 +4,12 @@ import {newAddrBook} from './addr_book'
 import {newKeyBook} from './keybook'
 import {newThreadMetadata} from './metadata'
 import {newHeadBook} from './headbook'
-import * as lstore from '../logstore'
+import * as lstore from '../common/logstore'
 import type { PeerId } from "@libp2p/interface";
 import {  QueryExt, QueryResult, TxnDatastoreExtended,Transaction } from '../core/db'  
 import { peerIdFromString } from "@libp2p/peer-id";
 import { ThreadID } from '@textile/threads-id'; 
-import {  Logstore} from '../core/logstore' // 假设核心接口定义  
+import {  ILogstore} from '../core/logstore' // 假设核心接口定义  
 import {AllowEmptyRestore,EmptyEdgeValue,DSOptions,DefaultOpts} from './global'
 
 
@@ -17,7 +17,7 @@ import {AllowEmptyRestore,EmptyEdgeValue,DSOptions,DefaultOpts} from './global'
 export async function newLogstore(  
   store: Datastore & { transaction?: any },  
   opts: DSOptions  
-): Promise<Logstore> {  
+): Promise<ILogstore> {  
   const addrBook = await newAddrBook( store, opts)  
   const keyBook = await newKeyBook(store)  
   const threadMetadata = newThreadMetadata(store)  
