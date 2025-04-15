@@ -12,6 +12,7 @@ import { Encryption } from "./util/curve25519Encryption";
 import { decryptContent } from "./util/dccrypt";
 import { keys } from "@libp2p/crypto";
 import { sha256, getRandomBytes, concatenateUint8Arrays } from "./util/utils";
+import { Blocks } from "helia";
 
 
 
@@ -19,14 +20,16 @@ import { sha256, getRandomBytes, concatenateUint8Arrays } from "./util/utils";
 export class Client {
   readonly protocol: string;
   p2pNode: Libp2p;
+  blockstore: Blocks;
   peerAddr: Multiaddr;
   token: string;
 
-  constructor(node: Libp2p, peerAddr: Multiaddr, protocol: string) {
+  constructor(node: Libp2p,blockstore: Blocks, peerAddr: Multiaddr, protocol: string) {
     this.protocol = protocol;
     this.p2pNode = node;
     this.peerAddr = peerAddr;
     this.token = "";
+    this.blockstore = blockstore
   }
 
   async GetToken(
@@ -95,5 +98,4 @@ export class Client {
     this.ClearToken();
     return await this.GetToken(pubkey, signCallback, peerAddr);
   }
-
 }

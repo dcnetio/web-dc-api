@@ -9,7 +9,7 @@ import { Ed25519PrivKey,Ed25519PubKey } from "../../dc-key/ed25519";
 import type { PeerId,PublicKey,PrivateKey } from "@libp2p/interface"; 
 import { SymmetricKey, Key as ThreadKey } from '../common/key';
 import {validateIDData} from '../lsstoreds/global';
-import {  ThreadInfo, IThreadLogInfo} from '../core/core';
+import {  ThreadInfo, IThreadLogInfo, SymKey} from '../core/core';
 import {ThreadToken} from '../core/identity';
 import {ILogstore} from '../core/logstore';
 import {Datastore} from 'interface-datastore';
@@ -19,19 +19,23 @@ import { IRecord,IThreadRecord } from '../core/record';
 import {DCGrpcServer} from './grpcserver';
 import { Libp2p } from "@libp2p/interface";
 import {dc_protocol} from '../../define';
-import {Connector}  from "../core/app";
 import {EventFromNode,Event} from '../cbor/event';
 import {Node} from '../cbor/node';  
 import {IPLDNode} from '../core/core';
 import {ThreadRecord,TimestampedRecord,PeerRecords,netPullingLimit} from './define';
 import {CID} from 'multiformats/cid';
 import {HeadUndef,CIDUndef} from '../core/head';
-import {GetRecord} from '../cbor/record';
+import {GetRecord,CreateRecord} from '../cbor/record';
 import {IThreadEvent} from '../core/event';
 import {DBGrpcClient} from './grpcClient';
 import { DBClient } from '../client';
 import { Client } from "../../dcapi";
+import {App,Connector,Token}  from "../core/app";
 import {ChainUtil} from '../../chain';
+import { DcUtil } from '../../dcutil';
+import {CreateEvent} from '../cbor/event';
+import {net as net_pb} from "../pb/net_pb";
+import { AddOptions } from 'helia';
 import {   
   PeerIDConverter,  
   MultiaddrConverter,  
@@ -56,11 +60,11 @@ function newRecord(r: IRecord, id: ThreadID, lid: PeerId): IThreadRecord {
 
 
 // 定义 Network 类  
-class Network {  
+export class Network {  
   private logstore: ILogstore;  
   private bstore: Blocks;
-  private ds: Datastore;
   private dcChain: ChainUtil;
+  private dc: DcUtil;
   private dagService: DAGCBOR; 
   private hostID: string;  
   private privateKey: Ed25519PrivKey;  
@@ -69,11 +73,10 @@ class Network {
   private connectors: Record<string, Connector>;
   private cachePeers: Record<string, Multiaddr> = {};
 
-  constructor(dcChain: ChainUtil,libp2p:Libp2p,logstore: ILogstore,ds: Datastore,bstore: Blocks,dagService: DAGCBOR,  privateKey: Ed25519PrivKey) {  
+  constructor(dcChain: ChainUtil,libp2p:Libp2p,logstore: ILogstore,bstore: Blocks,dagService: DAGCBOR,  privateKey: Ed25519PrivKey) {  
     this.logstore = logstore;  
     this.hostID = libp2p.peerId.toString();  
     this.privateKey = privateKey;  
-    this.ds = ds;
     this.bstore = bstore;
     this.dagService = dagService;
     this.libp2p = libp2p;
@@ -105,7 +108,7 @@ class Network {
       throw new Error("peerAddr is null");
     } 
     const addr = multiaddr(peerAddr);
-    const client = new Client(this.libp2p,addr, dc_protocol);
+    const client = new Client(this.libp2p,this.bstore,addr, dc_protocol);
     //获取token
     const token = await client.GetToken(this.privateKey.publicKey.toString(),(payload: Uint8Array) => {
       return this.sign(payload);
@@ -118,7 +121,7 @@ class Network {
           throw new Error("peerAddr is null");
         } 
         const addr = multiaddr(peerAddr);
-        const client = new Client(this.libp2p,addr, dc_protocol);
+        const client = new Client(this.libp2p,this.bstore,addr, dc_protocol);
         const token = await client.GetToken(this.privateKey.publicKey.toString(),(payload: Uint8Array) => {
           return this.sign(payload);
         });
@@ -143,7 +146,7 @@ class Network {
    * 创建threaddb  
    */  
   async createThread(id: ThreadID, options: { token: ThreadToken; logKey?: Ed25519PrivKey|Ed25519PubKey, threadKey?: ThreadKey }): Promise<ThreadInfo> {  
-    const identity = await this.validate(id, options.token, false);  
+    const identity = await this.validate(id, options.token);  
     if (identity) {  
       console.debug("Creating thread with identity:", identity.toString());  
     } else {  
@@ -161,26 +164,231 @@ class Network {
     return threadInfo; 
   }  
 
+
+/**
+ * 从多地址添加threaddb 
+ * 
+ * @param addr 包含threaddb ID的多地址
+ * @param options threaddb 选项
+ * @returns 带有地址的threaddb 信息
+ */
+async addThread(
+  addr: Multiaddr,
+  options: { token?: ThreadToken; logKey?: Ed25519PrivKey | Ed25519PubKey; threadKey?: ThreadKey } = {}
+): Promise<ThreadInfo> {
+  try {
+    // 从多地址提取threaddb ID
+    const idStr = addr.toString().split('/thread/')[1];
+    if (!idStr) {
+      throw new Error("Invalid thread address");
+    }
+    const id = ThreadID.fromString(idStr);
+
+    // 验证身份
+    let identity = await this.validate(id, options.token);
+    if (identity) {
+      console.debug(`Adding thread with identity: ${identity.toString()}`);
+    } else {
+      identity = this.privateKey.publicKey;
+    }
+
+    // 确保日志唯一性
+    await this.ensureUniqueLog(id, options.logKey, identity);
+
+    // 分离threaddb 组件以获取对等点地址
+    const threadComp = `/thread/${id.toString()}`;
+    const peerAddr = multiaddr(addr.toString().split(threadComp)[0]);
+    
+    // 获取对等点信息
+    const peerId = peerAddr.getPeerId();
+    if (!peerId) {
+      throw new Error("Invalid peer address");
+    }
+    
+    const pid = peerIdFromString(peerId);
+    const addFromSelf = pid.toString() === this.hostID;
+
+    // 如果我们从自己添加，检查threaddb 是否存在
+    if (addFromSelf) {
+      try {
+        await this.logstore.getThread(id);
+      } catch (err) {
+        if (err.message === "Thread not found") {
+          throw new Error(`Cannot retrieve thread from self: ${err.message}`);
+        }
+        throw err;
+      }
+    }
+    
+    // 添加threaddb 到存储
+    const threadInfo = new ThreadInfo(id, [], [], options.threadKey);
+    await this.logstore.addThread(threadInfo);
+
+    // 如果可以读取或有日志密钥，则创建日志
+    if ((options.threadKey && options.threadKey.canRead()) || options.logKey) {
+      const logInfo = await this.createLog(id, options.logKey, identity);
+      threadInfo.logs.push(logInfo);
+    }
+
+    // 如果不是从自己添加，则连接并获取日志
+    if (!addFromSelf) {
+      // 连接到对等点
+      await this.libp2p.dial(peerAddr);
+      
+      // 从对等点更新日志
+      await this.updateRecordsFromPeer(id, pid);
+    }
+
+    // 返回带有地址的threaddb 信息
+    return this.getThreadWithAddrs(id);
+  } catch (err) {
+    throw new Error(`Failed to add thread: ${err instanceof Error ? err.message : String(err)}`);
+  }
+}
+
+
+
+/**
+ * 获取threaddb 信息
+ * 返回包含地址的threaddb 信息对象
+ * 
+ * @param id threaddb ID
+ * @param options 选项，可以包含令牌等
+ * @returns 包含地址的threaddb 信息
+ * @throws 如果threaddb 验证失败或threaddb 不存在
+ */
+async getThread(
+  id: ThreadID, 
+  options: { token?: ThreadToken } = {}
+): Promise<ThreadInfo> {
+  try {
+    // 验证threaddb ID和令牌
+    await this.validate(id, options.token);
+    
+    // 获取带有地址的threaddb 信息
+    return this.getThreadWithAddrs(id);
+  } catch (err) {
+    throw new Error(`Error getting thread ${id.toString()}: ${err instanceof Error ? err.message : String(err)}`);
+  }
+}
+
+
+
+/**
+ * 从连接的远程对等点获取线程信息
+ * 
+ * @param id 线程ID
+ * @param options 线程选项
+ * @returns 线程信息对象
+ * @throws 如果连接刷新失败或获取线程信息失败
+ */
+async getThreadFromPeer(
+  id: ThreadID, 
+  options: { token?: ThreadToken } = {}
+): Promise<ThreadInfo> {
+  try {
+    // 刷新与对等点的连接
+    await this.refreshConn(this.peerID);
+    
+    // 创建带有令牌的上下文
+    let threadToken = this.token;
+    
+    // 创建请求
+    const request = {
+      threadID: id.toBytes()
+    };
+    
+    // 发送请求
+    try {
+      const response = await this.client.getThread(threadToken, request);
+      return threadInfoFromProto(response);
+    } catch (err) {
+      // 检查是否是令牌失效错误
+      if (err.message && err.message.includes("Invalid token")) {
+        console.debug("Token expired, getting new token and retrying request");
+        
+        // 获取新的令牌
+        this.token = await this.getToken();
+        if (!this.token) {
+          throw new Error("Failed to get new token");
+        }
+        
+        // 使用新令牌重试请求
+        const retryResponse = await this.client.getThread(this.token, request);
+        return threadInfoFromProto(retryResponse);
+      } else {
+        throw err;
+      }
+    }
+  } catch (err) {
+    throw new Error(`Error getting thread from peer: ${err instanceof Error ? err.message : String(err)}`);
+  }
+}
+
+
+/**
+ * 删除线程
+ * 
+ * @param id 线程ID
+ * @param options 线程选项
+ * @returns 无返回值
+ * @throws 如果验证失败或线程正在被使用
+ */
+async deleteThread(
+  id: ThreadID,
+  options: { token?: ThreadToken, apiToken?: Token } = {}
+): Promise<void> {
+  try {
+    // 验证线程ID和令牌
+    if (await this.validate(id, options.token) === undefined) {
+      throw new Error("Thread validation failed");
+    }
+    
+    // 检查线程是否被应用使用
+    const [_, ok] = this.getConnectorProtected(id, options.apiToken);
+    if (!ok) {
+      throw new Error("Cannot delete thread: thread in use");
+    }
+    
+    console.debug(`Deleting thread ${id.toString()}...`);
+    
+   
+    
+    try {
+      // 执行删除操作
+      await this.logstore.deleteThread(id); 
+      delete this.connectors[id.toString()];
+    } finally {
+     
+    }
+  } catch (err) {
+    throw new Error(`Failed to delete thread: ${err instanceof Error ? err.message : String(err)}`);
+  }
+}
+
   /**  
-   * 验证线程 ID 和 Token  
+   * 验证threaddb  ID 和 Token  
    */  
-  async validate(id: ThreadID, token: ThreadToken, readOnly: boolean): Promise<PublicKey|null> {  
+  async validate(id: ThreadID, token?: ThreadToken): Promise<PublicKey|undefined> {  
     if (!validateIDData(id.toBytes())) {  
       throw new Error("Invalid thread ID.");  
     }    
+    if (!token) {  
+      return
+    }
     return await token.validate(this.privateKey);  
   }  
 
  
 /**
  * 确保日志唯一性
- * 检查给定线程是否已存在具有相同密钥或身份的日志
+ * 检查给定threaddb 是否已存在具有相同密钥或身份的日志
  */
 async ensureUniqueLog(id: ThreadID, key?: Ed25519PrivKey | Ed25519PubKey, identity?: PublicKey): Promise<void> {
   try {
     const thrd = await this.logstore.getThread(id);
     
-    // 线程存在，继续检查
+    // threaddb 存在，继续检查
     let lid: PeerId;
     
     if (key) {
@@ -232,7 +440,7 @@ async ensureUniqueLog(id: ThreadID, key?: Ed25519PrivKey | Ed25519PubKey, identi
       throw error;
     }
   } catch (error: any) {
-    // 如果线程未找到，那没问题（我们正在创建一个新线程）
+    // 如果threaddb 未找到，那没问题（我们正在创建一个新threaddb ）
     if (error.message === "Thread not found") {
       return;
     }
@@ -310,7 +518,7 @@ async ensureUniqueLog(id: ThreadID, key?: Ed25519PrivKey | Ed25519PubKey, identi
             });
           }
         } else {
-          await this.putRecords(ctx, id, lid, rs.records, rs.counter);
+          await this.putRecords(id, lid, rs.records, rs.counter);
         }
       }
 
@@ -322,7 +530,7 @@ async ensureUniqueLog(id: ThreadID, key?: Ed25519PrivKey | Ed25519PubKey, identi
       
       // Process each record in order
       for (const r of tRecords) {
-        await this.putRecords(ctx, id, r.logid, [r.record], r.counter);
+        await this.putRecords( id, r.logid, [r.record], r.counter);
       }
     } catch (err) {
       throw err;
@@ -440,7 +648,7 @@ async ensureUniqueLog(id: ThreadID, key?: Ed25519PrivKey | Ed25519PubKey, identi
   }  
 
   /**  
-   * 生成随机线程密钥  
+   * 生成随机threaddb 密钥  
    */  
   generateRandomKey(): ThreadKey {  
     return new ThreadKey(SymmetricKey.new(),SymmetricKey.new());  
@@ -501,11 +709,95 @@ async ensureUniqueLog(id: ThreadID, key?: Ed25519PrivKey | Ed25519PubKey, identi
   }
 
 
+
+
+/**
+ * 从对等点获取新的日志和记录并添加到本地存储
+ * 
+ * @param tid threaddb ID
+ * @param pid 对等点ID
+ * @returns 无返回值，但会抛出错误
+ */
+async updateRecordsFromPeer(tid: ThreadID,peerId: PeerId): Promise<void> {
+  try {
+    // 获取threaddb 偏移量
+    const  [offsets, peers] = await this.threadOffsets(tid);
+    
+    // 构建获取记录的请求
+    const { req, serviceKey } = await this.buildGetRecordsRequest(tid, offsets, netPullingLimit);
+    
+    // 从对等点获取记录
+    const recs = await this.getRecordsFromPeer(
+      peerId,
+      req, 
+      serviceKey
+    );
+    
+    // 处理接收到的记录
+    for (const [lidStr, rs] of Object.entries(recs)) {
+      try {
+        // 将字符串ID转换为PeerId对象
+        const lid =  peerIdFromString(lidStr);
+        
+        // 将记录添加到本地存储
+        await this.putRecords( tid, lid, rs.records, rs.counter);
+      } catch (err) {
+        throw new Error(`Putting records from log ${lidStr} (thread ${tid}) failed: ${err instanceof Error ? err.message : String(err)}`);
+      }
+    }
+    // 检查是否可能有更多记录需要获取
+    for (const [lidStr, rs] of Object.entries(recs)) {
+      try {
+        const lid =  peerIdFromString(lidStr);
+        const head = await this.currentHead(tid, lid);
+        
+        // 如果我们收到了最大数量的记录，并且可能还有更多
+        if (head.counter <= rs.counter && rs.records.length === netPullingLimit) {
+          // 递归调用继续获取更多记录
+          return this.updateRecordsFromPeer(tid, peerId);
+        }
+      } catch (err) {
+        // 忽略获取头部的错误，继续检查其他日志
+        console.warn(`Error checking head for log ${lidStr}: ${err instanceof Error ? err.message : String(err)}`);
+      }
+    }
+  } catch (err) {
+    throw new Error(`Getting records for thread ${tid} failed: ${err instanceof Error ? err.message : String(err)}`);
+  }
+}
+
+
+/**
+ * 从特定对等点获取记录
+ * 注意: 这是一个假设的实现，需要根据你的实际gRPC客户端实现来调整
+ */
+async getRecordsFromPeer(
+  peerId: PeerId,
+  req: any,
+  serviceKey: SymKey
+): Promise<Record<string, PeerRecords>> {
+  try {
+
+    const client = await this.getClient(peerId);
+    if (!client) {
+      return {};
+    }
+    const dbClient = new DBClient(client,this.dc);
+    const recs = await dbClient.getRecordsFromPeer( req, serviceKey);
+    return recs;
+  } catch (err) {
+    console.error("getRecordsFromPeer error:", err);
+    throw err;
+  }
+}
+
+
+
   /**
    * Add records to a thread
    */
-  async putRecords(ctx: any, tid: ThreadID, lid: PeerId, recs: IRecord[], counter: number): Promise<void> {
-    const [chain, head] = await this.loadRecords(ctx, tid, lid, recs, counter);
+  async putRecords(tid: ThreadID, lid: PeerId, recs: IRecord[], counter: number): Promise<void> {
+    const [chain, head] = await this.loadRecords( tid, lid, recs, counter);
     
     if (chain.length === 0) {
       return;
@@ -564,7 +856,7 @@ async ensureUniqueLog(id: ThreadID, key?: Ed25519PrivKey | Ed25519PubKey, identi
           } else {
             event = await EventFromNode(block as Node);
           }
-          const dbody = await event.getBody(ctx, this, readKey!);
+          const dbody = await event.getBody( this, readKey!);
           
           identity =  await KeyConverter.publicFromBytes<Ed25519PubKey>(record.value().pubKey());
           
@@ -572,8 +864,8 @@ async ensureUniqueLog(id: ThreadID, key?: Ed25519PrivKey | Ed25519PubKey, identi
             await connector!.validateNetRecordBody(dbody, identity);
           } catch (err) {
             // If validation fails, clean up blocks
-            const header = await event.getHeader(ctx, this, null);
-            const body = await event.getBody(ctx, this, null);
+            const header = await event.getHeader( this, null);
+            const body = await event.getBody(this, null);
             this.bstore.deleteMany([event.cid(), header.cid(), body.cid()]);
             throw err;
           }
@@ -618,7 +910,6 @@ async ensureUniqueLog(id: ThreadID, key?: Ed25519PrivKey | Ed25519PubKey, identi
    * Load records from a thread
    */
   async loadRecords(
-    ctx: any,
     tid: ThreadID,
     lid: PeerId,
     recs: IRecord[],
@@ -714,10 +1005,10 @@ async ensureUniqueLog(id: ThreadID, key?: Ed25519PrivKey | Ed25519PubKey, identi
 
 /**
  * 获取记录
- * 从给定的线程和CID获取记录
+ * 从给定的threaddb 和CID获取记录
  * 
  * @param ctx 上下文
- * @param id 线程ID
+ * @param id threaddb ID
  * @param rid 记录CID
  * @returns 检索到的记录
  * @throws 如果无法获取服务密钥或记录
@@ -842,10 +1133,10 @@ async getRecord( id: ThreadID, rid: CID): Promise<IRecord> {
             if (!client) {
               return;
             }
-            const dbClient = new DBClient(client);
+            const dbClient = new DBClient(client,this.dc);
         
             // 这里使用一个队列来控制并发，类似于 Go 代码中的 queueGetRecords
-            const records = await dbClient.getRecordsFromPeer(client.peerAddr, tid, peerId.toString(), req, serviceKey);
+            const records = await dbClient.getRecordsFromPeer( req, serviceKey);
             
             // 更新收集器
             Object.entries(records).forEach(([logId, rs]) => {
@@ -895,9 +1186,9 @@ async getRecord( id: ThreadID, rid: CID): Promise<IRecord> {
    */
   async buildGetRecordsRequest(
     tid: ThreadID,
-    offsets: Record<string, { id: CID, counter: number }>,
+    offsets: Record<string,Head>,
     limit: number
-  ): Promise<{ req: any, serviceKey: any }> {
+  ): Promise<{ req: any, serviceKey: SymKey }> {
     try {
       // 从存储中获取服务密钥
       const serviceKey = await this.logstore.keyBook.serviceKey(tid);
@@ -934,6 +1225,374 @@ async getRecord( id: ThreadID, rid: CID): Promise<IRecord> {
       throw err;
     }
   }
+
+
+  /**
+   * 连接应用到指定threaddb 
+   * @param app 应用程序对象
+   * @param id threaddb ID
+   * @returns 返回一个应用连接器
+   * @throws 如果验证失败或获取threaddb 信息出错则抛出异常
+   */
+  async connectApp(app: App, id: ThreadID): Promise<Connector> {
+    // 验证threaddb ID
+   if (!id.isDefined()) {
+     throw new Error("Invalid thread ID");
+   }
+    // 获取threaddb信息
+    let info;
+    try {
+      info = await this.getThreadWithAddrs(id);
+    } catch (err) {
+      throw new Error(`Error getting thread ${id.toString()}: ${err instanceof Error ? err.message : String(err)}`);
+    }
+    
+    // 创建应用连接器
+    let con;
+    try {
+      con =  new Connector(this, app, info);
+    } catch (err) {
+      throw new Error(`Error making connector ${id.toString()}: ${err instanceof Error ? err.message : String(err)}`);
+    }
+    
+    // 添加连接器到网络
+    this.addConnector(id, con);
+    
+    return con;
+  }
+
+async  add(str: unknown, options?: Partial<AddOptions>): Promise<CID> {
+  // 添加到块存储
+  return await this.dagService.add(str, options);
+}
+
+async get(cid: CID): Promise<Uint8Array> {
+  // 从块存储中获取数据
+  return await this.dagService.get(cid);
+}
+
+
+
+/**
+ * 获取线程的所有日志
+ * 返回线程的日志列表和线程信息
+ *
+ * @param tid 线程ID
+ * @returns 日志数组和线程信息
+ */
+async getPbLogs(tid: ThreadID): Promise<[net_pb.pb.ILog[], ThreadInfo]> {
+  try {
+    // 从存储中获取线程信息
+    const info = await this.logstore.getThread(tid);
+    
+    // 创建日志数组
+    const logs: net_pb.pb.ILog[] = [];
+    
+    // 将每个日志信息转换为protobuf格式
+    for (const logInfo of info.logs) {
+      logs.push(this.logToProto(logInfo));
+    }
+    
+    return [logs, info];
+  } catch (err) {
+    throw new Error(`Failed to get logs for thread ${tid}: ${err instanceof Error ? err.message : String(err)}`);
+  }
+}
+
+/**
+ * 将日志信息转换为protobuf格式
+ * @param info 日志信息
+ * @returns protobuf格式的日志
+ */
+private logToProto(info: IThreadLogInfo): net_pb.pb.ILog {
+  // 创建protobuf日志对象
+  const log: net_pb.pb.ILog = {
+    ID: PeerIDConverter.toBytes(info.id.toString() as ProtoPeerID),
+    pubKey: ProtoKeyConverter.toBytes(info.pubKey as ProtoKey),
+    addrs: info.addrs.map(addr => addr.bytes),
+    head: info.head?.id ? info.head.id.bytes : undefined,
+    counter: info.head?.counter !== undefined ? BigInt(info.head.counter) : BigInt(0)
+  };
+  
+  // 如果有私钥，也添加到日志中
+  if (info.privKey) {
+    log.privKey = ProtoKeyConverter.privKeyToProto(info.privKey);
+  }
+  
+  return log;
+}
+
+ /**
+ * 创建新的记录
+ * 
+ * @param id threadID
+ * @param body 节点内容
+ * @param options 选项
+ * @returns 创建的threaddb记录
+ */
+async createRecord(
+  id: ThreadID,
+  body: IPLDNode,
+  options: { token?: ThreadToken, apiToken?: Token } = {}
+): Promise<IThreadRecord> {
+  try {
+    // 验证身份
+    let identity = await this.validate(id, options.token);
+    
+    if (!identity) {
+      identity = this.privateKey.publicKey;
+    }
+    
+    // 获取并验证连接器
+    const [con, ok] = this.getConnectorProtected(id, options.apiToken);
+    
+    if (!ok) {
+      throw new Error("Cannot create record: thread in use");
+    } else if (con) {
+      await con.validateNetRecordBody(body, identity as Ed25519PubKey);
+    }
+    
+    // 获取或创建日志
+    const lg = await this.getOrCreateLog(id, identity);
+    
+    // 创建新记录
+    const r = await this.newRecord(id, lg, body, identity);
+    
+    // 创建threaddb 记录
+    const tr = newRecord(r, id, lg.id);
+    if (!lg.head){
+      lg.head = {
+        id: CIDUndef,
+        counter: 0
+      }
+    }
+    
+    // 更新头部信息
+    const head: Head = {
+      id: tr.value().cid(),
+      counter: lg.head.counter + 1
+    };
+    
+    await this.logstore.headBook.setHead(id, lg.id, head);
+    
+    // 设置记录点（每10000个记录设置一个检查点）
+    await this.setThreadLogPoint(id, lg.id, lg.head?.counter + 1, tr.value().cid());
+    
+    console.debug(`Created record ${tr.value().cid()} (thread=${id}, log=${lg.id})`);
+    
+    // 推送记录到节点
+    if (this.server) {
+      await this.pushRecord(id, lg.id, tr.value(), lg.head.counter + 1);
+    }
+    
+    return tr;
+  } catch (error) {
+    throw error;
+  }
+}
+
+/**
+ * 获取或创建当前身份的日志
+ */
+async getOrCreateLog(id: ThreadID, identity: PublicKey): Promise<IThreadLogInfo> {
+  // 默认使用当前主机身份，如果未提供
+  if (!identity) {
+    identity = this.privateKey.publicKey;
+  }
+  
+  // 尝试获取此身份的现有日志ID
+  const lidb = await this.logstore.metadata.getBytes(id, identity.toString());
+  
+  // 检查旧式"自有"日志
+  if (!lidb && identity.equals(this.privateKey.publicKey)) {
+    const thrd = await this.logstore.getThread(id);
+    const ownLog = thrd.getFirstPrivKeyLog();
+    if (ownLog) {
+      return ownLog;
+    }
+  } else if (lidb) {
+    // 获取现有日志
+    const lidbstr = new TextDecoder().decode(lidb);
+    const lid = peerIdFromString(lidbstr);
+    return this.logstore.getLog(id, lid);
+  }
+  
+  // 创建新日志，如果不存在
+  return this.createLog(id, this.privateKey, identity);
+}
+
+/**
+ * 创建新记录
+ */
+async newRecord(id: ThreadID, lg: IThreadLogInfo, body: IPLDNode, identity: PublicKey): Promise<IRecord> {
+  // 获取threaddb 服务密钥
+  const serviceKey = await this.logstore.keyBook.serviceKey(id);
+  if (!serviceKey) {
+    throw new Error("No service key for thread");
+  }
+  const head = await this.logstore.headBook.heads(id, lg.id)
+  // 创建事件
+  const sk = SymmetricKey.fromSymKey(serviceKey);
+  const event = await CreateEvent(
+    this.dagService,
+    body as Node,
+    sk
+  );
+  // 将事件保存到存储
+  await this.dagService.add(event);
+  const rec = CreateRecord(
+    this.dagService,
+  {
+    Block: body as Node,
+    Prev: head[0].id,
+    Key: this.privateKey,
+    PubKey: this.privateKey.publicKey,
+    ServiceKey: sk
+  })
+  return rec
+}
+
+
+
+/**
+ * 推送记录到日志地址和threaddb 主题
+ * @param tid threaddb ID
+ * @param lid 对等点ID
+ * @param rec 记录对象
+ * @param counter 计数器
+ */
+async pushRecord(tid: ThreadID, lid: PeerId, rec: IRecord, counter: number): Promise<void> {
+  try {
+    // 收集已知的写入器地址
+    const addrs: Multiaddr[] = [];
+    const info = await this.logstore.getThread(tid);
+    
+    // 收集所有日志的地址
+    for (const l of info.logs) {
+      addrs.push(...l.addrs);
+    }
+    const peers = await this.getPeers(tid);
+    if (!peers) {
+      throw new Error(`No peers for thread ${tid}`);
+    }
+    // 向每个对等点推送
+    for (const p of peers) {
+      // 跳过无效对等点
+      if (!p || p.toString() === "") {
+        continue;
+      }
+      const client  = await this.getClient(p);
+      if (!client) {
+        continue
+      }
+     const dbClient = new DBClient(client, this.dc);
+      // 启动异步推送（不等待完成）
+      dbClient.pushRecordToPeer(tid, lid, rec, counter);
+    }
+  } catch (err) {
+    throw new Error(`Failed to push record: ${err instanceof Error ? err.message : String(err)}`);
+  }
+}
+
+/**
+ * 与拥有该threaddb 的对等节点交换threaddb 记录
+ * @param tid threaddb ID
+ */
+async exchange(tid: ThreadID): Promise<void> {
+  try {
+    // 获取threaddb 信息
+    const info = await this.logstore.getThread(tid);
+    
+    // 收集所有日志的地址
+    const addrs: Multiaddr[] = [];
+    for (const lg of info.logs) {
+      addrs.push(...lg.addrs);
+    }
+    
+    // 获取唯一对等点
+    let peers = await this.uniquePeers(addrs);
+    
+    // 尝试从外部对象获取对等点
+    const extPeers = await this.getPeers(tid);
+    if (extPeers && extPeers.length > 0) {
+      peers = extPeers;
+    }
+    
+    // 与每个对等点交换
+    for (const pid of peers) {
+      // 使用异步方式处理交换，不等待完成
+      this.exchangeWithPeer(pid, tid).catch(err => {
+        console.error(`Error exchanging with peer ${pid}: ${err instanceof Error ? err.message : String(err)}`);
+      });
+    }
+  } catch (err) {
+    throw new Error(`Exchange failed: ${err instanceof Error ? err.message : String(err)}`);
+  }
+}
+
+/**
+ * 与单个对等点交换threaddb 边缘
+ * @param pid 对等点ID
+ * @param tid threaddb ID
+ */
+private async exchangeWithPeer(pid: PeerId, tid: ThreadID): Promise<void> {
+  try {
+    // 获取客户端连接
+    const client = await this.getClient(pid);
+    if (!client) {
+      return;
+    }
+    
+    // 创建数据库客户端
+    const dbClient = new DBClient(client, this.dc);
+    
+    // 交换边缘
+    await dbClient.exchangeEdges([tid]);
+  } catch (err) {
+    throw err;
+  }
+}
+
+
+
+/**
+ * 获取受保护的threaddb 连接器
+ */
+getConnectorProtected(id: ThreadID, token?: Token): [Connector | undefined, boolean] {
+  const [conn, exists] = this.getConnector(id);
+  
+  if (!exists) {
+    return [undefined, true]; // threaddb 未被连接器使用
+  }
+  
+  if (!token || !conn?.token || this.bytesEqual(token, conn.token)) {
+    return [undefined, false]; // 无效令牌
+  }
+  
+  return [conn, true];
+}
+
+
+
+
+
+
+  
+  /**
+   * 检查两个字节数组是否相等
+   */
+   bytesEqual(a: Uint8Array, b: Uint8Array): boolean {
+    if (a.length !== b.length) return false;
+    
+    for (let i = 0; i < a.length; i++) {
+      if (a[i] !== b[i]) return false;
+    }
+    
+    return true;
+  }
+
+
+
 
 }
 

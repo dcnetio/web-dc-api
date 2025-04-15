@@ -36,14 +36,12 @@ interface EventHeaderObj {
 
 /**
  * 创建一个新事件，包装 body 节点
- * @param ctx 上下文
  * @param dag DAG 服务
  * @param body 要封装的节点
  * @param rkey 加密密钥
  * @returns 创建的事件
  */
 export async function CreateEvent(
-  ctx: Context,
   dag: DAGCBOR,
   body: Node,
   rkey: SymmetricKey

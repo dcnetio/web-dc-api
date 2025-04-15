@@ -1,7 +1,7 @@
 import { ulid } from 'ulid';
 import { Key, Query,Batch, Datastore } from 'interface-datastore';  
 
-import { DAGNode } from 'ipld-dag-pb';
+import { IPLDNode } from '../core/core';
 import {ThreadToken} from './identity';
 import { Ed25519PubKey as PubKey} from "../../dc-key/ed25519";
 import { Connector,LocalEventsBus } from '../core/app';
@@ -153,7 +153,7 @@ export interface IDB {
   collections: Map<string, ICollection> ;
   readTxn(collection: ICollection, fn: (txn: ITxn) => Promise<void> | void, token?: ThreadToken): Promise<void>;
   writeTxn(collection: ICollection, fn: (txn: ITxn) => Promise<void> | void, token?: ThreadToken): Promise<void>;
-  notifyTxnEvents(node: DAGNode, token: ThreadToken): Promise<void>;
+  notifyTxnEvents(node: IPLDNode, token: ThreadToken): Promise<void>;
 }
 
 

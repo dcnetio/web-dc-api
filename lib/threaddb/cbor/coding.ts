@@ -11,7 +11,7 @@ import { IBlock } from '../core/core';
  * 
  * @param block - The block to encode
  * @param key - The encryption key
- * @returns Promise resolving to a DAGNode
+ * @returns Promise resolving to a Node
  */
 export async function encodeBlock(block: IBlock, key: SymmetricKey): Promise<Node> {
     // Encrypt the block's raw data using the provided key
@@ -25,7 +25,7 @@ export async function encodeBlock(block: IBlock, key: SymmetricKey): Promise<Nod
  * 
  * @param block - The block to decode
  * @param key - The decryption key
- * @returns Promise resolving to a DAGNode
+ * @returns Promise resolving to a Node
  */
 export async function decodeBlock(block: IBlock, key: SymmetricKey): Promise<Node> {
   

@@ -2,7 +2,7 @@ import type { Libp2p } from "libp2p";
 import { ThreadID } from "@textile/threads-id";
 import { multiaddr, Multiaddr } from "@multiformats/multiaddr";
 import { dcnet as dcnet_proto } from "../../proto/dcnet_proto";
-import {net as net_pb} from "../pb/net_pb";
+import {net, net as net_pb} from "../pb/net_pb";
 import { base58btc } from "multiformats/bases/base58";
 import { Libp2pGrpcClient } from "grpc-libp2p-client";
 import { toString as uint8ArrayToString } from "uint8arrays/to-string";
@@ -18,23 +18,31 @@ import { CID } from 'multiformats/cid';
 import { PeerRecords} from "./define";
 import {RecordFromProto} from "../cbor/record";
 import { IRecord } from "../core/record";
+import { PeerId } from "@libp2p/interface";
+import { IBlock } from "../core/core";
+import {RecordToProto} from "../cbor/record";
+import { Net } from "../core/app";
 
 export class DBGrpcClient {
     grpcClient: Libp2pGrpcClient;
     stream: any;
     token: string;
+    net:Net;
 
     constructor(
         node: Libp2p,
         peerAddr: Multiaddr,
         token: string,
+        net:Net,
         protocol?: string
     ) {
         this.grpcClient = new Libp2pGrpcClient(node, peerAddr, token, protocol);
         this.token = token;
+        this.net = net;
     }
 
     
+
     async requestThreadID(): Promise<string> {
         try {
             const message = new dcnet_proto.pb.ThreadIDRequest({});
@@ -189,12 +197,11 @@ export class DBGrpcClient {
    * 注意: 这是一个假设的实现，需要根据你的实际gRPC客户端实现来调整
    */
    async getRecordsFromPeer(
-    tid: ThreadID,
-    peerId: string,
     req: any,
     serviceKey: any
   ): Promise<Record<string, PeerRecords>> {
     try {
+    
       // 编码请求消息
       const messageBytes = net_pb.pb.GetRecordsRequest.encode(req).finish();
       
@@ -229,9 +236,91 @@ export class DBGrpcClient {
       
       return result;
     } catch (err) {
-      console.error(`getRecordsFromPeer error for peer ${peerId}:`, err);
+      console.error(`getRecordsFromPeer error:`, err);
       throw err;
     }
   }
+
+
+   
+   
+  async pushRecordToPeer(
+      tid: ThreadID, 
+      lid: PeerId,
+      rec: IRecord,
+      counter: number
+    ): Promise<void> {
+      try {
+        const body = new net_pb.pb.PushRecordRequest.Body();
+        body.threadID = new TextEncoder().encode(tid.toString());
+        body.logID = new TextEncoder().encode(lid.toString());
+        body.record = await RecordToProto(this.net, rec);
+        const message = new net_pb.pb.PushRecordRequest();
+        message.body = body;
+        message.counter = counter;
+        // 编码请求
+        const messageBytes = net_pb.pb.PushRecordRequest.encode(message).finish();
+        // 调用gRPC方法
+        await this.grpcClient.unaryCall(
+          "/dcnet.pb.Service/PushRecord",
+          messageBytes,
+          30000, // 30秒超时
+        );
+
+      } catch (err) {
+        throw new Error(`Error pushing record: ${err instanceof Error ? err.message : String(err)}`);
+      }
+    }
+
+    async exchangeEdges(
+      req: net_pb.pb.ExchangeEdgesRequest,
+    ): Promise<net_pb.pb.ExchangeEdgesReply> {
+      try {
+      const messageBytes = net_pb.pb.ExchangeEdgesRequest.encode(req).finish();
+      // 调用 gRPC 方法
+     const response = await this.grpcClient.unaryCall(
+        "/dcnet.pb.Service/ExchangeEdges",
+        messageBytes,
+        30000
+      );
+      // 解码响应
+      const reply = net_pb.pb.ExchangeEdgesReply.decode(response);
+      return reply;
+      } catch (err) {
+        console.error("exchangeEdges error:", err);
+        throw err;
+     }
+    }
+
+    /**
+     * 获取threaddb 中的日志
+     * @param tid threaddb ID
+     * @returns 日志信息数组
+     */
+    async getLogs(tid: ThreadID, sk:Uint8Array): Promise<net_pb.pb.GetLogsReply> {
+      try {
+        const body = new net_pb.pb.GetLogsRequest.Body();
+        body.threadID = tid.toBytes();
+        body.serviceKey = sk; 
+        
+        const req = new net_pb.pb.GetLogsRequest();
+        req.body = body;
+        // 编码请求
+        const messageBytes = net_pb.pb.GetLogsRequest.encode(req).finish();
+        
+        // 调用 gRPC 方法
+        const response = await this.grpcClient.unaryCall(
+          "/dcnet.pb.Service/GetLogs",
+          messageBytes,
+          30000 // 设置超时时间为30秒
+        );
+        // 解码响应
+        const reply = net_pb.pb.GetLogsReply.decode(response);
+        return reply
+      } catch (err) {
+        console.error(`getLogs error for peer ${this.grpcClient.peerAddr.toString()}:`, err);
+        throw err;
+      }
+    }
 
 }

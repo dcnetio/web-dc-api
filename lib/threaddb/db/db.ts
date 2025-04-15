@@ -36,7 +36,6 @@ import { Net } from '../core/app';
 import { Dispatcher } from '../common/dispatcher';
 import { LocalEventsBus, App } from '../core/app'
 import * as dagPB from '@ipld/dag-pb'
-import { DAGNode } from 'ipld-dag-pb';
 import * as threadEvent from '../cbor/event'
 import {IRecord} from '../core/record'
 import {IPLDNode} from '../core/core'
@@ -44,29 +43,7 @@ import {IPLDNode} from '../core/core'
 
 const getBlockInitialTimeout      =  500 
 const getBlockRetries = 3; 
-interface CreateEvent extends Event {
-  documentId: string;
-  payload: {
-    fullDocument: Record<string, unknown>;
-  }
-}
 
-interface UpdateEvent extends Event {
-  documentId: string;
-  payload: {
-    patch: Record<string, unknown>;
-  }
-  previousState?: Record<string, unknown>;
-}
-
-interface DeleteEvent extends Event {
-  documentId: string;
-  previousState?: Record<string, unknown>;
-}
-
-interface CoreEvent extends Event {
-  type: string;
-}
 
 export class CollectionEvent<T = any> implements Event<T> {  
   readonly timestamp: bigint;  
@@ -448,7 +425,7 @@ defaultIndexFunc(): (collection: string, key: Key, txn: any, oldData?: Uint8Arra
  * 通知事务事件
  * 将事务相关的节点和令牌发送到本地事件总线
  */
-async notifyTxnEvents(node: DAGNode, token: ThreadToken): Promise<void> {
+async notifyTxnEvents(node: IPLDNode, token: ThreadToken): Promise<void> {
   try {
     await this.localEventsBus.send({
       node: node,
@@ -466,9 +443,9 @@ async notifyTxnEvents(node: DAGNode, token: ThreadToken): Promise<void> {
     }
   }
   
-  async validateNetRecordBody(body: DAGNode, identity: Ed25519PubKey): Promise<Error | undefined> {  
+  async validateNetRecordBody(body: IPLDNode, identity: Ed25519PubKey): Promise<Error | undefined> {  
     try {  
-      const events: Event[] = await this.eventcodec.eventsFromBytes(body.Data);  
+      const events: Event[] = await this.eventcodec.eventsFromBytes(body.data());  
       if (events.length === 0) {  
         return ;
       }  

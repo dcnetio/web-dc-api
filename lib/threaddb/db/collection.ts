@@ -7,7 +7,7 @@ import EventEmitter from 'eventemitter3';
 import { Ed25519PrivKey  as PrivKey,Ed25519PubKey as PubKey} from "../../dc-key/ed25519";
 import { Action, ActionType, Event,ITxn ,idFieldName} from '../core/db';
 import { ThreadID } from '@textile/threads-id';
-import { DAGNode } from 'ipld-dag-pb';
+import { IPLDNode } from '../core/core';
 import { CollectionConfig } from '../core/core';
 import {dsPrefix,IDB,ICollection,DBPrefix} from '../core/db';
 import {ThreadToken} from '../core/identity';
@@ -242,7 +242,7 @@ class BrowserJSRuntime implements JSRuntime {
  */
 interface Connector {
   validate(token: ThreadToken, readOnly: boolean): Promise<Error | null>;
-  createNetRecord(node: DAGNode, token: ThreadToken): Promise<any>;
+  createNetRecord(node: IPLDNode, token: ThreadToken): Promise<any>;
 }
 
 
@@ -1126,7 +1126,7 @@ export class Txn implements ITxn{
     if (!this.token) {
       throw new Error('Token not found');
     }
-    const validationResult = await this.collection.db.connector.validate(this.token, true);
+    const validationResult = await this.collection.db.connector.validate(this.token);
     if (validationResult) {
       throw validationResult;
     }
@@ -1171,7 +1171,7 @@ export class Txn implements ITxn{
     if (!this.token) {
       throw new Error('Token not found');
     }
-    const validationResult = await this.collection.db.connector.validate(this.token, true);
+    const validationResult = await this.collection.db.connector.validate(this.token);
     if (validationResult) {
       throw validationResult;
     }
@@ -1210,7 +1210,7 @@ export class Txn implements ITxn{
           throw new Error('Token not found');
         }
         // 验证令牌
-        const validationError = await this.collection.db.connector.validate(this.token, true);
+        const validationError = await this.collection.db.connector.validate(this.token);
         if (validationError) {
           throw validationError;
         }
@@ -1498,7 +1498,7 @@ async modifiedSince(time: number): Promise<InstanceID[]> {
   /**
    * Create events from actions
    */
-  private async createEvents(actions: Action[]): Promise<{ events: Event[], node: DAGNode | null }> {
+  private async createEvents(actions: Action[]): Promise<{ events: Event[], node: IPLDNode | null }> {
     if (this.discarded || this.committed) {
       throw errAlreadyDiscardedCommitedTxn;
     }
@@ -1514,8 +1514,7 @@ async modifiedSince(time: number): Promise<InstanceID[]> {
         throw new Error("Created events and node must both be nil or not-nil");
       }
       
-      // Create DAGNode (simplified - in a real implementation, you'd create a proper DAGNode)
-      const node = { Data: nodeData } as DAGNode;
+      const node = { Data: nodeData } as IPLDNode;
       
       return { events, node };
     } catch (err) {

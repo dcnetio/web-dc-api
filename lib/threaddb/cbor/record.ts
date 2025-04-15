@@ -48,7 +48,6 @@ interface LogRecord {
  * @returns 创建的记录
  */
 export async function CreateRecord(
-  ctx: Context,
   dag: DAGCBOR,
   config: CreateRecordConfig
 ): Promise<IRecord> {
@@ -162,7 +161,6 @@ export async function RemoveRecord(
  * @returns proto记录
  */
 export async function RecordToProto(
-  ctx: Context,
   dag: DAGCBOR,
   rec: IRecord
 ): Promise<net_pb.net.pb.Log.Record> {

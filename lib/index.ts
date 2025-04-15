@@ -43,9 +43,15 @@ import { BCManager } from "./bc/manager";
 import { MessageManager } from "./message/manager";
 import {DBManager} from "./threaddb/dbmanager";
 import {createTxnDatastore} from "./threaddb/common/idbstore-adapter";
-import {App,Connector}  from "./threaddb/core/app";
-import { ThreadID } from '@textile/threads-id';
 
+import { ThreadID } from '@textile/threads-id';
+import {Network} from "./threaddb/net/net";
+import {newLogstore} from "./threaddb/common/logstore";
+import {newKeyBook} from "./threaddb/lsstoreds/keybook";
+import {newAddrBook} from "./threaddb/lsstoreds/addr_book";
+import {newHeadBook} from "./threaddb/lsstoreds/headbook";
+import {newThreadMetadata} from "./threaddb/lsstoreds/metadata";
+import {dagCbor} from "@helia/dag-cbor";
 const NonceBytes = 12;
 const TagBytes = 16;
 
@@ -276,39 +282,6 @@ export class DC  implements SignHandler {
     return true;
   };
 
-/**
- * 连接应用到指定线程
- * @param app 应用程序对象
- * @param id 线程ID
- * @returns 返回一个应用连接器
- * @throws 如果验证失败或获取线程信息出错则抛出异常
- */
-async connectApp(app: App, id: ThreadID): Promise<Connector> {
-  // 验证线程ID
- if (!id.isDefined()) {
-   throw new Error("Invalid thread ID");
- }
-  // 获取threaddb信息
-  let info;
-  try {
-    info = await this.getThreadWithAddrs(id);
-  } catch (err) {
-    throw new Error(`Error getting thread ${id.toString()}: ${err instanceof Error ? err.message : String(err)}`);
-  }
-  
-  // 创建应用连接器
-  let con;
-  try {
-    con =  new Connector(this, app, info);
-  } catch (err) {
-    throw new Error(`Error making connector ${id.toString()}: ${err instanceof Error ? err.message : String(err)}`);
-  }
-  
-  // 添加连接器到网络
-  this.addConnector(id, con);
-  
-  return con;
-}
   // 退出登陆
   // accountLogout = async () => {
   //   if (!this.connectedDc.client) {
@@ -999,9 +972,20 @@ async connectApp(app: App, id: ThreadID): Promise<Connector> {
     jsonCollections: string 
   ): Promise<string> {
     const tdatastore = await createTxnDatastore(name)
+    const keyBook = await newKeyBook(tdatastore);
+    const addrBook = await newAddrBook(tdatastore);
+    const headBook = newHeadBook(tdatastore);
+    const threadMetadata = newThreadMetadata(tdatastore);
+    const logstore = newLogstore(keyBook, addrBook, headBook, threadMetadata);
+    const dagService = dagCbor(this.dcNodeClient)
+    const n = name;
+    if (!this.privKey) {
+      throw new Error("privKey is null");
+    }
+    const net = new Network(this.dcChain, this.dcNodeClient.libp2p, logstore, this.dcNodeClient.blockstore, dagService, this.privKey )
     const dbmanager = new DBManager(
       tdatastore,
-      this.dcNodeClient,
+      net,
       this.dc,
       this.connectedDc,
       this.opts,

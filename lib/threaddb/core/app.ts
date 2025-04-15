@@ -8,7 +8,7 @@ import { ThreadToken } from './identity';
 import { Ed25519PubKey } from '../../dc-key/ed25519';
 import { INet as net_Net } from './core'
 import { Context } from './core'
-import { DAGNode } from 'ipld-dag-pb';
+import { IPLDNode } from './core';
 
 
 // 类型定义  
@@ -21,7 +21,7 @@ export const ErrInvalidNetRecordBody = new Error('app denied net record body')
 
 // 核心接口  
 export interface App {  
-  validateNetRecordBody( body: DAGNode, identity: PubKey): Promise<Error | undefined>  
+  validateNetRecordBody( body: IPLDNode, identity: PubKey): Promise<Error | undefined>  
   handleNetRecord( rec: IThreadRecord, key?: ThreadKey): Promise<Error | undefined>  
   getNetRecordCreateTime(rec: IThreadRecord, key?: ThreadKey): Promise<bigint>  
 }  
@@ -71,7 +71,7 @@ export class LocalEventListener {
 }  
 
 export interface LocalEvent {  
-  node: DAGNode  
+  node: IPLDNode  
   token: ThreadToken  
 }  
 
@@ -81,17 +81,18 @@ export interface Net extends net_Net {
 
   createRecord(  
     threadId: ThreadID,  
-    body: DAGNode,  
+    body: IPLDNode,  
     options?: { threadToken?: ThreadToken, apiToken?: Token }  
   ): Promise<IThreadRecord>  
 
   validate(  
     id: ThreadID,  
-    token: ThreadToken,  
-    readOnly: boolean  
+    token: ThreadToken
   ): Promise<[PubKey | null, Error | null]>  
 
   exchange(id: ThreadID): Promise<Error | null>  
+
+  updateRecordsFromPeer(tid: ThreadID): Promise<void>
 }  
 
 // 连接器实现  
@@ -120,7 +121,7 @@ export class Connector {
 
   // 调用 net.createRecord 并提供线程 ID 和 API 令牌
   async createNetRecord(
-    body: DAGNode, 
+    body: IPLDNode, 
     token: ThreadToken
   ): Promise<IThreadRecord> {
     return this.net.createRecord(
@@ -135,16 +136,15 @@ export class Connector {
 
   // 验证线程令牌
   async validate(
-    token: ThreadToken, 
-    readOnly: boolean
+    token: ThreadToken
   ): Promise<Error | null> {
-    const [_, err] = await this.net.validate( this.threadId, token, readOnly);
+    const [_, err] = await this.net.validate( this.threadId, token);
     return err;
   }
 
   // 调用连接应用的 ValidateNetRecordBody
   async validateNetRecordBody(
-    body: DAGNode, 
+    body: IPLDNode, 
     identity: PubKey
   ): Promise<Error|undefined> {
     return this.app.validateNetRecordBody( body, identity);

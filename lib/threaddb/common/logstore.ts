@@ -12,7 +12,7 @@ import { symKeyFromBytes } from '../../dc-key/keyManager';
 import { CID } from 'multiformats';
 import {ThreadInfo} from '../core/core';
 
-const PermanentAddrTTL = 2^53-1; // 使用 bigint 精确表示 64 位整数  
+export const PermanentAddrTTL = 2^53-1; // 使用 bigint 精确表示 64 位整数  
 
 
 const managedSuffix = "/managed";

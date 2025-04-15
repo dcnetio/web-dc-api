@@ -4,7 +4,9 @@ import * as JsCrypto from "jscrypto/es6";
 import { Multiaddr, multiaddr } from "@multiformats/multiaddr";
 import { peerIdFromString } from "@libp2p/peer-id";
 import { PeerId } from "@libp2p/interface";
-import { openDB } from 'idb';
+import * as dagPB from '@ipld/dag-pb';
+import {IPLDNode} from "../threaddb/core/core";
+import { CID } from 'multiformats/cid';
 import { keys } from "@libp2p/crypto";
 const { Word32Array, AES, pad, mode, Base64 } = JsCrypto;
 const NonceBytes = 12;
@@ -227,6 +229,8 @@ function parseUint32(str) {
     throw error ;  
   }  
 }  
+
+
 
 
 export {

@@ -8,6 +8,7 @@ import  * as pb from '../pb/lstore'
 import {uniqueLogIds,uniqueThreadIds,DSOptions,AllowEmptyRestore,dsThreadKey} from './global'
 import LRU from 'lru-cache'  
 import { ThreadID } from '@textile/threads-id';
+import {DefaultOpts} from './global'
 
 
 // 缓存键类型  
@@ -36,7 +37,10 @@ interface  AddrsRecord {
 // Threads and logs addresses are serialized into protobuf, storing one datastore entry per (thread, log), along with metadata
 // to control address expiration. To alleviate disk access and serde overhead, we internally use a read/write-through
 // ARC cache, the size of which is adjustable via Options.CacheSize.
-export async function newAddrBook(ds: Datastore, opts: DSOptions): Promise<DsAddrBook> {
+export async function newAddrBook(ds: Datastore, opts?: DSOptions): Promise<DsAddrBook> {
+    if (!opts) {
+        opts = DefaultOpts();
+    }
     const ab = new DsAddrBook(ds, opts);
     if (opts.CacheSize > 0) {
         ab.cache = new LRU({ max: opts.CacheSize });
