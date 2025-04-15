@@ -34,13 +34,13 @@ import { FileManager } from "./file/manager";
 import type { HeliaLibp2p } from "helia";
 import { Libp2p } from "@libp2p/interface";
 import { CommentManager } from "./comment/manager";
-import { cidNeedConnect } from "./util/contant";
 import { dcnet } from "./proto/dcnet_proto";
 import { BrowserLineReader, readLine } from "./util/BrowserLineReader";
 import { bytesToHex } from "@noble/curves/abstract/utils";
 import {dc_protocol} from "./define";
 import { BCManager } from "./bc/manager";
 import { MessageManager } from "./message/manager";
+import { cidNeedConnect } from "./constants";
 
 
 const NonceBytes = 12;
@@ -79,7 +79,7 @@ export class DC  implements SignHandler {
         // 换个路径重新创建
         createChain = await this.dcChain.create(this.backChainAddr);
         if (!createChain) {
-          console.log("dcchainapi init failed");
+          console.error("dcchainapi init failed");
           return;
         }
       }
@@ -88,7 +88,7 @@ export class DC  implements SignHandler {
         // 换个路径重新创建
         createChain = await this.dcChain.create(this.backChainAddr);
         if (!createChain) {
-          console.log("dcchainapi init failed");
+          console.error("dcchainapi init failed");
           return;
         }
       }
@@ -166,7 +166,7 @@ export class DC  implements SignHandler {
       const fileContent = await fileManager.getFileFromDc(cid, decryptKey);
       return fileContent;
     } catch (error) {
-      console.log("error", error);
+      console.error("getFileFromDc error", error);
       return "";
     }
   };
@@ -777,6 +777,21 @@ export class DC  implements SignHandler {
     
   };
 
+  // 从用户消息盒子获取消息
+  getMsgFromUserBox = async (
+    appName: string,
+    limit?: number
+  ) => {
+    const messageManager = new MessageManager(
+      this.AccountBackupDc, 
+      this.dc, 
+      this.dcChain, 
+      this.dcNodeClient,
+      this);
+    const res = await messageManager.getMsgFromUserBox(appName, limit);
+    return res;
+  }
+
   /**
    * 开启定时验证 token 线程
    * 对应 Go 中的 dcPeerTokenKeepValidTask()
@@ -827,19 +842,19 @@ export class DC  implements SignHandler {
         try {
           const nodeAddr = connectInfo.client?.peerAddr;
           if (!nodeAddr) {
-            console.log("nodeAddr is null");
+            console.error("nodeAddr is null");
             return;
           }
           console.log("_newDcClient start ");
           connectInfo.client = await this._newDcClient(nodeAddr);
           console.log("_newDcClient end ");
         } catch (e) {
-          console.log("connectInfo failed", e);
+          console.error("connectInfo failed", e);
           return;
         }
       }
     } catch (error) {
-      console.log("error111 failed", error);
+      console.error("error111 failed", error);
       return;
     }
 
@@ -894,12 +909,12 @@ export class DC  implements SignHandler {
             connectInfo.nodeAddr?.getPeerId() as string
           );
           if (!nodeAddr) {
-            console.log("nodeAddr is null");
+            console.error("nodeAddr is null");
             return;
           }
           resClient = await this._newDcClient(nodeAddr);
           if (!resClient) {
-            console.log("resClient is null");
+            console.error("resClient is null");
             return;
           }
         } catch (e: any) {

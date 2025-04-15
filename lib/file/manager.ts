@@ -2,7 +2,6 @@ import type { SignHandler, DCConnectInfo } from '../types/types'
 import { FileClient } from './client'
 import type { HeliaLibp2p } from 'helia'
 import { ChainUtil } from '../chain'
-import { cidNeedConnect } from "../util/contant";
 import  { oidfetch } from "../proto/oidfetch_proto";
 import {StreamWriter } from './streamwriter'
 
@@ -27,6 +26,7 @@ import { decryptContent } from '../util/dccrypt'
 import * as buffer from "buffer/";
 import { Uint8ArrayList } from 'uint8arraylist'; 
 import { Stream } from '@libp2p/interface'
+import { cidNeedConnect } from '../constants';
 const { Buffer } = buffer;
 
 const NonceBytes = 12;
@@ -167,7 +167,7 @@ export class FileManager {
       return [null, Errors.ErrNoDcPeerConnected]
     }
     if (!this.connectedDc || !this.connectedDc.nodeAddr) {
-      console.log('=========Errors.ErrNoDcPeerConnected')
+      console.error('=========Errors.ErrNoDcPeerConnected')
         return [null, Errors.ErrNoDcPeerConnected]
      }
    
@@ -325,7 +325,7 @@ export class FileManager {
       }
         stream.close()
       } catch (error) {
-        console.log('=========stream close')
+        console.error('=========stream close', error)
       }
       return [resCid, null]
  }
@@ -340,7 +340,7 @@ export class FileManager {
       const res = value instanceof Uint8ArrayList ? value.subarray() : value;
       yield res;
     } catch (err) {
-      console.log('chunkGenerator error:', err);
+      console.error('chunkGenerator error:', err);
 
     }
   }
@@ -508,7 +508,7 @@ export class FileManager {
       }
       return fileContent;
     } catch (error) {
-      console.log("error", error);
+      console.error("getFileFromDc error", error);
       return "";
     }
   };

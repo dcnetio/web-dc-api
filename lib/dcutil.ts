@@ -20,7 +20,12 @@ import { ping } from "@libp2p/ping";
 import { autoNAT } from "@libp2p/autonat";
 import { dcutr } from "@libp2p/dcutr";
 import { bitswap } from "@helia/block-brokers";
+import { Client } from "./dcapi";
+import { dc_protocol, dial_timeout } from "./define";
+import { Ed25519PubKey } from "./dc-key/ed25519";
 
+const controller = new AbortController();
+const { signal } = controller;
 // import {uPnPNAT} from '@libp2p/upnp-nat'
 export class DcUtil {
   dcChain: ChainUtil;
@@ -36,7 +41,7 @@ export class DcUtil {
   _connectToObjNodes = async (cid: string) => {
     const peers = await this.dcChain.getObjNodes(cid);
     if (!peers) {
-      console.log("peers is null");
+      console.error("peers is null");
       return;
     }
     const res = await this._connectPeers(peers);
@@ -58,7 +63,7 @@ export class DcUtil {
         );
         console.log("nodeAddr", nodeAddr);
         if (!nodeAddr) {
-          console.log("no nodeAddr return");
+          console.error("no nodeAddr return");
           num++;
           if (num >= len) {
             reject("no nodeAddr return");
@@ -67,19 +72,23 @@ export class DcUtil {
         }
 
         try {
-          const resCon = await _this.dcNodeClient?.libp2p.dial(nodeAddr);
-          console.log("nodeAddr try return");
-          console.log(resCon);
-          if (resCon) {
-            reslove(nodeAddr);
-          } else {
-            num++;
-            if (num >= len) {
-              reject("dial nodeAddr failed");
+          if (_this.dcNodeClient?.libp2p) {
+            const resCon = await _this.dcNodeClient?.libp2p.dial(nodeAddr, {
+              signal: AbortSignal.timeout(dial_timeout)
+            });
+            console.log("nodeAddr try return");
+            console.log(resCon);
+            if (resCon) {
+              reslove(nodeAddr);
+            } else {
+              num++;
+              if (num >= len) {
+                reject("dial nodeAddr failed");
+              }
             }
           }
         } catch (error) {
-          console.log("dial nodeAddr error,error:%s", error.message);
+          console.error("dial nodeAddr error,error:%s", error.message);
           num++;
           if (num >= len) {
             reject(error.message);
@@ -92,6 +101,59 @@ export class DcUtil {
         dialNodeAddr(i);
       }
     });
+  };
+  connectToUserDcPeer = async (
+    account: Uint8Array, 
+  ) : Promise<Client | null> => {
+    const peerAddrs = await this.dcChain.getAccountPeers(account);
+    if (!peerAddrs || peerAddrs.length == 0) {
+      return null;
+    }
+    // 连接节点
+    if (!this.dcNodeClient || !this.dcNodeClient?.libp2p) {
+      return null;
+    }
+    const nodeAddr = await this._connectPeers(peerAddrs);
+    console.log("_connectNodeAddrs nodeAddr:", nodeAddr);
+    if (!nodeAddr) {
+      return null;
+    }
+    const client = new Client(this.dcNodeClient?.libp2p, nodeAddr, dc_protocol);
+
+    return client;
+  };
+
+  // 连接节点列表
+  connectToUserAllDcPeers = async (
+    account: Uint8Array, 
+  ) : Promise<Client[] | null> => {
+    const peerAddrs = await this.dcChain.getAccountPeers(account);
+    if (!peerAddrs || peerAddrs.length == 0) {
+      return null;
+    }
+
+    let clients: Client[] = [];
+    // 连接节点
+    for (let i = 0; i < peerAddrs.length; i++) {
+      const item = peerAddrs[i];
+      if(item){
+        try {
+          if (!this.dcNodeClient || !this.dcNodeClient?.libp2p) {
+            return null;
+          }
+          const nodeAddr = await this._connectPeers([item]);
+          console.log("_connectNodeAddrs nodeAddr:", nodeAddr);
+          if (!nodeAddr) {
+            return null;
+          }
+          const client = new Client(this.dcNodeClient?.libp2p, nodeAddr, dc_protocol);
+          clients.push(client)
+        } catch (error) {
+          console.error("connectToUserAllDcPeers error", error);
+        }
+      }
+    }
+    return clients;
   };
 
   // 连接节点列表
@@ -130,7 +192,7 @@ export class DcUtil {
             reslove(false);
           }
         } catch (error) {
-          console.log("nodeAddr catch return", error);
+          console.error("nodeAddr catch return", error);
           num++;
           if (num >= len) {
             reslove(false);
@@ -245,7 +307,7 @@ export class DcUtil {
   _getNodeAddr = async (peerId: string): Promise<Multiaddr | undefined> => {
     let nodeAddr = await this.dcChain.getDcNodeWebrtcDirectAddr(peerId);
     if (!nodeAddr) {
-      console.log("no node address found for peer: ", peerId);
+      console.error("no node address found for peer: ", peerId);
       return;
     }
     if (isName(nodeAddr)) {
@@ -272,7 +334,7 @@ export class DcUtil {
     // 连接节点，得到最快的节点（随机取几个连接取最快，如果都没有连接上继续随机取）
     const nodeAddr = await this._getConnectDcNodeList(allNodeList);
     if (!nodeAddr) {
-      console.log("no node connected");
+      console.error("no node connected");
       return;
     }
 
