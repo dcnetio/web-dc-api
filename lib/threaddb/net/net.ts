@@ -9,7 +9,7 @@ import { Ed25519PrivKey,Ed25519PubKey } from "../../dc-key/ed25519";
 import type { PeerId,PublicKey,PrivateKey } from "@libp2p/interface"; 
 import { SymmetricKey, Key as ThreadKey } from '../common/key';
 import {validateIDData} from '../lsstoreds/global';
-import {  ThreadInfo, IThreadLogInfo, SymKey} from '../core/core';
+import {  ThreadInfo, IThreadLogInfo, SymKey, IThreadInfo} from '../core/core';
 import {ThreadToken} from '../core/identity';
 import {ILogstore} from '../core/logstore';
 import {Datastore} from 'interface-datastore';
@@ -30,7 +30,7 @@ import {IThreadEvent} from '../core/event';
 import {DBGrpcClient} from './grpcClient';
 import { DBClient } from '../client';
 import { Client } from "../../dcapi";
-import {App,Connector,Token}  from "../core/app";
+import {App,Connector,Net,PubKey,Token}  from "../core/app";
 import {ChainUtil} from '../../chain';
 import { DcUtil } from '../../dcutil';
 import {CreateEvent} from '../cbor/event';
@@ -60,7 +60,8 @@ function newRecord(r: IRecord, id: ThreadID, lid: PeerId): IThreadRecord {
 
 
 // 定义 Network 类  
-export class Network {  
+export class Network implements Net {
+  
   private logstore: ILogstore;  
   private bstore: Blocks;
   private dcChain: ChainUtil;
@@ -284,6 +285,7 @@ async getThread(
  */
 async getThreadFromPeer(
   id: ThreadID, 
+  peerId: PeerId,
   options: { token?: ThreadToken } = {}
 ): Promise<ThreadInfo> {
   try {
@@ -369,12 +371,15 @@ async deleteThread(
   /**  
    * 验证threaddb  ID 和 Token  
    */  
-  async validate(id: ThreadID, token?: ThreadToken): Promise<PublicKey|undefined> {  
+  async validate(  
+      id: ThreadID,  
+      token?: ThreadToken
+    ): Promise<Ed25519PubKey |undefined> {  
     if (!validateIDData(id.toBytes())) {  
       throw new Error("Invalid thread ID.");  
     }    
     if (!token) {  
-      return
+      return 
     }
     return await token.validate(this.privateKey);  
   }  
@@ -478,7 +483,7 @@ async ensureUniqueLog(id: ThreadID, key?: Ed25519PrivKey | Ed25519PubKey, identi
   /**
    * Pull thread updates from peers
    */
-  async pullThread(ctx: any, id: ThreadID): Promise<void> {
+  async pullThread(id: ThreadID): Promise<void> {
     try {
       const recs = await this.pullThreadDeal(id);
       
@@ -782,7 +787,7 @@ async getRecordsFromPeer(
     if (!client) {
       return {};
     }
-    const dbClient = new DBClient(client,this.dc);
+    const dbClient = new DBClient(client,this.dc,this,this.logstore);
     const recs = await dbClient.getRecordsFromPeer( req, serviceKey);
     return recs;
   } catch (err) {

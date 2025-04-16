@@ -13,6 +13,7 @@ import {dsPrefix,IDB,ICollection,DBPrefix} from '../core/db';
 import {ThreadToken} from '../core/identity';
 import {dsDispatcherPrefix} from '../common/dispatcher';
 import {Query,compare,traverseFieldPathMap} from './query';
+import * as cbornode from '../cbor/node';
 
 // iteratorKeyMinCacheSize is the size of iterator keys stored in memory before more are fetched.
 const iteratorKeyMinCacheSize = 100
@@ -1514,7 +1515,10 @@ async modifiedSince(time: number): Promise<InstanceID[]> {
         throw new Error("Created events and node must both be nil or not-nil");
       }
       
-      const node = { Data: nodeData } as IPLDNode;
+      const node = await  cbornode.wrapObject(nodeData);
+      if (!node) {
+        throw new Error('Failed to wrap node data');
+      }
       
       return { events, node };
     } catch (err) {

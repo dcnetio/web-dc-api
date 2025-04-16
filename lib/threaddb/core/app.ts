@@ -9,6 +9,7 @@ import { Ed25519PubKey } from '../../dc-key/ed25519';
 import { INet as net_Net } from './core'
 import { Context } from './core'
 import { IPLDNode } from './core';
+import { PeerId } from '@libp2p/interface';
 
 
 // 类型定义  
@@ -87,12 +88,11 @@ export interface Net extends net_Net {
 
   validate(  
     id: ThreadID,  
-    token: ThreadToken
-  ): Promise<[PubKey | null, Error | null]>  
+    token?: ThreadToken
+  ): Promise<Ed25519PubKey |undefined>  
+  exchange(id: ThreadID): Promise<void>  
 
-  exchange(id: ThreadID): Promise<Error | null>  
-
-  updateRecordsFromPeer(tid: ThreadID): Promise<void>
+  updateRecordsFromPeer(tid: ThreadID,peerId: PeerId): Promise<void>
 }  
 
 // 连接器实现  
@@ -137,9 +137,13 @@ export class Connector {
   // 验证线程令牌
   async validate(
     token: ThreadToken
-  ): Promise<Error | null> {
-    const [_, err] = await this.net.validate( this.threadId, token);
-    return err;
+  ): Promise<Error | undefined> {
+    try{
+      await this.net.validate( this.threadId, token);
+      return 
+    }catch(err){
+      return err
+    }
   }
 
   // 调用连接应用的 ValidateNetRecordBody

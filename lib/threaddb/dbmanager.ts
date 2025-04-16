@@ -51,7 +51,7 @@ export const dsManagerBaseKey = new Key('/manager');
 
 
 
-function newGrpcClient(client: Client): DBGrpcClient {
+function newGrpcClient(client: Client,net:Net): DBGrpcClient {
     if (client.p2pNode == null || client.p2pNode.peerId == null) {
         throw new Error("p2pNode is null or node privateKey is null");
     }        
@@ -59,6 +59,7 @@ function newGrpcClient(client: Client): DBGrpcClient {
         client.p2pNode,
         client.peerAddr,
         client.token,
+        net,
         client.protocol
         );
     return  grpcClient
@@ -106,7 +107,7 @@ export class DBManager {
      * @returns Promise resolving to the private key  
      * @throws Error if key operations fail  
      */  
-    async getLogKey(tid: ThreadID): Promise<PrivateKey> {  
+    async getLogKey(tid: ThreadID): Promise<Ed25519PrivKey> {  
         const storageKey = `${this.storagePrefix}_${tid.toString()}_logkey`;  
         
         try {  
@@ -202,9 +203,9 @@ export class DBManager {
             }  
 
             await this.network.addThread( addr, {  
-                key,  
                 logKey: opts.logKey,  
                 token: opts.token,  
+                threadKey:key,  
             });  
             const collections = opts.collections || [];
             const name = opts.name || '';
@@ -221,7 +222,7 @@ export class DBManager {
         });  
     }  
 
-    private async pullThreadBackground(id: ThreadID, token?: Token) {  
+    private async pullThreadBackground(id: ThreadID, token?: ThreadToken) {  
         try {   
             await this.network.pullThread( id,pullThreadBackgroundTimeout, { token: token });  
         } catch (err) {  
@@ -290,7 +291,7 @@ async ifSyncDBToDCSuccess(tId: string): Promise<boolean> {
                     try {  
                         const peerId =  peerIdFromString(pid);  
                         const threadId = ThreadID.fromString(tId);
-                        const remoteInfo = await this.network.getThreadFromPeer(threadId, peerId);  
+                        const remoteInfo = await this.network.getThreadFromPeer(threadId, peerId,{});  
                         const localInfo = await this.network.getThread( threadId);  
                         if (this.compareThreadSync(localInfo, remoteInfo, storeUnit)) {  
                             clearTimeout(timeout);  
@@ -403,13 +404,15 @@ async syncDBFromDC(
             }))  
         );  
 
-        const dbOpts: ManagedOptions = {  
-            name: dbname,  
+        const dbOpts: NewOptions = {  
+            name: dbname, 
+            collections: collections, 
             key: threadKey,  
             logKey: logKey,  
             block: block,  
-            collections: collections
         };  
+      
+
 
         // Delete existing database if present  
         try {  
@@ -492,7 +495,7 @@ async  addLogToThread(ctx: Context, id: ThreadID, lid: PeerId): Promise<void> {
         blockHeight: blockHeight,
         signature: signature,
     };  
-    const dbClient = newGrpcClient(this.connectedDc.client);
+    const dbClient = newGrpcClient(this.connectedDc.client,this.network);
     dbClient.addLogToThread(id.toString(),lid.toString(),opts);
 }  
 
@@ -571,7 +574,7 @@ async newDB(
         return ['', Errors.ErrNoDcPeerConnected];  
     }  
     try {  
-        const dbClient =  newGrpcClient(this.connectedDc.client);
+        const dbClient =  newGrpcClient(this.connectedDc.client,this.network);
         const tidStr = await dbClient.requestThreadID(); 
         const threadID = await this.decodeThreadId(tidStr);
         const logKey = await this.getLogKey(threadID);  
@@ -627,13 +630,14 @@ async newDB(
         );  
 
        
-        const dbOpts: ManagedOptions = {  
-            name: dbname,  
+     
+        const dbOpts: NewOptions = {  
+            name: dbname, 
+            collections: collections, 
             key: threadKey,  
             logKey: logKey,  
             block: true,  
-            collections: collections
-        };  
+        }; 
 
         // Try creating database  
         const errors: string[] = [];  

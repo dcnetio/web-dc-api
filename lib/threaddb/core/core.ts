@@ -12,6 +12,9 @@ import { EventCodec } from "./db";
 import type { CID } from 'multiformats/cid'  
 import { Link } from 'multiformats/link'
 import { DAGCBOR} from '@helia/dag-cbor'
+import { ThreadToken } from './identity';
+import { Ed25519PrivKey, Ed25519PubKey } from '../../dc-key/ed25519';
+import {net as net_pb} from "../pb/net_pb";
 
 
 
@@ -37,13 +40,13 @@ export interface IBlock {
 
 // 接口定义  
 export interface INet extends DAGCBOR{  
-  createThread( id: ThreadID, ...opts: any[]): Promise<void>;  
-  addThread( addr: Multiaddr, ...opts: any[]): Promise<void>;  
-  getThread( id: ThreadID, ...opts: any[]): Promise<IThreadInfo>;  
-  getThreadFromPeer( id: ThreadID, peer: PeerId, ...opts: any[]): Promise<IThreadInfo>;
+  createThread( id: ThreadID, options: { token: ThreadToken; logKey?: Ed25519PrivKey|Ed25519PubKey, threadKey?: ThreadKey }): Promise<ThreadInfo>;  
+  addThread(addr: Multiaddr,options: { token?: ThreadToken; logKey?: Ed25519PrivKey | Ed25519PubKey; threadKey?: ThreadKey } ): Promise<ThreadInfo>;
+  getThread( id: ThreadID, ...opts: any[]): Promise<ThreadInfo>;  
+  getThreadFromPeer( id: ThreadID, peer: PeerId, options: { token?: ThreadToken }): Promise<ThreadInfo>;
   deleteThread( id: ThreadID, ...opts: any[]): Promise<void>;  
   pullThread( id: ThreadID,timeout: number, ...opts: any[]): Promise<void>;  
-  getPbLogs( id: ThreadID): Promise<[dcnet.pb.LogInfo[], IThreadInfo]>;  
+  getPbLogs( id: ThreadID): Promise<[net_pb.pb.ILog[], IThreadInfo]>;  
 }  
 
 
@@ -76,9 +79,9 @@ export class NewOptions {
   eventCodec?: EventCodec;  
   debug?: boolean;  
   key?: ThreadKey;
-  logKey?: PrivateKey | PublicKey;
+  logKey?: Ed25519PrivKey | Ed25519PubKey;
   block?: boolean;
-  token?: Token; 
+  token?: ThreadToken; 
 
   constructor(init?: Partial<NewOptions>) {  
       Object.assign(this, init);  
@@ -105,7 +108,7 @@ class TokenUtil {
 export interface ManagedOptions {  
   name: string;
   key: ThreadKey;
-  logKey: PrivateKey | PublicKey;
+  logKey: Ed25519PrivKey | Ed25519PubKey;
   token?: Token;
   collections: CollectionConfig[];
   block: boolean;

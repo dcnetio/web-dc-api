@@ -33,7 +33,9 @@ export class DBClient {
   logstore: ILogstore;
   net:Net;
 
-  constructor(dcClient: Client,dcUtil: DcUtil) {
+  constructor(dcClient: Client,dcUtil: DcUtil,net:Net,logstore: ILogstore) {
+    this.net = net;
+    this.logstore = logstore;
     this.dc = dcUtil;
     this.client = dcClient;
   }
@@ -52,6 +54,7 @@ export class DBClient {
         this.client.p2pNode,
         peerAddr,
         this.client.token,
+        this.net,
         this.client.protocol
       );
       const tid = await grpcClient.requestThreadID();
@@ -72,6 +75,7 @@ export class DBClient {
             this.client.p2pNode,
             this.client.peerAddr,
             this.client.token,
+            this.net,
             this.client.protocol
           );
       const threadInfo = await grpcClient.createThread(tid, opts);
@@ -97,6 +101,7 @@ export class DBClient {
             this.client.p2pNode,
             this.client.peerAddr,
             this.client.token,
+            this.net,
             this.client.protocol
           );
           grpcClient.pushRecordToPeer(
@@ -174,6 +179,7 @@ async exchangeEdges(threadIds: ThreadID[]): Promise<void> {
       this.client.p2pNode,
       this.client.peerAddr,
       this.client.token,
+      this.net,
       this.client.protocol
     );
 
@@ -320,6 +326,7 @@ async getLogs(tid: ThreadID): Promise<IThreadLogInfo[]> {
       this.client.p2pNode,
       this.client.peerAddr,
       this.client.token,
+      this.net,
       this.client.protocol
     );
 
@@ -354,6 +361,7 @@ async getRecordsFromPeer(
     this.client.p2pNode,
     this.client.peerAddr,
     this.client.token,
+    this.net,
     this.client.protocol
   );
 
