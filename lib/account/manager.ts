@@ -36,15 +36,15 @@ export class AccountManager {
   // 获取用户备用节点
   getAccountNodeAddr = async (): Promise<[Multiaddr | null, Error | null]> => {
     if (!this.connectedDc.client) {
-      console.log("dcClient is null");
+      console.error("dcClient is null");
       return [null, Errors.ErrNoDcPeerConnected];
     }
     if (!this.chainUtil) {
-      console.log("chainUtil is null");
+      console.error("chainUtil is null");
       return [null, Errors.ErrChainUtilIsNull];
     }
     if(!this.accountKey) {
-      console.log("accountKey is null");
+      console.error("accountKey is null");
       return [null, Errors.ErrAccountPrivateSignIsNull];
     }
     const pubkeyRaw = this.accountKey.getPubkeyRaw();
@@ -62,11 +62,11 @@ export class AccountManager {
   // 获取用户信息
   getUserInfoWithNft = async (nftAccount: string): Promise< [User | null, Error | null] > => {
     if (!this.connectedDc.client) {
-      console.log("dcClient is null");
+      console.error("dcClient is null");
       return [null, Errors.ErrNoDcPeerConnected];
     }
     if (!this.chainUtil) {
-      console.log("chainUtil is null");
+      console.error("chainUtil is null");
       return [null, Errors.ErrChainUtilIsNull];
     }
     // 从链上获取
@@ -76,20 +76,20 @@ export class AccountManager {
   };
   bindAccessPeerToUser = async (peerAddr: Multiaddr): Promise< [boolean | null, Error | null] > => {
     if (!this.connectedDc.client) {
-      console.log("dcClient is null");
+      console.error("dcClient is null");
       return [false, Errors.ErrNoDcPeerConnected];
     }
     if (!this.chainUtil) {
-      console.log("chainUtil is null");
+      console.error("chainUtil is null");
       return [null, Errors.ErrChainUtilIsNull];
     }
     if(!this.accountKey) {
-      console.log("accountKey is null");
+      console.error("accountKey is null");
       return [null, Errors.ErrAccountPrivateSignIsNull];
     }
     const peerId = peerAddr.getPeerId();
     if(!peerId) {
-      console.log("peerId is null");
+      console.error("peerId is null");
       return [null, Errors.ErrNoAccountPeerConnected];
     }
     // 绑定节点
