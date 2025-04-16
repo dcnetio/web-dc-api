@@ -30,7 +30,7 @@ export class ChainUtil {
       throwOnUnknown: true,
     });
     if (!this.dcchainapi) {
-      console.log("dcchainapi init failed");
+      console.error("dcchainapi init failed");
       return false;
     }
     return true;
@@ -124,7 +124,7 @@ export class ChainUtil {
       typeof fileInfoJSON !== "object" ||
       (fileInfoJSON as { peers: any[] }).peers.length == 0
     ) {
-      console.log("no peers found for file: ", cid);
+      console.error("no peers found for file: ", cid);
       return;
     }
     const peers = (fileInfoJSON as { peers: any[] }).peers || [];
@@ -138,8 +138,8 @@ export class ChainUtil {
     if (!userInfo || !isUser(userInfo)) {
       return null;
     }
-    const requestPeers = userInfo.requestPeers;
-    return requestPeers;
+    const peers = userInfo.peers;
+    return peers;
   };
 
   // 链上查询节点信息
@@ -187,7 +187,7 @@ export class ChainUtil {
       typeof peerInfoJson !== "object" ||
       (peerInfoJson as { ipAddress: string }).ipAddress == ""
     ) {
-      console.log("no ip address found for peer: ", peerid);
+      console.error("no ip address found for peer: ", peerid);
       return;
     }
     let nodeAddr = Buffer.from(
@@ -213,7 +213,7 @@ export class ChainUtil {
       peerListJson
     );
     if (!peerListJson || typeof peerListJson !== "object") {
-      console.log("no peer list found");
+      console.error("no peer list found");
       return [];
     }
     let peers: string[] = [];
