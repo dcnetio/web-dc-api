@@ -52,6 +52,7 @@ import {newAddrBook} from "./threaddb/lsstoreds/addr_book";
 import {newHeadBook} from "./threaddb/lsstoreds/headbook";
 import {newThreadMetadata} from "./threaddb/lsstoreds/metadata";
 import {dagCbor} from "@helia/dag-cbor";
+const storagePrefix = "dc-";
 const NonceBytes = 12;
 const TagBytes = 16;
 
@@ -104,14 +105,14 @@ export class DC  implements SignHandler {
     } finally {
       // 如果链节点已经连接
       if (createChain) {
-        this.dcNodeClient = await this.dc?._createHeliaNode();
+        this.dcNodeClient = await this.dcutil?._createHeliaNode();
        
         // todo 临时测试
         // const peerId = "12D3KooWEGzh4AcbJrfZMfQb63wncBUpscMEEyiMemSWzEnjVCPf";
-        // let nodeAddr = await this.dc?._getNodeAddr(peerId);
+        // let nodeAddr = await this.dcutil?._getNodeAddr(peerId);
         // nodeAddr = multiaddr('/ip4/192.168.31.42/udp/4001/webrtc-direct/certhash/uEiBq5Ki7QE5Nl2IPWTOG52RNutWFaB3rfdIEgKAlVcFtHA/p2p/12D3KooWKfJGey3xUcTQ8bCokBxxudoDm3RAeCfdbuq2e34c7TWB')
         // 获取默认dc节点地址
-        const nodeAddr = await this.dc?.getDefaultDcNodeAddr();
+        const nodeAddr = await this.dcutil?.getDefaultDcNodeAddr();
         if (nodeAddr) {
           console.log("--------nodeAddr---------", nodeAddr.toString());
           this.connectedDc.nodeAddr = nodeAddr; // 当前地址
@@ -166,7 +167,7 @@ export class DC  implements SignHandler {
   getFileFromDc = async (cid: string, decryptKey: string) => {
     try {
       const fileManager = new FileManager(
-        this.dc,
+        this.dcutil,
         this.connectedDc,
         this.dcChain,
         this.dcNodeClient,
@@ -194,7 +195,7 @@ export class DC  implements SignHandler {
   getCacheValueFromDc = async (
     key: string
   ): Promise<string | null> => {
-    const themeManager = new ThemeManager(this.connectedDc, this.dc);
+    const themeManager = new ThemeManager(this.connectedDc, this.dcutil);
     const res = await themeManager.getCacheValue(key);
     if(res[0]){
       return res[0]
@@ -255,7 +256,7 @@ export class DC  implements SignHandler {
       // if(this.connectedDc.nodeAddr) {
       //   const accountManager = new AccountManager(
       //     this.connectedDc,
-      //     this.dc,
+      //     this.dcutil,
       //     this.dcChain,
       //     this,
       //   );
@@ -303,7 +304,7 @@ export class DC  implements SignHandler {
   getUserInfoWithNft = async (nftAccount: string) => {
     const accountManager = new AccountManager(
       this.connectedDc,
-      this.dc,
+      this.dcutil,
       this.dcChain
     );
     const userInfo = await accountManager.getUserInfoWithNft(nftAccount);
@@ -566,7 +567,7 @@ export class DC  implements SignHandler {
       return ['', null];
     }
     const fileManager = new FileManager(
-      this.dc,
+      this.dcutil,
       this.connectedDc,
       this.dcChain,
       this.dcNodeClient,
@@ -694,7 +695,7 @@ export class DC  implements SignHandler {
       return ['', null];
     }
     const fileManager = new FileManager(
-      this.dc,
+      this.dcutil,
       this.connectedDc,
       this.dcChain,
       this.dcNodeClient,
@@ -750,7 +751,7 @@ export class DC  implements SignHandler {
       return ['', null];
     }
     const fileManager = new FileManager(
-      this.dc,
+      this.dcutil,
       this.connectedDc,
       this.dcChain,
       this.dcNodeClient,
@@ -777,7 +778,7 @@ export class DC  implements SignHandler {
   ) => {
     const messageManager = new MessageManager(
       this.AccountBackupDc, 
-      this.dc, 
+      this.dcutil, 
       this.dcChain, 
       this.dcNodeClient,
       this);
@@ -819,7 +820,7 @@ export class DC  implements SignHandler {
     if (!this.connectedDc.nodeAddr) {
       return;
     }
-    const dcClient = new Client(this.dcNodeClient.libp2p, nodeAddr, dc_protocol);
+    const dcClient = new Client(this.dcNodeClient.libp2p,this.dcNodeClient.blockstore, nodeAddr, dc_protocol);
     return dcClient;
   };
   async _getTokenWithDCConnectInfo(connectInfo: DCConnectInfo) {
@@ -899,7 +900,7 @@ export class DC  implements SignHandler {
         // 需要重连
         let resClient: Client | undefined;
         try {
-          const nodeAddr = await this.dc?._getNodeAddr(
+          const nodeAddr = await this.dcutil?._getNodeAddr(
             connectInfo.nodeAddr?.getPeerId() as string
           );
           if (!nodeAddr) {
@@ -954,7 +955,7 @@ export class DC  implements SignHandler {
     onUpdateTransmitSize: (status: number, size: number) => void
   ) {
     const fileManager = new FileManager(
-      this.dc,
+      this.dcutil,
       this.connectedDc,
       this.dcChain,
       this.dcNodeClient,
@@ -986,62 +987,14 @@ export class DC  implements SignHandler {
     const dbmanager = new DBManager(
       tdatastore,
       net,
-      this.dc,
+      this.dcutil,
       this.connectedDc,
-      this.opts,
-      this.chainUtil,
-      this.storagePrefix
+      {},
+      this.dcChain,
+      storagePrefix
     )
-    const db = await dbmanager.newDB(id, opts);
-    return await DB.newDB(store, n, id, opts);
+    const [threadId,err] = await dbmanager.newDB(name, b32Rk, b32Sk, jsonCollections);
+    return  threadId
   }
-
-
-/**
- * 获取线程信息并添加地址
- * @param id 线程ID
- * @returns 带有地址的线程信息
- * @throws 如果获取线程信息或创建组件失败则抛出异常
- */
-async getThreadWithAddrs(id: ThreadID): Promise<ThreadInfo> {
-  // 获取线程信息
-  let tinfo: ThreadInfo;
-  try {
-    tinfo = await this.store.getThread(id);
-  } catch (err) {
-    throw new Error(`Failed to get thread: ${err instanceof Error ? err.message : String(err)}`);
-  }
-  
-  // 创建P2P组件
-  let peerID;
-  try {
-    peerID = multiaddr.protocols.getProtocol('p2p').createComponent(this.host.ID().toString());
-  } catch (err) {
-    throw new Error(`Failed to create peer component: ${err instanceof Error ? err.message : String(err)}`);
-  }
-  
-  // 创建Thread组件
-  let threadID;
-  try {
-    threadID = multiaddr.protocols.getProtocol('thread').createComponent(tinfo.id.toString());
-  } catch (err) {
-    throw new Error(`Failed to create thread component: ${err instanceof Error ? err.message : String(err)}`);
-  }
-  
-  // 获取主机地址并封装
-  const addrs = this.host.getAddrs();
-  const res: Multiaddr[] = [];
-  
-  for (const addr of addrs) {
-    // 封装地址与peer ID和thread ID
-    const encapsulatedAddr = addr.encapsulate(`/p2p/${this.host.ID().toString()}/thread/${tinfo.id.toString()}`);
-    res.push(encapsulatedAddr);
-  }
-  
-  // 更新线程信息中的地址
-  tinfo.addrs = res;
-  
-  return tinfo;
-}
 }
 
