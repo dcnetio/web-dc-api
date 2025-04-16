@@ -35,7 +35,8 @@ import {ChainUtil} from '../../chain';
 import { DcUtil } from '../../dcutil';
 import {CreateEvent} from '../cbor/event';
 import {net as net_pb} from "../pb/net_pb";
-import { AddOptions } from 'helia';
+import { AddOptions,GetOptions } from '@helia/dag-cbor';
+import { toString as uint8ArrayToString } from "uint8arrays/to-string";
 import {   
   PeerIDConverter,  
   MultiaddrConverter,  
@@ -289,38 +290,18 @@ async getThreadFromPeer(
   options: { token?: ThreadToken } = {}
 ): Promise<ThreadInfo> {
   try {
-    // 刷新与对等点的连接
-    await this.refreshConn(this.peerID);
-    
-    // 创建带有令牌的上下文
-    let threadToken = this.token;
-    
-    // 创建请求
-    const request = {
-      threadID: id.toBytes()
-    };
+    const client = await this.getClient(peerId);
+    if (!client) {
+      throw new Error("Failed to get client");
+    }
+    const dbClient = new DBClient(client,this.dc,this,this.logstore);
     
     // 发送请求
     try {
-      const response = await this.client.getThread(threadToken, request);
-      return threadInfoFromProto(response);
+      const threadInfo =  dbClient.getThreadFromPeer(id,peerId,options);
+      return threadInfo;
     } catch (err) {
-      // 检查是否是令牌失效错误
-      if (err.message && err.message.includes("Invalid token")) {
-        console.debug("Token expired, getting new token and retrying request");
-        
-        // 获取新的令牌
-        this.token = await this.getToken();
-        if (!this.token) {
-          throw new Error("Failed to get new token");
-        }
-        
-        // 使用新令牌重试请求
-        const retryResponse = await this.client.getThread(this.token, request);
-        return threadInfoFromProto(retryResponse);
-      } else {
-        throw err;
-      }
+      throw new Error(`Error getting thread from peer: ${err instanceof Error ? err.message : String(err)}`);
     }
   } catch (err) {
     throw new Error(`Error getting thread from peer: ${err instanceof Error ? err.message : String(err)}`);
@@ -1138,7 +1119,7 @@ async getRecord( id: ThreadID, rid: CID): Promise<IRecord> {
             if (!client) {
               return;
             }
-            const dbClient = new DBClient(client,this.dc);
+            const dbClient = new DBClient(client,this.dc,this,this.logstore);
         
             // 这里使用一个队列来控制并发，类似于 Go 代码中的 queueGetRecords
             const records = await dbClient.getRecordsFromPeer( req, serviceKey);
@@ -1271,9 +1252,9 @@ async  add(str: unknown, options?: Partial<AddOptions>): Promise<CID> {
   return await this.dagService.add(str, options);
 }
 
-async get(cid: CID): Promise<Uint8Array> {
+async get<T>(cid: CID,options?: Partial<GetOptions>): Promise<T> {
   // 从块存储中获取数据
-  return await this.dagService.get(cid);
+  return await this.dagService.get(cid) as T;
 }
 
 
@@ -1295,9 +1276,8 @@ async getPbLogs(tid: ThreadID): Promise<[net_pb.pb.ILog[], ThreadInfo]> {
     
     // 将每个日志信息转换为protobuf格式
     for (const logInfo of info.logs) {
-      logs.push(this.logToProto(logInfo));
+      logs.push(await this.logToProto(logInfo));
     }
-    
     return [logs, info];
   } catch (err) {
     throw new Error(`Failed to get logs for thread ${tid}: ${err instanceof Error ? err.message : String(err)}`);
@@ -1309,21 +1289,19 @@ async getPbLogs(tid: ThreadID): Promise<[net_pb.pb.ILog[], ThreadInfo]> {
  * @param info 日志信息
  * @returns protobuf格式的日志
  */
-private logToProto(info: IThreadLogInfo): net_pb.pb.ILog {
+private async logToProto(lg: IThreadLogInfo): Promise<net_pb.pb.ILog> {
+  if (!lg.pubKey){
+    throw new Error('Missing required fields in LogInfo: pubKey');
+  }
+  const publicKeyBytes =  await KeyConverter.publicToBytes(lg.pubKey);
   // 创建protobuf日志对象
   const log: net_pb.pb.ILog = {
-    ID: PeerIDConverter.toBytes(info.id.toString() as ProtoPeerID),
-    pubKey: ProtoKeyConverter.toBytes(info.pubKey as ProtoKey),
-    addrs: info.addrs.map(addr => addr.bytes),
-    head: info.head?.id ? info.head.id.bytes : undefined,
-    counter: info.head?.counter !== undefined ? BigInt(info.head.counter) : BigInt(0)
+    ID: PeerIDConverter.toBytes(lg.id.toString() as ProtoPeerID),
+    pubKey:publicKeyBytes,
+    addrs: lg.addrs.map(addr => addr.bytes),
+    head: lg.head?.id ? lg.head.id.bytes : undefined,
+    counter: lg.head?.counter 
   };
-  
-  // 如果有私钥，也添加到日志中
-  if (info.privKey) {
-    log.privKey = ProtoKeyConverter.privKeyToProto(info.privKey);
-  }
-  
   return log;
 }
 
@@ -1490,7 +1468,7 @@ async pushRecord(tid: ThreadID, lid: PeerId, rec: IRecord, counter: number): Pro
       if (!client) {
         continue
       }
-     const dbClient = new DBClient(client, this.dc);
+     const dbClient = new DBClient(client, this.dc,this,this.logstore);
       // 启动异步推送（不等待完成）
       dbClient.pushRecordToPeer(tid, lid, rec, counter);
     }
@@ -1549,7 +1527,7 @@ private async exchangeWithPeer(pid: PeerId, tid: ThreadID): Promise<void> {
     }
     
     // 创建数据库客户端
-    const dbClient = new DBClient(client, this.dc);
+    const dbClient = new DBClient(client, this.dc,this,this.logstore);
     
     // 交换边缘
     await dbClient.exchangeEdges([tid]);

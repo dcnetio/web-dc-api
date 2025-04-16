@@ -14,7 +14,7 @@ import { IRecord } from "./core/record";
 import { DcUtil,BrowserType } from "../dcutil";
 import {net as net_pb} from "../threaddb/pb/net_pb";
 import {ILogstore} from "./core/logstore";
-import  {IThreadLogInfo} from "./core/core";
+import  {IThreadInfo, IThreadLogInfo, ThreadInfo} from "./core/core";
 import { toString as uint8ArrayToString } from "uint8arrays/to-string";
 import {peerIdFromString} from "@libp2p/peer-id";
 import {multiaddr} from "@multiformats/multiaddr";
@@ -23,6 +23,7 @@ import { CIDUndef, HeadUndef } from "./core/head";
 import {PermanentAddrTTL} from "./common/logstore";
 import { Net } from "./core/app";
 import {SymKey} from "./core/core";
+import { ThreadToken } from "./core/identity";
 
 
 
@@ -412,6 +413,23 @@ async createExternalLogsIfNotExist(tid: ThreadID, logs: IThreadLogInfo[]): Promi
     }
   } finally {
   }
+}
+
+
+async getThreadFromPeer(
+  id: ThreadID, 
+  peerId: PeerId,
+  options: { token?: ThreadToken } = {}
+): Promise<IThreadInfo> {
+  const grpcClient = new DBGrpcClient(
+    this.client.p2pNode,
+    this.client.peerAddr,
+    this.client.token,
+    this.net,
+    this.client.protocol
+  )
+  const threadInfo = await grpcClient.getThreadFromPeer(id);
+  return threadInfo;
 }
 
 

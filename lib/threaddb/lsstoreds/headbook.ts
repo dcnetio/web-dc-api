@@ -9,9 +9,12 @@ import { HeadBook, DumpHeadBook } from '../core/logstore';
 import { ThreadID } from '@textile/threads-id';
 import type { PeerId } from "@libp2p/interface";
 import { dsLogKey, dsThreadKey, AllowEmptyRestore } from './global';
+import * as buffer from "buffer/";
+const { Buffer } = buffer;
 
 const hbBase = new Key('/thread/heads');
 const hbEdge = new Key('/thread/heads:edge');
+
 
 export function newHeadBook(ds: TxnDatastoreExtended): DsHeadBook {
     return new DsHeadBook(ds);
@@ -171,7 +174,7 @@ export class DsHeadBook implements HeadBook {
 
             const edge = this.computeEdgeValue(heads);
             const buffer = Buffer.alloc(8);
-            buffer.writeBigUInt64BE(BigInt(edge));
+            buffer.writeBigUInt64BE(edge,0);
 
             await txn.put(key, buffer);
             return edge;

@@ -22,6 +22,9 @@ import { PeerId } from "@libp2p/interface";
 import { IBlock } from "../core/core";
 import {RecordToProto} from "../cbor/record";
 import { Net } from "../core/app";
+import { dcnet } from "../../proto/dcnet_proto";
+import * as buffer from "buffer/";
+const { Buffer } = buffer;
 
 export class DBGrpcClient {
     grpcClient: Libp2pGrpcClient;
@@ -143,7 +146,7 @@ export class DBGrpcClient {
                 const head = lg.head ? CID.decode(lg.head) :null;  
       
                 const counter = lg.counter  
-                  ? Number(Buffer.from(lg.counter).readBigInt64BE())  
+                  ? Number(Buffer.from(lg.counter).readBigUInt64BE(0))  
                   : -1;  
       
                 return {  
@@ -319,6 +322,30 @@ export class DBGrpcClient {
         return reply
       } catch (err) {
         console.error(`getLogs error for peer ${this.grpcClient.peerAddr.toString()}:`, err);
+        throw err;
+      }
+    }
+
+    async getThreadFromPeer(tid: ThreadID): Promise<ThreadInfo> {
+      try {
+        const req = new dcnet.pb.GetThreadRequest;
+        req.threadID = tid.toBytes();
+        
+        // 编码请求
+        const messageBytes = dcnet.pb.GetThreadRequest.encode(req).finish();
+        
+        // 调用 gRPC 方法
+        const response = await this.grpcClient.unaryCall(
+          "/dcnet.pb.Service/GetThread",
+          messageBytes,
+          30000 // 设置超时时间为30秒
+        );
+        // 解码响应
+        const reply = dcnet.pb.ThreadInfoReply.decode(response);
+        const threadInfo = await this.threadInfoFromProto(reply);
+        return threadInfo
+      } catch (err) {
+        console.error(`getThreadFromPeer error for peer ${this.grpcClient.peerAddr.toString()}:`, err);
         throw err;
       }
     }

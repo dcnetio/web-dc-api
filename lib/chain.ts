@@ -4,9 +4,10 @@
 
 import { multiaddr } from "@multiformats/multiaddr";
 import { ApiPromise, WsProvider } from "@polkadot/api";
-import * as buffer from "buffer/";
+
 import { isUser, sha256 } from "./util/utils";
 import { User } from "./types/types";
+import * as buffer from "buffer/";
 const { Buffer } = buffer;
 
 export interface StoreunitInfo {  

@@ -1,6 +1,8 @@
 import { Key, Datastore, Query } from 'interface-datastore'  
 import { IThreadMetadata, DumpMetadata, MetadataKey } from '../core/logstore'
 import { ThreadID } from '@textile/threads-id';
+import * as buffer from "buffer/";
+const { Buffer } = buffer;
 
 const AllowEmptyRestore = false  
 
@@ -39,7 +41,7 @@ export class DsThreadMetadata implements IThreadMetadata {
     return this.setValue(t, key, val)  
   }  
 
-  async getBytes(t: ThreadID, key: string): Promise<Buffer | null> {  
+  async getBytes(t: ThreadID, key: string): Promise<Uint8Array | null> {  
     const value = await this.getValue<Uint8Array>(t, key)
     return value ? Buffer.from(value) : null
   }  

@@ -2,7 +2,6 @@ import { PeerId } from '@libp2p/interface';
 import { multiaddr, Multiaddr } from '@multiformats/multiaddr';  
 import { ThreadID } from '@textile/threads-id';
 import { peerIdFromPrivateKey, peerIdFromString } from "@libp2p/peer-id";
-import { Buffer } from 'buffer';  
 import { Key } from 'interface-datastore';
 import { EventEmitter } from 'events';  
 import { DB as ThreadDb } from './db/db';
@@ -28,6 +27,8 @@ import { NewThreadOptions } from './core/options';
 import {ThreadToken} from './core/identity';
 import { DBGrpcClient } from "./net/grpcClient";
 import type { Client } from "../dcapi";
+import * as buffer from "buffer/";
+const { Buffer } = buffer; 
 
 
 import { extractPublicKeyFromPeerId } from "../dc-key/keyManager";

@@ -8,6 +8,8 @@ import * as dagPB from '@ipld/dag-pb';
 import {IPLDNode} from "../threaddb/core/core";
 import { CID } from 'multiformats/cid';
 import { keys } from "@libp2p/crypto";
+import * as buffer from "buffer/";
+const { Buffer } = buffer;
 const { Word32Array, AES, pad, mode, Base64 } = JsCrypto;
 const NonceBytes = 12;
 const TagBytes = 16;
