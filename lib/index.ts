@@ -44,6 +44,7 @@ import { MessageManager } from "./message/manager";
 import {DBManager} from "./threaddb/dbmanager";
 import {createTxnDatastore} from "./threaddb/common/idbstore-adapter";
 import { cidNeedConnect } from "./constants";
+import {DCGrpcServer} from "./threaddb/net/grpcserver";
 
 import { ThreadID } from '@textile/threads-id';
 import {Network} from "./threaddb/net/net";
@@ -72,12 +73,14 @@ export class DC  implements SignHandler {
   public AppId: string = "";
   public Identity: string = "";
   public Blockheight: number = 0;
+  public grpcServer: DCGrpcServer;
 
   constructor(options: { wssUrl: string; backWssUrl: string }) {
     this.blockChainAddr = options.wssUrl;
     this.backChainAddr = options.backWssUrl;
     this.dcChain = new ChainUtil();
     this.dcutil = new DcUtil(this.dcChain);
+   
   }
 
 
@@ -107,6 +110,8 @@ export class DC  implements SignHandler {
       // 如果链节点已经连接
       if (createChain) {
         this.dcNodeClient = await this.dcutil?._createHeliaNode();
+        this.grpcServer = new DCGrpcServer(this.dcNodeClient.libp2p,dc_protocol);
+        this.grpcServer.start();
        
         // todo 临时测试
         // const peerId = "12D3KooWEGzh4AcbJrfZMfQb63wncBUpscMEEyiMemSWzEnjVCPf";
@@ -999,7 +1004,7 @@ export class DC  implements SignHandler {
     if (!this.privKey) {
       throw new Error("privKey is null");
     }
-    const net = new Network(this.dcChain, this.dcNodeClient.libp2p, logstore, this.dcNodeClient.blockstore, dagService, this.privKey )
+    const net = new Network(this.dcChain, this.dcNodeClient.libp2p,this.grpcServer,logstore, this.dcNodeClient.blockstore, dagService, this.privKey )
     const dbmanager = new DBManager(
       tdatastore,
       net,

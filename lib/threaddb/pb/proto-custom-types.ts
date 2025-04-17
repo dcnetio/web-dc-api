@@ -2,6 +2,7 @@
 import { Multiaddr,multiaddr } from '@multiformats/multiaddr'  
 import { CID } from 'multiformats/cid'  
 import  { keys } from '@libp2p/crypto'
+import { PeerId } from "@libp2p/interface";
 import type { PrivateKey, PublicKey, KeyType, RSAPrivateKey, Secp256k1PrivateKey, Ed25519PrivateKey, Secp256k1PublicKey, Ed25519PublicKey } from '@libp2p/interface'
 import {  Key} from '../common/key'
 import { ThreadID } from '@textile/threads-id';
@@ -11,13 +12,13 @@ import { peerIdFromMultihash, peerIdFromString } from '@libp2p/peer-id'
 // Base Types ================================================================  
 type BrandedString<T extends string> = string & { readonly __brand: T }  
 
-export type ProtoPeerID = BrandedString<'ProtoPeerID'>  
+
 export type ProtoThreadID = BrandedString<'ProtoThreadID'>  
 export type ProtoKey = BrandedString<'ProtoKey'>
 
 // Peer ID ===================================================================  
 export class PeerIDConverter {  
-  static fromBytes(ibytes: Uint8Array): ProtoPeerID {  
+  static fromBytes(ibytes: Uint8Array): PeerId {  
      const digest = ibytes;  
      const size = digest.length;  
      const bytes = new Uint8Array(2 + size);  
@@ -33,11 +34,10 @@ export class PeerIDConverter {
     if (peerID == null) {
       throw new Error('Invalid Peer ID')
     }
-    const peerIDString = peerID.toString()
-    return peerIDString as ProtoPeerID
+   return peerID
   }  
 
-  static toBytes(id: ProtoPeerID): Uint8Array {  
+  static toBytes(id: string): Uint8Array {  
     const peerID = peerIdFromString(id)
     if (peerID == null) {
       throw new Error('Invalid Peer ID')

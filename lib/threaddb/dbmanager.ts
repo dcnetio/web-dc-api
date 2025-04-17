@@ -1,5 +1,5 @@
 import { PeerId } from '@libp2p/interface';  
-import { multiaddr, Multiaddr } from '@multiformats/multiaddr';  
+import { multiaddr, Multiaddr as TMultiaddr } from '@multiformats/multiaddr';  
 import { ThreadID } from '@textile/threads-id';
 import { peerIdFromPrivateKey, peerIdFromString } from "@libp2p/peer-id";
 import { Key } from 'interface-datastore';
@@ -8,16 +8,15 @@ import { DB as ThreadDb } from './db/db';
 import { Errors } from './core/db';
 import { Net } from './core/app';
 import { ChainUtil } from "../chain";
-import { LevelDatastore } from 'datastore-level' 
 import { Ed25519PrivKey } from "../dc-key/ed25519";
-import type { Connection, PrivateKey }  from '@libp2p/interface'
+import type { Connection }  from '@libp2p/interface'
 import { keys } from "@libp2p/crypto";
 import { SymmetricKey, Key as ThreadKey } from './common/key';
 import { extractPeerIdFromMultiaddr } from "../dc-key/keyManager";
 
 import {StoreunitInfo} from '../chain';
 import { PrefixTransform,TransformedDatastore} from './common/transformed-datastore' 
-import {NewOptions,Token,ICollectionConfig,ManagedOptions,ThreadInfo,Context} from './core/core';
+import {NewOptions,ICollectionConfig,ManagedOptions,ThreadInfo,Context} from './core/core';
 import {TxnDatastoreExtended,pullThreadBackgroundTimeout,PullTimeout} from './core/db';
 import type { DCConnectInfo } from "../types/types";
 import { fastExtractPeerId, uint32ToLittleEndianBytes,uint64ToLittleEndianBytes } from "../util/utils";
@@ -28,38 +27,11 @@ import { NewThreadOptions } from './core/options';
 import {ThreadToken} from './core/identity';
 import { DBGrpcClient } from "./net/grpcClient";
 import type { Client } from "../dcapi";
-import { protocols } from 'multiaddr';
+import Multiaddr from 'multiaddr';
+import {Protocol} from './net/define';
 
 import * as buffer from "buffer/";
 const { Buffer } = buffer; 
-
-
-import { extractPublicKeyFromPeerId } from "../dc-key/keyManager";
-
-import { createTxnDatastore } from './common/level-adapter';
-import { time } from 'console';
-// 协议常量定义  
-export const Protocol = {  
-    code: 406, // 根据实际协议代码调整  
-    name: 'thread', // 协议名称  
-    version: "0.0.1",
-    resolvable: true,
-    path: true,
-    size:0
-  } 
-if (!protocols.codes[Protocol.code]) {
-    protocols.codes[Protocol.code] = Protocol;
-    protocols.names[Protocol.name] = Protocol;
-}
- 
-
-  declare type Protocol = {
-    code: number;
-    size: number;
-    name: string;
-    resolvable: boolean | undefined;
-    path: boolean | undefined;
-  };
 
 export const ThreadProtocol = "/dc/" + Protocol.name + "/" + Protocol.version
 
@@ -166,7 +138,6 @@ export class DBManager {
             //生成临时ed25519公私钥对
             const keyPair = await keys.generateKeyPair("Ed25519");
             // 获取私钥
-            const bytes = keyPair.raw;
             const privateKey =  new Ed25519PrivKey(keyPair.raw)
             return  privateKey;  
         } catch (err) {  
@@ -180,7 +151,7 @@ export class DBManager {
    * @param addr Multiaddr instance  
    * @returns ID instance  
    */  
-  static fromAddr(addr: Multiaddr): ThreadID {  
+  static fromAddr(addr: TMultiaddr): ThreadID {  
     try {  
       // 获取协议值  
       const parts = addr.toString().split('/')  
@@ -200,7 +171,7 @@ export class DBManager {
    * ToAddr returns ID wrapped as a multiaddress.  
    * @returns Multiaddr instance  
    */  
-  toAddr(): Multiaddr {  
+  toAddr(): TMultiaddr {  
     try {  
       const addr = multiaddr(`/${Protocol.name}/${this.toString()}`)  
       return addr  
@@ -211,7 +182,7 @@ export class DBManager {
   }  
 
     async newDBFromAddr(  
-        addr: Multiaddr,  
+        addr: TMultiaddr,  
         key: ThreadKey,  
         opts: NewOptions = {}  
     ): Promise<ThreadDb> {  
@@ -230,7 +201,7 @@ export class DBManager {
                 throw Errors.ErrThreadReadKeyRequired;  
             }  
 
-            await this.network.addThread( addr, {  
+            await this.network.addThread( Multiaddr(addr.toString() ), {  
                 logKey: opts.logKey,  
                 token: opts.token,  
                 threadKey:key,  
@@ -392,10 +363,10 @@ async syncDBFromDC(
         const threadKey =  new ThreadKey(sk, rk);  
         let connectedFlag = false ;
         let connectedConn :Connection | undefined;
-        let fullMultiAddr :Multiaddr | undefined;
-        let threadAddr :Multiaddr;
+        let fullMultiAddr :TMultiaddr | undefined;
+        let threadAddr :TMultiaddr;
         let connectedPeerId :PeerId;
-        let dbMultiAddr :Multiaddr;
+        let dbMultiAddr :TMultiaddr;
         if (dbAddr.length > 0) {
             try {
                 
@@ -673,7 +644,7 @@ async newDB(
         const errors: string[] = [];  
         for (const multiAddr of threadInfo.addrs) {  
             try {  
-                await this.newDBFromAddr( multiAddr, threadKey, dbOpts);  
+                await this.newDBFromAddr( multiaddr(multiAddr.toString()), threadKey, dbOpts);  
                 break;  
             } catch (error) {  
                 errors.push(error.message);  

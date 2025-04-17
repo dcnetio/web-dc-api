@@ -2,7 +2,8 @@ import crypto from 'crypto';
 
 import { peerIdFromPublicKey,peerIdFromPrivateKey, peerIdFromMultihash, peerIdFromString } from "@libp2p/peer-id";
 import { keys } from "@libp2p/crypto";
-import { Multiaddr, multiaddr,protocols } from '@multiformats/multiaddr'; // 多地址库  
+import { Multiaddr as TMultiaddr, multiaddr,protocols } from '@multiformats/multiaddr'; // 多地址库  
+import  Multiaddr  from "multiaddr"
 import { Head } from '../core/head'; 
 import { ThreadID } from '@textile/threads-id'; 
 import { Ed25519PrivKey,Ed25519PubKey } from "../../dc-key/ed25519";
@@ -44,8 +45,7 @@ import {
   ThreadIDConverter,  
   KeyConverter,  
   ProtoKeyConverter,
-  json,  
-  ProtoPeerID
+  json
 } from '../pb/proto-custom-types' 
 
 
@@ -73,17 +73,16 @@ export class Network implements Net {
   private server:DCGrpcServer;
   private libp2p: Libp2p;
   private connectors: Record<string, Connector>;
-  private cachePeers: Record<string, Multiaddr> = {};
+  private cachePeers: Record<string, TMultiaddr> = {};
 
-  constructor(dcChain: ChainUtil,libp2p:Libp2p,logstore: ILogstore,bstore: Blocks,dagService: DAGCBOR,  privateKey: Ed25519PrivKey) {  
+  constructor(dcChain: ChainUtil,libp2p:Libp2p,grpcServer:DCGrpcServer,logstore: ILogstore,bstore: Blocks,dagService: DAGCBOR,  privateKey: Ed25519PrivKey) {  
     this.logstore = logstore;  
     this.hostID = libp2p.peerId.toString();  
     this.privateKey = privateKey;  
     this.bstore = bstore;
     this.dagService = dagService;
     this.libp2p = libp2p;
-    this.server = new DCGrpcServer(libp2p,dc_protocol);
-    this.server.start();
+    this.server = grpcServer;
     this.connectors = {};
     this.dcChain = dcChain;
   }  
@@ -100,7 +99,7 @@ export class Network implements Net {
   async getClient(peerId: PeerId):Promise<Client>{
     let cachedFlag = true;
     const cacheAddr = this.cachePeers[peerId.toString()]; 
-    let peerAddr: Multiaddr | undefined = cacheAddr;
+    let peerAddr: TMultiaddr | undefined = cacheAddr;
     if (!cacheAddr) {
       cachedFlag = false;
       peerAddr = await this.dcChain.getDcNodeWebrtcDirectAddr(peerId.toString());
@@ -198,9 +197,9 @@ async addThread(
     await this.ensureUniqueLog(id, options.logKey, identity);
 
     // 分离threaddb 组件以获取对等点地址
-    const threadComp = `/thread/${id.toString()}`;
-    const peerAddr = multiaddr(addr.toString().split(threadComp)[0]);
-    
+    // const threadComp = `/thread/${id.toString()}`;
+    // const peerAddr = multiaddr(addr.toString().split(threadComp)[0]);
+    const peerAddr = addr.decapsulate("/thread");
     // 获取对等点信息
     const peerId = peerAddr.getPeerId();
     if (!peerId) {
@@ -235,8 +234,7 @@ async addThread(
     // 如果不是从自己添加，则连接并获取日志
     if (!addFromSelf) {
       // 连接到对等点
-      await this.libp2p.dial(peerAddr);
-      
+      await this.libp2p.dial(multiaddr(peerAddr.toString()));
       // 从对等点更新日志
       await this.updateRecordsFromPeer(id, pid);
     }
@@ -451,7 +449,7 @@ async ensureUniqueLog(id: ThreadID, key?: Ed25519PrivKey | Ed25519PubKey, identi
         for (const addr of hostAddrs) {
           const withPeerId = addr.encapsulate(`/p2p/${this.libp2p.peerId.toString()}`);
           const withThread = withPeerId.encapsulate(`/thread/${tinfo.id.toString()}`);
-          resultAddrs.push(withThread); 
+          resultAddrs.push(Multiaddr(withThread.toString())); 
         }
         tinfo.addrs = resultAddrs;
         return tinfo;
@@ -665,7 +663,7 @@ async ensureUniqueLog(id: ThreadID, key?: Ed25519PrivKey | Ed25519PubKey, identi
     const info = await this.logstore.getThread(tid);
     
     const offsets: Record<string, Head> = {};
-    const addrs: Multiaddr[] = [];
+    const addrs: TMultiaddr[] = [];
     
     // Process all logs in thread
     for (const lg of info.logs) {
@@ -1042,7 +1040,7 @@ async getRecord( id: ThreadID, rid: CID): Promise<IRecord> {
     /**
      * Extract unique peer IDs from addresses
      */
-    async uniquePeers(addrs: Multiaddr[]): Promise<PeerId[]> {
+    async uniquePeers(addrs: TMultiaddr[]): Promise<PeerId[]> {
       const peerMap = new Map<string, PeerId>();
       
       for (const addr of addrs) {
@@ -1067,7 +1065,7 @@ async getRecord( id: ThreadID, rid: CID): Promise<IRecord> {
       /**
        * Extract peer ID from multiaddress and check if callable
        */
-      async callablePeer(addr: Multiaddr): Promise<[PeerId, boolean]> {
+      async callablePeer(addr: TMultiaddr): Promise<[PeerId, boolean]> {
         const p = addr.getPeerId();
         if (!p) {
           throw new Error("Address does not contain peer ID");
@@ -1296,7 +1294,7 @@ private async logToProto(lg: IThreadLogInfo): Promise<net_pb.pb.ILog> {
   const publicKeyBytes =  await KeyConverter.publicToBytes(lg.pubKey);
   // 创建protobuf日志对象
   const log: net_pb.pb.ILog = {
-    ID: PeerIDConverter.toBytes(lg.id.toString() as ProtoPeerID),
+    ID: PeerIDConverter.toBytes(lg.id.toString()),
     pubKey:publicKeyBytes,
     addrs: lg.addrs.map(addr => addr.bytes),
     head: lg.head?.id ? lg.head.id.bytes : undefined,
@@ -1447,7 +1445,7 @@ async newRecord(id: ThreadID, lg: IThreadLogInfo, body: IPLDNode, identity: Publ
 async pushRecord(tid: ThreadID, lid: PeerId, rec: IRecord, counter: number): Promise<void> {
   try {
     // 收集已知的写入器地址
-    const addrs: Multiaddr[] = [];
+    const addrs: TMultiaddr[] = [];
     const info = await this.logstore.getThread(tid);
     
     // 收集所有日志的地址
@@ -1487,7 +1485,7 @@ async exchange(tid: ThreadID): Promise<void> {
     const info = await this.logstore.getThread(tid);
     
     // 收集所有日志的地址
-    const addrs: Multiaddr[] = [];
+    const addrs: TMultiaddr[] = [];
     for (const lg of info.logs) {
       addrs.push(...lg.addrs);
     }

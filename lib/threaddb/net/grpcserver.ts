@@ -1,7 +1,6 @@
 import { Libp2p } from "@libp2p/interface";
 import { CID } from 'multiformats/cid';
 import {multiaddr} from '@multiformats/multiaddr'
-import { Uint8ArrayList } from 'uint8arraylist'; 
 import {StreamWriter } from 'grpc-libp2p-client/dc-http2/stream'
 import { Http2Frame } from 'grpc-libp2p-client/dc-http2/frame';
  import  * as net_pb from '../pb/net_pb'
@@ -14,9 +13,7 @@ import {
     CidConverter,  
     ThreadIDConverter,  
     KeyConverter,  
-    ProtoKeyConverter,
-    json,  
-    ProtoPeerID
+    ProtoKeyConverter
   } from '../pb/proto-custom-types' 
 export class DCGrpcServer {
     constructor(private libp2p: Libp2p, private protocol: string) {}
@@ -97,7 +94,7 @@ export class DCGrpcServer {
        
        const log = new net_pb.net.pb.Log({
         /** Log ID */
-        ID: PeerIDConverter.toBytes(pid as ProtoPeerID),
+        ID: PeerIDConverter.toBytes(pid),
 
         /** Log pubKey */
         pubKey: pubkeyBytes,

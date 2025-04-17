@@ -3,8 +3,9 @@
 import { Key,Datastore,Query,Batch } from 'interface-datastore';
 import { Key as ThreadKey } from '../common/key';
 import { ThreadID } from '@textile/threads-id';
-import type { PeerId,PublicKey,PrivateKey } from "@libp2p/interface"; 
-import { Multiaddr } from '@multiformats/multiaddr'; 
+import type { PeerId,PublicKey,PrivateKey } from "@libp2p/interface";  
+import Multiaddr from 'multiaddr'
+import { Multiaddr as TMultiaddr } from '@multiformats/multiaddr';
 import { Head } from './head'; 
 import { type AnySchema, type JSONSchemaType } from "ajv"; 
 import { dcnet } from "../../proto/dcnet_proto";
@@ -176,7 +177,7 @@ export interface IThreadLogInfo {
 // pubKey is the log's public key.
   pubKey?: PublicKey;  
 // Addrs are the addresses associated with the given log.
-  addrs: Multiaddr[];  
+  addrs: TMultiaddr[];  
 // Managed logs are any logs directly added/created by the host, and/or logs for which we have the private key
   managed: boolean;  
 // Head is the log's current head.

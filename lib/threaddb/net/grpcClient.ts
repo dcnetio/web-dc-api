@@ -1,37 +1,29 @@
 import type { Libp2p } from "libp2p";
 import { ThreadID } from "@textile/threads-id";
-import  Multiaddr  from "multiaddr";
 import { dcnet as dcnet_proto } from "../../proto/dcnet_proto";
-import {net, net as net_pb} from "../pb/net_pb";
-import { base58btc } from "multiformats/bases/base58";
+import { net as net_pb} from "../pb/net_pb";
 import { Libp2pGrpcClient } from "grpc-libp2p-client";
+import {IThreadLogInfo} from "../core/core";
+import  {Multiaddr as TMultiaddr,multiaddr} from '@multiformats/multiaddr'
+import  Multiaddr  from 'multiaddr'
 import { toString as uint8ArrayToString } from "uint8arrays/to-string";
 import { Key as ThreadKey } from '../common/key';
-import { DataSource } from "../../proto/datasource";
 import { Ed25519PubKey,Ed25519PrivKey } from "../../dc-key/ed25519";
 import type { PublicKey,PrivateKey } from "@libp2p/interface"; 
 import { extractPublicKeyFromPeerId,extractPeerIdFromMultiaddr } from "../../dc-key/keyManager";
 import { NewThreadOptions } from '../core/options';
-import {ThreadInfo,IThreadInfo } from '../core/core';
-import { peerIdFromString ,peerIdFromMultihash} from "@libp2p/peer-id";
+import {ThreadInfo } from '../core/core';
 import { CID } from 'multiformats/cid';
 import { PeerRecords} from "./define";
 import {RecordFromProto} from "../cbor/record";
 import { IRecord } from "../core/record";
 import { PeerId } from "@libp2p/interface";
-import { IBlock } from "../core/core";
 import {RecordToProto} from "../cbor/record";
 import { Net } from "../core/app";
 import { dcnet } from "../../proto/dcnet_proto";
 import {   
-  PeerIDConverter,  
-  MultiaddrConverter,  
+  PeerIDConverter,   
   CidConverter,  
-  ThreadIDConverter,  
-  KeyConverter,  
-  ProtoKeyConverter,
-  json,  
-  ProtoPeerID
 } from '../pb/proto-custom-types' 
 import * as buffer from "buffer/";
 const { Buffer } = buffer;
@@ -45,7 +37,7 @@ export class DBGrpcClient {
 
     constructor(
         node: Libp2p,
-        peerAddr: Multiaddr,
+        peerAddr: TMultiaddr,
         token: string,
         net:Net,
         protocol?: string
@@ -139,7 +131,7 @@ export class DBGrpcClient {
         }  
       
         const threadID = ThreadID.fromString(new TextDecoder().decode(reply.threadID));
-        const logs = reply.logs  
+        const logs: IThreadLogInfo[] = reply.logs  
           ? await Promise.all(  
               reply.logs.map(async lg => {  
                 if (!lg.ID || !lg.pubKey) {  
@@ -178,7 +170,7 @@ export class DBGrpcClient {
           if (reply.addrs && reply.addrs.length > 0) {
             for (const addrBytes of reply.addrs) {
               try {
-                const addr = multiaddr(addrBytes);
+                let addr =  Multiaddr(addrBytes);
                 addrs.push(addr);
               } catch (addrErr) {
                 console.warn(`Skipping invalid multiaddr: ${addrErr.message}`);

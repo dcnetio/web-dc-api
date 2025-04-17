@@ -1,5 +1,6 @@
 import type { Client } from "../dcapi";
-import type { Multiaddr } from "@multiformats/multiaddr";
+import type { Multiaddr as TMultiaddr } from "@multiformats/multiaddr";
+import Multiaddr  from "multiaddr"
 import { extractPublicKeyFromPeerId } from "../dc-key/keyManager";
 import { Ed25519PubKey } from "../dc-key/ed25519";
 import { dcnet  as dcnet_proto} from "../proto/dcnet_proto";
@@ -42,7 +43,7 @@ export class DBClient {
   }
 
   async requestThreadID(
-    peerAddr?: Multiaddr
+    peerAddr?: TMultiaddr
   ): Promise<string> {
     try {
       if (this.client.p2pNode == null) {
