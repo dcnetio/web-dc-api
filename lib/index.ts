@@ -38,7 +38,6 @@ import { dcnet } from "./proto/dcnet_proto";
 import { BrowserLineReader, readLine } from "./util/BrowserLineReader";
 import { bytesToHex } from "@noble/curves/abstract/utils";
 import {dc_protocol} from "./define";
-import { BCManager } from "./bc/manager";
 import { MessageManager } from "./message/manager";
 import {DBManager} from "./threaddb/dbmanager";
 import {createTxnDatastore} from "./threaddb/common/idbstore-adapter";
@@ -315,30 +314,17 @@ export class DC  implements SignHandler {
   ifEnoughUserSpace = async (
     needSize?: number
   ) => {
-    const bcManager = new BCManager(
-      this.connectedDc,
-      this.dcChain,
-      this
-    );
-    return bcManager.ifEnoughUserSpace(needSize);
+    const pubkeyRaw = this.getPubkeyRaw();
+    return this.dcChain.ifEnoughUserSpace(pubkeyRaw, needSize);
   }
 
   refreshUserInfo = async () => {
-    const bcManager = new BCManager(
-      this.connectedDc,
-      this.dcChain,
-      this
-    );
-    return bcManager.refreshUserInfo();
+    const pubkeyRaw = this.getPubkeyRaw();
+    return this.dcChain.refreshUserInfo(pubkeyRaw);
   };
 
   getBlockHeight = async () => {
-    const bcManager = new BCManager(
-      this.connectedDc,
-      this.dcChain,
-      this
-    );
-    return bcManager.getBlockHeight();
+    return this.dcChain.getBlockHeight();
   };
 
   // todo
