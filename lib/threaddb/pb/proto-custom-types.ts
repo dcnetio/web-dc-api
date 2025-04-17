@@ -62,10 +62,44 @@ export class MultiaddrConverter {
     return addr.bytes  
   }  
 
-  static createTest(): Multiaddr {  
-    return multiaddr('/ip4/127.0.0.1/tcp/1234')  
-  }  
-}  
+ /**
+   * Convert from protobuf address info array to Multiaddr array
+   * 
+   * @param addrs Array of protobuf address info objects
+   * @returns Array of valid multiaddrs
+   */
+ static addrsFromProtobuf(addrs: Uint8Array[]): Multiaddr[] {
+  const out: Multiaddr[] = [];
+  
+  for (const addr of addrs) {
+    try {
+      const a = multiaddr(addr);
+      out.push(a);
+    } catch (err) {
+      // Skip invalid addresses
+      continue;
+    }
+  }
+  
+  return out;
+}
+
+ /**
+   * Convert from Multiaddr array to protobuf address info array
+   * 
+   * @param addrs Array of multiaddrs
+   * @returns Array of protobuf address info objects
+   */
+ static addrsToProtobuf(addrs: Multiaddr[]): Uint8Array[] {
+    const out:  Uint8Array [] = [];
+    
+    for (const addr of addrs) {
+      out.push( addr.bytes );
+    }
+    
+    return out;
+}
+} 
 
 // CID =======================================================================  
 export class CidConverter {  

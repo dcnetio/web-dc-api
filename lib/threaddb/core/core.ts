@@ -6,7 +6,7 @@ import { ThreadID } from '@textile/threads-id';
 import type { PeerId,PublicKey,PrivateKey } from "@libp2p/interface"; 
 import { Multiaddr } from '@multiformats/multiaddr'; 
 import { Head } from './head'; 
-import { type JSONSchemaType } from "ajv"; 
+import { type AnySchema, type JSONSchemaType } from "ajv"; 
 import { dcnet } from "../../proto/dcnet_proto";
 import { EventCodec } from "./db";
 import type { CID } from 'multiformats/cid'  
@@ -51,9 +51,9 @@ export interface INet extends DAGCBOR{
 
 
 
-export interface CollectionConfig {  
+export interface ICollectionConfig {  
   name: string;  
-  schema: JSONSchemaType<any>;  
+  schema: AnySchema;  
   indexes?: Index[];  
   writeValidator?: string;  
   readFilter?: string;  
@@ -75,7 +75,7 @@ export interface DBInfo {
  
 export class NewOptions {  
   name?: string;  
-  collections?: CollectionConfig[];  
+  collections?: ICollectionConfig[];  
   eventCodec?: EventCodec;  
   debug?: boolean;  
   key?: ThreadKey;
@@ -110,7 +110,7 @@ export interface ManagedOptions {
   key: ThreadKey;
   logKey: Ed25519PrivKey | Ed25519PubKey;
   token?: Token;
-  collections: CollectionConfig[];
+  collections: ICollectionConfig[];
   block: boolean;
 } 
 

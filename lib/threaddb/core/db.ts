@@ -21,6 +21,7 @@ export const Errors = {
     ErrInvalidCollectionSchema: new Error("the collection schema _id property must be a string"),
     ErrCannotIndexIDField: new Error(`cannot create custom index `),
     ErrCollectionNotFound: new Error('collection not found'),
+    ErrNodeAddrIsNull: new Error('node address is null'),
 };  
 
 export const pullThreadBackgroundTimeout = 3600000; // 1 hour in milliseconds

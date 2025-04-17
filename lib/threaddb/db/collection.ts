@@ -1,5 +1,5 @@
 import { Key,QueryFilter } from 'interface-datastore';
-import  {JSONSchemaType} from 'ajv';
+import  {AnySchema} from 'ajv';
 import Ajv from 'ajv';
 import { nanoid } from 'nanoid';
 import EventEmitter from 'eventemitter3';
@@ -8,7 +8,7 @@ import { Ed25519PrivKey  as PrivKey,Ed25519PubKey as PubKey} from "../../dc-key/
 import { Action, ActionType, Event,ITxn ,idFieldName} from '../core/db';
 import { ThreadID } from '@textile/threads-id';
 import { IPLDNode } from '../core/core';
-import { CollectionConfig } from '../core/core';
+import { ICollectionConfig } from '../core/core';
 import {dsPrefix,IDB,ICollection,DBPrefix} from '../core/db';
 import {ThreadToken} from '../core/identity';
 import {dsDispatcherPrefix} from '../common/dispatcher';
@@ -260,7 +260,7 @@ export class Collection implements ICollection {
   
   constructor(
     public readonly name: string,
-    public schema: JSONSchemaType<any>,
+    public schema: AnySchema,
     public db: IDB,
     private rawWriteValidator?: string,
     private rawReadFilter?: string
@@ -1530,7 +1530,7 @@ async modifiedSince(time: number): Promise<InstanceID[]> {
 /**
  * Create a new collection
  */
-export async function newCollection(db: IDB, config: CollectionConfig): Promise<Collection> {
+export async function newCollection(db: IDB, config: ICollectionConfig): Promise<Collection> {
   // Validate name
   if (config.name && !nameRx.test(config.name)) {
     throw ErrInvalidName;

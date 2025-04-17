@@ -1,6 +1,6 @@
 import type { Libp2p } from "libp2p";
 import { ThreadID } from "@textile/threads-id";
-import { multiaddr, Multiaddr } from "@multiformats/multiaddr";
+import  Multiaddr  from "multiaddr";
 import { dcnet as dcnet_proto } from "../../proto/dcnet_proto";
 import {net, net as net_pb} from "../pb/net_pb";
 import { base58btc } from "multiformats/bases/base58";
@@ -10,10 +10,10 @@ import { Key as ThreadKey } from '../common/key';
 import { DataSource } from "../../proto/datasource";
 import { Ed25519PubKey,Ed25519PrivKey } from "../../dc-key/ed25519";
 import type { PublicKey,PrivateKey } from "@libp2p/interface"; 
-import { extractPublicKeyFromPeerId } from "../../dc-key/keyManager";
+import { extractPublicKeyFromPeerId,extractPeerIdFromMultiaddr } from "../../dc-key/keyManager";
 import { NewThreadOptions } from '../core/options';
 import {ThreadInfo,IThreadInfo } from '../core/core';
-import { peerIdFromString } from "@libp2p/peer-id";
+import { peerIdFromString ,peerIdFromMultihash} from "@libp2p/peer-id";
 import { CID } from 'multiformats/cid';
 import { PeerRecords} from "./define";
 import {RecordFromProto} from "../cbor/record";
@@ -23,8 +23,19 @@ import { IBlock } from "../core/core";
 import {RecordToProto} from "../cbor/record";
 import { Net } from "../core/app";
 import { dcnet } from "../../proto/dcnet_proto";
+import {   
+  PeerIDConverter,  
+  MultiaddrConverter,  
+  CidConverter,  
+  ThreadIDConverter,  
+  KeyConverter,  
+  ProtoKeyConverter,
+  json,  
+  ProtoPeerID
+} from '../pb/proto-custom-types' 
 import * as buffer from "buffer/";
 const { Buffer } = buffer;
+
 
 export class DBGrpcClient {
     grpcClient: Libp2pGrpcClient;
@@ -72,7 +83,7 @@ export class DBGrpcClient {
             if (opts.threadKey == null) {
                 throw new Error("threadKey is null");
             }
-            const serverPeerId = this.grpcClient.node.peerId;
+            const serverPeerId =  await extractPeerIdFromMultiaddr(this.grpcClient.peerAddr);
             const sPubkey = await extractPublicKeyFromPeerId(serverPeerId);
             
             const message = new dcnet_proto.pb.CreateThreadRequest({});
@@ -127,23 +138,22 @@ export class DBGrpcClient {
           throw new Error('Missing required field: threadID');  
         }  
       
-        const threadID = ThreadID.fromBytes(reply.threadID);  
-      
+        const threadID = ThreadID.fromString(new TextDecoder().decode(reply.threadID));
         const logs = reply.logs  
           ? await Promise.all(  
               reply.logs.map(async lg => {  
                 if (!lg.ID || !lg.pubKey) {  
                   throw new Error('Missing required fields in LogInfo: id or pubKey');  
                 }  
-                const [id, pubKey, privKey] = await Promise.all([  
-                    peerIdFromString(lg.ID ? uint8ArrayToString(lg.ID) : "") ,
-                    Ed25519PubKey.publicKeyFromProto(lg.pubKey || new Uint8Array()),
-                  lg.privKey ? Ed25519PrivKey.privateKeyFromProto(lg.privKey) : Promise.resolve(undefined),  
-                ]);  
-      
+                const id =  PeerIDConverter.fromBytes(lg.ID);
+                const pubKey =  Ed25519PubKey.publicKeyFromProto(lg.pubKey);
+                let privKey : Ed25519PrivKey | undefined = undefined;
+                if (lg.privKey?.length == 64) {
+                  privKey =  Ed25519PrivKey.privateKeyFromProto(lg.privKey);
+                }
                 const addrs = lg.addrs?.map(addr => multiaddr(addr)) || [];  
       
-                const head = lg.head ? CID.decode(lg.head) :null;  
+                const head = lg.head ? CidConverter.fromBytes(lg.head) :null;  
       
                 const counter = lg.counter  
                   ? Number(Buffer.from(lg.counter).readBigUInt64BE(0))  
@@ -164,7 +174,18 @@ export class DBGrpcClient {
             )  
           : [];  
       
-        const addrs = reply.addrs?.map(addr => multiaddr(addr)) || [];  
+          const addrs: Multiaddr[] = [];
+          if (reply.addrs && reply.addrs.length > 0) {
+            for (const addrBytes of reply.addrs) {
+              try {
+                const addr = multiaddr(addrBytes);
+                addrs.push(addr);
+              } catch (addrErr) {
+                console.warn(`Skipping invalid multiaddr: ${addrErr.message}`);
+                // Continue with other addresses
+              }
+            }
+          } 
         const threadInfo = new ThreadInfo(
           threadID,
           logs,
@@ -179,9 +200,15 @@ export class DBGrpcClient {
         const threadKeyEncrypt = await sPubkey.encrypt(args.threadKey.toBytes());
         let logKeyEncrpt: Uint8Array;
         if (args.logKey) {
+          if (args.logKey instanceof Ed25519PrivKey) {
+            logKeyEncrpt = await sPubkey.encrypt(Ed25519PubKey.publicKeyToProto(args.logKey.publicKey));
+          }else if (args.logKey instanceof Ed25519PubKey) {
+            logKeyEncrpt = await sPubkey.encrypt(Ed25519PubKey.publicKeyToProto(args.logKey));
+          }else{
             logKeyEncrpt = await sPubkey.encrypt(args.logKey.raw);
+          }
         }else{
-            logKeyEncrpt = new Uint8Array(0);
+            logKeyEncrpt = await sPubkey.encrypt(new Uint8Array(0));
         }
         const keys = new  dcnet_proto.pb.Keys({ threadKeyEncrpt: threadKeyEncrypt, logKeyEncrpt:logKeyEncrpt });
         return keys;

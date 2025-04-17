@@ -501,3 +501,4 @@ export function castCidToBytes(link: CID): Uint8Array {
 function isCID(value: any): boolean {
     return CID.asCID(value) !== null;
   }
+

@@ -13,13 +13,14 @@ import { Ed25519PrivKey } from "../dc-key/ed25519";
 import type { Connection, PrivateKey }  from '@libp2p/interface'
 import { keys } from "@libp2p/crypto";
 import { SymmetricKey, Key as ThreadKey } from './common/key';
+import { extractPeerIdFromMultiaddr } from "../dc-key/keyManager";
 
 import {StoreunitInfo} from '../chain';
 import { PrefixTransform,TransformedDatastore} from './common/transformed-datastore' 
-import {NewOptions,Token,CollectionConfig,ManagedOptions,ThreadInfo,Context} from './core/core';
+import {NewOptions,Token,ICollectionConfig,ManagedOptions,ThreadInfo,Context} from './core/core';
 import {TxnDatastoreExtended,pullThreadBackgroundTimeout,PullTimeout} from './core/db';
 import type { DCConnectInfo } from "../types/types";
-import { fastExtractPeerId, uint32ToLittleEndianBytes } from "../util/utils";
+import { fastExtractPeerId, uint32ToLittleEndianBytes,uint64ToLittleEndianBytes } from "../util/utils";
 import {DcUtil} from '../dcutil';
 import {Type} from '../constants';
 import { SignHandler } from '../types/types';
@@ -27,6 +28,8 @@ import { NewThreadOptions } from './core/options';
 import {ThreadToken} from './core/identity';
 import { DBGrpcClient } from "./net/grpcClient";
 import type { Client } from "../dcapi";
+import { protocols } from 'multiaddr';
+
 import * as buffer from "buffer/";
 const { Buffer } = buffer; 
 
@@ -37,12 +40,28 @@ import { createTxnDatastore } from './common/level-adapter';
 import { time } from 'console';
 // 协议常量定义  
 export const Protocol = {  
-    Code: 406, // 根据实际协议代码调整  
-    Name: 'thread', // 协议名称  
-    Version: "0.0.1",
+    code: 406, // 根据实际协议代码调整  
+    name: 'thread', // 协议名称  
+    version: "0.0.1",
+    resolvable: true,
+    path: true,
+    size:0
   } 
+if (!protocols.codes[Protocol.code]) {
+    protocols.codes[Protocol.code] = Protocol;
+    protocols.names[Protocol.name] = Protocol;
+}
+ 
 
-export const ThreadProtocol = "/dc/" + Protocol.Name + "/" + Protocol.Version
+  declare type Protocol = {
+    code: number;
+    size: number;
+    name: string;
+    resolvable: boolean | undefined;
+    path: boolean | undefined;
+  };
+
+export const ThreadProtocol = "/dc/" + Protocol.name + "/" + Protocol.version
 
 
 // 常量  
@@ -88,7 +107,8 @@ export class DBManager {
         connectedDc:DCConnectInfo,
         opts: NewOptions = {} ,
         chainUtil: ChainUtil,
-        storagePrefix: string
+        storagePrefix: string,
+        signHandler: SignHandler
     ) {  
 
         this.store = store;  
@@ -100,6 +120,7 @@ export class DBManager {
         this.lock = new AsyncLock();  
         this.chainUtil = chainUtil;
         this.connectedDc = connectedDc;
+        this.signHandler = signHandler
     }  
 
      /**  
@@ -124,6 +145,12 @@ export class DBManager {
                 return key;  
             }  
         } catch (err) {  
+            if (err.code === 'ERR_NOT_FOUND') {  
+                // Create new key if none exists  
+                const key = await this.newLogKey();  
+                this.store.put(new Key(storageKey), Buffer.from(key.raw));
+                return key;  
+            }
             throw new Error(`Failed to get/create log key: ${err}`);  
         }  
     }
@@ -157,7 +184,7 @@ export class DBManager {
     try {  
       // 获取协议值  
       const parts = addr.toString().split('/')  
-      const index = parts.indexOf(Protocol.Name)  
+      const index = parts.indexOf(Protocol.name)  
       if (index === -1 || index === parts.length - 1) {  
         throw new Error('thread protocol not found in multiaddr')  
       }  
@@ -175,7 +202,7 @@ export class DBManager {
    */  
   toAddr(): Multiaddr {  
     try {  
-      const addr = multiaddr(`/${Protocol.Name}/${this.toString()}`)  
+      const addr = multiaddr(`/${Protocol.name}/${this.toString()}`)  
       return addr  
     } catch (err) {  
       // This should not happen with valid IDs  
@@ -243,7 +270,7 @@ async  wrapDB(
     id: ThreadID,  
     base: NewOptions,  
     name: string,  
-    collections: CollectionConfig[]  
+    collections: ICollectionConfig[]  
   ): Promise<[TxnDatastoreExtended, NewOptions, Error | null]> {  
     const isValid = await this.validateThreadId(id.toString());  
     if (!isValid) {  
@@ -396,7 +423,7 @@ async syncDBFromDC(
         dbMultiAddr = dbMultiAddr.decapsulate(threadAddr);
         dbMultiAddr = dbMultiAddr.encapsulate(threadAddr);
 
-        const collectionInfos: CollectionConfig[] = JSON.parse(jsonCollections);  
+        const collectionInfos: ICollectionConfig[] = JSON.parse(jsonCollections);  
         const collections = await Promise.all(  
             collectionInfos.map(async info => ({  
                 name: info.name,  
@@ -569,7 +596,7 @@ async newDB(
     dbname: string,  
     b32Rk: string,  
     b32Sk: string,  
-    jsonCollections: string  
+    collectionInfos: ICollectionConfig[]  
 ): Promise<[string, Error | null]> {  
     if (!this.connectedDc?.client) {  
         return ['', Errors.ErrNoDcPeerConnected];  
@@ -589,10 +616,12 @@ async newDB(
         const hValue: Uint8Array = uint32ToLittleEndianBytes(
           blockHeight ? blockHeight : 0
         );
-        const peerIdValue: Uint8Array = new TextEncoder().encode(
-          this.connectedDc.nodeAddr?.getPeerId() || ""
-        );
-        const sizeValue: Uint8Array = uint32ToLittleEndianBytes(50<<20); //数据库固定大小50M
+        if (!this.connectedDc?.nodeAddr) {
+            return ['', Errors.ErrNodeAddrIsNull];
+        }
+        const rPeerId = await  extractPeerIdFromMultiaddr(this.connectedDc.nodeAddr);
+        const peerIdValue: Uint8Array = new TextEncoder().encode(rPeerId.toString());
+        const sizeValue: Uint8Array = uint64ToLittleEndianBytes(50<<20); //数据库固定大小50M
         const tidUnit8Array = new TextEncoder().encode(tidStr);
 
         const typeValue: Uint8Array = uint32ToLittleEndianBytes(Type.Threaddbtype);
@@ -617,10 +646,10 @@ async newDB(
         const threadInfo = await dbClient.createThread(threadID.toString(), opts);  
 
         // Parse collections  
-        let collectionInfos: CollectionConfig[] = [];  
-        if (jsonCollections.length > 2) {  
-            collectionInfos = JSON.parse(jsonCollections);  
-        }  
+        // let collectionInfos: ICollectionConfig[] = [];  
+        // if (jsonCollections.length > 2) {  
+        //     collectionInfos = JSON.parse(jsonCollections);  
+        // }  
 
         const collections = await Promise.all(  
             collectionInfos.map(async info => ({  

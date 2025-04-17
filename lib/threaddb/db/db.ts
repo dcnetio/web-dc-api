@@ -15,7 +15,7 @@ import { ThreadToken } from '../core/identity';
 import { 
   NewOptions,
   Index,
-  CollectionConfig} from '../core/core';
+  ICollectionConfig} from '../core/core';
 import { Event,
   InstanceID,
   ReduceAction,
@@ -248,13 +248,13 @@ export class DB implements App,IDB {
     }  
   }  
 
-  private async initCollections(configs: CollectionConfig[]): Promise<void> {  
+  private async initCollections(configs: ICollectionConfig[]): Promise<void> {  
     for (const config of configs) {  
       await this.newCollection(config);  
     }  
   }  
 
-  async newCollection(config: CollectionConfig): Promise<Collection> {  
+  async newCollection(config: ICollectionConfig): Promise<Collection> {  
     if (this.collections.has(config.name)) {  
       throw new CollectionExistsError(config.name);  
     }  

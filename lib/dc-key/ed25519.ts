@@ -262,6 +262,9 @@ export class Ed25519PrivKey implements Ed25519PrivateKey {
 
     // privateKeyFromProto converts a protobuf PrivateKey message into a public key object.
     static privateKeyFromProto(buf:Uint8Array):Ed25519PrivKey {
+        if (buf.length !== 64) {  
+            throw new Error('Invalid key length')  
+        }
          const decoded = Ed25519PrivKey.proto.decode(buf) as unknown as KeyMessage;  
         if (decoded.type !== keyType.Ed25519) {  
             throw new Error('Invalid key type')  

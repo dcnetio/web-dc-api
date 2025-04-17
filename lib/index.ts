@@ -10,6 +10,7 @@ import { unixfs } from "@helia/unixfs";
 import { multiaddr, type Multiaddr } from "@multiformats/multiaddr";
 import toBuffer from "it-to-buffer";
 import * as buffer from "buffer/";
+import {ICollectionConfig} from './threaddb/core/core';
 import {
   compareByteArrays,
   decryptContentForBrowser,
@@ -985,7 +986,7 @@ export class DC  implements SignHandler {
     name: string,
     b32Rk: string,  
     b32Sk: string,  
-    jsonCollections: string 
+    jsonCollections: ICollectionConfig[] 
   ): Promise<string> {
     const tdatastore = await createTxnDatastore(name)
     const keyBook = await newKeyBook(tdatastore);
@@ -1006,10 +1007,13 @@ export class DC  implements SignHandler {
       this.connectedDc,
       {},
       this.dcChain,
-      storagePrefix
+      storagePrefix,
+      this
     )
     const [threadId,err] = await dbmanager.newDB(name, b32Rk, b32Sk, jsonCollections);
     return  threadId
   }
 }
+
+
 
