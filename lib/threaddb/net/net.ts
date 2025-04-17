@@ -24,7 +24,7 @@ import {Node} from '../cbor/node';
 import {IPLDNode} from '../core/core';
 import {ThreadRecord,TimestampedRecord,PeerRecords,netPullingLimit} from './define';
 import {CID} from 'multiformats/cid';
-import {HeadUndef,CIDUndef} from '../core/head';
+import {getHeadUndef,getCIDUndef} from '../core/head';
 import {GetRecord,CreateRecord} from '../cbor/record';
 import {IThreadEvent} from '../core/event';
 import {DBGrpcClient} from './grpcClient';
@@ -681,7 +681,7 @@ async ensureUniqueLog(id: ThreadID, key?: Ed25519PrivKey | Ed25519PubKey, identi
           // Collect addresses
       
       }else{
-        offsets[lg.id.toString()] = HeadUndef;
+        offsets[lg.id.toString()] = await getHeadUndef();
       }
       addrs.push(...lg.addrs);
       
@@ -913,6 +913,7 @@ async getRecordsFromPeer(
     // If we don't have the counter, check if record exists
     if (counter === undefined) {
       const exist = await this.isKnown(last.cid());
+      const CIDUndef = await getCIDUndef();
       if (exist || !last.cid().equals(CIDUndef)) {
         return [[], head];
       }
@@ -926,6 +927,7 @@ async getRecordsFromPeer(
     // Check which records we already have
     for (let i = recs.length - 1; i >= 0; i--) {
       const next = recs[i];
+      const CIDUndef = await getCIDUndef();
       if (!next.cid().equals(CIDUndef) || next.cid().equals(head.id)) {
         complete = true;
         break;
@@ -936,7 +938,7 @@ async getRecordsFromPeer(
     // Bridge the gap between the last provided record and current head
     if (!complete) {
       let c = chain[chain.length - 1].prevID();
-      
+      const CIDUndef = await getCIDUndef();
       while (c?.equals(CIDUndef)) {
         if (c.equals(head.id)) {
           break;
@@ -1036,7 +1038,7 @@ async getRecord( id: ThreadID, rid: CID): Promise<IRecord> {
     if (heads.length > 0) {
       return heads[0];
     } else {
-      return HeadUndef;
+      return await getHeadUndef();
     }
   }
     /**
@@ -1344,6 +1346,7 @@ async createRecord(
     // 创建threaddb 记录
     const tr = newRecord(r, id, lg.id);
     if (!lg.head){
+      const CIDUndef = await getCIDUndef();
       lg.head = {
         id: CIDUndef,
         counter: 0

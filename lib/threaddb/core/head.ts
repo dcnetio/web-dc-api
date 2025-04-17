@@ -14,16 +14,26 @@ export interface Head {
 export const CounterUndef: number = 0  
 
 
-// HeadUndef转换方案  
-const emptyMultihash = await sha256.digest(new Uint8Array())
-export const HeadUndef: Head = {  
-  // 使用multiformats的CID undefined表示  
-  id: CID.create(1, 0x55, emptyMultihash),  // 1表示CID版本，0x55表示raw
-  counter: CounterUndef  
+// // HeadUndef转换方案  
+// const emptyMultihash = await sha256.digest(new Uint8Array())
+// export const HeadUndef: Head = {  
+//   // 使用multiformats的CID undefined表示  
+//   id: CID.create(1, 0x55, emptyMultihash),  // 1表示CID版本，0x55表示raw
+//   counter: CounterUndef  
+// }  
+
+// export const CIDUndef:CID = CID.create(1, 0x55, emptyMultihash)
+export async function getHeadUndef(): Promise<Head> {  
+  const emptyMultihash = await sha256.digest(new Uint8Array())  
+  return {  
+    id: CID.create(1, 0x55, emptyMultihash),  
+    counter: CounterUndef  
+  }  
 }  
-
-export const CIDUndef:CID = CID.create(1, 0x55, emptyMultihash)
-
+export async function getCIDUndef(): Promise<CID> {  
+  const emptyMultihash = await sha256.digest(new Uint8Array())  
+  return CID.create(1, 0x55, emptyMultihash)  
+}  
 
 
 /**  

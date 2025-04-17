@@ -19,7 +19,7 @@ import { toString as uint8ArrayToString } from "uint8arrays/to-string";
 import {peerIdFromString} from "@libp2p/peer-id";
 import {multiaddr} from "@multiformats/multiaddr";
 import { CID } from 'multiformats/cid';
-import { CIDUndef, HeadUndef } from "./core/head";
+import { getHeadUndef } from "./core/head";
 import {PermanentAddrTTL} from "./common/logstore";
 import { Net } from "./core/app";
 import {SymKey} from "./core/core";
@@ -396,7 +396,7 @@ async createExternalLogsIfNotExist(tid: ThreadID, logs: IThreadLogInfo[]): Promi
         
         if (heads.length === 0) {
           // 如果没有头部，设置为未定义并添加日志
-          log.head =HeadUndef;
+          log.head = await getHeadUndef();
           await this.logstore.addLog(tid, log);
         } else {
           // 更新日志地址
