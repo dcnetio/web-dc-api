@@ -15,6 +15,8 @@ export const Errors = {
     ErrThreadReadKeyRequired: new Error('thread read key required'), 
     ErrorThreadIDValidation: new Error('thread id validation error'),
     ErrThreadNotFound: new Error('thread not found'), 
+    ErrLogNotFound: new Error('log not found'),
+    ErrLogExists: new Error('log already exists'),
     ErrP2pNetworkNotInit: new Error('p2p network not initialized'),
     ErrNoDbManager: new Error('no db manager'),
     ErrNoDcPeerConnected: new Error('no dc peer connected'),

@@ -13,21 +13,9 @@ import * as pb from '../pb/lstore.ts';
 export class ErrThreadExists extends Error {  
   constructor() { super('thread already exists'); }  
 }  
-export class ErrThreadNotFound extends Error {  
-  constructor() { super('thread not found'); }  
-}  
-export class ErrLogNotFound extends Error {  
-  constructor() { super('log not found'); }  
-}  
-export class ErrLogExists extends Error {  
-  constructor() { super('log already exists'); }  
-}  
-export class ErrEmptyDump extends Error {  
-  constructor() { super('empty dump'); }  
-}  
-export class ErrEdgeUnavailable extends Error {  
-  constructor() { super('edge unavailable'); }  
-}  
+
+
+
 
 // 接口定义  
 export interface IThreadMetadata {  

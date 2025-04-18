@@ -1,7 +1,7 @@
 // Package logstore provides local store for thread logs. The subpackages provide creators for different types of store implementations.
 
 import { Mutex } from 'async-mutex';
-import { KeyBook, AddrBook, IThreadMetadata, HeadBook, ILogstore, ErrThreadNotFound, ErrLogNotFound, ErrLogExists } from '../core/logstore';
+import { KeyBook, AddrBook, IThreadMetadata, HeadBook, ILogstore } from '../core/logstore';
 import {IThreadInfo,IThreadLogInfo} from '../core/core';
 import {SymmetricKey} from './key';
 import { ThreadID } from '@textile/threads-id'; 
@@ -11,6 +11,7 @@ import {Key as ThreadKey} from './key';
 import { symKeyFromBytes } from '../../dc-key/keyManager';
 import { CID } from 'multiformats';
 import {ThreadInfo} from '../core/core';
+import {Errors} from '../core/db';
 
 export const PermanentAddrTTL = 2^53-1; // 使用 bigint 精确表示 64 位整数  
 
@@ -106,7 +107,7 @@ class Logstore implements ILogstore {
         return this.mutex.runExclusive(async () => {
             const sk = await this.keyBook.serviceKey(id);
             if (!sk) {
-                throw ErrThreadNotFound;
+                throw Errors.ErrThreadNotFound
             }
             const rk = await this.keyBook.readKey(id);
             const set = await this.getLogIDs(id);
@@ -152,7 +153,7 @@ class Logstore implements ILogstore {
             if (lg.privKey) {
                 const pk = await this.keyBook.privKey(id, lg.id);
                 if (pk) {
-                    throw ErrLogExists;
+                    throw Errors.ErrLogExists;
                 }
                 await this.keyBook.addPrivKey(id, lg.id, lg.privKey);
             }
@@ -180,7 +181,7 @@ class Logstore implements ILogstore {
     private async getLogInternal(id: ThreadID, lid: PeerId): Promise<IThreadLogInfo> {
         const pk = await this.keyBook.pubKey(id, lid);
         if (!pk) {
-            throw ErrLogNotFound;
+            throw Errors.ErrLogNotFound;
         }
         const sk = await this.keyBook.privKey(id, lid);
         const addrs = await this.addrBook.addrs(id, lid);

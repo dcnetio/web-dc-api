@@ -83,7 +83,7 @@ table.forEach(row => {
   const proto = createProtocol(...row)
   if (!protocols.codes[proto.code]) {
     protocols.codes[proto.code] = proto
-    protocols.codes[proto.name] = proto
+    protocols.names[proto.name] = proto
   }
 })
 if (!protocols.codes[Protocol.code]) {

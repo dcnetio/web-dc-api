@@ -249,11 +249,11 @@ export class ChainUtil {
       }  
       // 构造返回数据  
       return {  
-        size: Number(data['size'] || 0),  
-        utype: Number(data['utype'] || 0),  
+        size: Number(data['fileSize'] || 0),  
+        utype: Number(data['fileType'] || 0),  
         peers: new Set(Array.isArray(data['peers']) ? data['peers'].map(String) : []),  
         users: new Set(Array.isArray(data['users']) ? data['users'].map(String) : []),  
-        logs: new Set(Array.isArray(data['logs']) ? data['logs'].map(String) : [])  
+        logs: new Set(Array.isArray(data['dbLog']) ? data['dbLog'].map(String) : [])  
     };    
   }
 }

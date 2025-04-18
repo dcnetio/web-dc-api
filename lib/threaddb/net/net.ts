@@ -3,14 +3,13 @@ import crypto from 'crypto';
 import { peerIdFromPublicKey,peerIdFromPrivateKey, peerIdFromMultihash, peerIdFromString } from "@libp2p/peer-id";
 import { keys } from "@libp2p/crypto";
 import { Multiaddr as TMultiaddr, multiaddr,protocols } from '@multiformats/multiaddr'; // 多地址库  
-import  Multiaddr  from "multiaddr"
 import { Head } from '../core/head'; 
 import { ThreadID } from '@textile/threads-id'; 
 import { Ed25519PrivKey,Ed25519PubKey } from "../../dc-key/ed25519";
 import type { PeerId,PublicKey,PrivateKey } from "@libp2p/interface"; 
 import { SymmetricKey, Key as ThreadKey } from '../common/key';
 import {validateIDData} from '../lsstoreds/global';
-import {  ThreadInfo, IThreadLogInfo, SymKey, IThreadInfo} from '../core/core';
+import {  ThreadInfo, IThreadLogInfo, SymKey, IThreadInfo, ThreadMuliaddr} from '../core/core';
 import {ThreadToken} from '../core/identity';
 import {ILogstore} from '../core/logstore';
 import {Datastore} from 'interface-datastore';
@@ -35,6 +34,7 @@ import {App,Connector,Net,PubKey,Token}  from "../core/app";
 import {ChainUtil} from '../../chain';
 import { DcUtil } from '../../dcutil';
 import {CreateEvent} from '../cbor/event';
+import {Errors} from '../core/db';
 import {net as net_pb} from "../pb/net_pb";
 import { AddOptions,GetOptions } from '@helia/dag-cbor';
 import { toString as uint8ArrayToString } from "uint8arrays/to-string";
@@ -111,7 +111,7 @@ export class Network implements Net {
     const addr = multiaddr(peerAddr);
     const client = new Client(this.libp2p,this.bstore,addr, dc_protocol);
     //获取token
-    const token = await client.GetToken(this.privateKey.publicKey.toString(),(payload: Uint8Array) => {
+    const token = await client.GetToken(this.privateKey.publicKey.string(),(payload: Uint8Array) => {
       return this.sign(payload);
     });
     if (!token) {
@@ -123,7 +123,7 @@ export class Network implements Net {
         } 
         const addr = multiaddr(peerAddr);
         const client = new Client(this.libp2p,this.bstore,addr, dc_protocol);
-        const token = await client.GetToken(this.privateKey.publicKey.toString(),(payload: Uint8Array) => {
+        const token = await client.GetToken(this.privateKey.publicKey.string(),(payload: Uint8Array) => {
           return this.sign(payload);
         });
         if (token) {
@@ -174,12 +174,12 @@ export class Network implements Net {
  * @returns 带有地址的threaddb 信息
  */
 async addThread(
-  addr: Multiaddr,
+  addr: ThreadMuliaddr,
   options: { token?: ThreadToken; logKey?: Ed25519PrivKey | Ed25519PubKey; threadKey?: ThreadKey } = {}
 ): Promise<ThreadInfo> {
   try {
     // 从多地址提取threaddb ID
-    const idStr = addr.toString().split('/thread/')[1];
+    const idStr = addr.id.toString();
     if (!idStr) {
       throw new Error("Invalid thread address");
     }
@@ -199,7 +199,7 @@ async addThread(
     // 分离threaddb 组件以获取对等点地址
     // const threadComp = `/thread/${id.toString()}`;
     // const peerAddr = multiaddr(addr.toString().split(threadComp)[0]);
-    const peerAddr = addr.decapsulate("/thread");
+    const peerAddr = addr.addr
     // 获取对等点信息
     const peerId = peerAddr.getPeerId();
     if (!peerId) {
@@ -425,7 +425,7 @@ async ensureUniqueLog(id: ThreadID, key?: Ed25519PrivKey | Ed25519PubKey, identi
     }
   } catch (error: any) {
     // 如果threaddb 未找到，那没问题（我们正在创建一个新threaddb ）
-    if (error.message === "Thread not found") {
+    if (error.message === Errors.ErrThreadNotFound.message) {
       return;
     }
     // 否则抛出错误
@@ -443,13 +443,13 @@ async ensureUniqueLog(id: ThreadID, key?: Ed25519PrivKey | Ed25519PubKey, identi
         const tinfo = await this.logstore.getThread(id);
         // Get host addresses
         const hostAddrs = this.libp2p.getMultiaddrs();
-        const resultAddrs: Multiaddr[] = [];
+        const resultAddrs: ThreadMuliaddr[] = [];
         
         // Encapsulate each address with peer and thread components
         for (const addr of hostAddrs) {
           const withPeerId = addr.encapsulate(`/p2p/${this.libp2p.peerId.toString()}`);
-          const withThread = withPeerId.encapsulate(`/thread/${tinfo.id.toString()}`);
-          resultAddrs.push(Multiaddr(withThread.toString())); 
+          const threadMultiaddr = new ThreadMuliaddr(withPeerId, tinfo.id);
+          resultAddrs.push(threadMultiaddr); 
         }
         tinfo.addrs = resultAddrs;
         return tinfo;
@@ -1172,7 +1172,7 @@ async getRecord( id: ThreadID, rid: CID): Promise<IRecord> {
     tid: ThreadID,
     offsets: Record<string,Head>,
     limit: number
-  ): Promise<{ req: any, serviceKey: SymKey }> {
+  ): Promise<{ req: net_pb.pb.IGetRecordsRequest, serviceKey: SymKey }> {
     try {
       // 从存储中获取服务密钥
       const serviceKey = await this.logstore.keyBook.serviceKey(tid);
@@ -1183,26 +1183,25 @@ async getRecord( id: ThreadID, rid: CID): Promise<IRecord> {
       
       // 创建日志条目
       const logs = Object.entries(offsets).map(([logId, offset]) => {
-        return {
-          logID: { ID: new TextEncoder().encode(logId) },
-          offset: { cid: offset.id.bytes },
+        const pbLog: net_pb.pb.GetRecordsRequest.Body.ILogEntry = {
+          logID: PeerIDConverter.toBytes(logId),
           limit: limit,
-          counter: offset.counter
-        };
-      });
+          counter: offset.counter,
+          offset: CidConverter.toBytes(offset.id)
+        }
+        return pbLog;
+     });
       
       // 构建请求体
-      const body = {
-        threadID: { ID: tid.toBytes() },
-        serviceKey: { key: serviceKey.raw },
+      const body: net_pb.pb.GetRecordsRequest.IBody = {
+        threadID: ThreadIDConverter.toBytes(tid.toString()),
+        serviceKey: serviceKey.raw,
         logs: logs
       };
       
       // 创建请求
-      const req = {
-        body: body
-      };
-      
+      const req = new net_pb.pb.GetRecordsRequest();
+      req.body = body;
       return { req, serviceKey };
     } catch (err) {
       console.error("buildGetRecordsRequest error:", err);

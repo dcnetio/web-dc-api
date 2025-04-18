@@ -12,8 +12,7 @@ import { peerIdFromMultihash, peerIdFromString } from '@libp2p/peer-id'
 // Base Types ================================================================  
 type BrandedString<T extends string> = string & { readonly __brand: T }  
 
-
-export type ProtoThreadID = BrandedString<'ProtoThreadID'>  
+ 
 export type ProtoKey = BrandedString<'ProtoKey'>
 
 // Peer ID ===================================================================  
@@ -118,13 +117,13 @@ export class CidConverter {
 
 // Thread ID =================================================================  
 export class ThreadIDConverter {  
-  static fromBytes(bytes: Uint8Array): ProtoThreadID {  
+  static fromBytes(bytes: Uint8Array): string {  
     const id = ThreadID.fromBytes(bytes).toString()
    
-    return id as ProtoThreadID  
+    return id 
   }  
 
-  static toBytes(id: ProtoThreadID): Uint8Array {  
+  static toBytes(id: string): Uint8Array {  
     const threadID = ThreadID.fromString(id)
     return threadID.toBytes()
   }  
@@ -172,12 +171,12 @@ export class KeyConverter {
 // ProtoKey is a custom type used to serialize and deserialize raw keys into the symmetric.Key type, and back.
 
 export class ProtoKeyConverter {
-  static fromBytes(bytes: Uint8Array): ProtoKey {  
+  static fromBytes(bytes: Uint8Array): string {  
    const key = Key.fromBytes(bytes)
-    return key.toString() as ProtoKey 
+    return key.toString() 
   }  
 
-  static toBytes(pkey: ProtoKey): Uint8Array {  
+  static toBytes(pkey: string): Uint8Array {  
     const key = Key.fromString(pkey)
     return key.toBytes()
   } 

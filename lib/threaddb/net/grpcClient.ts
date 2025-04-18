@@ -14,20 +14,31 @@ import { extractPublicKeyFromPeerId,extractPeerIdFromMultiaddr } from "../../dc-
 import { NewThreadOptions } from '../core/options';
 import {ThreadInfo } from '../core/core';
 import { CID } from 'multiformats/cid';
-import { PeerRecords} from "./define";
+import { PeerRecords, Protocol} from "./define";
 import {RecordFromProto} from "../cbor/record";
 import { IRecord } from "../core/record";
 import { PeerId } from "@libp2p/interface";
 import {RecordToProto} from "../cbor/record";
 import { Net } from "../core/app";
 import { dcnet } from "../../proto/dcnet_proto";
+import {ThreadMuliaddr} from "../core/core";
+import * as varint from 'uint8-varint'
+import { protocols } from "@multiformats/multiaddr";
 import {   
   PeerIDConverter,   
-  CidConverter,  
+  CidConverter,
+  MultiaddrConverter,  
 } from '../pb/proto-custom-types' 
 import * as buffer from "buffer/";
 const { Buffer } = buffer;
 
+interface Protocol {
+  code: number
+  size: number
+  name: string
+  resolvable?: boolean | undefined
+  path?: boolean | undefined
+}
 
 export class DBGrpcClient {
     grpcClient: Libp2pGrpcClient;
@@ -143,7 +154,7 @@ export class DBGrpcClient {
                 if (lg.privKey?.length == 64) {
                   privKey =  Ed25519PrivKey.privateKeyFromProto(lg.privKey);
                 }
-                const addrs = lg.addrs?.map(addr => multiaddr(addr)) || [];  
+                const addrs = lg.addrs?.map(addr => MultiaddrConverter.fromBytes(addr)) || [];  
       
                 const head = lg.head ? CidConverter.fromBytes(lg.head) :null;  
       
@@ -166,12 +177,18 @@ export class DBGrpcClient {
             )  
           : [];  
       
-          const addrs: Multiaddr[] = [];
+          const addrs: ThreadMuliaddr[] = [];
           if (reply.addrs && reply.addrs.length > 0) {
             for (const addrBytes of reply.addrs) {
               try {
-                let addr =  Multiaddr(addrBytes);
-                addrs.push(addr);
+                //addrBytes 移除code为406,长度为-1的数据
+                // 处理含有 /thread 协议的多地址
+                // thread 协议码为 406
+                let processedBytes = this.removeThreadProtocol(addrBytes);
+                // 使用处理后的字节创建多地址
+                let addr = multiaddr(processedBytes);
+                const threadMultiaddr = new ThreadMuliaddr(addr, threadID);
+                addrs.push(threadMultiaddr);
               } catch (addrErr) {
                 console.warn(`Skipping invalid multiaddr: ${addrErr.message}`);
                 // Continue with other addresses
@@ -186,6 +203,48 @@ export class DBGrpcClient {
         return threadInfo;  
       }  
 
+      removeThreadProtocol(bytes: Uint8Array): Uint8Array {
+        
+         let i = 0
+         while (i < bytes.length) {
+           const code = varint.decode(bytes, i)
+           if (code == Protocol.code) {// 406,截取前面的数据
+            return bytes.slice(0, i)
+           }
+           const n = varint.encodingLength(code)
+
+           const p = protocols(code)
+           const size = this.sizeForAddr(p, bytes.slice(i + n))
+       
+           if (size === 0) {
+             i += n
+             continue
+           }
+           const addr = bytes.slice(i + n, i + n + size)
+           i += (size + n)
+       
+           if (i > bytes.length) { 
+             throw new Error('invalid multiaddr')
+           }
+           if (p.path === true) {
+             break
+           }
+         }
+         return bytes
+       }
+      
+
+
+       sizeForAddr (p: Protocol, addr: Uint8Array | number[]): number {
+        if (p.size > 0) {
+          return p.size / 8
+        } else if (p.size === 0) {
+          return 0
+        } else {
+          const size = varint.decode(addr instanceof Uint8Array ? addr : Uint8Array.from(addr))
+          return size + varint.encodingLength(size)
+        }
+      }
 
   async getThreadKeys(sPubkey: Ed25519PubKey, args: { threadKey: ThreadKey, logKey?: PrivateKey | PublicKey }): Promise<dcnet_proto.pb.Keys> {
     try {
@@ -229,7 +288,7 @@ export class DBGrpcClient {
       
       // 调用 gRPC 方法
       const responseData = await this.grpcClient.unaryCall(
-        "/dcnet.pb.Service/GetRecords",
+        "/net.pb.Service/GetRecords",
         messageBytes,
         30000
       );
@@ -284,7 +343,7 @@ export class DBGrpcClient {
         const messageBytes = net_pb.pb.PushRecordRequest.encode(message).finish();
         // 调用gRPC方法
         await this.grpcClient.unaryCall(
-          "/dcnet.pb.Service/PushRecord",
+          "/net.pb.Service/PushRecord",
           messageBytes,
           30000, // 30秒超时
         );
@@ -301,7 +360,7 @@ export class DBGrpcClient {
       const messageBytes = net_pb.pb.ExchangeEdgesRequest.encode(req).finish();
       // 调用 gRPC 方法
      const response = await this.grpcClient.unaryCall(
-        "/dcnet.pb.Service/ExchangeEdges",
+        "/net.pb.Service/ExchangeEdges",
         messageBytes,
         30000
       );
@@ -332,7 +391,7 @@ export class DBGrpcClient {
         
         // 调用 gRPC 方法
         const response = await this.grpcClient.unaryCall(
-          "/dcnet.pb.Service/GetLogs",
+          "/net.pb.Service/GetLogs",
           messageBytes,
           30000 // 设置超时时间为30秒
         );

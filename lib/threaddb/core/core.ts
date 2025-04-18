@@ -4,7 +4,6 @@ import { Key,Datastore,Query,Batch } from 'interface-datastore';
 import { Key as ThreadKey } from '../common/key';
 import { ThreadID } from '@textile/threads-id';
 import type { PeerId,PublicKey,PrivateKey } from "@libp2p/interface";  
-import Multiaddr from 'multiaddr'
 import { Multiaddr as TMultiaddr } from '@multiformats/multiaddr';
 import { Head } from './head'; 
 import { type AnySchema, type JSONSchemaType } from "ajv"; 
@@ -16,6 +15,7 @@ import { DAGCBOR} from '@helia/dag-cbor'
 import { ThreadToken } from './identity';
 import { Ed25519PrivKey, Ed25519PubKey } from '../../dc-key/ed25519';
 import {net as net_pb} from "../pb/net_pb";
+import { Protocol } from '../net/define';
 
 
 
@@ -42,7 +42,7 @@ export interface IBlock {
 // 接口定义  
 export interface INet extends DAGCBOR{  
   createThread( id: ThreadID, options: { token: ThreadToken; logKey?: Ed25519PrivKey|Ed25519PubKey, threadKey?: ThreadKey }): Promise<ThreadInfo>;  
-  addThread(addr: Multiaddr,options: { token?: ThreadToken; logKey?: Ed25519PrivKey | Ed25519PubKey; threadKey?: ThreadKey } ): Promise<ThreadInfo>;
+  addThread(addr: ThreadMuliaddr,options: { token?: ThreadToken; logKey?: Ed25519PrivKey | Ed25519PubKey; threadKey?: ThreadKey } ): Promise<ThreadInfo>;
   getThread( id: ThreadID, ...opts: any[]): Promise<ThreadInfo>;  
   getThreadFromPeer( id: ThreadID, peer: PeerId, options: { token?: ThreadToken }): Promise<ThreadInfo>;
   deleteThread( id: ThreadID, ...opts: any[]): Promise<void>;  
@@ -139,13 +139,27 @@ export interface SymKey {
 }
 
 
+export  class ThreadMuliaddr{
+  addr: TMultiaddr
+  id: ThreadID
+  constructor(addr: TMultiaddr, id: ThreadID) {
+    this.id = id
+    this.addr = addr
+  }
+  getMultiaddrString(): string {
+   const addr = this.addr.toString()
+   const id = this.id.toString()
+   const addrStr = addr + '/' + Protocol.name + '/' + id
+    return addrStr
+  }
+}
 
 // 定义 Thread Info 的接口  
 export interface IThreadInfo {  
   id: ThreadID;  
   key?: ThreadKey;  
   logs: IThreadLogInfo[];
-	addrs: Multiaddr[];
+	addrs: ThreadMuliaddr[];
   getFirstPrivKeyLog() :IThreadLogInfo | undefined
 }  
 
@@ -153,7 +167,7 @@ export class ThreadInfo  implements IThreadInfo {
   constructor(  
     public id: ThreadID, 
     public logs: IThreadLogInfo[],  
-    public addrs: Multiaddr[] ,
+    public addrs: ThreadMuliaddr[] ,
     public key?: ThreadKey,  
   ) {}
 

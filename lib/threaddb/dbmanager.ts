@@ -13,6 +13,7 @@ import type { Connection }  from '@libp2p/interface'
 import { keys } from "@libp2p/crypto";
 import { SymmetricKey, Key as ThreadKey } from './common/key';
 import { extractPeerIdFromMultiaddr } from "../dc-key/keyManager";
+import {ThreadMuliaddr} from './core/core'
 
 import {StoreunitInfo} from '../chain';
 import { PrefixTransform,TransformedDatastore} from './common/transformed-datastore' 
@@ -27,7 +28,6 @@ import { NewThreadOptions } from './core/options';
 import {ThreadToken} from './core/identity';
 import { DBGrpcClient } from "./net/grpcClient";
 import type { Client } from "../dcapi";
-import Multiaddr from 'multiaddr';
 import {Protocol} from './net/define';
 
 import * as buffer from "buffer/";
@@ -182,11 +182,11 @@ export class DBManager {
   }  
 
     async newDBFromAddr(  
-        addr: TMultiaddr,  
+        addr: ThreadMuliaddr,  
         key: ThreadKey,  
         opts: NewOptions = {}  
     ): Promise<ThreadDb> {  
-        const id =  DBManager.fromAddr(addr);  
+        const id =  addr.id;  
         
         return await this.lock.acquire('dbs', async () => {  
             if (this.dbs.has(id.toString())) {  
@@ -201,7 +201,7 @@ export class DBManager {
                 throw Errors.ErrThreadReadKeyRequired;  
             }  
 
-            await this.network.addThread( Multiaddr(addr.toString() ), {  
+            await this.network.addThread(addr, {  
                 logKey: opts.logKey,  
                 token: opts.token,  
                 threadKey:key,  
@@ -417,12 +417,12 @@ async syncDBFromDC(
         try {  
             await this.deleteDB(tID, false);  
         } catch (error) {  
-            if (error.message != Errors.ErrDBNotFound.message && error.message != Errors.ErrThreadNotFound.message) {
+            if ( error.message != Errors.ErrDBNotFound.message && error.message != Errors.ErrThreadNotFound.message) {
                 throw error;  
             }  
         }  
-
-        await this.newDBFromAddr(dbMultiAddr,  threadKey, dbOpts);  
+        const threadMultiaddr = new ThreadMuliaddr(dbMultiAddr, tID);
+        await this.newDBFromAddr(threadMultiaddr,  threadKey, dbOpts);  
         return null;  
     } catch (error) {  
         if (error.message == Errors.ErrorThreadIDValidation.message) {
@@ -508,12 +508,14 @@ async  addLogToThread(ctx: Context, id: ThreadID, lid: PeerId): Promise<void> {
 
  const abortController = new AbortController();  
  const signal = ctx.signal || abortController.signal; 
-  const storeUnit = await this.chainUtil.objectState(id.toString());  
+ const storeUnit = await this.chainUtil.objectState(id.toString());  
   if (storeUnit) {  
-    const userPubkey = this.signHandler.publickey; 
+    const userPubkey = this.signHandler.publickey(); 
     let findFlag = false;  
     for (const user of storeUnit.users) {  
-      if (user === userPubkey.toString()) {  
+        //移除0x前缀
+        const noPrefixUser = user.replace("0x", "");
+      if (noPrefixUser === userPubkey.toString()) {  
         findFlag = true;  
         break;  
       }  
@@ -644,7 +646,8 @@ async newDB(
         const errors: string[] = [];  
         for (const multiAddr of threadInfo.addrs) {  
             try {  
-                await this.newDBFromAddr( multiaddr(multiAddr.toString()), threadKey, dbOpts);  
+                
+                await this.newDBFromAddr(multiAddr, threadKey, dbOpts);  
                 break;  
             } catch (error) {  
                 errors.push(error.message);  
