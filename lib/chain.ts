@@ -256,4 +256,43 @@ export class ChainUtil {
         logs: new Set(Array.isArray(data['dbLog']) ? data['dbLog'].map(String) : [])  
     };    
   }
+
+    ifEnoughUserSpace = async (
+      pubkeyRaw: Uint8Array,
+      needSize?: number
+    ): Promise<boolean> => {
+      const hexAccount = "0x" + Buffer.from(pubkeyRaw).toString("hex");
+      // 获取用户存储空间
+      const userInfo = await this.getUserInfoWithAccount(
+        hexAccount
+      );
+      if (!userInfo) {
+        throw new Error("get user info error");
+      }
+  
+      // 用户冻结
+      if (userInfo.commentFrozenStatus != 0 || userInfo.spamFrozenStatus != 0) {
+        return false
+      }
+  
+      // 过期高度判断
+      const blockHeight = (await this.getBlockHeight()) || 0;
+      if (userInfo.expireNumber > 0 && userInfo.expireNumber < blockHeight) {
+        return false
+      }
+  
+      // 用户存储空间判断
+      const needSizeNumber = needSize || 1024 * 1024; // 1M
+      if (userInfo.subscribeSpace - userInfo.usedSpace < needSizeNumber) {
+        return false
+      }
+  
+      return true
+    };
+    refreshUserInfo = async (pubkeyRaw: Uint8Array): Promise<User> => {
+      const hexAccount = "0x" + Buffer.from(pubkeyRaw).toString("hex");
+      const userInfo = await this.getUserInfoWithAccount(hexAccount);
+      return userInfo;
+    };
+  
 }
