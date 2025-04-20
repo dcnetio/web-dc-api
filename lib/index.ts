@@ -1001,7 +1001,10 @@ export class DC  implements SignHandler {
       storagePrefix,
       this
     )
-    const [threadId,err] = await dbmanager.newDB(name, b32Rk, b32Sk, jsonCollections);
+    
+    
+
+   const [threadId,err] = await dbmanager.newDB(name, b32Rk, b32Sk, jsonCollections);
     return  threadId
   }
 }

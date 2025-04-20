@@ -2,6 +2,7 @@ import { Libp2pGrpcClient } from "grpc-libp2p-client";
 import type { Client } from "../dcapi";
 import { dcnet } from "../proto/dcnet_proto";
 import { HeliaLibp2p } from "helia";
+import { DataSource } from "../proto/datasource";
 
 const uploadStatus = {
   OK: 0,
@@ -56,7 +57,7 @@ export class FileClient {
       message.signature = signature;
       const messageBytes = dcnet.pb.StroeFileRequest.encode(message).finish();
       
-     // const signatureDataSource = new DataSource();
+    //  const signatureDataSource = new DataSource();
       const onDataCallback = async (payload: Uint8Array) => {
         const decodedPayload = dcnet.pb.StroeFileReply.decode(payload);
         let resStatus = uploadStatus.UPLOADING;

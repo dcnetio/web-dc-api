@@ -227,7 +227,14 @@ function parseUint32(str) {
   } catch (error) {  
     throw error ;  
   }  
-}  
+}
+
+function hexToAscii(hex: string): string {
+  // 移除0x前缀（如果存在）
+  const cleanHex = hex.startsWith('0x') ? hex.slice(2) : hex;
+  // 使用Buffer将16进制转换为字符串
+  return Buffer.from(cleanHex, 'hex').toString('ascii');
+}
 
 
 
@@ -250,5 +257,6 @@ export {
   withWebLock,
   saveKeyPair,
   loadKeyPair,
-  parseUint32
+  parseUint32,
+  hexToAscii
 };

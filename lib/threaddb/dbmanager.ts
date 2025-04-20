@@ -20,7 +20,7 @@ import { PrefixTransform,TransformedDatastore} from './common/transformed-datast
 import {NewOptions,ICollectionConfig,ManagedOptions,ThreadInfo,Context} from './core/core';
 import {TxnDatastoreExtended,pullThreadBackgroundTimeout,PullTimeout} from './core/db';
 import type { DCConnectInfo } from "../types/types";
-import { fastExtractPeerId, uint32ToLittleEndianBytes,uint64ToLittleEndianBytes } from "../util/utils";
+import { fastExtractPeerId, sleep, uint32ToLittleEndianBytes,uint64ToLittleEndianBytes } from "../util/utils";
 import {DcUtil} from '../dcutil';
 import {Type} from '../constants';
 import { SignHandler } from '../types/types';
@@ -335,7 +335,8 @@ async ifDbInitSuccess(tid: ThreadID): Promise<boolean> {
         const logKey = await this.getLogKey(tid);  
         const lid =  peerIdFromPrivateKey(logKey); 
         const threadInfo =  await this.chainUtil.objectState(tid.toString());  
-        return !!(threadInfo?.logs && threadInfo.logs[lid.toString()]);  
+        const exist = threadInfo?threadInfo?.logs.has(lid.toString()):false; 
+       return exist;
     } catch {  
         return false;  
     }  
@@ -369,7 +370,7 @@ async syncDBFromDC(
         let dbMultiAddr :TMultiaddr;
         if (dbAddr.length > 0) {
             try {
-                
+                //
                 connectedConn = await this.dc.dcNodeClient?.libp2p.dial(multiaddr(dbAddr));
             } catch (error) {
                 console.log("connect to %s catch return, error:%s",dbAddr, error.message);
@@ -379,7 +380,6 @@ async syncDBFromDC(
         if (connectedConn) {//连接成功
             connectedPeerId = connectedConn?.remotePeer;
             dbMultiAddr = connectedConn.remoteAddr;
-            threadAddr = multiaddr(`/p2p/${connectedPeerId.toString()}/thread/${threadid}`);
            
         }else{//从区块链中获取节点信息,再连接
             const connectedAddr = await this.dc._connectToObjNodes(threadid);
@@ -387,12 +387,10 @@ async syncDBFromDC(
                 throw new Error("connect to obj nodes failed");
             }
             dbMultiAddr = connectedAddr;
-            const connectedPeerId = fastExtractPeerId(connectedAddr);
-            threadAddr = multiaddr(`/p2p/${connectedPeerId?.toString()}/thread/${threadid}`);
+            
 
         }
-        dbMultiAddr = dbMultiAddr.decapsulate(threadAddr);
-        dbMultiAddr = dbMultiAddr.encapsulate(threadAddr);
+    
 
         const collectionInfos: ICollectionConfig[] = JSON.parse(jsonCollections);  
         const collections = await Promise.all(  
@@ -537,6 +535,8 @@ async  addLogToThread(ctx: Context, id: ThreadID, lid: PeerId): Promise<void> {
   }  
   let count = 0;  
   const maxCount = 6;  
+  let endFlag = false
+  this.addLogToThread(ctx, id, lid);  
   const ticker = setInterval(async () => {  
       // 检查是否已被取消  
       if (signal.aborted) {  
@@ -548,20 +548,32 @@ async  addLogToThread(ctx: Context, id: ThreadID, lid: PeerId): Promise<void> {
       if (await this.ifDbInitSuccess(id)) {  
           clearInterval(ticker);  
           if (timeoutId) clearTimeout(timeoutId);  
+          endFlag = true
           return;  
       }  
-      if (count >= maxCount) {  
+      if (count >= maxCount) {  //每6秒确认
         this.addLogToThread(ctx, id, lid);  
         count = 0;  
     } else {  
         count++;  
     }   
   }, 1000); // 每秒执行一次  
-  // 监听取消信号  
-  signal.addEventListener('abort', () => {  
-      clearInterval(ticker);   
-      if (timeoutId) clearTimeout(timeoutId);  
-  });  
+  await new Promise<void>((resolve) => {
+    // Add a resolving condition to the interval
+    const checkFlag = setInterval(() => {
+      if (endFlag) {
+        clearInterval(checkFlag);
+        resolve();
+      }
+    }, 1000);
+    
+    // Also make sure the abort signal resolves the promise
+    signal.addEventListener('abort', () => {
+      clearInterval(checkFlag);
+      resolve();
+    });
+  }); 
+  
 }  
 
 
@@ -574,95 +586,110 @@ async newDB(
     if (!this.connectedDc?.client) {  
         return ['', Errors.ErrNoDcPeerConnected];  
     }  
-    try {  
-        const dbClient =  newGrpcClient(this.connectedDc.client,this.network);
-        const tidStr = await dbClient.requestThreadID(); 
-        const threadID = await this.decodeThreadId(tidStr);
-        const logKey = await this.getLogKey(threadID);  
-        const lpk = logKey.publicKey;
-        const lid =  peerIdFromPrivateKey(logKey)  
-        const sk = SymmetricKey.fromString(b32Sk);
-        const rk = SymmetricKey.fromString(b32Rk);
-        const threadKey = new ThreadKey(sk, rk);  
-        const blockHeight = (await this.chainUtil.getBlockHeight())||0;
 
-        const hValue: Uint8Array = uint32ToLittleEndianBytes(
-          blockHeight ? blockHeight : 0
-        );
-        if (!this.connectedDc?.nodeAddr) {
-            return ['', Errors.ErrNodeAddrIsNull];
-        }
-        const rPeerId = await  extractPeerIdFromMultiaddr(this.connectedDc.nodeAddr);
-        const peerIdValue: Uint8Array = new TextEncoder().encode(rPeerId.toString());
-        const sizeValue: Uint8Array = uint64ToLittleEndianBytes(50<<20); //数据库固定大小50M
-        const tidUnit8Array = new TextEncoder().encode(tidStr);
+    const ctx1 = createContext(30000);
+    //todo remove
+    const res = await this.syncDBFromDC(ctx1,"bafk7tlnp56bzvujbayazj5ouo6ufva5s4ruyl564s3uejrooomoc6uy", dbname, "", b32Rk, b32Sk, true,
+        JSON.stringify(collectionInfos)
+      );
+      console.log("==========syncDBFromDC", res);
 
-        const typeValue: Uint8Array = uint32ToLittleEndianBytes(Type.Threaddbtype);
-        const preSign = new Uint8Array([
-            ...tidUnit8Array,
-            ...sizeValue,
-            ...hValue,
-            ...typeValue,
-            ...peerIdValue
-        ]);
-        const signature =  this.signHandler.sign(preSign);
+    //todo remove end
+    //todo 移除注释
+    // try {  
+    //     const dbClient =  newGrpcClient(this.connectedDc.client,this.network);
+    //     const tidStr = await dbClient.requestThreadID(); 
+    //     const threadID = await this.decodeThreadId(tidStr);
+    //     const logKey = await this.getLogKey(threadID);  
+    //     const lpk = logKey.publicKey;
+    //     const lid =  peerIdFromPrivateKey(logKey)  
+    //     const sk = SymmetricKey.fromString(b32Sk);
+    //     const rk = SymmetricKey.fromString(b32Rk);
+    //     const threadKey = new ThreadKey(sk, rk);  
+    //     const blockHeight = (await this.chainUtil.getBlockHeight())||0;
+
+    //     const hValue: Uint8Array = uint32ToLittleEndianBytes(
+    //       blockHeight ? blockHeight : 0
+    //     );
+    //     if (!this.connectedDc?.nodeAddr) {
+    //         return ['', Errors.ErrNodeAddrIsNull];
+    //     }
+    //     const rPeerId = await  extractPeerIdFromMultiaddr(this.connectedDc.nodeAddr);
+    //     const peerIdValue: Uint8Array = new TextEncoder().encode(rPeerId.toString());
+    //     const sizeValue: Uint8Array = uint64ToLittleEndianBytes(50<<20); //数据库固定大小50M
+    //     const tidUnit8Array = new TextEncoder().encode(tidStr);
+
+    //     const typeValue: Uint8Array = uint32ToLittleEndianBytes(Type.Threaddbtype);
+    //     const preSign = new Uint8Array([
+    //         ...tidUnit8Array,
+    //         ...sizeValue,
+    //         ...hValue,
+    //         ...typeValue,
+    //         ...peerIdValue
+    //     ]);
+    //     const signature =  this.signHandler.sign(preSign);
        
-        // Create thread options  
-        const opts: NewThreadOptions = {
-            threadKey: threadKey,
-            logKey: logKey,
-            token: new ThreadToken(this.connectedDc.client.token),
-            blockHeight: blockHeight,
-            signature: signature,
-        };  
+    //     // Create thread options  
+    //     const opts: NewThreadOptions = {
+    //         threadKey: threadKey,
+    //         logKey: logKey,
+    //         token: new ThreadToken(this.connectedDc.client.token),
+    //         blockHeight: blockHeight,
+    //         signature: signature,
+    //     };  
 
-        const threadInfo = await dbClient.createThread(threadID.toString(), opts);  
+    //     const threadInfo = await dbClient.createThread(threadID.toString(), opts);  
 
-        // Parse collections  
-        // let collectionInfos: ICollectionConfig[] = [];  
-        // if (jsonCollections.length > 2) {  
-        //     collectionInfos = JSON.parse(jsonCollections);  
-        // }  
+    //     //todo remove
+    //     threadInfo.id = await this.decodeThreadId("bafk7tlnp56bzvujbayazj5ouo6ufva5s4ruyl564s3uejrooomoc6uy");
+    //     threadInfo.addrs[0].id = threadInfo.id ;
 
-        const collections = await Promise.all(  
-            collectionInfos.map(async info => ({  
-                name: info.name,  
-                schema: info.schema,  
-                indexes: info.indexes || []  
-            }))  
-        );  
+    //     // Parse collections  
+    //     // let collectionInfos: ICollectionConfig[] = [];  
+    //     // if (jsonCollections.length > 2) {  
+    //     //     collectionInfos = JSON.parse(jsonCollections);  
+    //     // }  
+
+    //     const collections = await Promise.all(  
+    //         collectionInfos.map(async info => ({  
+    //             name: info.name,  
+    //             schema: info.schema,  
+    //             indexes: info.indexes || []  
+    //         }))  
+    //     );  
 
        
      
-        const dbOpts: NewOptions = {  
-            name: dbname, 
-            collections: collections, 
-            key: threadKey,  
-            logKey: logKey,  
-            block: true,  
-        }; 
+    //     const dbOpts: NewOptions = {  
+    //         name: dbname, 
+    //         collections: collections, 
+    //         key: threadKey,  
+    //         logKey: logKey,  
+    //         block: true,  
+    //     }; 
 
-        // Try creating database  
-        const errors: string[] = [];  
-        for (const multiAddr of threadInfo.addrs) {  
-            try {  
+    //     // Try creating database  
+    //     const errors: string[] = [];  
+    //     for (const multiAddr of threadInfo.addrs) {  
+    //         try {  
                 
-                await this.newDBFromAddr(multiAddr, threadKey, dbOpts);  
-                break;  
-            } catch (error) {  
-                errors.push(error.message);  
-            }  
-        }  
+    //             await this.newDBFromAddr(multiAddr, threadKey, dbOpts);  
+    //             break;  
+    //         } catch (error:any) {  
+    //             errors.push(error.message);  
+    //         }  
+    //     }  
 
-        if (errors.length === threadInfo.addrs.length) {  
-            throw new Error(`create db failed:${errors.join(',')}`);  
-        }   
-        const ctx = createContext(30000);
-        await this.addLogToThreadStart(ctx,threadID, lid);  
-        return [threadID.toString(), null];  
-    } catch (error) {  
-        return ['', error as Error];  
-    }  
+    //     if (errors.length === threadInfo.addrs.length) {  
+    //         throw new Error(`create db failed:${errors.join(',')}`);  
+    //     }   
+    //     const ctx = createContext(30000);
+    //     await this.addLogToThreadStart(ctx,threadID, lid);  
+    //     return [threadID.toString(), null];  
+    // } catch (error) {  
+    //     return ['', error as Error];  
+    // }  
+     //todo 移除注释 结束
 }  
 
 async refreshDBFromDC(tId: ThreadID): Promise<Error | null> {  

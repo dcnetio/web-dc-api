@@ -84,7 +84,7 @@ export class DsHeadBook implements HeadBook {
             if (!data) return [];
             const hr = deserializeHeadBookRecord(new TextDecoder().decode(data));
             return hr.heads.map(h => ({
-                id: CID.decode(new TextEncoder().encode(h.id.toString())),
+                id: h.id,
                 counter: h.counter,
             }));
         } catch (err) {
@@ -189,7 +189,7 @@ export class DsHeadBook implements HeadBook {
         for await (const entry of results) {
             const record = deserializeHeadBookRecord(new TextDecoder().decode(entry.value));
             heads.push(...record.heads.map(h => ({
-                id: CID.decode(new TextEncoder().encode(h.id.toString())),
+                id: h.id,
                 counter: h.counter
             })));
         }
@@ -270,7 +270,7 @@ export class DsHeadBook implements HeadBook {
         if (withHeads) {
             const hr = deserializeHeadBookRecord(new TextDecoder().decode(entry.value));
             heads = hr.heads.map(h => ({
-                id: CID.decode(new TextEncoder().encode(h.id.toString())),
+                id: h.id,
                 counter: h.counter
             }));
         }
