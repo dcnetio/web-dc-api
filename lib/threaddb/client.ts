@@ -1,6 +1,6 @@
 import type { Client } from "../dcapi";
 import type { Multiaddr as TMultiaddr } from "@multiformats/multiaddr";
-import { extractPublicKeyFromPeerId } from "../dc-key/keyManagers";
+import { extractPublicKeyFromPeerId } from "../dc-key/keyManager";
 import { Ed25519PubKey } from "../dc-key/ed25519";
 import { dcnet  as dcnet_proto} from "../proto/dcnet_proto";
 import { Key as ThreadKey } from './common/key';

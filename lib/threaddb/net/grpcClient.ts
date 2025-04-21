@@ -10,7 +10,7 @@ import { toString as uint8ArrayToString } from "uint8arrays/to-string";
 import { Key as ThreadKey } from '../common/key';
 import { Ed25519PubKey,Ed25519PrivKey } from "../../dc-key/ed25519";
 import type { PublicKey,PrivateKey } from "@libp2p/interface"; 
-import { extractPublicKeyFromPeerId,extractPeerIdFromMultiaddr } from "../../dc-key/keyManagers";
+import { extractPublicKeyFromPeerId,extractPeerIdFromMultiaddr } from "../../dc-key/keyManager";
 import { NewThreadOptions } from '../core/options';
 import {ThreadInfo } from '../core/core';
 import { CID } from 'multiformats/cid';

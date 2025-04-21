@@ -7,7 +7,7 @@ import { dcnet } from "../proto/dcnet_proto";
 import { Ed25519PubKey } from "../dc-key/ed25519";
 import { SignHandler } from "../types/types";
 import { uint32ToLittleEndianBytes } from "../util/utils";
-import { extractPublicKeyFromPeerId } from "../dc-key/keyManagers";
+import { extractPublicKeyFromPeerId } from "../dc-key/keyManager";
 import { peerIdFromString } from "@libp2p/peer-id";
 import { Errors } from "../error";
 import { toString as uint8ArrayToString } from "uint8arrays/to-string";

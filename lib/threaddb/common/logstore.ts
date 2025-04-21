@@ -8,7 +8,7 @@ import { ThreadID } from '@textile/threads-id';
 import type { PeerId } from "@libp2p/interface";
 import { compareByteArrays } from '../../util/utils';
 import {Key as ThreadKey} from './key';
-import { symKeyFromBytes } from '../../dc-key/keyManagers';
+import { symKeyFromBytes } from '../../dc-key/keyManager';
 import { CID } from 'multiformats';
 import {ThreadInfo} from '../core/core';
 import {Errors} from '../core/db';

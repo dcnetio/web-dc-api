@@ -1,6 +1,6 @@
 // Description: 该文件包含了dc网络的工具函数，用于从dc网络获取文件或缓存值
 
-import { KeyManager } from "./dc-key/keyManagers";
+import { KeyManager } from "./dc-key/keyManager";
 
 import { toString as uint8ArrayToString } from "uint8arrays/to-string";
 import { base32 } from 'multiformats/bases/base32' 

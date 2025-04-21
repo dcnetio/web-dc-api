@@ -12,7 +12,7 @@ import { Ed25519PrivKey } from "../dc-key/ed25519";
 import type { Connection }  from '@libp2p/interface'
 import { keys } from "@libp2p/crypto";
 import { SymmetricKey, Key as ThreadKey } from './common/key';
-import { extractPeerIdFromMultiaddr } from "../dc-key/keyManagers";
+import { extractPeerIdFromMultiaddr } from "../dc-key/keyManager";
 import {ThreadMuliaddr} from './core/core'
 
 import {StoreunitInfo} from '../chain';
