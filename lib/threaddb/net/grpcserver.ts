@@ -116,8 +116,8 @@ export class DCGrpcServer {
         'content-type': 'application/grpc'
     }
     // 设置响应头部
-    const headerResponseFrame = Http2Frame.createResponseHeadersFrame(streamId, headlist,true)
-    await writer.write(headerResponseFrame)
+    // const headerResponseFrame = Http2Frame.createResponseHeadersFrame(streamId, headlist,true)
+    // await writer.write(headerResponseFrame)
      // 创建数据帧
     const bytes =  net_pb.net.pb.GetLogsReply.encode(response).finish()
     const dataFrame = Http2Frame.createDataFrame( streamId,bytes, false)
@@ -128,10 +128,10 @@ export class DCGrpcServer {
         'grpc-status': '0', // 表示成功
         'grpc-message': 'Operation completed successfully'
     };
-    const trailersFrame = Http2Frame.createTrailersFrame(streamId, trailers);
-    console.log('Trailers Frame:', trailersFrame);
-    await writer.write(trailersFrame)
-    await writer.end()
+    // const trailersFrame = Http2Frame.createTrailersFrame(streamId, trailers);
+    // console.log('Trailers Frame:', trailersFrame);
+    // await writer.write(trailersFrame)
+    // await writer.end()
       return 
     }
 

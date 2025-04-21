@@ -4,7 +4,7 @@ import type { Multiaddr } from "@multiformats/multiaddr";
 import { DCGrpcClient } from "./grpc-dc";
 import { toString as uint8ArrayToString } from "uint8arrays/to-string";
 import { Ed25519PubKey } from "./dc-key/ed25519";
-import { extractPeerIdFromMultiaddr,generateSymKeyForPrikey,extractPublicKeyFromPeerId } from "./dc-key/keyManager";
+import { extractPeerIdFromMultiaddr,generateSymKeyForPrikey,extractPublicKeyFromPeerId } from "./dc-key/keyManagers";
 import type { PeerId } from "@libp2p/interface";
 
 

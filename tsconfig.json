@@ -1,0 +1,20 @@
+{  
+  "compilerOptions": {  
+    "target": "ES2022",  
+    "module": "ESNext",  
+    "moduleResolution": "node",
+    "declaration": true,           // 生成 .d.ts 文件    
+    "sourceMap": true,             // 生成 .js.map 文件  
+    "esModuleInterop": true, 
+    "forceConsistentCasingInFileNames": true,  
+    // "strict": true,  
+    "skipLibCheck": true,
+    "outDir": "./dist",            // 编译输出目录  
+    "rootDir": "./lib",            // 源码目录
+    "paths": {
+      "*": ["./node_modules/*"]
+    }
+  },  
+  "include": ["lib/**/*"],  
+  "exclude": ["node_modules", "dist"]  
+}  

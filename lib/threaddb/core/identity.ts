@@ -1,7 +1,7 @@
 // thread.ts   
 import { keys } from "@libp2p/crypto";
 import  { Ed25519PubKey, Ed25519PrivKey }  from '../../dc-key/ed25519';
-import {ed25519PublicKeyToCryptoKey,ed25519PrivateKeyToCryptoKey} from '../../dc-key/keyManager'
+import {ed25519PublicKeyToCryptoKey,ed25519PrivateKeyToCryptoKey} from '../../dc-key/keyManagers'
 import { SignJWT, jwtVerify, type JWTPayload, importPKCS8, exportJWK } from 'jose' 
 import { base32 } from 'multiformats/bases/base32' 
 import { jwtDecode } from 'jwt-decode'

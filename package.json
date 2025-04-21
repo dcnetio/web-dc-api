@@ -2,13 +2,23 @@
   "name": "dcapi-web",
   "version": "0.1.2",
   "description": "dcapi web",
-  "main": "lib/index.ts",
-  "types": "lib/index.ts",
-  "type": "module",
+  "main": "./dist/cjs/index.js",
+  "module": "./dist/esm/index.js",
+  "types": "./dist/esm/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/src/index.d.ts",  
+      "import": "./dist/esm/index.js",
+      "require": "./dist/cjs/index.js"
+    }
+  },
   "files": [
-    "lib"
+    "dist/"
   ],
   "scripts": {
+    "build": "npm run build:cjs && npm run build:esm",
+    "build:cjs": "tsc -p tsconfig.cjs.json",
+    "build:esm": "tsc -p tsconfig.esm.json",
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "nodemon --watch lib --ext ts,tsx,js,jsx,json --ignore 'src/**/*.test.ts' --exec 'npx yalc publish --push '"
   },

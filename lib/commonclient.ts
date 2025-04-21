@@ -1,6 +1,6 @@
 import type { Multiaddr } from "@multiformats/multiaddr";
 import { Ed25519PrivKey } from "./dc-key/ed25519";
-import { KeyManager } from "./dc-key/keyManager";
+import { KeyManager } from "./dc-key/keyManagers";
 import type { Client } from "./dcapi";
 import { DCGrpcClient } from "./grpc-dc";
 import { keys } from "@libp2p/crypto";
@@ -9,7 +9,7 @@ import {
   extractPeerIdFromMultiaddr,
   generateSymKeyForPrikey,
   extractPublicKeyFromPeerId,
-} from "./dc-key/keyManager";
+} from "./dc-key/keyManagers";
 import { sha256, getRandomBytes, concatenateUint8Arrays } from "./util/utils";
 import { Encryption } from "./util/curve25519Encryption";
 import { decryptContent } from "./util/dccrypt";

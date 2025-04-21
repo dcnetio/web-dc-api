@@ -5,7 +5,7 @@ import { base32 } from 'multiformats/bases/base32'
 
 import { DcUtil } from "../dcutil";
 import * as buffer from "buffer/";
-import { extractPeerIdFromMultiaddr } from "../dc-key/keyManager";
+import { extractPeerIdFromMultiaddr } from "../dc-key/keyManagers";
 import { Multiaddr } from "@multiformats/multiaddr";
 import { CommentClient } from "./client";
 import { parseUint32, sha256, uint32ToLittleEndianBytes } from "../util/utils";
