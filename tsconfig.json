@@ -11,9 +11,6 @@
     "skipLibCheck": true,
     "outDir": "./dist",            // 编译输出目录  
     "rootDir": "./lib",            // 源码目录
-    "paths": {
-      "*": ["./node_modules/*"]
-    }
   },  
   "include": ["lib/**/*"],  
   "exclude": ["node_modules", "dist"]  
