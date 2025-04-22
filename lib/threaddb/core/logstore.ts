@@ -4,9 +4,9 @@ import { Ed25519PrivKey } from "../../dc-key/ed25519";
 import { SymKey, IThreadInfo, IThreadLogInfo } from "./core";
 import type { Multiaddr } from "@multiformats/multiaddr";
 import { multiaddr } from '@multiformats/multiaddr';
-import { Head } from './head.ts'; 
+import { Head } from './head'; 
 import { Key } from 'interface-datastore'  
-import * as pb from '../pb/lstore.ts'; 
+import * as pb from '../pb/lstore'; 
 
 
 // 异常定义  

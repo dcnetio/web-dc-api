@@ -1,0 +1,11 @@
+// tsconfig.dev.json  
+{  
+  "extends": "./tsconfig.base.json",  
+  "compilerOptions": {  
+    // 开发情况
+    "paths": {  
+      "grpc-libp2p-client": ["node_modules/grpc-libp2p-client/src/index"],  
+      "grpc-libp2p-client/*": ["node_modules/grpc-libp2p-client/src/*"],  
+    },  
+  }  
+}  
