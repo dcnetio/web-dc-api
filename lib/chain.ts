@@ -5,9 +5,17 @@
 import { multiaddr } from "@multiformats/multiaddr";
 import { ApiPromise, WsProvider } from "@polkadot/api";
 
-import { isUser, sha256 } from "./util/utils";
+import { isUser, sha256,hexToAscii } from "./util/utils";
 import { User } from "./types/types";
 import * as buffer from "buffer/";
+import {   
+  PeerIDConverter,   
+  CidConverter,
+  MultiaddrConverter,  
+} from './threaddb/pb/proto-custom-types' 
+import { base58btc } from "multiformats/bases/base58";
+import { hexToBytes } from "@noble/curves/abstract/utils";
+import { base32 } from "multiformats/bases/base32";
 const { Buffer } = buffer;
 
 export interface StoreunitInfo {  
@@ -15,6 +23,7 @@ export interface StoreunitInfo {
   utype: number;  
   peers: Set<string>;  
   users: Set<string>;  
+  mbusers: Set<string>;//base32 编码的用户
   logs: Set<string>;  
 }  
 
@@ -207,6 +216,8 @@ export class ChainUtil {
     return addr;
   };
 
+  
+
   // 链上查询节点列表
   getDcNodeList = async () => {
     const peerList = await this.dcchainapi?.query.dcNode.onlineNodesAddress();
@@ -251,9 +262,45 @@ export class ChainUtil {
       return {  
         size: Number(data['fileSize'] || 0),  
         utype: Number(data['fileType'] || 0),  
-        peers: new Set(Array.isArray(data['peers']) ? data['peers'].map(String) : []),  
+        peers: new Set(
+          Array.isArray(data['peers']) 
+            ? data['peers'].map(peer => {
+                try {
+                  return hexToAscii(String(peer));
+                } catch (e) {
+                  console.warn('Failed to convert peer ID format:', e);
+                  return String(peer); // 如果转换失败，保留原格式
+                }
+              })
+            : []
+        ),   
         users: new Set(Array.isArray(data['users']) ? data['users'].map(String) : []),  
-        logs: new Set(Array.isArray(data['dbLog']) ? data['dbLog'].map(String) : [])  
+        mbusers: new Set(
+          Array.isArray(data['users']) 
+            ? data['users'].map(user => {
+                try {
+                  const userBytes = hexToBytes(user.slice(2));
+                  const mbUser =  base32.encode(userBytes); 
+                  return mbUser
+                } catch (e) {
+                  console.warn('Failed to convert peer ID format:', e);
+                  return String(user); // 如果转换失败，保留原格式
+                }
+              })
+            : []
+        ),   
+        logs: new Set(
+          Array.isArray(data['dbLog']) 
+            ? data['dbLog'].map(log => {
+                try {
+                  return hexToAscii(String(log));
+                } catch (e) {
+                  console.warn('Failed to convert peer ID format:', e);
+                  return String(log); // 如果转换失败，保留原格式
+                }
+              })
+            : []
+        ),   
     };    
   }
 

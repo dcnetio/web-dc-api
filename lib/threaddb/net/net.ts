@@ -233,8 +233,6 @@ async addThread(
 
     // 如果不是从自己添加，则连接并获取日志
     if (!addFromSelf) {
-      // 连接到对等点
-      await this.libp2p.dial(multiaddr(peerAddr.toString()));
       // 从对等点更新日志
       await this.updateRecordsFromPeer(id, pid);
     }
@@ -410,25 +408,20 @@ async ensureUniqueLog(id: ThreadID, key?: Ed25519PrivKey | Ed25519PubKey, identi
       }
     }
     
-    // 检查此ID的日志是否已存在
     try {
       await this.logstore.getLog(id, lid);
       // 如果到达这里，说明日志存在
       throw new Error("Log exists");
     } catch (error: any) {
-      // 如果错误是"日志未找到"，那很好
-      if (error.message === "Log not found") {
+      if (error.message === Errors.ErrLogNotFound.message) {
         return;
       }
-      // 其他错误需要抛出
       throw error;
     }
   } catch (error: any) {
-    // 如果threaddb 未找到，那没问题（我们正在创建一个新threaddb ）
     if (error.message === Errors.ErrThreadNotFound.message) {
       return;
     }
-    // 否则抛出错误
     throw error;
   }
 }
