@@ -3,7 +3,7 @@ import { ThreadID } from "@textile/threads-id";
 import { dcnet as dcnet_proto } from "../../proto/dcnet_proto";
 import { net as net_pb} from "../pb/net_pb";
 import { Libp2pGrpcClient } from "grpc-libp2p-client";
-import {IThreadLogInfo} from "../core/core";
+import {IThreadLogInfo, SymKey} from "../core/core";
 import  {Multiaddr as TMultiaddr,multiaddr} from '@multiformats/multiaddr'
 import  Multiaddr  from 'multiaddr'
 import { toString as uint8ArrayToString } from "uint8arrays/to-string";
@@ -24,12 +24,15 @@ import { dcnet } from "../../proto/dcnet_proto";
 import {ThreadMuliaddr} from "../core/core";
 import * as varint from 'uint8-varint'
 import { protocols } from "@multiformats/multiaddr";
+import { SymmetricKey } from '../common/key';
 import {   
   PeerIDConverter,   
   CidConverter,
   MultiaddrConverter,  
 } from '../pb/proto-custom-types' 
 import * as buffer from "buffer/";
+import { log } from "console";
+import { peerIdFromString } from "@libp2p/peer-id";
 const { Buffer } = buffer;
 
 interface Protocol {
@@ -279,7 +282,7 @@ export class DBGrpcClient {
    */
    async getRecordsFromPeer(
     req: any,
-    serviceKey: any
+    serviceKey: SymmetricKey
   ): Promise<Record<string, PeerRecords>> {
     try {
     
@@ -302,7 +305,8 @@ export class DBGrpcClient {
       for (const logInfo of response.logs || []) {
         if (!logInfo.logID) continue;
         
-        const logId = uint8ArrayToString(logInfo.logID);
+        const logId =  PeerIDConverter.fromBytes(logInfo.logID).toString();
+        //peerIdFromString(new TextDecoder().decode(logInfo.logID)).toString();
         const records:IRecord[] = [];
         
         for (const rec of logInfo.records || []) {

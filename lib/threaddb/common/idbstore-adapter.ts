@@ -38,13 +38,46 @@ class IDBDatastoreAdapter implements TxnDatastoreExtended {
       }  
     }  
   
-    // 修改 query 方法  
-    async *query(  
-      query: Query,  
-      options?: AbortOptions  
-    ): AsyncIterable<{ key: Key; value: Uint8Array }> {  
-      yield* this.store.query(query);  
-    }  
+    async *query(
+      query: Query,
+      options?: AbortOptions
+    ): AsyncIterable<Pair> {
+      try {
+        console.debug(`开始查询: prefix=${query.prefix || '无'}`);
+        
+        // 获取迭代器
+        const storeQuery = this.store.query(query);
+        
+        // 检查异步迭代器协议
+        if (!storeQuery || typeof storeQuery[Symbol.asyncIterator] !== 'function') {
+          console.error('store.query 没有返回有效的异步迭代器');
+          return;
+        }
+        
+        let count = 0;
+        // 手动迭代，而不是使用 yield*
+        for await (const entry of storeQuery) {
+          count++;
+          if (count % 10 === 0) {
+            console.debug(`已处理 ${count} 个查询结果`);
+          }
+          
+          // 验证返回值格式
+          if (!entry || !entry.key) {
+            console.warn('跳过无效查询结果');
+            continue;
+          }
+          
+          yield entry;
+        }
+        
+        console.debug(`查询完成，共处理 ${count} 个结果`);
+
+      } catch (err) {
+        console.error(`查询执行异常: ${err instanceof Error ? err.message : String(err)}`);
+        throw err; // 重新抛出以便上层处理
+      }
+    }
   
     // 扩展查询方法  
     

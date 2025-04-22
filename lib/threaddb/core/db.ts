@@ -156,7 +156,7 @@ export interface IDB {
   collections: Map<string, ICollection> ;
   readTxn(collection: ICollection, fn: (txn: ITxn) => Promise<void> | void, token?: ThreadToken): Promise<void>;
   writeTxn(collection: ICollection, fn: (txn: ITxn) => Promise<void> | void, token?: ThreadToken): Promise<void>;
-  notifyTxnEvents(node: IPLDNode, token: ThreadToken): Promise<void>;
+  notifyTxnEvents(node: IPLDNode, token?: ThreadToken): Promise<void>;
 }
 
 

@@ -39,7 +39,7 @@ const PublicKeyProto = new protobuf.Type("PublicKey")
 
 
 // ED25519公钥实现  // 更完整的实现  
-export class Ed25519PubKey implements Ed25519PublicKey {  
+export class   Ed25519PubKey implements Ed25519PublicKey {  
     raw: Uint8Array;  
     type :'Ed25519';  
  
@@ -64,24 +64,29 @@ export class Ed25519PubKey implements Ed25519PublicKey {
         return this.raw  
     }  
 
-    toMultihash(): MultihashDigest<0> {  
-        // 创建符合 MultihashDigest 接口的对象  
-        const digest = this.raw;  
-        const size = digest.length;  
-        
-        // 创建 bytes: 格式为 [code(varint), size(varint), ...digest]  
-        const bytes = new Uint8Array(2 + size);  
-        bytes[0] = 0x00; // identity hash code  
-        bytes[1] = size;  // size in varint  
-        bytes.set(digest, 2);  
+ 
+   /**
+ * Returns a multihash, the digest of which is the protobuf-encoded public key
+ * encoded as an identity hash
+ */
+toMultihash(): MultihashDigest<0> {  
+    // 使用 protobuf 编码公钥
+    const protoBytes = Ed25519PubKey.publicKeyToProto(this);
+    const size = protoBytes.length;
+    
+    // 创建 bytes: 格式为 [code(varint), size(varint), ...digest]  
+    const bytes = new Uint8Array(2 + size);  
+    bytes[0] = 0x00; // identity hash code  
+    bytes[1] = size;  // size in varint  
+    bytes.set(protoBytes, 2);  
 
-        return {  
-            code: 0,  
-            size,  
-            digest,  
-            bytes  
-        };  
-    }  
+    return {  
+        code: 0x00, // identity hash code
+        size,  
+        digest: protoBytes,  
+        bytes  
+    };
+}  
 
     toCID() {  
         const hash = this.toMultihash()  
@@ -151,9 +156,17 @@ export class Ed25519PubKey implements Ed25519PublicKey {
         const protoBytes = base32.decode(str)
         return Ed25519PubKey.publicKeyFromProto(protoBytes)
     }
-
+ /**
+   * Returns this key as a multihash with base58btc encoding
+   */
     toString(): string {  
-        return bytesToHex(this.bytes()) 
+        const digest = this.raw;
+        const size = digest.length;
+        const bytes = new Uint8Array(2 + size);
+        bytes[0] = 0x00; // identity hash code
+        bytes[1] = size;  // size in varint
+        bytes.set(digest, 2);
+        return base58btc.encode(bytes)
     }  
 
     static fromString(str: string): Ed25519PubKey {  

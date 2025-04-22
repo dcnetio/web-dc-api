@@ -3,11 +3,11 @@ import type { Multiaddr as TMultiaddr } from "@multiformats/multiaddr";
 import { extractPublicKeyFromPeerId } from "../dc-key/keyManager";
 import { Ed25519PubKey } from "../dc-key/ed25519";
 import { dcnet  as dcnet_proto} from "../proto/dcnet_proto";
-import { Key as ThreadKey } from './common/key';
+import { SymmetricKey, Key as ThreadKey } from './common/key';
 import type { PublicKey,PrivateKey } from "@libp2p/interface"; 
 import { NewThreadOptions } from './core/options';
 import { ThreadID } from '@textile/threads-id'; 
-import { PeerRecords} from "./net/define";
+import { netPullingLimit, PeerRecords} from "./net/define";
 import { DBGrpcClient } from "./net/grpcClient";
 import { PeerId } from "@libp2p/interface";
 import { IRecord } from "./core/record";
@@ -19,11 +19,12 @@ import { toString as uint8ArrayToString } from "uint8arrays/to-string";
 import {peerIdFromString} from "@libp2p/peer-id";
 import {multiaddr} from "@multiformats/multiaddr";
 import { CID } from 'multiformats/cid';
-import { getHeadUndef } from "./core/head";
+import { getHeadUndef, Head } from "./core/head";
 import {PermanentAddrTTL} from "./common/logstore";
 import { Net } from "./core/app";
 import {SymKey} from "./core/core";
 import { ThreadToken } from "./core/identity";
+import { CidConverter, KeyConverter, PeerIDConverter, ThreadIDConverter } from "./pb/proto-custom-types";
 
 
 
@@ -292,10 +293,10 @@ private async localEdges(tid: ThreadID): Promise<{ addrEdge: number, headsEdge: 
  * 调度日志更新
  * @param tid threaddb ID
  */
-private async scheduleUpdateLogs(tid: ThreadID): Promise<void> {
+ async scheduleUpdateLogs(tid: ThreadID): Promise<void> {
    // 创建gRPC客户端
   const lgs =  await this.getLogs(tid);
-	return this.createExternalLogsIfNotExist(tid, lgs)
+	return await this.createExternalLogsIfNotExist(tid, lgs)
 }
 
 /**
@@ -303,9 +304,54 @@ private async scheduleUpdateLogs(tid: ThreadID): Promise<void> {
  * @param tid threaddb ID
  */
 private async scheduleUpdateRecords(tid: ThreadID): Promise<void> {
-  // 实现记录更新调度逻辑
-  // 在实际实现中，这可能会将任务推入队列
+  this.net.updateRecordsFromPeer(tid, null,this);
 }
+
+
+
+  /**
+   * 构建获取记录的请求
+   */
+  private async buildGetRecordsRequest(
+    tid: ThreadID,
+    offsets: Record<string,Head>,
+    limit: number
+  ): Promise<{ req: net_pb.pb.IGetRecordsRequest, serviceKey: SymKey }> {
+    try {
+      // 从存储中获取服务密钥
+      const serviceKey = await this.logstore.keyBook.serviceKey(tid);
+      
+      if (!serviceKey) {
+        throw new Error("A service-key is required to request records");
+      }
+      
+      // 创建日志条目
+      const logs = Object.entries(offsets).map(([logId, offset]) => {
+        const pbLog: net_pb.pb.GetRecordsRequest.Body.ILogEntry = {
+          logID: PeerIDConverter.toBytes(logId),
+          limit: limit,
+          counter: offset.counter,
+          offset: CidConverter.toBytes(offset.id)
+        }
+        return pbLog;
+     });
+      
+      // 构建请求体
+      const body: net_pb.pb.GetRecordsRequest.IBody = {
+        threadID: ThreadIDConverter.toBytes(tid.toString()),
+        serviceKey: serviceKey.raw,
+        logs: logs
+      };
+      
+      // 创建请求
+      const req = new net_pb.pb.GetRecordsRequest();
+      req.body = body;
+      return { req, serviceKey };
+    } catch (err) {
+      console.error("buildGetRecordsRequest error:", err);
+      throw err;
+    }
+  }
 
 
 /**
@@ -366,8 +412,8 @@ async getRecordsFromPeer(
     this.client.protocol
   );
 
-  const reply = await grpcClient.getRecordsFromPeer( req, serviceKey.raw);
-  if (!reply.records) {
+  const reply = await grpcClient.getRecordsFromPeer( req,SymmetricKey.fromSymKey( serviceKey));
+  if (Object.keys(reply).length === 0) {
     return {};
   }
   return reply;
@@ -408,7 +454,7 @@ async createExternalLogsIfNotExist(tid: ThreadID, logs: IThreadLogInfo[]): Promi
           );
         }
       } catch (err) {
-        throw err;
+        continue
       }
     }
   } finally {
@@ -446,10 +492,10 @@ private async logFromProto(protoLog: net_pb.pb.ILog): Promise<IThreadLogInfo> {
   }
   
   // 解析日志ID
-  const id =  peerIdFromString(uint8ArrayToString(protoLog.ID));
+  const id =  PeerIDConverter.fromBytes(protoLog.ID);
   
   // 解析公钥
-  const pubKey =  Ed25519PubKey.publicKeyFromProto(protoLog.pubKey);
+  const pubKey = await KeyConverter.publicFromBytes(protoLog.pubKey);
   
 
   // 解析地址

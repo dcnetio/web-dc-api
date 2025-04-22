@@ -3,13 +3,16 @@ import EventEmitter from 'eventemitter3';
 import { ThreadID } from '@textile/threads-id'
 import { IThreadRecord } from './record'
 import { Key as ThreadKey } from '../common/key';
-import { ThreadInfo } from './core';
+import { SymKey, ThreadInfo } from './core';
 import { ThreadToken } from './identity';
 import { Ed25519PubKey } from '../../dc-key/ed25519';
 import { INet as net_Net } from './core'
 import { Context } from './core'
 import { IPLDNode } from './core';
 import { PeerId } from '@libp2p/interface';
+import { Head } from './head';
+import {net as net_pb} from "../pb/net_pb";
+import { DBClient } from '../client';
 
 
 // 类型定义  
@@ -91,8 +94,13 @@ export interface Net extends net_Net {
     token?: ThreadToken
   ): Promise<Ed25519PubKey |undefined>  
   exchange(id: ThreadID): Promise<void>  
-
-  updateRecordsFromPeer(tid: ThreadID,peerId: PeerId): Promise<void>
+  threadOffsets(tid: ThreadID): Promise<[Record<string, Head>, PeerId[]]> 
+  buildGetRecordsRequest(
+    tid: ThreadID,
+    offsets: Record<string,Head>,
+    limit: number
+  ): Promise<{ req: net_pb.pb.IGetRecordsRequest, serviceKey: SymKey }> 
+  updateRecordsFromPeer(tid: ThreadID,peerId: PeerId|null,client?:DBClient): Promise<void>
 }  
 
 // 连接器实现  
@@ -122,7 +130,7 @@ export class Connector {
   // 调用 net.createRecord 并提供线程 ID 和 API 令牌
   async createNetRecord(
     body: IPLDNode, 
-    token: ThreadToken
+    token?: ThreadToken
   ): Promise<IThreadRecord> {
     return this.net.createRecord(
       this.threadId, 
@@ -136,7 +144,7 @@ export class Connector {
 
   // 验证线程令牌
   async validate(
-    token: ThreadToken
+    token?: ThreadToken
   ): Promise<Error | undefined> {
     try{
       await this.net.validate( this.threadId, token);

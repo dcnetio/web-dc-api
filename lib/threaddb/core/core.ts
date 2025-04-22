@@ -110,7 +110,7 @@ export interface ManagedOptions {
   name: string;
   key: ThreadKey;
   logKey: Ed25519PrivKey | Ed25519PubKey;
-  token?: Token;
+  token?: ThreadToken;
   collections: ICollectionConfig[];
   block: boolean;
 } 

@@ -123,7 +123,7 @@ export class ChainUtil {
   }
 
   // 获取所有文件存储节点
-  getObjNodes = async (cid: string) => {
+  getObjNodes = async (cid: string): Promise<string[] | undefined> => {
     const fileInfo = (await this.dcchainapi?.query.dcNode.files(cid)) || null;
     console.log("new first 1");
     const fileInfoJSON = fileInfo?.toJSON();
@@ -132,12 +132,12 @@ export class ChainUtil {
     if (
       !fileInfoJSON ||
       typeof fileInfoJSON !== "object" ||
-      (fileInfoJSON as { peers: any[] }).peers.length == 0
+      (fileInfoJSON as { peers: string[] }).peers.length == 0
     ) {
       console.error("no peers found for file: ", cid);
       return;
     }
-    const peers = (fileInfoJSON as { peers: any[] }).peers || [];
+    const peers = (fileInfoJSON as { peers: string[] }).peers || [];
     return peers;
   };
 
