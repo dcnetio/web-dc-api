@@ -180,7 +180,7 @@ function fastExtractPeerId(ma: Multiaddr | string): PeerId | null {
       // const stored = await db.get('ed25519', 'ed25519_key');  
     
       // 解码 Base64  
-      const decode = str => Uint8Array.from(atob(str), c => c.charCodeAt(0));  
+      const decode = (str: string) => Uint8Array.from(atob(str), c => c.charCodeAt(0));  
       
       // if(!stored.publicKey || !stored.privateKey) return null
     
@@ -204,7 +204,7 @@ async function withWebLock(lockName: string,mode: LockMode, callback: () => Prom
   });  
 }  
 // 函数：解析32位无符号整数  
-function parseUint32(str) {  
+function parseUint32(str: string) {
   try {  
     // 尝试解析为数值  
     const num = parseInt(str, 10);  
