@@ -1469,11 +1469,11 @@ async newRecord(id: ThreadID, lg: IThreadLogInfo, body: IPLDNode, identity: Publ
   const rec = CreateRecord(
     this.dagService,
   {
-    Block: body as Node,
-    Prev: head[0].id,
-    Key: this.privateKey,
-    PubKey: this.privateKey.publicKey,
-    ServiceKey: sk
+    block: body as Node,
+    prev: head[0].id,
+    key: this.privateKey,
+    pubKey: this.privateKey.publicKey,
+    serviceKey: sk
   })
   return rec
 }

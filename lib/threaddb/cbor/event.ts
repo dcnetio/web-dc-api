@@ -7,7 +7,7 @@ import * as dagCBOR from '@ipld/dag-cbor';
 import { sha256 } from 'multiformats/hashes/sha2';
 import {  Format } from 'interface-ipld-format';
 
-import { encodeBlock, decodeBlock ,decodeBlock1} from './coding';
+import { encodeBlock, decodeBlock } from './coding';
 import {Block,Node} from './node';  
 import CID_IPLD from 'cids';
 import { dagCbor ,DAGCBOR} from '@helia/dag-cbor'

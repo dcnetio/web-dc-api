@@ -3,6 +3,8 @@ import { SymmetricKey } from '../common/key'
 import {Node} from './node';  
 import * as cbornode from './node';
 import { IBlock } from '../core/core';
+import * as dagCBOR from '@ipld/dag-cbor';
+
 
 
 
@@ -28,28 +30,18 @@ export async function encodeBlock(block: IBlock, key: SymmetricKey): Promise<Nod
  * @returns Promise resolving to a Node
  */
 export async function decodeBlock(block: IBlock, key: SymmetricKey): Promise<Node> {
-  
-    // Decrypt the data using the provided key
-    const decoded =  await key.decrypt(block.data());
-    return cbornode.wrapObject(decoded);
+    const obj = dagCBOR.decode(block.data()) as any;
+    let encodedData :Uint8Array;
+    if (obj instanceof Uint8Array) {
+        encodedData = obj;
 
-   
+    } else {
+        encodedData = dagCBOR.decode(obj._data);
+    }
+    // Decrypt the data using the provided key
+    const decoded =  await key.decrypt(encodedData);
+    return cbornode.decode(decoded);
 }
 
 
 
-/**
- * Decrypts a block's raw data with the given key and returns a DAG node
- * 
- * @param block - The block to decode
- * @param key - The decryption key
- * @returns Promise resolving to a Node
- */
-export async function decodeBlock1(block: IBlock, key: SymmetricKey): Promise<Node> {
-  
-    // Decrypt the data using the provided key
-    const decoded =  await key.decrypt(block.data());
-    return cbornode.wrapObject(decoded);
-
-   
-}

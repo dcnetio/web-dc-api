@@ -17,27 +17,27 @@ import  * as net_pb from '../pb/net_pb'
 import { IPLDNode } from '../core/core';
 // 记录的节点结构
 interface RecordObj {
-  Block: CID;
-  Sig: Uint8Array;
-  PubKey: Uint8Array;
-  Prev?: CID;
+  block: CID;
+  sig: Uint8Array;
+  pubKey: Uint8Array;
+  prev?: CID;
 }
 
 // 创建记录的配置
 interface CreateRecordConfig {
-  Block: Node;
-  Prev?: CID;
-  Key: PrivKey;
-  PubKey: PubKey;
-  ServiceKey: SymmetricKey;
+  block: Node;
+  prev?: CID;
+  key: PrivKey;
+  pubKey: PubKey;
+  serviceKey: SymmetricKey;
 }
 
 // 用于传输的记录协议结构
 interface LogRecord {
-  RecordNode: Uint8Array;
-  EventNode: Uint8Array;
-  HeaderNode: Uint8Array;
-  BodyNode: Uint8Array;
+  recordNode: Uint8Array;
+  eventNode: Uint8Array;
+  headerNode: Uint8Array;
+  bodyNode: Uint8Array;
 }
 
 /**
@@ -52,14 +52,14 @@ export async function CreateRecord(
   config: CreateRecordConfig
 ): Promise<IRecord> {
   // 序列化公钥
-  const pkb =  config.PubKey.bytes();
+  const pkb =  config.pubKey.bytes();
   
   // 创建签名有效载荷
   let payload: Uint8Array;
-  if (config.Prev && CID.asCID(config.Prev) !== null) {
+  if (config.prev && CID.asCID(config.prev) !== null) {
     // 连接块CID和前一个CID的字节
-    const blockBytes = config.Block.cid().bytes;
-    const prevBytes = config.Prev.bytes;
+    const blockBytes = config.block.cid().bytes;
+    const prevBytes = config.prev.bytes;
     payload = new Uint8Array(blockBytes.length + prevBytes.length);
     payload.set(blockBytes);
     payload.set(prevBytes, blockBytes.length);
@@ -68,14 +68,14 @@ export async function CreateRecord(
   }
   
   // 使用私钥签名
-  const sig =  config.Key.sign(payload);
+  const sig =  config.key.sign(payload);
   
   // 创建记录对象
   const obj: RecordObj = {
-    Block: config.Block.cid(),
-    Sig: sig,
-    PubKey: pkb,
-    Prev: config.Prev
+    block: config.block.cid(),
+    sig: sig,
+    pubKey: pkb,
+    prev: config.prev
   };
   
   // 将对象打包为CBOR节点
@@ -85,7 +85,7 @@ export async function CreateRecord(
   const node = new Block(bytes,cid );
   
   // 使用服务密钥加密节点
-  const coded = await encodeBlock(node, config.ServiceKey);
+  const coded = await encodeBlock(node, config.serviceKey);
   
   // 如果提供了DAG服务，则添加到DAG
   if (dag) {
@@ -96,7 +96,7 @@ export async function CreateRecord(
   return new Record(
     coded,
     obj,
-    config.Block
+    config.block
   );
 }
 
@@ -250,27 +250,27 @@ export class Record implements IRecord {
   }
   
   blockID(): CID {
-    return this._obj.Block;
+    return this._obj.block;
   }
   async getBlock( dag: DAGCBOR): Promise<IPLDNode> {
     if (this._block) {
       return this._block;
     }
     
-    this._block = await dag.get(this._obj.Block);
+    this._block = await dag.get(this._obj.block);
     return this._block;
   }
   
   prevID(): CID | undefined {
-    return this._obj.Prev;
+    return this._obj.prev;
   }
   
   sig(): Uint8Array {
-    return this._obj.Sig;
+    return this._obj.sig;
   }
   
   pubKey(): Uint8Array {
-    return this._obj.PubKey;
+    return this._obj.pubKey;
   }
   links(): Link[] {
     return this._node.links();

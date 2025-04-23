@@ -3,6 +3,7 @@ import { name,code, encode, decode } from '@ipld/dag-cbor';
 import { sha256 } from 'multiformats/hashes/sha2';  
 import * as Block from 'multiformats/block';  
 import { Key } from 'interface-datastore';
+import * as dagCBOR from '@ipld/dag-cbor';
   
 import {       
   IndexFunc,    
@@ -15,21 +16,24 @@ import {
   Event,  
   ReduceAction,  
   InstanceID,     
-  ActionType
+  CoreActionType
 } from '../core/db';  
 
 // ==================== 核心数据结构 ====================  
 interface Operation {  
-  type: ActionType; 
+  type: CoreActionType; 
   instanceID: InstanceID;  
-  jsonPatch?: Uint8Array ;  
+  jsonPatch?: Uint8Array ; 
+  jSONPatch?: Uint8Array ; 
 }  
 
 interface PatchEvent {  
   timestamp: bigint;  
   id: InstanceID;  
-  collection: string;  
-  operation: Operation;  
+  iD?: InstanceID;
+  collection: string; 
+  collectionName?: string; 
+  patch: Operation;  
 }  
 
 interface RecordEvents {  
@@ -73,7 +77,7 @@ export class JsonPatcher implements EventCodec {
         const event = await this.parseEvent(rawEvent);  
         await this.processEvent(event, baseKey, txn, indexFunc);  
         actions.push({  
-          type: event.operation.type,  
+          type: event.patch.type,  
           collection: event.collection,  
           instanceID: event.id  
         });  
@@ -87,10 +91,14 @@ export class JsonPatcher implements EventCodec {
   }  
 
   async eventsFromBytes(data: Uint8Array): Promise<Event[]> {  
-    const block = await Block.decode({  
+    const block = await Block.decode<RecordEvents,number,number>({  
       bytes: data,  
       ...JsonPatcher.ENCODER_SETTINGS  
     });  
+    if (!block.value) {  
+      throw new Error('Invalid block value');  
+    }
+    
     return this.wrapEvents((block.value as RecordEvents).patches);  
   }  
 
@@ -100,8 +108,8 @@ export class JsonPatcher implements EventCodec {
       timestamp: BigInt(Date.now()) * 1000000n + BigInt(Math.floor(Math.random() * 1000000)),
       id: action.instanceID,  
       collection: action.collectionName || 'default',  
-      operation: {  
-        type: this.normalizeActionType(action.type),  
+      patch: {  
+        type: action.type,  
         instanceID: action.instanceID,  
         jsonPatch: action.current  
       }  
@@ -110,26 +118,25 @@ export class JsonPatcher implements EventCodec {
 
   private wrapEvents(patches: PatchEvent[]): Event[] {  
     return patches.map(p => ({  
-      collection: p.collection,  
-      instanceID: p.id,  
+      collection: p.collection || p.collectionName,  
+      instanceID: p.id || p.patch.instanceID,  
       timestamp: p.timestamp,  
-      payload: p.operation.jsonPatch,  
+      payload: p.patch.jsonPatch || p.patch.jSONPatch,  
       marshal: async () => this.marshalPatchEvent(p)  
     }));  
   }  
 
   private async marshalPatchEvent(event: PatchEvent): Promise<Uint8Array> {  
+   
     return encode({  
       t: event.timestamp,  
-      i: event.id,  
-      c: event.collection,  
+      i: event.id || event.iD,  
+      c: event.collection || event.collectionName,  
       op: {  
-        typ: event.operation.type,  
-        id: event.operation.instanceID,  
-        patch: event.operation.jsonPatch   
-          ? decode(event.operation.jsonPatch)  
-          : null  
-      }  
+        type: event.patch.type,  
+        id: event.patch.instanceID,  
+        patch: event.patch.jsonPatch || event.patch.jSONPatch  
+      }
     });  
   }  
 
@@ -147,8 +154,8 @@ export class JsonPatcher implements EventCodec {
       timestamp: data.t,  
       id: data.i,  
       collection: data.c,  
-      operation: {  
-        type: data.op.typ,  
+      patch: {  
+        type: data.op.type,  
         instanceID: data.op.id,  
         jsonPatch: data.op.patch ? encode(data.op.patch) : undefined  
       }  
@@ -162,11 +169,11 @@ export class JsonPatcher implements EventCodec {
     indexFunc: IndexFunc  
   ): Promise<void> {  
     const recordKey = baseKey.child(new Key(event.collection)).child(new Key(event.id));  
-    
+
     const oldData = await txn.get(recordKey).catch(() => undefined);  
-    const newData = event.operation.type === 'delete'   
+    const newData = event.patch.type === CoreActionType.Delete  
       ? undefined   
-      : event.operation.jsonPatch;  
+      : event.patch.jsonPatch;  
 
     await indexFunc(  
       event.collection,  
@@ -176,27 +183,18 @@ export class JsonPatcher implements EventCodec {
       newData
     );  
 
-    if (event.operation.type === 'delete') {  
+    if (event.patch.type === CoreActionType.Delete) {  
       await txn.delete(recordKey);  
     } else if (newData) {  
-      await txn.put(recordKey, newData);  
+      const decoded = dagCBOR.decode<Uint8Array>(newData);
+      if (!decoded) {  
+        throw new Error('Failed to decode JSON patch');  
+      }
+      await txn.put(recordKey, decoded);  
     }  
   }  
 
-  private normalizeActionType(actionType: string): ActionType {  
-    const normalized = String(actionType).toLowerCase().trim();  
-    switch (normalized) {  
-      case 'create':  
-        return ActionType.Create;  
-      case 'save':  
-        return  ActionType.Save;  
-      case 'delete':  
-        return ActionType.Delete;  
-      default:  
-        throw new Error(`Unsupported action type: ${actionType}`);  
-    }  
-  } 
   private wrapError(err: Error): Error {  
-    return new Error(`JSONPATCHER_ERROR: ${err.message}`, { cause: err });  
+    return new Error(`JSONPATCHER_ERROR: ${err.message}`);  
   }  
 }

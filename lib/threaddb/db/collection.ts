@@ -5,7 +5,7 @@ import { nanoid } from 'nanoid';
 import EventEmitter from 'eventemitter3';
 
 import { Ed25519PrivKey  as PrivKey,Ed25519PubKey as PubKey} from "../../dc-key/ed25519";
-import { Action, ActionType, Event,ITxn ,idFieldName} from '../core/db';
+import { Action, CoreActionType, Event,ITxn ,idFieldName} from '../core/db';
 import { ThreadID } from '@textile/threads-id';
 import { IPLDNode } from '../core/core';
 import { ICollectionConfig } from '../core/core';
@@ -14,6 +14,8 @@ import {ThreadToken} from '../core/identity';
 import {dsDispatcherPrefix} from '../common/dispatcher';
 import {Query,compare,traverseFieldPathMap} from './query';
 import * as cbornode from '../cbor/node';
+import * as dagCBOR from '@ipld/dag-cbor';
+import { dagCbor } from '@helia/dag-cbor';
 
 // iteratorKeyMinCacheSize is the size of iterator keys stored in memory before more are fetched.
 const iteratorKeyMinCacheSize = 100
@@ -355,8 +357,8 @@ export class Collection implements ICollection {
   /**
    * Find instance by ID
    */
-  async findByID(id: InstanceID, token?: ThreadToken): Promise<Uint8Array> {
-    let instance: Uint8Array | null = null;
+  async findByID(id: InstanceID, token?: ThreadToken): Promise<Object> {
+    let instance: Object | null = null;
     
     await this.readTxn(async (txn) => {
       instance = await txn.findByID(id);
@@ -477,8 +479,8 @@ export class Collection implements ICollection {
   /**
    * Find instances matching a query
    */
-  async find(q: Query, token?: ThreadToken): Promise<Uint8Array[]> {
-    let instances: Uint8Array[] = [];
+  async find(q: Query, token?: ThreadToken): Promise<Object[]> {
+    let instances: Object[] = [];
     
     await this.readTxn(async (txn) => {
       instances = await txn.find(q);
@@ -661,8 +663,7 @@ async addIndex( index: Index, token?: ThreadToken): Promise<void> {
       const all = await this.find(new Query(), token);
       
       for (const item of all) {
-        const jsonObj = JSON.parse(new TextDecoder().decode(item));
-        const value = traverseFieldPathMap(jsonObj, index.path);
+        const value = traverseFieldPathMap(item, index.path);
         
         if (value === undefined) {
           continue;
@@ -793,7 +794,8 @@ async indexUpdate(field: string, index: Index, txn: any, key: Key, input: Uint8A
  * 返回对输入的字段搜索结果
  */
 function getIndexValue(field: string, input: Uint8Array): Key {
-  const jsonObj = JSON.parse(new TextDecoder().decode(input));
+  const decoded = dagCBOR.decode<Uint8Array>(input);
+  const jsonObj = JSON.parse(new TextDecoder().decode(decoded));
   const value = traverseFieldPathMap(jsonObj, field);
   
   if (value === undefined) {
@@ -982,7 +984,7 @@ export class Txn implements ITxn{
         
         // Add action
         this.actions.push({
-          type: ActionType.Create,
+          type: CoreActionType.Create,
           instanceID: id,
           collectionName: this.collection.name,
           current: updatedWithTimestamp
@@ -1083,7 +1085,7 @@ export class Txn implements ITxn{
       
       // Add action
       actions.push({
-        type: ActionType.Save,
+        type: CoreActionType.Save,
         instanceID: id,
         collectionName: this.collection.name,
         previous,
@@ -1113,7 +1115,7 @@ export class Txn implements ITxn{
       
       // Add action
       this.actions.push({
-        type: ActionType.Delete,
+        type: CoreActionType.Delete,
         instanceID: ids[i],
         collectionName: this.collection.name
       });
@@ -1163,7 +1165,7 @@ export class Txn implements ITxn{
   /**
    * Find instance by ID
    */
-  async findByID(id: InstanceID): Promise<Uint8Array> {
+  async findByID(id: InstanceID): Promise<Object> {
     const validationResult = await this.collection.db.connector.validate(this.token);
     if (validationResult) {
       throw validationResult;
@@ -1188,14 +1190,21 @@ export class Txn implements ITxn{
     if (!filtered) {
       throw ErrInstanceNotFound;
     }
-    
-    return filtered;
+    let parsedValue;
+    try {
+      parsedValue = JSON.parse(new TextDecoder().decode(filtered));
+    } catch (err) {
+      console.warn("Failed to parse JSON for sorting:", err);
+      parsedValue = {};
+    }
+                  
+    return parsedValue;
   }
 
   /**
    * Find instances matching a query
    */
-    async find(q?: Query): Promise<Uint8Array[]> {
+    async find(q?: Query): Promise<Object[]> {
       try {
         // 验证令牌
         const validationError = await this.collection.db.connector.validate(this.token);
@@ -1318,7 +1327,7 @@ export class Txn implements ITxn{
             }
             
             // 提取最终结果
-            const results = values.map(v => v.value);
+            const results = values.map(v => v.marshaledValue);
             return results;
             
           } finally {

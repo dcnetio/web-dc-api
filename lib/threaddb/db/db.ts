@@ -19,7 +19,7 @@ import {
 import { Event,
   InstanceID,
   ReduceAction,
-  Action,ActionType,
+  Action,CoreActionType,
   TxnDatastoreExtended,
   Transaction,
   IndexFunc,
@@ -40,7 +40,7 @@ import * as threadEvent from '../cbor/event'
 import {IRecord} from '../core/record'
 import {IPLDNode} from '../core/core'
 
-
+const baseKey = DBPrefix.dsPrefix.child(new Key("collection"))
 const getBlockInitialTimeout      =  500 
 const getBlockRetries = 3; 
 
@@ -92,7 +92,7 @@ export class DefaultEventCodec implements EventCodec {
         }  
       await txn.commit();
       reduceActions.push({  
-        type: this.getActionType(event),  
+        type: this.getCoreActionType(event),  
         collection: event.collection,  
         instanceID: event.instanceID  
       });  
@@ -118,25 +118,25 @@ export class DefaultEventCodec implements EventCodec {
     return [events, nodeData];  
   }  
 
-  private getActionType(event: Event): ActionType {  
+  private getCoreActionType(event: Event): CoreActionType {  
     // 根据payload内容判断操作类型  
-    if (!event.payload) return ActionType.Delete;  
-    if ('previous' in event.payload) return ActionType.Save;  
-    return ActionType.Create;  
+    if (!event.payload) return CoreActionType.Delete;  
+    if ('previous' in event.payload) return CoreActionType.Save;  
+    return CoreActionType.Create;  
   }  
 
   private buildEventPayload(action: Action): any {  
     switch (action.type) {  
-      case ActionType.Create:  
+      case CoreActionType.Create:  
         return {  
           created: action.current ? JSON.parse(new TextDecoder().decode(action.current)) : null  
         };  
-      case ActionType.Save:  
+      case CoreActionType.Save:  
         return {  
           previous: action.previous ? JSON.parse(new TextDecoder().decode(action.previous)) : null,  
           current: action.current ? JSON.parse(new TextDecoder().decode(action.current)) : null  
         };  
-      case ActionType.Delete:  
+      case CoreActionType.Delete:  
         return {  
           deleted: action.previous ? JSON.parse(new TextDecoder().decode(action.previous)) : null  
         };  
@@ -350,8 +350,7 @@ export class DB implements App,IDB {
 
   async reduce(events: Event[]): Promise<void> {  
     console.debug(`reducing events in ${this.name}`);
-    const baseKey = new Key('/');
-    
+  
     try {
       // 调用事件编解码器的 reduce 方法获取处理结果
       const codecActions = await this.eventcodec.reduce(
@@ -363,27 +362,10 @@ export class DB implements App,IDB {
       
       // 创建 actions 数组并映射处理结果
       const actions: Action[] = codecActions.map(ca => {
-        let actionType: ActionType;
-        
-        // 根据类型转换为对应的操作类型
-        switch (ca.type) {
-          case 'create':
-            actionType = ActionType.Create;
-            break;
-          case 'save':
-            actionType = ActionType.Save;
-            break;
-          case 'delete':
-            actionType = ActionType.Delete;
-            break;
-          default:
-            throw new Error(`eventcodec action not recognized: ${ca.type}`);
-        }
-        
         // 返回转换后的 Action 对象
         return {
           collectionName: ca.collection,
-          type: actionType,
+          type: ca.type,
           instanceID: ca.instanceID
         };
       });

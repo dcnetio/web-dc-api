@@ -174,7 +174,7 @@ class LevelDatastoreAdapter implements TxnDatastoreExtended {
       query: async function*( q: Query): AsyncIterable<QueryResult> {  
         for await (const entry of this.store.query(q)) {  
           yield {  
-            key: entry.key,  
+            key: entry.key.toString(),  
             value: entry.value,  
             size: entry.value.length  
           };  
@@ -193,7 +193,7 @@ class LevelDatastoreAdapter implements TxnDatastoreExtended {
           }  
           if (match) {  
             yield {  
-              key: entry.key,  
+              key: entry.key.toString(),   
               value: entry.value,  
               size: entry.value.length  
             };  

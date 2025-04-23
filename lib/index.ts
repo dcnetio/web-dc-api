@@ -1015,7 +1015,11 @@ export class DC  implements SignHandler {
    const userConnection = db.getCollection("person");
    const query = new Query();
   const user = await userConnection.find(query);
-  console.log("user:",user)
+  for (let i = 0; i < user.length; i++) {
+    console.log("id:",user[i]._id)
+    console.log("name:",user[i].name)
+    console.log("age:",user[i].age)
+  }
     //todo remove end
     return  threadId
   }

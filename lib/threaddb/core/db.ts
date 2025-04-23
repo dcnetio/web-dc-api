@@ -60,11 +60,11 @@ export function instanceIDToString(id: InstanceID): string {
 }  
 
 
-export enum ActionType {  
-    Create = 'create',  
-    Save = 'save',  
-    Delete = 'delete'  
-  }  
+export enum CoreActionType {  
+    Create = 0,  
+    Save = 1,  
+    Delete = 2  
+}  
 
 
 
@@ -95,11 +95,11 @@ export interface ITxn{
   /**
    * Find instance by ID
    */
-  findByID(id: InstanceID): Promise<Uint8Array> ;
+  findByID(id: InstanceID): Promise<Object> ;
   /**
    * Find instances matching a query
    */
-  find(q?: Query): Promise<Uint8Array[]>;
+  find(q?: Query): Promise<Object[]>;
   /**
  * Get instances modified since a specific time
  * 
@@ -130,7 +130,7 @@ export interface ITxn{
     getReadFilter(): Uint8Array;
     readTxn(fn: (txn: ITxn) => Promise<void> | void, token?: ThreadToken): Promise<void> ;
     writeTxn(fn: (txn: ITxn) => Promise<void> | void, token?: ThreadToken): Promise<void>
-    findByID(id: InstanceID, token?: ThreadToken): Promise<Uint8Array> ;
+    findByID(id: InstanceID, token?: ThreadToken): Promise<Object> ;
     create(v: Uint8Array, token?: ThreadToken): Promise<InstanceID> ;
     createMany(vs: Uint8Array[], token?: ThreadToken): Promise<InstanceID[]> ;
     delete(id: InstanceID, token?: ThreadToken): Promise<void> ;
@@ -141,7 +141,7 @@ export interface ITxn{
     verifyMany(vs: Uint8Array[], token?: ThreadToken): Promise<void> ;
     has(id: InstanceID, token?: ThreadToken): Promise<boolean>;
     hasMany(ids: InstanceID[], token?: ThreadToken): Promise<boolean> ;
-    find(q: Query, token?: ThreadToken): Promise<Uint8Array[]>
+    find(q: Query, token?: ThreadToken): Promise<Object[]>
     modifiedSince(time: number, token?: ThreadToken): Promise<InstanceID[]>;
     validInstance(v: Uint8Array): void;
     validWrite(identity: PubKey, e: Event): Promise<void>;
@@ -217,7 +217,7 @@ export type IndexFunc = (
   ) => Promise<void>;  
 
 export interface Action {  
-    type: ActionType;  
+    type: CoreActionType;  
     instanceID: InstanceID;  
     collectionName: string;  
     previous?: Uint8Array;  
@@ -225,7 +225,7 @@ export interface Action {
   }  
   
   export interface ReduceAction {  
-    type: ActionType;  
+    type: CoreActionType;  
     collection: string;  
     instanceID: InstanceID;  
   }  

@@ -295,29 +295,34 @@ export async function decodeBlock(block: Block): Promise<Node> {
 
 // 从原始数据解码节点
 export async function decode(data: Uint8Array, hashAlg: string = 'sha2-256'): Promise<Node> {
-    try {
-        const obj = dagCBOR.decode(data);
+  const obj = dagCBOR.decode(data);  
+  return await wrapObject(obj);
+  // try {
+  //     let canonicalData: Uint8Array = data;
+  //     let obj: any;
+  //     try {
+  //        obj = dagCBOR.decode(data);
+  //        // 重新编码确保规范化
+  //        canonicalData = dagCBOR.encode(obj);
+  //     } catch (err) {
         
-        // 重新编码确保规范化
-        const canonicalData = dagCBOR.encode(obj);
+  //     }
         
-        // 创建 CID
-        const hash = await sha256.digest(canonicalData);
-        const cid = CID.createV1(dagCBOR.code, hash);
-        const oldCid = new CID_IPLD(cid.toString());
+  //       // 创建 CID
+  //       const hash = await sha256.digest(canonicalData);
+  //       const cid = CID.createV1(dagCBOR.code, hash);
+  //       const oldCid = new CID_IPLD(cid.toString());
         
-        // 创建自定义Block对象
-        const block = new Block(
-          canonicalData,
-          cid
-        )
-        return await newObject(block, obj);
-      } catch (err) {
-        throw new Error(`Failed to decode data: ${err instanceof Error ? err.message : String(err)}`);
-      }
+  //       // 创建自定义Block对象
+  //       const block = new Block(
+  //         canonicalData,
+  //         cid
+  //       )
+  //       return await newObject(block, obj);
+  //     } catch (err) {
+  //       throw new Error(`Failed to decode data: ${err instanceof Error ? err.message : String(err)}`);
+  //     }
 }
-
-// 包装对象为节点
 export async function wrapObject(obj: any): Promise<Node> {
   try {
     // 编码对象
@@ -328,10 +333,10 @@ export async function wrapObject(obj: any): Promise<Node> {
     const cid = CID.createV1(dagCBOR.code, hash);
     
     // 创建块
-    const block = new Block( data, cid );
+    const block = new Block(data, cid);
     
-    // 创建深拷贝
-    const clone = JSON.parse(JSON.stringify(obj));
+    // 创建兼容 Uint8Array 的深拷贝
+    const clone = structuredClone(obj) || deepCopyWithTypedArrays(obj);
     
     return await newObject(block, clone);
   } catch (err) {
@@ -339,6 +344,39 @@ export async function wrapObject(obj: any): Promise<Node> {
   }
 }
 
+// 兼容性深拷贝函数
+function deepCopyWithTypedArrays(obj: any): any {
+  if (obj === null || obj === undefined) {
+    return obj;
+  }
+  
+  // 区分处理 ArrayBuffer 和 ArrayBufferView
+  if (obj instanceof ArrayBuffer) {
+    // ArrayBuffer 直接创建新副本
+    return new Uint8Array(obj).buffer;
+  }
+  
+  // 处理 TypedArrays (ArrayBufferView)
+  if (ArrayBuffer.isView(obj)) {
+    // 从视图创建新副本
+    return new Uint8Array(obj.buffer, obj.byteOffset, obj.byteLength);
+  }
+  
+  if (Array.isArray(obj)) {
+    return obj.map(item => deepCopyWithTypedArrays(item));
+  }
+  
+  if (typeof obj === 'object' && !isCID(obj)) {
+    const copy: Record<string, any> = {};
+    for (const [key, value] of Object.entries(obj)) {
+      copy[key] = deepCopyWithTypedArrays(value);
+    }
+    return copy;
+  }
+  
+  // 原始值、CID 直接返回
+  return obj;
+}
 // 从 JSON 创建节点
 export async function fromJSON(json: any): Promise<Node> {
   try {
