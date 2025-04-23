@@ -191,7 +191,7 @@ export class DsThreadMetadata implements IThreadMetadata {
         break  
       default:  
         if (value instanceof Uint8Array) {  
-          dump.data.bytes[mk.t.toString()] = dump.data.bytes[mk.t.toString()] || {};
+          dump.data.bytes[mk.t.toString()] = dump.data.bytes[mk.t.toString()];
           dump.data.bytes[mk.t.toString()][mk.k] = value;
         } else {  
           throw new Error(`Unsupported value type for key: ${mk.k}`)  

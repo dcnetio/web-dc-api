@@ -1,0 +1,28 @@
+{  
+  "compilerOptions": {  
+    "baseUrl": ".",  // 这很重要，确保相对路径正确
+    "target": "ES2020",  
+    "module": "ESNext",  
+    "moduleResolution": "Bundler",  // Bundler ： TypeScript 4.7+ 新选项，专为现代打包工具优化  
+    "moduleDetection": "force",     // 强制将所有文件视为模块  
+    "esModuleInterop": true,  
+    "isolatedModules": true,  
+    "verbatimModuleSyntax": false,   // TypeScript 5.0+ 新选项，保留导入语句原样  
+    "resolveJsonModule": true,  
+    "declaration": true,  
+    "declarationMap": true,         // 生成声明文件的映射  
+    "sourceMap": true,  
+    // "strict": true,  
+    "skipLibCheck": true,  
+    "forceConsistentCasingInFileNames": true,
+    "outDir": "dist",            // 编译输出目录  
+    "rootDir": "lib",            // 源码目录
+    // 开发情况
+    "paths": {  
+      "grpc-libp2p-client": ["node_modules/grpc-libp2p-client/src/index"],  
+      "grpc-libp2p-client/*": ["node_modules/grpc-libp2p-client/src/*"],  
+    },  
+  },  
+  "include": ["lib/**/*"],  
+  "exclude": ["node_modules", "dist"]  
+}  

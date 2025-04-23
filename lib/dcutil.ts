@@ -369,7 +369,15 @@ export class DcUtil {
     if (peerId) {
       let nodeAddr = await this._getNodeAddr(peerId);
       if (nodeAddr) {
-        return nodeAddr;
+        try {
+          const connection = await this.dcNodeClient?.libp2p.dial(nodeAddr, {
+            signal: AbortSignal.timeout(1000)
+          });
+          if (connection) {
+            return nodeAddr;
+          }
+        } catch (error) {
+        }
       }
       localStorage.removeItem("defaultPeerId");
     }

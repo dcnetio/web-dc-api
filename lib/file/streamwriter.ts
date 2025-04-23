@@ -101,7 +101,7 @@ export class StreamWriter {
   // 在 next() 操作时更新队列大小  
   private async safeNext() {  
     const result = await this.p.next()  
-    if (!result.done) {  
+    if (!result.done && result.value) {
       this.p._queueSize -= result.value.byteLength  
     }  
     return result  

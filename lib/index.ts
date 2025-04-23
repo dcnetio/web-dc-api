@@ -38,7 +38,7 @@ import { CommentManager } from "./comment/manager";
 import { dcnet } from "./proto/dcnet_proto";
 import { BrowserLineReader, readLine } from "./util/BrowserLineReader";
 import { bytesToHex } from "@noble/curves/abstract/utils";
-import {dc_protocol} from "./define";
+import {dc_protocol, dial_timeout} from "./define";
 import { MessageManager } from "./message/manager";
 import {DBManager} from "./threaddb/dbmanager";
 import {createTxnDatastore} from "./threaddb/common/idbstore-adapter";
@@ -119,12 +119,14 @@ export class DC  implements SignHandler {
         // let nodeAddr = await this.dcutil?._getNodeAddr(peerId);
         // nodeAddr = multiaddr('/ip4/192.168.31.42/udp/4001/webrtc-direct/certhash/uEiBq5Ki7QE5Nl2IPWTOG52RNutWFaB3rfdIEgKAlVcFtHA/p2p/12D3KooWKfJGey3xUcTQ8bCokBxxudoDm3RAeCfdbuq2e34c7TWB')
         // 获取默认dc节点地址
-        const nodeAddr = await this.dcutil?.getDefaultDcNodeAddr();
+        let nodeAddr = await this.dcutil?.getDefaultDcNodeAddr();
         if (nodeAddr) {
           console.log("--------nodeAddr---------", nodeAddr.toString());
+          const connection = await this.dcNodeClient?.libp2p.dial(nodeAddr, {
+            signal: AbortSignal.timeout(dial_timeout)
+          });
           this.connectedDc.nodeAddr = nodeAddr; // 当前地址
           this.connectedDc.client = await this._newDcClient(nodeAddr);
-          const connection =await this.dcNodeClient.libp2p.dial(nodeAddr);
           console.log("--------connection---------", connection);
           console.log('libp2p 已连接节点列表:', Object.keys(this.dcNodeClient.libp2p.getPeers()))
           console.log('libp2p 已连接连接列表:', Object.keys(this.dcNodeClient.libp2p.getConnections()))
