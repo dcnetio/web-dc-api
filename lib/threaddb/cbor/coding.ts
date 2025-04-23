@@ -29,18 +29,24 @@ export async function encodeBlock(block: IBlock, key: SymmetricKey): Promise<Nod
  * @param key - The decryption key
  * @returns Promise resolving to a Node
  */
-export async function decodeBlock(block: IBlock, key: SymmetricKey): Promise<Node> {
+export async function decodeBlock(block: IBlock, key?: SymmetricKey): Promise<Node> {
     const obj = dagCBOR.decode(block.data()) as any;
-    let encodedData :Uint8Array;
+    let encryptData :Uint8Array;
     if (obj instanceof Uint8Array) {
-        encodedData = obj;
-
+        encryptData = obj;
     } else {
-        encodedData = dagCBOR.decode(obj._data);
+        try {
+            encryptData = dagCBOR.decode(obj._data);
+        } catch (e) {
+            encryptData = obj._data;
+        }
     }
+    let decrptData  = encryptData;
     // Decrypt the data using the provided key
-    const decoded =  await key.decrypt(encodedData);
-    return cbornode.decode(decoded);
+    if (key) {
+        decrptData =  await key.decrypt(encryptData);
+    }
+    return cbornode.decode(decrptData);
 }
 
 

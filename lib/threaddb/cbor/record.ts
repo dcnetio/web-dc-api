@@ -15,6 +15,7 @@ import { DAGCBOR } from '@helia/dag-cbor';
 import { Blocks } from 'helia';
 import  * as net_pb from '../pb/net_pb'
 import { IPLDNode } from '../core/core';
+import { calculateCID } from '../../util/utils';
 // 记录的节点结构
 interface RecordObj {
   block: CID;
@@ -113,8 +114,10 @@ export async function GetRecord(
   id: CID,
   key: SymmetricKey
 ): Promise<IRecord> {
-  const coded = await dag.get<Node>(id);
-  return RecordFromNode(coded, key);
+  const blockData = await dag.get<Uint8Array>(id);
+  const rnode = new Block(blockData, await calculateCID(blockData));
+  const wrapedRnode = await wrapObject(rnode);
+  return RecordFromNode(wrapedRnode, key);
 }
 
 /**
@@ -221,11 +224,6 @@ export async function RecordFromProto(
   );
 }
 
-// 辅助函数：计算内容的CID
-async function calculateCID(data: Uint8Array): Promise<CID> {
-  const hash = await sha256.digest(data);
-  return CID.createV1(dagCBOR.code, hash);
-}
 
 /**
  * 表示记录的IPLD节点

@@ -37,7 +37,7 @@ import {CreateEvent} from '../cbor/event';
 import {Errors} from '../core/db';
 import {net as net_pb} from "../pb/net_pb";
 import { AddOptions,GetOptions } from '@helia/dag-cbor';
-import { toString as uint8ArrayToString } from "uint8arrays/to-string";
+import {EventObj} from '../cbor/event';
 import {   
   PeerIDConverter,  
   MultiaddrConverter,  
@@ -881,7 +881,7 @@ async getRecordsWithDbClient(
           if (block instanceof Event) {
             event = block;
           } else {
-            event = await EventFromNode(block as Node);
+            event = block as Event;
           }
           const dbody = await event.getBody( this, readKey!);
           
@@ -962,7 +962,7 @@ async getRecordsWithDbClient(
       return [[], head];
     }
 
-    const chain: IRecord[] = [];
+    let chain: IRecord[] = [];
     let complete = false;
     
     // Check which records we already have
@@ -975,12 +975,15 @@ async getRecordsWithDbClient(
       }
       chain.push(next);
     }
+    if (chain.length > 20){
+      chain =  chain.splice(10);
+    }
 
     // Bridge the gap between the last provided record and current head
-    if (!complete) {
+    if (!complete && chain.length > 0) {
       let c = chain[chain.length - 1].prevID();
       const CIDUndef = await getCIDUndef();
-      while (c?.equals(CIDUndef)) {
+      while (c && !c.equals(CIDUndef)) {
         if (c.equals(head.id)) {
           break;
         }

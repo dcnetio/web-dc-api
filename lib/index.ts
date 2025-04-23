@@ -15,7 +15,6 @@ import {
   compareByteArrays,
   decryptContentForBrowser,
   mergeUInt8Arrays,
-  sha256,
   sleep,
   uint32ToLittleEndianBytes,
 } from "./util/utils";

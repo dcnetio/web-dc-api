@@ -15,7 +15,7 @@ import * as cbornode from './node';
 import { Link } from 'multiformats/link'
 import {IPLDNode} from '../core/core';
 import {Blocks} from 'helia'
-import { decode } from 'cbor-x';
+import { calculateCID } from '../../util/utils'
 
 
 
@@ -102,9 +102,14 @@ export async function GetEvent(
   dag: DAGCBOR,
   id: CID
 ): Promise<NetEvent> {
-  const node = await dag.get<Node>( id);
-  return EventFromNode(node);
+  const blockData = await dag.get<Uint8Array>( id);
+  const rnode = new Block(blockData, await calculateCID(blockData));
+  const wrapedRnode = await cbornode.wrapObject(rnode);
+  return EventFromNode(wrapedRnode);
 }
+
+
+
 
 /**
  * 将节点解码为事件
@@ -113,21 +118,9 @@ export async function GetEvent(
  */
 export async function EventFromNode(eNode: Node): Promise<NetEvent> {
   try {
-    const eventObj = eNode.toJSON();
-    if (!eventObj || !eventObj.Body || !eventObj.Header) {
-      throw new Error("Event object is undefined");
-    }
-    const obj: EventObj = {
-      Body: eventObj.Body,
-      Header: eventObj.Header
-    };
-    // 包装事件对象为 CBOR 节点
-   const node = await cbornode.wrapObject(obj);
-    // 返回事件
-  return new Event(
-    node,
-    obj
-  );
+    const wrapedRnode = await cbornode.wrapObject(eNode);
+    const event = new Event(wrapedRnode, dagCBOR.decode<EventObj>(wrapedRnode.rawData()),wrapedRnode..CID, wrapedRnode.Body.CID);
+    return event;
   } catch (err) {
     throw new Error(`Failed to decode node into event: ${err instanceof Error ? err.message : String(err)}`);
   }
@@ -209,9 +202,11 @@ export class Event implements NetEvent {
     dag: DAGCBOR,
     key?: SymmetricKey
   ): Promise<NetEventHeader> {
-    if (!this._header) {
-      const coded = await dag.get<Node>(this._obj.Header);
-      this._header = new EventHeader(coded);
+    if (!this._header) {//todo 需要调试
+      const blockData = await dag.get<Uint8Array>(this._obj.Header);
+      const rnode = new Block(blockData, await calculateCID(blockData));
+      const wrapedRnode = await cbornode.wrapObject(rnode);
+      this._header = new EventHeader(wrapedRnode);
     }
     try{
     if (!this._header.isLoaded() && key) {

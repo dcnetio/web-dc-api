@@ -9,7 +9,6 @@ import {
   compareByteArrays,
   decryptContentForBrowser,
   mergeUInt8Arrays,
-  sha256,
   sleep,
   uint32ToLittleEndianBytes,
   uint64ToBigEndianBytes,
