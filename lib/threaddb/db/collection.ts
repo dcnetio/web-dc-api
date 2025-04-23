@@ -573,7 +573,7 @@ export class Collection implements ICollection {
   /**
    * Filter read operations based on the read filter
    */
-  async filterRead(identity: PubKey, instance: Uint8Array): Promise<Uint8Array | null> {
+  async filterRead(identity: PubKey|undefined, instance: Uint8Array): Promise<Uint8Array | null> {
     if (!this.readFilter) {
       return instance;
     }
@@ -1124,18 +1124,13 @@ export class Txn implements ITxn{
    * Check if instances exist
    */
   async has(...ids: InstanceID[]): Promise<boolean> {
-    if (!this.token) {
-      throw new Error('Token not found');
-    }
     const validationResult = await this.collection.db.connector.validate(this.token);
     if (validationResult) {
       throw validationResult;
     }
     
-    const pk = await this.token?.pubKey();
-	if (!pk) {
-	  throw new Error('Identity not found');
-	}
+  const pk = await this.token?.pubKey();
+	
     
     for (let i = 0; i < ids.length; i++) {
       const key = this.collection.baseKey().child(new Key(ids[i]));
@@ -1169,9 +1164,6 @@ export class Txn implements ITxn{
    * Find instance by ID
    */
   async findByID(id: InstanceID): Promise<Uint8Array> {
-    if (!this.token) {
-      throw new Error('Token not found');
-    }
     const validationResult = await this.collection.db.connector.validate(this.token);
     if (validationResult) {
       throw validationResult;
@@ -1190,9 +1182,7 @@ export class Txn implements ITxn{
     }
     
     const pk = await this.token?.pubKey();
-	if (!pk) {
-		throw new Error('Identity not found');
-	}	
+	
     const filtered = await this.collection.filterRead(pk, bytes);
     
     if (!filtered) {
@@ -1207,9 +1197,6 @@ export class Txn implements ITxn{
    */
     async find(q?: Query): Promise<Uint8Array[]> {
       try {
-        if (!this.token) {
-          throw new Error('Token not found');
-        }
         // 验证令牌
         const validationError = await this.collection.db.connector.validate(this.token);
         if (validationError) {
@@ -1232,9 +1219,7 @@ export class Txn implements ITxn{
           try {
             // 获取公钥
             const pk = await this.token?.pubKey();
-            if (!pk) {
-              throw new Error('Identity not found');
-            }
+  
             
             // 存储结果
             const values: MarshaledResult[] = [];
@@ -1466,9 +1451,6 @@ async modifiedSince(time: number): Promise<InstanceID[]> {
     }
     
     try {
-      if (!this.token) {
-        throw new Error('Token not found');
-      }
       await this.collection.db.connector.createNetRecord(node, this.token);
       await this.collection.db.dispatcher.dispatch(events);
       await this.collection.db.notifyTxnEvents(node, this.token);

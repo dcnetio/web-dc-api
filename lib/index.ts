@@ -9,8 +9,8 @@ import { unixfs } from "@helia/unixfs";
 
 import { multiaddr, type Multiaddr } from "@multiformats/multiaddr";
 import toBuffer from "it-to-buffer";
-import * as buffer from "buffer/";
-import {ICollectionConfig} from './threaddb/core/core';
+
+import {Query} from './threaddb/db/query'
 import {
   compareByteArrays,
   decryptContentForBrowser,
@@ -53,11 +53,13 @@ import {newAddrBook} from "./threaddb/lsstoreds/addr_book";
 import {newHeadBook} from "./threaddb/lsstoreds/headbook";
 import {newThreadMetadata} from "./threaddb/lsstoreds/metadata";
 import {dagCbor} from "@helia/dag-cbor";
+import { ICollectionConfig } from "./threaddb/core/core";
+import * as buffer from "buffer/";
+const { Buffer } = buffer;
 const storagePrefix = "dc-";
 const NonceBytes = 12;
 const TagBytes = 16;
 
-const { Buffer } = buffer;
 export class DC  implements SignHandler {
   blockChainAddr: string;
   backChainAddr: string;
@@ -1007,6 +1009,14 @@ export class DC  implements SignHandler {
     
 
    const [threadId,err] = await dbmanager.newDB(name, b32Rk, b32Sk, jsonCollections);
+   //todo remove 
+   const tid = ThreadID.fromString(threadId);
+   const db = await dbmanager.getDB(tid);
+   const userConnection = db.getCollection("person");
+   const query = new Query();
+  const user = await userConnection.find(query);
+  console.log("user:",user)
+    //todo remove end
     return  threadId
   }
 }

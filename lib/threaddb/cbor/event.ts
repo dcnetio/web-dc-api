@@ -7,7 +7,7 @@ import * as dagCBOR from '@ipld/dag-cbor';
 import { sha256 } from 'multiformats/hashes/sha2';
 import {  Format } from 'interface-ipld-format';
 
-import { encodeBlock, decodeBlock } from './coding';
+import { encodeBlock, decodeBlock ,decodeBlock1} from './coding';
 import {Block,Node} from './node';  
 import CID_IPLD from 'cids';
 import { dagCbor ,DAGCBOR} from '@helia/dag-cbor'
@@ -15,6 +15,7 @@ import * as cbornode from './node';
 import { Link } from 'multiformats/link'
 import {IPLDNode} from '../core/core';
 import {Blocks} from 'helia'
+import { decode } from 'cbor-x';
 
 
 
@@ -31,7 +32,7 @@ export interface EventObj {
 
 // 事件头部的节点结构
 interface EventHeaderObj {
-  Key?: Uint8Array;
+  key?: Uint8Array;
 }
 
 /**
@@ -56,11 +57,11 @@ export async function CreateEvent(
   const codedBody = await encodeBlock(bodyBlock, key);
   
   // 序列化密钥
-  const keyb = key.toBytes();
+  const keyb = key.bytes();
   
   // 创建事件头部
   const eventHeader: EventHeaderObj = {
-    Key: keyb
+    key: keyb
   };
 
   const header = await cbornode.wrapObject(eventHeader);
@@ -201,21 +202,32 @@ export class Event implements NetEvent {
     return this._obj.Header;
   }
 
+    
  
+
   async getHeader(
     dag: DAGCBOR,
     key?: SymmetricKey
   ): Promise<NetEventHeader> {
     if (!this._header) {
-      const coded = await dag.get<Node>( this._obj.Header);
+      const coded = await dag.get<Node>(this._obj.Header);
       this._header = new EventHeader(coded);
     }
-    
+    try{
     if (!this._header.isLoaded() && key) {
-      const node = await decodeBlock(this._header.node(), key);
-      const header = dagCBOR.decode(node.data()) as EventHeaderObj;
+      const decoded = dagCBOR.decode<Block>(this._header.node().data()) ; 
+      if (!decoded) {
+        throw new Error("Failed to decode block");
+      }
+      const encryptedData = dagCBOR.decode<Uint8Array>(decoded._data); ;
+      const data: Uint8Array =  await key.decrypt(encryptedData);
+      const header = dagCBOR.decode<EventHeaderObj>(data) ;
       this._header.setObj(header);
     }
+    }catch(err){
+      throw new Error(`Failed to decode header: ${err instanceof Error ? err.message : String(err)}`);
+    }
+    
     
     return this._header;
   }
@@ -299,11 +311,11 @@ export class EventHeader implements NetEventHeader {
       throw new Error("EventHeader object not loaded");
     }
     
-    if (!this._obj.Key) {
+    if (!this._obj.key) {
       throw new Error("Key is undefined");
     }
     
-    return SymmetricKey.fromBytes(this._obj.Key);
+    return SymmetricKey.fromBytes(this._obj.key);
   }
 
    data(): Uint8Array {

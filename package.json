@@ -47,6 +47,8 @@
     "async-mutex": "^0.5.0",
     "blockstore-idb": "^2.0.1",
     "cids": "^1.1.9",
+    "cbor-x": "^1.6.0",
+    "crypto-js": "^4.2.0",
     "datastore-idb": "^3.0.1",
     "datastore-level": "^11.0.1",
     "google-protobuf": "~3.21.2",

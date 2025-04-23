@@ -73,7 +73,6 @@ class Logstore implements ILogstore {
 
     // AddThread adds a thread with keys.
     async addThread(info: IThreadInfo): Promise<void> {
-        return this.mutex.runExclusive(async () => {
             if (!info.key?.service()) {
                 throw new Error("a service-key is required to add a thread");
             }
@@ -99,12 +98,11 @@ class Logstore implements ILogstore {
                     throw new Error("read-key mismatch");
                 }
             }
-        });
+        
     }
 
     // GetThread returns thread info of the given id.
     async getThread(id: ThreadID):Promise<IThreadInfo> {
-        return this.mutex.runExclusive(async () => {
             const sk = await this.keyBook.serviceKey(id);
             if (!sk) {
                 throw Errors.ErrThreadNotFound
@@ -122,7 +120,7 @@ class Logstore implements ILogstore {
             }
             const threadInfo = new ThreadInfo(id, logs, [], threadKey );
             return threadInfo;
-        });
+    
     }
 
     private async getLogIDs(id: ThreadID): Promise<Set<PeerId>> {
@@ -136,7 +134,6 @@ class Logstore implements ILogstore {
 
     // DeleteThread deletes a thread.
     async deleteThread(id: ThreadID): Promise<void> {
-        return this.mutex.runExclusive(async () => {
             await this.keyBook.clearKeys(id);
             await this.metadata.clearMetadata(id);
             const set = await this.getLogIDs(id);
@@ -144,38 +141,34 @@ class Logstore implements ILogstore {
                 await this.addrBook.clearAddrs(id, l);
                 await this.headBook.clearHeads(id, l);
             }
-        });
     }
 
     // AddLog adds a log under the given thread.
     async addLog(id: ThreadID, lg: IThreadLogInfo): Promise<void> {
-        return this.mutex.runExclusive(async () => {
-            if (lg.privKey) {
-                const pk = await this.keyBook.privKey(id, lg.id);
-                if (pk) {
-                    throw Errors.ErrLogExists;
-                }
-                await this.keyBook.addPrivKey(id, lg.id, lg.privKey);
+        if (lg.privKey) {
+            const pk = await this.keyBook.privKey(id, lg.id);
+            if (pk) {
+                throw Errors.ErrLogExists;
             }
-            if (!lg.pubKey) {
-                throw new Error("public key is required");
-            }
-            await this.keyBook.addPubKey(id, lg.id, lg.pubKey);
-            await this.addrBook.addAddrs(id, lg.id, lg.addrs, PermanentAddrTTL);
-            if (lg.head && lg.head.id.toString() !== "") {
-                await this.headBook.setHead(id, lg.id, lg.head);
-            }
-            if (lg.managed || lg.privKey) {
-                await this.metadata.putBool(id, lg.id.toString() + managedSuffix, true);
-            }
-        });
+            await this.keyBook.addPrivKey(id, lg.id, lg.privKey);
+        }
+        if (!lg.pubKey) {
+            throw new Error("public key is required");
+        }
+        await this.keyBook.addPubKey(id, lg.id, lg.pubKey);
+        await this.addrBook.addAddrs(id, lg.id, lg.addrs, PermanentAddrTTL);
+        if (lg.head && lg.head.id.toString() !== "") {
+            await this.headBook.setHead(id, lg.id, lg.head);
+        }
+        if (lg.managed || lg.privKey) {
+            await this.metadata.putBool(id, lg.id.toString() + managedSuffix, true);
+        }
+        return;
     }
 
     // GetLog returns info about the given thread.
     async getLog(id: ThreadID, lid: PeerId): Promise<IThreadLogInfo> {
-        return this.mutex.runExclusive(async () => {
-            return this.getLogInternal(id, lid);
-        });
+        return this.getLogInternal(id, lid);
     }
 
     private async getLogInternal(id: ThreadID, lid: PeerId): Promise<IThreadLogInfo> {

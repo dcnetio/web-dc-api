@@ -215,15 +215,17 @@ export class DB implements App,IDB {
       throw new Error(`Failed to connect app: ${err instanceof Error ? err.message : String(err)}`);
     }
 
-    const info = await n.getThread(id);
-    if (args.block) {  
-      await n.pullThread(info.id, pullThreadBackgroundTimeout,{ token: args.token });  
-    } else {  
-      setTimeout(async () => {  
-        await n.pullThread(info.id,pullThreadBackgroundTimeout, { token: args.token });  
-      }, 30000);
-    }  
-
+	
+ // 处理集合配置
+    if (args.collections && args.collections.length > 0) {
+      for (const collectionConfig of args.collections) {
+        try {
+          await dbInstance.newCollection(collectionConfig);
+        } catch (err) {
+          throw new Error(`Failed to create collection: ${err instanceof Error ? err.message : String(err)}`);
+        }
+      }
+    }
     return dbInstance;
   }  
 
@@ -280,7 +282,7 @@ export class DB implements App,IDB {
     try {  
       const results = this.datastore.query({
         prefix: DBPrefix.dsSchemas.toString(),
-      });  
+      }) as AsyncIterable<{ key: Key, value: Uint8Array }>;  
 
       try {  
         for await (const res of results) {  

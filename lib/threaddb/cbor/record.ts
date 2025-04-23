@@ -7,7 +7,7 @@ import { SymmetricKey } from '../common/key';
 import { CID, Link } from 'multiformats/cid';
 import * as dagCBOR from '@ipld/dag-cbor';
 import { sha256 } from 'multiformats/hashes/sha2';
-import { Node } from './node';
+import { Node, wrapObject } from './node';
 import { Block } from './node';
 import { Event, EventFromNode,EventObj,EventHeader } from './event';
 import { encodeBlock, decodeBlock } from './coding';
@@ -181,12 +181,6 @@ export async function RecordToProto(
   return record;
 }
 
-/**
- * 从包含链接数据的序列化版本返回节点
- * @param rec proto记录
- * @param key 解密密钥
- * @returns 记录
- */
 export async function RecordFromProto(
   rec: net_pb.net.pb.Log.Record,
   key: SymmetricKey
@@ -195,36 +189,42 @@ export async function RecordFromProto(
     throw new Error("解密密钥是必需的");
   }
 
-  // 解码各个节点
-  const rnode =  dagCBOR.decode<Node>(rec.recordNode);
-  const enode =  dagCBOR.decode<Node>(rec.eventNode);
-  const hnode =  dagCBOR.decode<Node>(rec.headerNode);
-  const body =  dagCBOR.decode<Node>(rec.bodyNode);
+  const rnode = new Block(rec.recordNode, await calculateCID(rec.recordNode));
+  const wrapedRnode = await wrapObject(rnode);
+  const enode = await  wrapObject(new Block(rec.eventNode, await calculateCID(rec.eventNode)));
+  const hnode = await wrapObject(new Block(rec.headerNode, await calculateCID(rec.headerNode)));
+  const bnode = await wrapObject(new Block(rec.bodyNode, await calculateCID(rec.bodyNode)));
   
   // 解密记录节点
-  const rBlock = new Block(rnode.rawData(), rnode.cid());
-  const decoded = await decodeBlock(rBlock, key);
+  const decoded = await decodeBlock(rnode, key);
+  
+  // 解析记录对象
   const robj = dagCBOR.decode<RecordObj>(decoded.data());
   
   // 解析事件对象
-  const eBlock = new Block(enode.rawData(), enode.cid());
-  const eobj = dagCBOR.decode<EventObj>(eBlock.data());
+  const eobj = dagCBOR.decode<EventObj>(enode.data());
   
+  // 创建事件头和事件
   const eventHeader = new EventHeader(hnode);
-  // 创建事件
   const event = new Event(
-    enode as Node,
+    enode,
     eobj,
     eventHeader,
-    body as Node
+    bnode
   );
   
   // 返回记录
   return new Record(
-    rnode ,
+    wrapedRnode,
     robj,
     event
   );
+}
+
+// 辅助函数：计算内容的CID
+async function calculateCID(data: Uint8Array): Promise<CID> {
+  const hash = await sha256.digest(data);
+  return CID.createV1(dagCBOR.code, hash);
 }
 
 /**

@@ -208,7 +208,7 @@ export class DBManager {
             });  
             const collections = opts.collections || [];
             const name = opts.name || '';
-            const [store, dbOpts] = await this.wrapDB(this.store,id, opts,name, collections);  
+            const [store, dbOpts] = await this.wrapDB(this.store,id, this.opts,name, collections);  
             const db = await ThreadDb.newDB(store, this.network, id, dbOpts);  
             this.dbs.set(id.toString(), db);  
             if (opts.block) {  
@@ -356,7 +356,8 @@ async syncDBFromDC(
         const tID = await this.decodeThreadId(threadid);  
         const logKey = await this.getLogKey(tID);  
         const lid =  peerIdFromPrivateKey(logKey);
-
+        const strLid = lid.toString();
+        console.log("syncDBFromDC threadid:%s, dbAddr:%s, b32Rk:%s, b32Sk:%s, block:%s, jsonCollections:%s",threadid, dbAddr, b32Rk, b32Sk, block,jsonCollections);
         this.dc._connectToObjNodes(threadid);  
         this.addLogToThreadStart(ctx,tID, lid);
         const sk = SymmetricKey.fromString(b32Sk);
@@ -497,6 +498,7 @@ async  addLogToThread(ctx: Context, id: ThreadID, lid: PeerId): Promise<void> {
 }  
 
 
+
  async  addLogToThreadStart(  
   ctx: Context,  
   id: ThreadID,  
@@ -589,10 +591,11 @@ async newDB(
 
     const ctx1 = createContext(30000);
     //todo remove
-    const res = await this.syncDBFromDC(ctx1,"bafk7tlnp56bzvujbayazj5ouo6ufva5s4ruyl564s3uejrooomoc6uy", dbname, "", b32Rk, b32Sk, true,
+    const res = await this.syncDBFromDC(ctx1,"bafkvx5l4v5yf7usv5qrdoisdk7wjycsefyr6tjovx2y7kulmyleptca", dbname, "", b32Rk, b32Sk, true,
         JSON.stringify(collectionInfos)
       );
       console.log("==========syncDBFromDC", res);
+      return ["bafkvx5l4v5yf7usv5qrdoisdk7wjycsefyr6tjovx2y7kulmyleptca", null];
 
     //todo remove end
     //todo 移除注释
@@ -762,6 +765,39 @@ async close(): Promise<void> {
         this.dbs.clear();  
     });  
 }  
+
+/**
+ * Gets a database by ID
+ * @param ctx The context for the operation
+ * @param id The thread ID of the database
+ * @param opts Optional managed options
+ * @returns Promise resolving to the database instance
+ * @throws Error if the database cannot be found
+ */
+async getDB(id: ThreadID, opts?: ManagedOptions): Promise<ThreadDb> {
+    console.debug(`manager: getting db ${id}`);
+    
+
+    
+    console.debug(`manager: getting thread ${id} from net`);
+    try {
+        // Get thread from the network
+        await this.network.getThread(id, { token: opts?.token });
+        console.debug(`manager: got thread ${id} from net`);
+    } catch (err) {
+        throw err;
+    }
+    
+    // Use lock to safely access the database map
+    return this.lock.acquire('dbs', async () => {
+        console.debug(`manager: getting db ${id} from map`);
+        const db = this.dbs.get(id.toString());
+        if (!db) {
+            throw Errors.ErrDBNotFound;
+        }
+        return db;
+    });
+}
 
 // DeleteDB deletes a db by id.
 async deleteDB( id: ThreadID, deleteThreadFlag: boolean, opts?: ManagedOptions): Promise<void> {

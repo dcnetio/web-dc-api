@@ -47,6 +47,8 @@ import {
   ProtoKeyConverter,
   json
 } from '../pb/proto-custom-types' 
+import * as buffer from "buffer/";
+const { Buffer } = buffer;
 
 
 
@@ -139,8 +141,22 @@ export class Network implements Net {
   }
 
   async getPeers(id: ThreadID):Promise<PeerId[]| undefined>{
-   //从区块链中获取数据库存储的所有节点
-   return
+   const peers = await this.dcChain.getObjNodes(id.toString());
+   if (!peers) {
+     return undefined;
+   }
+   const peerIds: PeerId[] = [];
+   for (const peer of peers) {
+    const peerStr = Buffer.from(peer.slice(2), "hex").toString(
+      "utf8"
+    );
+     const peerId = peerIdFromString(peerStr);
+     if (!peerId) {
+       continue
+      }
+     peerIds.push(peerId);
+   }
+   return peerIds;
   }
 
   /**  
@@ -234,7 +250,7 @@ async addThread(
     // 如果不是从自己添加，则连接并获取日志
     if (!addFromSelf) {
       // 从对等点更新日志
-      await this.updateRecordsFromPeer(id, pid);
+      await this.updateLogsFromPeer(id, pid);
     }
 
     // 返回带有地址的threaddb 信息
@@ -532,6 +548,7 @@ async ensureUniqueLog(id: ThreadID, key?: Ed25519PrivKey | Ed25519PubKey, identi
           peers = extPeers;
         }
       } catch (err) {
+        console.error(`Error getting peers for thread ${tid}: ${err instanceof Error ? err.message : String(err)}`);
         // Ignore getPeers errors
       }
       const pulledRecs: Record<string, PeerRecords> = {};
@@ -674,7 +691,9 @@ async ensureUniqueLog(id: ThreadID, key?: Ed25519PrivKey | Ed25519PubKey, identi
       }else{
         offsets[lg.id.toString()] = await getHeadUndef();
       }
-      addrs.push(...lg.addrs);
+      if (lg.addrs && lg.addrs.length > 0) {
+        addrs.push(...lg.addrs);
+      }
       
     
     }
@@ -685,7 +704,18 @@ async ensureUniqueLog(id: ThreadID, key?: Ed25519PrivKey | Ed25519PubKey, identi
     return [offsets, peers];
   }
 
-
+async updateLogsFromPeer(tid: ThreadID,peerId: PeerId): Promise<void> {
+  try {
+    const client = await this.getClient(peerId);
+    if (!client) {
+      return ;
+    }
+    const dbClient = new DBClient(client,this.dc,this,this.logstore);
+    await dbClient.scheduleUpdateLogs(tid);
+  } catch (err) {
+    throw new Error(`Getting records for thread ${tid} failed: ${err instanceof Error ? err.message : String(err)}`);
+  } 
+}
 
 
 /**
@@ -695,21 +725,27 @@ async ensureUniqueLog(id: ThreadID, key?: Ed25519PrivKey | Ed25519PubKey, identi
  * @param pid 对等点ID
  * @returns 无返回值，但会抛出错误
  */
-async updateRecordsFromPeer(tid: ThreadID,peerId: PeerId): Promise<void> {
+async updateRecordsFromPeer(tid: ThreadID,peerId: PeerId|null,client?:DBClient): Promise<void> {
   try {
     // 获取threaddb 偏移量
     const  [offsets, peers] = await this.threadOffsets(tid);
     
     // 构建获取记录的请求
     const { req, serviceKey } = await this.buildGetRecordsRequest(tid, offsets, netPullingLimit);
-    
-    // 从对等点获取记录
-    const recs = await this.getRecordsFromPeer(
-      peerId,
-      req, 
-      serviceKey
-    );
-    
+    let recs : Record<string, PeerRecords> = {};
+    if (client) {
+      recs = await this.getRecordsWithDbClient(client, req, serviceKey);
+    }else{
+      if (!peerId) {
+        throw new Error("A peer-id is required to request records");
+      }
+      // 从对等点获取记录
+      recs = await this.getRecordsFromPeer(
+        peerId,
+        req, 
+        serviceKey
+      );
+    }
     // 处理接收到的记录
     for (const [lidStr, rs] of Object.entries(recs)) {
       try {
@@ -731,7 +767,7 @@ async updateRecordsFromPeer(tid: ThreadID,peerId: PeerId): Promise<void> {
         // 如果我们收到了最大数量的记录，并且可能还有更多
         if (head.counter <= rs.counter && rs.records.length === netPullingLimit) {
           // 递归调用继续获取更多记录
-          return this.updateRecordsFromPeer(tid, peerId);
+          return this.updateRecordsFromPeer(tid, peerId,client);
         }
       } catch (err) {
         // 忽略获取头部的错误，继续检查其他日志
@@ -760,6 +796,20 @@ async getRecordsFromPeer(
       return {};
     }
     const dbClient = new DBClient(client,this.dc,this,this.logstore);
+    const recs = await dbClient.getRecordsFromPeer( req, serviceKey);
+    return recs;
+  } catch (err) {
+    console.error("getRecordsFromPeer error:", err);
+    throw err;
+  }
+}
+
+async getRecordsWithDbClient(
+  dbClient: DBClient,
+  req: any,
+  serviceKey: SymKey
+): Promise<Record<string, PeerRecords>> {
+  try {
     const recs = await dbClient.getRecordsFromPeer( req, serviceKey);
     return recs;
   } catch (err) {
@@ -919,7 +969,7 @@ async getRecordsFromPeer(
     for (let i = recs.length - 1; i >= 0; i--) {
       const next = recs[i];
       const CIDUndef = await getCIDUndef();
-      if (!next.cid().equals(CIDUndef) || next.cid().equals(head.id)) {
+      if (next.cid().equals(CIDUndef) || next.cid().equals(head.id)) {
         complete = true;
         break;
       }

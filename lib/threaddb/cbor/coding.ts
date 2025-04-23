@@ -30,7 +30,25 @@ export async function encodeBlock(block: IBlock, key: SymmetricKey): Promise<Nod
 export async function decodeBlock(block: IBlock, key: SymmetricKey): Promise<Node> {
   
     // Decrypt the data using the provided key
-    const decoded =  key.decrypt(block.data());
+    const decoded =  await key.decrypt(block.data());
+    return cbornode.wrapObject(decoded);
+
+   
+}
+
+
+
+/**
+ * Decrypts a block's raw data with the given key and returns a DAG node
+ * 
+ * @param block - The block to decode
+ * @param key - The decryption key
+ * @returns Promise resolving to a Node
+ */
+export async function decodeBlock1(block: IBlock, key: SymmetricKey): Promise<Node> {
+  
+    // Decrypt the data using the provided key
+    const decoded =  await key.decrypt(block.data());
     return cbornode.wrapObject(decoded);
 
    
