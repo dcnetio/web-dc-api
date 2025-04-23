@@ -22,7 +22,7 @@ import {
 import { Ed25519PrivKey, Ed25519PubKey } from "./dc-key/ed25519";
 import { decryptContent } from "./util/dccrypt";
 import { ChainUtil } from "./chain";
-import type { SignHandler, DCConnectInfo } from "./types/types";
+import type { SignHandler, DCConnectInfo, APPInfo } from "./types/types";
 import { Client } from "./dcapi";
 import { DcUtil } from "./dcutil";
 import { Errors } from "./error";
@@ -71,17 +71,17 @@ export class DC  implements SignHandler {
   public TokenTask: boolean = false;
   public connectedDc: DCConnectInfo = {};
   public AccountBackupDc: DCConnectInfo = {};
-  public AppId: string = "";
   public Identity: string = "";
   public Blockheight: number = 0;
   public grpcServer: DCGrpcServer;
+  public appInfo: APPInfo
 
-  constructor(options: { wssUrl: string; backWssUrl: string }) {
+  constructor(options: { wssUrl: string; backWssUrl: string, appInfo: APPInfo }) {
     this.blockChainAddr = options.wssUrl;
     this.backChainAddr = options.backWssUrl;
     this.dcChain = new ChainUtil();
     this.dcutil = new DcUtil(this.dcChain);
-   
+    this.appInfo = options.appInfo;
   }
 
 
@@ -222,14 +222,12 @@ export class DC  implements SignHandler {
     const res = await themeManager.setCacheKey(value);
     return res;
   };
-  // register = async (
-  //   appName: string
-  // ) => {
+  // register = async () => {
   //   if (!this.connectedDc?.client) {
   //     throw new Error("dcClient is null");
   //   }
   //   const commonClient = new CommonClient(this.connectedDc.client);
-  //   const privKey = await commonClient.register(appName);
+  //   const privKey = await commonClient.register(appId);
   //   this.privKey = privKey;
   // };
 
@@ -238,7 +236,6 @@ export class DC  implements SignHandler {
     nftAccount: string,
     password: string,
     safecode: string,
-    appName: string
   ) => {
     //登录accountLogin
     if (!this.connectedDc?.client) {
@@ -249,7 +246,7 @@ export class DC  implements SignHandler {
       nftAccount,
       password,
       safecode,
-      appName
+      this.appInfo?.id || ""
     );
     if (privKey) {
       this.privKey = privKey;
@@ -359,7 +356,6 @@ export class DC  implements SignHandler {
 	//    commentSpace 评论空间大小
 	//    返回res-0:成功 1:评论空间没有配置 2:评论空间不足 3:评论数据同步中
   addThemeObj = async (
-    appName: string,
     theme: string,
     openFlag:number,
     commentSpace?: number,
@@ -371,7 +367,7 @@ export class DC  implements SignHandler {
       this
     );
     const res = await commentManager.addThemeObj(
-      appName,
+      this.appInfo?.id || "",
       theme,
       openFlag,
       commentSpace || 20 * 1024 * 1024, // 20M
@@ -385,7 +381,6 @@ export class DC  implements SignHandler {
 	//    commentSpace 评论空间大小
 	//    返回 res-0:成功 1:评论空间没有配置 2:评论空间不足 3:评论数据同步中
   addThemeSpace = async (
-    appName: string,
     theme: string,
     addSpace: number,
   ) => {
@@ -396,7 +391,7 @@ export class DC  implements SignHandler {
       this
     );
     const res = await commentManager.addThemeSpace(
-      appName,
+      this.appInfo?.id || "",
       theme,
       addSpace,
     );
@@ -413,7 +408,6 @@ export class DC  implements SignHandler {
 	//    openFlag 开放标志 0-开放 1-私密 // todo ?这里没有
 	//	  返回评论key,格式为:commentBlockHeight/commentCid
   publishCommentToTheme = async (
-    appName: string,
     theme: string,
     themeAuthor: string,
     commentType: number,
@@ -427,7 +421,7 @@ export class DC  implements SignHandler {
       this
     );
     const res = await commentManager.publishCommentToTheme(
-      appName,
+      this.appInfo?.id || "",
       theme,
       themeAuthor,
       commentType,
@@ -445,7 +439,6 @@ export class DC  implements SignHandler {
 	//    commentKey 要删除的评论key,格式为:commentBlockHeight/commentCid
 	//    返回是否删除成功
   deleteSelfComment = async (
-    appName: string,
     theme: string,
     themeAuthor: string,
     commentKey: string,
@@ -457,7 +450,7 @@ export class DC  implements SignHandler {
       this
     );
     const res = await commentManager.deleteSelfComment(
-      appName,
+      this.appInfo?.id || "",
       theme,
       themeAuthor,
       commentKey,
@@ -534,7 +527,6 @@ export class DC  implements SignHandler {
 	//    limit 限制条数
 	//	  返回已开通评论的对象列表,格式：[{"Theme":"YmF...bXk=","appId":"dGVzdGFwcA==","blockheight":2904,"commentSpace":1000,"userPubkey":"YmJh...vZGU=","signature":"oCY1...Y8sO/lkDac/nLu...Rm/xm...CQ=="}]
   getThemeObj = async (
-    appName: string,
     themeAuthor: string,
     startHeight?: number,
     direction?: number,
@@ -549,7 +541,7 @@ export class DC  implements SignHandler {
       this
     );
     const res = await commentManager.getThemeObj(
-      appName,
+      this.appInfo?.id || "",
       themeAuthor,
       startHeight || 0,
       direction || 0,
@@ -661,7 +653,6 @@ export class DC  implements SignHandler {
 	//    limit 限制条数
 	//    返回对象下的评论列表，格式[{"Theme":"bafk...6q","AppId":"testapp","ThemeAuthor":"bba...6u","Blockheight":3116,"UserPubkey":"bba...y6u","CommentCid":"ba...aygu","Comment":"hello worldd","CommentSize":11,"Status":0,"Signature":"blo...cwpada","Refercommentkey":"","CCount":0,"UpCount":0,"DownCount":0,"TCount":0}]
   getThemeComments = async (
-    appName: string,
     theme: string,
     themeAuthor: string,
     startHeight?: number,
@@ -677,7 +668,7 @@ export class DC  implements SignHandler {
       this
     );
     const res = await commentManager.getThemeComments(
-      appName,
+      this.appInfo?.id || "",
       theme,
       themeAuthor,
       startHeight || 0,
@@ -719,7 +710,6 @@ export class DC  implements SignHandler {
 	//    limit 限制条数
 	//    返回用户评论列表，格式：[{"Theme":"bafk...fpy","AppId":"testapp","ThemeAuthor":"bbaa...jkhmm","Blockheight":3209,"UserPubkey":"bba...2hzm","CommentCid":"baf...2aygu","Comment":"hello world","CommentSize":11,"Status":0,"Signature":"bkqy...b6dkda","Refercommentkey":"","CCount":0,"UpCount":0,"DownCount":0,"TCount":0}]
 	getUserComments = async (
-    appName: string,
     userPubkey: string,
     startHeight?: number,
     direction?: number,
@@ -734,7 +724,7 @@ export class DC  implements SignHandler {
       this
     );
     const res = await commentManager.getUserComments(
-      appName,
+      this.appInfo?.id || "",
       userPubkey,
       startHeight || 0,
       direction || 0,
@@ -768,7 +758,6 @@ export class DC  implements SignHandler {
 
   // 发送消息到用户消息盒子
   sendMsgToUserBox = async (
-    appName: string,
     receiver: string, 
     msg: string
   ) => {
@@ -778,14 +767,17 @@ export class DC  implements SignHandler {
       this.dcChain, 
       this.dcNodeClient,
       this);
-    const res = await messageManager.sendMsgToUserBox(appName, receiver, msg);
+    const res = await messageManager.sendMsgToUserBox(
+      this.appInfo?.id || "",
+      receiver, 
+      msg
+    );
     return res;
     
   };
 
   // 从用户消息盒子获取消息
   getMsgFromUserBox = async (
-    appName: string,
     limit?: number
   ) => {
     const messageManager = new MessageManager(
@@ -794,7 +786,7 @@ export class DC  implements SignHandler {
       this.dcChain, 
       this.dcNodeClient,
       this);
-    const res = await messageManager.getMsgFromUserBox(appName, limit);
+    const res = await messageManager.getMsgFromUserBox(this.appInfo?.id || "", limit);
     return res;
   }
 

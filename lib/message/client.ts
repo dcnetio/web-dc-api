@@ -140,9 +140,9 @@ export class MessageClient {
     }
   };
 
-  async getMaxKeyFromUserBox(appName: string): Promise<string> {
+  async getMaxKeyFromUserBox(appId: string): Promise<string> {
     const message = new dcnet.pb.GetMaxKeyFromUserBoxRequest();
-    message.appId = new TextEncoder().encode(appName);
+    message.appId = new TextEncoder().encode(appId);
     const messageBytes =
       dcnet.pb.GetMaxKeyFromUserBoxRequest.encode(message).finish();
     try {
@@ -194,12 +194,12 @@ export class MessageClient {
   }
 
   async getMsgFromUserBox(
-    appName: string,
+    appId: string,
     seekKey: string,
     limit: number
   ): Promise<{ [k: string]: any; }> {
     const message = new dcnet.pb.GetMsgFromUserBoxRequest();
-    message.appId = new TextEncoder().encode(appName);
+    message.appId = new TextEncoder().encode(appId);
     message.blockheight = 0;
     message.seekKey = new TextEncoder().encode(seekKey);
     message.limit = limit;

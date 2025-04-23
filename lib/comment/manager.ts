@@ -94,7 +94,7 @@ export class CommentManager {
   }
 
   async addThemeObj(
-    appName: string,
+    appId: string,
     theme: string,
     openFlag:number,
     commentSpace: number,
@@ -111,7 +111,7 @@ export class CommentManager {
       const statusValue: Uint8Array = uint32ToLittleEndianBytes(openFlag);
 
       const themeValue: Uint8Array = new TextEncoder().encode(theme);
-      const appIdValue: Uint8Array = new TextEncoder().encode(appName);
+      const appIdValue: Uint8Array = new TextEncoder().encode(appId);
       const preSign = new Uint8Array([
         ...themeValue,
         ...appIdValue,
@@ -127,7 +127,7 @@ export class CommentManager {
         this.signHandler
       );
       let res = await commentClient.addThemeObj(
-        appName,
+        appId,
         theme,
         blockHeight || 0,
         commentSpace,
@@ -144,7 +144,7 @@ export class CommentManager {
         await this.addUserOffChainSpace();
         // 继续调用
         res = await commentClient.addThemeObj(
-          appName,
+          appId,
           theme,
           blockHeight || 0,
           commentSpace,
@@ -164,7 +164,7 @@ export class CommentManager {
   }
 
   async addThemeSpace(
-    appName: string,
+    appId: string,
     theme: string,
     addSpace: number,
   ): Promise<[number | null, Error | null]> {
@@ -179,7 +179,7 @@ export class CommentManager {
       const spaceValue: Uint8Array = uint32ToLittleEndianBytes(addSpace);
 
       const themeValue: Uint8Array = new TextEncoder().encode(theme);
-      const appIdValue: Uint8Array = new TextEncoder().encode(appName);
+      const appIdValue: Uint8Array = new TextEncoder().encode(appId);
       const preSign = new Uint8Array([
         ...themeValue,
         ...appIdValue,
@@ -194,7 +194,7 @@ export class CommentManager {
         this.signHandler
       );
       const res = await commentClient.addThemeSpace(
-        appName,
+        appId,
         theme,
         blockHeight || 0,
         addSpace,
@@ -209,7 +209,7 @@ export class CommentManager {
   }
 
   async publishCommentToTheme(
-    appName: string,
+    appId: string,
     theme: string,
     themeAuthor: string,
     commentType: number,
@@ -231,7 +231,7 @@ export class CommentManager {
       const commentCidBase32 = base32.encode(commenthash)
 
       const themeValue: Uint8Array = new TextEncoder().encode(theme);
-      const appIdValue: Uint8Array = new TextEncoder().encode(appName);
+      const appIdValue: Uint8Array = new TextEncoder().encode(appId);
       const authValue: Uint8Array = new TextEncoder().encode(themeAuthor);
       const cidValue: Uint8Array = new TextEncoder().encode(commentCidBase32);
       const referValue: Uint8Array = new TextEncoder().encode(refercommentkey);
@@ -252,7 +252,7 @@ export class CommentManager {
         this.signHandler
       );
       let res = await commentClient.publishCommentToTheme(
-        appName,
+        appId,
         theme,
         themeAuthor,
         blockHeight || 0,
@@ -275,7 +275,7 @@ export class CommentManager {
         await this.addUserOffChainSpace();
         // 继续调用
         res = await commentClient.publishCommentToTheme(
-          appName,
+          appId,
           theme,
           themeAuthor,
           blockHeight || 0,
@@ -301,7 +301,7 @@ export class CommentManager {
   }
 
   async deleteSelfComment(
-    appName: string,
+    appId: string,
     theme: string,
     themeAuthor: string,
     commentKey: string,
@@ -319,7 +319,7 @@ export class CommentManager {
         blockHeight ? blockHeight : 0
       );
       const themeValue: Uint8Array = new TextEncoder().encode(theme);
-      const appIdValue: Uint8Array = new TextEncoder().encode(appName);
+      const appIdValue: Uint8Array = new TextEncoder().encode(appId);
       const authValue: Uint8Array = new TextEncoder().encode(themeAuthor);
       const cidValue: Uint8Array = new TextEncoder().encode(commentCid);
       const preSign = new Uint8Array([
@@ -337,7 +337,7 @@ export class CommentManager {
         this.signHandler
       );
       const res = await commentClient.deleteSelfComment(
-        appName,
+        appId,
         theme,
         themeAuthor,
         blockHeight || 0,
@@ -354,7 +354,7 @@ export class CommentManager {
   }
 
   async getThemeObj(
-    appName: string,
+    appId: string,
     themeAuthor: string,
     startHeight: number,
     direction: number,
@@ -376,7 +376,7 @@ export class CommentManager {
         this.signHandler
       );
       const res = await commentClient.getThemeObj(
-        appName,
+        appId,
         themeAuthor,
         startHeight || 0,
         direction || 0,
@@ -392,7 +392,7 @@ export class CommentManager {
   }
 
   async getThemeComments(
-    appName: string,
+    appId: string,
     theme: string,
     themeAuthor: string,
     startHeight: number,
@@ -411,7 +411,7 @@ export class CommentManager {
         this.signHandler
       );
       const res = await commentClient.getThemeComments(
-        appName,
+        appId,
         theme,
         themeAuthor,
         startHeight || 0,
@@ -428,7 +428,7 @@ export class CommentManager {
   }
 
   async getUserComments(
-    appName: string,
+    appId: string,
     userPubkey: string,
     startHeight: number,
     direction: number,
@@ -446,7 +446,7 @@ export class CommentManager {
         this.signHandler
       );
       const res = await commentClient.getUserComments(
-        appName,
+        appId,
         userPubkey,
         startHeight || 0,
         direction || 0,
