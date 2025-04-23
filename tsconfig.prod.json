@@ -1,4 +1,0 @@
-// tsconfig.prod.json  
-{  
-  "extends": "./tsconfig.base.json", 
-}  

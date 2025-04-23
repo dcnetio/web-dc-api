@@ -7,7 +7,7 @@ import dts from 'rollup-plugin-dts';
 import pkg from './package.json' assert { type: 'json' }; // 使用 .mjs 时  
 
 const tsconfig = {  
-  tsconfig: './tsconfig.prod.json',  
+  tsconfig: './tsconfig.json',  
   declaration: false  
 };
 // 获取依赖列表作为外部模块  
