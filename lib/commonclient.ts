@@ -35,14 +35,14 @@ export class CommonClient {
 
   // // 注册
   // async register(
-  //   appName: string
+  //   appId: string
   // ): Promise<Ed25519PrivKey> {
   //   //生成助记词
   //    const mnemonic = KeyManager.generateMnemonic();
   //   const keymanager = new KeyManager();
   //   const privKey = await keymanager.getEd25519KeyFromMnemonic(
   //     mnemonic,
-  //     appName,
+  //     appId,
   //   );
   //   this.privKey = privKey;
   //   console.log("Mnemonic:", mnemonic);
@@ -55,7 +55,7 @@ export class CommonClient {
     nftAccount: string,
     password: string,
     safecode: string,
-    appName: string
+    appId: string
   ): Promise<Ed25519PrivKey> {
     //登录
     const prikey = await this._accountDoLogin(
@@ -77,7 +77,7 @@ export class CommonClient {
     //const privKey1 = await keymanager.getEd25519KeyFromMnemonic(mnemonic);
     const privKey = await keymanager.getEd25519KeyFromMnemonic(
       mnemonic,
-      appName
+      appId
     );
     this.privKey = privKey;
     return privKey;

@@ -31,6 +31,7 @@ import type { Client } from "../dcapi";
 import {Protocol} from './net/define';
 
 import * as buffer from "buffer/";
+import { dial_timeout } from 'lib/define';
 const { Buffer } = buffer; 
 
 export const ThreadProtocol = "/dc/" + Protocol.name + "/" + Protocol.version
@@ -370,7 +371,9 @@ async syncDBFromDC(
         if (dbAddr.length > 0) {
             try {
                 //
-                connectedConn = await this.dc.dcNodeClient?.libp2p.dial(multiaddr(dbAddr));
+                connectedConn = await this.dc.dcNodeClient?.libp2p.dial(multiaddr(dbAddr), {
+                              signal: AbortSignal.timeout(dial_timeout)
+                            });
             } catch (error) {
                 console.log("connect to %s catch return, error:%s",dbAddr, error.message);
             }

@@ -47,7 +47,7 @@ export class MessageManager {
   }
 
   sendMsgToUserBox = async (
-    appName: string,
+    appId: string,
     receiver: string, 
     msg: string
   ) => {
@@ -59,7 +59,7 @@ export class MessageManager {
       const sendPublicKey = await this.signHandler.publickey();
 
       const userMsg = await this.generateMsqBoxReq(
-        appName,
+        appId,
         receiverPubkey,
         msg
       )
@@ -93,7 +93,7 @@ export class MessageManager {
   };
 
   getMsgFromUserBox = async (
-    appName: string,
+    appId: string,
     limit: number = 100
   ): Promise<[{ [k: string]: any }[] | null, Error | null]> => {
     try {
@@ -125,7 +125,7 @@ export class MessageManager {
             client,
             this.signHandler,
           );
-          let maxKey = await messageClient.getMaxKeyFromUserBox(appName);
+          let maxKey = await messageClient.getMaxKeyFromUserBox(appId);
           const userBoxMaxKeyStr = localStorage.getItem('userBoxMaxKey') || '';
           let userBoxMaxKey = userBoxMaxKeyStr ? JSON.parse(userBoxMaxKeyStr) : {};
           if(maxKey){
@@ -137,7 +137,7 @@ export class MessageManager {
             try {
               // 获取的maxkey 不等于 之前保存的maxkey
               const res = await messageClient.getMsgFromUserBox(
-                appName,
+                appId,
                 maxKey,
                 limit
               );
@@ -166,7 +166,7 @@ export class MessageManager {
     }
   };
   private generateMsqBoxReq = async (
-    appName: string,
+    appId: string,
     receiverPubkey: Ed25519PubKey, 
     msg: string
   ): Promise<dcnet.pb.UserMsg> => {
@@ -181,7 +181,7 @@ export class MessageManager {
       const cid = CID.create(1, 0x55, hash);
       const messageIdValue = new TextEncoder().encode(cid.toString());
 
-      const appNameValue = new TextEncoder().encode(appName);
+      const appIdValue = new TextEncoder().encode(appId);
 
       const sendPublicKey = await this.signHandler.publickey();
       const sendPublicKeyValue = new TextEncoder().encode(sendPublicKey.string());
@@ -199,14 +199,14 @@ export class MessageManager {
       const preSign = new Uint8Array([
         ...messageIdValue,
         ...receiverPubkeyValue,
-        ...appNameValue,
+        ...appIdValue,
         ...hValue,
         ...encryptMsgValue,
       ]);
       const signature = this.signHandler.sign(preSign);
 
       const userMsg = new dcnet.pb.UserMsg({});
-      userMsg.appId = new TextEncoder().encode(appName);
+      userMsg.appId = new TextEncoder().encode(appId);
       userMsg.blockheight = blockHeight;
       userMsg.encryptMsg = encryptMsgValue;
       userMsg.messageId = messageIdValue;

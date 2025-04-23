@@ -42,3 +42,8 @@ export interface SignHandler {
 export interface FileTransmit {  
   updateTransmitSize(status: string, size: number): void;  
 }  
+
+export interface APPInfo {
+  id: string;
+  name: string;
+}

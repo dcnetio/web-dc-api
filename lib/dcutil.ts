@@ -223,7 +223,9 @@ export class DcUtil {
 
         try {
           if (_this.dcNodeClient?.libp2p) {
-            const res = await _this.dcNodeClient.libp2p.dial(nodeAddr);
+            const res = await _this.dcNodeClient.libp2p.dial(nodeAddr, {
+              signal: AbortSignal.timeout(dial_timeout)
+            });
             console.log("nodeAddr try return");
             console.log(res);
             if (res) {
@@ -370,7 +372,7 @@ export class DcUtil {
       if (nodeAddr) {
         try {
           const connection = await this.dcNodeClient?.libp2p.dial(nodeAddr, {
-            signal: AbortSignal.timeout(1000)
+            signal: AbortSignal.timeout(dial_timeout)
           });
           if (connection) {
             return nodeAddr;
@@ -438,7 +440,9 @@ export class DcUtil {
 
   //创建主动上报流处理,type:1-文件或文件夹假Cid,2-threaddb threadid,3-threaddb recordid
   async createTransferStream(libp2p: Libp2p,blockstore: Blocks,nodeAddr: Multiaddr, type: number,oid: string) {
-    const nodeConn = await libp2p.dial(nodeAddr);
+    const nodeConn = await libp2p.dial(nodeAddr, {
+      signal: AbortSignal.timeout(dial_timeout)
+    });
    const stream = await nodeConn.newStream("/dc/transfer/1.0.0")
    const writer =  new StreamWriter(stream.sink) 
    const mParts: Uint8Array[] = [];
