@@ -356,8 +356,6 @@ async syncDBFromDC(
         const tID = await this.decodeThreadId(threadid);  
         const logKey = await this.getLogKey(tID);  
         const lid =  peerIdFromPrivateKey(logKey);
-        const strLid = lid.toString();
-        console.log("syncDBFromDC threadid:%s, dbAddr:%s, b32Rk:%s, b32Sk:%s, block:%s, jsonCollections:%s",threadid, dbAddr, b32Rk, b32Sk, block,jsonCollections);
         this.dc._connectToObjNodes(threadid);  
         this.addLogToThreadStart(ctx,tID, lid);
         const sk = SymmetricKey.fromString(b32Sk);

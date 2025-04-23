@@ -25,8 +25,8 @@ const Errors = {
 
 
 export class Block {
-    private _data: Uint8Array;
-    private _cid: CID;
+     _data: Uint8Array;
+     _cid: CID;
   
     constructor(data: Uint8Array, cid: CID) {
       this._data = data;
