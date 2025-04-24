@@ -16,6 +16,8 @@ import { Link } from 'multiformats/link'
 import {IPLDNode} from '../core/core';
 import {Blocks} from 'helia'
 import { calculateCID } from '../../util/utils'
+import { wrap } from 'module';
+import { Head } from '../core/head';
 
 
 
@@ -26,8 +28,8 @@ import { calculateCID } from '../../util/utils'
 
 // 事件的节点结构
 export interface EventObj {
-  Body: CID;
-  Header: CID;
+  body: CID;
+  header: CID;
 }
 
 // 事件头部的节点结构
@@ -69,8 +71,8 @@ export async function CreateEvent(
  
   // 创建事件对象
   const obj: EventObj = {
-    Body: body.cid(),
-    Header: codedHeader.cid()
+    body: body.cid(),
+    header: codedHeader.cid()
   };
   
   // 包装事件对象为 CBOR 节点
@@ -103,10 +105,10 @@ export async function GetEvent(
   id: CID
 ): Promise<NetEvent> {
   const blockData = await dag.get<Uint8Array>( id);
-  const rnode = new Block(blockData, await calculateCID(blockData));
-  const wrapedRnode = await cbornode.wrapObject(rnode);
-  return EventFromNode(wrapedRnode);
+  const eventNode = await cbornode.decode(blockData);
+  return EventFromNode(eventNode);
 }
+
 
 
 
@@ -118,8 +120,10 @@ export async function GetEvent(
  */
 export async function EventFromNode(eNode: Node): Promise<NetEvent> {
   try {
-    const wrapedRnode = await cbornode.wrapObject(eNode);
-    const event = new Event(wrapedRnode, dagCBOR.decode<EventObj>(wrapedRnode.rawData()),wrapedRnode..CID, wrapedRnode.Body.CID);
+   //取出头部
+    const eventObj = eNode as unknown as EventObj;
+    const wrapedRnode = await cbornode.wrapObject(eventObj);
+    const event = new Event(wrapedRnode, eventObj);
     return event;
   } catch (err) {
     throw new Error(`Failed to decode node into event: ${err instanceof Error ? err.message : String(err)}`);
@@ -192,29 +196,30 @@ export class Event implements NetEvent {
   }
   
   headerCID(): CID {
-    return this._obj.Header;
+    return this._obj.header;
   }
 
-    
- 
 
   async getHeader(
     dag: DAGCBOR,
     key?: SymmetricKey
   ): Promise<NetEventHeader> {
     if (!this._header) {//todo 需要调试
-      const blockData = await dag.get<Uint8Array>(this._obj.Header);
-      const rnode = new Block(blockData, await calculateCID(blockData));
-      const wrapedRnode = await cbornode.wrapObject(rnode);
-      this._header = new EventHeader(wrapedRnode);
+      const blockData = await dag.get<Uint8Array>(this._obj.header);
+      const headerNode = await cbornode.wrapObject(blockData);
+      this._header = new EventHeader(headerNode);
     }
     try{
     if (!this._header.isLoaded() && key) {
-      const decoded = dagCBOR.decode<Block>(this._header.node().data()) ; 
+      const decoded = dagCBOR.decode<Uint8Array>(this._header.node().data()) ; 
       if (!decoded) {
         throw new Error("Failed to decode block");
       }
-      const encryptedData = dagCBOR.decode<Uint8Array>(decoded._data); ;
+      let encryptedData = decoded;
+      try {
+        encryptedData = dagCBOR.decode<Uint8Array>(decoded);
+      } catch (e) {
+      }
       const data: Uint8Array =  await key.decrypt(encryptedData);
       const header = dagCBOR.decode<EventHeaderObj>(data) ;
       this._header.setObj(header);
@@ -222,13 +227,12 @@ export class Event implements NetEvent {
     }catch(err){
       throw new Error(`Failed to decode header: ${err instanceof Error ? err.message : String(err)}`);
     }
-    
-    
+
     return this._header;
   }
   
   bodyCID(): CID {
-    return this._obj.Body;
+    return this._obj.body;
   }
   
   async getBody(
@@ -243,7 +247,9 @@ export class Event implements NetEvent {
     }
     
     if (!this._body) {
-      this._body = await dag.get(this._obj.Body);
+     const block = await dag.get<Uint8Array>(this._obj.body);
+     this._body = await cbornode.wrapObject(block);
+
     }
     
     if (!k) {

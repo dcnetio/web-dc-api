@@ -349,7 +349,6 @@ export class DB implements App,IDB {
   }  
 
   async reduce(events: Event[]): Promise<void> {  
-    console.debug(`reducing events in ${this.name}`);
   
     try {
       // 调用事件编解码器的 reduce 方法获取处理结果
@@ -402,7 +401,6 @@ defaultIndexFunc(): (collection: string, key: Key, txn: any, oldData?: Uint8Arra
   private notifyStateChanged(actions: Action[]): void {
     // 发送状态变更事件
     if (this.localEventsBus) {//浏览器侧暂不实现
-      console.debug(`State changed with ${actions.length} actions`);
     }
   }
 /**
@@ -468,9 +466,7 @@ async notifyTxnEvents(node: IPLDNode, token: ThreadToken): Promise<void> {
       // 从字节数据中解码事件  
       const events = await this.eventcodec.eventsFromBytes(body.rawData());  
 
-      // 记录调试信息  
-      console.debug(`dispatching new record: ${rec.threadID()}/${rec.logID()}`);  
-
+      
       // 分发事件  
       await this.dispatch(events);  
     } catch (err) {  

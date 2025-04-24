@@ -323,7 +323,7 @@ export async function decode(data: Uint8Array, hashAlg: string = 'sha2-256'): Pr
   //       throw new Error(`Failed to decode data: ${err instanceof Error ? err.message : String(err)}`);
   //     }
 }
-export async function wrapObject(obj: any): Promise<Node> {
+export async function  wrapObject(obj: any): Promise<Node> {
   try {
     // 编码对象
     const data = dagCBOR.encode(obj);

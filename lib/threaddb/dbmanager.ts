@@ -31,7 +31,7 @@ import type { Client } from "../dcapi";
 import {Protocol} from './net/define';
 
 import * as buffer from "buffer/";
-import { dial_timeout } from 'lib/define';
+import { dial_timeout } from '../define';
 const { Buffer } = buffer; 
 
 export const ThreadProtocol = "/dc/" + Protocol.name + "/" + Protocol.version

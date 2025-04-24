@@ -15,6 +15,7 @@ import {ILogstore} from '../core/logstore';
 import {Datastore} from 'interface-datastore';
 import {Blocks} from 'helia'
 import { DAGCBOR } from '@helia/dag-cbor'; // DAGService
+import * as dagCBOR from '@ipld/dag-cbor';
 import { IRecord,IThreadRecord } from '../core/record'; 
 import {DCGrpcServer} from './grpcserver';
 import { Libp2p } from "@libp2p/interface";
@@ -38,6 +39,7 @@ import {Errors} from '../core/db';
 import {net as net_pb} from "../pb/net_pb";
 import { AddOptions,GetOptions } from '@helia/dag-cbor';
 import {EventObj} from '../cbor/event';
+import {calculateCID} from '../../util/utils';
 import {   
   PeerIDConverter,  
   MultiaddrConverter,  
@@ -520,10 +522,10 @@ async ensureUniqueLog(id: ThreadID, key?: Ed25519PrivKey | Ed25519PubKey, identi
         if (a.createtime > b.createtime) return 1;
         return 0;
       }); 
-      
+      let i = 0;
       // Process each record in order
       for (const r of tRecords) {
-        await this.putRecords( id, r.logid, [r.record], r.counter);
+          await this.putRecords( id, r.logid, [r.record], r.counter);
       }
     } catch (err) {
       throw err;
@@ -871,19 +873,19 @@ async getRecordsWithDbClient(
           validate = true;
         }
       }
-
       for (const record of chain) {
         if (validate) {
           // Validate the record
           const block = await record.value().getBlock(this.dagService);
           
-          let event;
+          let event: Event;
           if (block instanceof Event) {
             event = block;
           } else {
-            event = block as Event;
+            event = await EventFromNode(block as Node) as Event;
           }
-          const dbody = await event.getBody( this, readKey!);
+          
+          const dbody = await event.getBody( this, readKey);
           
           identity =  await KeyConverter.publicFromBytes<Ed25519PubKey>(record.value().pubKey());
           
@@ -891,7 +893,7 @@ async getRecordsWithDbClient(
             await connector!.validateNetRecordBody(dbody, identity);
           } catch (err) {
             // If validation fails, clean up blocks
-            const header = await event.getHeader( this, null);
+            const header = await event.getHeader( this,null );
             const body = await event.getBody(this, null);
             this.bstore.deleteMany([event.cid(), header.cid(), body.cid()]);
             throw err;
@@ -964,30 +966,25 @@ async getRecordsWithDbClient(
 
     let chain: IRecord[] = [];
     let complete = false;
-    
+    const CIDUndef = await getCIDUndef();
     // Check which records we already have
     for (let i = recs.length - 1; i >= 0; i--) {
       const next = recs[i];
-      const CIDUndef = await getCIDUndef();
       if (next.cid().equals(CIDUndef) || next.cid().equals(head.id)) {
         complete = true;
         break;
       }
       chain.push(next);
     }
-    if (chain.length > 20){
-      chain =  chain.splice(10);
-    }
+ 
 
     // Bridge the gap between the last provided record and current head
     if (!complete && chain.length > 0) {
       let c = chain[chain.length - 1].prevID();
-      const CIDUndef = await getCIDUndef();
       while (c && !c.equals(CIDUndef)) {
         if (c.equals(head.id)) {
           break;
         }
-
         const r = await this.getRecord( tid, c);
         chain.push(r);
         c = r.prevID();
@@ -1006,12 +1003,11 @@ async getRecordsWithDbClient(
       
       // Get and cache blocks
       const block = await r.getBlock(this.dagService);
-      
      let event: IThreadEvent;
       if (block instanceof Event) {
         event = block;
       } else {
-        event = await EventFromNode(block as Node);
+        event = await EventFromNode(block as Node) ;
       }
 
       const header = await event.getHeader(this.dagService);
@@ -1019,9 +1015,22 @@ async getRecordsWithDbClient(
       
       // Store internal blocks
       await this.addMany([event, header, body]);
-      tRecords.push(newRecord(r, tid, lid)as ThreadRecord);
+      tRecords.push(newRecord(r, tid, lid) as ThreadRecord);
     }
-
+  
+   if (tRecords.length == 2) {
+    console.log("head ID2:", head.id.toString());
+      console.log("record cid:",tRecords[tRecords.length-1].value().cid().toString(),"record prevID:",tRecords[tRecords.length-1].value().prevID()?.toString());
+      console.log("record cid11:",tRecords[tRecords.length-2].value().cid().toString(),"record prevID:",tRecords[tRecords.length-2].value().prevID()?.toString());
+    }
+    if (tRecords.length == 4) {
+      console.log("head ID4:", head.id.toString());
+      console.log("record cid:",tRecords[tRecords.length-1].value().cid().toString(),"record prevID:",tRecords[tRecords.length-1].value().prevID()?.toString());
+      console.log("record cid11:",tRecords[tRecords.length-2].value().cid().toString(),"record prevID:",tRecords[tRecords.length-2].value().prevID()?.toString());
+      console.log("record cid22:",tRecords[tRecords.length-3].value().cid().toString(),"record prevID:",tRecords[tRecords.length-3].value().prevID()?.toString());
+      console.log("record cid33:",tRecords[tRecords.length-4].value().cid().toString(),"record prevID:",tRecords[tRecords.length-4].value().prevID()?.toString());
+    }
+    
     return [tRecords, head];
   }
 

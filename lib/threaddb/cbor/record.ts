@@ -11,17 +11,19 @@ import { Node, wrapObject } from './node';
 import { Block } from './node';
 import { Event, EventFromNode,EventObj,EventHeader } from './event';
 import { encodeBlock, decodeBlock } from './coding';
-import { DAGCBOR } from '@helia/dag-cbor';
+import { dagCbor, DAGCBOR } from '@helia/dag-cbor';
 import { Blocks } from 'helia';
 import  * as net_pb from '../pb/net_pb'
 import { IPLDNode } from '../core/core';
 import { calculateCID } from '../../util/utils';
+import * as cbornode from './node';
+import { Envelope } from '@libp2p/interface';
 // 记录的节点结构
 interface RecordObj {
   block: CID;
   sig: Uint8Array;
   pubKey: Uint8Array;
-  prev?: CID;
+  prev: CID;
 }
 
 // 创建记录的配置
@@ -115,9 +117,12 @@ export async function GetRecord(
   key: SymmetricKey
 ): Promise<IRecord> {
   const blockData = await dag.get<Uint8Array>(id);
-  const rnode = new Block(blockData, await calculateCID(blockData));
-  const wrapedRnode = await wrapObject(rnode);
-  return RecordFromNode(wrapedRnode, key);
+  const decrypt = await key.decrypt(blockData);
+  const decoded =  dagCBOR.decode<RecordObj>(decrypt);
+ // const dblock = await dag.get<Uint8Array>(decoded.block);
+  const wrapedRnode = await wrapObject(blockData);
+  const record = new Record(wrapedRnode, decoded);
+  return record
 }
 
 /**
@@ -135,6 +140,7 @@ export async function RecordFromNode(
   const node = await decodeBlock(block, key);
   // 解析记录对象
   const obj = dagCBOR.decode<RecordObj>(node.rawData());
+ // const wrapedRnode = await  wrapObject(block);
   // 返回Record实例
   return new Record(
     coded,
@@ -184,6 +190,9 @@ export async function RecordToProto(
   return record;
 }
 
+
+
+
 export async function RecordFromProto(
   rec: net_pb.net.pb.Log.Record,
   key: SymmetricKey
@@ -191,36 +200,33 @@ export async function RecordFromProto(
   if (!key) {
     throw new Error("解密密钥是必需的");
   }
-
-  const rnode = new Block(rec.recordNode, await calculateCID(rec.recordNode));
-  const wrapedRnode = await wrapObject(rnode);
-  const enode = await  wrapObject(new Block(rec.eventNode, await calculateCID(rec.eventNode)));
-  const hnode = await wrapObject(new Block(rec.headerNode, await calculateCID(rec.headerNode)));
-  const bnode = await wrapObject(new Block(rec.bodyNode, await calculateCID(rec.bodyNode)));
-  
-  // 解密记录节点
-  const decoded = await decodeBlock(rnode, key);
-  
+ const encryptRec = dagCBOR.decode<Uint8Array>(rec.recordNode);
+ const recData = await key.decrypt(encryptRec);
+ const recObj = dagCBOR.decode<RecordObj>(recData);
+ const rnode = await cbornode.decode(rec.recordNode)
+ 
   // 解析记录对象
-  const robj = dagCBOR.decode<RecordObj>(decoded.data());
-  
+  const eventNode = await cbornode.decode(rec.eventNode);
+  const headerNode = await cbornode.decode(rec.headerNode);
+  const bodyNode =await cbornode.decode(rec.bodyNode);
   // 解析事件对象
-  const eobj = dagCBOR.decode<EventObj>(enode.data());
+  const eobj = dagCBOR.decode<EventObj>(eventNode.rawData());
   
   // 创建事件头和事件
-  const eventHeader = new EventHeader(hnode);
+  const eventHeader = new EventHeader(headerNode);
   const event = new Event(
-    enode,
+    eventNode,
     eobj,
     eventHeader,
-    bnode
+    bodyNode
   );
   
   // 返回记录
   return new Record(
-    wrapedRnode,
-    robj,
-    event
+    rnode,
+    recObj,
+    event,
+     
   );
 }
 
