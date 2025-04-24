@@ -56,7 +56,7 @@ export class MessageManager {
         return [null, Errors.ErrNoAccountPeerConnected];
       }
       const receiverPubkey: Ed25519PubKey = Ed25519PubKey.pubkeyToEdStr(receiver)
-      const sendPublicKey = await this.signHandler.publickey();
+      const sendPublicKey = await this.signHandler.getPublicKey();
 
       const userMsg = await this.generateMsqBoxReq(
         appId,
@@ -100,7 +100,7 @@ export class MessageManager {
       if (!this.accountBackupDc.client) {
         return [null, Errors.ErrNoAccountPeerConnected];
       }
-      const publicKey = await this.signHandler.publickey();
+      const publicKey = await this.signHandler.getPublicKey();
       const publickey = publicKey.string()
 
       const clients = await this.dc.connectToUserAllDcPeers(publicKey.raw);
@@ -114,7 +114,7 @@ export class MessageManager {
           // 获取token
           if(!client.token) {
             const token = await client.GetToken(
-              this.signHandler.publickey().string(),
+              this.signHandler.getPublicKey().string(),
               (payload: Uint8Array): Uint8Array => {
                 return this.signHandler.sign(payload);
               }
@@ -183,7 +183,7 @@ export class MessageManager {
 
       const appIdValue = new TextEncoder().encode(appId);
 
-      const sendPublicKey = await this.signHandler.publickey();
+      const sendPublicKey = await this.signHandler.getPublicKey();
       const sendPublicKeyValue = new TextEncoder().encode(sendPublicKey.string());
 
       const receiverPubkeyValue = new TextEncoder().encode(receiverPubkey.string());

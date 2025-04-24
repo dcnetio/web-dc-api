@@ -511,7 +511,7 @@ async  addLogToThread(ctx: Context, id: ThreadID, lid: PeerId): Promise<void> {
  const signal = ctx.signal || abortController.signal; 
  const storeUnit = await this.chainUtil.objectState(id.toString());  
   if (storeUnit) {  
-    const userPubkey = this.signHandler.publickey(); 
+    const userPubkey = this.signHandler.getPublicKey(); 
     let findFlag = false;  
     for (const user of storeUnit.users) {  
         //移除0x前缀

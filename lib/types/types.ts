@@ -35,7 +35,7 @@ export interface DCConnectInfo {
 
 export interface SignHandler {
   sign(payload: Uint8Array): Uint8Array;
-  publickey(): Ed25519PubKey;
+  getPublicKey(): Ed25519PubKey;
   getPubkeyRaw: () => Uint8Array;
 }
 // 类型定义  
