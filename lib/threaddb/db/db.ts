@@ -100,6 +100,19 @@ export class DefaultEventCodec implements EventCodec {
     return reduceActions;  
   }  
 
+/**
+ * Creates a list of events from a given list of actions and returns
+ * the events along with their serialized representation.
+ *
+ * For each action, constructs an event with its payload and adds it
+ * to the list of events. The entire collection of events is then
+ * serialized into a Uint8Array using JSON encoding.
+ *
+ * @param actions - The actions to convert into events.
+ * @returns A promise that resolves to a tuple containing the list of
+ * events and their serialized Uint8Array representation.
+ */
+
   async create(actions: Action[]): Promise<[Event[], Uint8Array]> {  
     const events: Event[] = [];  
     
