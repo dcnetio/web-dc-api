@@ -72,7 +72,7 @@ export class CommentManager {
       preSign.set(peerIdValue, 0);
       preSign.set(hValue, peerIdValue.length);
       const signature = this.signHandler.sign(preSign);
-      const userPubkey = this.signHandler.publickey();
+      const userPubkey = this.signHandler.getPublicKey();
 
       console.log("AddUserOffChainSpace peerId", peerId);
       const commentClient = new CommentClient(
@@ -120,7 +120,7 @@ export class CommentManager {
         ...statusValue,
       ]);
       const signature = this.signHandler.sign(preSign);
-      const userPubkey = this.signHandler.publickey();
+      const userPubkey = this.signHandler.getPublicKey();
       const commentClient = new CommentClient(
         this.connectedDc.client,
         this.dcNodeClient,
@@ -187,7 +187,7 @@ export class CommentManager {
         ...spaceValue,
       ]);
       const signature = this.signHandler.sign(preSign);
-      const userPubkey = this.signHandler.publickey();
+      const userPubkey = this.signHandler.getPublicKey();
       const commentClient = new CommentClient(
         this.connectedDc.client,
         this.dcNodeClient,
@@ -245,7 +245,7 @@ export class CommentManager {
         ...typeValue,
       ]);
       const signature = this.signHandler.sign(preSign);
-      const userPubkey = this.signHandler.publickey();
+      const userPubkey = this.signHandler.getPublicKey();
       const commentClient = new CommentClient(
         this.connectedDc.client,
         this.dcNodeClient,
@@ -330,7 +330,7 @@ export class CommentManager {
         ...cidValue,
       ]);
       const signature = this.signHandler.sign(preSign);
-      const userPubkey = this.signHandler.publickey();
+      const userPubkey = this.signHandler.getPublicKey();
       const commentClient = new CommentClient(
         this.connectedDc.client,
         this.dcNodeClient,

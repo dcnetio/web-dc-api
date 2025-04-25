@@ -36,23 +36,23 @@ function concatenateUint8Arrays(...arrays: Uint8Array[]): Uint8Array {
   }
   return result;
 }
-/**  
- * 将 64 位无符号整数转换为大端序字节数组（用于文件头）  
- * @param value 要转换的整数值  
- * @returns 8 字节的 Uint8Array  
- */  
-function uint64ToBigEndianBytes(value: number | bigint): Uint8Array {  
-  const buffer = new ArrayBuffer(8);  
-  const view = new DataView(buffer);  
-  
-  // 确保值是 BigInt 类型  
-  const bigIntValue = typeof value === 'number' ? BigInt(value) : value;  
-  
-  // 使用 DataView 设置大端序值  
-  view.setBigUint64(0, bigIntValue, false); // false 表示大端序  
-  
-  return new Uint8Array(buffer);  
-}  
+/**
+ * 将 64 位无符号整数转换为大端序字节数组（用于文件头）
+ * @param value 要转换的整数值
+ * @returns 8 字节的 Uint8Array
+ */
+function uint64ToBigEndianBytes(value: number | bigint): Uint8Array {
+  const buffer = new ArrayBuffer(8);
+  const view = new DataView(buffer);
+
+  // 确保值是 BigInt 类型
+  const bigIntValue = typeof value === "number" ? BigInt(value) : value;
+
+  // 使用 DataView 设置大端序值
+  view.setBigUint64(0, bigIntValue, false); // false 表示大端序
+
+  return new Uint8Array(buffer);
+}
 
 // Helper 函数：将 Uint64 转换为小端 Uint8Array
 function uint64ToLittleEndianBytes(value: number): Uint8Array {
@@ -70,24 +70,29 @@ function uint32ToLittleEndianBytes(value: number): Uint8Array {
   return new Uint8Array(buffer);
 }
 
+// 将 Uint64 转换为大端 Uint8Array
+function uint64ToUint8Array(
+  value: bigint,
+  littleEndian: boolean = false
+): Uint8Array {
+  const buffer = new ArrayBuffer(8); // 64 位需要 8 字节
+  const view = new DataView(buffer);
+  view.setBigUint64(0, value, littleEndian); // false 表示大端
+  return new Uint8Array(buffer);
+}
 
-// 将 Uint64 转换为大端 Uint8Array  
-function uint64ToUint8Array(value: bigint,littleEndian: boolean = false): Uint8Array {  
-  const buffer = new ArrayBuffer(8); // 64 位需要 8 字节  
-  const view = new DataView(buffer);  
-  view.setBigUint64(0, value, littleEndian); // false 表示大端  
-  return new Uint8Array(buffer);  
-}  
-
-//将 Uint8Array 转换为 uint64  
-function uint8ArrayToUint64(bytes: Uint8Array, littleEndian: boolean = false): bigint {  
-  if (bytes.length !== 8) {  
-    throw new Error("Uint8Array must be exactly 8 bytes long");  
-  }  
-  const buffer = bytes.buffer;  
-  const view = new DataView(buffer);  
+//将 Uint8Array 转换为 uint64
+function uint8ArrayToUint64(
+  bytes: Uint8Array,
+  littleEndian: boolean = false
+): bigint {
+  if (bytes.length !== 8) {
+    throw new Error("Uint8Array must be exactly 8 bytes long");
+  }
+  const buffer = bytes.buffer;
+  const view = new DataView(buffer);
   return view.getBigUint64(0, littleEndian);
-}  
+}
 
 function isUser(obj: any): obj is User {
   // implement checks for required properties here
@@ -153,90 +158,93 @@ function fastExtractPeerId(ma: Multiaddr | string): PeerId | null {
 
   return peerIdStr ? peerIdFromString(peerIdStr) : null;
 }
+// 编码
+const encodeKey = (buffer: Uint8Array) =>
+  btoa(String.fromCharCode(...buffer));
 
-    // 使用 Web Crypto API 安全存储
-    async function saveKeyPair(key,keyPair) {
-      // 导出密钥（正确参数）  
-      const privateKey = btoa(String.fromCharCode(...keyPair.raw)) 
-      // const publicKey = Buffer.from(keyPair.publicKey.raw).toString('base64')
-      const encode = buffer => btoa(String.fromCharCode(...new Uint8Array(buffer)));  
-      // const keyStorage = {  
-      //   publicKey: encode(publicKey),  
-      //   privateKey: encode(privateKey),  
-      //   createdAt: new Date().toISOString()  
-      // };  
-      // // 打开数据库  
-      // const db = await openDB('cryptoVault', 2, {  
-      //   upgrade(db) {  
-      //     db.createObjectStore('ed25519');  
-      //   }  
-      // });  
+// 解码 
+const decodeKey = (str: string) =>
+  Uint8Array.from(atob(str), (c) => c.charCodeAt(0));
 
-      // await db.put("keys", {
-      //   id: "ed25519_key",
-      //   ...keyStorage  
-      // });
-      localStorage.setItem('ed25519_key'+key, privateKey)
-    }
-    async function loadKeyPair(key) {  
-      // const db = await openDB('cryptoVault');  
-      // const stored = await db.get('ed25519', 'ed25519_key');  
-    
-      // 解码 Base64  
-      const decode = (str: string) => Uint8Array.from(atob(str), c => c.charCodeAt(0));  
-      
-      // if(!stored.publicKey || !stored.privateKey) return null
-    
-      // // 导入私钥  
-      // const privateKey = decode(stored.privateKey)
-      const privateKey = localStorage.getItem('ed25519_key'+key)
-      if(privateKey){
-        const keyPair = keys.privateKeyFromRaw(decode(privateKey))
-        return keyPair
-      }
-      return null
-    }  
+// 使用 Web Crypto API 安全存储
+async function saveKeyPair(key, keyPair) {
+  // 导出密钥（正确参数）
+  const privateKey = encodeKey(keyPair.raw);
+  localStorage.setItem(key, privateKey);
+}
+async function loadKeyPair(key) {
+  const privateKey = localStorage.getItem(key);
+  if (privateKey) {
+    const keyPair = keys.privateKeyFromRaw(decodeKey(privateKey));
+    return keyPair;
+  }
+  return null;
+}
 
+async function savePublicKey(publicKey: string) {
+  localStorage.setItem(
+    "ed25519_publicKey",
+    publicKey
+  );
+}
+async function loadPublicKey(): Promise<string | null> {
+  const publicKey = localStorage.getItem("ed25519_publicKey");
+  if (publicKey) {
+    return publicKey;
+  }
+  return null;
+}
+async function saveTokenWithPeerId(publicKeyString: string, peerId: string, token: string) {
+  localStorage.setItem("token_" + publicKeyString + "_" + peerId, token);
+}
+async function loadTokenWithPeerId(publicKeyString: string, peerId: string): Promise<string | null> {
+  return localStorage.getItem("token_" + publicKeyString + "_" + peerId);
+}
 
 // 同域名跨浏览器锁获取并执行操作,mode  "exclusive" | "shared";
-async function withWebLock(lockName: string,mode: LockMode, callback: () => Promise<void>): Promise<void> {  
-  await navigator.locks.request(lockName, { mode: mode }, async (lock) => {  
-      console.log(`Lock "${lockName}" acquired`);  
-      await callback();  
-      console.log(`Lock "${lockName}" released`);  
-  });  
-}  
-// 函数：解析32位无符号整数  
+async function withWebLock(
+  lockName: string,
+  mode: LockMode,
+  callback: () => Promise<void>
+): Promise<void> {
+  await navigator.locks.request(lockName, { mode: mode }, async (lock) => {
+    console.log(`Lock "${lockName}" acquired`);
+    await callback();
+    console.log(`Lock "${lockName}" released`);
+  });
+}
+// 函数：解析32位无符号整数
 function parseUint32(str: string) {
-  try {  
-    // 尝试解析为数值  
-    const num = parseInt(str, 10);  
-    
-    // 验证解析结果  
-    if (isNaN(num)) {  
-      throw new Error("invalid syntax");  
-    }  
-    
-    if (num < 0) {  
-      throw new Error("invalid syntax for uint");  
-    }  
-    
-    if (num > 0xFFFFFFFF) { // 检查是否超出32位无符号范围  
-      throw new Error("value out of range") ;  
-    }  
-    
-    // 转换为32位无符号整数  
-    return num >>> 0;  
-  } catch (error) {  
-    throw error ;  
-  }  
+  try {
+    // 尝试解析为数值
+    const num = parseInt(str, 10);
+
+    // 验证解析结果
+    if (isNaN(num)) {
+      throw new Error("invalid syntax");
+    }
+
+    if (num < 0) {
+      throw new Error("invalid syntax for uint");
+    }
+
+    if (num > 0xffffffff) {
+      // 检查是否超出32位无符号范围
+      throw new Error("value out of range");
+    }
+
+    // 转换为32位无符号整数
+    return num >>> 0;
+  } catch (error) {
+    throw error;
+  }
 }
 
 function hexToAscii(hex: string): string {
   // 移除0x前缀（如果存在）
-  const cleanHex = hex.startsWith('0x') ? hex.slice(2) : hex;
+  const cleanHex = hex.startsWith("0x") ? hex.slice(2) : hex;
   // 使用Buffer将16进制转换为字符串
-  return Buffer.from(cleanHex, 'hex').toString('ascii');
+  return Buffer.from(cleanHex, "hex").toString("ascii");
 }
 
 
@@ -256,7 +264,7 @@ export {
   uint64ToUint8Array,
   uint8ArrayToUint64,
   uint64ToLittleEndianBytes,
-  uint64ToBigEndianBytes, 
+  uint64ToBigEndianBytes,
   isUser,
   sleep,
   decryptContentForBrowser,
@@ -268,5 +276,9 @@ export {
   loadKeyPair,
   parseUint32,
   hexToAscii,
-  calculateCID
+  calculateCID,
+  savePublicKey,
+  loadPublicKey,
+  saveTokenWithPeerId,
+  loadTokenWithPeerId,
 };

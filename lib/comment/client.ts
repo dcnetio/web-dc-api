@@ -62,7 +62,7 @@ export class CommentClient {
       if (error.message.indexOf(Errors.INVALID_TOKEN.message) != -1) {
         // try to get token
         const token = await this.client.GetToken(
-          this.signHandler.publickey().string(),
+          this.signHandler.getPublicKey().string(),
           (payload: Uint8Array): Uint8Array => {
             return this.signHandler.sign(payload);
           }
@@ -411,7 +411,7 @@ export class CommentClient {
       if (error.message.indexOf(Errors.INVALID_TOKEN.message) != -1) {
         // try to get token
         const token = await this.client.GetToken(
-          this.signHandler.publickey().string(),
+          this.signHandler.getPublicKey().string(),
           (payload: Uint8Array): Uint8Array => {
             return this.signHandler.sign(payload);
           }
@@ -489,7 +489,7 @@ export class CommentClient {
       if (error.message.indexOf(Errors.INVALID_TOKEN.message) != -1) {
         // try to get token
         const token = await this.client.GetToken(
-          this.signHandler.publickey().string(),
+          this.signHandler.getPublicKey().string(),
           (payload: Uint8Array): Uint8Array => {
             return this.signHandler.sign(payload);
           }
@@ -565,7 +565,7 @@ export class CommentClient {
       if (error.message.indexOf(Errors.INVALID_TOKEN.message) != -1) {
         // try to get token
         const token = await this.client.GetToken(
-          this.signHandler.publickey().string(),
+          this.signHandler.getPublicKey().string(),
           (payload: Uint8Array): Uint8Array => {
             return this.signHandler.sign(payload);
           }

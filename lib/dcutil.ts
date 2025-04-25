@@ -264,10 +264,10 @@ export class DcUtil {
 
     // const memoryDatastore = new MemoryDatastore();
     // 创建或导入私钥
-    let keyPair = (await loadKeyPair("Ed25519PrivateKey")) as Ed25519PrivateKey;
+    let keyPair = (await loadKeyPair("ed25519_privateKey")) as Ed25519PrivateKey;
     if (!keyPair) {
       keyPair = await keys.generateKeyPair("Ed25519");
-      await saveKeyPair("Ed25519PrivateKey", keyPair);
+      await saveKeyPair("ed25519_privateKey", keyPair);
     }
     // libp2p is the networking layer that underpins Helia
     const libp2p = await createLibp2p({
