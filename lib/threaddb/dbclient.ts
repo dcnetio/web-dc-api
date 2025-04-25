@@ -1,5 +1,6 @@
 import type { Client } from "../dcapi";
 import type { Multiaddr as TMultiaddr } from "@multiformats/multiaddr";
+import * as dagCBOR from '@ipld/dag-cbor';
 import { extractPublicKeyFromPeerId } from "../dc-key/keyManager";
 import { Ed25519PubKey } from "../dc-key/ed25519";
 import { dcnet  as dcnet_proto} from "../proto/dcnet_proto";
@@ -16,15 +17,17 @@ import {net as net_pb} from "./pb/net_pb";
 import {ILogstore} from "./core/logstore";
 import  {IThreadInfo, IThreadLogInfo, ThreadInfo} from "./core/core";
 import { toString as uint8ArrayToString } from "uint8arrays/to-string";
-import {peerIdFromString} from "@libp2p/peer-id";
+import {peerIdFromMultihash, peerIdFromString} from "@libp2p/peer-id";
 import {multiaddr} from "@multiformats/multiaddr";
 import { CID } from 'multiformats/cid';
-import { getHeadUndef, Head } from "./core/head";
+import { getCIDUndef, getHeadUndef, Head } from "./core/head";
 import {PermanentAddrTTL} from "./common/logstore";
 import { Net } from "./core/app";
 import {SymKey} from "./core/core";
 import { ThreadToken } from "./core/identity";
 import { CidConverter, KeyConverter, PeerIDConverter, ThreadIDConverter } from "./pb/proto-custom-types";
+import { dagCbor } from "@helia/dag-cbor";
+import { decode } from 'multiformats/hashes/digest';
 
 
 
@@ -490,9 +493,10 @@ private async logFromProto(protoLog: net_pb.pb.ILog): Promise<IThreadLogInfo> {
   if (!protoLog.ID || !protoLog.pubKey) {
     throw new Error('Missing required fields in Log: ID or pubKey');
   }
-  
+  const multihash = decode(protoLog.ID);
+  const id = peerIdFromMultihash(multihash);
   // 解析日志ID
-  const id =  PeerIDConverter.fromBytes(protoLog.ID);
+  //const id =  PeerIDConverter.fromBytes(logId);
   
   // 解析公钥
   const pubKey = await KeyConverter.publicFromBytes(protoLog.pubKey);
@@ -502,9 +506,9 @@ private async logFromProto(protoLog: net_pb.pb.ILog): Promise<IThreadLogInfo> {
   const addrs = (protoLog.addrs || []).map(addr => multiaddr(addr));
   
   // 解析头部信息
-  const head = protoLog.head
+  const head = protoLog.head && protoLog.head.length > 0
     ?  CID.decode(protoLog.head)
-    : CID.parse('');
+    : await getCIDUndef();
   
   // 解析计数器
   const counter = protoLog.counter
