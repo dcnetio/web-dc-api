@@ -1,7 +1,6 @@
 import resolve from '@rollup/plugin-node-resolve';  
 import commonjs from '@rollup/plugin-commonjs';  
 import typescript from '@rollup/plugin-typescript';  
-import nodePolyfills from 'rollup-plugin-node-polyfills';  
 
 import json from '@rollup/plugin-json';  
 // import { terser } from 'rollup-plugin-terser';  
@@ -36,9 +35,6 @@ export default [
     ],  
     external, // 外部依赖，不会被打包进最终文件  
     plugins: [  
-      nodePolyfills({  
-        include: ['buffer']  
-      }) ,
       resolve({  
         preferBuiltins: false, // 优先使用 Node.js 内置模块  
         // 为难以解析的 Node.js 模块提供替代实现  

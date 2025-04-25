@@ -21,9 +21,7 @@
     "build:w": "rollup -c -w",
     "build": "rollup -c",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "nodemon --watch lib --ext ts,tsx,js,jsx,json --ignore 'src/**/*.test.ts' --exec \"npm run dev:exec\"",
-    "dev:exec": "cross-env BUILD_TARGET=browser npm run build:yalc",
-    "build:yalc": "npm run build && npx yalc publish --push --changed"
+    "dev": "nodemon --watch lib --ext ts,tsx,js,jsx,json --ignore 'src/**/*.test.ts' --exec 'npx yalc publish --push '"
   },
   "author": "",
   "license": "ISC",
@@ -79,10 +77,8 @@
     "@rollup/plugin-json": "^6.1.0",
     "@rollup/plugin-node-resolve": "^16.0.1",
     "@rollup/plugin-typescript": "^12.1.2",
-    "cross-env": "^7.0.3",
     "nodemon": "^3.1.9",
     "rollup-plugin-dts": "^6.2.1",
-    "rollup-plugin-node-polyfills": "^0.2.1",
     "typescript": "^5.8.3"
   }
 }
