@@ -7,7 +7,7 @@ import { ApiPromise, WsProvider } from "@polkadot/api";
 
 import { isUser, sha256,hexToAscii } from "./util/utils";
 import { User } from "./types/types";
-import * as buffer from "buffer/";
+
 import {   
   PeerIDConverter,   
   CidConverter,
@@ -16,6 +16,7 @@ import {
 import { base58btc } from "multiformats/bases/base58";
 import { hexToBytes } from "@noble/curves/abstract/utils";
 import { base32 } from "multiformats/bases/base32";
+import * as buffer from "buffer/";
 const { Buffer } = buffer;
 
 export interface StoreunitInfo {  

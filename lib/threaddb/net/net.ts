@@ -29,7 +29,7 @@ import {getHeadUndef,getCIDUndef} from '../core/head';
 import {GetRecord,CreateRecord} from '../cbor/record';
 import {IThreadEvent} from '../core/event';
 import {DBGrpcClient} from './grpcClient';
-import { DBClient } from '../client';
+import { DBClient } from '../dbclient';
 import { Client } from "../../dcapi";
 import {App,Connector,Net,PubKey,Token}  from "../core/app";
 import {ChainUtil} from '../../chain';

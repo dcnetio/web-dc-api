@@ -12,7 +12,7 @@ import { IPLDNode } from './core';
 import { PeerId } from '@libp2p/interface';
 import { Head } from './head';
 import {net as net_pb} from "../pb/net_pb";
-import { DBClient } from '../client';
+import { DBClient } from '../dbclient';
 
 
 // 类型定义  

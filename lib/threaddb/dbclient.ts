@@ -12,7 +12,7 @@ import { DBGrpcClient } from "./net/grpcClient";
 import { PeerId } from "@libp2p/interface";
 import { IRecord } from "./core/record";
 import { DcUtil,BrowserType } from "../dcutil";
-import {net as net_pb} from "../threaddb/pb/net_pb";
+import {net as net_pb} from "./pb/net_pb";
 import {ILogstore} from "./core/logstore";
 import  {IThreadInfo, IThreadLogInfo, ThreadInfo} from "./core/core";
 import { toString as uint8ArrayToString } from "uint8arrays/to-string";

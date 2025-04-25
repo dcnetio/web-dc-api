@@ -160,11 +160,12 @@ export class DBGrpcClient {
                 const addrs = lg.addrs?.map(addr => MultiaddrConverter.fromBytes(addr)) || [];  
       
                 const head = lg.head ? CidConverter.fromBytes(lg.head) :null;  
-      
-                const counter = lg.counter  
-                  ? Number(Buffer.from(lg.counter).readBigUInt64BE(0))  
-                  : -1;  
-      
+                
+                let counter = -1
+                if (lg.counter && lg.counter.length > 0) {  
+                  const counterBuffer = Buffer.from(lg.counter);
+                  counter = Number(counterBuffer.readBigUInt64BE(0));
+                }
                 return {  
                   id,  
                   pubKey,  
