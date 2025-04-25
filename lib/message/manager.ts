@@ -111,10 +111,11 @@ export class MessageManager {
       for (const client of clients) {
         if (client) {
           const peerId = client.peerAddr.getPeerId() || "";
+          const publicKeyString = this.signHandler.getPublicKey().string();
           // 获取token
           if(!client.token) {
             const token = await client.GetToken(
-              this.signHandler.getPublicKey().string(),
+              publicKeyString,
               (payload: Uint8Array): Uint8Array => {
                 return this.signHandler.sign(payload);
               }
@@ -126,7 +127,7 @@ export class MessageManager {
             this.signHandler,
           );
           let maxKey = await messageClient.getMaxKeyFromUserBox(appId);
-          const userBoxMaxKeyStr = localStorage.getItem('userBoxMaxKey') || '';
+          const userBoxMaxKeyStr = localStorage.getItem('userBoxMaxKey_' + publicKeyString) || '';
           let userBoxMaxKey = userBoxMaxKeyStr ? JSON.parse(userBoxMaxKeyStr) : {};
           if(maxKey){
             let preMaxKey = userBoxMaxKey[publickey] || {};
@@ -150,7 +151,7 @@ export class MessageManager {
               })
               if(list.length < limit){
                 if(maxKey) {
-                  localStorage.setItem('userBoxMaxKey', JSON.stringify(userBoxMaxKey))
+                  localStorage.setItem('userBoxMaxKey_' + publicKeyString, JSON.stringify(userBoxMaxKey))
                 }
                 getFlag = false
               }

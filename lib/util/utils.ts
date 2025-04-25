@@ -167,10 +167,10 @@ const decodeKey = (str: string) =>
 async function saveKeyPair(key, keyPair) {
   // 导出密钥（正确参数）
   const privateKey = encodeKey(keyPair.raw);
-  localStorage.setItem("ed25519_key" + key, privateKey);
+  localStorage.setItem(key, privateKey);
 }
 async function loadKeyPair(key) {
-  const privateKey = localStorage.getItem("ed25519_key" + key);
+  const privateKey = localStorage.getItem(key);
   if (privateKey) {
     const keyPair = keys.privateKeyFromRaw(decodeKey(privateKey));
     return keyPair;
