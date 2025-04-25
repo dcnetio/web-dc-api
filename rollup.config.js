@@ -35,7 +35,7 @@ export default [
     external, // 外部依赖，不会被打包进最终文件  
     plugins: [  
       resolve({  
-        preferBuiltins: true, // 优先使用 Node.js 内置模块  
+        preferBuiltins: false, // 优先使用 Node.js 内置模块  
         // 为难以解析的 Node.js 模块提供替代实现  
         browser: true,  
         mainFields: ['browser', 'module', 'main']  
