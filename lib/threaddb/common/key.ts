@@ -1,4 +1,6 @@
-import * as crypto from 'crypto';
+ 
+import { secretbox, randomBytes } from 'tweetnacl'  
+
 import { base32 } from 'multiformats/bases/base32';
 import { SymKey } from '../core/core';
 import { symKeyFromBytes } from '../../dc-key/keyManager';
@@ -41,7 +43,7 @@ export class SymmetricKey {
    * Generate a new random key
    */
   static newRandom(): SymmetricKey {
-    const rawBytes = crypto.randomBytes(KeyBytes);
+    const rawBytes = randomBytes(KeyBytes);
     return new SymmetricKey(rawBytes);
   }
 
@@ -120,89 +122,20 @@ export class SymmetricKey {
    */
   encrypt(plaintext: Uint8Array): Uint8Array {
     // Generate a random nonce
-    const nonce = crypto.randomBytes(NonceBytes);
+    const nonce = randomBytes(secretbox.nonceLength)  ;
     
-    // Create cipher
-    const cipher = crypto.createCipheriv(
-      'aes-256-gcm', 
-      this._raw.slice(0, KeyBytes), 
-      nonce
-    );
-    
-    // Encrypt the data
-    const encrypted = Buffer.concat([
-      cipher.update(Buffer.from(plaintext)),
-      cipher.final()
-    ]);
-    
-    // Get the auth tag
-    const authTag = cipher.getAuthTag();
-    
-    // Combine nonce + encrypted data + auth tag
-    const result = new Uint8Array(nonce.length + encrypted.length + authTag.length);
-    result.set(nonce);
-    result.set(encrypted, nonce.length);
-    result.set(authTag, nonce.length + encrypted.length);
-    
-    return result;
+    const box = secretbox(plaintext, nonce, this._raw)  
+    const encrypted = new Uint8Array(nonce.length + box.length)  
+    encrypted.set(nonce)  
+    encrypted.set(box, nonce.length)  
+    return encrypted  
   }
 
   /**
    * Decrypt uses key to perform AES-256 GCM decryption on ciphertext
    */
   async decrypt(encryptBuffer: Uint8Array): Promise<Uint8Array> {
-  //   if (ciphertext.length < NonceBytes) {
-  //     throw new CipherTextError();
-  //   }
-    
-  //   // Extract the nonce, ciphertext and auth tag
-  //   const nonce = ciphertext.slice(0, NonceBytes);
-  //    ciphertext = ciphertext.slice(NonceBytes); 
   
-    
-  //   try {
-  //     // Create decipher
-  //     const key = await window.crypto.subtle.importKey(  
-  //       "raw",  
-  //       this._raw,  
-  //       {  
-  //         name: "AES-GCM",  
-  //         length: 256  
-  //       },  
-  //       false,  
-  //       ["decrypt"]  
-  //     );  
-  //      // 4. 尝试不同的解密配置  
-  //     const configs = [  
-  //       { tagLength: 128, name: "标准模式" },  
-  //       { tagLength: 96, name: "96位标签模式" },  
-  //       { tagLength: 64, name: "64位标签模式" }  
-  //     ];  
-
-  //     for (const config of configs) {  
-  //       try {   
-  //         const decrypted = await window.crypto.subtle.decrypt(  
-  //           {  
-  //             name: "AES-GCM",  
-  //             iv: nonce,  
-  //             tagLength: config.tagLength  
-  //           },  
-  //           key,  
-  //           ciphertext  
-  //         );  
-  //         // 解密成功  
-  //         const result = new Uint8Array(decrypted);  
-  //         return result;  
-  //       } catch (e: any) {  
-  //           console.log(`${config.name} 失败:`, e.message);  
-  //           continue;  
-  //       } 
-  //     }  
-  //     throw new Error('decrypt failed');  
-  //   } catch (err) {
-  //     throw new Error(`Decryption failed: ${err instanceof Error ? err.message : String(err)}`);
-  //   }
-  // }
    if (encryptBuffer.length <= 28) {
       return encryptBuffer;
     }
