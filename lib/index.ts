@@ -200,7 +200,7 @@ export class DC implements SignHandler {
   }
 
   // 从dc网络获取指定文件
-  getFileFromDc = async (cid: string, decryptKey: string) => {
+  getFile = async (cid: string, decryptKey: string) => {
     try {
       const fileManager = new FileManager(
         this.dcutil,
@@ -209,10 +209,10 @@ export class DC implements SignHandler {
         this.dcNodeClient,
         this
       );
-      const fileContent = await fileManager.getFileFromDc(cid, decryptKey);
+      const fileContent = await fileManager.getFile(cid, decryptKey);
       return fileContent;
     } catch (error) {
-      console.error("getFileFromDc error", error);
+      console.error("getFile error", error);
       return "";
     }
   };
@@ -228,7 +228,7 @@ export class DC implements SignHandler {
     return res;
   };
   // 从dc网络获取缓存值
-  getCacheValueFromDc = async (key: string): Promise<string | null> => {
+  getCacheValue = async (key: string): Promise<string | null> => {
     const themeManager = new ThemeManager(this.connectedDc, this.dcutil);
     const res = await themeManager.getCacheValue(key);
     if (res[0]) {
@@ -570,7 +570,7 @@ export class DC implements SignHandler {
       this
     );
     const cid = Buffer.from(res[0]).toString();
-    const fileContent = await fileManager.getFileFromDc(
+    const fileContent = await fileManager.getFile(
       cid,
       "",
       cidNeedConnect.NOT_NEED
@@ -699,7 +699,7 @@ export class DC implements SignHandler {
       this
     );
     const cid = Buffer.from(res[0]).toString();
-    const fileContent = await fileManager.getFileFromDc(
+    const fileContent = await fileManager.getFile(
       cid,
       "",
       cidNeedConnect.NOT_NEED
@@ -758,7 +758,7 @@ export class DC implements SignHandler {
       this
     );
     const cid = Buffer.from(res[0]).toString();
-    const fileContent = await fileManager.getFileFromDc(
+    const fileContent = await fileManager.getFile(
       cid,
       "",
       cidNeedConnect.NOT_NEED

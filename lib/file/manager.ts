@@ -366,7 +366,7 @@ export class FileManager {
 
   // 从dc网络获取指定文件
   // flag 是否需要连接节点，0-获取，1-不获取
-  getFileFromDc = async (cid: string, decryptKey: string, flag?: number) => {
+  getFile = async (cid: string, decryptKey: string, flag?: number) => {
     console.log("first 11111");
     if (flag !== cidNeedConnect.NOT_NEED) {
       const res = await this.dc?._connectToObjNodes(cid);
@@ -470,7 +470,7 @@ export class FileManager {
       }
       return fileContent;
     } catch (error) {
-      console.error("getFileFromDc error", error);
+      console.error("getFile error", error);
       return "";
     }
   };
