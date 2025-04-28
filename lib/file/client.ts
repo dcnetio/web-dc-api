@@ -2,7 +2,8 @@ import { Libp2pGrpcClient } from "grpc-libp2p-client";
 import type { Client } from "../dcapi";
 import { dcnet } from "../proto/dcnet_proto";
 import { HeliaLibp2p } from "helia";
-import { DataSource } from "../proto/datasource";
+import { Errors } from "lib/error";
+import { SignHandler } from "lib/types/types";
 
 const uploadStatus = {
   OK: 0,
@@ -27,16 +28,20 @@ const uploadRespondStatus = {
   TooManyBackups: 14, //备份过多
   VAccountParseError: 15, //Virth Account解析错误
 };
- 
 
 export class FileClient {
   client: Client;
   dcNodeClient: HeliaLibp2p;
+  signHandler: SignHandler;
 
-
-  constructor(dcClient: Client, dcNodeClient: HeliaLibp2p) {
+  constructor(
+    dcClient: Client,
+    dcNodeClient: HeliaLibp2p,
+    signHandler: SignHandler
+  ) {
     this.client = dcClient;
     this.dcNodeClient = dcNodeClient;
+    this.signHandler = signHandler;
   }
 
   async storeFile(
@@ -45,81 +50,105 @@ export class FileClient {
     signature: Uint8Array,
     cid: string,
     onUpdateTransmitSize: (status: number, size: number) => void,
+    onErrorCallback: (error: Error) => void
   ) {
-    try {
-      if (this.client.p2pNode == null) {
-        throw new Error("p2pNode is null");
-      }
-      const message = new dcnet.pb.StroeFileRequest({});
-      message.cid = new TextEncoder().encode(cid);
-      message.filesize = fileSize;
-      message.blockheight = blockHeight;
-      message.signature = signature;
-      const messageBytes = dcnet.pb.StroeFileRequest.encode(message).finish();
-      
-    //  const signatureDataSource = new DataSource();
-      const onDataCallback = async (payload: Uint8Array) => {
-        const decodedPayload = dcnet.pb.StroeFileReply.decode(payload);
-        let resStatus = uploadStatus.UPLOADING;
-        // todo 需要转换
-        switch (decodedPayload.status) {
-          case uploadRespondStatus.FilePulling:
-            resStatus = uploadStatus.UPLOADING;
-            break;
-          case uploadRespondStatus.PullFail:
-            resStatus = uploadStatus.ERROR;
-            break;
-          case uploadRespondStatus.PullSuccess:
-            resStatus = uploadStatus.OK;
-            break;
-          case uploadRespondStatus.BlockFinality:
-            resStatus = uploadStatus.OK;
-            break;
-          case uploadRespondStatus.FinalityTimeout:
-            resStatus = uploadStatus.ABNORMAL;
-            break;
-          case uploadRespondStatus.FaultSize:
-            resStatus = uploadStatus.ERROR;
-            break;
-          case uploadRespondStatus.FaultCount:
-            resStatus = uploadStatus.ERROR;
-            break;
-          case uploadRespondStatus.NoUserSpace:
-            resStatus = uploadStatus.ERROR;
-            break;
-        }
-        if(onUpdateTransmitSize ) {
-          onUpdateTransmitSize(resStatus, Number(decodedPayload.receivesize));
-        }
-      };
-    
-      // const dataSourceCallback = (): AsyncIterable<Uint8Array> => {
-      //   console.log("dataSourceCallback");
-      //   return signatureDataSource.getDataSource();
-      // };
-
-    
-      // 使用方法
-      const grpcClient = new Libp2pGrpcClient(
-        this.client.p2pNode,
-        this.client.peerAddr,
-        this.client.token,
-        this.client.protocol
-      );
-
-      await grpcClient.Call(
-        "/dcnet.pb.Service/StoreFile",
-        messageBytes,
-        100000,
-        "server-streaming",
-        onDataCallback,
-      );
-      return;
-      // const decoded = dcnet.pb.StroeFileReply.decode(responseData);
-      // return [decoded.cid, decoded.decryptKey, null];
-    } catch (err) {
-      console.error("storeFile error:", err);
-      throw err;
+    if (this.client.p2pNode == null) {
+      throw new Error("p2pNode is null");
     }
+    const message = new dcnet.pb.StroeFileRequest({});
+    message.cid = new TextEncoder().encode(cid);
+    message.filesize = fileSize;
+    message.blockheight = blockHeight;
+    message.signature = signature;
+    const messageBytes = dcnet.pb.StroeFileRequest.encode(message).finish();
+
+    //  const signatureDataSource = new DataSource();
+    const onDataCallback = async (payload: Uint8Array) => {
+      const decodedPayload = dcnet.pb.StroeFileReply.decode(payload);
+      let resStatus = uploadStatus.UPLOADING;
+      // todo 需要转换
+      switch (decodedPayload.status) {
+        case uploadRespondStatus.FilePulling:
+          resStatus = uploadStatus.UPLOADING;
+          break;
+        case uploadRespondStatus.PullFail:
+          resStatus = uploadStatus.ERROR;
+          break;
+        case uploadRespondStatus.PullSuccess:
+          resStatus = uploadStatus.OK;
+          break;
+        case uploadRespondStatus.BlockFinality:
+          resStatus = uploadStatus.OK;
+          break;
+        case uploadRespondStatus.FinalityTimeout:
+          resStatus = uploadStatus.ABNORMAL;
+          break;
+        case uploadRespondStatus.FaultSize:
+          resStatus = uploadStatus.ERROR;
+          break;
+        case uploadRespondStatus.FaultCount:
+          resStatus = uploadStatus.ERROR;
+          break;
+        case uploadRespondStatus.NoUserSpace:
+          resStatus = uploadStatus.ERROR;
+          break;
+      }
+      if (onUpdateTransmitSize) {
+        onUpdateTransmitSize(resStatus, Number(decodedPayload.receivesize));
+      }
+    };
+
+    // 使用方法
+    const grpcClient = new Libp2pGrpcClient(
+      this.client.p2pNode,
+      this.client.peerAddr,
+      this.client.token,
+      this.client.protocol
+    );
+
+    grpcClient.Call(
+      "/dcnet.pb.Service/StoreFile",
+      messageBytes,
+      100000,
+      "server-streaming",
+      onDataCallback,
+      undefined,
+      undefined,
+      async (error: Error) => {
+        console.error("StoreFile error:", error);
+        if (error.message.indexOf(Errors.INVALID_TOKEN.message) != -1) {
+          // try to get token
+          const publicKey = this.signHandler.getPublicKey();
+          const token = await this.client.GetToken(
+            publicKey.string(),
+            (payload: Uint8Array): Uint8Array => {
+              return this.signHandler.sign(payload);
+            }
+          );
+          if (!token) {
+            throw new Error(Errors.INVALID_TOKEN.message);
+          }
+          grpcClient.Call(
+            "/dcnet.pb.Service/StoreFile",
+            messageBytes,
+            100000,
+            "server-streaming",
+            onDataCallback,
+            undefined,
+            undefined,
+            async (error: Error) => {
+              console.error("StoreFile error:", error);
+              if (onErrorCallback) {
+                onErrorCallback(error);
+              }
+            }
+          );
+          return true;
+        }
+        if (onErrorCallback) {
+          onErrorCallback(error);
+        }
+      }
+    );
   }
 }

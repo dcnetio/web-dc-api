@@ -17,6 +17,9 @@ export const Errors = {
   INVALID_TOKEN: new AppError('INVALID_TOKEN', 'invalid token', 401),
   // REQ_TOKEN_TOO_OFTEN: new AppError('REQ_TOKEN_TOO_OFTEN', 'request token too often', 429),
 
+  // user not bind to this peer
+  USER_NOT_BIND_TO_PEER: new AppError('USER_NOT_BIND_TO_PEER', 'user not bind to this peer'),
+
   // // User management errors
   // USER_BINDED: new AppError('USER_BINDED', 'user has binded an account'),
   // ACCOUNT_BINDED: new AppError('ACCOUNT_BINDED', 'account has been Binded with other user'),
