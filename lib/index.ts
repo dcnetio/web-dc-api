@@ -72,6 +72,7 @@ export class DC implements SignHandler {
   privKey: Ed25519PrivKey | undefined; // 私钥
   publicKey: Ed25519PubKey | undefined;
 
+
   public TokenTask: boolean = false;
   public connectedDc: DCConnectInfo = {};
   public AccountBackupDc: DCConnectInfo = {};
@@ -79,6 +80,7 @@ export class DC implements SignHandler {
   public Blockheight: number = 0;
   public grpcServer: DCGrpcServer;
   public appInfo: APPInfo;
+  public dbManager: DBManager;
 
   constructor(options: {
     wssUrl: string;
@@ -984,13 +986,8 @@ export class DC implements SignHandler {
     return res;
   }
 
-  async newDB(
-    name: string,
-    b32Rk: string,
-    b32Sk: string,
-    jsonCollections: ICollectionConfig[]
-  ): Promise<string> {
-    const tdatastore = await createTxnDatastore(name);
+  async newDBManager(): Promise<void> {
+    const tdatastore = await createTxnDatastore(this.appInfo.name);
     const keyBook = await newKeyBook(tdatastore);
     const addrBook = await newAddrBook(tdatastore);
     const headBook = newHeadBook(tdatastore);
@@ -1020,12 +1017,31 @@ export class DC implements SignHandler {
       storagePrefix,
       this
     );
+    this.dbManager = dbmanager;
+    return;
+  }
 
+  async newDB(
+    name: string,
+    b32Rk: string,
+    b32Sk: string,
+    jsonCollections: ICollectionConfig[]
+  ): Promise<string> {
+    if (!this.dbManager) {
+      await this.newDBManager()
+    }
+    //todo remove
+    console.log("newDB name:", name);
+    console.log("newDB b32Rk:", b32Rk);
+    console.log("newDB b32Sk:", b32Sk);
+    console.log("newDB jsonCollections:", jsonCollections);
+    //todo remove end
+    // 创建数据库
 
-   const [threadId,err] = await dbmanager.newDB(name, b32Rk, b32Sk, jsonCollections);
+   const [threadId,err] = await this.dbManager.newDB(name, b32Rk, b32Sk, jsonCollections);
    //todo remove 
    const tid = ThreadID.fromString(threadId);
-   const db = await dbmanager.getDB(tid);
+   const db = await this.dbManager.getDB(tid);
    const userConnection = db.getCollection("person");
    const query = new Query();
   const user = await userConnection.find(query);
@@ -1037,4 +1053,5 @@ export class DC implements SignHandler {
     //todo remove end
     return threadId;
   }
+
 }

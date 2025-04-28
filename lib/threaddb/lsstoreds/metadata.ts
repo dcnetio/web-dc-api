@@ -42,13 +42,24 @@ export class DsThreadMetadata implements IThreadMetadata {
   }  
 
   async getBytes(t: ThreadID, key: string): Promise<Uint8Array | null> {  
-    const value = await this.getValue<Uint8Array>(t, key)
-    return value ? Buffer.from(value) : null
+    const k = this.keyMeta(t, key)  
+    try {  
+      const value = await this.ds.get(k)  
+      return value
+    } catch (err) {  
+      if (err.code === 'ERR_NOT_FOUND') return null  
+      throw new Error(`Error getting metadata: ${err.message}`)  
+    }  
   }  
 
 
   async putBytes(t: ThreadID, key: string, val: Uint8Array): Promise<void> {  
-    return this.setValue(t, key, val)  
+    const k = this.keyMeta(t, key)   
+    try {  
+      await this.ds.put(k, val)  
+    } catch (err) {  
+      throw new Error(`Error setting metadata: ${err.message}`)  
+    }  
   }  
 
   private keyMeta(t: ThreadID, k: string): Key {  
@@ -60,6 +71,7 @@ export class DsThreadMetadata implements IThreadMetadata {
     const k = this.keyMeta(t, key)  
     try {  
       const value = await this.ds.get(k)  
+      // For Uint8Array we'll handle it in getBytes method
       return this.decodeValue<T>(value)  
     } catch (err) {  
       if (err.code === 'ERR_NOT_FOUND') return null  

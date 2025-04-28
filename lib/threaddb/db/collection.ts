@@ -1628,13 +1628,13 @@ function setNewInstanceID(data: Uint8Array): { id: InstanceID, data: Uint8Array 
 /**
  * Set modified timestamp
  */
-function setModifiedTag(data: Uint8Array): { time: bigint, data: Uint8Array } {
-  const time = BigInt(Date.now()) * 1000000n + BigInt(Math.floor(Math.random() * 1000000));
-  
+function setModifiedTag(data: Uint8Array): { time: number, data: Uint8Array } {
+  const timeMs = Date.now();
+  const randomNs = Math.floor(Math.random() * 1000000);
+  const time = (timeMs * 1000000 + randomNs);
   try {
     const instance = JSON.parse(new TextDecoder().decode(data));
     instance._mod = time;
-    
     return {
       time,
       data: new TextEncoder().encode(JSON.stringify(instance))

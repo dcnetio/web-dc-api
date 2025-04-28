@@ -160,13 +160,8 @@ toMultihash(): MultihashDigest<0> {
    * Returns this key as a multihash with base58btc encoding
    */
     toString(): string {  
-        const digest = this.raw;
-        const size = digest.length;
-        const bytes = new Uint8Array(2 + size);
-        bytes[0] = 0x00; // identity hash code
-        bytes[1] = size;  // size in varint
-        bytes.set(digest, 2);
-        return base58btc.encode(bytes)
+     //生成16进制
+        return bytesToHex(this.bytes())
     }  
 
     static fromString(str: string): Ed25519PubKey {  

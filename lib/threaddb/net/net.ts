@@ -1603,7 +1603,7 @@ getConnectorProtected(id: ThreadID, token?: Token): [Connector | undefined, bool
     return [undefined, true]; // threaddb 未被连接器使用
   }
   
-  if (!token || !conn?.token || this.bytesEqual(token, conn.token)) {
+  if (!token || !conn?.token || !this.bytesEqual(token, conn.token)) {
     return [undefined, false]; // 无效令牌
   }
   
