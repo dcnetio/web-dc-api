@@ -30,6 +30,10 @@ export const Errors = {
   ErrNoPeerIdIsNull: new FileError("peerId is null"),
   ErrAddThemeObj: new FileError("add theme obj error"),
   ErrPublishCommentToTheme: new FileError("publish comment error"),
+  // 评论空间没有配置
+  ErrCommentSpaceNotConfig: new FileError("comment space not config"),
+  // 评论数据同步中
+  ErrCommentDataSync: new FileError("comment data sync"),
 };
 
 export class CommentManager {
@@ -139,7 +143,11 @@ export class CommentManager {
       if(res === 0){
         return [res, null];
       }
-      if(res === 1 || res === 2){
+      if(res === 1){
+        // 评论空间没有配置 
+        return [null, Errors.ErrCommentSpaceNotConfig];
+      }
+      if(res === 2){
         // 添加空间
         await this.addUserOffChainSpace();
         // 继续调用
@@ -155,6 +163,10 @@ export class CommentManager {
         if(res === 0){
           return [res, null];
         }
+      }
+      if(res === 3){
+        // 评论数据同步中
+        return [null, Errors.ErrCommentDataSync];
       }
       return [null, Errors.ErrAddThemeObj]
     } catch (err) {
@@ -215,6 +227,7 @@ export class CommentManager {
     commentType: number,
     comment: string,
     refercommentkey: string,
+    openFlag?: number
   ): Promise<[string | null, Error | null]> {
     try {
       if (!this.connectedDc?.client) {
@@ -262,6 +275,7 @@ export class CommentManager {
         comment,
         refercommentkey,
         signature,
+        openFlag,
       );
       // res 0:成功 1:评论空间没有配置 2:评论空间不足
       if(res === 0){
@@ -270,7 +284,11 @@ export class CommentManager {
         const commentKey = `${commentBlockHeight}/${commentCidBase32}`
         return [commentKey, null];
       }
-      if(res === 1 || res === 2){
+      if(res === 1){
+        // 评论空间没有配置 
+        return [null, Errors.ErrCommentSpaceNotConfig];
+      }
+      if(res === 2){
         // 添加空间
         await this.addUserOffChainSpace();
         // 继续调用

@@ -233,7 +233,8 @@ export class CommentClient {
     commentCid: string,
     comment: string,
     refercommentkey: string,
-    signature: Uint8Array
+    signature: Uint8Array,
+    openFlag?: number
   ) {
     const message = new dcnet.pb.PublishCommentToThemeRequest({});
     message.theme = new TextEncoder().encode(theme);
@@ -246,6 +247,9 @@ export class CommentClient {
     message.comment = new TextEncoder().encode(comment);
     message.commentSize = comment.length;
     message.refercommentkey = new TextEncoder().encode(refercommentkey);
+    if (openFlag !== undefined) {
+      message.type = openFlag;
+    }
     message.signature = signature;
     const messageBytes =
       dcnet.pb.PublishCommentToThemeRequest.encode(message).finish();

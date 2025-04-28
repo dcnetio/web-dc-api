@@ -81,7 +81,7 @@ export class ThemeManager{
   }
 
   // 设置缓存值
-  setCacheKey = async (value: string, peerAddr?: Multiaddr) : Promise<[string | null, Error | null]> => {
+  setCacheKey = async (value: string, expire: number, peerAddr?: Multiaddr) : Promise<[string | null, Error | null]> => {
     if (!this.connectedDc.client) {
       return [null, Errors.ErrNoDcPeerConnected];
     }
@@ -95,7 +95,6 @@ export class ThemeManager{
     }
     //获取最新区块高度
     const blockHeight = await this.chainUtil.getBlockHeight();
-    const expire = (blockHeight ? blockHeight : 0) + 10000;
     const valueArray = new TextEncoder().encode(value);
     const hashValue = await sha256(valueArray);
 

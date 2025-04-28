@@ -41,7 +41,7 @@ import { CommentManager } from "./comment/manager";
 import { dcnet } from "./proto/dcnet_proto";
 import { BrowserLineReader, readLine } from "./util/BrowserLineReader";
 import { bytesToHex } from "@noble/curves/abstract/utils";
-import { dc_protocol, dial_timeout } from "./define";
+import { dc_protocol, dial_timeout, keyExpire } from "./define";
 import { MessageManager } from "./message/manager";
 import { DBManager } from "./threaddb/dbmanager";
 import { createTxnDatastore } from "./threaddb/common/idbstore-adapter";
@@ -239,14 +239,15 @@ export class DC implements SignHandler {
     return null;
   };
   // 设置缓存值
-  setCacheKey = async (value: string) => {
+  setCacheKey = async (value: string, expire?: number) => {
     const themeManager = new ThemeManager(
       this.connectedDc,
       this.dcutil,
       this.dcChain,
       this
     );
-    const res = await themeManager.setCacheKey(value);
+    const expireNumber = expire ? expire : keyExpire; // 默认一天
+    const res = await themeManager.setCacheKey(value, expireNumber);
     return res;
   };
   // 登陆
@@ -415,14 +416,15 @@ export class DC implements SignHandler {
   //    commentType:评论类型 0:普通评论 1:点赞 2:推荐 3:踩
   //    comment 评论内容
   //    referCommentkey 被引用的评论
-  //    openFlag 开放标志 0-开放 1-私密 // todo ?这里没有
+  //    openFlag 开放标志 0-开放 1-私密
   //	  返回评论key,格式为:commentBlockHeight/commentCid
   publishCommentToTheme = async (
     theme: string,
     themeAuthor: string,
     commentType: number,
     comment: string,
-    refercommentkey?: string
+    refercommentkey?: string,
+    openFlag?: number
   ) => {
     const commentManager = new CommentManager(
       this.connectedDc,
@@ -436,7 +438,8 @@ export class DC implements SignHandler {
       themeAuthor,
       commentType,
       comment,
-      refercommentkey || ""
+      refercommentkey || "",
+      openFlag,
     );
     console.log("publishCommentToTheme res:", res);
     return res;
