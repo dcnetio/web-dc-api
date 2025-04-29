@@ -30,9 +30,11 @@ import { DBGrpcClient } from "./net/grpcClient";
 import type { Client } from "../dcapi";
 import { jsonStringify } from '../util/utils';
 import {Protocol} from './net/define';
+import {parseJsonToQuery} from './db/json2Query';
 
 import * as buffer from "buffer/";
 import { dial_timeout } from '../define';
+import { Query } from './db/query';
 const { Buffer } = buffer; 
 
 export const ThreadProtocol = "/dc/" + Protocol.name + "/" + Protocol.version
@@ -539,8 +541,7 @@ async  addLogToThread(ctx: Context, id: ThreadID, lid: PeerId): Promise<void> {
   }  
   let count = 0;  
   const maxCount = 6;  
-  let endFlag = false
-  this.addLogToThread(ctx, id, lid);  
+  let endFlag = false; 
   const ticker = setInterval(async () => {  
       // 检查是否已被取消  
       if (signal.aborted) {  
@@ -1033,8 +1034,7 @@ async has(threadId: string, collectionName: string, instanceID: string): Promise
 async find(threadId: string, collectionName: string, queryString: string): Promise<string> {
     try {
         // 解析查询字符串
-        const query = JSON.parse(queryString);
-        
+        const query = parseJsonToQuery(queryString);
         // 解码线程ID
         const tID = ThreadID.fromString(threadId);
         

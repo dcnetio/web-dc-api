@@ -15,6 +15,18 @@ export class Query {
   skip: number = 0;
   index: string = '';
 
+  constructor() {
+    
+      this.ands = [];
+      this.ors = [];
+      this.sort = new Sort();
+      this.seek = '';
+      this.limit = 0;
+      this.skip = 0;
+      this.index = '';
+   
+  }
+
   /**
    * Validate validates the entire query
    */
@@ -38,7 +50,7 @@ export class Query {
    * And concatenates a new condition in an existing field
    */
   and(field: string): Criterion {
-    return new Criterion(field, this);
+    return new Criterion(field);
   }
 
   /**
@@ -166,13 +178,14 @@ export class Query {
  */
 export class Criterion {
   fieldPath: string;
-  operation: Operation = Operation.Eq;
+  operation: Operation = Operation.eq;
   value: Value = new Value();
   private query: Query | null = null;
 
-  constructor(fieldPath: string, query: Query | null = null) {
+  constructor(fieldPath: string, operation?:Operation,value?:Value) {
     this.fieldPath = fieldPath;
-    this.query = query;
+    this.operation = operation;
+    this.value = value;
   }
 
   /**
@@ -197,42 +210,42 @@ export class Criterion {
    * Eq is an equality operator against a field
    */
   eq(value: any): Query {
-    return this.createCriterion(Operation.Eq, value);
+    return this.createCriterion(Operation.eq, value);
   }
 
   /**
    * Ne is a not equal operator against a field
    */
   ne(value: any): Query {
-    return this.createCriterion(Operation.Ne, value);
+    return this.createCriterion(Operation.ne, value);
   }
 
   /**
    * Gt is a greater operator against a field
    */
   gt(value: any): Query {
-    return this.createCriterion(Operation.Gt, value);
+    return this.createCriterion(Operation.gt, value);
   }
 
   /**
    * Lt is a less operation against a field
    */
   lt(value: any): Query {
-    return this.createCriterion(Operation.Lt, value);
+    return this.createCriterion(Operation.lt, value);
   }
 
   /**
    * Ge is a greater or equal operator against a field
    */
   ge(value: any): Query {
-    return this.createCriterion(Operation.Ge, value);
+    return this.createCriterion(Operation.ge, value);
   }
 
   /**
    * Le is a less or equal operator against a field
    */
   le(value: any): Query {
-    return this.createCriterion(Operation.Le, value);
+    return this.createCriterion(Operation.le, value);
   }
 
   /**
@@ -258,17 +271,17 @@ export class Criterion {
       const result = compareValue(value, this.value);
       
       switch (this.operation) {
-        case Operation.Eq:
+        case Operation.eq:
           return result === 0;
-        case Operation.Ne:
+        case Operation.ne:
           return result !== 0;
-        case Operation.Gt:
+        case Operation.gt:
           return result > 0;
-        case Operation.Lt:
+        case Operation.lt:
           return result < 0;
-        case Operation.Le:
+        case Operation.le:
           return result <= 0;
-        case Operation.Ge:
+        case Operation.ge:
           return result >= 0;
         default:
           throw new Error("invalid operation");
@@ -300,12 +313,13 @@ export class Sort {
  * Operation models comparison operators
  */
 export enum Operation {
-  Eq = 0, // equals
-  Ne = 1, // not equal to
-  Gt = 2, // greater than
-  Lt = 3, // less than
-  Ge = 4, // greater than or equal to
-  Le = 5, // less than or equal to
+  eq = 0, // equals
+  ne = 1, // not equal to
+  gt = 2, // greater than
+  lt = 3, // less than
+  ge = 4, // greater than or equal to
+  le = 5, // less than or equal to
+  fn = 6 //func
 }
 
 

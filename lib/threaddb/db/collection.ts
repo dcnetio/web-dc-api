@@ -1463,7 +1463,6 @@ async modifiedSince(time: number): Promise<InstanceID[]> {
     try {
       await this.collection.db.connector.createNetRecord(node, this.token);
       await this.collection.db.dispatcher.dispatch(events);
-      await this.collection.db.notifyTxnEvents(node, this.token);
       this.committed = true;
     } catch (err) {
       throw new Error(`Commit failed: ${err instanceof Error ? err.message : String(err)}`);
