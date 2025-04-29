@@ -39,6 +39,7 @@ import * as dagPB from '@ipld/dag-pb'
 import * as threadEvent from '../cbor/event'
 import {IRecord} from '../core/record'
 import {IPLDNode} from '../core/core'
+import { jsonStringify } from 'lib/util/utils';
 
 const baseKey = DBPrefix.dsPrefix.child(new Key("collection"))
 const getBlockInitialTimeout      =  500 
@@ -46,18 +47,18 @@ const getBlockRetries = 3;
 
 
 export class CollectionEvent<T = any> implements Event<T> {  
-  readonly timestamp: bigint;  
+  readonly timestamp: BigInt;  
   
   constructor(  
     readonly instanceID: InstanceID,  
     readonly collection: string,  
     readonly payload: T  
   ) {  
-    this.timestamp =  BigInt(Date.now()) * 1000000n + BigInt(Math.floor(Math.random() * 1000000));
+    this.timestamp = BigInt(Date.now() * 1000000 + Math.floor(Math.random() * 1000000));
   }  
 
   async marshal(): Promise<Uint8Array> {  
-    return new TextEncoder().encode(JSON.stringify({  
+    return new TextEncoder().encode(jsonStringify({  
       t: this.timestamp,  
       i: this.instanceID,  
       c: this.collection,  
@@ -81,7 +82,7 @@ export class DefaultEventCodec implements EventCodec {
       // 使用事务处理数据变更  
       const txn = await store.newTransactionExtended(false);
       const oldData = await txn.get(key);  
-      const newData = event.payload ? new TextEncoder().encode(JSON.stringify(event.payload)) : undefined;  
+      const newData = event.payload ? new TextEncoder().encode(jsonStringify(event.payload)) : undefined;  
         // 应用索引更新  
       await indexFn(event.collection, key, txn, oldData, newData);  
         // 保存数据  
@@ -491,7 +492,7 @@ async notifyTxnEvents(node: IPLDNode, token: ThreadToken): Promise<void> {
   async getNetRecordCreateTime(
     rec: IThreadRecord,
     key: ThreadKey
-  ): Promise<bigint> {
+  ): Promise<BigInt> {
     let event :IThreadEvent;
     try {
       // 从记录中解码事件

@@ -15,9 +15,9 @@ import { dagCbor, DAGCBOR } from '@helia/dag-cbor';
 import { Blocks } from 'helia';
 import  * as net_pb from '../pb/net_pb'
 import { IPLDNode } from '../core/core';
-import { calculateCID } from '../../util/utils';
 import * as cbornode from './node';
 import { Envelope } from '@libp2p/interface';
+import { KeyConverter } from '../pb/proto-custom-types';
 // 记录的节点结构
 interface RecordObj {
   block: CID;
@@ -28,7 +28,7 @@ interface RecordObj {
 
 // 创建记录的配置
 interface CreateRecordConfig {
-  block: Node;
+  block: IPLDNode;
   prev?: CID;
   key: PrivKey;
   pubKey: PubKey;
@@ -55,7 +55,7 @@ export async function CreateRecord(
   config: CreateRecordConfig
 ): Promise<IRecord> {
   // 序列化公钥
-  const pkb =  config.pubKey.bytes();
+  const pkb =  await KeyConverter.publicToBytes(config.pubKey);
   
   // 创建签名有效载荷
   let payload: Uint8Array;
@@ -68,6 +68,7 @@ export async function CreateRecord(
     payload.set(prevBytes, blockBytes.length);
   } else {
     payload = pkb;
+   
   }
   
   // 使用私钥签名
@@ -81,11 +82,13 @@ export async function CreateRecord(
     prev: config.prev
   };
   
+   const node = await wrapObject(obj);
+
   // 将对象打包为CBOR节点
-  const bytes = dagCBOR.encode(obj);
-  const hash = await sha256.digest(bytes);
-  const cid = CID.createV1(dagCBOR.code, hash);
-  const node = new Block(bytes,cid );
+  // const bytes = dagCBOR.encode(obj);
+  // const hash = await sha256.digest(bytes);
+  // const cid = CID.createV1(dagCBOR.code, hash);
+  // const node = new Block(bytes,cid );
   
   // 使用服务密钥加密节点
   const coded = await encodeBlock(node, config.serviceKey);

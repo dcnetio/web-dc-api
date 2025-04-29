@@ -107,7 +107,7 @@ export interface PeerRecords {
 export interface TimestampedRecord {
   record: IRecord;
   counter: number;
-  createtime: bigint;
+  createtime: BigInt;
   logid: PeerId;
 
 }

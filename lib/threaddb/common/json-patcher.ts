@@ -4,7 +4,7 @@ import { sha256 } from 'multiformats/hashes/sha2';
 import * as Block from 'multiformats/block';  
 import { Key } from 'interface-datastore';
 import * as dagCBOR from '@ipld/dag-cbor';
-  
+import * as cbornode from '../cbor/node';
 import {       
   IndexFunc,    
   Transaction,  
@@ -28,7 +28,7 @@ interface Operation {
 }  
 
 interface PatchEvent {  
-  timestamp: bigint;  
+  timestamp: BigInt;  
   id: InstanceID;  
   iD?: InstanceID;
   collection: string; 
@@ -91,8 +91,14 @@ export class JsonPatcher implements EventCodec {
   }  
 
   async eventsFromBytes(data: Uint8Array): Promise<Event[]> {  
+   let blockData = data as Uint8Array;
+   try {
+      blockData = await dagCBOR.decode(data) as Uint8Array;
+    } catch (e) {
+      blockData = data;
+   }
     const block = await Block.decode<RecordEvents,number,number>({  
-      bytes: data,  
+      bytes: blockData as Uint8Array,  
       ...JsonPatcher.ENCODER_SETTINGS  
     });  
     if (!block.value) {  
@@ -104,8 +110,9 @@ export class JsonPatcher implements EventCodec {
 
   // ==================== 私有方法 ====================  
   private convertActions(actions: Action[]): PatchEvent[] {  
+   const timestamp = BigInt(Date.now() * 1000000 + Math.floor(Math.random() * 1000000));
     return actions.map(action => ({  
-      timestamp: BigInt(Date.now()) * 1000000n + BigInt(Math.floor(Math.random() * 1000000)),
+      timestamp: timestamp,
       id: action.instanceID,  
       collection: action.collectionName || 'default',  
       patch: {  
@@ -117,6 +124,9 @@ export class JsonPatcher implements EventCodec {
   }  
 
   private wrapEvents(patches: PatchEvent[]): Event[] {  
+    if (!patches || patches.length === 0) {
+      return [];  
+    }
     return patches.map(p => ({  
       collection: p.collection || p.collectionName,  
       instanceID: p.id || p.patch.instanceID,  

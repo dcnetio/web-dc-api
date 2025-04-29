@@ -6,9 +6,6 @@ import { peerIdFromString } from "@libp2p/peer-id";
 import { PeerId } from "@libp2p/interface";
 import { keys } from "@libp2p/crypto";
 import * as buffer from "buffer/";
-import { CID } from 'multiformats/cid';
-import * as dagCBOR from '@ipld/dag-cbor';
-import { sha256 as digestSha256 } from 'multiformats/hashes/sha2';
 const { Buffer } = buffer;
 const { Word32Array, AES, pad, mode, Base64 } = JsCrypto;
 const NonceBytes = 12;
@@ -247,14 +244,12 @@ function hexToAscii(hex: string): string {
   return Buffer.from(cleanHex, "hex").toString("ascii");
 }
 
-
-// 辅助函数：计算内容的CID
-async function calculateCID(data: Uint8Array): Promise<CID> {
-  const hash = await digestSha256.digest(data);
-  return CID.createV1(dagCBOR.code, hash);
+// json stringify过程中,将 BigInt 转为字符串
+function jsonStringify(value: any): string {
+  return JSON.stringify(value, (_, val) => 
+    typeof val === 'bigint' ? val.toString() : val
+  );
 }
-
-
 
 export {
   sha256,
@@ -276,9 +271,9 @@ export {
   loadKeyPair,
   parseUint32,
   hexToAscii,
-  calculateCID,
   savePublicKey,
   loadPublicKey,
   saveTokenWithPeerId,
   loadTokenWithPeerId,
+  jsonStringify
 };

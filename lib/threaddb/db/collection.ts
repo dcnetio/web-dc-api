@@ -16,6 +16,7 @@ import {Query,compare,traverseFieldPathMap} from './query';
 import * as cbornode from '../cbor/node';
 import * as dagCBOR from '@ipld/dag-cbor';
 import { dagCbor } from '@helia/dag-cbor';
+import { jsonStringify } from 'lib/util/utils';
 
 // iteratorKeyMinCacheSize is the size of iterator keys stored in memory before more are fetched.
 const iteratorKeyMinCacheSize = 100
@@ -594,7 +595,7 @@ export class Collection implements ICollection {
         return null;
       }
       
-      return new TextEncoder().encode(JSON.stringify(result));
+      return new TextEncoder().encode(jsonStringify(result));
     } catch (err) {
       throw new Error(`Read filter error: ${err instanceof Error ? err.message : String(err)}`);
     }
@@ -1626,21 +1627,40 @@ function setNewInstanceID(data: Uint8Array): { id: InstanceID, data: Uint8Array 
 }
 
 /**
- * Set modified timestamp
+ * 为对象设置修改时间戳标签 (纳秒精度)
+ * @param data 包含原始数据的字节数组
+ * @returns 包含新时间戳和更新后数据的对象
  */
-function setModifiedTag(data: Uint8Array): { time: number, data: Uint8Array } {
-  const timeMs = Date.now();
-  const randomNs = Math.floor(Math.random() * 1000000);
-  const time = (timeMs * 1000000 + randomNs);
+function setModifiedTag(data: Uint8Array): { time: bigint, data: Uint8Array } {
+  // 生成纳秒级时间戳 (等同于 Go 的 time.Now().UnixNano())
+  const timeMs = BigInt(Date.now());
+  const randomNs = BigInt(Math.floor(Math.random() * 1000000));
+  // 转换为纳秒
+  const time = timeMs * 1000000n + randomNs;
+  
   try {
+    // 解析输入数据为 JSON 对象
     const instance = JSON.parse(new TextDecoder().decode(data));
-    instance._mod = time;
+    
+    // 字段名与 Go 代码中相同
+    const modFieldName = "_mod";
+    
+    // 添加或更新 _mod 字段
+    // 注意：存储时将 BigInt 转换为数字，这可能会在某些极端情况下丢失精度
+    // 但对于一般应用已经足够了
+    instance[modFieldName] = time;
+    
+    // 序列化回字节数组
+    const modifiedData = new TextEncoder().encode(jsonStringify(instance));
+    
     return {
       time,
-      data: new TextEncoder().encode(JSON.stringify(instance))
+      data: modifiedData
     };
   } catch (err) {
-    throw new Error(`Error setting modified tag: ${err instanceof Error ? err.message : String(err)}`);
+    // 处理错误，但避免使用 log.Fatal 这样的致命错误
+    console.error(`修改标签设置错误: ${err instanceof Error ? err.message : String(err)}`);
+    throw new Error(`设置 _mod 字段失败: ${err instanceof Error ? err.message : String(err)}`);
   }
 }
 

@@ -127,11 +127,11 @@ export class DC implements SignHandler {
         this.grpcServer.start();
 
         // todo 临时测试
-        // const peerId = "12D3KooWEGzh4AcbJrfZMfQb63wncBUpscMEEyiMemSWzEnjVCPf";
-        // let nodeAddr = await this.dcutil?._getNodeAddr(peerId);
+         const peerId = "12D3KooWEGzh4AcbJrfZMfQb63wncBUpscMEEyiMemSWzEnjVCPf";
+         let nodeAddr = await this.dcutil?._getNodeAddr(peerId);
         // nodeAddr = multiaddr('/ip4/192.168.31.42/udp/4001/webrtc-direct/certhash/uEiBq5Ki7QE5Nl2IPWTOG52RNutWFaB3rfdIEgKAlVcFtHA/p2p/12D3KooWKfJGey3xUcTQ8bCokBxxudoDm3RAeCfdbuq2e34c7TWB')
         // 获取默认dc节点地址
-        let nodeAddr = await this.dcutil?.getDefaultDcNodeAddr();
+       // let nodeAddr = await this.dcutil?.getDefaultDcNodeAddr();
         if (nodeAddr) {
           console.log("--------nodeAddr---------", nodeAddr.toString());
           const connection = await this.dcNodeClient?.libp2p.dial(nodeAddr, {
@@ -999,6 +999,7 @@ export class DC implements SignHandler {
       throw new Error("publicKey is null");
     }
     const net = new Network(
+      this.dcutil,
       this.dcChain,
       this.dcNodeClient.libp2p,
       this.grpcServer,

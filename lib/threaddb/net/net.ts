@@ -38,8 +38,6 @@ import {CreateEvent} from '../cbor/event';
 import {Errors} from '../core/db';
 import {net as net_pb} from "../pb/net_pb";
 import { AddOptions,GetOptions } from '@helia/dag-cbor';
-import {EventObj} from '../cbor/event';
-import {calculateCID} from '../../util/utils';
 import {   
   PeerIDConverter,  
   MultiaddrConverter,  
@@ -79,7 +77,7 @@ export class Network implements Net {
   private connectors: Record<string, Connector>;
   private cachePeers: Record<string, TMultiaddr> = {};
 
-  constructor(dcChain: ChainUtil,libp2p:Libp2p,grpcServer:DCGrpcServer,logstore: ILogstore,bstore: Blocks,dagService: DAGCBOR,  privateKey: Ed25519PrivKey) {  
+  constructor(dcUtil  : DcUtil,dcChain: ChainUtil,libp2p:Libp2p,grpcServer:DCGrpcServer,logstore: ILogstore,bstore: Blocks,dagService: DAGCBOR,  privateKey: Ed25519PrivKey) {  
     this.logstore = logstore;  
     this.hostID = libp2p.peerId.toString();  
     this.privateKey = privateKey;  
@@ -89,6 +87,7 @@ export class Network implements Net {
     this.server = grpcServer;
     this.connectors = {};
     this.dcChain = dcChain;
+    this.dc = dcUtil;
   }  
 
    // 签名,后续应该改成发送到钱包iframe中签名,发送数据包含payload和用户公钥
@@ -1471,19 +1470,21 @@ async newRecord(id: ThreadID, lg: IThreadLogInfo, body: IPLDNode, identity: Publ
   const head = await this.logstore.headBook.heads(id, lg.id)
   // 创建事件
   const sk = SymmetricKey.fromSymKey(serviceKey);
+  const readKey = await this.logstore.keyBook.readKey(id);
+  const rk = readKey ? SymmetricKey.fromSymKey(readKey) : null;
   const event = await CreateEvent(
     this.dagService,
     body as Node,
-    sk
+    rk
   );
   // 将事件保存到存储
   await this.dagService.add(event);
-  const rec = CreateRecord(
+  const rec = await CreateRecord(
     this.dagService,
   {
-    block: body as Node,
+    block: event,
     prev: head[0].id,
-    key: this.privateKey,
+    key: lg.privKey as Ed25519PrivKey,
     pubKey: this.privateKey.publicKey,
     serviceKey: sk
   })
@@ -1507,7 +1508,9 @@ async pushRecord(tid: ThreadID, lid: PeerId, rec: IRecord, counter: number): Pro
     
     // 收集所有日志的地址
     for (const l of info.logs) {
-      addrs.push(...l.addrs);
+      if (l.addrs && l.addrs.length > 0) {
+        addrs.push(...l.addrs);
+      }
     }
     const peers = await this.getPeers(tid);
     if (!peers) {

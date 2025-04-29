@@ -171,7 +171,7 @@ export class MessageManager {
     receiverPubkey: Ed25519PubKey, 
     msg: string
   ): Promise<dcnet.pb.UserMsg> => {
-      const timeStamp = Date.now() * 1000; // Microsecond timestamp
+      const timeStamp = Date.now() * 1000000; // na timestamp
       const preId = `${msg}${timeStamp}`;
 
       // Create SHA2-256 hash

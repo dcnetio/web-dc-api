@@ -162,7 +162,7 @@ export interface IDB {
 
 export interface Event<T = any> {  
   /** 事件时间戳 (Unix纳秒时间戳) */  
-  readonly timestamp: bigint;  
+  readonly timestamp: BigInt;  
   /** 关联的实例ID */  
   readonly instanceID: InstanceID;  
   /** 所属集合名称 */  

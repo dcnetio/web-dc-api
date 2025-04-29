@@ -15,7 +15,6 @@ import * as cbornode from './node';
 import { Link } from 'multiformats/link'
 import {IPLDNode} from '../core/core';
 import {Blocks} from 'helia'
-import { calculateCID } from '../../util/utils'
 import { wrap } from 'module';
 import { Head } from '../core/head';
 
@@ -198,6 +197,8 @@ export class Event implements NetEvent {
   headerCID(): CID {
     return this._obj.header;
   }
+
+    
 
 
   async getHeader(

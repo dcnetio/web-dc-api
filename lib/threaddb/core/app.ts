@@ -27,7 +27,7 @@ export const ErrInvalidNetRecordBody = new Error('app denied net record body')
 export interface App {  
   validateNetRecordBody( body: IPLDNode, identity: PubKey): Promise<Error | undefined>  
   handleNetRecord( rec: IThreadRecord, key?: ThreadKey): Promise<Error | undefined>  
-  getNetRecordCreateTime(rec: IThreadRecord, key?: ThreadKey): Promise<bigint>  
+  getNetRecordCreateTime(rec: IThreadRecord, key?: ThreadKey): Promise<BigInt>  
 }  
 
 // 本地事件总线实现  
@@ -172,7 +172,7 @@ export class Connector {
   // 调用连接应用的 GetNetRecordCreateTime 解析记录创建时间
   async getNetRecordCreateTime(
     rec: IThreadRecord
-  ): Promise<bigint> {
+  ): Promise<BigInt> {
     return this.app.getNetRecordCreateTime(rec, this.threadKey);
   }
 

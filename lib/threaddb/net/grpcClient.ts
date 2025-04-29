@@ -28,7 +28,8 @@ import { SymmetricKey } from '../common/key';
 import {   
   PeerIDConverter,   
   CidConverter,
-  MultiaddrConverter,  
+  MultiaddrConverter,
+  ThreadIDConverter,  
 } from '../pb/proto-custom-types' 
 import * as buffer from "buffer/";
 import { log } from "console";
@@ -338,8 +339,8 @@ export class DBGrpcClient {
     ): Promise<void> {
       try {
         const body = new net_pb.pb.PushRecordRequest.Body();
-        body.threadID = new TextEncoder().encode(tid.toString());
-        body.logID = new TextEncoder().encode(lid.toString());
+        body.threadID = ThreadIDConverter.toBytes(tid.toString()) ;
+        body.logID = PeerIDConverter.toBytes(lid.toString());
         body.record = await RecordToProto(this.net, rec);
         const message = new net_pb.pb.PushRecordRequest();
         message.body = body;

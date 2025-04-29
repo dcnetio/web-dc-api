@@ -13,6 +13,11 @@ const NonceBytes = 12;
 const TagBytes = 16;
 const KeyBytes = 32;
 
+interface EncryptedData {  
+  iv: Uint8Array;       // 初始化向量  
+  ciphertext: ArrayBuffer; // 密文  
+  tag: ArrayBuffer;     // 认证标签  
+}  
 // Error classes
 class CipherTextError extends Error {
   constructor() {
@@ -117,19 +122,60 @@ export class SymmetricKey {
     }
   }
 
-  /**
-   * Encrypt performs AES-256 GCM encryption on plaintext
-   */
-  encrypt(plaintext: Uint8Array): Uint8Array {
-    // Generate a random nonce
-    const nonce = randomBytes(secretbox.nonceLength)  ;
+  // /**
+  //  * Encrypt performs AES-256 GCM encryption on plaintext
+  //  */
+  // encrypt(plaintext: Uint8Array): Uint8Array {
+  //   // Generate a random nonce
+  //   const nonce = randomBytes(secretbox.nonceLength)  ;
     
-    const box = secretbox(plaintext, nonce, this._raw)  
-    const encrypted = new Uint8Array(nonce.length + box.length)  
-    encrypted.set(nonce)  
-    encrypted.set(box, nonce.length)  
-    return encrypted  
-  }
+  //   const box = secretbox(plaintext, nonce, this._raw)  
+  //   const encrypted = new Uint8Array(nonce.length + box.length)  
+  //   encrypted.set(nonce)  
+  //   encrypted.set(box, nonce.length)  
+  //   return encrypted  
+  // }
+ 
+  
+  async  encrypt(  
+    plaintext: Uint8Array,   
+    exNonce?: Uint8Array
+  ): Promise<Uint8Array> {  
+    let nonce = randomBytes(NonceBytes);
+    if(exNonce && exNonce.length === NonceBytes) {
+      nonce = exNonce;
+    } else {
+    // 生成随机初始化向量 (96 bits)  
+    const iv = crypto.getRandomValues(nonce);  
+    // 加密配置  
+    const algorithm = {  
+      name: "AES-GCM",  
+      iv: iv,  
+      tagLength: 128 // 认证标签长度 (bits)  
+    };  
+    const symKey = await this.toSymKey();
+    // 执行加密  
+    const ciphertext = await crypto.subtle.encrypt(  
+      algorithm,  
+      symKey.key,  
+      plaintext 
+    );  
+    // 提取认证标签（最后16字节）  
+    const tag = ciphertext.slice(ciphertext.byteLength - 16);  
+    
+    // 分离密文主体（去除标签）  
+   // const ciphertextBody = ciphertext.slice(0, ciphertext.byteLength - 16);  
+    const result = new Uint8Array(nonce.length + ciphertext.byteLength);
+    result.set(nonce, 0);
+    result.set(new Uint8Array(ciphertext), nonce.length);
+   
+    return result;
+  } 
+} 
+
+
+
+
 
   /**
    * Decrypt uses key to perform AES-256 GCM decryption on ciphertext

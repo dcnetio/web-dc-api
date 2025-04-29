@@ -135,7 +135,7 @@ export class FileManager {
 
         // 加密处理
         if (symKey) {
-          content = symKey.encrypt(content);
+          content = await symKey.encrypt(content);
         }
 
         // 文件头处理（仅在第一个分块添加）

@@ -17,8 +17,8 @@ import * as dagCBOR from '@ipld/dag-cbor';
  */
 export async function encodeBlock(block: IBlock, key: SymmetricKey): Promise<Node> {
     // Encrypt the block's raw data using the provided key
-    const coded =  key.encrypt(block.data());
-    return cbornode.wrapObject(coded);
+    const coded =  await key.encrypt(block.data());
+    return await cbornode.wrapObject(coded);
   
 }
 

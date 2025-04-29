@@ -28,6 +28,7 @@ import { NewThreadOptions } from './core/options';
 import {ThreadToken} from './core/identity';
 import { DBGrpcClient } from "./net/grpcClient";
 import type { Client } from "../dcapi";
+import { jsonStringify } from '../util/utils';
 import {Protocol} from './net/define';
 
 import * as buffer from "buffer/";
@@ -481,7 +482,7 @@ async  addLogToThread(ctx: Context, id: ThreadID, lid: PeerId): Promise<void> {
 
     let signature: Uint8Array;  
     try {  
-        signature = await this.signHandler.sign(preSign);  
+        signature =  this.signHandler.sign(preSign);  
     } catch (err) {  
         throw err;  
     }  
@@ -1053,7 +1054,7 @@ async find(threadId: string, collectionName: string, queryString: string): Promi
         
         // 合并结果并返回JSON字符串
         if (Array.isArray(results)) {
-            return JSON.stringify(results);
+            return jsonStringify(results);
         } else {
             // 如果结果是字节数组，则需要连接它们
             const resultArray = results as Buffer[];
@@ -1103,7 +1104,7 @@ async findByID(threadId: string, collectionName: string, instanceID: string): Pr
         const result = await collection.findByID(instanceID);
         
         // 返回实例
-        return result instanceof Buffer ? result.toString() : JSON.stringify(result);
+        return result instanceof Buffer ? result.toString() : jsonStringify(result);
     } catch (err) {
         console.error(`Failed to find instance by ID: ${err instanceof Error ? err.message : String(err)}`);
         throw err;
