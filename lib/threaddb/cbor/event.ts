@@ -44,7 +44,7 @@ interface EventHeaderObj {
  * @returns 创建的事件
  */
 export async function CreateEvent(
-  dag: DAGCBOR,
+  bstore: Blocks,
   body: Node,
   rkey: SymmetricKey
 ): Promise<NetEvent> {
@@ -70,17 +70,18 @@ export async function CreateEvent(
  
   // 创建事件对象
   const obj: EventObj = {
-    body: body.cid(),
+    body: codedBody.cid(),
     header: codedHeader.cid()
   };
   
   // 包装事件对象为 CBOR 节点
   const node = await cbornode.wrapObject(obj);
+  console.log("-------------------nodecid",node.cid().toString());
   // 添加到 DAG
-  if (dag) {
-    await dag.add(codedHeader);
-    await dag.add(codedBody);
-    await dag.add(node);
+  if (bstore) {
+    await bstore.put(node.cid(), node.data());
+    await bstore.put(codedHeader.cid(), codedHeader.data());
+    await bstore.put(codedBody.cid(), codedBody.data());
   }
   
   // 返回事件
@@ -137,11 +138,11 @@ export async function EventFromNode(eNode: Node): Promise<NetEvent> {
  * @returns 获取的事件
  */
 export async function EventFromRecord(
-  dag: DAGCBOR,
+  bstore: Blocks,
   rec: IRecord
 ): Promise<NetEvent> {
   try {
-    const block = await rec.getBlock( dag);
+    const block = await rec.getBlock( bstore);
     
     // 检查是否已经是 Event
     if (block instanceof Event) {
@@ -202,11 +203,11 @@ export class Event implements NetEvent {
 
 
   async getHeader(
-    dag: DAGCBOR,
+    bstore: Blocks,
     key?: SymmetricKey
   ): Promise<NetEventHeader> {
     if (!this._header) {//todo 需要调试
-      const blockData = await dag.get<Uint8Array>(this._obj.header);
+      const blockData = await bstore.get(this._obj.header);
       const headerNode = await cbornode.wrapObject(blockData);
       this._header = new EventHeader(headerNode);
     }
@@ -237,18 +238,18 @@ export class Event implements NetEvent {
   }
   
   async getBody(
-    dag: DAGCBOR,
+    bstore: Blocks,
     key?: SymmetricKey
   ): Promise<IPLDNode> {
     let k: SymmetricKey | null = null;
     
     if (key) {
-      const header = await this.getHeader( dag, key);
+      const header = await this.getHeader( bstore, key);
       k = await header.key();
     }
     
     if (!this._body) {
-     const block = await dag.get<Uint8Array>(this._obj.body);
+     const block = await bstore.get(this._obj.body);
      this._body = await cbornode.wrapObject(block);
 
     }

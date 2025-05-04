@@ -48,7 +48,6 @@ export class Http2_Type {
 export class BrowserType {
   static File = 1;
   static ThreadDB = 2;
-  static ThreadRec = 3;
 }
 
 
@@ -443,6 +442,7 @@ export class DcUtil {
     const nodeConn = await libp2p.dial(nodeAddr, {
       signal: AbortSignal.timeout(dial_timeout)
     });
+    //判断是否有现成的stream,如果已经存在就直接使用
    const stream = await nodeConn.newStream("/dc/transfer/1.0.0")
    const writer =  new StreamWriter(stream.sink) 
    const mParts: Uint8Array[] = [];
@@ -490,6 +490,7 @@ export class DcUtil {
             const fetchRequest = oidfetch.pb.FetchRequest.decode(parsedMessage.payload)
             
             const resCid =  new TextDecoder().decode(fetchRequest.cid)
+            console.log("-------------------------------resCid",resCid)
             //获取resCid对应的block
             const cid = CID.parse(resCid);  
 

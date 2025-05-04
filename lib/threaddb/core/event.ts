@@ -3,6 +3,7 @@ import type { CID } from 'multiformats/cid'
 import {IPLDNode} from './core'
 import { SymmetricKey } from '../common/key'
 import {DAGCBOR} from '@helia/dag-cbor'
+import { Blocks } from 'helia'
 
 
 // 事件头接口  
@@ -24,7 +25,7 @@ export interface IThreadEvent extends IPLDNode {
    * @param decryptKey 可选的解密密钥（用于加密头）  
    */  
   getHeader(   
-    dag: DAGCBOR,
+    bstore: Blocks,
     decryptKey?: SymmetricKey  
   ): Promise<EventHeader>  
 
@@ -36,7 +37,7 @@ export interface IThreadEvent extends IPLDNode {
    * @param decryptKey 必须提供头密钥才能解密  
    */  
   getBody(   
-    dag: DAGCBOR,
+    bstore: Blocks,
     decryptKey?: SymmetricKey  
   ): Promise<IPLDNode>  
 }  

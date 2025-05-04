@@ -157,7 +157,7 @@ class Logstore implements ILogstore {
         }
         await this.keyBook.addPubKey(id, lg.id, lg.pubKey);
         await this.addrBook.addAddrs(id, lg.id, lg.addrs, PermanentAddrTTL);
-        if (lg.head && lg.head.id.toString() !== "") {
+        if (lg.head ) {
             await this.headBook.setHead(id, lg.id, lg.head);
         }
         if (lg.managed || lg.privKey) {

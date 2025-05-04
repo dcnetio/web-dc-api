@@ -341,7 +341,7 @@ export class DBGrpcClient {
         const body = new net_pb.pb.PushRecordRequest.Body();
         body.threadID = ThreadIDConverter.toBytes(tid.toString()) ;
         body.logID = PeerIDConverter.toBytes(lid.toString());
-        body.record = await RecordToProto(this.net, rec);
+        body.record = await RecordToProto(this.net.bstore, rec);
         const message = new net_pb.pb.PushRecordRequest();
         message.body = body;
         message.counter = counter;

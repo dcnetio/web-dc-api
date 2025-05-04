@@ -5,6 +5,7 @@ import type { PeerId } from "@libp2p/interface";
 import type { PublicKey as CryptoPubKey } from '@libp2p/interface-keys'  
 import { DAGCBOR} from '@helia/dag-cbor'
 import { IPLDNode } from './core'
+import { Blocks } from 'helia';
 
 
 
@@ -23,7 +24,7 @@ export interface IRecord extends IPLDNode {
   blockID: () => CID  
   
   /** 异步加载内部区块 */  
-  getBlock: ( dag: DAGCBOR) => Promise<IPLDNode>  
+  getBlock: ( bstore:Blocks) => Promise<IPLDNode>  
   
   /** 前一个记录的 CID */  
   prevID: () => CID | undefined 

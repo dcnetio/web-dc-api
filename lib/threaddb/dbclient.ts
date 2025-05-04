@@ -20,7 +20,7 @@ import { toString as uint8ArrayToString } from "uint8arrays/to-string";
 import {peerIdFromMultihash, peerIdFromString} from "@libp2p/peer-id";
 import {multiaddr} from "@multiformats/multiaddr";
 import { CID } from 'multiformats/cid';
-import { getCIDUndef, getHeadUndef, Head } from "./core/head";
+import {  getHeadUndef, Head } from "./core/head";
 import {PermanentAddrTTL} from "./common/logstore";
 import { Net } from "./core/app";
 import {SymKey} from "./core/core";
@@ -109,18 +109,18 @@ export class DBClient {
             this.net,
             this.client.protocol
           );
-          grpcClient.pushRecordToPeer(
+          await grpcClient.pushRecordToPeer(
             tid,
             lid,
             rec,
             counter
           );
           //开启threaddb的block记录上报流
-          this.dc.createTransferStream(
+          await this.dc.createTransferStream(
             this.client.p2pNode,
             this.client.blockstore,
             this.client.peerAddr,
-            BrowserType.ThreadRec,
+            BrowserType.ThreadDB,
             rec.cid().toString(),
           );
         } catch (err) {
@@ -508,7 +508,7 @@ private async logFromProto(protoLog: net_pb.pb.ILog): Promise<IThreadLogInfo> {
   // 解析头部信息
   const head = protoLog.head && protoLog.head.length > 0
     ?  CID.decode(protoLog.head)
-    : await getCIDUndef();
+    : undefined;
   
   // 解析计数器
   const counter = protoLog.counter

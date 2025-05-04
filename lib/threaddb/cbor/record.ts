@@ -23,7 +23,7 @@ interface RecordObj {
   block: CID;
   sig: Uint8Array;
   pubKey: Uint8Array;
-  prev: CID;
+  prev?: CID;
 }
 
 // 创建记录的配置
@@ -51,7 +51,7 @@ interface LogRecord {
  * @returns 创建的记录
  */
 export async function CreateRecord(
-  dag: DAGCBOR,
+ bstore: Blocks,
   config: CreateRecordConfig
 ): Promise<IRecord> {
   // 序列化公钥
@@ -79,8 +79,10 @@ export async function CreateRecord(
     block: config.block.cid(),
     sig: sig,
     pubKey: pkb,
-    prev: config.prev
   };
+  if (config.prev) {
+    obj.prev = config.prev;
+  }
   
    const node = await wrapObject(obj);
 
@@ -93,9 +95,9 @@ export async function CreateRecord(
   // 使用服务密钥加密节点
   const coded = await encodeBlock(node, config.serviceKey);
   
-  // 如果提供了DAG服务，则添加到DAG
-  if (dag) {
-    await dag.add(coded);
+
+  if (bstore) {
+    await bstore.put(coded.cid(), coded.data());
   }
   
   // 返回Record实例
@@ -173,18 +175,18 @@ export async function RemoveRecord(
  * @returns proto记录
  */
 export async function RecordToProto(
-  dag: DAGCBOR,
+  bstore: Blocks,
   rec: IRecord
 ): Promise<net_pb.net.pb.Log.Record> {
-  const block = await rec.getBlock( dag);
+  const block = await rec.getBlock( bstore);
   let event: NetEvent;
   if (block instanceof Event) {
     event = block;
   } else {
     event = await EventFromNode(block as Node);
   }
-  const header = await event.getHeader( dag);
-  const body = await event.getBody(dag);
+  const header = await event.getHeader( bstore);
+  const body = await event.getBody(bstore);
   const record = new net_pb.net.pb.Log.Record();
   record.recordNode = rec.data();
   record.eventNode = event.data();
@@ -259,12 +261,13 @@ export class Record implements IRecord {
   blockID(): CID {
     return this._obj.block;
   }
-  async getBlock( dag: DAGCBOR): Promise<IPLDNode> {
+  async getBlock( bstore:Blocks): Promise<IPLDNode> {
     if (this._block) {
       return this._block;
     }
     
-    this._block = await dag.get(this._obj.block);
+    const data = await bstore.get(this._obj.block);
+    this._block = await cbornode.wrapObject(data);
     return this._block;
   }
   

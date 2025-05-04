@@ -13,6 +13,7 @@ import { PeerId } from '@libp2p/interface';
 import { Head } from './head';
 import {net as net_pb} from "../pb/net_pb";
 import { DBClient } from '../dbclient';
+import { Blocks } from 'helia';
 
 
 // 类型定义  
@@ -81,6 +82,7 @@ export interface LocalEvent {
 
 // 网络接口  
 export interface Net extends net_Net {  
+  bstore: Blocks;
   connectApp(app: App, threadId: ThreadID): Promise<Connector>
 
   createRecord(  

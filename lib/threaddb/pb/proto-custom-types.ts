@@ -113,6 +113,9 @@ export class CidConverter {
   }  
 
   static toBytes(c: CID): Uint8Array {  
+    if (c == null) {  
+      return new Uint8Array() // Undefined CID  
+    }
     return c.bytes  
   }  
 }  

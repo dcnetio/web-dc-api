@@ -40,7 +40,7 @@ export interface IBlock {
 
 
 // 接口定义  
-export interface INet extends DAGCBOR{  
+export interface INet {  
   createThread( id: ThreadID, options: { token: ThreadToken; logKey?: Ed25519PrivKey|Ed25519PubKey, threadKey?: ThreadKey }): Promise<ThreadInfo>;  
   addThread(addr: ThreadMuliaddr,options: { token?: ThreadToken; logKey?: Ed25519PrivKey | Ed25519PubKey; threadKey?: ThreadKey } ): Promise<ThreadInfo>;
   getThread( id: ThreadID, ...opts: any[]): Promise<ThreadInfo>;  

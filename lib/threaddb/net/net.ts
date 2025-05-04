@@ -25,7 +25,7 @@ import {Node} from '../cbor/node';
 import {IPLDNode} from '../core/core';
 import {ThreadRecord,TimestampedRecord,PeerRecords,netPullingLimit} from './define';
 import {CID} from 'multiformats/cid';
-import {getHeadUndef,getCIDUndef} from '../core/head';
+import {getHeadUndef} from '../core/head';
 import {GetRecord,CreateRecord} from '../cbor/record';
 import {IThreadEvent} from '../core/event';
 import {DBGrpcClient} from './grpcClient';
@@ -64,9 +64,8 @@ function newRecord(r: IRecord, id: ThreadID, lid: PeerId): IThreadRecord {
 
 // 定义 Network 类  
 export class Network implements Net {
-  
+  bstore: Blocks;
   private logstore: ILogstore;  
-  private bstore: Blocks;
   private dcChain: ChainUtil;
   private dc: DcUtil;
   private dagService: DAGCBOR; 
@@ -491,11 +490,11 @@ async ensureUniqueLog(id: ThreadID, key?: Ed25519PrivKey | Ed25519PubKey, identi
             const r = rs.records[i];
             
             // Get blocks for validation
-            const block = await r.getBlock( this.dagService);
+            const block = await r.getBlock( this.bstore);
             const event = block instanceof Event ? block : await EventFromNode(block as Node);
             
-            const header = await event.getHeader(this.dagService);
-            const body = await event.getBody(this.dagService);
+            const header = await event.getHeader(this.bstore);
+            const body = await event.getBody(this.bstore);
             
             // Store internal blocks locally
             await this.addMany([event, header, body]);
@@ -534,7 +533,7 @@ async ensureUniqueLog(id: ThreadID, key?: Ed25519PrivKey | Ed25519PubKey, identi
 
   async addMany( nodes: IPLDNode[]): Promise<void> {
     for (const node of nodes) {
-      await this.dagService.add( node);
+      await this.bstore.put(node.cid(), node.data());
     } 
   }
   /**
@@ -623,7 +622,6 @@ async ensureUniqueLog(id: ThreadID, key?: Ed25519PrivKey | Ed25519PubKey, identi
     }  
     const addr = multiaddr(`/p2p/${this.hostID}`); // 基于 hostID 生成地址  
     const head : Head = {
-        id: peerId.toCID(),
         counter: 0,
     }
     const logInfo: IThreadLogInfo = {  
@@ -875,7 +873,7 @@ async getRecordsWithDbClient(
       for (const record of chain) {
         if (validate) {
           // Validate the record
-          const block = await record.value().getBlock(this.dagService);
+          const block = await record.value().getBlock(this.bstore);
           
           let event: Event;
           if (block instanceof Event) {
@@ -884,7 +882,7 @@ async getRecordsWithDbClient(
             event = await EventFromNode(block as Node) as Event;
           }
           
-          const dbody = await event.getBody( this, readKey);
+          const dbody = await event.getBody( this.bstore, readKey);
           
           identity =  await KeyConverter.publicFromBytes<Ed25519PubKey>(record.value().pubKey());
           
@@ -892,8 +890,8 @@ async getRecordsWithDbClient(
             await connector!.validateNetRecordBody(dbody, identity);
           } catch (err) {
             // If validation fails, clean up blocks
-            const header = await event.getHeader( this,null );
-            const body = await event.getBody(this, null);
+            const header = await event.getHeader( this.bstore,null );
+            const body = await event.getBody(this.bstore, null);
             this.bstore.deleteMany([event.cid(), header.cid(), body.cid()]);
             throw err;
           }
@@ -926,7 +924,7 @@ async getRecordsWithDbClient(
         }
 
         // Add record to blockstore
-        await this.dagService.add(record.value());
+        await this.bstore.put(record.value().cid(), record.value().data());
         
       }
     } finally {
@@ -955,8 +953,7 @@ async getRecordsWithDbClient(
     // If we don't have the counter, check if record exists
     if (counter === undefined) {
       const exist = await this.isKnown(last.cid());
-      const CIDUndef = await getCIDUndef();
-      if (exist || !last.cid().equals(CIDUndef)) {
+      if (exist || !(last.cid().toString() == "")) {
         return [[], head];
       }
     } else if (counter <= head.counter) {
@@ -965,11 +962,10 @@ async getRecordsWithDbClient(
 
     let chain: IRecord[] = [];
     let complete = false;
-    const CIDUndef = await getCIDUndef();
     // Check which records we already have
     for (let i = recs.length - 1; i >= 0; i--) {
       const next = recs[i];
-      if (next.cid().equals(CIDUndef) || next.cid().equals(head.id)) {
+      if ( next.cid.toString() == "" || next.cid().equals(head.id)) {
         complete = true;
         break;
       }
@@ -980,7 +976,7 @@ async getRecordsWithDbClient(
     // Bridge the gap between the last provided record and current head
     if (!complete && chain.length > 0) {
       let c = chain[chain.length - 1].prevID();
-      while (c && !c.equals(CIDUndef)) {
+      while (c && !(last.cid().toString() == "")) {
         if (c.equals(head.id)) {
           break;
         }
@@ -1001,7 +997,7 @@ async getRecordsWithDbClient(
       const r = chain[i];
       
       // Get and cache blocks
-      const block = await r.getBlock(this.dagService);
+      const block = await r.getBlock(this.bstore);
      let event: IThreadEvent;
       if (block instanceof Event) {
         event = block;
@@ -1009,8 +1005,8 @@ async getRecordsWithDbClient(
         event = await EventFromNode(block as Node) ;
       }
 
-      const header = await event.getHeader(this.dagService);
-      const body = await event.getBody(this.dagService);
+      const header = await event.getHeader(this.bstore);
+      const body = await event.getBody(this.bstore);
       
       // Store internal blocks
       await this.addMany([event, header, body]);
@@ -1142,7 +1138,7 @@ async getRecord( id: ThreadID, rid: CID): Promise<IRecord> {
   async getRecords(
     peers: PeerId[], 
     tid: ThreadID, 
-    offsets: Record<string, { id: CID, counter: number }>,
+    offsets: Record<string, { id?: CID, counter: number }>,
     limit: number
   ): Promise<Record<string, PeerRecords>> {
     try {
@@ -1300,15 +1296,6 @@ async getRecord( id: ThreadID, rid: CID): Promise<IRecord> {
     return con;
   }
 
-async  add(str: unknown, options?: Partial<AddOptions>): Promise<CID> {
-  // 添加到块存储
-  return await this.dagService.add(str, options);
-}
-
-async get<T>(cid: CID,options?: Partial<GetOptions>): Promise<T> {
-  // 从块存储中获取数据
-  return await this.dagService.get(cid) as T;
-}
 
 
 
@@ -1393,13 +1380,11 @@ async createRecord(
     
     // 创建新记录
     const r = await this.newRecord(id, lg, body, identity);
-    
+   
     // 创建threaddb 记录
     const tr = newRecord(r, id, lg.id);
     if (!lg.head){
-      const CIDUndef = await getCIDUndef();
       lg.head = {
-        id: CIDUndef,
         counter: 0
       }
     }
@@ -1420,6 +1405,9 @@ async createRecord(
     // 推送记录到节点
     if (this.server) {
       await this.pushRecord(id, lg.id, tr.value(), lg.head.counter + 1);
+      //todo remove 
+      console.log("****************push record to node",tr.value().cid().toString(),id.toString(),lg.id.toString(),lg.head.counter + 1);
+      //todo remove end
     }
     
     return tr;
@@ -1467,23 +1455,33 @@ async newRecord(id: ThreadID, lg: IThreadLogInfo, body: IPLDNode, identity: Publ
   if (!serviceKey) {
     throw new Error("No service key for thread");
   }
-  const head = await this.logstore.headBook.heads(id, lg.id)
+  const heads = await this.logstore.headBook.heads(id, lg.id)
   // 创建事件
   const sk = SymmetricKey.fromSymKey(serviceKey);
   const readKey = await this.logstore.keyBook.readKey(id);
   const rk = readKey ? SymmetricKey.fromSymKey(readKey) : null;
   const event = await CreateEvent(
-    this.dagService,
+    this.bstore,
     body as Node,
     rk
   );
   // 将事件保存到存储
-  await this.dagService.add(event);
+  await this.bstore.put(event.cid(), event.data());
+  //todo remove
+  console.log("**************event cid:",event.cid().toString());
+  console.log("**************event header id:",event.headerCID().toString());
+  console.log("**************event body id:",event.bodyCID().toString());
+
+  //todo remove end
+  let prev:CID;
+  if (heads && heads.length > 0 ){
+    prev = heads[0].id;
+  }
   const rec = await CreateRecord(
-    this.dagService,
+    this.bstore,
   {
     block: event,
-    prev: head[0].id,
+    prev: prev,
     key: lg.privKey as Ed25519PrivKey,
     pubKey: this.privateKey.publicKey,
     serviceKey: sk

@@ -5,7 +5,7 @@ import { sha256 } from 'multiformats/hashes/sha2'
 // Head结构体转换  
 export interface Head {  
   /** 使用multiformats的CID类型表示IPFS内容标识符 */  
-  id: CID  
+  id?: CID  
   /** 使用number表示计数器（注意JS的Number精度限制） */  
   counter: number  
 }  
@@ -24,9 +24,8 @@ export const CounterUndef: number = 0
 
 // export const CIDUndef:CID = CID.create(1, 0x55, emptyMultihash)
 export async function getHeadUndef(): Promise<Head> {  
-  const emptyMultihash = await sha256.digest(new Uint8Array())  
+ // const emptyMultihash = await sha256.digest(new Uint8Array())  
   return {  
-    id: CID.create(1, 0x55, emptyMultihash),  
     counter: CounterUndef  
   }  
 }  
