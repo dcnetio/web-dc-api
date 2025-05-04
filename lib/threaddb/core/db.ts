@@ -237,7 +237,7 @@ export interface Action {
       indexFn: IndexFunc  
     ): Promise<ReduceAction[]>;  
   
-    create(actions: Action[]): Promise<[Event[], Uint8Array]>;  
+    create(actions: Action[]): Promise<[Event[],  IPLDNode ]>;  
   
     eventsFromBytes(data: Uint8Array): Promise<Event[]> ;  
     

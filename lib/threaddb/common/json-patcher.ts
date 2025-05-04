@@ -18,20 +18,18 @@ import {
   InstanceID,     
   CoreActionType
 } from '../core/db';  
+import { IPLDNode } from '../core/core';
 
 // ==================== 核心数据结构 ====================  
-interface Operation {  
+interface Operation {  //当前命名方式,大小写与golang一致
   type: CoreActionType; 
   instanceID: InstanceID;  
-  jsonPatch?: Uint8Array ; 
-  jSONPatch?: Uint8Array ; 
+  jSONPatch: Uint8Array ; 
 }  
 
-interface PatchEvent {  
+interface PatchEvent {  //当前命名方式大小写与golang一致
   timestamp: BigInt;  
-  id: InstanceID;  
-  iD?: InstanceID;
-  collection: string; 
+  iD: InstanceID;  
   collectionName?: string; 
   patch: Operation;  
 }  
@@ -55,13 +53,15 @@ export class JsonPatcher implements EventCodec {
     cidVersion: 1 as const  
   };  
 
-  async create(actions: Action[]): Promise<[Event[], Uint8Array]> {  
+  async create(actions: Action[]): Promise<[Event[], IPLDNode ]> {  
     const events = this.convertActions(actions);  
-    const block = await Block.encode({  
-      value: { patches: events },  
-      ...JsonPatcher.ENCODER_SETTINGS  
-    });  
-    return [this.wrapEvents(events), block.bytes];  
+    const recordEvents = { patches: events };
+    const obj = await cbornode.wrapObject(recordEvents);
+    // const block = await Block.encode({  
+    //   value: objValue,  
+    //   ...JsonPatcher.ENCODER_SETTINGS  
+    // });  
+    return [this.wrapEvents(events), obj];  
   }  
 
   async reduce(  
@@ -78,8 +78,8 @@ export class JsonPatcher implements EventCodec {
         await this.processEvent(event, baseKey, txn, indexFunc);  
         actions.push({  
           type: event.patch.type,  
-          collection: event.collection,  
-          instanceID: event.id  
+          collection: event.collectionName,  
+          instanceID: event.iD  
         });  
       }  
       await txn.commit();  
@@ -113,12 +113,12 @@ export class JsonPatcher implements EventCodec {
    const timestamp = BigInt(Date.now() * 1000000 + Math.floor(Math.random() * 1000000));
     return actions.map(action => ({  
       timestamp: timestamp,
-      id: action.instanceID,  
-      collection: action.collectionName || 'default',  
+      iD: action.instanceID,  
+      collectionName: action.collectionName || 'default',  
       patch: {  
         type: action.type,  
         instanceID: action.instanceID,  
-        jsonPatch: action.current  
+        jSONPatch: action.current  
       }  
     }));  
   }  
@@ -128,10 +128,10 @@ export class JsonPatcher implements EventCodec {
       return [];  
     }
     return patches.map(p => ({  
-      collection: p.collection || p.collectionName,  
-      instanceID: p.id || p.patch.instanceID,  
+      collection:  p.collectionName,  
+      instanceID: p.iD || p.patch.instanceID,  
       timestamp: p.timestamp,  
-      payload: p.patch.jsonPatch || p.patch.jSONPatch,  
+      payload:  p.patch.jSONPatch,  
       marshal: async () => this.marshalPatchEvent(p)  
     }));  
   }  
@@ -140,12 +140,12 @@ export class JsonPatcher implements EventCodec {
    
     return encode({  
       t: event.timestamp,  
-      i: event.id || event.iD,  
-      c: event.collection || event.collectionName,  
+      i: event.iD || event.iD,  
+      c: event.collectionName,  
       op: {  
         type: event.patch.type,  
         id: event.patch.instanceID,  
-        patch: event.patch.jsonPatch || event.patch.jSONPatch  
+        patch:  event.patch.jSONPatch  
       }
     });  
   }  
@@ -162,12 +162,12 @@ export class JsonPatcher implements EventCodec {
     const data = decode(await event.marshal()) as any;  
     return {  
       timestamp: data.t,  
-      id: data.i,  
-      collection: data.c,  
+      iD: data.i,  
+      collectionName: data.c,  
       patch: {  
         type: data.op.type,  
         instanceID: data.op.id,  
-        jsonPatch: data.op.patch ? encode(data.op.patch) : undefined  
+        jSONPatch: data.op.patch ? encode(data.op.patch) : undefined  
       }  
     };  
   }  
@@ -178,15 +178,15 @@ export class JsonPatcher implements EventCodec {
     txn: Transaction,  
     indexFunc: IndexFunc  
   ): Promise<void> {  
-    const recordKey = baseKey.child(new Key(event.collection)).child(new Key(event.id));  
+    const recordKey = baseKey.child(new Key(event.collectionName)).child(new Key(event.iD));  
 
     const oldData = await txn.get(recordKey).catch(() => undefined);  
     const newData = event.patch.type === CoreActionType.Delete  
       ? undefined   
-      : event.patch.jsonPatch;  
+      : event.patch.jSONPatch;  
 
     await indexFunc(  
-      event.collection,  
+      event.collectionName,  
       recordKey,  
       txn ,  
       oldData,  

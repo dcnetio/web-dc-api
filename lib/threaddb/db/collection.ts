@@ -1496,20 +1496,15 @@ async modifiedSince(time: number): Promise<InstanceID[]> {
     }
     
     try {
-      const [events, nodeData] = await this.collection.db.eventcodec.create(actions);
+      const [events, node] = await this.collection.db.eventcodec.create(actions);
       
-      if (events.length === 0 && !nodeData) {
+      if (events.length === 0 && node) {
         return { events: [], node: null };
       }
-      
-      if (events.length === 0 || !nodeData) {
-        throw new Error("Created events and node must both be nil or not-nil");
-      }
-      
-      const node = await  cbornode.wrapObject(nodeData);
-      if (!node) {
-        throw new Error('Failed to wrap node data');
-      }
+      // const node = await  cbornode.wrapObject(nodeData);
+      // if (!node) {
+      //   throw new Error('Failed to wrap node data');
+      // }
       
       return { events, node };
     } catch (err) {
