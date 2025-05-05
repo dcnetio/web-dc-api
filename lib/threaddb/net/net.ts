@@ -836,7 +836,7 @@ async getRecordsWithDbClient(
       let headReached = true;
       let updatedHead = head;
       
-      if (!current.id.equals(head.id)) {
+      if (current?.id?.toString()  !=  head?.id?.toString() ) {
         // Fast-forward the chain up to the updated head
         headReached = false;
         updatedHead = current;

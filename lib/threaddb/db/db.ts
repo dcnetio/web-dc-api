@@ -463,7 +463,7 @@ async notifyTxnEvents(node: IPLDNode, token: ThreadToken): Promise<void> {
     let event: any;
     try {  
       // 从记录中解码事件  
-      event = await threadEvent.EventFromRecord(this.connector.net, rec.value());  
+      event = await threadEvent.EventFromRecord(this.connector.net.bstore, rec.value());  
     } catch (err) {  
       // 如果解码失败，尝试从块中获取事件  
       try {//todo 待调试
@@ -496,7 +496,7 @@ async notifyTxnEvents(node: IPLDNode, token: ThreadToken): Promise<void> {
     let event :IThreadEvent;
     try {
       // 从记录中解码事件
-      event = await threadEvent.EventFromRecord(this.connector.net, rec.value());
+      event = await threadEvent.EventFromRecord(this.connector.net.bstore, rec.value());
     } catch (err) {
       // 如果解码失败，尝试从块中获取事件
       try {
@@ -510,7 +510,7 @@ async notifyTxnEvents(node: IPLDNode, token: ThreadToken): Promise<void> {
     let body:IPLDNode;
     try {
       // 获取事件的主体
-      body = await event.getBody( this.connector.net, key.read());
+      body = await event.getBody( this.connector.net.bstore, key.read());
     } catch (err) {
       throw new Error(
         `Error when getting body of event on thread ${this.connector.threadId}/${rec.logID()}: ${err instanceof Error ? err.message : String(err)}`
@@ -539,7 +539,7 @@ async notifyTxnEvents(node: IPLDNode, token: ThreadToken): Promise<void> {
     for (let i = 1; i <= getBlockRetries; i++) {
       try {
         // 尝试获取块
-        const block = await rec.getBlock(this.connector.net);
+        const block = await rec.getBlock(this.connector.net.bstore);
         return block; // 成功则立即返回
       } catch (err) {
         lastError = err as Error;

@@ -91,21 +91,11 @@ export class JsonPatcher implements EventCodec {
   }  
 
   async eventsFromBytes(data: Uint8Array): Promise<Event[]> {  
-   let blockData = data as Uint8Array;
-   try {
-      blockData = await dagCBOR.decode(data) as Uint8Array;
-    } catch (e) {
-      blockData = data;
-   }
-    const block = await Block.decode<RecordEvents,number,number>({  
-      bytes: blockData as Uint8Array,  
-      ...JsonPatcher.ENCODER_SETTINGS  
-    });  
-    if (!block.value) {  
-      throw new Error('Invalid block value');  
+    let block = await dagCBOR.decode(data);
+    if (block &&  typeof block === 'object'  &&'patches' in block && Array.isArray(block.patches)) {
+      return this.wrapEvents(block.patches);  
     }
-    
-    return this.wrapEvents((block.value as RecordEvents).patches);  
+    throw new Error('Invalid block format: expected RecordEvents with patches array'); 
   }  
 
   // ==================== 私有方法 ====================  

@@ -1040,19 +1040,28 @@ export class DC implements SignHandler {
     // 创建数据库
 
    const [threadId,err] = await this.dbManager.newDB(name, b32Rk, b32Sk, jsonCollections);
-   //todo remove 
-   const tid = ThreadID.fromString(threadId);
-   const db = await this.dbManager.getDB(tid);
-   const userConnection = db.getCollection("person");
-   const query = new Query();
-  const user = await userConnection.find(query);
-  for (let i = 0; i < user.length; i++) {
-    console.log("id:",user[i]._id)
-    console.log("name:",user[i].name)
-    console.log("age:",user[i].age)
-  }
-    //todo remove end
+    if (err) {
+      console.error("newDB error", err);
+      return "";
+    }
     return threadId;
+  }
+
+  async syncDbFromDC(
+    threadid: string,  
+    dbname: string,  
+    dbAddr: string,  
+    b32Rk: string,  
+    b32Sk: string,  
+    block: boolean,  
+    collectionInfos: ICollectionConfig[]  
+  ): Promise<void> {
+    if (!this.dbManager) {
+      await this.newDBManager()
+    }
+  await this.dbManager.syncDBFromDC(null,
+      threadid,dbname,dbAddr,b32Rk,b32Sk,block,collectionInfos
+    );
   }
 
 }

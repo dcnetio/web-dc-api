@@ -354,7 +354,7 @@ async syncDBFromDC(
     b32Rk: string,  
     b32Sk: string,  
     block: boolean,  
-    jsonCollections: string  
+    collectionInfos: ICollectionConfig[]    
 ): Promise<Error | null> {  
     try {  
         const tID = await this.decodeThreadId(threadid);  
@@ -397,7 +397,7 @@ async syncDBFromDC(
         }
     
 
-        const collectionInfos: ICollectionConfig[] = JSON.parse(jsonCollections);  
+      
         const collections = await Promise.all(  
             collectionInfos.map(async info => ({  
                 name: info.name,  
