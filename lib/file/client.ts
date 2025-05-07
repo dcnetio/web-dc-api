@@ -61,7 +61,6 @@ export class FileClient {
       const onDataCallback = async (payload: Uint8Array) => {
         const decodedPayload = dcnet.pb.StroeFileReply.decode(payload);
         let resStatus = uploadStatus.UPLOADING;
-        // todo 需要转换
         switch (decodedPayload.status) {
           case uploadRespondStatus.FilePulling:
             resStatus = uploadStatus.UPLOADING;

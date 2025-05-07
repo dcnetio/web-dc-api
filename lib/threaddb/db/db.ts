@@ -466,7 +466,7 @@ async notifyTxnEvents(node: IPLDNode, token: ThreadToken): Promise<void> {
       event = await threadEvent.EventFromRecord(this.connector.net.bstore, rec.value());  
     } catch (err) {  
       // 如果解码失败，尝试从块中获取事件  
-      try {//todo 待调试
+      try {
         const block = await this.getBlockWithRetry( rec.value());  
         event = await threadEvent.EventFromNode(block);  
       } catch (blockErr) {

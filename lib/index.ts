@@ -1031,14 +1031,7 @@ export class DC implements SignHandler {
     if (!this.dbManager) {
       await this.newDBManager()
     }
-    //todo remove
-    console.log("newDB name:", name);
-    console.log("newDB b32Rk:", b32Rk);
-    console.log("newDB b32Sk:", b32Sk);
-    console.log("newDB jsonCollections:", jsonCollections);
-    //todo remove end
     // 创建数据库
-
    const [threadId,err] = await this.dbManager.newDB(name, b32Rk, b32Sk, jsonCollections);
     if (err) {
       console.error("newDB error", err);

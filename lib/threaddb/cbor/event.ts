@@ -206,7 +206,7 @@ export class Event implements NetEvent {
     bstore: Blocks,
     key?: SymmetricKey
   ): Promise<NetEventHeader> {
-    if (!this._header) {//todo 需要调试
+    if (!this._header) {
       const blockData = await bstore.get(this._obj.header);
       const headerNode = await cbornode.wrapObject(blockData);
       this._header = new EventHeader(headerNode);

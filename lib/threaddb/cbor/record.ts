@@ -1,4 +1,4 @@
-import { Context } from '../core/core';
+import {  IThreadLogInfo } from '../core/core';
 import { IRecord } from '../core/record';
 import { IThreadEvent as NetEvent, EventHeader as NetEventHeader } from '../core/event';
 import { Ed25519PrivKey  as PrivKey,Ed25519PubKey as PubKey} from "../../dc-key/ed25519";
@@ -6,18 +6,19 @@ import type { PublicKey  } from '@libp2p/interface-keys'
 import { SymmetricKey } from '../common/key';
 import { CID, Link } from 'multiformats/cid';
 import * as dagCBOR from '@ipld/dag-cbor';
-import { sha256 } from 'multiformats/hashes/sha2';
 import { Node, wrapObject } from './node';
 import { Block } from './node';
 import { Event, EventFromNode,EventObj,EventHeader } from './event';
 import { encodeBlock, decodeBlock } from './coding';
-import { dagCbor, DAGCBOR } from '@helia/dag-cbor';
+import {  DAGCBOR } from '@helia/dag-cbor';
 import { Blocks } from 'helia';
-import  * as net_pb from '../pb/net_pb'
+import {net as net_pb} from "../pb/net_pb";
 import { IPLDNode } from '../core/core';
 import * as cbornode from './node';
-import { Envelope } from '@libp2p/interface';
-import { KeyConverter } from '../pb/proto-custom-types';
+import { KeyConverter, PeerIDConverter } from '../pb/proto-custom-types';
+import { decode } from 'multiformats/hashes/digest';
+import { peerIdFromMultihash } from '@libp2p/peer-id';
+import {multiaddr} from "@multiformats/multiaddr";
 // 记录的节点结构
 interface RecordObj {
   block: CID;
@@ -166,6 +167,77 @@ export async function RemoveRecord(
   await blockstore.delete(rec.cid());
 }
 
+
+
+/**
+ * 将日志信息转换为protobuf格式
+ * @param info 日志信息
+ * @returns protobuf格式的日志
+ */
+ export async function  logToProto(lg: IThreadLogInfo): Promise<net_pb.pb.ILog> {
+  if (!lg.pubKey){
+    throw new Error('Missing required fields in LogInfo: pubKey');
+  }
+  const publicKeyBytes =  await KeyConverter.publicToBytes(lg.pubKey);
+  const lgid = lg.id.toString();
+  const idBytes = PeerIDConverter.toBytes(lgid);
+  const addrs = lg.addrs? lg.addrs.map(addr => addr.bytes) : [];
+  // 创建protobuf日志对象
+  const log: net_pb.pb.ILog = {
+    ID: idBytes,
+    pubKey:publicKeyBytes,
+    addrs: addrs,
+    head: lg.head?.id ? lg.head.id.bytes : undefined,
+    counter: lg.head?.counter 
+  };
+  return log;
+}
+
+
+/**
+ * 将protobuf格式的日志转换为应用格式
+ * @param protoLog protobuf格式的日志
+ * @returns 应用格式的日志信息
+ */
+export async function logFromProto(protoLog: net_pb.pb.ILog): Promise<IThreadLogInfo> {
+  if (!protoLog.ID || !protoLog.pubKey) {
+    throw new Error('Missing required fields in Log: ID or pubKey');
+  }
+  const multihash = decode(protoLog.ID);
+  const id = peerIdFromMultihash(multihash);
+  // 解析日志ID
+  //const id =  PeerIDConverter.fromBytes(logId);
+  
+  // 解析公钥
+  const pubKey = await KeyConverter.publicFromBytes(protoLog.pubKey);
+  
+
+  // 解析地址
+  const addrs = (protoLog.addrs || []).map(addr => multiaddr(addr));
+  
+  // 解析头部信息
+  const head = protoLog.head && protoLog.head.length > 0
+    ?  CID.decode(protoLog.head)
+    : undefined;
+  
+  // 解析计数器
+  const counter = protoLog.counter
+    ? Number(protoLog.counter)
+    : 0;
+  
+  return {
+    id,
+    pubKey,
+    addrs,
+    managed: true,
+    head: {
+      id: head,
+      counter
+    }
+  };
+}
+
+
 /**
  * 将记录转换为用于传输的proto版本
  * 节点以加密形式发送
@@ -177,7 +249,7 @@ export async function RemoveRecord(
 export async function RecordToProto(
   bstore: Blocks,
   rec: IRecord
-): Promise<net_pb.net.pb.Log.Record> {
+): Promise<net_pb.pb.Log.Record> {
   const block = await rec.getBlock( bstore);
   let event: NetEvent;
   if (block instanceof Event) {
@@ -187,7 +259,7 @@ export async function RecordToProto(
   }
   const header = await event.getHeader( bstore);
   const body = await event.getBody(bstore);
-  const record = new net_pb.net.pb.Log.Record();
+  const record = new net_pb.pb.Log.Record();
   record.recordNode = rec.data();
   record.eventNode = event.data();
   record.headerNode = header.data();
@@ -199,7 +271,7 @@ export async function RecordToProto(
 
 
 export async function RecordFromProto(
-  rec: net_pb.net.pb.Log.Record,
+  rec: net_pb.pb.Log.Record,
   key: SymmetricKey
 ): Promise<IRecord> {
   if (!key) {

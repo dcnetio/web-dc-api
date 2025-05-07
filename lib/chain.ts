@@ -96,6 +96,22 @@ export class ChainUtil {
       }
       return userInfo;
     }
+   // 对 userInfo.peers 按与用户公钥的 XOR 距离进行排序
+    if (userInfo.peers && Array.isArray(userInfo.peers) && account) {
+        userInfo.peers.sort((peerA, peerB) => {
+        // 将 peer 字符串转换为 Uint8Array (如果需要)
+        const peerABytes = typeof peerA === 'string' ? new TextEncoder().encode(peerA) : peerA;
+        const peerBBytes = typeof peerB === 'string' ? new TextEncoder().encode(peerB) : peerB;
+        //account 是一个0x开头的16进制字符串转换为 Uint8Array
+        const accountBytes = hexToBytes(account.slice(2));
+        // 计算每个 peer 与公钥的 XOR 距离
+        const distance1 = this.calculateDistance(peerABytes, accountBytes);
+        const distance2 = this.calculateDistance(peerBBytes, accountBytes);
+        if (distance1 < distance2) return -1;
+        if (distance1 > distance2) return 1;
+        return 0;
+      });
+    }
     return userInfo;
   }
   // 获取用户钱包信息
@@ -111,6 +127,39 @@ export class ChainUtil {
     );
     return userInfo;
   }
+
+  /**
+ * 计算两个字节数组之间的XOR距离
+ * @param key1 第一个字节数组
+ * @param key2 第二个字节数组
+ * @returns 两个键之间的XOR距离，以BigInt表示
+ */
+ calculateDistance(key1: Uint8Array, key2: Uint8Array): bigint {
+  // 使用两个字节数组的最小长度
+  const minLen = Math.min(key1.length, key2.length);
+  
+  // 创建结果数组存储XOR结果
+  const result = new Uint8Array(minLen);
+  
+  // 按字节计算XOR距离
+  for (let i = 0; i < minLen; i++) {
+    result[i] = key1[i] ^ key2[i];
+  }
+  
+  // 将结果转换为BigInt用于比较
+  // 首先转换为十六进制字符串以处理大数值
+  let hexString = '0x';
+  for (let i = 0; i < result.length; i++) {
+    hexString += result[i].toString(16).padStart(2, '0');
+  }
+  
+  // 如果结果为空（全零），返回0n
+  if (hexString === '0x') {
+    return BigInt(0);
+  }
+  
+  return BigInt(hexString);
+}
 
   // 获取用户钱包信息
   async getUserInfoWithNft(nftAccount: string): Promise<User | null> {

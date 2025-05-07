@@ -1,14 +1,9 @@
 import type { Client } from "../dcapi";
 import type { Multiaddr as TMultiaddr } from "@multiformats/multiaddr";
-import * as dagCBOR from '@ipld/dag-cbor';
 import { extractPublicKeyFromPeerId } from "../dc-key/keyManager";
-import { Ed25519PubKey } from "../dc-key/ed25519";
-import { dcnet  as dcnet_proto} from "../proto/dcnet_proto";
-import { SymmetricKey, Key as ThreadKey } from './common/key';
-import type { PublicKey,PrivateKey } from "@libp2p/interface"; 
+import { SymmetricKey} from './common/key';
 import { NewThreadOptions } from './core/options';
 import { ThreadID } from '@textile/threads-id'; 
-import { netPullingLimit, PeerRecords} from "./net/define";
 import { DBGrpcClient } from "./net/grpcClient";
 import { PeerId } from "@libp2p/interface";
 import { IRecord } from "./core/record";
@@ -16,18 +11,16 @@ import { DcUtil,BrowserType } from "../dcutil";
 import {net as net_pb} from "./pb/net_pb";
 import {ILogstore} from "./core/logstore";
 import  {IThreadInfo, IThreadLogInfo, ThreadInfo} from "./core/core";
-import { toString as uint8ArrayToString } from "uint8arrays/to-string";
-import {peerIdFromMultihash, peerIdFromString} from "@libp2p/peer-id";
-import {multiaddr} from "@multiformats/multiaddr";
-import { CID } from 'multiformats/cid';
 import {  getHeadUndef, Head } from "./core/head";
-import {PermanentAddrTTL} from "./common/logstore";
+
 import { Net } from "./core/app";
 import {SymKey} from "./core/core";
 import { ThreadToken } from "./core/identity";
-import { CidConverter, KeyConverter, PeerIDConverter, ThreadIDConverter } from "./pb/proto-custom-types";
-import { dagCbor } from "@helia/dag-cbor";
-import { decode } from 'multiformats/hashes/digest';
+import { CidConverter, PeerIDConverter, ThreadIDConverter } from "./pb/proto-custom-types";
+import { logFromProto } from "./cbor/record";
+import { PeerRecords } from "./net/define";
+
+
 
 
 
@@ -113,7 +106,8 @@ export class DBClient {
             tid,
             lid,
             rec,
-            counter
+            counter,
+            this.logstore,
           );
           //开启threaddb的block记录上报流
           await this.dc.createTransferStream(
@@ -299,7 +293,7 @@ private async localEdges(tid: ThreadID): Promise<{ addrEdge: number, headsEdge: 
  async scheduleUpdateLogs(tid: ThreadID): Promise<void> {
    // 创建gRPC客户端
   const lgs =  await this.getLogs(tid);
-	return await this.createExternalLogsIfNotExist(tid, lgs)
+	return await this.net.createExternalLogsIfNotExist(tid, lgs)
 }
 
 /**
@@ -388,7 +382,7 @@ async getLogs(tid: ThreadID): Promise<IThreadLogInfo[]> {
     }
     // 将日志从protobuf格式转换为应用格式
     const logs: IThreadLogInfo[] = await Promise.all(
-      reply.logs.map(async (l) => await this.logFromProto(l))
+      reply.logs.map(async (l) => await logFromProto(l))
     );
     return logs;
   } catch (err) {
@@ -424,46 +418,6 @@ async getRecordsFromPeer(
 
 
 
-/**
- * 创建外部日志（如果不存在）
- * 创建的日志将使用未定义CID作为当前头部
- * 此方法是线程安全的
- * 
- * @param tid 线程ID
- * @param logs 日志信息数组
- */
-async createExternalLogsIfNotExist(tid: ThreadID, logs: IThreadLogInfo[]): Promise<void> {
-
-  try {
-    
-    
-    // 处理每个日志
-    for (const log of logs) {
-      try {
-        // 检查当前头部
-        const heads = await this.logstore.headBook.heads(tid, log.id);
-        
-        if (heads.length === 0) {
-          // 如果没有头部，设置为未定义并添加日志
-          log.head = await getHeadUndef();
-          await this.logstore.addLog(tid, log);
-        } else {
-          // 更新日志地址
-          await this.logstore.addrBook.addAddrs(
-            tid, 
-            log.id, 
-            log.addrs, 
-            PermanentAddrTTL
-          );
-        }
-      } catch (err) {
-        continue
-      }
-    }
-  } finally {
-  }
-}
-
 
 async getThreadFromPeer(
   id: ThreadID, 
@@ -484,48 +438,5 @@ async getThreadFromPeer(
 
 
 
-/**
- * 将protobuf格式的日志转换为应用格式
- * @param protoLog protobuf格式的日志
- * @returns 应用格式的日志信息
- */
-private async logFromProto(protoLog: net_pb.pb.ILog): Promise<IThreadLogInfo> {
-  if (!protoLog.ID || !protoLog.pubKey) {
-    throw new Error('Missing required fields in Log: ID or pubKey');
-  }
-  const multihash = decode(protoLog.ID);
-  const id = peerIdFromMultihash(multihash);
-  // 解析日志ID
-  //const id =  PeerIDConverter.fromBytes(logId);
-  
-  // 解析公钥
-  const pubKey = await KeyConverter.publicFromBytes(protoLog.pubKey);
-  
-
-  // 解析地址
-  const addrs = (protoLog.addrs || []).map(addr => multiaddr(addr));
-  
-  // 解析头部信息
-  const head = protoLog.head && protoLog.head.length > 0
-    ?  CID.decode(protoLog.head)
-    : undefined;
-  
-  // 解析计数器
-  const counter = protoLog.counter
-    ? Number(protoLog.counter)
-    : 0;
-  
-  // 创建并返回日志信息
-  return {
-    id,
-    pubKey,
-    addrs,
-    managed: true,
-    head: {
-      id: head,
-      counter
-    }
-  };
-}
   
 }

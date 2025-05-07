@@ -26,7 +26,7 @@ import {IPLDNode} from '../core/core';
 import {ThreadRecord,TimestampedRecord,PeerRecords,netPullingLimit} from './define';
 import {CID} from 'multiformats/cid';
 import {getHeadUndef} from '../core/head';
-import {GetRecord,CreateRecord} from '../cbor/record';
+import {GetRecord,CreateRecord, logToProto, logFromProto} from '../cbor/record';
 import {IThreadEvent} from '../core/event';
 import {DBGrpcClient} from './grpcClient';
 import { DBClient } from '../dbclient';
@@ -37,7 +37,7 @@ import { DcUtil } from '../../dcutil';
 import {CreateEvent} from '../cbor/event';
 import {Errors} from '../core/db';
 import {net as net_pb} from "../pb/net_pb";
-import { AddOptions,GetOptions } from '@helia/dag-cbor';
+import {PermanentAddrTTL} from "../common/logstore";
 import {   
   PeerIDConverter,  
   MultiaddrConverter,  
@@ -48,6 +48,7 @@ import {
   json
 } from '../pb/proto-custom-types' 
 import * as buffer from "buffer/";
+import { AsyncMutex } from '../common/AsyncMutex';
 const { Buffer } = buffer;
 
 
@@ -75,6 +76,7 @@ export class Network implements Net {
   private libp2p: Libp2p;
   private connectors: Record<string, Connector>;
   private cachePeers: Record<string, TMultiaddr> = {};
+  private threadMutexes: Record<string, AsyncMutex> = {};
 
   constructor(dcUtil  : DcUtil,dcChain: ChainUtil,libp2p:Libp2p,grpcServer:DCGrpcServer,logstore: ILogstore,bstore: Blocks,dagService: DAGCBOR,  privateKey: Ed25519PrivKey) {  
     this.logstore = logstore;  
@@ -138,6 +140,15 @@ export class Network implements Net {
     }
     this.cachePeers[peerId.toString()] = peerAddr;
     return client;
+  }
+
+  
+
+  getMutexForThread(threadId: string): AsyncMutex {
+    if (!this.threadMutexes[threadId]) {
+      this.threadMutexes[threadId] = new AsyncMutex();
+    }
+    return this.threadMutexes[threadId];
   }
 
   async getPeers(id: ThreadID):Promise<PeerId[]| undefined>{
@@ -335,26 +346,22 @@ async deleteThread(
 ): Promise<void> {
   try {
     // 验证线程ID和令牌
-    if (await this.validate(id, options.token) === undefined) {
-      throw new Error("Thread validation failed");
-    }
+    await this.validate(id, options.token)
     
     // 检查线程是否被应用使用
     const [_, ok] = this.getConnectorProtected(id, options.apiToken);
     if (!ok) {
       throw new Error("Cannot delete thread: thread in use");
     }
-    
     console.debug(`Deleting thread ${id.toString()}...`);
-    
-   
-    
+    const mutex = this.getMutexForThread(id.toString());
+    await mutex.acquire();
     try {
       // 执行删除操作
       await this.logstore.deleteThread(id); 
       delete this.connectors[id.toString()];
     } finally {
-     
+      mutex.release();
     }
   } catch (err) {
     throw new Error(`Failed to delete thread: ${err instanceof Error ? err.message : String(err)}`);
@@ -425,9 +432,11 @@ async ensureUniqueLog(id: ThreadID, key?: Ed25519PrivKey | Ed25519PubKey, identi
     }
     
     try {
-      await this.logstore.getLog(id, lid);
-      // 如果到达这里，说明日志存在
-      throw new Error("Log exists");
+      const lginfo = await this.logstore.getLog(id, lid);
+      if (lginfo) {
+        // 如果到达这里，说明日志存在
+        throw new Error("Log exists");
+      }
     } catch (error: any) {
       if (error.message === Errors.ErrLogNotFound.message) {
         return;
@@ -473,7 +482,10 @@ async ensureUniqueLog(id: ThreadID, key?: Ed25519PrivKey | Ed25519PubKey, identi
    */
   async pullThread(id: ThreadID): Promise<void> {
     try {
+      const mutex = this.getMutexForThread(id.toString());
+      await mutex.acquire();
       const recs = await this.pullThreadDeal(id);
+      mutex.release();
       
       const [connector, appConnected] =  this.getConnector(id);
       
@@ -818,7 +830,6 @@ async getRecordsWithDbClient(
 }
 
 
-
   /**
    * Add records to a thread
    */
@@ -828,14 +839,13 @@ async getRecordsWithDbClient(
     if (chain.length === 0) {
       return;
     }
-    
+    const mutex = this.getMutexForThread(tid.toString());
+    await mutex.acquire();
     try {
       // Check the head again, as another process could have changed the log
       const current = await this.currentHead(tid, lid);
-      
       let headReached = true;
       let updatedHead = head;
-      
       if (current?.id?.toString()  !=  head?.id?.toString() ) {
         // Fast-forward the chain up to the updated head
         headReached = false;
@@ -928,7 +938,7 @@ async getRecordsWithDbClient(
         
       }
     } finally {
-      
+      mutex.release();
     }
   }
 
@@ -1316,7 +1326,7 @@ async getPbLogs(tid: ThreadID): Promise<[net_pb.pb.ILog[], ThreadInfo]> {
     
     // 将每个日志信息转换为protobuf格式
     for (const logInfo of info.logs) {
-      logs.push(await this.logToProto(logInfo));
+      logs.push(await logToProto(logInfo));
     }
     return [logs, info];
   } catch (err) {
@@ -1325,24 +1335,96 @@ async getPbLogs(tid: ThreadID): Promise<[net_pb.pb.ILog[], ThreadInfo]> {
 }
 
 /**
- * 将日志信息转换为protobuf格式
- * @param info 日志信息
- * @returns protobuf格式的日志
+ * 预加载日志到线程
+ * 浏览器兼容版本
+ * 
+ * @param tid 线程ID
+ * @param logs 协议缓冲区日志数组
  */
-private async logToProto(lg: IThreadLogInfo): Promise<net_pb.pb.ILog> {
-  if (!lg.pubKey){
-    throw new Error('Missing required fields in LogInfo: pubKey');
+async preLoadLogs(tid: ThreadID, logs: net_pb.pb.Log[]): Promise<void> {
+  try {
+    // 创建一个与日志数组相同长度的ThreadLogInfo数组
+    const lgs: IThreadLogInfo[] = [];
+    
+    // 遍历并转换每个日志
+    for (let i = 0; i < logs.length; i++) {
+      lgs.push(await logFromProto(logs[i]));
+    }
+    // 调用创建外部日志的方法
+    await this.createExternalLogsIfNotExistForPreload(tid, lgs);
+  } catch (err) {
+    throw new Error(`Failed to preload logs: ${err instanceof Error ? err.message : String(err)}`);
   }
-  const publicKeyBytes =  await KeyConverter.publicToBytes(lg.pubKey);
-  // 创建protobuf日志对象
-  const log: net_pb.pb.ILog = {
-    ID: PeerIDConverter.toBytes(lg.id.toString()),
-    pubKey:publicKeyBytes,
-    addrs: lg.addrs.map(addr => addr.bytes),
-    head: lg.head?.id ? lg.head.id.bytes : undefined,
-    counter: lg.head?.counter 
-  };
-  return log;
+}
+
+
+/**
+ * 创建外部日志（如果不存在）
+ * 创建的日志将使用未定义CID作为当前头部
+ * 此方法是线程安全的
+ * 
+ * @param tid 线程ID
+ * @param logs 日志信息数组
+ */
+async createExternalLogsIfNotExist(tid: ThreadID, logs: IThreadLogInfo[]): Promise<void> {
+  const mutex = this.getMutexForThread(tid.toString());
+  await mutex.acquire();
+  try {
+    for (const log of logs) {
+      try {
+        const heads = await this.logstore.headBook.heads(tid, log.id);
+        
+        if (heads.length === 0) {
+          log.head = await getHeadUndef();
+          await this.logstore.addLog(tid, log);
+        } else {
+          await this.logstore.addrBook.addAddrs(
+            tid, 
+            log.id, 
+            log.addrs, 
+            PermanentAddrTTL
+          );
+        }
+      } catch (err) {
+        continue
+      }
+    }
+  } finally {
+    mutex.release();
+  }
+}
+
+/**
+ * 预加载时创建外部日志（如果不存在）
+ * 浏览器兼容版本
+ * 
+ * @param tid 线程ID
+ * @param logs 日志信息数组
+ */
+async createExternalLogsIfNotExistForPreload(tid: ThreadID, logs: IThreadLogInfo[]): Promise<void> {
+  const mutex = this.getMutexForThread(tid.toString());
+  await mutex.acquire();
+  try {
+    for (const log of logs) {
+      try {
+        const heads = await this.logstore.headBook.heads(tid, log.id);
+        if (heads.length === 0) {
+          await this.logstore.addLog(tid, log);
+        } else {
+          await this.logstore.addrBook.addAddrs(
+            tid, 
+            log.id, 
+            log.addrs, 
+            PermanentAddrTTL
+          );
+        }
+      } catch (err) {
+        continue;
+      }
+    }
+  } finally {
+    mutex.release();
+  }
 }
 
  /**
@@ -1405,9 +1487,6 @@ async createRecord(
     // 推送记录到节点
     if (this.server) {
       await this.pushRecord(id, lg.id, tr.value(), lg.head.counter + 1);
-      //todo remove 
-      console.log("****************push record to node",tr.value().cid().toString(),id.toString(),lg.id.toString(),lg.head.counter + 1);
-      //todo remove end
     }
     
     return tr;
@@ -1467,12 +1546,6 @@ async newRecord(id: ThreadID, lg: IThreadLogInfo, body: IPLDNode, identity: Publ
   );
   // 将事件保存到存储
   await this.bstore.put(event.cid(), event.data());
-  //todo remove
-  console.log("**************event cid:",event.cid().toString());
-  console.log("**************event header id:",event.headerCID().toString());
-  console.log("**************event body id:",event.bodyCID().toString());
-
-  //todo remove end
   let prev:CID;
   if (heads && heads.length > 0 ){
     prev = heads[0].id;

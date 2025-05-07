@@ -15,7 +15,7 @@ import { NewThreadOptions } from '../core/options';
 import {ThreadInfo } from '../core/core';
 import { CID } from 'multiformats/cid';
 import { PeerRecords, Protocol} from "./define";
-import {RecordFromProto} from "../cbor/record";
+import {logToProto, RecordFromProto} from "../cbor/record";
 import { IRecord } from "../core/record";
 import { PeerId } from "@libp2p/interface";
 import {RecordToProto} from "../cbor/record";
@@ -34,7 +34,30 @@ import {
 import * as buffer from "buffer/";
 import { log } from "console";
 import { peerIdFromString } from "@libp2p/peer-id";
+import { ILogstore } from "../core/logstore";
+import { Errors } from "../core/db";
 const { Buffer } = buffer;
+
+export const GrpcStatus = {
+  OK: 0,
+  CANCELLED: 1,
+  UNKNOWN: 2,
+  INVALID_ARGUMENT: 3,
+  DEADLINE_EXCEEDED: 4,
+  NOT_FOUND: 5,
+  ALREADY_EXISTS: 6,
+  PERMISSION_DENIED: 7,
+  RESOURCE_EXHAUSTED: 8,
+  FAILED_PRECONDITION: 9,
+  ABORTED: 10,
+  OUT_OF_RANGE: 11,
+  UNIMPLEMENTED: 12,
+  INTERNAL: 13,
+  UNAVAILABLE: 14,
+  DATA_LOSS: 15,
+  UNAUTHENTICATED: 16
+};
+
 
 interface Protocol {
   code: number
@@ -335,7 +358,8 @@ export class DBGrpcClient {
       tid: ThreadID, 
       lid: PeerId,
       rec: IRecord,
-      counter: number
+      counter: number,
+      logstore: ILogstore,
     ): Promise<void> {
       try {
         const body = new net_pb.pb.PushRecordRequest.Body();
@@ -355,7 +379,39 @@ export class DBGrpcClient {
         );
 
       } catch (err) {
-        throw new Error(`Error pushing record: ${err instanceof Error ? err.message : String(err)}`);
+        if (err.message == Errors.ErrLogNotFound.message) {
+          try {
+            const timeout = setTimeout(() => {
+              throw new Error('Getting log information timed out');
+            }, 30000); // 30秒超时 (PushTimeout)
+            
+            // 获取日志信息
+            const log = await logstore.getLog(tid, lid);
+            clearTimeout(timeout); // 清除超时
+            
+            // 准备日志推送请求
+            const logBody = new net_pb.pb.PushLogRequest.Body();
+            logBody.threadID = ThreadIDConverter.toBytes(tid.toString());
+            logBody.log = await logToProto(log);
+            
+            const logRequest = new net_pb.pb.PushLogRequest();
+            logRequest.body = logBody;
+            
+            // 推送缺失的日志
+            const logMessageBytes = net_pb.pb.PushLogRequest.encode(logRequest).finish();
+            await this.grpcClient.unaryCall(
+              "/net.pb.Service/PushLog",
+              logMessageBytes,
+              30000
+            );
+            return;
+          } catch (logErr) {
+            throw new Error(`Error pushing missing log: ${logErr instanceof Error ? logErr.message : String(logErr)}`);
+          }
+        
+
+          throw new Error(`Error pushing record: ${err instanceof Error ? err.message : String(err)}`);
+        }
       }
     }
 

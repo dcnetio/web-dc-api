@@ -3,7 +3,7 @@ import EventEmitter from 'eventemitter3';
 import { ThreadID } from '@textile/threads-id'
 import { IThreadRecord } from './record'
 import { Key as ThreadKey } from '../common/key';
-import { SymKey, ThreadInfo } from './core';
+import { IThreadLogInfo, SymKey, ThreadInfo } from './core';
 import { ThreadToken } from './identity';
 import { Ed25519PubKey } from '../../dc-key/ed25519';
 import { INet as net_Net } from './core'
@@ -14,6 +14,7 @@ import { Head } from './head';
 import {net as net_pb} from "../pb/net_pb";
 import { DBClient } from '../dbclient';
 import { Blocks } from 'helia';
+import { AsyncMutex } from '../common/AsyncMutex';
 
 
 // 类型定义  
@@ -103,6 +104,10 @@ export interface Net extends net_Net {
     limit: number
   ): Promise<{ req: net_pb.pb.IGetRecordsRequest, serviceKey: SymKey }> 
   updateRecordsFromPeer(tid: ThreadID,peerId: PeerId|null,client?:DBClient): Promise<void>
+  getMutexForThread(threadId: string): AsyncMutex 
+  preLoadLogs(tid: ThreadID, logs: net_pb.pb.Log[]): Promise<void> 
+  createExternalLogsIfNotExist(tid: ThreadID, logs: IThreadLogInfo[]): Promise<void> 
+  createExternalLogsIfNotExistForPreload(tid: ThreadID, logs: IThreadLogInfo[]): Promise<void>
 }  
 
 // 连接器实现  

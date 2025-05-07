@@ -3,9 +3,8 @@ import { multiaddr, Multiaddr as TMultiaddr } from '@multiformats/multiaddr';
 import { ThreadID } from '@textile/threads-id';
 import { peerIdFromPrivateKey, peerIdFromString } from "@libp2p/peer-id";
 import { Key } from 'interface-datastore';
-import { EventEmitter } from 'events';  
 import { DB as ThreadDb } from './db/db';
-import { Errors } from './core/db';
+import { Errors, Transaction } from './core/db';
 import { Net } from './core/app';
 import { ChainUtil } from "../chain";
 import { Ed25519PrivKey } from "../dc-key/ed25519";
@@ -20,7 +19,7 @@ import { PrefixTransform,TransformedDatastore} from './common/transformed-datast
 import {NewOptions,ICollectionConfig,ManagedOptions,ThreadInfo,Context} from './core/core';
 import {TxnDatastoreExtended,pullThreadBackgroundTimeout,PullTimeout} from './core/db';
 import type { DCConnectInfo } from "../types/types";
-import { fastExtractPeerId, sleep, uint32ToLittleEndianBytes,uint64ToLittleEndianBytes } from "../util/utils";
+import {  uint32ToLittleEndianBytes,uint64ToLittleEndianBytes } from "../util/utils";
 import {DcUtil} from '../dcutil';
 import {Type} from '../constants';
 import { SignHandler } from '../types/types';
@@ -31,10 +30,11 @@ import type { Client } from "../dcapi";
 import { jsonStringify } from '../util/utils';
 import {Protocol} from './net/define';
 import {parseJsonToQuery} from './db/json2Query';
-
 import * as buffer from "buffer/";
 import { dial_timeout } from '../define';
-import { Query } from './db/query';
+import {decode as multibaseDecode} from 'multibase';
+import {net as net_pb} from "./pb/net_pb";
+import { LineReader } from './common/lineReader';
 const { Buffer } = buffer; 
 
 export const ThreadProtocol = "/dc/" + Protocol.name + "/" + Protocol.version
@@ -214,7 +214,9 @@ export class DBManager {
             const name = opts.name || '';
             const [store, dbOpts] = await this.wrapDB(this.store,id, this.opts,name, collections);  
             const db = await ThreadDb.newDB(store, this.network, id, dbOpts);  
+            
             this.dbs.set(id.toString(), db);  
+            
             if (opts.block) {  
                 await this.network.pullThread(id,pullThreadBackgroundTimeout, { token: opts.token });  
             } else {  
@@ -233,6 +235,270 @@ export class DBManager {
         }  
     }  
 
+/**
+ * 从读取器预加载数据库
+ * @param ctx 上下文
+ * @param ioReader 数据流读取器
+ * @param addr 线程地址
+ * @param key 线程密钥
+ * @param opts 管理选项
+ */
+async preloadDBFromReader(
+    ctx: Context,
+    ioReader: ReadableStream<Uint8Array>,
+    addr: ThreadMuliaddr,
+    key: ThreadKey,
+    opts: NewOptions = {}  
+  ): Promise<void> {
+    console.debug("manager: preloading db from reader");
+    let id: ThreadID;
+    try {
+      id = DBManager.fromAddr(addr.addr);
+    } catch (err) {
+      throw err;
+    }
+    // 检查数据库是否已存在
+    await this.lock.acquire('dbs', async () => {
+      if (this.dbs.has(id.toString())) {
+        throw Errors.ErrDBExists;
+      }
+    });
+    if (opts.name && !isValidName(opts.name)) {
+      throw Errors.ErrInvalidName;
+    }
+    // 验证密钥
+    if (key.defined() && !key.canRead()) {
+      throw Errors.ErrThreadReadKeyRequired;
+    }
+    // 添加线程到网络
+    console.debug(`manager: adding thread to net ${id}`);
+    try {
+      await this.network.addThread(addr, {
+        threadKey: key,
+        logKey: opts.logKey,
+        token: opts.token
+      });
+    } catch (err) {
+      throw err;
+    }
+    console.debug(`manager: added thread to net ${id}`);
+    
+    // 包装数据库
+    let store: TxnDatastoreExtended;
+    let dbOpts: NewOptions;
+    try {
+      const collections = opts.collections || [];
+      const name = opts.name || '';
+      [store, dbOpts] = await this.wrapDB(this.store, id, this.opts, name, collections);
+    } catch (err) {
+      throw err;
+    }
+    
+    // 创建新数据库
+    let db: ThreadDb;
+    try {
+      db = await ThreadDb.newDB(store, this.network, id, dbOpts);
+    } catch (err) {
+      throw err;
+    }
+    
+    // 添加数据库到管理器
+    await this.lock.acquire('dbs', async () => {
+      this.dbs.set(id.toString(), db);
+    });
+    
+    // 导入数据库状态
+    const readKey = key.read();
+    if (!readKey) {
+      throw new Error(`read key not found for thread ${id}`);
+    }
+    
+    // 创建行读取器
+    const lineReader = new LineReader(ioReader);
+    const textDecoder = new TextDecoder();
+    
+    // 读取第一行并更新线程信息的日志头
+    let stateValue: string;
+    try {
+      const value = await lineReader.readLine();
+      if (value) {
+        stateValue = value;
+      }
+      
+    } catch (err) {
+      throw err;
+    }
+    
+    // 移除头部32位hash
+    stateValue = stateValue.slice(32);
+    
+    // 更新线程信息的日志头
+    const logs = stateValue.split(';');
+    const pbLogs: net_pb.pb.Log[] = [];
+    
+    for (const log of logs) {
+      try {
+        // 解码 multibase 格式
+        const  data  =  multibaseDecode(log);
+        // 解析 protobuf
+        const pbLog = net_pb.pb.Log.decode(data);
+        pbLogs.push(pbLog);
+      } catch (err) {
+        // 忽略错误，继续处理
+        continue;
+      }
+    }
+    
+    // 预加载日志
+    try {
+      await this.network.preLoadLogs(id, pbLogs);
+    } catch (err) {
+      await this.deleteDB(id, false);
+      throw err;
+    }
+    
+    // 导入数据库状态
+    try {
+      await this.importDBStateFromReader(id, lineReader, readKey);
+    } catch (err) {
+      await this.deleteDB(id, false);
+      throw err;
+    }
+  }
+
+/**
+ * 从读取器导入数据库状态
+ * @param id 线程ID
+ * @param reader 可读流读取器
+ * @param readKey 用于解密的对称密钥
+ */
+async importDBStateFromReader(
+  id: ThreadID, 
+  lineReader: LineReader, 
+  readKey: SymmetricKey
+): Promise<void> {
+  console.debug("manager: importing db state from reader");
+  
+  // 检查数据库是否存在
+  let db: ThreadDb | undefined;
+  await this.lock.acquire('dbs', async () => {
+    db = this.dbs.get(id.toString());
+  });
+  
+  if (!db) {
+    throw Errors.ErrDBNotFound;
+  }
+  
+  // 获取索引函数
+  const indexFunc = db.defaultIndexFunc();
+  
+  // 设置行读取
+  const textDecoder = new TextDecoder();
+  let done = false;
+  let line =""
+  while (true) {
+       line = await lineReader.readLine();
+      if (!line) {
+       break
+      }  
+    // 创建事务
+    let txn:Transaction;
+    try {
+      txn = await db.datastore.newTransactionExtended(false);
+    } catch (err) {
+      throw new Error(`创建事务错误: ${err instanceof Error ? err.message : String(err)}`);
+    }
+    
+    try {
+      // 解析键值对
+      const kv = line.split('|');
+      if (kv.length !== 2) {
+        await txn.discard();
+        throw new Error('无效的记录格式');
+      }
+      
+      const key = kv[0];
+      const mValue = kv[1];
+      
+      // 使用multibase解码值
+      let encValue: Uint8Array;
+      try {
+        const decoded = multibaseDecode(mValue);
+        encValue = decoded;
+      } catch (err) {
+        await txn.discard();
+        throw new Error(`multibase解码失败: ${err instanceof Error ? err.message : String(err)}`);
+      }
+      
+      // 如有需要解密记录
+      let decValue = encValue;
+      if (readKey) {
+        try {
+          decValue = await readKey.decrypt(encValue);
+        } catch (err) {
+          await txn.discard();
+          throw new Error(`解密值失败: ${err instanceof Error ? err.message : String(err)}`);
+        }
+      }
+      
+      // 创建数据存储键
+      const setKey = new Key(key);
+      
+      // 检查键是否已存在
+      try {
+        const exists = await txn.has(setKey);
+        if (exists) {
+           txn.discard();
+          continue; // 跳过此记录
+        }
+      } catch (err) {
+         txn.discard();
+        throw new Error(`检查键存在性失败: ${err instanceof Error ? err.message : String(err)}`);
+      }
+      
+      // 存储值
+      try {
+        await txn.put(setKey, decValue);
+      } catch (err) {
+         txn.discard();
+        throw new Error(`存储值失败: ${err instanceof Error ? err.message : String(err)}`);
+      }
+      
+      // 从键中提取集合名称（倒数第二个部分）
+      const parts = key.split('/');
+      if (parts.length < 2) {
+         txn.discard();
+        throw new Error('无效的键格式: 未找到集合名称');
+      }
+      
+      const collection = parts[parts.length - 2];
+      
+      // 应用索引
+      try {
+        await indexFunc(collection, setKey, txn, decValue);
+      } catch (err) {
+         txn.discard();
+        throw new Error(`应用索引失败: ${err instanceof Error ? err.message : String(err)}`);
+      }
+      
+      // 提交事务
+      try {
+        await txn.commit();
+      } catch (err) {
+         txn.discard();
+        throw new Error(`提交事务失败: ${err instanceof Error ? err.message : String(err)}`);
+      }
+    } catch (err) {
+      // 确保在任何失败时丢弃事务
+      try {
+         txn.discard();
+      } catch {
+        // 忽略丢弃时的错误
+      }
+      throw err;
+    }
+    }
+  }
 
 
 /**  
@@ -360,8 +626,8 @@ async syncDBFromDC(
         const tID = await this.decodeThreadId(threadid);  
         const logKey = await this.getLogKey(tID);  
         const lid =  peerIdFromPrivateKey(logKey);
-        this.dc._connectToObjNodes(threadid);  
-        this.addLogToThreadStart(ctx,tID, lid);
+        await this.dc._connectToObjNodes(threadid);  
+       await this.addLogToThreadStart(ctx,tID, lid);
         const sk = SymmetricKey.fromString(b32Sk);
         const rk = SymmetricKey.fromString(b32Rk);
         const threadKey =  new ThreadKey(sk, rk);  
@@ -498,7 +764,7 @@ async  addLogToThread(ctx: Context, id: ThreadID, lid: PeerId): Promise<void> {
         signature: signature,
     };  
     const dbClient = newGrpcClient(this.connectedDc.client,this.network);
-    dbClient.addLogToThread(id.toString(),lid.toString(),opts);
+    await dbClient.addLogToThread(id.toString(),lid.toString(),opts);
 }  
 
 
@@ -509,9 +775,11 @@ async  addLogToThread(ctx: Context, id: ThreadID, lid: PeerId): Promise<void> {
   lid: PeerId  
 ) : Promise<void>  {
     
-
+ if (!ctx){
+    ctx = createContext(30000);
+ }
  const abortController = new AbortController();  
- const signal = ctx.signal || abortController.signal; 
+ const signal = ctx?.signal || abortController.signal; 
  const storeUnit = await this.chainUtil.objectState(id.toString());  
   if (storeUnit) {  
     const userPubkey = this.signHandler.getPublicKey(); 
@@ -542,6 +810,10 @@ async  addLogToThread(ctx: Context, id: ThreadID, lid: PeerId): Promise<void> {
   let count = 0;  
   const maxCount = 6;  
   let endFlag = false; 
+  try{
+        await this.addLogToThread(ctx, id, lid);  
+    }catch (error) {//允许报错
+    }
   const ticker = setInterval(async () => {  
       // 检查是否已被取消  
       if (signal.aborted) {  
@@ -557,7 +829,7 @@ async  addLogToThread(ctx: Context, id: ThreadID, lid: PeerId): Promise<void> {
           return;  
       }  
       if (count >= maxCount) {  //每6秒确认
-        this.addLogToThread(ctx, id, lid);  
+        await this.addLogToThread(ctx, id, lid);  
         count = 0;  
     } else {  
         count++;  
@@ -770,15 +1042,12 @@ async getDB(id: ThreadID, opts?: ManagedOptions): Promise<ThreadDb> {
         throw err;
     }
     
-    // Use lock to safely access the database map
-    return this.lock.acquire('dbs', async () => {
-        console.debug(`manager: getting db ${id} from map`);
-        const db = this.dbs.get(id.toString());
-        if (!db) {
-            throw Errors.ErrDBNotFound;
-        }
-        return db;
-    });
+    const db = this.dbs.get(id.toString());
+    if (!db) {
+        throw Errors.ErrDBNotFound;
+    }
+    return db;
+    
 }
 
 // DeleteDB deletes a db by id.
@@ -792,34 +1061,34 @@ async deleteDB( id: ThreadID, deleteThreadFlag: boolean, opts?: ManagedOptions):
     } catch (err) {
         throw err;
     }
+   
+    const db = this.dbs.get(id.toString());
+    if (!db) {
+        throw Errors.ErrDBNotFound;
+    }
+
+    try {
+        await db.close();
+    } catch (err) {
+        throw err;
+    }
+
+    if (deleteThreadFlag) {
+        console.debug(`manager: deleting thread ${id} from net`);
+        try {
+            await this.network.deleteThread(id, { token: opts?.token, apiToken: db.connector.token });
+            console.debug(`manager: deleted thread ${id} from net`);
+        } catch (err) {
+            throw err;
+        }
+    }
+
+    try {
+        await this.deleteThreadNamespace(id);
+    } catch (err) {
+        throw err;
+    }
     this.lock.acquire('dbs', async () => {
-        const db = this.dbs.get(id.toString());
-        if (!db) {
-            throw Errors.ErrDBNotFound;
-        }
-
-        try {
-            await db.close();
-        } catch (err) {
-            throw err;
-        }
-
-        if (deleteThreadFlag) {
-            console.debug(`manager: deleting thread ${id} from net`);
-            try {
-                await this.network.deleteThread(id, { token: opts?.token, apiToken: db.connector.token });
-                console.debug(`manager: deleted thread ${id} from net`);
-            } catch (err) {
-                throw err;
-            }
-        }
-
-        try {
-            await this.deleteThreadNamespace(id);
-        } catch (err) {
-            throw err;
-        }
-
         this.dbs.delete(id.toString());
         console.debug(`manager: deleted db ${id}`);
     });
@@ -1151,19 +1420,16 @@ async modifiedSince(threadId: string, collectionName: string, time: number): Pro
 
 }
 
-// 辅助类和函数  
+
 class AsyncLock {  
     private locks: Map<string, Promise<void>>;  
-
     constructor() {  
         this.locks = new Map();  
     }  
-
     async acquire<T>(key: string, fn: () => Promise<T>): Promise<T> {  
         while (this.locks.has(key)) {  
             await this.locks.get(key);  
         }  
-
         let resolve: () => void;  
         const promise = new Promise<void>((r) => (resolve = r));  
         this.locks.set(key, promise);  
@@ -1171,12 +1437,15 @@ class AsyncLock {
         try {  
             const result = await fn();  
             return result;  
+        } catch (err: any) {
+            // 重新抛出错误以保持类型一致性
+            throw err;  
         } finally {  
             this.locks.delete(key);  
             resolve!();  
         }  
     }  
-}  
+}
 
 function isValidName(name: string): boolean {  
     return /^[a-zA-Z0-9_-]+$/.test(name);  
