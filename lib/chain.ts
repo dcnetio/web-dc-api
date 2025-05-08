@@ -342,5 +342,5 @@ export class ChainUtil {
       const userInfo = await this.getUserInfoWithAccount(hexAccount);
       return userInfo;
     };
-  
+    
 }

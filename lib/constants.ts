@@ -8,3 +8,9 @@ export const cidNeedConnect = {
   NEED: 0,
   NOT_NEED: 1,
 };
+
+// openFlag 开放标志 0-开放 1-私密
+export enum OpenFlag {
+  OPEN = 0,
+  PRIVATE = 1,
+}

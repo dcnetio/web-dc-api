@@ -1,4 +1,4 @@
-import { DCConnectInfo, SignHandler } from "../types/types";
+import { DCConnectInfo, SignHandler, ThemeComment, ThemeObj } from "../types/types";
 import type { HeliaLibp2p } from "helia";
 import { ChainUtil } from "../chain";
 import { base32 } from 'multiformats/bases/base32' 
@@ -10,6 +10,11 @@ import { Multiaddr } from "@multiformats/multiaddr";
 import { CommentClient } from "./client";
 import { parseUint32, sha256, uint32ToLittleEndianBytes } from "../util/utils";
 import { FileManager } from "../file/manager";
+import { cidNeedConnect } from "lib/constants";
+import { toString as uint8ArrayToString } from "uint8arrays/to-string";
+import { BrowserLineReader, readLine } from "lib/util/BrowserLineReader";
+import { bytesToHex } from "@noble/curves/abstract/utils";
+import { dcnet } from "lib/proto/dcnet_proto";
 const { Buffer } = buffer;
 
 // 创建一个可以取消的信号
@@ -37,16 +42,19 @@ export const Errors = {
 };
 
 export class CommentManager {
+  dc: DcUtil;
   connectedDc: DCConnectInfo = {};
   dcNodeClient: HeliaLibp2p;
   chainUtil: ChainUtil;
   signHandler: SignHandler;
   constructor(
+    dc: DcUtil,
     connectedDc: DCConnectInfo,
     dcNodeClient: HeliaLibp2p,
     chainUtil: ChainUtil,
     signHandler: SignHandler
   ) {
+    this.dc = dc;
     this.connectedDc = connectedDc;
     this.dcNodeClient = dcNodeClient;
     this.chainUtil = chainUtil;
@@ -379,15 +387,11 @@ export class CommentManager {
     offset: number,
     limit: number,
     seekKey: string,
-  ): Promise<[string | null, Error | null]> {
+  ): Promise<[ThemeObj[] | null, Error | null]> {
     try {
       if (!this.connectedDc?.client) {
         return [null, Errors.ErrNoDcPeerConnected];
       }
-      const blockHeight = (await this.chainUtil.getBlockHeight()) || 0;
-      const hValue: Uint8Array = uint32ToLittleEndianBytes(
-        blockHeight ? blockHeight : 0
-      );
       const commentClient = new CommentClient(
         this.connectedDc.client,
         this.dcNodeClient,
@@ -402,7 +406,26 @@ export class CommentManager {
         limit || 0,
         seekKey || '',
       ); 
-      return [res, null];
+      const fileManager = new FileManager(
+        this.dc,
+        this.connectedDc,
+        this.chainUtil,
+        this.dcNodeClient,
+        this.signHandler
+      );
+      const cid = Buffer.from(res[0]).toString();
+      const fileContent = await fileManager.getFile(
+        cid,
+        "",
+        cidNeedConnect.NOT_NEED
+      );
+      if (!fileContent) {
+        return [[], null];
+      }
+      const fileContentString = uint8ArrayToString(fileContent);
+      const allContent = await this.handleThemeObj(fileContentString);
+      console.log("getThemeObj allContent:", allContent);
+      return [allContent, null];
     } catch (err) {
       console.error("getThemeObj error:", err);
       throw err;
@@ -418,7 +441,8 @@ export class CommentManager {
     offset: number,
     limit: number,
     seekKey: string,
-  ): Promise<[string | null, Error | null]> {
+    vaccount?: string,
+  ): Promise<[ThemeComment[] | null, Error | null]> {
     try {
       if (!this.connectedDc?.client) {
         return [null, Errors.ErrNoDcPeerConnected];
@@ -437,8 +461,29 @@ export class CommentManager {
         offset || 0,
         limit || 0,
         seekKey || '',
+        vaccount,
       );
-      return [res, null];
+      const fileManager = new FileManager(
+        this.dc,
+        this.connectedDc,
+        this.chainUtil,
+        this.dcNodeClient,
+        this.signHandler
+      );
+      const cid = Buffer.from(res[0]).toString();
+      const fileContent = await fileManager.getFile(
+        cid,
+        "",
+        cidNeedConnect.NOT_NEED
+      );
+      console.log("getThemeComments fileContent:", fileContent);
+      if (!fileContent) {
+        return [[], null];
+      }
+      const fileContentString = uint8ArrayToString(fileContent);
+      const allContent = await this.handleThemeComments(fileContentString);
+      console.log("getThemeComments allContent:", allContent);
+      return [allContent, null];
     } catch (err) {
       console.error("getThemeComments error:", err);
       throw err;
@@ -453,7 +498,7 @@ export class CommentManager {
     offset: number,
     limit: number,
     seekKey: string,
-  ): Promise<[string | null, Error | null]> {
+  ): Promise<[ThemeComment[] | null, Error | null]> {
     try {
       if (!this.connectedDc?.client) {
         return [null, Errors.ErrNoDcPeerConnected];
@@ -472,10 +517,125 @@ export class CommentManager {
         limit || 0,
         seekKey || '',
       );
-      return [res, null];
+      const fileManager = new FileManager(
+        this.dc,
+        this.connectedDc,
+        this.chainUtil,
+        this.dcNodeClient,
+        this.signHandler
+      );
+      const cid = Buffer.from(res[0]).toString();
+      const fileContent = await fileManager.getFile(
+        cid,
+        "",
+        cidNeedConnect.NOT_NEED
+      );
+      console.log("getUserComments fileContent:", fileContent);
+      if (!fileContent) {
+        return [[], null];
+      }
+      const fileContentString = uint8ArrayToString(fileContent);
+      const allContent = await this.handleThemeComments(fileContentString);
+      console.log("getUserComments allContent:", allContent);
+      return [allContent, null];
     } catch (err) {
       console.error("getUserComments error:", err);
       throw err;
     }
   }
+  private handleThemeObj = async (fileContentString: string) => {
+    const reader = new BrowserLineReader(fileContentString);
+
+    let allContent: Array<ThemeObj> = [];
+    // readLine 循环
+    while (true) {
+      const { line, error } = readLine(reader);
+      if (error && error.message !== "EOF") {
+        console.error("读取错误:", error);
+        break;
+      } else if (line) {
+        // 将Uint8Array转回字符串
+        const decoder = new TextDecoder();
+        const lineString = decoder.decode(line);
+        console.log("读取的行:", lineString);
+        if (!lineString) {
+          console.error("结束");
+          break;
+        }
+        const fileContentUint8Array = base32.decode(lineString);
+        const content = dcnet.pb.AddThemeObjRequest.decode(
+          fileContentUint8Array
+        );
+        console.log("content:", content);
+        allContent.push({
+          theme: uint8ArrayToString(content.theme),
+          appId: uint8ArrayToString(content.appId),
+          blockheight: content.blockheight,
+          commentSpace: content.commentSpace,
+          allowSpace: content.allowSpace,
+          userPubkey: uint8ArrayToString(content.userPubkey),
+          openFlag: content.openFlag,
+          signature: bytesToHex(content.signature),
+          CCount: content.CCount,
+          UpCount: content.UpCount,
+          DownCount: content.DownCount,
+          TCount: content.TCount,
+          vaccount: uint8ArrayToString(content.vaccount),
+        });
+      }
+    }
+    return allContent;
+  };
+  private handleThemeComments = async (fileContentString: string) => {
+    const reader = new BrowserLineReader(fileContentString);
+    let allContent: Array<ThemeComment> = [];
+
+    if (!this.signHandler.getPublicKey()) {
+      return;
+    }
+    // readLine 循环
+    while (true) {
+      const { line, error } = readLine(reader);
+      if (error && error.message !== "EOF") {
+        console.error("读取错误:", error);
+        break;
+      } else if (line) {
+        // 将Uint8Array转回字符串
+        const decoder = new TextDecoder();
+        const lineString = decoder.decode(line);
+        console.log("读取的行:", lineString);
+        if (!lineString) {
+          console.error("结束");
+          break;
+        }
+        const lineContent = base32.decode(lineString);
+        const plainContent = await this.signHandler.decrypt(lineContent);
+        const content =
+          dcnet.pb.PublishCommentToThemeRequest.decode(plainContent);
+        console.log("content:", content);
+
+        allContent.push({
+          theme: uint8ArrayToString(content.theme),
+          appId: uint8ArrayToString(content.appId),
+          themeAuthor: uint8ArrayToString(content.themeAuthor),
+          blockheight: content.blockheight,
+          userPubkey: uint8ArrayToString(content.userPubkey),
+          commentCid: uint8ArrayToString(content.commentCid),
+          comment: uint8ArrayToString(content.comment),
+          commentSize: content.commentSize,
+          status: content.status,
+          refercommentkey: uint8ArrayToString(content.refercommentkey),
+          CCount: content.CCount,
+          UpCount: content.UpCount,
+          DownCount: content.DownCount,
+          TCount: content.TCount,
+          type: content.type,
+          signature: bytesToHex(content.signature),
+          vaccount: bytesToHex(content.vaccount),
+        });
+      }
+    }
+    return allContent;
+  };
 }
+
