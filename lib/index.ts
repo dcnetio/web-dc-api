@@ -34,7 +34,7 @@ import { DCManager } from "./dc/manager";
 import { ThemeManager } from "./theme/manager";
 import { AccountManager } from "./account/manager";
 import { CommonClient } from "./commonclient";
-import { FileManager } from "./file/manager";
+import { FileManager, MediaController } from "./file/manager";
 import type { HeliaLibp2p } from "helia";
 import { Libp2p } from "@libp2p/interface";
 import { CommentManager } from "./comment/manager";
@@ -58,10 +58,171 @@ import { newThreadMetadata } from "./threaddb/lsstoreds/metadata";
 import { dagCbor } from "@helia/dag-cbor";
 import { ICollectionConfig } from "./threaddb/core/core";
 import * as buffer from "buffer/";
+import { SeekableFileStream } from "./file/seekableFileStream";
 const { Buffer } = buffer;
 const storagePrefix = "dc-";
 const NonceBytes = 12;
 const TagBytes = 16;
+
+/**
+ * 注册 Service Worker 并设置消息监听器
+ * @param dc DC实例，用于处理IPFS请求
+ * @returns Promise<ServiceWorkerRegistration | null>
+ */
+async function  registerServiceWorker(dc?: DC): Promise<ServiceWorkerRegistration | null> {
+  if ('serviceWorker' in navigator) {
+    return navigator.serviceWorker.register(
+      new URL('/sw.js', import.meta.url).href
+    ).then(registration => {
+      console.log('ServiceWorker 注册成功:', registration.scope);
+      
+      // 设置消息监听器处理IPFS资源请求
+      navigator.serviceWorker.addEventListener('message', async (event) => {
+        if (event.data && event.data.type === 'ipfs-fetch') {
+           await handleIpfsRequest(event.data, event.ports[0], dc);
+        }
+      });
+      
+      return registration;
+    }).catch(error => {
+      console.error('ServiceWorker 注册失败:', error);
+      return null;
+    });
+  }
+  return Promise.reject('Service Worker not supported');
+}
+
+
+/**
+ * 处理来自Service Worker的IPFS资源请求
+ * @param data 请求数据，包含路径和范围信息
+ * @param port 通信端口
+ * @param dc DC实例
+ */
+async function handleIpfsRequest(data: any, port: MessagePort, dc?: DC) {
+  const { id, pathname, range } = data;
+  let fileSize = 0;
+  
+  try {
+    // 从路径提取IPFS路径和解密密钥
+    const pathParts = pathname.split('/');
+    let ipfsPath = pathParts[3]; // <ipfs-hash>[_<key>]
+    
+    // 提取加密密钥（如果有）
+    let decryptKey = '';
+    const keyParts = ipfsPath.split('_');
+    if (keyParts.length > 1) {
+      ipfsPath = keyParts[0];
+      decryptKey = keyParts[1];
+    }
+    
+    let fileData: Uint8Array | null = null;
+    const DEFAULT_CHUNK_SIZE = 3 * 1024 * 1024; // 默认返回3MB数据块
+    let start = 0;
+    let end = 0;
+    if (dc) {
+      if (range) {
+        // 处理范围请求（视频跳转等）
+        try {
+          const fileStream = await dc.getSeekableFileStream(ipfsPath, decryptKey);
+          fileSize = fileStream.getSize();
+          if (fileStream) {
+            const match = range.match(/bytes=(\d+)-(\d+)?/);
+            if (match) {
+               start = parseInt(match[1]);
+               end = match[2] ? parseInt(match[2]) : start + DEFAULT_CHUNK_SIZE-1;
+              if (end >= fileSize) {
+                // 如果请求的结束范围超过文件大小，则调整为文件大小
+                end = fileSize - 1;
+              }
+              console.log(`处理范围请求: ${start}-${end}, 总大小: ${fileStream.getSize()}`);
+              fileStream.seek(start);
+              fileData = await fileStream.read(end - start + 1);
+
+
+              console.log("***************解密数据块大小11111:", fileData.length);
+              
+              // 如果读取到文件末尾，清理缓存
+              if (end >= fileStream.getSize() - 1) {
+                console.log(`文件读取完成，清理缓存: ${pathname}`);
+                dc.clearFileCache(pathname);
+              }
+            }
+          }
+        } catch (err) {
+          console.error('文件流操作失败:', err);
+          // 发生错误时清理缓存
+          dc.clearFileCache(pathname);
+          port.postMessage({
+            success: false,
+            error: err instanceof Error ? err.message : 'File stream operation failed'
+          });
+          return;
+        }
+      } else {
+        // 普通文件请求
+        fileData = await dc.getFileFromDc(ipfsPath, decryptKey);
+        fileSize = fileData ? fileData.length : 0;
+        // 非范围请求的文件读取完成后，清理缓存
+        dc.clearFileCache(pathname);
+      }
+      if (!fileData) {
+        port.postMessage({
+          success: false,
+          error: 'no data',
+        });
+        return 
+      }
+      console.log("***************解密数据块大小1112222:", fileData.length);
+      if (fileData && fileData.buffer) {
+        // 创建不包含 buffer 的基本响应对象
+        const responseObj = {
+          success: true,
+          status: range ? 206 : 200,
+          headers: {
+            'Content-Range': range ? `bytes ${start}-${end}/${fileSize}` : undefined,
+            'Accept-Ranges': 'bytes',
+            'Cache-Control': 'no-cache',
+            'Content-Length': fileData.length,
+          },
+        };
+        
+        // 传递时才添加 data 字段
+        // 注意：在这个方法里 fileData.buffer 被转移后，fileData 将不再可用
+        port.postMessage({
+          ...responseObj,
+          data: fileData.buffer
+        }, [fileData.buffer]);
+      
+        // 手动清除引用
+        fileData = null;
+      } else {
+        port.postMessage({
+          success: false,
+          error: 'Missing data buffer'
+        });
+      }
+      
+    } else {
+      // DC实例不可用
+      port.postMessage({
+        success: false,
+        error: 'DC instance not available'
+      });
+    }
+  } catch (error) {
+    console.error('处理IPFS请求失败:', error);
+    // 全局错误捕获时也清理缓存
+    if (dc && pathname) {
+      dc.clearFileCache(pathname);
+    }
+    port.postMessage({
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error'
+    });
+  }
+}
+
 
 export class DC implements SignHandler {
   blockChainAddr: string;
@@ -81,7 +242,18 @@ export class DC implements SignHandler {
   public grpcServer: DCGrpcServer;
   public appInfo: APPInfo;
   public dbManager: DBManager;
-
+    // 文件管理器缓存
+  private fileManager: FileManager | undefined;
+   // 文件缓存相关属性
+   private seekableFileStreamCache: Map<string, {
+    stream: SeekableFileStream,
+    lastAccessTime: number
+  }> = new Map();
+ private readonly CACHE_TIMEOUT = 100000; // 100秒超时
+  private cacheCleanupInterval: NodeJS.Timeout | null = null;
+  
+  
+  
   constructor(options: {
     wssUrl: string;
     backWssUrl: string;
@@ -117,6 +289,15 @@ export class DC implements SignHandler {
         }
       }
     } finally {
+       // 注册 Service Worker，并传入当前 DC 实例
+       try {
+        // 启动缓存清理定时任务
+        this.startCacheCleanupTask();
+        await registerServiceWorker(this);
+        console.log('Service Worker 已注册');
+      } catch (err) {
+        console.warn('Service Worker 注册失败:', err);
+      }
       // 如果链节点已经连接
       if (createChain) {
         this.dcNodeClient = await this.dcutil?._createHeliaNode();
@@ -175,6 +356,8 @@ export class DC implements SignHandler {
         this.startDcPeerTokenKeepValidTask();
       }
     }
+    
+  
   };
 
   // 签名,后续应该改成发送到钱包iframe中签名,发送数据包含payload和用户公钥
@@ -201,6 +384,109 @@ export class DC implements SignHandler {
     return pubKey.raw;
   }
 
+   /**
+   * 获取或创建文件管理器
+   */
+   private getFileManager(): FileManager {
+    if (!this.fileManager) {
+      this.fileManager = new FileManager(
+        this.dcutil,
+        this.connectedDc,
+        this.dcChain,
+        this.dcNodeClient,
+        this
+      );
+    }
+    return this.fileManager;
+  }
+  
+  /**
+   * 根据路径获取或创建可寻址文件流，带缓存功能
+   * @param ipfsPath IPFS路径
+   * @param decryptKey 解密密钥
+   * @returns SeekableFileStream 可寻址文件流
+   */
+  async getSeekableFileStream(ipfsPath: string, decryptKey: string): Promise<SeekableFileStream> {
+    const cacheKey = `${ipfsPath}_${decryptKey}`;
+    
+    // 检查缓存中是否存在
+    const cachedItem = this.seekableFileStreamCache.get(cacheKey);
+    
+    if (cachedItem) {
+      console.log(`使用缓存的 SeekableFileStream: ${cacheKey}`);
+      // 更新最后访问时间
+      cachedItem.lastAccessTime = Date.now();
+      return cachedItem.stream;
+    } else {
+      console.log(`创建新的 SeekableFileStream: ${cacheKey}`);
+      const fileManager = this.getFileManager();
+      const fileStream = await fileManager.createSeekableFileStream(ipfsPath, decryptKey);
+      
+      if (fileStream) {
+        // 将新创建的流保存到缓存，并记录访问时间
+        this.seekableFileStreamCache.set(cacheKey, {
+          stream: fileStream,
+          lastAccessTime: Date.now()
+        });
+      }
+      
+      return fileStream;
+    }
+  }
+  
+  /**
+   * 清理文件缓存
+   * @param pathname 可选，指定要清理的路径
+   */
+  public clearFileCache(pathname?: string): void {
+    if (pathname) {
+      // 清理特定路径的缓存
+      const pathParts = pathname.split('/');
+      let ipfsPath = pathParts[3]; 
+      const keyParts = ipfsPath.split('_');
+      if (keyParts.length > 1) {
+        ipfsPath = keyParts[0];
+        const decryptKey = keyParts[1];
+        const cacheKey = `${ipfsPath}_${decryptKey}`;
+        this.seekableFileStreamCache.delete(cacheKey);
+        console.log(`清理特定缓存: ${cacheKey}`);
+      }
+    } else {
+      // 清理所有缓存
+      this.seekableFileStreamCache.clear();
+      console.log('清理所有文件缓存');
+    }
+  }
+  
+  /**
+   * 启动定时缓存清理任务
+   * 超过10秒未访问的流将被释放
+   */
+  private startCacheCleanupTask(): void {
+    if (this.cacheCleanupInterval) {
+      clearInterval(this.cacheCleanupInterval);
+    }
+    
+    this.cacheCleanupInterval = setInterval(() => {
+      const now = Date.now();
+      let removedCount = 0;
+      
+      // 检查所有缓存项是否超时
+      for (const [key, value] of this.seekableFileStreamCache.entries()) {
+        if (now - value.lastAccessTime > this.CACHE_TIMEOUT) {
+          // 超过10秒没有访问，释放资源
+          console.log(`缓存超时，释放资源: ${key}`);
+          this.seekableFileStreamCache.delete(key);
+          removedCount++;
+        }
+      }
+      
+      if (removedCount > 0 || this.seekableFileStreamCache.size > 0) {
+        console.log(`文件缓存清理: 移除 ${removedCount} 项，剩余 ${this.seekableFileStreamCache.size} 项`);
+      }
+    }, 5000); // 每5秒检查一次超时缓存
+  }
+  
   // 从dc网络获取指定文件
   getFileFromDc = async (cid: string, decryptKey: string) => {
     try {
@@ -215,9 +501,32 @@ export class DC implements SignHandler {
       return fileContent;
     } catch (error) {
       console.error("getFileFromDc error", error);
-      return "";
+      return ;
     }
   };
+
+  createFileStream = async (
+    cid: string,
+    decryptKey: string
+  ): Promise< ReadableStream<Uint8Array>| null> => {
+    const fileManager = new FileManager(
+      this.dcutil,
+      this.connectedDc,
+      this.dcChain,
+      this.dcNodeClient,
+      this
+    );
+    const fileStream = await fileManager.createSeekableFileStream(
+      cid,
+      decryptKey
+    );
+    return fileStream.createReadableStream();
+  }
+
+
+
+
+
 
   /// <reference path = "dcnet_pb.d.ts" />
 

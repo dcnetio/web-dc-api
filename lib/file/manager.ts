@@ -4,6 +4,7 @@ import type { HeliaLibp2p } from "helia";
 import { ChainUtil } from "../chain";
 import { oidfetch } from "../proto/oidfetch_proto";
 import { StreamWriter } from "./streamwriter";
+import * as MP4Box from 'mp4box'
 
 import {
   compareByteArrays,
@@ -24,8 +25,9 @@ import toBuffer from "it-to-buffer";
 import { decryptContent } from "../util/dccrypt";
 import * as buffer from "buffer/";
 import { Uint8ArrayList } from "uint8arraylist";
-import { Stream } from "@libp2p/interface";
+import { Libp2p, Stream } from "@libp2p/interface";
 import { cidNeedConnect } from "../constants";
+import { SeekableFileStream } from "./seekableFileStream";
 const { Buffer } = buffer;
 
 const NonceBytes = 12;
@@ -50,23 +52,31 @@ export const Errors = {
   ErrNoNeedUpload: new FileError("no need upload"),
 };
 
+
+export interface MediaController {
+  restart(): { videoElement: HTMLVideoElement, mediaUrl: string, controller: MediaController };
+  dispose(): void;
+}
 interface CustomMessage {
   type: number; // uint8 (1字节)
   version: number; // uint16 (2字节, 大端序)
   payload: Uint8Array; // 二进制数据
 }
 
+
+
+
 export class FileManager {
   dc: DcUtil;
   connectedDc: DCConnectInfo = {};
   chainUtil: ChainUtil;
-  dcNodeClient: HeliaLibp2p;
+  dcNodeClient: HeliaLibp2p<Libp2p>;
   accountKey: SignHandler;
   constructor(
     dc: DcUtil,
     connectedDc: DCConnectInfo,
     chainUtil: ChainUtil,
-    dcNodeClient: HeliaLibp2p,
+    dcNodeClient: HeliaLibp2p<Libp2p>,
     accountKey: SignHandler
   ) {
     this.dc = dc;
@@ -367,21 +377,16 @@ export class FileManager {
   // 从dc网络获取指定文件
   // flag 是否需要连接节点，0-获取，1-不获取
   getFileFromDc = async (cid: string, decryptKey: string, flag?: number) => {
-    console.log("first 11111");
     if (flag !== cidNeedConnect.NOT_NEED) {
       const res = await this.dc?._connectToObjNodes(cid);
       if (!res) {
-        console.log("return nulllllllll");
         return null;
       }
     }
-    console.log("first 2");
     const fs = unixfs(this.dcNodeClient);
-    console.log("first 3");
     let headDealed = false;
     let waitBuffer = new Uint8Array(0);
     let fileContent = new Uint8Array(0);
-    console.log("first 31");
 
     const encryptextLen = (3 << 20) + NonceBytes + TagBytes; //每段密文长度(最后一段可能会短一点)
     const catOptions = {
@@ -389,15 +394,11 @@ export class FileManager {
       length: 32,
       // signal: AbortSignal.timeout(5000),
     };
-    console.log("first 32");
     let readCount = 0;
     try {
       for (;;) {
         if (!headDealed) {
-          //处理文件头
-          console.log("first 33");
           const headBuf = await toBuffer(fs.cat(CID.parse(cid), catOptions));
-          console.log("first 4");
           readCount += headBuf.length;
           if (headBuf.length > 0) {
             waitBuffer = mergeUInt8Arrays(waitBuffer, headBuf);
@@ -471,7 +472,76 @@ export class FileManager {
       return fileContent;
     } catch (error) {
       console.error("getFileFromDc error", error);
-      return "";
+      return ;
     }
   };
+
+
+  /**
+   * 创建可随机访问的文件流
+   */
+  async createSeekableFileStream(cid: string, decryptKey: string, flag?: number): Promise<SeekableFileStream | null> {
+    // 连接到节点
+    if (flag !== cidNeedConnect.NOT_NEED) {
+      const res = await this.dc?._connectToObjNodes(cid);
+      if (!res) {
+        return null;
+      }
+    }
+
+    const fs = unixfs(this.dcNodeClient);
+    
+    try {
+      // 读取头信息
+      const headerData = await toBuffer(fs.cat(CID.parse(cid), {
+        offset: 0,
+        length: 32
+      }));
+      
+      // 检查是否有DC文件头
+      const hasHeader = compareByteArrays(
+        headerData.subarray(0, 10),
+        Buffer.from(dcFileHead)
+      );
+      
+      // 获取文件大小
+      // const stats = await fs.stat(CID.parse(cid));
+      // const totalSize = Number(stats.fileSize);
+      const fileSize = this.readUint64BE(headerData, 24);
+      
+      const fileInfo = {
+        size: fileSize,
+        hasHeader,
+        headerSize: hasHeader ? 32 : 0
+      };
+      
+      // 创建并返回流对象
+      return new SeekableFileStream({
+        fileInfo,
+        fs,
+        cid: CID.parse(cid),
+        decryptKey: decryptKey || "",
+        encryptChunkSize: (3 << 20) + NonceBytes + TagBytes
+      });
+    } catch (err) {
+      console.error("Failed to create seekable file stream:", err);
+      return null;
+    }
+  }
+
+
+   readUint64BE(buffer: Uint8Array, offset: number): number {
+    // JavaScript中Number可以安全表示的最大整数是2^53-1
+    const high = buffer[offset] * 2**24 + 
+                 buffer[offset + 1] * 2**16 + 
+                 buffer[offset + 2] * 2**8 + 
+                 buffer[offset + 3];
+    const low = buffer[offset + 4] * 2**24 + 
+                buffer[offset + 5] * 2**16 + 
+                buffer[offset + 6] * 2**8 + 
+                buffer[offset + 7];
+    
+    return high * 2**32 + low;
+  }
+
 }

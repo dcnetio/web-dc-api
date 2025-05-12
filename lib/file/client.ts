@@ -3,6 +3,7 @@ import type { Client } from "../dcapi";
 import { dcnet } from "../proto/dcnet_proto";
 import { HeliaLibp2p } from "helia";
 import { DataSource } from "../proto/datasource";
+import { Libp2p } from "libp2p";
 
 const uploadStatus = {
   OK: 0,
@@ -31,10 +32,10 @@ const uploadRespondStatus = {
 
 export class FileClient {
   client: Client;
-  dcNodeClient: HeliaLibp2p;
+  dcNodeClient: HeliaLibp2p<Libp2p>;
 
 
-  constructor(dcClient: Client, dcNodeClient: HeliaLibp2p) {
+  constructor(dcClient: Client, dcNodeClient: HeliaLibp2p<Libp2p>) {
     this.client = dcClient;
     this.dcNodeClient = dcNodeClient;
   }

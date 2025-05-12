@@ -35,6 +35,7 @@ import { dial_timeout } from '../define';
 import {decode as multibaseDecode} from 'multibase';
 import {net as net_pb} from "./pb/net_pb";
 import { LineReader } from './common/lineReader';
+import { FileManager } from 'lib/file/manager';
 const { Buffer } = buffer; 
 
 export const ThreadProtocol = "/dc/" + Protocol.name + "/" + Protocol.version
@@ -234,6 +235,185 @@ export class DBManager {
             console.error(`Error pulling thread ${id}:`, err);  
         }  
     }  
+
+
+
+/**
+ * Preloads a database from DC network to local
+ * Generally happens when a new device first logs in to sync previously created databases
+ * 
+ * @param threadid Thread ID string
+ * @param fid Content ID string of the file to preload
+ * @param dbname Database name
+ * @param dbAddr Database address string
+ * @param b32Rk Base32-encoded read key
+ * @param b32Sk Base32-encoded secret key
+ * @param block Whether to block until syncing is complete
+ * @param jsonCollections JSON string of collection configurations
+ * @returns Promise that resolves when preloading is complete
+ */
+async preloadDBFromDC(
+    threadid: string,
+    fid: string,
+    dbname: string,
+    dbAddr: string,
+    b32Rk: string,
+    b32Sk: string,
+    block: boolean,
+    jsonCollections: string
+  ): Promise<void> {
+    console.debug(`manager: preloading DB from DC ${threadid}`);
+  
+    // Check if DBManager exists
+    if (!this) {
+      throw Errors.ErrNoDbManager;
+    }
+  
+    // Decode thread ID
+    let tID: ThreadID;
+    try {
+      tID = await this.decodeThreadId(threadid);
+    } catch (err) {
+      throw err;
+    }
+  
+    // Get log key
+    let logKey: Ed25519PrivKey;
+    try {
+      logKey = await this.getLogKey(tID);
+    } catch (err) {
+      throw err;
+    }
+  
+    // Create peer ID from log key
+    let lid: PeerId;
+    try {
+      lid = peerIdFromPrivateKey(logKey);
+    } catch (err) {
+      throw err;
+    }
+  
+    // Begin connection in background
+    await this.dc._connectToObjNodes(tID.toString()).catch(err => 
+      console.error(`Error connecting to object nodes: ${err.message}`)
+    );
+    const ctx = createContext(30000);
+    try {
+      await this.addLogToThreadStart(ctx, tID, lid);
+    } catch (err) {
+      console.warn(`Warning: could not add log to thread: ${err.message}`);
+    }
+  
+    // Generate thread key
+    let threadKey: ThreadKey;
+    try {
+      const sk = SymmetricKey.fromString(b32Sk);
+      const rk = SymmetricKey.fromString(b32Rk);
+      threadKey = new ThreadKey(sk, rk);
+    } catch (err) {
+      throw err;
+    }
+  
+    let connectedPeerId: PeerId | undefined;
+    let multiAddr: TMultiaddr | undefined;
+    
+    // Try to connect using provided dbAddr
+    let connectedFlag = false;
+    if (dbAddr.length > 10) {
+      try {
+        // Try to parse address info and connect
+        const peerAddrInfo = multiaddr(dbAddr);
+        
+        try {
+          const conn = await this.dc.dcNodeClient?.libp2p.dial(peerAddrInfo, {
+            signal: AbortSignal.timeout(3000)
+          });
+          
+          if (conn) {
+            connectedFlag = true;
+            multiAddr = multiaddr(dbAddr);
+          }
+        } catch (err) {
+          // Connection failed
+        }
+      } catch (err) {
+        // Invalid address
+      }
+    }
+  
+    // If direct connection failed, connect through object nodes
+    if (!connectedFlag) {
+      try {
+        const connectedAddr = await this.dc._connectToObjNodes(tID.toString());
+        if (!connectedAddr) {
+          throw Errors.ErrNoThreadOnDc;
+        }
+        
+        const conns = this.dc.dcNodeClient?.libp2p.getConnections(connectedPeerId);
+        if (!conns || conns.length == 0) {
+            throw Errors.ErrNoThreadOnDc;
+        } 
+      } catch (err) {
+        throw err;
+      }
+    } else {
+      // Start connection in background
+      this.dc._connectToObjNodes(tID.toString()).catch(err => 
+        console.error(`Error connecting to object nodes: ${err.message}`)
+      );
+    }
+  
+    // Parse collection info
+    let collectionInfos: ICollectionConfig[] = [];
+    try {
+      collectionInfos = JSON.parse(jsonCollections);
+    } catch (err) {
+      throw err;
+    }
+  
+    // Create collection configurations
+    const collections = collectionInfos.map(info => ({
+      name: info.name,
+      schema: info.schema,
+      indexes: info.indexes || []
+    }));
+  
+    // Create options for new database
+    const dbOpts: NewOptions = {
+      name: dbname,
+      collections: collections,
+      key: threadKey,
+      logKey: logKey,
+      block: block
+    };
+  
+    // Delete existing database if it exists
+    try {
+      await this.deleteDB(tID, false);
+    } catch (err) {
+      // Ignore specific errors
+      if (err !== Errors.ErrDBNotFound && err !== Errors.ErrThreadNotFound) {
+        throw err;
+      }
+    }
+  
+    // Create context with extended timeout for file download
+    const tctx = createContext(PullTimeout * 30);
+     const fileManager = new FileManager(
+            this.dc,
+            this.connectedDc,
+            this.chainUtil,
+            this.dc.dcNodeClient,
+            this.signHandler
+          );
+    const fileStream = await fileManager.createSeekableFileStream(fid, "");
+ 
+    // Preload database from reader
+    const threadMultiaddr = new ThreadMuliaddr(multiAddr!, tID);
+    await this.preloadDBFromReader(tctx, fileStream.createReadableStream(), threadMultiaddr, threadKey, dbOpts);
+  }
+
+
 
 /**
  * 从读取器预加载数据库

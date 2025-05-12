@@ -88,8 +88,6 @@ export class DcUtil {
       return;
     }
     const res = await this._connectPeers(peers);
-    console.log("new first 2");
-    console.log(res);
     return res;
   };
 

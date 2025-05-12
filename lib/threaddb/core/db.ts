@@ -24,6 +24,7 @@ export const Errors = {
     ErrCannotIndexIDField: new Error(`cannot create custom index `),
     ErrCollectionNotFound: new Error('collection not found'),
     ErrNodeAddrIsNull: new Error('node address is null'),
+    ErrNoThreadOnDc: new Error('no thread on dc'),
 };  
 
 export const pullThreadBackgroundTimeout = 3600000; // 1 hour in milliseconds
