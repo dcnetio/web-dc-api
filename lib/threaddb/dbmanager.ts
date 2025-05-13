@@ -548,49 +548,33 @@ async preloadDBFromReader(
     }
   }
 
-
 /**
- * 将数据库状态导出到文件
- * @param ctx 上下文
- * @param id 线程ID
- * @param path 文件路径
- * @param readKey 读取密钥（用于加密）
- * @returns 线程信息
+ * Browser-compatible version to export DB to file
+ * @param ctx Context
+ * @param id ThreadID
+ * @param fileName Suggested file name for download
+ * @param readKey Optional encryption key
+ * @returns Promise resolving to ThreadInfo
  */
 async exportDBToFile(
   ctx: Context,
   id: ThreadID,
-  path: string,
+  fileName: string,
   readKey?: SymmetricKey
 ): Promise<ThreadInfo> {
-  console.debug(`manager: exporting db ${id.toString()} to file ${path}`);
+  console.debug(`manager: exporting db ${id.toString()} to file download`);
   
-  // 检查数据库是否存在
-  let db: ThreadDb | undefined;
-  await this.lock.acquire('dbs', async () => {
-    db = this.dbs.get(id.toString());
-  });
-  
-  if (!db) {
-    throw Errors.ErrDBNotFound;
-  }
-  
-  // 获取线程的日志状态
+  // Get thread logs similar to original function
   let logState = "";
   let logs: net_pb.pb.ILog[];
   let threadInfo: ThreadInfo;
   
-  try {
-    [logs, threadInfo] = await this.network.getPbLogs( id);
-  } catch (err) {
-    throw err;
-  }
+  [logs, threadInfo] = await this.network.getPbLogs(id);
   
-  // 构建日志状态字符串
+  // Build log state string
   for (let i = 0; i < logs.length; i++) {
     const logBytes = net_pb.pb.Log.encode(logs[i]).finish();
-    // 使用 multibase 编码
-    const mbaseLog = await multibase.encode('base64', logBytes);
+    const mbaseLog = multibase.encode('base64', logBytes);
     
     if (i === 0) {
       logState = mbaseLog.toString();
@@ -599,63 +583,70 @@ async exportDBToFile(
     }
   }
   
-  // 创建文件
-  const fs = require('fs').promises;
-  const logfile = await fs.open(path, 'w');
+  // Create content in memory instead of writing to file
+  let content = logState + "\n";
   
-  try {
-    // 写入日志状态作为第一行
-    await logfile.writeFile(logState);
-    
-    // 创建事务
-    const txn = await db.datastore.newTransactionExtended( true);
-    
-    try {
-      // 创建查询迭代器
-      const q = new Query();
-      const baseKey = new Key('/'); // 从根键开始查询
-      const i = await newIterator(txn, baseKey, q);    
-      // 迭代所有记录
-      for await (const res of i.iter.next()) {
-        if (res.error) {
-          throw res.error;
-        }
-        let enc: Uint8Array;
-        // 如果提供了readKey，则加密数据
-        if (readKey) {
-          const encBytes = await readKey.encrypt(res.entry.value);
-          const mValue =  multibase.encode('base64', encBytes);
-          const record = `${res.entry.key}|${mValue.toString()}`;
-          enc = new TextEncoder().encode(record);
-        } else {
-          // 否则只进行base64编码
-          const mValue =  multibase.encode('base64', res.entry.value);
-          const record = `${res.entry.key}|${mValue.toString()}`;
-          enc = new TextEncoder().encode(record);
-        }
-        
-        // 写入换行符和记录
-        await logfile.writeFile(Buffer.from("\n"));
-        await logfile.writeFile(enc);
-      }
-      
-      // 关闭迭代器
-      i.close();
-      
-      // 丢弃事务（只读事务）
-      await txn.discard();
-      
-    } catch (err) {
-      // 发生错误时丢弃事务
-      await txn.discard();
-      throw err;
-    }
-  } finally {
-    // 关闭文件
-    await logfile.close();
+  // Get database
+  const db = this.dbs.get(id.toString());
+  if (!db) {
+    throw Errors.ErrDBNotFound;
   }
   
-  return threadInfo;
+  // Create transaction
+  const txn = await db.datastore.newTransactionExtended(true);
+  
+  try {
+    // Similar query logic, but accumulating in memory
+    const q = new Query();
+    const baseKey = new Key('/');
+    const i = await newIterator(txn, baseKey, q);
+    
+    for await (const res of i.iter.next()) {
+      if (res.error) {
+        throw res.error;
+      }
+      
+      let line: string;
+      if (readKey) {
+        const encBytes = await readKey.encrypt(res.entry.value);
+        const mValue = multibase.encode('base64', encBytes);
+        line = `${res.entry.key}|${mValue.toString()}`;
+      } else {
+        const mValue = multibase.encode('base64', res.entry.value);
+        line = `${res.entry.key}|${mValue.toString()}`;
+      }
+      
+      content += line + "\n";
+    }
+    
+    i.close();
+    txn.discard();
+    
+    
+    // Create blob and trigger download
+    const blob = new Blob([content], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    
+    // Create download link
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = fileName || `db-export-${id.toString().substring(0, 8)}.txt`;
+    
+    // Append to body, click and remove
+    document.body.appendChild(a);
+    a.click();
+    
+    // Cleanup
+    setTimeout(() => {
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }, 100);
+    
+    return threadInfo;
+  } catch (err) {
+    txn.discard();
+    throw err;
+  }
 }
 
 
