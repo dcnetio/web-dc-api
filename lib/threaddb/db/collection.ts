@@ -1781,7 +1781,7 @@ class Iterator {
 /**
  * 创建新的迭代器
  */
-async function newIterator(txn: any, baseKey: Key, q: Query): Promise<Iterator> {
+export async function newIterator(txn: any, baseKey: Key, q: Query): Promise<Iterator> {
   const i = new Iterator(txn, q);
   
   let prefix: Key;

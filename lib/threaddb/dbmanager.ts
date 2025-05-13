@@ -32,10 +32,12 @@ import {Protocol} from './net/define';
 import {parseJsonToQuery} from './db/json2Query';
 import * as buffer from "buffer/";
 import { dial_timeout } from '../define';
-import {decode as multibaseDecode} from 'multibase';
+import multibase, {decode as multibaseDecode} from 'multibase';
 import {net as net_pb} from "./pb/net_pb";
 import { LineReader } from './common/lineReader';
 import { FileManager } from 'lib/file/manager';
+import {newIterator} from './db/collection';
+import { Query } from './db/query';
 const { Buffer } = buffer; 
 
 export const ThreadProtocol = "/dc/" + Protocol.name + "/" + Protocol.version
@@ -389,7 +391,7 @@ async preloadDBFromDC(
   
     // Delete existing database if it exists
     try {
-      await this.deleteDB(tID, false);
+      await this.deleteDB(tID, true);
     } catch (err) {
       // Ignore specific errors
       if (err !== Errors.ErrDBNotFound && err !== Errors.ErrThreadNotFound) {
@@ -546,6 +548,120 @@ async preloadDBFromReader(
     }
   }
 
+
+/**
+ * 将数据库状态导出到文件
+ * @param ctx 上下文
+ * @param id 线程ID
+ * @param path 文件路径
+ * @param readKey 读取密钥（用于加密）
+ * @returns 线程信息
+ */
+async exportDBToFile(
+  ctx: Context,
+  id: ThreadID,
+  path: string,
+  readKey?: SymmetricKey
+): Promise<ThreadInfo> {
+  console.debug(`manager: exporting db ${id.toString()} to file ${path}`);
+  
+  // 检查数据库是否存在
+  let db: ThreadDb | undefined;
+  await this.lock.acquire('dbs', async () => {
+    db = this.dbs.get(id.toString());
+  });
+  
+  if (!db) {
+    throw Errors.ErrDBNotFound;
+  }
+  
+  // 获取线程的日志状态
+  let logState = "";
+  let logs: net_pb.pb.ILog[];
+  let threadInfo: ThreadInfo;
+  
+  try {
+    [logs, threadInfo] = await this.network.getPbLogs( id);
+  } catch (err) {
+    throw err;
+  }
+  
+  // 构建日志状态字符串
+  for (let i = 0; i < logs.length; i++) {
+    const logBytes = net_pb.pb.Log.encode(logs[i]).finish();
+    // 使用 multibase 编码
+    const mbaseLog = await multibase.encode('base64', logBytes);
+    
+    if (i === 0) {
+      logState = mbaseLog.toString();
+    } else {
+      logState = `${logState};${mbaseLog.toString()}`;
+    }
+  }
+  
+  // 创建文件
+  const fs = require('fs').promises;
+  const logfile = await fs.open(path, 'w');
+  
+  try {
+    // 写入日志状态作为第一行
+    await logfile.writeFile(logState);
+    
+    // 创建事务
+    const txn = await db.datastore.newTransactionExtended( true);
+    
+    try {
+      // 创建查询迭代器
+      const q = new Query();
+      const baseKey = new Key('/'); // 从根键开始查询
+      const i = await newIterator(txn, baseKey, q);    
+      // 迭代所有记录
+      for await (const res of i.iter.next()) {
+        if (res.error) {
+          throw res.error;
+        }
+        let enc: Uint8Array;
+        // 如果提供了readKey，则加密数据
+        if (readKey) {
+          const encBytes = await readKey.encrypt(res.entry.value);
+          const mValue =  multibase.encode('base64', encBytes);
+          const record = `${res.entry.key}|${mValue.toString()}`;
+          enc = new TextEncoder().encode(record);
+        } else {
+          // 否则只进行base64编码
+          const mValue =  multibase.encode('base64', res.entry.value);
+          const record = `${res.entry.key}|${mValue.toString()}`;
+          enc = new TextEncoder().encode(record);
+        }
+        
+        // 写入换行符和记录
+        await logfile.writeFile(Buffer.from("\n"));
+        await logfile.writeFile(enc);
+      }
+      
+      // 关闭迭代器
+      i.close();
+      
+      // 丢弃事务（只读事务）
+      await txn.discard();
+      
+    } catch (err) {
+      // 发生错误时丢弃事务
+      await txn.discard();
+      throw err;
+    }
+  } finally {
+    // 关闭文件
+    await logfile.close();
+  }
+  
+  return threadInfo;
+}
+
+
+
+
+
 /**
  * 从读取器导入数据库状态
  * @param id 线程ID
@@ -679,6 +795,7 @@ async importDBStateFromReader(
     }
     }
   }
+
 
 
 /**  

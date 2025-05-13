@@ -187,7 +187,6 @@ private async readEncrypted(startPosition: number, length: number): Promise<Uint
     let result = new Uint8Array(length);
     result.set(decryptedData.subarray(offsetInBlock, offsetInBlock + length), 0);
     return result;
-    
   } catch (err) {
     console.error("Error reading encrypted data:", err);
     return new Uint8Array(0);
