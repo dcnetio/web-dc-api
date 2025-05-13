@@ -167,7 +167,8 @@ export class FileManager {
   async addFile(
     file: File,
     enkey: string,
-    onUpdateTransmitSize: (status: number, size: number) => void
+    onUpdateTransmitSize: (status: number, size: number) => void,
+    vaccount?: string,
   ): Promise<[string | null, Error | null]> {
     if (!this.connectedDc?.client) {
       return [null, Errors.ErrNoDcPeerConnected];

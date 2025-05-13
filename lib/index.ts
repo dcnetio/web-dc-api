@@ -149,22 +149,8 @@ export class DC implements SignHandler {
             "libp2p 已连接连接列表:",
             Object.keys(this.dcNodeClient.libp2p.getConnections())
           );
-          // 获取存储的pubkey
-          const publicKeyString = await loadPublicKey();
-          if(publicKeyString) {
-            // 获取公钥
-            const publicKey = Ed25519PubKey.pubkeyToEdStr(publicKeyString);
-            this.publicKey = publicKey;
-            // 获取token
-            const token = await loadTokenWithPeerId(publicKeyString, nodeAddr.getPeerId());
-            if (token) {
-              // 连接token还在
-              this.connectedDc.client.token = token;
-            }
-            // token不在，说明换了节点，则重新获取
-            await this.getTokenWithDCConnectInfo(this.connectedDc);
-          }
-          await sleep(5000);
+          // 获取存储的token
+          this.getSavedToken(nodeAddr.getPeerId());
         }
         // console.log("--------dial success begin---------");
         // this.dcNodeClient.libp2p.getMultiaddrs().forEach((addr) => {
@@ -177,6 +163,25 @@ export class DC implements SignHandler {
       }
     }
   };
+  // 获取存储的token
+  private async getSavedToken(peerId: string){
+
+    // 获取存储的pubkey
+    const publicKeyString = await loadPublicKey();
+    if(publicKeyString) {
+      // 获取公钥
+      const publicKey = Ed25519PubKey.pubkeyToEdStr(publicKeyString);
+      this.publicKey = publicKey;
+      // 获取token
+      const token = await loadTokenWithPeerId(publicKeyString, peerId);
+      if (token) {
+        // 连接token还在
+        this.connectedDc.client.token = token;
+      }
+      // token不在，说明换了节点，则重新获取
+      await this.getTokenWithDCConnectInfo(this.connectedDc);
+    }
+  }
 
   // 签名,后续应该改成发送到钱包iframe中签名,发送数据包含payload和用户公钥
   sign = (payload: Uint8Array): Uint8Array => {
@@ -1046,7 +1051,12 @@ export class DC implements SignHandler {
 	//	key 键
 	//	value 值
 	//	返回是否设置成功
-  async vaSetKeyValue() {
+  async vaSetKeyValue(
+    themeAuthor: string,
+    theme: string,
+    key: string,
+    value: string
+  ) {
     const keyValueManager = new KeyValueManager(
       this.dcutil,
       this.connectedDc,
@@ -1062,5 +1072,177 @@ export class DC implements SignHandler {
       key,
       value
     )
+    return res
+  }
+
+	// Va_SetKeyValueForVAccount 设置键值对,只有配置了权限的用户,才能设置键值对,只有绑定了虚拟账号的用户才能设置
+	//
+	//	themeAuthor 主题作者
+	//	Group 存储主题所属组,默认为DCAPP
+	//	theme 存储主题
+	//	key 键
+	//	value 值
+	//	virAccount 虚拟账号
+	//	返回是否设置成功
+  async vaSetKeyValueForVAccount(
+    themeAuthor: string,
+    theme: string,
+    key: string,
+    value: string,
+    vaccount: string
+  ) {
+    const keyValueManager = new KeyValueManager(
+      this.dcutil,
+      this.connectedDc,
+      this.AccountBackupDc,
+      this.dcNodeClient,
+      this.dcChain,
+      this
+    );
+    const res = await keyValueManager.vaSetKeyValueForVAccount(
+      this.appInfo.id,
+      themeAuthor,
+      theme,
+      key,
+      value,
+      vaccount,
+    )
+    return res
+  }
+
+	// Va_GetValueWithKey 获取键值对的值,如果是鉴权主题,则只有配置了权限的用户,才能获取键值对的值,
+	//
+	//	如果是公共主题,如NFT数据,则只对写账号鉴权,任何人都可以读
+	//	themeAuthor 主题作者
+	//	group 存储主题所属组,默认为DCAPP
+	//	theme 存储主题
+	//	writerPubkey 写入账号的pubkey
+	//	key 键
+	//	返回值
+  async vaGetValueWithKey(
+    themeAuthor: string,
+    theme: string,
+    writerPubkey: string,
+    key: string,
+  ) {
+    const keyValueManager = new KeyValueManager(
+      this.dcutil,
+      this.connectedDc,
+      this.AccountBackupDc,
+      this.dcNodeClient,
+      this.dcChain,
+      this
+    );
+    const res = await keyValueManager.vaGetValueWithKeyForVAccount(
+      this.appInfo.id,
+      themeAuthor,
+      theme,
+      writerPubkey,
+      key,
+    )
+    return res
+  }
+
+	// Va_GetValueWithKeyForVAccount 获取键值对的值,如果是鉴权主题,则只有配置了权限的用户,才能获取键值对的值,只有绑定了虚拟账号的用户才能获取
+	//
+	//	如果是公共主题,如NFT数据,则只对写账号鉴权,任何人都可以读
+	//	themeAuthor 主题作者
+	//	group 存储主题所属组,默认为DCAPP
+	//	theme 存储主题
+	//	writerPubkey 写入账号的pubkey
+	//	key 键
+	//	virAccount 虚拟账号
+	//	返回值
+  async vaGetValueWithKeyForVAccount(
+    themeAuthor: string,
+    theme: string,
+    writerPubkey: string,
+    key: string,
+    vaccount: string
+  ) {
+    const keyValueManager = new KeyValueManager(
+      this.dcutil,
+      this.connectedDc,
+      this.AccountBackupDc,
+      this.dcNodeClient,
+      this.dcChain,
+      this
+    );
+    const res = await keyValueManager.vaGetValueWithKeyForVAccount(
+      this.appInfo.id,
+      themeAuthor,
+      theme,
+      writerPubkey,
+      key,
+      vaccount,
+    )
+    return res
+  }
+
+	// Va_GetValueWithKeys 批量获取键值对的值,如果是鉴权主题,则只有配置了权限的用户,才能获取键值对的值,
+	//
+	//	themeAuthor 主题作者
+	//	group 存储主题所属组,默认为DCAPP
+	//	theme 存储主题
+	//	writerPubkey 写入账号的pubkey
+	//	keys 键,逗号分隔
+	//	返回值
+  async vaGetValuesWithKeys(
+    themeAuthor: string,
+    theme: string,
+    writerPubkey: string,
+    keys: string,
+  ) {
+    const keyValueManager = new KeyValueManager(
+      this.dcutil,
+      this.connectedDc,
+      this.AccountBackupDc,
+      this.dcNodeClient,
+      this.dcChain,
+      this
+    );
+    const res = await keyValueManager.vaGetValuesWithKeysForVAccount(
+      this.appInfo.id,
+      themeAuthor,
+      theme,
+      writerPubkey,
+      keys,
+    )
+    return res
+  }
+
+	// Va_GetValuesWithKeysForVAccount 批量获取键值对的值,如果是鉴权主题,则只有配置了权限的用户,才能获取键值对的值,只有绑定了虚拟账号的用户才能获取
+	//
+	//	themeAuthor 主题作者
+	//	group 存储主题所属组,默认为DCAPP
+	//	theme 存储主题
+	//	writerPubkey 写入账号的pubkey
+	//	keys 键,逗号分隔
+	//	virAccount 虚拟账号
+	//	返回值
+  async vaGetValuesWithKeysForVAccount(
+    themeAuthor: string,
+    theme: string,
+    writerPubkey: string,
+    keys: string,
+    vaccount: string
+  ) {
+    const keyValueManager = new KeyValueManager(
+      this.dcutil,
+      this.connectedDc,
+      this.AccountBackupDc,
+      this.dcNodeClient,
+      this.dcChain,
+      this
+    );
+    const res = await keyValueManager.vaGetValuesWithKeysForVAccount(
+      this.appInfo.id,
+      themeAuthor,
+      theme,
+      writerPubkey,
+      keys,
+      vaccount,
+    )
+    return res
   }
 }

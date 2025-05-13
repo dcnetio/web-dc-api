@@ -10,7 +10,7 @@ import { Ed25519PubKey } from "lib/dc-key/ed25519";
 import { sha256, uint32ToLittleEndianBytes } from "lib/util/utils";
 import { base32 } from "multiformats/bases/base32";
 import { Client } from "lib/dcapi";
-import { Direction } from "lib/define";
+import { CommentType, Direction } from "lib/define";
 // 错误定义
 export class KeyValueError extends Error {
   constructor(message: string) {
@@ -191,9 +191,8 @@ export class KeyValueManager {
     const hValue: Uint8Array = uint32ToLittleEndianBytes(
       blockHeight ? blockHeight : 0
     );
-    const type = 0;
     // Create binary representation of type (little endian)
-    const typeValue: Uint8Array = uint32ToLittleEndianBytes(type ? type : 0);
+    const typeValue: Uint8Array = uint32ToLittleEndianBytes(CommentType.KeyValue);
     // sign(Theme+appId+objAuthor+blockheight+contentCid)
     const themeValue: Uint8Array = new TextEncoder().encode(theme);
     const appIdValue: Uint8Array = new TextEncoder().encode(appId);
@@ -215,15 +214,15 @@ export class KeyValueManager {
     const keyValueClient = new KeyValueClient(client, this.signHandler);
     try {
       const res = await keyValueClient.configThemeObjAuth(
-        themeValue,
-        appIdValue,
-        themeAuthorValue,
+        theme,
+        appId,
+        themeAuthor,
         blockHeight,
         userPubkeyStr,
-        contentCidValue,
+        contentCid,
         content,
         contentSize,
-        type,
+        CommentType.KeyValue,
         signature
       );
 
@@ -294,9 +293,9 @@ export class KeyValueManager {
     key: string,
     value: string,
     vaccount?: string
-  ){
+  ): Promise<[boolean, Error | null]> {
     if (!theme.startsWith("keyvalue_")) {
-      return new Error("Va_SetKeyValue failed, theme must start with 'keyvalue_'");
+      return [null, new Error("Va_SetKeyValue failed, theme must start with 'keyvalue_'")];
     }
     const userPubkey = this.signHandler.getPublicKey();
     let userPubkeyStr = userPubkey.string();
@@ -310,8 +309,143 @@ export class KeyValueManager {
     if (client.peerAddr === null) {
       return [null, new Error("ErrConnectToAccountPeersFail")];
     }
-    const serverPeerId = client.peerAddr.getPeerId();
     const content = `${key}:${value}`;
+    const contentUint8 = new TextEncoder().encode(content);
+    const contenthash = await sha256(contentUint8);
+    const contentCidBase32 = base32.encode(contenthash)
+
+    const contentSize = content.length;
+
+    const blockHeight: number = await this.chainUtil.getBlockHeight();
+    const hValue: Uint8Array = uint32ToLittleEndianBytes(
+      blockHeight ? blockHeight : 0
+    );
+    const themeValue: Uint8Array = new TextEncoder().encode(theme);
+    const themeAuthorValue: Uint8Array = new TextEncoder().encode(themeAuthor);
+    const appIdValue: Uint8Array = new TextEncoder().encode(appId);
+    const contentCidValue: Uint8Array = new TextEncoder().encode(contentCidBase32);
+    const typeValue: Uint8Array = uint32ToLittleEndianBytes(CommentType.KeyValue);
+
+    const preSign = new Uint8Array([
+      ...themeValue,
+      ...appIdValue,
+      ...themeAuthorValue,
+      ...hValue,
+      ...contentCidValue,
+      ...typeValue,
+    ]);
+    const signature = await this.signHandler.sign(preSign);
+    const keyValueClient = new KeyValueClient(client, this.signHandler);
+    try {
+      const res = await keyValueClient.setKeyValue(
+        theme,
+        appId,
+        themeAuthor,
+        blockHeight,
+        userPubkeyStr,
+        contentCidBase32,
+        content,
+        contentSize,
+        CommentType.KeyValue,
+        signature,
+        vaccount
+      );
+
+      if (res !== 0) {
+        return [null, new Error(`setKeyValue fail, resFlag:${res}`)];
+      }
+      return [true, null]
+    } catch (error) {
+      return [null, error];
+    }
+
+  }
+
+  async vaGetValueWithKeyForVAccount(
+    appId: string,
+    themeAuthor: string,
+    theme: string,
+    writerPubkey: string,
+    key: string,
+    vaccount?: string
+  ): Promise<[string, Error | null]> {
+    if (!theme.startsWith("keyvalue_")) {
+      return [null, new Error("vaGetValueWithKeyForVAccount failed, theme must start with 'keyvalue_'")];
+    }
+    const themeAuthorPubkey: Ed25519PubKey =
+      Ed25519PubKey.pubkeyToEdStr(themeAuthor);
+    const  client = await this.dc.connectToUserDcPeer(themeAuthorPubkey.raw);
+    if (client === null) {
+      return [null, new Error("ErrConnectToAccountPeersFail")];
+    }
+
+    if (client.peerAddr === null) {
+      return [null, new Error("ErrConnectToAccountPeersFail")];
+    }
+
+    const keyValueClient = new KeyValueClient(client, this.signHandler);
+    try {
+      const res = await keyValueClient.getValueWithKey(
+        theme,
+        appId,
+        themeAuthor,
+        writerPubkey,
+        key,
+        vaccount
+      );
+
+      if (res == null) {
+        return [null, new Error(`vaGetValueWithKeyForVAccount fail, resFlag:${res}`)];
+      }
+      const keyValue = new TextDecoder().decode(res)
+      return [keyValue, null]
+    } catch (error) {
+      return [null, error];
+    }
+
+  }
+
+  async vaGetValuesWithKeysForVAccount(
+    appId: string,
+    themeAuthor: string,
+    theme: string,
+    writerPubkey: string,
+    keys: string,
+    vaccount?: string
+  ): Promise<[string, Error | null]> {
+    if (!theme.startsWith("keyvalue_")) {
+      return [null, new Error("vaGetValuesWithKeysForVAccount failed, theme must start with 'keyvalue_'")];
+    }
+    const themeAuthorPubkey: Ed25519PubKey =
+      Ed25519PubKey.pubkeyToEdStr(themeAuthor);
+    const  client = await this.dc.connectToUserDcPeer(themeAuthorPubkey.raw);
+    if (client === null) {
+      return [null, new Error("ErrConnectToAccountPeersFail")];
+    }
+
+    if (client.peerAddr === null) {
+      return [null, new Error("ErrConnectToAccountPeersFail")];
+    }
+
+    const keyValueClient = new KeyValueClient(client, this.signHandler);
+    try {
+      const res = await keyValueClient.getValuesWithKeys(
+        theme,
+        appId,
+        themeAuthor,
+        writerPubkey,
+        keys,
+        vaccount
+      );
+
+      if (res == null) {
+        return [null, new Error(`vaGetValuesWithKeysForVAccount fail, resFlag:${res}`)];
+      }
+      const keyValues = new TextDecoder().decode(res)
+      return [keyValues, null]
+    } catch (error) {
+      return [null, error];
+    }
 
   }
 }

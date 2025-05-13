@@ -281,7 +281,7 @@ export class DcUtil {
 
       connectionManager: {
         maxParallelDials: 100,
-        maxConnections: 1000,
+        maxConnections: 100,
         inboundConnectionThreshold: 100,
       },
 

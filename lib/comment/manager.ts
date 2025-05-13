@@ -14,7 +14,7 @@ import { cidNeedConnect } from "lib/constants";
 import { toString as uint8ArrayToString } from "uint8arrays/to-string";
 import { BrowserLineReader, readLine } from "lib/util/BrowserLineReader";
 import { bytesToHex } from "@noble/curves/abstract/utils";
-import { dcnet } from "lib/proto/dcnet_proto";
+import { dcnet } from "../proto/dcnet_proto";
 const { Buffer } = buffer;
 
 // 创建一个可以取消的信号

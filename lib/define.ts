@@ -5,3 +5,19 @@ export enum Direction {
   Forward = 0,  
   Reverse = 1  
 }  
+export enum CommentType {
+  /** 普通评论 */
+  Comment = 0,
+  
+  /** 赞 */
+  Up = 1,
+  
+  /** 踩 */
+  Down = 2,
+  
+  /** 推荐或转发 */
+  Transfer = 3,
+  
+  /** keyvalue形式的数据 */
+  KeyValue = 4
+}
