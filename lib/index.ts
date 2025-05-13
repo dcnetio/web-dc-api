@@ -41,7 +41,7 @@ import { CommentManager } from "./comment/manager";
 import { dcnet } from "./proto/dcnet_proto";
 import { BrowserLineReader, readLine } from "./util/BrowserLineReader";
 import { bytesToHex } from "@noble/curves/abstract/utils";
-import { dc_protocol, dial_timeout } from "./define";
+import { dc_protocol, dial_timeout, keyExpire } from "./define";
 import { MessageManager } from "./message/manager";
 import { DBManager } from "./threaddb/dbmanager";
 import { createTxnDatastore } from "./threaddb/common/idbstore-adapter";
@@ -59,6 +59,7 @@ import { dagCbor } from "@helia/dag-cbor";
 import { ICollectionConfig } from "./threaddb/core/core";
 import * as buffer from "buffer/";
 import { SeekableFileStream } from "./file/seekableFileStream";
+import { KeyValueManager } from "./keyvalue/manager";
 const { Buffer } = buffer;
 const storagePrefix = "dc-";
 const NonceBytes = 12;
@@ -161,7 +162,7 @@ async function handleIpfsRequest(data: any, port: MessagePort, dc?: DC) {
         }
       } else {
         // 普通文件请求
-        fileData = await dc.getFileFromDc(ipfsPath, decryptKey);
+        fileData = await dc.getFile(ipfsPath, decryptKey);
         fileSize = fileData ? fileData.length : 0;
         // 非范围请求的文件读取完成后，清理缓存
         dc.clearFileCache(pathname);
@@ -329,22 +330,8 @@ export class DC implements SignHandler {
             "libp2p 已连接连接列表:",
             Object.keys(this.dcNodeClient.libp2p.getConnections())
           );
-          // 获取存储的pubkey
-          const publicKeyString = await loadPublicKey();
-          if(publicKeyString) {
-            // 获取公钥
-            const publicKey = Ed25519PubKey.pubkeyToEdStr(publicKeyString);
-            this.publicKey = publicKey;
-            // 获取token
-            const token = await loadTokenWithPeerId(publicKeyString, nodeAddr.getPeerId());
-            if (token) {
-              // 连接token还在
-              this.connectedDc.client.token = token;
-            }
-            // token不在，说明换了节点，则重新获取
-            await this.getTokenWithDCConnectInfo(this.connectedDc);
-          }
-          await sleep(5000);
+          // 获取存储的token
+          this.getSavedToken(nodeAddr.getPeerId());
         }
         // console.log("--------dial success begin---------");
         // this.dcNodeClient.libp2p.getMultiaddrs().forEach((addr) => {
@@ -359,6 +346,25 @@ export class DC implements SignHandler {
     
   
   };
+  // 获取存储的token
+  private async getSavedToken(peerId: string){
+
+    // 获取存储的pubkey
+    const publicKeyString = await loadPublicKey();
+    if(publicKeyString) {
+      // 获取公钥
+      const publicKey = Ed25519PubKey.pubkeyToEdStr(publicKeyString);
+      this.publicKey = publicKey;
+      // 获取token
+      const token = await loadTokenWithPeerId(publicKeyString, peerId);
+      if (token) {
+        // 连接token还在
+        this.connectedDc.client.token = token;
+      }
+      // token不在，说明换了节点，则重新获取
+      await this.getTokenWithDCConnectInfo(this.connectedDc);
+    }
+  }
 
   // 签名,后续应该改成发送到钱包iframe中签名,发送数据包含payload和用户公钥
   sign = (payload: Uint8Array): Uint8Array => {
@@ -368,6 +374,14 @@ export class DC implements SignHandler {
     const signature = this.privKey.sign(payload);
     return signature;
   };
+
+  decrypt = async (content: Uint8Array) : Promise<Uint8Array> => {
+    if (!this.privKey) {
+      throw new Error("privKey is null");
+    }
+    const decodeContent = await this.privKey.decrypt(content)
+    return decodeContent; 
+  }
 
   getPublicKey(): Ed25519PubKey {
     if (!this.publicKey) {
@@ -488,7 +502,7 @@ export class DC implements SignHandler {
   }
   
   // 从dc网络获取指定文件
-  getFileFromDc = async (cid: string, decryptKey: string) => {
+  getFile = async (cid: string, decryptKey: string) => {
     try {
       const fileManager = new FileManager(
         this.dcutil,
@@ -539,7 +553,7 @@ export class DC implements SignHandler {
     return res;
   };
   // 从dc网络获取缓存值
-  getCacheValueFromDc = async (key: string): Promise<string | null> => {
+  getCacheValue = async (key: string): Promise<string | null> => {
     const themeManager = new ThemeManager(this.connectedDc, this.dcutil);
     const res = await themeManager.getCacheValue(key);
     if (res[0]) {
@@ -548,14 +562,15 @@ export class DC implements SignHandler {
     return null;
   };
   // 设置缓存值
-  setCacheKey = async (value: string) => {
+  setCacheKey = async (value: string, expire?: number) => {
     const themeManager = new ThemeManager(
       this.connectedDc,
       this.dcutil,
       this.dcChain,
       this
     );
-    const res = await themeManager.setCacheKey(value);
+    const expireNumber = expire ? expire : keyExpire; // 默认一天
+    const res = await themeManager.setCacheKey(value, expireNumber);
     return res;
   };
   // 登陆
@@ -662,6 +677,7 @@ export class DC implements SignHandler {
   // 添加用户评论空间
   addUserOffChainSpace = async () => {
     const commentManager = new CommentManager(
+      this.dcutil,
       this.connectedDc,
       this.dcNodeClient,
       this.dcChain,
@@ -683,6 +699,7 @@ export class DC implements SignHandler {
     commentSpace?: number
   ) => {
     const commentManager = new CommentManager(
+      this.dcutil,
       this.connectedDc,
       this.dcNodeClient,
       this.dcChain,
@@ -704,6 +721,7 @@ export class DC implements SignHandler {
   //    返回 res-0:成功 1:评论空间没有配置 2:评论空间不足 3:评论数据同步中
   addThemeSpace = async (theme: string, addSpace: number) => {
     const commentManager = new CommentManager(
+      this.dcutil,
       this.connectedDc,
       this.dcNodeClient,
       this.dcChain,
@@ -724,16 +742,18 @@ export class DC implements SignHandler {
   //    commentType:评论类型 0:普通评论 1:点赞 2:推荐 3:踩
   //    comment 评论内容
   //    referCommentkey 被引用的评论
-  //    openFlag 开放标志 0-开放 1-私密 // todo ?这里没有
+  //    openFlag 开放标志 0-开放 1-私密
   //	  返回评论key,格式为:commentBlockHeight/commentCid
   publishCommentToTheme = async (
     theme: string,
     themeAuthor: string,
     commentType: number,
     comment: string,
-    refercommentkey?: string
+    refercommentkey?: string,
+    openFlag?: number
   ) => {
     const commentManager = new CommentManager(
+      this.dcutil,
       this.connectedDc,
       this.dcNodeClient,
       this.dcChain,
@@ -745,7 +765,8 @@ export class DC implements SignHandler {
       themeAuthor,
       commentType,
       comment,
-      refercommentkey || ""
+      refercommentkey || "",
+      openFlag,
     );
     console.log("publishCommentToTheme res:", res);
     return res;
@@ -763,6 +784,7 @@ export class DC implements SignHandler {
     commentKey: string
   ) => {
     const commentManager = new CommentManager(
+      this.dcutil,
       this.connectedDc,
       this.dcNodeClient,
       this.dcChain,
@@ -778,63 +800,6 @@ export class DC implements SignHandler {
     return res;
   };
 
-  private handleThemeObj = async (fileContentString: string) => {
-    const reader = new BrowserLineReader(fileContentString);
-
-    let allContent: Array<{
-      theme: string;
-      appId: string;
-      blockheight: number;
-      commentSpace: number;
-      allowSpace: number;
-      userPubkey: string;
-      openFlag: number;
-      signature: string;
-      CCount: number;
-      UpCount: number;
-      DownCount: number;
-      TCount: number;
-      vaccount: string;
-    }> = [];
-    // readLine 循环
-    while (true) {
-      const { line, error } = readLine(reader);
-      if (error && error.message !== "EOF") {
-        console.error("读取错误:", error);
-        break;
-      } else if (line) {
-        // 将Uint8Array转回字符串
-        const decoder = new TextDecoder();
-        const lineString = decoder.decode(line);
-        console.log("读取的行:", lineString);
-        if (!lineString) {
-          console.error("结束");
-          break;
-        }
-        const fileContentUint8Array = base32.decode(lineString);
-        const content = dcnet.pb.AddThemeObjRequest.decode(
-          fileContentUint8Array
-        );
-        console.log("content:", content);
-        allContent.push({
-          theme: uint8ArrayToString(content.theme),
-          appId: uint8ArrayToString(content.appId),
-          blockheight: content.blockheight,
-          commentSpace: content.commentSpace,
-          allowSpace: content.allowSpace,
-          userPubkey: uint8ArrayToString(content.userPubkey),
-          openFlag: content.openFlag,
-          signature: bytesToHex(content.signature),
-          CCount: content.CCount,
-          UpCount: content.UpCount,
-          DownCount: content.DownCount,
-          TCount: content.TCount,
-          vaccount: uint8ArrayToString(content.vaccount),
-        });
-      }
-    }
-    return allContent;
-  };
 
   // todo
   // Comment_GetCommentableObj 获取指定用户已开通评论的对象列表
@@ -854,6 +819,7 @@ export class DC implements SignHandler {
     seekKey?: string
   ) => {
     const commentManager = new CommentManager(
+      this.dcutil,
       this.connectedDc,
       this.dcNodeClient,
       this.dcChain,
@@ -869,98 +835,7 @@ export class DC implements SignHandler {
       seekKey || ""
     );
     console.log("getThemeObj res:", res);
-
-    if (res[0] == null) {
-      return ["", null];
-    }
-    const fileManager = new FileManager(
-      this.dcutil,
-      this.connectedDc,
-      this.dcChain,
-      this.dcNodeClient,
-      this
-    );
-    const cid = Buffer.from(res[0]).toString();
-    const fileContent = await fileManager.getFileFromDc(
-      cid,
-      "",
-      cidNeedConnect.NOT_NEED
-    );
-    if (!fileContent) {
-      return ["", null];
-    }
-    const fileContentString = uint8ArrayToString(fileContent);
-    const allContent = await this.handleThemeObj(fileContentString);
-    console.log("getThemeObj allContent:", allContent);
-    return [allContent, null];
-  };
-  private handleThemeComments = async (fileContentString: string) => {
-    const reader = new BrowserLineReader(fileContentString);
-    let allContent: Array<{
-      theme: string;
-      appId: string;
-      themeAuthor: string;
-      blockheight: number;
-      userPubkey: string;
-      commentCid: string;
-      comment: string;
-      commentSize: number;
-      status: number;
-      refercommentkey: string;
-      CCount: number;
-      UpCount: number;
-      DownCount: number;
-      TCount: number;
-      type: number;
-      signature: string;
-      vaccount: string;
-    }> = [];
-    if (!this.publicKey) {
-      return;
-    }
-    // readLine 循环
-    while (true) {
-      const { line, error } = readLine(reader);
-      if (error && error.message !== "EOF") {
-        console.error("读取错误:", error);
-        break;
-      } else if (line) {
-        // 将Uint8Array转回字符串
-        const decoder = new TextDecoder();
-        const lineString = decoder.decode(line);
-        console.log("读取的行:", lineString);
-        if (!lineString) {
-          console.error("结束");
-          break;
-        }
-        const lineContent = base32.decode(lineString);
-        const plainContent = await this.privKey.decrypt(lineContent);
-        const content =
-          dcnet.pb.PublishCommentToThemeRequest.decode(plainContent);
-        console.log("content:", content);
-
-        allContent.push({
-          theme: uint8ArrayToString(content.theme),
-          appId: uint8ArrayToString(content.appId),
-          themeAuthor: uint8ArrayToString(content.themeAuthor),
-          blockheight: content.blockheight,
-          userPubkey: uint8ArrayToString(content.userPubkey),
-          commentCid: uint8ArrayToString(content.commentCid),
-          comment: uint8ArrayToString(content.comment),
-          commentSize: content.commentSize,
-          status: content.status,
-          refercommentkey: uint8ArrayToString(content.refercommentkey),
-          CCount: content.CCount,
-          UpCount: content.UpCount,
-          DownCount: content.DownCount,
-          TCount: content.TCount,
-          type: content.type,
-          signature: bytesToHex(content.signature),
-          vaccount: bytesToHex(content.vaccount),
-        });
-      }
-    }
-    return allContent;
+    return res;
   };
 
   // todo
@@ -983,6 +858,7 @@ export class DC implements SignHandler {
     seekKey?: string
   ) => {
     const commentManager = new CommentManager(
+      this.dcutil,
       this.connectedDc,
       this.dcNodeClient,
       this.dcChain,
@@ -999,30 +875,7 @@ export class DC implements SignHandler {
       seekKey || ""
     );
     console.log("getThemeComments res:", res);
-    if (res[0] == null) {
-      return ["", null];
-    }
-    const fileManager = new FileManager(
-      this.dcutil,
-      this.connectedDc,
-      this.dcChain,
-      this.dcNodeClient,
-      this
-    );
-    const cid = Buffer.from(res[0]).toString();
-    const fileContent = await fileManager.getFileFromDc(
-      cid,
-      "",
-      cidNeedConnect.NOT_NEED
-    );
-    console.log("getThemeComments fileContent:", fileContent);
-    if (!fileContent) {
-      return ["", null];
-    }
-    const fileContentString = uint8ArrayToString(fileContent);
-    const allContent = await this.handleThemeComments(fileContentString);
-    console.log("getThemeComments allContent:", allContent);
-    return [allContent, null];
+    return res
   };
 
   //todo
@@ -1043,6 +896,7 @@ export class DC implements SignHandler {
     seekKey?: string
   ) => {
     const commentManager = new CommentManager(
+      this.dcutil,
       this.connectedDc,
       this.dcNodeClient,
       this.dcChain,
@@ -1058,30 +912,7 @@ export class DC implements SignHandler {
       seekKey || ""
     );
     console.log("getUserComments res:", res);
-    if (res[0] == null) {
-      return ["", null];
-    }
-    const fileManager = new FileManager(
-      this.dcutil,
-      this.connectedDc,
-      this.dcChain,
-      this.dcNodeClient,
-      this
-    );
-    const cid = Buffer.from(res[0]).toString();
-    const fileContent = await fileManager.getFileFromDc(
-      cid,
-      "",
-      cidNeedConnect.NOT_NEED
-    );
-    console.log("getUserComments fileContent:", fileContent);
-    if (!fileContent) {
-      return ["", null];
-    }
-    const fileContentString = uint8ArrayToString(fileContent);
-    const allContent = await this.handleThemeComments(fileContentString);
-    console.log("getUserComments allContent:", allContent);
-    return [allContent, null];
+    return res;
   };
 
   // 发送消息到用户消息盒子
@@ -1347,6 +1178,37 @@ export class DC implements SignHandler {
       return "";
     }
     return threadId;
+  }
+  // createStoreTheme 创建一个存储主题,可以理解为创建一个数据库
+  //
+  //	themeAuthor 主题作者
+  //	appId 存储主题所属组,可以自由指定,相当于对应的表,默认为DCAPP
+  //	theme 存储主题
+  //	Space 存储主题初始空间大小
+  //	Type  存储主题类型 1:鉴权主题(读写都需要鉴权) 2:公共主题(默认所有用户可读,写需要鉴权)
+  //	返回res-0:成功 1:评论空间没有配置 2:评论空间不足 3:评论数据同步中
+  async vaCreateStoreTheme (
+    themeAuthor: string,
+    theme: string,
+    space: number,
+    type: number,
+  ){
+    const keyValueManager = new KeyValueManager(
+      this.dcutil,
+      this.connectedDc,
+      this.AccountBackupDc,
+      this.dcNodeClient,
+      this.dcChain,
+      this
+    );
+    const res = await keyValueManager.vaCreateStoreTheme(
+      this.appInfo.id,
+      themeAuthor,
+      theme,
+      space,
+      type
+    )
+    return res
   }
 
   async syncDbFromDC(

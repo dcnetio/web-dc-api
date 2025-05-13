@@ -233,7 +233,8 @@ export class CommentClient {
     commentCid: string,
     comment: string,
     refercommentkey: string,
-    signature: Uint8Array
+    signature: Uint8Array,
+    openFlag?: number
   ) {
     const message = new dcnet.pb.PublishCommentToThemeRequest({});
     message.theme = new TextEncoder().encode(theme);
@@ -246,6 +247,9 @@ export class CommentClient {
     message.comment = new TextEncoder().encode(comment);
     message.commentSize = comment.length;
     message.refercommentkey = new TextEncoder().encode(refercommentkey);
+    if (openFlag !== undefined) {
+      message.type = openFlag;
+    }
     message.signature = signature;
     const messageBytes =
       dcnet.pb.PublishCommentToThemeRequest.encode(message).finish();
@@ -452,7 +456,8 @@ export class CommentClient {
     direction: number,
     offset: number,
     limit: number,
-    seekKey: string
+    seekKey: string,
+    vaccount?: string
   ) {
     const message = new dcnet.pb.GetThemeCommentsRequest({});
     message.appId = new TextEncoder().encode(appId);
@@ -463,6 +468,9 @@ export class CommentClient {
     message.offset = offset;
     message.limit = limit;
     message.seekKey = new TextEncoder().encode(seekKey);
+    // if(vaccount){ // todo 没有vaccount
+    //   message.vaccount = new TextEncoder().encode(vaccount);
+    // }
     const messageBytes =
       dcnet.pb.GetThemeCommentsRequest.encode(message).finish();
     try {
@@ -541,13 +549,13 @@ export class CommentClient {
     message.seekKey = new TextEncoder().encode(seekKey);
     const messageBytes =
       dcnet.pb.GetUserCommentsRequest.encode(message).finish();
+    const grpcClient = new Libp2pGrpcClient(
+      this.client.p2pNode,
+      this.client.peerAddr,
+      this.client.token,
+      this.client.protocol
+    );
     try {
-      const grpcClient = new Libp2pGrpcClient(
-        this.client.p2pNode,
-        this.client.peerAddr,
-        this.client.token,
-        this.client.protocol
-      );
       const reply = await grpcClient.unaryCall(
         "/dcnet.pb.Service/GetUserComments",
         messageBytes,
@@ -573,12 +581,6 @@ export class CommentClient {
         if (!token) {
           throw new Error(Errors.INVALID_TOKEN.message);
         }
-        const grpcClient = new Libp2pGrpcClient(
-          this.client.p2pNode,
-          this.client.peerAddr,
-          this.client.token,
-          this.client.protocol
-        );
         const reply = await grpcClient.unaryCall(
           "/dcnet.pb.Service/GetUserComments",
           messageBytes,

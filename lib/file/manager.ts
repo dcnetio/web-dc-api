@@ -5,6 +5,7 @@ import { ChainUtil } from "../chain";
 import { oidfetch } from "../proto/oidfetch_proto";
 import { StreamWriter } from "./streamwriter";
 import * as MP4Box from 'mp4box'
+import { Errors as GErrors } from "../error";
 
 import {
   compareByteArrays,
@@ -28,6 +29,8 @@ import { Uint8ArrayList } from "uint8arraylist";
 import { Libp2p, Stream } from "@libp2p/interface";
 import { cidNeedConnect } from "../constants";
 import { SeekableFileStream } from "./seekableFileStream";
+import { AccountClient } from "lib/account/client";
+import { error } from "ajv/dist/vocabularies/applicator/dependencies";
 const { Buffer } = buffer;
 
 const NonceBytes = 12;
@@ -174,7 +177,8 @@ export class FileManager {
   async addFile(
     file: File,
     enkey: string,
-    onUpdateTransmitSize: (status: number, size: number) => void
+    onUpdateTransmitSize: (status: number, size: number) => void,
+    vaccount?: string,
   ): Promise<[string | null, Error | null]> {
     if (!this.connectedDc?.client) {
       return [null, Errors.ErrNoDcPeerConnected];
@@ -214,26 +218,7 @@ export class FileManager {
       }
       resCid = cid.toString();
       console.log("=========resCid", resCid);
-      const startTime = Date.now();
-      console.log("=========startTime", startTime);
 
-      console.log(
-        "libp2p getProtocols",
-        this.dcNodeClient.libp2p.getProtocols()
-      );
-      console.log("libp2p peerId", this.dcNodeClient.libp2p.peerId.toString());
-      console.log(
-        "libp2p 服务列表:",
-        Object.keys(this.dcNodeClient.libp2p.services)
-      );
-      console.log(
-        "libp2p 已连接节点列表:",
-        Object.keys(this.dcNodeClient.libp2p.getPeers())
-      );
-      console.log(
-        "libp2p 已连接连接列表:",
-        Object.keys(this.dcNodeClient.libp2p.getConnections())
-      );
       const stats = await fs.stat(cid);
       const filesize = stats.unixfs?.fileSize();
       console.log(
@@ -261,14 +246,15 @@ export class FileManager {
         ...typeValue,
         ...peerIdValue,
       ]);
-
       const signature = this.accountKey.sign(messageParts);
       const fileClient = new FileClient(
         this.connectedDc.client,
-        this.dcNodeClient
+        this.dcNodeClient,
+        this.accountKey
       );
       let resStatus = 0;
       let resFlag = false;
+      let resError: Error | null = null;
       fileClient.storeFile(
         dagFileSize,
         blockHeight ? blockHeight : 0,
@@ -278,11 +264,54 @@ export class FileManager {
           resFlag = true;
           resStatus = status;
           onUpdateTransmitSize(status, size);
+        },
+        async (error: Error) => {
+          if (
+            error.message.indexOf(GErrors.USER_NOT_BIND_TO_PEER.message) != -1
+          ) {
+            // 绑定节点
+            const headerValue = new TextEncoder().encode(
+              "add_request_peer_id_to_user"
+            );
+            const messageParts = new Uint8Array([
+              ...headerValue,
+              ...bhValue,
+              ...peerIdValue,
+            ]);
+            const bindSignature = await this.accountKey.sign(messageParts);
+            const accountClient = new AccountClient(this.connectedDc.client);
+            const bindResult = await accountClient.bindAccessPeerToUser(
+              blockHeight ? blockHeight : 0,
+              bindSignature
+            );
+            console.log("bindAccessPeerToUser bindResult:", bindResult);
+            await fileClient.storeFile(
+              dagFileSize,
+              blockHeight ? blockHeight : 0,
+              signature,
+              resCid,
+              (status: number, size: number): void => {
+                resFlag = true;
+                resStatus = status;
+                onUpdateTransmitSize(status, size);
+              },
+              (error: Error) => {
+                console.log("storeFile error:", error);
+                resFlag = true;
+                resError = error;
+              }
+            );
+          } else {
+            return [null, error];
+          }
         }
       );
       //等待storeRes 为true
       while (!resFlag) {
         await sleep(100);
+      }
+      if (resError) {
+        return [null, resError];
       }
       if (resStatus !== 2) {
         //不是上传中，不需要操作
@@ -295,10 +324,11 @@ export class FileManager {
         this.dcNodeClient.blockstore,
         nodeAddr,
         BrowserType.File,
-        resCid,
-      )
+        resCid
+      );
     } catch (error) {
       console.error("=========stream close", error);
+      throw error;
     }
     return [resCid, null];
   }
