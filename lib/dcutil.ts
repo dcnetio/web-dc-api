@@ -18,23 +18,14 @@ import { Ed25519PrivateKey } from "@libp2p/interface";
 import { ping } from "@libp2p/ping";
 // import {mdns} from '@libp2p/mdns'
 import {StreamWriter } from './file/streamwriter'
-import type { Connection }  from '@libp2p/interface'
 import { Stream } from '@libp2p/interface'
 import { Uint8ArrayList } from 'uint8arraylist'; 
 import  { oidfetch } from "./proto/oidfetch_proto";
 import { Blocks } from "@helia/interface";
 import {CID} from 'multiformats/cid'
 import {
-  compareByteArrays,
-  decryptContentForBrowser,
-  mergeUInt8Arrays,
-  sleep,
-  uint32ToLittleEndianBytes,
-  uint64ToBigEndianBytes,
-  uint64ToLittleEndianBytes,
   concatenateUint8Arrays,
 } from './util/utils'
-import internal from "stream";
 
 // http2 type
 export class Http2_Type {
@@ -65,7 +56,6 @@ import { dcutr } from "@libp2p/dcutr";
 import { bitswap } from "@helia/block-brokers";
 import { Client } from "./dcapi";
 import { dc_protocol, dial_timeout } from "./define";
-import { Ed25519PubKey } from "./dc-key/ed25519";
 
 const controller = new AbortController();
 const { signal } = controller;

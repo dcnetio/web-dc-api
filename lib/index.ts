@@ -1,54 +1,35 @@
 // Description: 该文件包含了dc网络的工具函数，用于从dc网络获取文件或缓存值
 
-import { KeyManager } from "./dc-key/keyManager";
 
-import { toString as uint8ArrayToString } from "uint8arrays/to-string";
-import { base32 } from "multiformats/bases/base32";
-import { CID } from "multiformats";
-import { unixfs } from "@helia/unixfs";
 
-import { multiaddr, type Multiaddr } from "@multiformats/multiaddr";
-import toBuffer from "it-to-buffer";
+import { type Multiaddr } from "@multiformats/multiaddr";
 
-import { Query } from "./threaddb/db/query";
 import {
-  compareByteArrays,
-  decryptContentForBrowser,
   loadPublicKey,
   loadTokenWithPeerId,
-  mergeUInt8Arrays,
   savePublicKey,
-  sha256,
   sleep,
-  uint32ToLittleEndianBytes,
 } from "./util/utils";
 import { Ed25519PrivKey, Ed25519PubKey } from "./dc-key/ed25519";
-import { decryptContent } from "./util/dccrypt";
 import { ChainUtil } from "./chain";
 import type { SignHandler, DCConnectInfo, APPInfo } from "./types/types";
 import { Client } from "./dcapi";
 import { DcUtil } from "./dcutil";
 import { Errors } from "./error";
-import { PublicKey } from "@libp2p/interface";
 import { DCManager } from "./dc/manager";
 import { ThemeManager } from "./theme/manager";
 import { AccountManager } from "./account/manager";
 import { CommonClient } from "./commonclient";
-import { FileManager, MediaController } from "./file/manager";
+import { FileManager } from "./file/manager";
 import type { HeliaLibp2p } from "helia";
 import { Libp2p } from "@libp2p/interface";
 import { CommentManager } from "./comment/manager";
-import { dcnet } from "./proto/dcnet_proto";
-import { BrowserLineReader, readLine } from "./util/BrowserLineReader";
-import { bytesToHex } from "@noble/curves/abstract/utils";
 import { dc_protocol, dial_timeout, keyExpire } from "./define";
 import { MessageManager } from "./message/manager";
 import { DBManager } from "./threaddb/dbmanager";
 import { createTxnDatastore } from "./threaddb/common/idbstore-adapter";
-import { cidNeedConnect } from "./constants";
 import { DCGrpcServer } from "./threaddb/net/grpcserver";
 
-import { ThreadID } from "@textile/threads-id";
 import { Network } from "./threaddb/net/net";
 import { newLogstore } from "./threaddb/common/logstore";
 import { newKeyBook } from "./threaddb/lsstoreds/keybook";
@@ -309,11 +290,11 @@ export class DC implements SignHandler {
         this.grpcServer.start();
 
         // todo 临时测试
-         const peerId = "12D3KooWEGzh4AcbJrfZMfQb63wncBUpscMEEyiMemSWzEnjVCPf";
-         let nodeAddr = await this.dcutil?._getNodeAddr(peerId);
-        // nodeAddr = multiaddr('/ip4/192.168.31.42/udp/4001/webrtc-direct/certhash/uEiBq5Ki7QE5Nl2IPWTOG52RNutWFaB3rfdIEgKAlVcFtHA/p2p/12D3KooWKfJGey3xUcTQ8bCokBxxudoDm3RAeCfdbuq2e34c7TWB')
+        //  const peerId = "12D3KooWEGzh4AcbJrfZMfQb63wncBUpscMEEyiMemSWzEnjVCPf";
+        //  let nodeAddr = await this.dcutil?._getNodeAddr(peerId);
+        // // nodeAddr = multiaddr('/ip4/192.168.31.42/udp/4001/webrtc-direct/certhash/uEiBq5Ki7QE5Nl2IPWTOG52RNutWFaB3rfdIEgKAlVcFtHA/p2p/12D3KooWKfJGey3xUcTQ8bCokBxxudoDm3RAeCfdbuq2e34c7TWB')
         // 获取默认dc节点地址
-       // let nodeAddr = await this.dcutil?.getDefaultDcNodeAddr();
+       let nodeAddr = await this.dcutil?.getDefaultDcNodeAddr();
         if (nodeAddr) {
           console.log("--------nodeAddr---------", nodeAddr.toString());
           const connection = await this.dcNodeClient?.libp2p.dial(nodeAddr, {

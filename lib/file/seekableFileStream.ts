@@ -1,11 +1,6 @@
 import { UnixFS } from "@helia/unixfs";
 import { CID } from "multiformats/cid";
 import toBuffer from "it-to-buffer";
-import {
-    decryptContentForBrowser,
-    mergeUInt8Arrays,
-    sleep,
-} from '../util/utils';
 import { decryptContent } from "lib/util/dccrypt";
 
 /**

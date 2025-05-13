@@ -2,23 +2,18 @@ import type { SignHandler, DCConnectInfo } from "../types/types";
 import { FileClient } from "./client";
 import type { HeliaLibp2p } from "helia";
 import { ChainUtil } from "../chain";
-import { oidfetch } from "../proto/oidfetch_proto";
-import { StreamWriter } from "./streamwriter";
-import * as MP4Box from 'mp4box'
 import { Errors as GErrors } from "../error";
 
 import {
   compareByteArrays,
-  decryptContentForBrowser,
   mergeUInt8Arrays,
   sleep,
   uint32ToLittleEndianBytes,
   uint64ToBigEndianBytes,
   uint64ToLittleEndianBytes,
-  concatenateUint8Arrays,
 } from "../util/utils";
 
-import { UnixFS, unixfs } from "@helia/unixfs";
+import { unixfs } from "@helia/unixfs";
 import { SymmetricKey } from "../threaddb/common/key";
 import { CID } from "multiformats/cid";
 import { BrowserType, DcUtil } from "../dcutil";
@@ -30,7 +25,6 @@ import { Libp2p, Stream } from "@libp2p/interface";
 import { cidNeedConnect } from "../constants";
 import { SeekableFileStream } from "./seekableFileStream";
 import { AccountClient } from "lib/account/client";
-import { error } from "ajv/dist/vocabularies/applicator/dependencies";
 const { Buffer } = buffer;
 
 const NonceBytes = 12;
@@ -478,7 +472,7 @@ export class FileManager {
               continue;
             }
             //解密
-            const decrypted = decryptContentForBrowser(
+            const decrypted = await decryptContent(
               encryptBuffer,
               decryptKey
             );
@@ -487,7 +481,7 @@ export class FileManager {
         } else {
           if (waitBuffer.length > 0) {
             if (decryptKey != "") {
-              const decrypted = decryptContentForBrowser(
+              const decrypted = await decryptContent(
                 waitBuffer,
                 decryptKey
               );
