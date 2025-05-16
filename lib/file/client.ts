@@ -5,7 +5,7 @@ import { HeliaLibp2p } from "helia";
 import { DataSource } from "../proto/datasource";
 import { Libp2p } from "libp2p";
 import { Errors } from "lib/error";
-import { SignHandler } from "lib/types/types";
+import { DCContext } from "lib/interfaces";
 
 const uploadStatus = {
   OK: 0,
@@ -34,16 +34,16 @@ const uploadRespondStatus = {
 export class FileClient {
   client: Client;
   dcNodeClient: HeliaLibp2p<Libp2p>;
-  signHandler: SignHandler;
+  context: DCContext;
 
   constructor(
     dcClient: Client,
     dcNodeClient: HeliaLibp2p<Libp2p>,
-    signHandler: SignHandler
+    context: DCContext
   ) {
     this.client = dcClient;
     this.dcNodeClient = dcNodeClient;
-    this.signHandler = signHandler;
+    this.context = context;
   }
 
   async storeFile(
@@ -128,100 +128,5 @@ export class FileClient {
       console.error("storeFile error:", err);
       throw err;
     }
-    const message = new dcnet.pb.StroeFileRequest({});
-    message.cid = new TextEncoder().encode(cid);
-    message.filesize = fileSize;
-    message.blockheight = blockHeight;
-    message.signature = signature;
-    const messageBytes = dcnet.pb.StroeFileRequest.encode(message).finish();
-
-    //  const signatureDataSource = new DataSource();
-    const onDataCallback = async (payload: Uint8Array) => {
-      const decodedPayload = dcnet.pb.StroeFileReply.decode(payload);
-      let resStatus = uploadStatus.UPLOADING;
-      // todo 需要转换
-      switch (decodedPayload.status) {
-        case uploadRespondStatus.FilePulling:
-          resStatus = uploadStatus.UPLOADING;
-          break;
-        case uploadRespondStatus.PullFail:
-          resStatus = uploadStatus.ERROR;
-          break;
-        case uploadRespondStatus.PullSuccess:
-          resStatus = uploadStatus.OK;
-          break;
-        case uploadRespondStatus.BlockFinality:
-          resStatus = uploadStatus.OK;
-          break;
-        case uploadRespondStatus.FinalityTimeout:
-          resStatus = uploadStatus.ABNORMAL;
-          break;
-        case uploadRespondStatus.FaultSize:
-          resStatus = uploadStatus.ERROR;
-          break;
-        case uploadRespondStatus.FaultCount:
-          resStatus = uploadStatus.ERROR;
-          break;
-        case uploadRespondStatus.NoUserSpace:
-          resStatus = uploadStatus.ERROR;
-          break;
-      }
-      if (onUpdateTransmitSize) {
-        onUpdateTransmitSize(resStatus, Number(decodedPayload.receivesize));
-      }
-    };
-
-    // 使用方法
-    const grpcClient = new Libp2pGrpcClient(
-      this.client.p2pNode,
-      this.client.peerAddr,
-      this.client.token,
-      this.client.protocol
-    );
-
-    grpcClient.Call(
-      "/dcnet.pb.Service/StoreFile",
-      messageBytes,
-      100000,
-      "server-streaming",
-      onDataCallback,
-      undefined,
-      undefined,
-      async (error: Error) => {
-        console.error("StoreFile error:", error);
-        if (error.message.indexOf(Errors.INVALID_TOKEN.message) != -1) {
-          // try to get token
-          const publicKey = this.signHandler.getPublicKey();
-          const token = await this.client.GetToken(
-            publicKey.string(),
-            (payload: Uint8Array): Uint8Array => {
-              return this.signHandler.sign(payload);
-            }
-          );
-          if (!token) {
-            throw new Error(Errors.INVALID_TOKEN.message);
-          }
-          grpcClient.Call(
-            "/dcnet.pb.Service/StoreFile",
-            messageBytes,
-            100000,
-            "server-streaming",
-            onDataCallback,
-            undefined,
-            undefined,
-            async (error: Error) => {
-              console.error("StoreFile error:", error);
-              if (onErrorCallback) {
-                onErrorCallback(error);
-              }
-            }
-          );
-          return true;
-        }
-        if (onErrorCallback) {
-          onErrorCallback(error);
-        }
-      }
-    );
   }
 }

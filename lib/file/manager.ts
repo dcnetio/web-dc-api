@@ -1,4 +1,4 @@
-import type { SignHandler, DCConnectInfo } from "../types/types";
+import type { DCConnectInfo } from "../types/types";
 import { FileClient } from "./client";
 import type { HeliaLibp2p } from "helia";
 import { ChainUtil } from "../chain";
@@ -25,6 +25,7 @@ import { Libp2p, Stream } from "@libp2p/interface";
 import { cidNeedConnect } from "../constants";
 import { SeekableFileStream } from "./seekableFileStream";
 import { AccountClient } from "lib/account/client";
+import { DCContext } from "lib/interfaces";
 const { Buffer } = buffer;
 
 const NonceBytes = 12;
@@ -68,19 +69,19 @@ export class FileManager {
   connectedDc: DCConnectInfo = {};
   chainUtil: ChainUtil;
   dcNodeClient: HeliaLibp2p<Libp2p>;
-  accountKey: SignHandler;
+  context: DCContext;
   constructor(
     dc: DcUtil,
     connectedDc: DCConnectInfo,
     chainUtil: ChainUtil,
     dcNodeClient: HeliaLibp2p<Libp2p>,
-    accountKey: SignHandler
+    context: DCContext
   ) {
     this.dc = dc;
     this.connectedDc = connectedDc;
     this.chainUtil = chainUtil;
     this.dcNodeClient = dcNodeClient;
-    this.accountKey = accountKey;
+    this.context = context;
   }
   // 处理文件头
   async _processHeader(
@@ -194,7 +195,7 @@ export class FileManager {
       const symKey =
         enkey && enkey.length > 0 ? SymmetricKey.fromString(enkey) : null;
       const fs = unixfs(this.dcNodeClient);
-      const pubkeyBytes = this.accountKey.getPubkeyRaw();
+      const pubkeyBytes = this.context.getPubkeyRaw();
       // const peerId = "12D3KooWEGzh4AcbJrfZMfQb63wncBUpscMEEyiMemSWzEnjVCPf";
       let nodeAddr = await this.dc?._getNodeAddr(peerId);
       if (!nodeAddr) {
@@ -240,11 +241,11 @@ export class FileManager {
         ...typeValue,
         ...peerIdValue,
       ]);
-      const signature = this.accountKey.sign(messageParts);
+      const signature = this.context.sign(messageParts);
       const fileClient = new FileClient(
         this.connectedDc.client,
         this.dcNodeClient,
-        this.accountKey
+        this.context
       );
       let resStatus = 0;
       let resFlag = false;
@@ -272,7 +273,7 @@ export class FileManager {
               ...bhValue,
               ...peerIdValue,
             ]);
-            const bindSignature = await this.accountKey.sign(messageParts);
+            const bindSignature = await this.context.sign(messageParts);
             const accountClient = new AccountClient(this.connectedDc.client);
             const bindResult = await accountClient.bindAccessPeerToUser(
               blockHeight ? blockHeight : 0,

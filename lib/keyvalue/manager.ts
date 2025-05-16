@@ -1,6 +1,6 @@
 import type { Multiaddr } from "@multiformats/multiaddr";
 import { KeyValueClient } from "./client";
-import { DCConnectInfo, SignHandler, ThemeComment } from "../types/types";
+import { DCConnectInfo, ThemeComment } from "../types/types";
 import { OpenFlag } from "lib/constants";
 import { CommentManager } from "lib/comment/manager";
 import { HeliaLibp2p } from "helia";
@@ -11,6 +11,7 @@ import { sha256, uint32ToLittleEndianBytes } from "lib/util/utils";
 import { base32 } from "multiformats/bases/base32";
 import { Client } from "lib/dcapi";
 import { CommentType, Direction } from "lib/define";
+import { DCContext } from "lib/interfaces";
 // 错误定义
 export class KeyValueError extends Error {
   constructor(message: string) {
@@ -28,21 +29,21 @@ export class KeyValueManager {
   private accountBackupDc: DCConnectInfo = {};
   private dcNodeClient: HeliaLibp2p;
   private chainUtil: ChainUtil;
-  private signHandler: SignHandler;
+  private context: DCContext;
   constructor(
     dc: DcUtil,
     connectedDc: DCConnectInfo,
     accountBackupDc: DCConnectInfo,
     dcNodeClient: HeliaLibp2p,
     chainUtil: ChainUtil,
-    signHandler: SignHandler
+    context: DCContext
   ) {
     this.dc = dc;
     this.connectedDc = connectedDc;
     this.accountBackupDc = accountBackupDc;
     this.dcNodeClient = dcNodeClient;
     this.chainUtil = chainUtil;
-    this.signHandler = signHandler;
+    this.context = context;
   }
 
   async vaCreateStoreTheme(
@@ -96,11 +97,7 @@ export class KeyValueManager {
     try {
       // Assuming AddThemeObjDeal is implemented elsewhere
       const commentManager = new CommentManager(
-        this.dc,
-        this.connectedDc,
-        this.dcNodeClient,
-        this.chainUtil,
-        this.signHandler
+        this.context,
       );
       const res = await commentManager.addThemeObj(
         appId,
@@ -127,7 +124,7 @@ export class KeyValueManager {
       theme = theme + "_authlist";
     }
     let client: Client | null = null;
-    const userPubkey = this.signHandler.getPublicKey();
+    const userPubkey = this.context.getPublicKey();
     let userPubkeyStr = userPubkey.string();
 
     if (vaccount !== "") {
@@ -209,9 +206,9 @@ export class KeyValueManager {
       ...typeValue,
     ]);
 
-    const signature = await this.signHandler.sign(preSign);
+    const signature = await this.context.sign(preSign);
 
-    const keyValueClient = new KeyValueClient(client, this.signHandler);
+    const keyValueClient = new KeyValueClient(client, this.context);
     try {
       const res = await keyValueClient.configThemeObjAuth(
         theme,
@@ -248,11 +245,7 @@ export class KeyValueManager {
     try {
       while (true) {
         const commentManager = new CommentManager(
-          this.dc,
-          this.connectedDc,
-          this.dcNodeClient,
-          this.chainUtil,
-          this.signHandler
+          this.context,
         );
         const res = await commentManager.getThemeComments(
           appId,
@@ -297,7 +290,7 @@ export class KeyValueManager {
     if (!theme.startsWith("keyvalue_")) {
       return [null, new Error("Va_SetKeyValue failed, theme must start with 'keyvalue_'")];
     }
-    const userPubkey = this.signHandler.getPublicKey();
+    const userPubkey = this.context.getPublicKey();
     let userPubkeyStr = userPubkey.string();
     const themeAuthorPubkey: Ed25519PubKey =
       Ed25519PubKey.pubkeyToEdStr(themeAuthor);
@@ -334,8 +327,8 @@ export class KeyValueManager {
       ...contentCidValue,
       ...typeValue,
     ]);
-    const signature = await this.signHandler.sign(preSign);
-    const keyValueClient = new KeyValueClient(client, this.signHandler);
+    const signature = await this.context.sign(preSign);
+    const keyValueClient = new KeyValueClient(client, this.context);
     try {
       const res = await keyValueClient.setKeyValue(
         theme,
@@ -383,7 +376,7 @@ export class KeyValueManager {
       return [null, new Error("ErrConnectToAccountPeersFail")];
     }
 
-    const keyValueClient = new KeyValueClient(client, this.signHandler);
+    const keyValueClient = new KeyValueClient(client, this.context);
     try {
       const res = await keyValueClient.getValueWithKey(
         theme,
@@ -427,7 +420,7 @@ export class KeyValueManager {
       return [null, new Error("ErrConnectToAccountPeersFail")];
     }
 
-    const keyValueClient = new KeyValueClient(client, this.signHandler);
+    const keyValueClient = new KeyValueClient(client, this.context);
     try {
       const res = await keyValueClient.getValuesWithKeys(
         theme,

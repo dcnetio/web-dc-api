@@ -5,25 +5,25 @@ import { CID } from "multiformats/cid";
 import { Libp2pGrpcClient } from "grpc-libp2p-client";
 import { dcnet } from "../proto/dcnet_proto";
 import { Ed25519PubKey } from "../dc-key/ed25519";
-import { SignHandler } from "../types/types";
 import { uint32ToLittleEndianBytes } from "../util/utils";
 import { extractPublicKeyFromPeerId } from "../dc-key/keyManager";
 import { peerIdFromString } from "@libp2p/peer-id";
 import { Errors } from "../error";
 import { toString as uint8ArrayToString } from "uint8arrays/to-string";
+import { DCContext } from "lib/interfaces";
 
 export class MessageClient {
   client: Client;
   receiverClient: Client | undefined;
-  signHandler: SignHandler;
+  context: DCContext;
 
   constructor(
     dcClient: Client,
-    signHandler: SignHandler,
+    context: DCContext,
     receiverClient?: Client
   ) {
     this.client = dcClient;
-    this.signHandler = signHandler;
+    this.context = context;
     this.receiverClient = receiverClient;
   }
 
@@ -69,9 +69,9 @@ export class MessageClient {
       if (error.message.indexOf(Errors.INVALID_TOKEN.message) != -1) {
         // try to get token
         const token = await this.receiverClient.GetToken(
-          this.signHandler.getPublicKey().string(),
+          this.context.getPublicKey().string(),
           (payload: Uint8Array): Uint8Array => {
-            return this.signHandler.sign(payload);
+            return this.context.sign(payload);
           }
         );
         if (!token) {
@@ -117,9 +117,9 @@ export class MessageClient {
       if (error.message.indexOf(Errors.INVALID_TOKEN.message) != -1) {
         // try to get token
         const token = await this.client.GetToken(
-          this.signHandler.getPublicKey().string(),
+          this.context.getPublicKey().string(),
           (payload: Uint8Array): Uint8Array => {
-            return this.signHandler.sign(payload);
+            return this.context.sign(payload);
           }
         );
         if (!token) {
@@ -163,9 +163,9 @@ export class MessageClient {
       if (error.message.indexOf(Errors.INVALID_TOKEN.message) != -1) {
         // try to get token
         const token = await this.client.GetToken(
-          this.signHandler.getPublicKey().string(),
+          this.context.getPublicKey().string(),
           (payload: Uint8Array): Uint8Array => {
-            return this.signHandler.sign(payload);
+            return this.context.sign(payload);
           }
         );
         if (!token) {
@@ -223,9 +223,9 @@ export class MessageClient {
       if (error.message.indexOf(Errors.INVALID_TOKEN.message) != -1) {
         // try to get token
         const token = await this.client.GetToken(
-          this.signHandler.getPublicKey().string(),
+          this.context.getPublicKey().string(),
           (payload: Uint8Array): Uint8Array => {
-            return this.signHandler.sign(payload);
+            return this.context.sign(payload);
           }
         );
         if (!token) {

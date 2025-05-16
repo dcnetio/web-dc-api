@@ -1,9 +1,10 @@
 import type { Multiaddr } from "@multiformats/multiaddr";
-import { SignHandler, DCConnectInfo } from "../types/types";
+import { DCConnectInfo } from "../types/types";
 import { ThemeClient } from "./client";
 import { DcUtil } from "../dcutil";
 import { ChainUtil } from "../chain";
 import { sha256, uint32ToLittleEndianBytes } from "../util/utils";
+import { DCContext } from "lib/interfaces";
 
 // 错误定义
 export class ThemeError extends Error {
@@ -27,12 +28,12 @@ export class ThemeManager{
   dc: DcUtil;
   chainUtil: ChainUtil | undefined;
   connectedDc: DCConnectInfo = {};
-  accountKey : SignHandler | undefined;
-  constructor(connectedDc: DCConnectInfo, dc: DcUtil, chainUtil?: ChainUtil, accPrivateSign?: SignHandler) {
+  context : DCContext | undefined;
+  constructor(connectedDc: DCConnectInfo, dc: DcUtil, chainUtil?: ChainUtil, context?: DCContext) {
     this.connectedDc = connectedDc;
     this.dc = dc;
     this.chainUtil = chainUtil;
-    this.accountKey = accPrivateSign;
+    this.context = context;
   }
 
   async getCacheValue(key: string, peerAddr?: Multiaddr): Promise<[string | null, Error | null]> {
@@ -89,8 +90,8 @@ export class ThemeManager{
       console.log("chainUtil is null");
       return [null, Errors.ErrChainUtilIsNull];
     }
-    if(!this.accountKey) {
-      console.log("accountKey is null");
+    if(!this.context) {
+      console.log("context is null");
       return [null, Errors.ErrAccountPrivateSignIsNull];
     }
     //获取最新区块高度
@@ -114,7 +115,7 @@ export class ThemeManager{
     preSign.set(preSignPart1, 0);
     preSign.set(hashValue, preSignPart1.length);
 
-    const signature = this.accountKey.sign(preSign);
+    const signature = this.context.sign(preSign);
     const themeClient = new ThemeClient(this.connectedDc.client, peerAddr);
     const setCacheValueReply = await themeClient.setCacheKey(
       value,

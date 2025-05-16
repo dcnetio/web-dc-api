@@ -1,4 +1,4 @@
-import { DCConnectInfo, SignHandler, ThemeComment, ThemeObj } from "../types/types";
+import { DCConnectInfo, ThemeComment, ThemeObj } from "../types/types";
 import type { HeliaLibp2p } from "helia";
 import { ChainUtil } from "../chain";
 import { base32 } from 'multiformats/bases/base32' 
@@ -15,6 +15,7 @@ import { toString as uint8ArrayToString } from "uint8arrays/to-string";
 import { BrowserLineReader, readLine } from "lib/util/BrowserLineReader";
 import { bytesToHex } from "@noble/curves/abstract/utils";
 import { dcnet } from "../proto/dcnet_proto";
+import { DCContext } from "lib/interfaces";
 const { Buffer } = buffer;
 
 // 创建一个可以取消的信号
@@ -46,19 +47,15 @@ export class CommentManager {
   connectedDc: DCConnectInfo = {};
   dcNodeClient: HeliaLibp2p;
   chainUtil: ChainUtil;
-  signHandler: SignHandler;
+  context:DCContext
   constructor(
-    dc: DcUtil,
-    connectedDc: DCConnectInfo,
-    dcNodeClient: HeliaLibp2p,
-    chainUtil: ChainUtil,
-    signHandler: SignHandler
+    context: DCContext,
   ) {
-    this.dc = dc;
-    this.connectedDc = connectedDc;
-    this.dcNodeClient = dcNodeClient;
-    this.chainUtil = chainUtil;
-    this.signHandler = signHandler;
+    this.dc = context.dcutil;
+    this.connectedDc = context.connectedDc;
+    this.dcNodeClient = context.dcNodeClient;
+    this.chainUtil = context.dcChain;
+    this.context = context;
   }
 
   // 配置或增加用户自身的评论空间 0:成功  1:失败
@@ -83,14 +80,14 @@ export class CommentManager {
       const preSign = new Uint8Array(peerIdValue.length + hValue.length);
       preSign.set(peerIdValue, 0);
       preSign.set(hValue, peerIdValue.length);
-      const signature = this.signHandler.sign(preSign);
-      const userPubkey = this.signHandler.getPublicKey();
+      const signature = this.context.sign(preSign);
+      const userPubkey = this.context.getPublicKey();
 
       console.log("AddUserOffChainSpace peerId", peerId);
       const commentClient = new CommentClient(
         this.connectedDc.client,
         this.dcNodeClient,
-        this.signHandler
+        this.context
       );
       const res = await commentClient.addUserOffChainSpace(
         userPubkey.string(),
@@ -131,12 +128,12 @@ export class CommentManager {
         ...spaceValue,
         ...statusValue,
       ]);
-      const signature = this.signHandler.sign(preSign);
-      const userPubkey = this.signHandler.getPublicKey();
+      const signature = this.context.sign(preSign);
+      const userPubkey = this.context.getPublicKey();
       const commentClient = new CommentClient(
         this.connectedDc.client,
         this.dcNodeClient,
-        this.signHandler
+        this.context
       );
       let res = await commentClient.addThemeObj(
         appId,
@@ -206,12 +203,12 @@ export class CommentManager {
         ...hValue,
         ...spaceValue,
       ]);
-      const signature = this.signHandler.sign(preSign);
-      const userPubkey = this.signHandler.getPublicKey();
+      const signature = this.context.sign(preSign);
+      const userPubkey = this.context.getPublicKey();
       const commentClient = new CommentClient(
         this.connectedDc.client,
         this.dcNodeClient,
-        this.signHandler
+        this.context
       );
       const res = await commentClient.addThemeSpace(
         appId,
@@ -265,12 +262,12 @@ export class CommentManager {
         ...referValue,
         ...typeValue,
       ]);
-      const signature = this.signHandler.sign(preSign);
-      const userPubkey = this.signHandler.getPublicKey();
+      const signature = this.context.sign(preSign);
+      const userPubkey = this.context.getPublicKey();
       const commentClient = new CommentClient(
         this.connectedDc.client,
         this.dcNodeClient,
-        this.signHandler
+        this.context
       );
       let res = await commentClient.publishCommentToTheme(
         appId,
@@ -355,12 +352,12 @@ export class CommentManager {
         ...hValue,
         ...cidValue,
       ]);
-      const signature = this.signHandler.sign(preSign);
-      const userPubkey = this.signHandler.getPublicKey();
+      const signature = this.context.sign(preSign);
+      const userPubkey = this.context.getPublicKey();
       const commentClient = new CommentClient(
         this.connectedDc.client,
         this.dcNodeClient,
-        this.signHandler
+        this.context
       );
       const res = await commentClient.deleteSelfComment(
         appId,
@@ -395,7 +392,7 @@ export class CommentManager {
       const commentClient = new CommentClient(
         this.connectedDc.client,
         this.dcNodeClient,
-        this.signHandler
+        this.context
       );
       const res = await commentClient.getThemeObj(
         appId,
@@ -411,10 +408,10 @@ export class CommentManager {
         this.connectedDc,
         this.chainUtil,
         this.dcNodeClient,
-        this.signHandler
+        this.context
       );
       const cid = Buffer.from(res[0]).toString();
-      const fileContent = await fileManager.getFile(
+      const fileContent = await fileManager.getFileFromDc(
         cid,
         "",
         cidNeedConnect.NOT_NEED
@@ -450,7 +447,7 @@ export class CommentManager {
       const commentClient = new CommentClient(
         this.connectedDc.client,
         this.dcNodeClient,
-        this.signHandler
+        this.context
       );
       const res = await commentClient.getThemeComments(
         appId,
@@ -468,10 +465,10 @@ export class CommentManager {
         this.connectedDc,
         this.chainUtil,
         this.dcNodeClient,
-        this.signHandler
+        this.context
       );
       const cid = Buffer.from(res[0]).toString();
-      const fileContent = await fileManager.getFile(
+      const fileContent = await fileManager.getFileFromDc(
         cid,
         "",
         cidNeedConnect.NOT_NEED
@@ -506,7 +503,7 @@ export class CommentManager {
       const commentClient = new CommentClient(
         this.connectedDc.client,
         this.dcNodeClient,
-        this.signHandler
+        this.context
       );
       const res = await commentClient.getUserComments(
         appId,
@@ -522,10 +519,10 @@ export class CommentManager {
         this.connectedDc,
         this.chainUtil,
         this.dcNodeClient,
-        this.signHandler
+        this.context
       );
       const cid = Buffer.from(res[0]).toString();
-      const fileContent = await fileManager.getFile(
+      const fileContent = await fileManager.getFileFromDc(
         cid,
         "",
         cidNeedConnect.NOT_NEED
@@ -590,7 +587,7 @@ export class CommentManager {
     const reader = new BrowserLineReader(fileContentString);
     let allContent: Array<ThemeComment> = [];
 
-    if (!this.signHandler.getPublicKey()) {
+    if (!this.context.getPublicKey()) {
       return;
     }
     // readLine 循环
@@ -609,7 +606,7 @@ export class CommentManager {
           break;
         }
         const lineContent = base32.decode(lineString);
-        const plainContent = await this.signHandler.decrypt(lineContent);
+        const plainContent = await this.context.decrypt(lineContent);
         const content =
           dcnet.pb.PublishCommentToThemeRequest.decode(plainContent);
         console.log("content:", content);

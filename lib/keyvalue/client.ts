@@ -5,15 +5,15 @@ import { dcnet } from "../proto/dcnet_proto";
 import { base58btc } from "multiformats/bases/base58";
 import { toString as uint8ArrayToString } from "uint8arrays/to-string";
 import { Errors } from "lib/error";
-import { SignHandler } from "lib/types/types";
+import { DCContext } from "lib/interfaces";
 
 export class KeyValueClient {
   client: Client;
-  signHandler: SignHandler;
+  context: DCContext;
 
-  constructor(dcClient: Client, signHandler: SignHandler) {
+  constructor(dcClient: Client, context: DCContext) {
     this.client = dcClient;
-    this.signHandler = signHandler;
+    this.context = context;
   }
 
   async configThemeObjAuth(
@@ -60,9 +60,9 @@ export class KeyValueClient {
       if (error.message.indexOf(Errors.INVALID_TOKEN.message) != -1) {
         // try to get token
         const token = await this.client.GetToken(
-          this.signHandler.getPublicKey().string(),
+          this.context.getPublicKey().string(),
           (payload: Uint8Array): Uint8Array => {
-            return this.signHandler.sign(payload);
+            return this.context.sign(payload);
           }
         );
         if (!token) {
@@ -131,9 +131,9 @@ export class KeyValueClient {
       if (error.message.indexOf(Errors.INVALID_TOKEN.message) != -1) {
         // try to get token
         const token = await this.client.GetToken(
-          this.signHandler.getPublicKey().string(),
+          this.context.getPublicKey().string(),
           (payload: Uint8Array): Uint8Array => {
-            return this.signHandler.sign(payload);
+            return this.context.sign(payload);
           }
         );
         if (!token) {
@@ -195,9 +195,9 @@ export class KeyValueClient {
       if (error.message.indexOf(Errors.INVALID_TOKEN.message) != -1) {
         // try to get token
         const token = await this.client.GetToken(
-          this.signHandler.getPublicKey().string(),
+          this.context.getPublicKey().string(),
           (payload: Uint8Array): Uint8Array => {
-            return this.signHandler.sign(payload);
+            return this.context.sign(payload);
           }
         );
         if (!token) {
@@ -262,9 +262,9 @@ export class KeyValueClient {
       if (error.message.indexOf(Errors.INVALID_TOKEN.message) != -1) {
         // try to get token
         const token = await this.client.GetToken(
-          this.signHandler.getPublicKey().string(),
+          this.context.getPublicKey().string(),
           (payload: Uint8Array): Uint8Array => {
-            return this.signHandler.sign(payload);
+            return this.context.sign(payload);
           }
         );
         if (!token) {

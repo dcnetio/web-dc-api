@@ -1,5 +1,5 @@
 import { ChainUtil } from "../chain";
-import { DCConnectInfo, SignHandler, User } from "../types/types";
+import { DCConnectInfo, User } from "../types/types";
 import * as buffer from "buffer/";
 import { MessageClient } from "./client";
 import { CID } from "multiformats";
@@ -11,6 +11,7 @@ import { HeliaLibp2p } from "helia";
 import { dc_protocol } from "../define";
 import { Client } from "../dcapi";
 import { dcnet } from "../proto/dcnet_proto";
+import { DCContext } from "lib/interfaces";
 const { Buffer } = buffer;
 // 错误定义
 export class DCError extends Error {
@@ -28,7 +29,7 @@ export const Errors = {
 
 export class MessageManager {
   private accountBackupDc: DCConnectInfo = {};
-  private signHandler: SignHandler;
+  private context: DCContext;
   private chainUtil: ChainUtil;
   private dcNodeClient: HeliaLibp2p;
   private dc: DcUtil;
@@ -37,13 +38,13 @@ export class MessageManager {
     dc: DcUtil,
     chainUtil: ChainUtil,
     dcNodeClient: HeliaLibp2p,
-    signHandler: SignHandler
+    context: DCContext
   ) {
     this.accountBackupDc = accountBackupDc;
     this.dc = dc;
     this.chainUtil = chainUtil;
     this.dcNodeClient = dcNodeClient;
-    this.signHandler = signHandler;
+    this.context = context;
   }
 
   sendMsgToUserBox = async (
@@ -56,7 +57,7 @@ export class MessageManager {
         return [null, Errors.ErrNoAccountPeerConnected];
       }
       const receiverPubkey: Ed25519PubKey = Ed25519PubKey.pubkeyToEdStr(receiver)
-      const sendPublicKey = await this.signHandler.getPublicKey();
+      const sendPublicKey = await this.context.getPublicKey();
 
       const userMsg = await this.generateMsqBoxReq(
         appId,
@@ -73,14 +74,14 @@ export class MessageManager {
       const token = await receiverClient.GetToken(
         sendPublicKey.string(),
         (payload: Uint8Array): Uint8Array => {
-          return this.signHandler.sign(payload);
+          return this.context.sign(payload);
         }
       );
       receiverClient.token = token;
   
       const messageClient = new MessageClient(
         this.accountBackupDc.client,
-        this.signHandler,
+        this.context,
         receiverClient,
       );
       const reply = await messageClient.sendMsgToUserBox(
@@ -100,7 +101,7 @@ export class MessageManager {
       if (!this.accountBackupDc.client) {
         return [null, Errors.ErrNoAccountPeerConnected];
       }
-      const publicKey = await this.signHandler.getPublicKey();
+      const publicKey = await this.context.getPublicKey();
       const publickey = publicKey.string()
 
       const clients = await this.dc.connectToUserAllDcPeers(publicKey.raw);
@@ -111,20 +112,20 @@ export class MessageManager {
       for (const client of clients) {
         if (client) {
           const peerId = client.peerAddr.getPeerId() || "";
-          const publicKeyString = this.signHandler.getPublicKey().string();
+          const publicKeyString = this.context.getPublicKey().string();
           // 获取token
           if(!client.token) {
             const token = await client.GetToken(
               publicKeyString,
               (payload: Uint8Array): Uint8Array => {
-                return this.signHandler.sign(payload);
+                return this.context.sign(payload);
               }
             );
             client.token = token;
           }
           const messageClient = new MessageClient(
             client,
-            this.signHandler,
+            this.context,
           );
           let maxKey = await messageClient.getMaxKeyFromUserBox(appId);
           const userBoxMaxKeyStr = localStorage.getItem('userBoxMaxKey_' + publicKeyString) || '';
@@ -184,7 +185,7 @@ export class MessageManager {
 
       const appIdValue = new TextEncoder().encode(appId);
 
-      const sendPublicKey = await this.signHandler.getPublicKey();
+      const sendPublicKey = await this.context.getPublicKey();
       const sendPublicKeyValue = new TextEncoder().encode(sendPublicKey.string());
 
       const receiverPubkeyValue = new TextEncoder().encode(receiverPubkey.string());
@@ -204,7 +205,7 @@ export class MessageManager {
         ...hValue,
         ...encryptMsgValue,
       ]);
-      const signature = this.signHandler.sign(preSign);
+      const signature = this.context.sign(preSign);
 
       const userMsg = new dcnet.pb.UserMsg({});
       userMsg.appId = new TextEncoder().encode(appId);

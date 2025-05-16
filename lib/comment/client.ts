@@ -7,21 +7,21 @@ import { unixfs } from "@helia/unixfs";
 import { toString as uint8ArrayToString } from "uint8arrays/to-string";
 import { FileManager } from "../file/manager";
 import { Errors } from "../error";
-import { SignHandler } from "../types/types";
+import { DCContext } from "lib/interfaces";
 
 export class CommentClient {
   client: Client;
   dcNodeClient: HeliaLibp2p;
-  signHandler: SignHandler;
+  context:DCContext
 
   constructor(
     dcClient: Client,
     dcNodeClient: HeliaLibp2p,
-    signHandler: SignHandler
+    context:DCContext
   ) {
     this.client = dcClient;
     this.dcNodeClient = dcNodeClient;
-    this.signHandler = signHandler;
+    this.context = context;
   }
 
   async addUserOffChainSpace(
@@ -62,9 +62,9 @@ export class CommentClient {
       if (error.message.indexOf(Errors.INVALID_TOKEN.message) != -1) {
         // try to get token
         const token = await this.client.GetToken(
-          this.signHandler.getPublicKey().string(),
+          this.context.getPublicKey().string(),
           (payload: Uint8Array): Uint8Array => {
-            return this.signHandler.sign(payload);
+            return this.context.sign(payload);
           }
         );
         if (!token) {
@@ -131,7 +131,7 @@ export class CommentClient {
         const token = await this.client.GetToken(
           userPubkey,
           (payload: Uint8Array): Uint8Array => {
-            return this.signHandler.sign(payload);
+            return this.context.sign(payload);
           }
         );
         if (!token) {
@@ -196,7 +196,7 @@ export class CommentClient {
         const token = await this.client.GetToken(
           userPubkey,
           (payload: Uint8Array): Uint8Array => {
-            return this.signHandler.sign(payload);
+            return this.context.sign(payload);
           }
         );
         if (!token) {
@@ -275,7 +275,7 @@ export class CommentClient {
         const token = await this.client.GetToken(
           userPubkey,
           (payload: Uint8Array): Uint8Array => {
-            return this.signHandler.sign(payload);
+            return this.context.sign(payload);
           }
         );
         if (!token) {
@@ -345,7 +345,7 @@ export class CommentClient {
         const token = await this.client.GetToken(
           userPubkey,
           (payload: Uint8Array): Uint8Array => {
-            return this.signHandler.sign(payload);
+            return this.context.sign(payload);
           }
         );
         if (!token) {
@@ -415,9 +415,9 @@ export class CommentClient {
       if (error.message.indexOf(Errors.INVALID_TOKEN.message) != -1) {
         // try to get token
         const token = await this.client.GetToken(
-          this.signHandler.getPublicKey().string(),
+          this.context.getPublicKey().string(),
           (payload: Uint8Array): Uint8Array => {
-            return this.signHandler.sign(payload);
+            return this.context.sign(payload);
           }
         );
         if (!token) {
@@ -497,9 +497,9 @@ export class CommentClient {
       if (error.message.indexOf(Errors.INVALID_TOKEN.message) != -1) {
         // try to get token
         const token = await this.client.GetToken(
-          this.signHandler.getPublicKey().string(),
+          this.context.getPublicKey().string(),
           (payload: Uint8Array): Uint8Array => {
-            return this.signHandler.sign(payload);
+            return this.context.sign(payload);
           }
         );
         if (!token) {
@@ -573,9 +573,9 @@ export class CommentClient {
       if (error.message.indexOf(Errors.INVALID_TOKEN.message) != -1) {
         // try to get token
         const token = await this.client.GetToken(
-          this.signHandler.getPublicKey().string(),
+          this.context.getPublicKey().string(),
           (payload: Uint8Array): Uint8Array => {
-            return this.signHandler.sign(payload);
+            return this.context.sign(payload);
           }
         );
         if (!token) {

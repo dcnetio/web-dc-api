@@ -1,9 +1,10 @@
 import type { Multiaddr } from "@multiformats/multiaddr";
 import { ChainUtil } from "../chain";
 import { DcUtil } from "../dcutil";
-import { SignHandler, DCConnectInfo, User } from "../types/types";
+import { DCConnectInfo, User } from "../types/types";
 import { AccountClient } from "./client";
 import { uint32ToLittleEndianBytes } from "../util/utils";
+import { DCContext } from "lib";
 
 // 错误定义
 export class AccountError extends Error {
@@ -25,12 +26,12 @@ export class AccountManager {
   dc: DcUtil;
   chainUtil: ChainUtil | undefined;
   connectedDc: DCConnectInfo = {};
-  accountKey : SignHandler | undefined;
-  constructor(connectedDc: DCConnectInfo, dc: DcUtil, chainUtil?: ChainUtil, accPrivateSign?: SignHandler) {
-    this.connectedDc = connectedDc;
-    this.dc = dc;
-    this.chainUtil = chainUtil;
-    this.accountKey = accPrivateSign;
+  context: DCContext;
+  constructor(context: DCContext) {
+    this.connectedDc = context.connectedDc;
+    this.dc = context.dcutil;
+    this.chainUtil = context.dcChain;
+    this.context = context;
   }
 
   // 获取用户备用节点
@@ -43,11 +44,11 @@ export class AccountManager {
       console.error("chainUtil is null");
       return [null, Errors.ErrChainUtilIsNull];
     }
-    if(!this.accountKey) {
-      console.error("accountKey is null");
+    if(!this.context) {
+      console.error("context is null");
       return [null, Errors.ErrAccountPrivateSignIsNull];
     }
-    const pubkeyRaw = this.accountKey.getPubkeyRaw();
+    const pubkeyRaw = this.context.getPubkeyRaw();
     const peerAddrs = await this.chainUtil.getAccountPeers(pubkeyRaw);
     if (peerAddrs && peerAddrs.length > 0) {
       // 连接备用节点
@@ -83,8 +84,8 @@ export class AccountManager {
       console.error("chainUtil is null");
       return [null, Errors.ErrChainUtilIsNull];
     }
-    if(!this.accountKey) {
-      console.error("accountKey is null");
+    if(!this.context) {
+      console.error("context is null");
       return [null, Errors.ErrAccountPrivateSignIsNull];
     }
     const peerId = peerAddr.getPeerId();
@@ -103,7 +104,7 @@ export class AccountManager {
       ...bhValue,
       ...peerIdValue,
     ]);
-    const signature = await this.accountKey.sign(messageParts);
+    const signature = await this.context.sign(messageParts);
     const accountClient = new AccountClient(
       this.connectedDc.client,
     );

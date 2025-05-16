@@ -22,7 +22,6 @@ import type { DCConnectInfo } from "../types/types";
 import {  uint32ToLittleEndianBytes,uint64ToLittleEndianBytes } from "../util/utils";
 import {DcUtil} from '../dcutil';
 import {Type} from '../constants';
-import { SignHandler } from '../types/types';
 import { NewThreadOptions } from './core/options';
 import {ThreadToken} from './core/identity';
 import { DBGrpcClient } from "./net/grpcClient";
@@ -38,6 +37,7 @@ import { LineReader } from './common/lineReader';
 import { FileManager } from 'lib/file/manager';
 import {newIterator} from './db/collection';
 import { Query } from './db/query';
+import { DCContext } from 'lib/interfaces';
 const { Buffer } = buffer; 
 
 export const ThreadProtocol = "/dc/" + Protocol.name + "/" + Protocol.version
@@ -77,7 +77,7 @@ export class DBManager {
     private lock: AsyncLock;  
     public  chainUtil: ChainUtil;
     private storagePrefix: string;
-    private signHandler: SignHandler;
+    private context: DCContext;
 
     constructor(  
         store: TxnDatastoreExtended,  //实际上是一个LevelDatastore实例,用levelDatastoreAdapter包装
@@ -87,7 +87,7 @@ export class DBManager {
         opts: NewOptions = {} ,
         chainUtil: ChainUtil,
         storagePrefix: string,
-        signHandler: SignHandler
+        context: DCContext
     ) {  
 
         this.store = store;  
@@ -99,7 +99,7 @@ export class DBManager {
         this.lock = new AsyncLock();  
         this.chainUtil = chainUtil;
         this.connectedDc = connectedDc;
-        this.signHandler = signHandler
+        this.context = context
     }  
 
      /**  
@@ -406,7 +406,7 @@ async preloadDBFromDC(
             this.connectedDc,
             this.chainUtil,
             this.dc.dcNodeClient,
-            this.signHandler
+            this.context
           );
     const fileStream = await fileManager.createSeekableFileStream(fid, "");
  
@@ -1038,7 +1038,7 @@ async  addLogToThread(ctx: Context, id: ThreadID, lid: PeerId): Promise<void> {
 
     let signature: Uint8Array;  
     try {  
-        signature =  this.signHandler.sign(preSign);  
+        signature =  this.context.sign(preSign);  
     } catch (err) {  
         throw err;  
     }  
@@ -1070,7 +1070,7 @@ async  addLogToThread(ctx: Context, id: ThreadID, lid: PeerId): Promise<void> {
  const signal = ctx?.signal || abortController.signal; 
  const storeUnit = await this.chainUtil.objectState(id.toString());  
   if (storeUnit) {  
-    const userPubkey = this.signHandler.getPublicKey(); 
+    const userPubkey = this.context.getPublicKey(); 
     let findFlag = false;  
     for (const user of storeUnit.users) {  
         //移除0x前缀
@@ -1182,7 +1182,7 @@ async newDB(
             ...typeValue,
             ...peerIdValue
         ]);
-        const signature =  this.signHandler.sign(preSign);
+        const signature =  this.context.sign(preSign);
        
         // Create thread options  
         const opts: NewThreadOptions = {

@@ -50,6 +50,10 @@ export class DCGrpcServer {
         }
       });
     }
+
+    stop() {
+      this.libp2p.stop()
+    }
   
     _parseFrameHeader(buffer: Uint8Array) {
         const length = (buffer[0] << 16) | (buffer[1] << 8) | buffer[2];
