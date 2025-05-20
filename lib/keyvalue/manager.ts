@@ -1,17 +1,17 @@
 import type { Multiaddr } from "@multiformats/multiaddr";
 import { KeyValueClient } from "./client";
 import { DCConnectInfo, ThemeComment } from "../types/types";
-import { OpenFlag } from "lib/constants";
-import { CommentManager } from "lib/comment/manager";
+import { OpenFlag } from "../constants";
+import { CommentManager } from "../comment/manager";
 import { HeliaLibp2p } from "helia";
-import { ChainUtil } from "lib/chain";
-import { DcUtil } from "lib/dcutil";
-import { Ed25519PubKey } from "lib/dc-key/ed25519";
-import { sha256, uint32ToLittleEndianBytes } from "lib/util/utils";
+import { ChainUtil } from "../chain";
+import { DcUtil } from "../dcutil";
+import { Ed25519PubKey } from "../dc-key/ed25519";
+import { sha256, uint32ToLittleEndianBytes } from "../util/utils";
 import { base32 } from "multiformats/bases/base32";
-import { Client } from "lib/dcapi";
-import { CommentType, Direction } from "lib/define";
-import { DCContext } from "lib/interfaces";
+import { Client } from "../dcapi";
+import { CommentType, Direction } from "../define";
+import { DCContext } from "../interfaces";
 // 错误定义
 export class KeyValueError extends Error {
   constructor(message: string) {
@@ -96,9 +96,7 @@ export class KeyValueManager {
 
     try {
       // Assuming AddThemeObjDeal is implemented elsewhere
-      const commentManager = new CommentManager(
-        this.context,
-      );
+      const commentManager = new CommentManager(this.context);
       const res = await commentManager.addThemeObj(
         appId,
         theme,
@@ -189,7 +187,9 @@ export class KeyValueManager {
       blockHeight ? blockHeight : 0
     );
     // Create binary representation of type (little endian)
-    const typeValue: Uint8Array = uint32ToLittleEndianBytes(CommentType.KeyValue);
+    const typeValue: Uint8Array = uint32ToLittleEndianBytes(
+      CommentType.KeyValue
+    );
     // sign(Theme+appId+objAuthor+blockheight+contentCid)
     const themeValue: Uint8Array = new TextEncoder().encode(theme);
     const appIdValue: Uint8Array = new TextEncoder().encode(appId);
@@ -244,9 +244,7 @@ export class KeyValueManager {
     let authList: ThemeComment[] = [];
     try {
       while (true) {
-        const commentManager = new CommentManager(
-          this.context,
-        );
+        const commentManager = new CommentManager(this.context);
         const res = await commentManager.getThemeComments(
           appId,
           theme,
@@ -288,13 +286,16 @@ export class KeyValueManager {
     vaccount?: string
   ): Promise<[boolean, Error | null]> {
     if (!theme.startsWith("keyvalue_")) {
-      return [null, new Error("Va_SetKeyValue failed, theme must start with 'keyvalue_'")];
+      return [
+        null,
+        new Error("Va_SetKeyValue failed, theme must start with 'keyvalue_'"),
+      ];
     }
     const userPubkey = this.context.getPublicKey();
     let userPubkeyStr = userPubkey.string();
     const themeAuthorPubkey: Ed25519PubKey =
       Ed25519PubKey.pubkeyToEdStr(themeAuthor);
-    const  client = await this.dc.connectToUserDcPeer(themeAuthorPubkey.raw);
+    const client = await this.dc.connectToUserDcPeer(themeAuthorPubkey.raw);
     if (client === null) {
       return [null, new Error("ErrConnectToAccountPeersFail")];
     }
@@ -305,7 +306,7 @@ export class KeyValueManager {
     const content = `${key}:${value}`;
     const contentUint8 = new TextEncoder().encode(content);
     const contenthash = await sha256(contentUint8);
-    const contentCidBase32 = base32.encode(contenthash)
+    const contentCidBase32 = base32.encode(contenthash);
 
     const contentSize = content.length;
 
@@ -316,8 +317,12 @@ export class KeyValueManager {
     const themeValue: Uint8Array = new TextEncoder().encode(theme);
     const themeAuthorValue: Uint8Array = new TextEncoder().encode(themeAuthor);
     const appIdValue: Uint8Array = new TextEncoder().encode(appId);
-    const contentCidValue: Uint8Array = new TextEncoder().encode(contentCidBase32);
-    const typeValue: Uint8Array = uint32ToLittleEndianBytes(CommentType.KeyValue);
+    const contentCidValue: Uint8Array = new TextEncoder().encode(
+      contentCidBase32
+    );
+    const typeValue: Uint8Array = uint32ToLittleEndianBytes(
+      CommentType.KeyValue
+    );
 
     const preSign = new Uint8Array([
       ...themeValue,
@@ -347,11 +352,10 @@ export class KeyValueManager {
       if (res !== 0) {
         return [null, new Error(`setKeyValue fail, resFlag:${res}`)];
       }
-      return [true, null]
+      return [true, null];
     } catch (error) {
       return [null, error];
     }
-
   }
 
   async vaGetValueWithKeyForVAccount(
@@ -363,11 +367,16 @@ export class KeyValueManager {
     vaccount?: string
   ): Promise<[string, Error | null]> {
     if (!theme.startsWith("keyvalue_")) {
-      return [null, new Error("vaGetValueWithKeyForVAccount failed, theme must start with 'keyvalue_'")];
+      return [
+        null,
+        new Error(
+          "vaGetValueWithKeyForVAccount failed, theme must start with 'keyvalue_'"
+        ),
+      ];
     }
     const themeAuthorPubkey: Ed25519PubKey =
       Ed25519PubKey.pubkeyToEdStr(themeAuthor);
-    const  client = await this.dc.connectToUserDcPeer(themeAuthorPubkey.raw);
+    const client = await this.dc.connectToUserDcPeer(themeAuthorPubkey.raw);
     if (client === null) {
       return [null, new Error("ErrConnectToAccountPeersFail")];
     }
@@ -388,14 +397,16 @@ export class KeyValueManager {
       );
 
       if (res == null) {
-        return [null, new Error(`vaGetValueWithKeyForVAccount fail, resFlag:${res}`)];
+        return [
+          null,
+          new Error(`vaGetValueWithKeyForVAccount fail, resFlag:${res}`),
+        ];
       }
-      const keyValue = new TextDecoder().decode(res)
-      return [keyValue, null]
+      const keyValue = new TextDecoder().decode(res);
+      return [keyValue, null];
     } catch (error) {
       return [null, error];
     }
-
   }
 
   async vaGetValuesWithKeysForVAccount(
@@ -407,11 +418,16 @@ export class KeyValueManager {
     vaccount?: string
   ): Promise<[string, Error | null]> {
     if (!theme.startsWith("keyvalue_")) {
-      return [null, new Error("vaGetValuesWithKeysForVAccount failed, theme must start with 'keyvalue_'")];
+      return [
+        null,
+        new Error(
+          "vaGetValuesWithKeysForVAccount failed, theme must start with 'keyvalue_'"
+        ),
+      ];
     }
     const themeAuthorPubkey: Ed25519PubKey =
       Ed25519PubKey.pubkeyToEdStr(themeAuthor);
-    const  client = await this.dc.connectToUserDcPeer(themeAuthorPubkey.raw);
+    const client = await this.dc.connectToUserDcPeer(themeAuthorPubkey.raw);
     if (client === null) {
       return [null, new Error("ErrConnectToAccountPeersFail")];
     }
@@ -432,13 +448,15 @@ export class KeyValueManager {
       );
 
       if (res == null) {
-        return [null, new Error(`vaGetValuesWithKeysForVAccount fail, resFlag:${res}`)];
+        return [
+          null,
+          new Error(`vaGetValuesWithKeysForVAccount fail, resFlag:${res}`),
+        ];
       }
-      const keyValues = new TextDecoder().decode(res)
-      return [keyValues, null]
+      const keyValues = new TextDecoder().decode(res);
+      return [keyValues, null];
     } catch (error) {
       return [null, error];
     }
-
   }
 }

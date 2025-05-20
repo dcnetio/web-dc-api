@@ -4,7 +4,7 @@ import { ThemeClient } from "./client";
 import { DcUtil } from "../dcutil";
 import { ChainUtil } from "../chain";
 import { sha256, uint32ToLittleEndianBytes } from "../util/utils";
-import { DCContext } from "lib/interfaces";
+import { DCContext } from "../interfaces";
 
 // 错误定义
 export class ThemeError extends Error {

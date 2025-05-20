@@ -3,7 +3,7 @@ const { Buffer } = buffer;
 import {  Key, Query,Pair } from 'interface-datastore';
 import {DBPrefix } from '../core/db';
 import { Event ,TxnDatastoreExtended, Transaction} from '../core/db'; // Assuming Event is defined in a core module
-import { jsonStringify } from "lib/util/utils";
+import { jsonStringify } from "../../util/utils";
  
 export const dsDispatcherPrefix = DBPrefix.dsPrefix.child(new Key('dispatcher'));
 

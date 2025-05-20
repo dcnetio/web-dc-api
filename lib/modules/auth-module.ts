@@ -12,6 +12,7 @@ import { Ed25519PubKey } from "../dc-key/ed25519";
 import { Errors } from "../error";
 import { dc_protocol, dial_timeout } from "../define";
 import { Multiaddr } from "@multiformats/multiaddr";
+import {WalletManager} from "../wallet/manager";
 
 const logger = createLogger('AuthModule');
 
@@ -24,6 +25,7 @@ export class AuthModule implements DCModule, IAuthOperations {
   private context: DCContext;
   private initialized: boolean = false;
   private tokenTask: boolean = false;
+  private walletManager: WalletManager;
   
   /**
    * 初始化认证模块
@@ -33,6 +35,9 @@ export class AuthModule implements DCModule, IAuthOperations {
   async initialize(context: DCContext): Promise<boolean> {
     try {
       this.context = context;
+      const walletManager = new WalletManager(this.context);
+      await walletManager.init();
+      this.walletManager = walletManager;
       this.initialized = true;
       return true;
     } catch (error) {
@@ -76,6 +81,51 @@ export class AuthModule implements DCModule, IAuthOperations {
   
   /**
    * 账户登录
+   * @returns 是否登录成功
+   */
+  async accountLoginWithWallet(): Promise<boolean> {
+    this.assertInitialized();
+    
+    if (!this.context.connectedDc?.client) {
+      throw new Error("dcClient is null");
+    }
+
+    try {
+      const res = await this.walletManager.openConnect();
+      if(!res) {
+        throw new Error("openConnect error");
+      }
+      const data = res.responseData;
+      if(!data.publicKey) {
+        throw new Error("openConnect response is null");
+      }
+      const publicKey = Ed25519PubKey.formEd25519PublicKey(data.publicKey);
+      this.context.publicKey = publicKey;
+      savePublicKey(publicKey.string());
+      console.log("accountLogin data", data);
+      // 获取token
+      const token = await this.context.connectedDc?.client.GetToken(
+        publicKey.string(),
+        (payload: Uint8Array): Promise<Uint8Array> => {
+          return this.sign(payload);
+        }
+      );
+      
+      if (!token) {
+        throw new Error("GetToken error");
+      }
+      // 存在token， 获取用户备用节点
+      await this.getAccountBackupDc();
+
+    } catch (error) {
+      console.error("accountLogin error", error);
+      
+    }
+    return true;
+  }
+
+  /**
+   * 账户登录
    * @param nftAccount NFT账户
    * @param password 密码
    * @param safecode 安全码
@@ -87,7 +137,6 @@ export class AuthModule implements DCModule, IAuthOperations {
     if (!this.context.connectedDc?.client) {
       throw new Error("dcClient is null");
     }
-    
     const commonClient = new CommonClient(this.context.connectedDc.client);
     const privKey = await commonClient.accountLogin(
       nftAccount,
@@ -116,6 +165,16 @@ export class AuthModule implements DCModule, IAuthOperations {
     }
     return true;
   }
+
+  async sign(payload: Uint8Array): Promise<Uint8Array>  {
+    if (!this.walletManager) {
+      throw new Error("walletManager is null");
+    } else  {
+      const signature = await this.walletManager.sign(payload);
+      return signature;
+    }
+  }
+
   
   /**
    * 获取用户备用节点

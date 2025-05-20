@@ -24,8 +24,8 @@ import { Uint8ArrayList } from "uint8arraylist";
 import { Libp2p, Stream } from "@libp2p/interface";
 import { cidNeedConnect } from "../constants";
 import { SeekableFileStream } from "./seekableFileStream";
-import { AccountClient } from "lib/account/client";
-import { DCContext } from "lib/interfaces";
+import { AccountClient } from "../account/client";
+import { DCContext } from "../interfaces";
 const { Buffer } = buffer;
 
 const NonceBytes = 12;

@@ -47,6 +47,7 @@ export interface FileTransmit {
 export interface APPInfo {
   id: string;
   name: string;
+  icon?: string;
 }
 
 export interface ThemeObj {

@@ -1,3 +1,7 @@
+export const version = 'v0_0_1';
+export const walletOrigin = "http://localhost:3000"; //
+export const walletUrl = walletOrigin; // 钱包地址
+export const walletWindowName = "walletWindow"; // 窗口名称
 export const dc_protocol = "/dc/thread/0.0.1";
 export const dial_timeout = 2000;
 export const keyExpire = 60 * 60 * 24; // setcachekey 过期时间默认一天

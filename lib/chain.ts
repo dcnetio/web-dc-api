@@ -63,6 +63,9 @@ export class ChainUtil {
       throw new Error("walletAccountStorage is null");
     }
     let userInfo = walletAccountStorage.toJSON();
+    if (userInfo === null) {
+      throw new Error("userInfo is null");
+    }
     if (!isUser(userInfo)) {
       throw new Error("walletAccountStorage is not user");
     }

@@ -16,7 +16,7 @@ import {Query,compare,traverseFieldPathMap} from './query';
 import * as cbornode from '../cbor/node';
 import * as dagCBOR from '@ipld/dag-cbor';
 import { dagCbor } from '@helia/dag-cbor';
-import { jsonStringify } from 'lib/util/utils';
+import { jsonStringify } from '../../util/utils';
 
 // iteratorKeyMinCacheSize is the size of iterator keys stored in memory before more are fetched.
 const iteratorKeyMinCacheSize = 100

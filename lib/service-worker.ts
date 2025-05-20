@@ -14,10 +14,16 @@ const logger = createLogger('ServiceWorker');
 export async function registerServiceWorker(fileOps?: IFileOperations): Promise<ServiceWorkerRegistration | null> {
   if ('serviceWorker' in navigator) {
     try {
-      const registration = await navigator.serviceWorker.register(
-        new URL('/sw.js', import.meta.url).href
-      );
+      // const registration = await navigator.serviceWorker.register(
+      //   new URL('/sw.js', import.meta.url).href
+      // );
       
+      // 路径在函数内部解析，不在模块顶层
+      const swPath = typeof window !== 'undefined' 
+      ? (new URL('/sw.js', window.location.origin).href)
+      : '/sw.js';
+      
+      const registration = await navigator.serviceWorker.register(swPath);
       logger.info('ServiceWorker 注册成功:', registration.scope);
       
       // 设置消息监听器处理IPFS资源请求

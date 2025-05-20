@@ -34,10 +34,10 @@ import { dial_timeout } from '../define';
 import multibase, {decode as multibaseDecode} from 'multibase';
 import {net as net_pb} from "./pb/net_pb";
 import { LineReader } from './common/lineReader';
-import { FileManager } from 'lib/file/manager';
+import { FileManager } from '../file/manager';
 import {newIterator} from './db/collection';
 import { Query } from './db/query';
-import { DCContext } from 'lib/interfaces';
+import { DCContext } from '../interfaces';
 const { Buffer } = buffer; 
 
 export const ThreadProtocol = "/dc/" + Protocol.name + "/" + Protocol.version

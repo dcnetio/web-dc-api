@@ -10,7 +10,7 @@ import { extractPublicKeyFromPeerId } from "../dc-key/keyManager";
 import { peerIdFromString } from "@libp2p/peer-id";
 import { Errors } from "../error";
 import { toString as uint8ArrayToString } from "uint8arrays/to-string";
-import { DCContext } from "lib/interfaces";
+import { DCContext } from "../interfaces";
 
 export class MessageClient {
   client: Client;

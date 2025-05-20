@@ -1,7 +1,7 @@
 import { UnixFS } from "@helia/unixfs";
 import { CID } from "multiformats/cid";
 import toBuffer from "it-to-buffer";
-import { decryptContent } from "lib/util/dccrypt";
+import { decryptContent } from "../util/dccrypt";
 
 /**
  * 可定位文件流类

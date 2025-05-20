@@ -4,8 +4,8 @@ import { dcnet } from "../proto/dcnet_proto";
 import { HeliaLibp2p } from "helia";
 import { DataSource } from "../proto/datasource";
 import { Libp2p } from "libp2p";
-import { Errors } from "lib/error";
-import { DCContext } from "lib/interfaces";
+import { Errors } from "../error";
+import { DCContext } from "../interfaces";
 
 const uploadStatus = {
   OK: 0,

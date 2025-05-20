@@ -39,7 +39,7 @@ export interface DCContext {
   grpcServer: DCGrpcServer;
   
   // 核心功能
-  sign(payload: Uint8Array): Uint8Array;
+  sign(payload: Uint8Array): Promise<Uint8Array> | Uint8Array;
   getPubkeyRaw(): Uint8Array;
   getPublicKey(): Ed25519PubKey;
   decrypt(data: Uint8Array): Promise<Uint8Array>;

@@ -22,7 +22,7 @@ export class DCGrpcClient {
 
   async GetToken(
     pubkey: string,
-    signCallback: (payload: Uint8Array) => Uint8Array
+    signCallback: (payload: Uint8Array) => Promise<Uint8Array> | Uint8Array,
   ): Promise<string> {
     let token: string = "";
     try {
@@ -34,7 +34,7 @@ export class DCGrpcClient {
         const decodedPayload = dcnet.pb.GetTokenReply.decode(payload);
         if (decodedPayload.challenge) {
           const challenge = decodedPayload.challenge;
-          const signature = signCallback(challenge);
+          const signature = await signCallback(challenge);
           const message = new dcnet.pb.GetTokenRequest({});
           message.signature = signature;
           const messageBytes =

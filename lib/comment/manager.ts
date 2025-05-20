@@ -10,12 +10,12 @@ import { Multiaddr } from "@multiformats/multiaddr";
 import { CommentClient } from "./client";
 import { parseUint32, sha256, uint32ToLittleEndianBytes } from "../util/utils";
 import { FileManager } from "../file/manager";
-import { cidNeedConnect } from "lib/constants";
+import { cidNeedConnect } from "../constants";
 import { toString as uint8ArrayToString } from "uint8arrays/to-string";
-import { BrowserLineReader, readLine } from "lib/util/BrowserLineReader";
+import { BrowserLineReader, readLine } from "../util/BrowserLineReader";
 import { bytesToHex } from "@noble/curves/abstract/utils";
 import { dcnet } from "../proto/dcnet_proto";
-import { DCContext } from "lib/interfaces";
+import { DCContext } from "../interfaces";
 const { Buffer } = buffer;
 
 // 创建一个可以取消的信号

@@ -34,7 +34,7 @@ export class Client {
 
   async GetToken(
     pubkey: string,
-    signCallback: (payload: Uint8Array) => Uint8Array,
+    signCallback: (payload: Uint8Array) => Promise<Uint8Array> | Uint8Array,
     peerAddr?: Multiaddr
   ): Promise<string> {
     try {

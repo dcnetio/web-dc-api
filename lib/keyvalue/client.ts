@@ -4,8 +4,8 @@ import { Libp2pGrpcClient } from "grpc-libp2p-client";
 import { dcnet } from "../proto/dcnet_proto";
 import { base58btc } from "multiformats/bases/base58";
 import { toString as uint8ArrayToString } from "uint8arrays/to-string";
-import { Errors } from "lib/error";
-import { DCContext } from "lib/interfaces";
+import { Errors } from "../error";
+import { DCContext } from "../interfaces";
 
 export class KeyValueClient {
   client: Client;

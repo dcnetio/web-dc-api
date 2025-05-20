@@ -39,7 +39,7 @@ import * as dagPB from '@ipld/dag-pb'
 import * as threadEvent from '../cbor/event'
 import {IRecord} from '../core/record'
 import {IPLDNode} from '../core/core'
-import { jsonStringify } from 'lib/util/utils';
+import { jsonStringify } from '../../util/utils';
 
 const baseKey = DBPrefix.dsPrefix.child(new Key("collection"))
 const getBlockInitialTimeout      =  500 

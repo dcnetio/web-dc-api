@@ -64,6 +64,7 @@ export class DC implements DCContext {
     backWssUrl: string;
     appInfo: APPInfo;
     logLevel?: LogLevel;
+    names?: string[];
   }) {
     this.blockChainAddr = options.wssUrl;
     this.backChainAddr = options.backWssUrl;
@@ -80,21 +81,33 @@ export class DC implements DCContext {
     this.moduleSystem = new ModuleSystem(this);
     
     // 注册核心模块
-    this.registerCoreModules();
+    this.registerCoreModules(options.names || []);
   }
   
   /**
    * 注册核心模块
    */
-  private registerCoreModules(): void {
-    // 注册核心功能模块
-    this.moduleSystem.registerModule(new FileModule());
-    this.moduleSystem.registerModule(new AuthModule());
-    this.moduleSystem.registerModule(new CommentModule());
-    this.moduleSystem.registerModule(new DatabaseModule());
-    this.moduleSystem.registerModule(new MessageModule());
-    this.moduleSystem.registerModule(new KeyValueModule());
-    this.moduleSystem.registerModule(new ClientModule());
+  private registerCoreModules(names: string[] = []): void {
+    if(names && names.length > 0) {
+      // 注册自定义模块
+      for (const name of names) {
+        const module = this.moduleSystem.getModule(name);
+        if (module) {
+          this.moduleSystem.registerModule(module);
+        } else {
+          logger.warn(`模块 ${name} 不存在，跳过注册`);
+        }
+      }
+    }else {
+      // 注册核心功能模块
+      this.moduleSystem.registerModule(new FileModule());
+      this.moduleSystem.registerModule(new AuthModule());
+      this.moduleSystem.registerModule(new CommentModule());
+      this.moduleSystem.registerModule(new DatabaseModule());
+      this.moduleSystem.registerModule(new MessageModule());
+      this.moduleSystem.registerModule(new KeyValueModule());
+      this.moduleSystem.registerModule(new ClientModule());
+    }
     
     logger.info("核心模块注册完成");
   }
@@ -225,7 +238,7 @@ export class DC implements DCContext {
    * @param payload 需要签名的数据
    * @returns 签名结果
    */
-  sign = (payload: Uint8Array): Uint8Array => {
+  sign = (payload: Uint8Array): Promise<Uint8Array> | Uint8Array => {
     if (!this.privKey) {
       throw new Error("私钥未初始化，无法进行签名");
     }
