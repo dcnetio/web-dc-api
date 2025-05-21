@@ -222,14 +222,14 @@ export class DCCompat extends DC {
    * 创建数据库查询
    */
   createQuery(collectionName: string, threadId: string) {
-    return this.db.createQuery(collectionName, threadId);
+    //return this.db.createQuery(collectionName, threadId);
   }
   
   /**
    * 创建数据库事务
    */
   createTransaction(threadId: string) {
-    return this.db.createTransaction(threadId);
+   // return this.db.createTransaction(threadId);
   }
   
   /**
@@ -278,7 +278,7 @@ export class DCCompat extends DC {
    * 获取hostid
    */
   getHostID() {
-    const DCManager = require('./dc/manager').DCManager;
+    const DCManager = require('./implement/dc/manager').DCManager;
     const dcManager = new DCManager(this.connectedDc);
     return dcManager.getHostID();
   }

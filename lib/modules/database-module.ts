@@ -4,16 +4,16 @@
 import { DCContext, IDatabaseOperations } from "../interfaces";
 import { DCModule, CoreModuleName } from "../module-system";
 import { createLogger } from "../util/logger";
-import { createTxnDatastore } from "../threaddb/common/idbstore-adapter";
-import { newKeyBook } from "../threaddb/lsstoreds/keybook";
-import { newAddrBook } from "../threaddb/lsstoreds/addr_book";
-import { newHeadBook } from "../threaddb/lsstoreds/headbook";
-import { newThreadMetadata } from "../threaddb/lsstoreds/metadata";
-import { newLogstore } from "../threaddb/common/logstore";
+import { createTxnDatastore } from "../implement/threaddb/common/idbstore-adapter";
+import { newKeyBook } from "../implement/threaddb/lsstoreds/keybook";
+import { newAddrBook } from "../implement/threaddb/lsstoreds/addr_book";
+import { newHeadBook } from "../implement/threaddb/lsstoreds/headbook";
+import { newThreadMetadata } from "../implement/threaddb/lsstoreds/metadata";
+import { newLogstore } from "../implement/threaddb/common/logstore";
 import { dagCbor } from "@helia/dag-cbor";
-import { Network } from "../threaddb/net/net";
-import { DBManager } from "../threaddb/dbmanager";
-import { ICollectionConfig } from "../threaddb/core/core";
+import { Network } from "../implement/threaddb/net/net";
+import { DBManager } from "../implement/threaddb/dbmanager";
+import { ICollectionConfig } from "../implement/threaddb/core/core";
 
 const logger = createLogger('DatabaseModule');
 const storagePrefix = "dc-";

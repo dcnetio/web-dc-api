@@ -64,7 +64,6 @@ export class CommonClient {
       safecode,
       this.client.peerAddr
     );
-    console.log("AccountLogin success:", prikey);
     let mnemonic = "";
     if (prikey.startsWith("mnemonic:")) {
       mnemonic = prikey.slice(9);

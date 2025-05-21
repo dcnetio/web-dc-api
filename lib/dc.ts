@@ -8,7 +8,7 @@ import { DcUtil } from "./dcutil";
 import { type HeliaLibp2p } from "helia";
 import { Libp2p } from "@libp2p/interface";
 import { dc_protocol } from "./define";
-import { DCGrpcServer } from "./threaddb/net/grpcserver";
+import { DCGrpcServer } from "./implement/threaddb/net/grpcserver";
 import { Ed25519PrivKey, Ed25519PubKey } from "./dc-key/ed25519";
 import { DCContext } from "./interfaces";
 import { createLogger, configureLogger, LogLevel } from "./util/logger";
@@ -238,7 +238,7 @@ export class DC implements DCContext {
    * @param payload 需要签名的数据
    * @returns 签名结果
    */
-  sign = (payload: Uint8Array): Promise<Uint8Array> | Uint8Array => {
+  sign =async (payload: Uint8Array): Promise<Uint8Array>  => {
     if (!this.privKey) {
       throw new Error("私钥未初始化，无法进行签名");
     }

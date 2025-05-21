@@ -3,7 +3,7 @@
 
 import { DCContext, IAuthOperations } from "../interfaces";
 import { DCModule, CoreModuleName } from "../module-system";
-import { AccountManager } from "../account/manager";
+import { AccountManager } from "../implement/account/manager";
 import { CommonClient } from "../commonclient";
 import { Client } from "../dcapi";
 import { createLogger } from "../util/logger";
@@ -12,7 +12,7 @@ import { Ed25519PubKey } from "../dc-key/ed25519";
 import { Errors } from "../error";
 import { dc_protocol, dial_timeout } from "../define";
 import { Multiaddr } from "@multiformats/multiaddr";
-import {WalletManager} from "../wallet/manager";
+import {WalletManager} from "../implement/wallet/manager";
 
 const logger = createLogger('AuthModule');
 
@@ -79,50 +79,50 @@ export class AuthModule implements DCModule, IAuthOperations {
     }
   }
   
-  /**
-   * 账户登录
-   * @returns 是否登录成功
-   */
-  async accountLoginWithWallet(): Promise<boolean> {
-    this.assertInitialized();
+  // /**
+  //  * 账户登录
+  //  * @returns 是否登录成功
+  //  */
+  // async accountLogin(): Promise<boolean> {
+  //   this.assertInitialized();
     
-    if (!this.context.connectedDc?.client) {
-      throw new Error("dcClient is null");
-    }
+  //   if (!this.context.connectedDc?.client) {
+  //     throw new Error("dcClient is null");
+  //   }
 
-    try {
-      const res = await this.walletManager.openConnect();
-      if(!res) {
-        throw new Error("openConnect error");
-      }
-      const data = res.responseData;
-      if(!data.publicKey) {
-        throw new Error("openConnect response is null");
-      }
-      const publicKey = Ed25519PubKey.formEd25519PublicKey(data.publicKey);
-      this.context.publicKey = publicKey;
-      savePublicKey(publicKey.string());
-      console.log("accountLogin data", data);
-      // 获取token
-      const token = await this.context.connectedDc?.client.GetToken(
-        publicKey.string(),
-        (payload: Uint8Array): Promise<Uint8Array> => {
-          return this.sign(payload);
-        }
-      );
+  //   try {
+  //     const res = await this.walletManager.openConnect();
+  //     if(!res) {
+  //       throw new Error("openConnect error");
+  //     }
+  //     const data = res.responseData;
+  //     if(!data.publicKey) {
+  //       throw new Error("openConnect response is null");
+  //     }
+  //     const publicKey = Ed25519PubKey.formEd25519PublicKey(data.publicKey);
+  //     this.context.publicKey = publicKey;
+  //     savePublicKey(publicKey.string());
+  //     console.log("accountLogin data", data);
+  //     // 获取token
+  //     const token = await this.context.connectedDc?.client.GetToken(
+  //       publicKey.string(),
+  //       (payload: Uint8Array): Promise<Uint8Array> => {
+  //         return this.sign(payload);
+  //       }
+  //     );
       
-      if (!token) {
-        throw new Error("GetToken error");
-      }
-      // 存在token， 获取用户备用节点
-      await this.getAccountBackupDc();
+  //     if (!token) {
+  //       throw new Error("GetToken error");
+  //     }
+  //     // 存在token， 获取用户备用节点
+  //     await this.getAccountBackupDc();
 
-    } catch (error) {
-      console.error("accountLogin error", error);
+  //   } catch (error) {
+  //     console.error("accountLogin error", error);
       
-    }
-    return true;
-  }
+  //   }
+  //   return true;
+  // }
 
   /**
    * 账户登录
@@ -150,6 +150,7 @@ export class AuthModule implements DCModule, IAuthOperations {
       // 保存公钥
       const pubkey = this.context.privKey.publicKey;
       this.context.publicKey = pubkey;
+      console.log("accountLogin pubkey base32", pubkey.string());
       await savePublicKey(pubkey.string());
       // 获取token
       const token = await this.context.connectedDc?.client.GetToken(

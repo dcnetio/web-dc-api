@@ -17,7 +17,7 @@ import { loadKeyPair, saveKeyPair } from "./util/utils";
 import { Ed25519PrivateKey } from "@libp2p/interface";
 import { ping } from "@libp2p/ping";
 // import {mdns} from '@libp2p/mdns'
-import {StreamWriter } from './file/streamwriter'
+import {StreamWriter } from './implement/file/streamwriter'
 import { Stream } from '@libp2p/interface'
 import { Uint8ArrayList } from 'uint8arraylist'; 
 import  { oidfetch } from "./proto/oidfetch_proto";

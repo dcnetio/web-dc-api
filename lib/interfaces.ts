@@ -7,10 +7,10 @@ import type { HeliaLibp2p } from "helia";
 import { Libp2p } from "@libp2p/interface";
 import { ChainUtil } from "./chain";
 import { DcUtil } from "./dcutil";
-import { ICollectionConfig } from "./threaddb/core/core";
-import { SeekableFileStream } from "./file/seekableFileStream";
-import { DBManager } from "./threaddb/dbmanager";
-import { DCGrpcServer } from "./threaddb/net/grpcserver";
+import { ICollectionConfig } from "./implement/threaddb/core/core";
+import { SeekableFileStream } from "./implement/file/seekableFileStream";
+import { DBManager } from "./implement/threaddb/dbmanager";
+import { DCGrpcServer } from "./implement/threaddb/net/grpcserver";
 
 /**
  * 核心系统上下文接口
@@ -39,7 +39,7 @@ export interface DCContext {
   grpcServer: DCGrpcServer;
   
   // 核心功能
-  sign(payload: Uint8Array): Promise<Uint8Array> | Uint8Array;
+  sign(payload: Uint8Array): Promise<Uint8Array> ;
   getPubkeyRaw(): Uint8Array;
   getPublicKey(): Ed25519PubKey;
   decrypt(data: Uint8Array): Promise<Uint8Array>;

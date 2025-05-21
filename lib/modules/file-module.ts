@@ -3,9 +3,9 @@
 
 import { DCContext, IFileOperations } from "../interfaces";
 import { DCModule, CoreModuleName } from "../module-system";
-import { FileManager } from "../file/manager";
-import { FileCacheManager } from "../file/file-cache-manager";
-import { SeekableFileStream } from "../file/seekableFileStream";
+import { FileManager } from "../implement/file/manager";
+import { FileCacheManager } from "../implement/file/file-cache-manager";
+import { SeekableFileStream } from "../implement/file/seekableFileStream";
 import { createLogger } from "../util/logger";
 import { registerServiceWorker } from "../service-worker";
 
@@ -164,10 +164,10 @@ export class FileModule implements DCModule, IFileOperations {
       if (!file) {
         throw new Error("文件不能为空");
       }
-      
       const res = await this.fileManager.addFile(file, enkey, onUpdateTransmitSize);
       return res;
     } catch (error) {
+
       logger.error(`添加文件失败: ${file?.name}`, error);
       throw new Error(`添加文件失败: ${error instanceof Error ? error.message : String(error)}`);
     }

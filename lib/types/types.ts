@@ -29,7 +29,6 @@ export interface User {
 
 export interface DCConnectInfo {
   client?: Client | undefined;
-  client2?: Client | undefined;
   nodeAddr?: Multiaddr | undefined;
 }
 

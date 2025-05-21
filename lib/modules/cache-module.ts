@@ -8,14 +8,14 @@ import { ThemeManager } from "../implement/theme/manager";
 import { keyExpire } from "../define";
 import { createLogger } from "../util/logger";
 
-const logger = createLogger('KeyValueModule');
+const logger = createLogger('CacheModule');
 
 /**
  * 键值存储模块
  * 提供键值存储功能
  */
-export class KeyValueModule implements DCModule, IKeyValueOperations {
-  readonly moduleName = CoreModuleName.KEYVALUE;
+export class CacheeModule implements DCModule, IKeyValueOperations {
+  readonly moduleName = CoreModuleName.CACHE;
   private context: DCContext;
   private keyValueManager: KeyValueManager;
   private themeManager: ThemeManager;

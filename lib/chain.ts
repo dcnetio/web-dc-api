@@ -8,12 +8,6 @@ import { ApiPromise, WsProvider } from "@polkadot/api";
 import { isUser, sha256,hexToAscii } from "./util/utils";
 import { User } from "./types/types";
 
-import {   
-  PeerIDConverter,   
-  CidConverter,
-  MultiaddrConverter,  
-} from './threaddb/pb/proto-custom-types' 
-import { base58btc } from "multiformats/bases/base58";
 import { hexToBytes } from "@noble/curves/abstract/utils";
 import { base32 } from "multiformats/bases/base32";
 import * as buffer from "buffer/";
@@ -97,8 +91,15 @@ export class ChainUtil {
       if(parentUserInfo.spamFrozenStatus != 0){
         userInfo.spamFrozenStatus = parentUserInfo.spamFrozenStatus;
       }
-      return userInfo;
+
     }
+     //peers 进行统一处理
+      for (let i = 0; i < userInfo.peers.length; i++) {
+        userInfo.peers[i] = hexToAscii(userInfo.peers[i]);
+      }
+      for (let i = 0; i < userInfo.requestPeers.length; i++) {
+        userInfo.requestPeers[i] = hexToAscii(userInfo.requestPeers[i]);
+      }
    // 对 userInfo.peers 按与用户公钥的 XOR 距离进行排序
     if (userInfo.peers && Array.isArray(userInfo.peers) && account) {
         userInfo.peers.sort((peerA, peerB) => {

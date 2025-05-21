@@ -6,7 +6,7 @@ import { sha512 } from '@noble/hashes/sha512'
 import { HDKey } from '@scure/bip32'  
 import  {  Ed25519PrivKey }  from './ed25519'
 import * as bcrypt from "../util/bcrypt"; //
-import { SymKey } from "../threaddb/core/core";
+import { SymKey } from "../implement/threaddb/core/core";
 import { multiaddr } from "@multiformats/multiaddr";
 import { peerIdFromString } from "@libp2p/peer-id";
 import { Ed25519PubKey } from "./ed25519";

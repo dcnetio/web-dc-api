@@ -3,7 +3,7 @@
 
 import { DCContext, ICommentOperations } from "../interfaces";
 import { DCModule, CoreModuleName } from "../module-system";
-import { CommentManager } from "../comment/manager";
+import { CommentManager } from "../implement/comment/manager";
 import { createLogger } from "../util/logger";
 
 const logger = createLogger('CommentModule');

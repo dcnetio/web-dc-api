@@ -237,6 +237,7 @@ function parseUint32(str: string) {
   }
 }
 
+// 将16进制字符串转换为ASCII字符串,peeid bases32
 function hexToAscii(hex: string): string {
   // 移除0x前缀（如果存在）
   const cleanHex = hex.startsWith("0x") ? hex.slice(2) : hex;

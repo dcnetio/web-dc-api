@@ -3,7 +3,7 @@
 
 import { DCContext, IMessageOperations } from "../interfaces";
 import { DCModule, CoreModuleName } from "../module-system";
-import { MessageManager } from "../message/manager";
+import { MessageManager } from "../implement/message/manager";
 import { createLogger } from "../util/logger";
 
 const logger = createLogger('MessageModule');

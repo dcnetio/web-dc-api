@@ -38,6 +38,7 @@ export enum CoreModuleName {
   DATABASE = 'database',
   MESSAGE = 'message',
   KEYVALUE = 'keyvalue',
+  CACHE = 'cache',
   CLIENT = 'client'
 }
 
