@@ -3,10 +3,11 @@
 
 import { DCContext, IKeyValueOperations } from "../interfaces";
 import { DCModule, CoreModuleName } from "../common/module-system";
-import { KeyValueManager } from "../implements/keyvalue/manager";
+import { KeyValueManager, KeyValueStoreType } from "../implements/keyvalue/manager";
 import { ThemeManager } from "../implements/theme/manager";
 import { keyExpire } from "../common/define";
 import { createLogger } from "../util/logger";
+import { ThemeComment } from "lib/common/types/types";
 
 const logger = createLogger('KeyValueModule');
 
@@ -68,18 +69,16 @@ export class KeyValueModule implements DCModule, IKeyValueOperations {
    * @param type 主题类型
    * @returns 创建结果
    */
-  async vaCreateStoreTheme(
-    themeAuthor: string,
+  async createStore(
     theme: string,
     space: number,
-    type: number
+    type: KeyValueStoreType
   ): Promise<any> {
     this.assertInitialized();
     
     try {
-      const res = await this.keyValueManager.vaCreateStoreTheme(
+      const res = await this.keyValueManager.createStore(
         this.context.appInfo.id,
-        themeAuthor,
         theme,
         space,
         type
@@ -93,50 +92,174 @@ export class KeyValueModule implements DCModule, IKeyValueOperations {
     }
   }
   
-  /**
-   * 从dc网络获取缓存值
-   * @param key 缓存键
-   * @returns 缓存值
-   */
-  async getCacheValue(key: string): Promise<string | null> {
-    this.assertInitialized();
-    
-    try {
-      const res = await this.themeManager.getCacheValue(key);
-      if (res[0]) {
-        logger.info(`获取缓存键 ${key} 成功`);
-        return res[0];
-      }
-      
-      logger.info(`缓存键 ${key} 不存在`);
-      return null;
-    } catch (error) {
-      logger.error(`获取缓存键 ${key} 失败:`, error);
-      throw error;
-    }
-  }
+
   
-  /**
-   * 设置缓存值
-   * @param value 缓存值
-   * @param expire 过期时间
-   * @returns 设置结果
-   */
-  async setCacheKey(value: string, expire?: number): Promise<any> {
+   async configAuth(
+    appId: string,
+    themeAuthor: string,
+    theme: string,
+    authPubkey: string,
+    permission: number,
+    remark: string,
+    vaccount?: string
+  ): Promise<[number, Error | null]> {
     this.assertInitialized();
     
     try {
-      const expireNumber = expire ? expire : keyExpire; // 默认一天
-      const res = await this.themeManager.setCacheKey(value, expireNumber);
-      
-      logger.info(`设置缓存值成功，过期时间: ${expireNumber}秒`);
+      const res = await this.keyValueManager.configAuth(
+        appId,
+        themeAuthor,
+        theme,
+        authPubkey,
+        permission,
+        remark,
+        vaccount
+      );
       return res;
     } catch (error) {
-      logger.error(`设置缓存值失败:`, error);
+      logger.error(`配置权限失败:`, error);
+      throw error;
+    }
+  }
+   async getAuthList(
+    appId: string,
+    themeAuthor: string,
+    theme: string,
+    vaccount?: string
+  ): Promise<[ThemeComment[] | null, Error | null]> {
+    this.assertInitialized();
+    
+    try {
+      const res = await this.keyValueManager.getAuthList(
+        appId,
+        themeAuthor,
+        theme,
+        vaccount
+      );
+
+      return res;
+    } catch (error) {
+      logger.error(`获取权限列表失败:`, error);
       throw error;
     }
   }
   
+  
+  async setKeyValue(
+    appId: string,
+    themeAuthor: string,
+    theme: string,
+    key: string,
+    value: string,
+    indexs: string, //索引列表,格式为key1:value1$$$key2:value2
+    vaccount?: string
+  ): Promise<[boolean, Error | null]> {
+    this.assertInitialized();
+    
+    try {
+      const res = await this.keyValueManager.setKeyValue(
+        appId,
+        themeAuthor,
+        theme,
+        key,
+        value,
+        indexs,
+        vaccount
+      );
+      return res;
+    } catch (error) {
+      logger.error(`设置key-value失败:`, error);
+      throw error;
+    }
+  }
+
+  
+  async getetValueWithKey(
+    appId: string,
+    themeAuthor: string,
+    theme: string,
+    writerPubkey: string,
+    key: string,
+    vaccount?: string
+  ): Promise<[string, Error | null]> {
+    this.assertInitialized();
+    
+    try {
+      const res = await this.keyValueManager.getetValueWithKey(
+        appId,
+        themeAuthor,
+        theme,
+        writerPubkey,
+        key,
+        vaccount
+      );
+      return res;
+    } catch (error) {
+      logger.error(`获取key-value失败:`, error);
+      throw error;
+    }
+  }
+
+  
+  async getValuesWithKeys(
+    appId: string,
+    themeAuthor: string,
+    theme: string,
+    writerPubkey: string,
+    keys: string,
+    vaccount?: string
+  ): Promise<[string, Error | null]> {
+    this.assertInitialized();
+    
+    try {
+      const res = await this.keyValueManager.getValuesWithKeys(
+        appId,
+        themeAuthor,
+        theme,
+        writerPubkey,
+        keys,
+        vaccount
+      );
+      return res;
+    } catch (error) {
+      logger.error(`获取key-value失败:`, error);
+      throw error;
+    }
+  }
+
+   async getValuesWithIndex(
+    appId: string,
+    themeAuthor: string,
+    theme: string,
+    indexKey:string,
+    indexValue:string,
+    seekKey:string, 
+    offset: number,
+    limit: number,
+    vaccount?: string
+  ): Promise<[string, Error | null]> {
+    this.assertInitialized();
+    
+    try {
+      const res = await this.keyValueManager.getValuesWithIndex(
+        appId,
+        themeAuthor,
+        theme,
+        indexKey,
+        indexValue,
+        seekKey,
+        offset,
+        limit,
+        vaccount
+      );
+      return res;
+    } catch (error) {
+      logger.error(`获取key-value失败:`, error);
+      throw error;
+    }
+  }
+  
+
   /**
    * 断言模块已初始化
    */

@@ -107,9 +107,9 @@ export class KeyValueClient {
     message.signature = signature;
     message.type = type;
     message.userPubkey = new TextEncoder().encode(userPubkeyStr);
-    // if(vaccount){
-    //   message.vaccount = new TextEncoder().encode(vaccount)
-    // }
+    if(vaccount){
+       message.vaccount = new TextEncoder().encode(vaccount)
+     }
     const messageBytes = dcnet.pb.SetKeyValueRequest.encode(message).finish();
     const grpcClient = new Libp2pGrpcClient(
       this.client.p2pNode,
@@ -168,9 +168,9 @@ export class KeyValueClient {
     message.theme = new TextEncoder().encode(theme);
     message.UserPubkey = new TextEncoder().encode(userPubkey)
     message.Key = new TextEncoder().encode(key);
-    // if(vaccount){
-    //   message.vaccount = new TextEncoder().encode(vaccount)
-    // }
+    if(vaccount){
+       message.vaccount = new TextEncoder().encode(vaccount)
+     }
     const messageBytes = dcnet.pb.GetValueWithKeyRequest.encode(message).finish();
     const grpcClient = new Libp2pGrpcClient(
       this.client.p2pNode,
@@ -235,9 +235,9 @@ export class KeyValueClient {
     message.theme = new TextEncoder().encode(theme);
     message.UserPubkey = new TextEncoder().encode(userPubkey);
     message.Keys = new TextEncoder().encode(keys);
-    // if(vaccount){
-    //   message.vaccount = new TextEncoder().encode(vaccount)
-    // }
+    if(vaccount){
+       message.vaccount = new TextEncoder().encode(vaccount)
+     }
     const messageBytes = dcnet.pb.GetValuesWithKeysRequest.encode(message).finish();
     const grpcClient = new Libp2pGrpcClient(
       this.client.p2pNode,
@@ -277,6 +277,79 @@ export class KeyValueClient {
         );
         console.log("GetValuesWithKeys reply", reply);
         const decoded = dcnet.pb.GetValuesWithKeysReply.decode(reply);
+        console.log("GetValuesWithKeys decoded", decoded);
+        if(decoded.flag == 0) {
+          return decoded.keyValues;
+        }
+        return null;
+      }
+      console.error("GetValuesWithKeys error:", error);
+      throw error;
+    }
+  }
+
+   async getValuesWithIndex(
+    appId: string,
+    themeAuthor: string,
+    theme: string,
+    indexKey:string,
+    indexValue:string,
+    seekKey:string, 
+    offset: number,
+    limit: number,
+    vaccount?: string
+  ): Promise<Uint8Array|null> {
+    const message = new dcnet.pb.GetValuesWithIndexRequest({});
+    message.appId = new TextEncoder().encode(appId);
+    message.themeAuthor = new TextEncoder().encode(themeAuthor);
+    message.theme = new TextEncoder().encode(theme);
+    message.indexKey = new TextEncoder().encode(indexKey);
+    message.indexValue = new TextEncoder().encode(indexValue);
+    message.seekKey = new TextEncoder().encode(seekKey);
+    message.offset = offset;
+    message.limit = limit;
+    if(vaccount){
+      message.vaccount = new TextEncoder().encode(vaccount)
+    }
+    const messageBytes = dcnet.pb.GetValuesWithKeysRequest.encode(message).finish();
+    const grpcClient = new Libp2pGrpcClient(
+      this.client.p2pNode,
+      this.client.peerAddr,
+      this.client.token,
+      this.client.protocol
+    );
+    try {
+      const reply = await grpcClient.unaryCall(
+        "/dcnet.pb.Service/GetValuesWithIndex",
+        messageBytes,
+        30000
+      );
+      console.log("getValuesWithIndex reply", reply);
+      const decoded = dcnet.pb.GetValuesWithKeysReply.decode(reply);
+      console.log("getValuesWithIndex decoded", decoded);
+      if(decoded.flag == 0) {
+        return decoded.keyValues;
+      }
+      return null;
+    } catch (error) {
+      if (error.message.indexOf(Errors.INVALID_TOKEN.message) != -1) {
+        // try to get token
+        const token = await this.client.GetToken(
+          this.context.getPublicKey().string(),
+          (payload: Uint8Array): Promise<Uint8Array> => {
+            return this.context.sign(payload);
+          }
+        );
+        if (!token) {
+          throw new Error(Errors.INVALID_TOKEN.message);
+        }
+        const reply = await grpcClient.unaryCall(
+          "/dcnet.pb.Service/GetValuesWithKeys",
+          messageBytes,
+          30000
+        );
+        console.log("GetValuesWithKeys reply", reply);
+        const decoded = dcnet.pb.GetValuesWithIndexReply.decode(reply);
         console.log("GetValuesWithKeys decoded", decoded);
         if(decoded.flag == 0) {
           return decoded.keyValues;

@@ -20,7 +20,8 @@ import {
   DatabaseModule, 
   MessageModule, 
   KeyValueModule, 
-  ClientModule
+  ClientModule,
+  CacheModule
 } from "./modules";
 import { Client } from "./common/dcapi";
 
@@ -107,6 +108,7 @@ export class DC implements DCContext {
       this.moduleSystem.registerModule(new MessageModule());
       this.moduleSystem.registerModule(new KeyValueModule());
       this.moduleSystem.registerModule(new ClientModule());
+      this.moduleSystem.registerModule(new CacheModule());
     }
     
     logger.info("核心模块注册完成");

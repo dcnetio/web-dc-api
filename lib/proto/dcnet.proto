@@ -132,7 +132,7 @@ message RequestRandEncryptKeyRequest {
 
 message RequestRandEncryptKeyReply {
     bytes encryptKey = 1;//用请求节点的pubkey对key进行加密后的数据
-    bytes signature =2; //处理节点私钥对key的签名sign(key)
+    bytes signature =2; //提供服务的dc节点私钥对key的签名sign(key)
 }
 
 
@@ -182,6 +182,7 @@ message AccountDealBackupRequest {
                                //解密出来后登录时用，主要防止传输过程中数据泄露（解析过程：1、用节点私钥从randencrpt中解密出rand，2、用节点私钥解密loginkeyrandencrypt生成 loginkeyrand 3、从loginkeyrand中去掉rand，生成loginkey）
     bytes  peerid = 8 ;
     bytes signature = 9;//sign(accounthash+prikeyencrypthash+blockheight+peerid)
+    bytes vaccount = 10 ; //虚拟账号,可选,如果有虚拟账号
 }
 
 message AccountDealBackupReply {
@@ -222,6 +223,7 @@ message CreateThreadRequest {
     Keys keys=2;
     uint32 blockheight = 3;
     bytes signature = 4;//sign(threadid+threadKey+logkey+blockheight+otype(2)+peerid)
+    bytes vaccount = 5 ; //虚拟账号,可选,如果有虚拟账号
 }
 
 message Keys {
@@ -246,6 +248,7 @@ message LogInfo {
 
 
 message ThreadIDRequest {
+    bytes vaccount = 1 ; //虚拟账号,可选,如果有虚拟账号
 }
 
 message ThreadIDReply {
@@ -259,6 +262,7 @@ message AddThreadToPeerRequest {
     uint32 blockheight = 2;
     Keys keys = 3;
     bytes signature = 4;//sign("addthread"+threadid+blockheight+peerid)
+    bytes vaccount = 5 ; //虚拟账号,可选,如果有虚拟账号
 }
 
 
@@ -271,12 +275,14 @@ message AddThreadToPeerReply{
 
 message GetThreadRequest {
     bytes threadID = 1;
+    bytes vaccount = 2 ; //虚拟账号,可选,如果有虚拟账号
 }
 
 message DeleteThreadRequest {
     bytes threadID = 1;
     uint32 blockheight = 2;
     bytes signature = 3;//sign(threadid+blockheight+otype(2)+peerid)
+    bytes vaccount = 4 ; //虚拟账号,可选,如果有虚拟账号
 }
 
 message DeleteThreadReply {}
@@ -307,6 +313,7 @@ message DeleteFileRequest {
     bytes  cid = 1;
     uint32 blockheight = 2;
     bytes signature = 3;//sign(cid+blockheight+otype(2)+peerid)    
+    bytes vaccount = 4 ; //虚拟账号,可选,如果有虚拟账号
 }
 
 message DeleteFileReply {
@@ -379,6 +386,7 @@ message SetUserDefaultDBRequest{
      uint32 blockheight = 2;
      bytes  peerid = 3; //允许发起上链请求的peerid
      bytes signature = 4;//sign(dbinfocrypt+blockheight+peerid)
+     bytes vaccount = 5 ; //虚拟账号,可选,如果有虚拟账号
 }
 
 message SetUserDefaultDBReply{
@@ -390,6 +398,7 @@ message AddSubPubkeyRequest{
      uint32 blockheight = 2;
      bytes  peerid = 3; //允许发起上链请求的peerid
      bytes signature = 4;//sign(subpubkey+blockheight+peerid)
+     bytes vaccount = 5 ; //虚拟账号,可选,如果有虚拟账号
 }
 
 message AddSubPubkeyReply{
@@ -401,6 +410,7 @@ message DeleteSubPubkeyRequest{
         uint32 blockheight = 2;
         bytes  peerid = 3; //允许发起上链请求的peerid
         bytes signature = 4;//sign(subpubkey+blockheight+peerid)
+        bytes vaccount = 5 ; //虚拟账号,可选,如果有虚拟账号
 }
 
 message DeleteSubPubkeyReply{
@@ -430,6 +440,7 @@ message AddLogToThreadRequest{
      uint32 blockheight = 3;
      bytes  peerid = 4; //允许发起上链请求的peerid
      bytes signature = 5;//sign(threadID+logID+blockheight+peerid)
+     bytes vaccount = 6 ; //虚拟账号,可选,如果有虚拟账号
 
 }
 
@@ -442,6 +453,7 @@ message AddThreadSpaceRequest{
      uint32 blockheight = 2;
      uint32  space = 3; //要增加的空间
      bytes signature = 4;//sign(threadID+blockheight+peerid+space)
+     bytes vaccount = 5 ; //虚拟账号,可选,如果有虚拟账号
 }
 
 message AddThreadSpaceReply{
@@ -617,6 +629,7 @@ message DeleteThemeObjRequest{
     uint32 blockheight = 3; //发送请求时的区块高度
     bytes userPubkey  = 4; //对象用户公钥
     bytes signature = 5 ; //发送者私钥对（objCid+appId+blockheight)的签名
+    bytes vaccount = 6 ; //虚拟账号,可选,如果有虚拟账号
 }
 
 message DeleteThemeObjReply{
@@ -642,6 +655,7 @@ message PublishCommentToThemeRequest{
     uint32 type = 15; //评论的类型 0:普通评论 1:点赞 2:推荐 3:踩
     bytes signature = 16 ; //发送者私钥对sign(theme+appId+themeAuthor+blockheight+commentCid+Refercommentkey+type)的签名
     bytes vaccount = 17 ; //虚拟账号,可选,如果有虚拟账号
+    uint64 timestamp = 18 ; //接收时的时间戳,由接收节点生成,单位为微秒
 }
 
 message PublishCommentToThemeReply{
@@ -660,12 +674,18 @@ message PublishCommentToThemeReply{
     uint32 contentSize = 8; //keyvalue内容大小
     uint32 type = 9; //CommentType_KeyValue 4
     bytes signature = 10 ; //发送者私钥对sign(theme+appId+themeAuthor+blockheight+contentCid+type)的签名
+    bytes vaccount = 11 ; //虚拟账号,可选,如果有虚拟账号
 }
 
 
 message SetKeyValueReply{
     uint32 flag =1; //0:成功 1:空间没有配置 2:keyvalue空间不足
 }
+
+
+
+
+
 
 
 message ConfigThemeObjAuthRequest{
@@ -679,6 +699,7 @@ message ConfigThemeObjAuthRequest{
     uint32 contentSize = 8; //评论的大小
     uint32 type = 9; // 必须为0
     bytes signature = 10 ; //发送者私钥对sign(theme+appId+themeAuthor+blockheight+contentCid+type)的签名
+    bytes vaccount = 11 ; //虚拟账号,可选,如果有虚拟账号
 }
 
 
@@ -688,11 +709,13 @@ message ConfigThemeObjAuthReply{
 
 
 
+
+
 message AddUserOffChainSpaceRequest{
    bytes userPubkey  = 1; //要新增用户对外评论空间的用户
    uint32 blockheight = 2; //发送请求时的区块高度
    bytes  peerid = 3; //允许发起上链请求的peerid
-   bytes signature = 4 ; //发送者私钥对（peerid+blockheight）的签名
+   bytes signature = 4 ; //发送者私钥对（peerid+blockheight)的签名
    bytes vaccount = 5 ; //虚拟账号,可选,如果有虚拟账号
 }
 
@@ -751,6 +774,7 @@ message DeleteSelfCommentRequest{
     uint32 commentBlockheight = 6; //添加评论时的区块高度
     bytes commentCid  = 7; //发布的评论CID
     bytes signature = 8; //发送者私钥对（objCid+appId+themeAuthor+blockheight+commentCid)的签名
+    bytes vaccount = 9 ; //虚拟账号,可选,如果有虚拟账号
 }
 
 
@@ -768,6 +792,7 @@ message DeleteCommentToObjRequest{
     uint32 commentBlockheight = 6; //添加评论时的区块高度
     bytes commentCid  = 7; //发布的评论CID
     bytes signature = 8; //发送者私钥对（objCid+appId+themeAuthor+blockheight+commentCid)的签名
+    bytes vaccount = 9 ; //虚拟账号,可选,如果有虚拟账号
 }
 
 
@@ -789,6 +814,7 @@ message GetThemeObjRequest{
     uint32 offset = 5; //偏移量，以开始的区块高度的第一条记录开始计数
     uint32 limit = 6; //返回的记录条数，最多为1000
     bytes  seekKey = 7; //起始key，如果设置了seekKey，忽略startHeight seekKey格式： commentableobjcid  
+    bytes vaccount = 8 ; //虚拟账号,可选,如果有虚拟账号
 }
 
 
@@ -798,6 +824,23 @@ message GetThemeObjRequest{
 message GetThemeObjReply{
     uint32 flag = 1;//处理结果
     bytes objsCid = 2; //获取的评论列表结果集，存入ipfs网络中后反馈的cid，客户端再通过 getFile获取，结果集是每行一个AddThemeObjRequest通过json序列化后的字符串
+}
+
+
+
+message SyncThemeObjRequest{
+    bytes appId = 1; //应用标志
+    bytes themeAuthor = 2;//发布评论对象的作者pubkey
+    bytes theme = 3; //主题
+}
+
+
+
+
+
+message SyncThemeObjReply{
+    uint32 flag = 1;//处理结果
+    bytes addThemReqRawData = 2; //用户添加评论对象的原始请求数据
 }
 
 
@@ -813,7 +856,8 @@ message GetThemeCommentsRequest{
     uint32  direction = 5;//遍历方向 0:正向  1:逆向
     uint32 offset = 6; //偏移量，以开始的区块高度的第一条记录开始计数
     uint32 limit = 7; //返回的记录条数，最多为100
-     bytes  seekKey = 8; //起始key，如果设置了seekKey，忽略startHeight (seekKey格式 blockheight/commentcid）
+    bytes  seekKey = 8; //起始key，如果设置了seekKey，忽略startHeight (seekKey格式 blockheight/commentcid）
+    bytes vaccount = 9 ; //虚拟账号,可选,如果有虚拟账号
 }
 
 message GetThemeCommentsReply{
@@ -821,6 +865,27 @@ message GetThemeCommentsReply{
     bytes commentsCid = 2; //获取的评论列表结果集，存入ipfs网络中后反馈的cid，客户端再通过 getFile获取，结果集是PublishCommentToThemeRequest的数组 json序列化
 }
 
+
+message GetValuesWithIndexRequest{
+    bytes theme = 1; //主题CID
+    bytes appId = 2; //应用标志
+    bytes themeAuthor = 3;//发布评论对象的作者pubkey
+    uint32 startHeight = 4; //开始的区块高度
+    uint32  direction = 5;//遍历方向 0:正向  1:逆向
+    uint32 offset = 6; //偏移量，以开始的区块高度的第一条记录开始计数
+    uint32 limit = 7; //返回的记录条数，最多为100
+    bytes  seekKey = 8; //起始key，如果设置了seekKey，忽略startHeight (seekKey格式 blockheight/commentcid）
+    bytes indexKey = 9; //索引key
+    bytes indexValue = 10; //索引值
+    bytes vaccount = 11 ; //虚拟账号,可选,如果有虚拟账号
+   
+}
+
+
+message  GetValuesWithIndexReply{
+    uint32 flag = 1;//获取结果
+    bytes keyValues = 2; //获取的值,是个数组,[{key1:value1},{key2:value2}]
+}
 
 message GetThemeAuthListRequest{
     bytes theme = 1; //主题CID
@@ -831,6 +896,7 @@ message GetThemeAuthListRequest{
     uint32 offset = 6; //偏移量，以开始的区块高度的第一条记录开始计数
     uint32 limit = 7; //返回的记录条数，最多为100
     bytes  seekKey = 8; //起始key，如果设置了seekKey，忽略startHeight (seekKey格式 blockheight/commentcid）
+    bytes vaccount = 9 ; //虚拟账号,可选,如果有虚拟账号
 }
 
 message GetThemeAuthListReply{
@@ -846,6 +912,7 @@ message GetUserCommentsRequest{
     uint32 offset = 5; //偏移量，以开始的区块高度的第一条记录开始计数
     uint32 limit = 6; //返回的记录条数，最多为1000
     bytes  seekKey = 7; //起始key，如果设置了seekKey，忽略startHeight  (seekKey格式 objcid/blockheight/commentcid）
+    bytes vaccount = 8 ; //虚拟账号,可选,如果有虚拟账号
 }
 
 message GetUserCommentsReply{
@@ -860,6 +927,7 @@ message GetValueWithKeyRequest{
     bytes themeAuthor = 3;//发布评论对象的作者pubkey
     bytes UserPubkey = 4;//对应用户pubkey命名空间
     bytes Key = 5; //要获取的key
+    bytes vaccount = 6 ; //虚拟账号,可选,如果有虚拟账号
 }
 
 message GetValueWithKeyReply{
@@ -873,6 +941,7 @@ message GetValuesWithKeysRequest{
     bytes themeAuthor = 3;//发布评论对象的作者pubkey
     bytes UserPubkey = 4;//对应用户pubkey命名空间
     bytes Keys = 5; //要获取的key列表,最多100个,逗号分隔
+    bytes vaccount = 6 ; //虚拟账号,可选,如果有虚拟账号
 }
 
 message GetValuesWithKeysReply{
@@ -1041,6 +1110,7 @@ message ReEncryptFileRequest{
     bytes  encSecretkey = 3; //用接收节点加密后的加密key(用于重新加密文件)
     uint32 blockheight = 4; //发起请求时的blockheight
     bytes  signature = 5;// 发送设备的签名 sign(cid+encDecryptKey+encSecketkey+blockheight)
+    bytes vaccount = 6 ; //虚拟账号,可选,如果有虚拟账号
 }
 
 message ReEncryptFileReply{
@@ -1073,6 +1143,89 @@ message DeductUserOffChainOpTimesRequest {
 
 message DeductUserOffChainOpTimesReply {
     uint32 flag = 1; //0:成功 1:链下操作次数不足 2:其他失败
+}
+
+message DeductUserAIProxyOpTimesRequest {
+    bytes userPubkey  = 1; 
+     bytes appId = 2; //应用标志
+    bytes themeAuthor = 3;//发布状态汇聚对象的的pubkey
+    bytes theme = 4; //状态汇聚对象
+}
+
+message DeductUserAIProxyOpTimesReply {
+    uint32 flag = 1; //0:成功 1:操作次数不足 2:其他失败
+}
+
+
+
+message GetAIProxyConfigFromPeerRequest {
+    bytes theme = 1; //状态汇聚对象CID
+    bytes appId = 2; //应用标志
+    bytes themeAuthor = 3;//发布状态汇聚对象的的pubkey
+    bytes UserPubkey = 4;//申请访问配置的用户pubkey
+    bytes edges = 5; //theme的边缘信息,如果一致,则不需要重新获取配置
+}
+
+message GetAIProxyConfigFromPeerReply {
+   uint32 flag = 1;//获取结果 0:成功 1:权限不足 2:获取失败
+   bytes configInfo = 2; //获取的配置结果集，第一行用户权限,后面每行一个mcp服务工具配置信息或者AI模型配置信息
+   bytes edges = 3; //当前主题的边缘信息,如果一致,则不需要重新获取配置
+   
+}
+
+
+message GetAIProxyConfigRequest {
+    bytes theme = 1; //状态汇聚对象CID
+    bytes appId = 2; //应用标志
+    bytes themeAuthor = 3;//发布状态汇聚对象的的pubkey
+    uint32 blockheight = 4; //发起请求时的blockheight
+     bytes  signature = 5;
+}
+
+message GetAIProxyConfigReply {
+   uint32 flag = 1;//获取结果 0:成功 1:权限不足 2:获取失败
+   bytes proxyConfigCid = 2; //获取的配置结果集，存入ipfs网络中后反馈的cid，客户端再通过 getFile获取,包括了配置列表和所有用户的授权信息
+   bytes aeskey = 3; //配置信息的aes加密key
+}
+
+message GetUserOwnAIProxyAuthRequest {
+    bytes theme = 1; //状态汇聚对象CID
+    bytes appId = 2; //应用标志
+    bytes themeAuthor = 3;//发布状态汇聚对象的的pubkey
+    uint32 blockheight = 4; //发起请求时的blockheight
+     bytes  signature = 5;
+}
+
+message GetUserOwnAIProxyAuthReply {
+   uint32 flag = 1;//获取结果 0:成功 1:权限不足 2:获取失败
+   bytes authInfo = 2; //获取的配置结果,返回请求用户的授权信息
+   bytes configs = 3; //获取的配置结果,返回请求用户的配置列表
+}
+
+
+
+message DoAIProxyCallRequest {
+    bytes theme = 1; //状态汇聚对象CID
+    bytes appId = 2; //应用标志
+    bytes themeAuthor = 3;//发布状态汇聚对象的的pubkey
+    uint32 blockheight = 4; //发起请求时的blockheight
+    bytes configKey = 5;// 配置名称
+    bytes path = 6;//请求路径
+    bytes reqBody = 7;//请求数据,当为模型调用时json格式如下:[{Role: "user",Content: [{ Type: "text", Text: "你好" }]},{Role: "assistant",Content: [{  "Type": "image","Source": {"Type": "base64","MediaType": "image/jpeg","Data": "iV..."}]}]
+    bytes modelConfig = 8; //模型调用时起作用{"provider": "anthropic", "model": "claude-3-opus-20240229","temperature": 0.7,"maxTokens": 1000, "topP": 0.9,"topK": 40,"stopSequences": ["Human:", "Assistant:"],"systemPrompt": "你是一个专业的图片分析助手...","applySystemPrompt": true,"stream": false,tools: [{"name": "image_analysis","description": "分析图片内容并给出建议","parameters": {"type": "object","properties": {"image_url": {"type": "string","description": "图片的url地址"}}}}]}
+    uint32 forceRefresh = 9; //强制刷新AI配置, 0:不刷新 1:刷新,如果为1,则扣除10倍的链下操作次数
+    bytes  headers = 10; //请求头,当调用为mcp tool调用时,需要传入请求头
+    bytes  signature = 11;
+}
+
+
+
+
+message DoAIProxyCallReply{
+        uint32 flag = 1; //0:成功 1:权限不足 2:获取失败 3:关闭连接
+        bytes content = 2; //返回的消息
+        bytes err =3; //返回的错误信息
+    
 }
    
 
@@ -1269,6 +1422,8 @@ service Service {
     //获取指定已开通对象的评论列表//ok
     rpc GetThemeComments(GetThemeCommentsRequest) returns (GetThemeCommentsReply){}
 
+
+
      //获取指定已开通对象的权限列表(对GetThemeComments进行包装，增加权限判断)//ok
      rpc GetThemeAuthList(GetThemeAuthListRequest) returns (GetThemeAuthListReply){}
 
@@ -1281,6 +1436,10 @@ service Service {
     //批量获取key的值,返回对象列表//ok
     rpc GetValuesWithKeys(GetValuesWithKeysRequest) returns (GetValuesWithKeysReply){}
  
+     //根据索引获取对应key的值//ok
+    rpc GetValuesWithIndex(GetValuesWithIndexRequest) returns (GetValuesWithIndexReply){}
+ 
+
     //评论相关节点间同步接口
    //将用户的评论发送到对应的节点（放置了开放评论对象的DC节点）//ok
    rpc SendCommentToPeer(PublishCommentToThemeRequest) returns (PublishCommentToThemeReply){}
@@ -1301,6 +1460,9 @@ service Service {
    //节点中用户评论相关数据打包完成通知//ok
    rpc UserCommentsDownloadReady(UserCommentsDownloadReadyRequest) returns (UserCommentsDownloadReadyReply){}
 
+
+   // 从其他节点同步主题对象到本地
+   rpc SyncThemeObj(SyncThemeObjRequest) returns (SyncThemeObjReply) {}
 
    //物联网 管理平台需要最少建立三个主题,一个是上报主题管理(主要用来确定每个设备状态向哪个主题上报),一个是归档状态汇聚主题(由上报主题管理指定,多节点备份,后续分析使用),一个是设备状态主题(由上报主题管理指定,单接到备份,供查看实时状态使用)
    //物联网设备状态上报接口,每个设备每次上报状态，只能保留最新的100000个状态,设备测应该每50000个状态打包成一个文件，然后上传到DC网络中,并将文件的CID等信息上报到汇聚主题所在的节点
@@ -1329,8 +1491,22 @@ service Service {
 
    // 申请真随机数
     rpc RequestRandData(RequestRandDataRequest) returns (RequestRandDataReply) {}
+   
+    // 申请AI模型或者MCPServer的访问权限
+    rpc GetAIProxyConfigFromPeer(GetAIProxyConfigFromPeerRequest) returns (GetAIProxyConfigFromPeerReply) {}
 
+    //获取AI模型或者MCPServer代理的配置信息
+    rpc GetAIProxyConfig(GetAIProxyConfigRequest) returns (GetAIProxyConfigReply) {}
+
+     //AI相关代理的调用,包括代理与AI的通信或者与MCPServer的通信
+    rpc DoAIProxyCall(DoAIProxyCallRequest) returns (stream DoAIProxyCallReply) {}
+
+    //GetUserOwnAIProxyConfig
+    rpc GetUserOwnAIProxyAuth(GetUserOwnAIProxyAuthRequest) returns (GetUserOwnAIProxyAuthReply) {}
 
    // 申请扣除用户的链下操作次数
    rpc DeductUserOffChainOpTimes(DeductUserOffChainOpTimesRequest) returns (DeductUserOffChainOpTimesReply) {}
+
+   //申请扣除用户的AI代理的操作次数
+   rpc DeductUserAIProxyOpTimes(DeductUserAIProxyOpTimesRequest) returns (DeductUserAIProxyOpTimesReply) {}
 }

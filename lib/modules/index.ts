@@ -8,3 +8,4 @@ export { DatabaseModule } from './database-module';
 export { MessageModule } from './message-module';
 export { KeyValueModule } from './keyvalue-module';
 export { ClientModule } from './client-module';
+export { CacheModule  } from './cache-module';

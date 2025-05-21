@@ -1,9 +1,8 @@
 // modules/keyvalue-module.ts
 // 键值存储功能模块
 
-import { DCContext, IKeyValueOperations } from "../interfaces";
+import { DCContext, ICacheOperations } from "../interfaces";
 import { DCModule, CoreModuleName } from "../common/module-system";
-import { KeyValueManager } from "../implements/keyvalue/manager";
 import { ThemeManager } from "../implements/theme/manager";
 import { keyExpire } from "../common/define";
 import { createLogger } from "../util/logger";
@@ -14,10 +13,9 @@ const logger = createLogger('CacheModule');
  * 键值存储模块
  * 提供键值存储功能
  */
-export class CacheeModule implements DCModule, IKeyValueOperations {
+export class CacheModule implements DCModule, ICacheOperations {
   readonly moduleName = CoreModuleName.CACHE;
   private context: DCContext;
-  private keyValueManager: KeyValueManager;
   private themeManager: ThemeManager;
   private initialized: boolean = false;
   
@@ -29,15 +27,7 @@ export class CacheeModule implements DCModule, IKeyValueOperations {
   async initialize(context: DCContext): Promise<boolean> {
     try {
       this.context = context;
-      this.keyValueManager = new KeyValueManager(
-        context.dcutil,
-        context.connectedDc,
-        context.AccountBackupDc,
-        context.dcNodeClient,
-        context.dcChain,
-        context
-      );
-      
+
       this.themeManager = new ThemeManager(
         context.connectedDc,
         context.dcutil,
@@ -59,40 +49,6 @@ export class CacheeModule implements DCModule, IKeyValueOperations {
   async shutdown(): Promise<void> {
     this.initialized = false;
   }
-  
-  /**
-   * 创建存储主题
-   * @param themeAuthor 主题作者
-   * @param theme 主题名称
-   * @param space 空间大小
-   * @param type 主题类型
-   * @returns 创建结果
-   */
-  async vaCreateStoreTheme(
-    themeAuthor: string,
-    theme: string,
-    space: number,
-    type: number
-  ): Promise<any> {
-    this.assertInitialized();
-    
-    try {
-      const res = await this.keyValueManager.vaCreateStoreTheme(
-        this.context.appInfo.id,
-        themeAuthor,
-        theme,
-        space,
-        type
-      );
-      
-      logger.info(`创建存储主题 ${theme} 成功`);
-      return res;
-    } catch (error) {
-      logger.error(`创建存储主题 ${theme} 失败:`, error);
-      throw error;
-    }
-  }
-  
   /**
    * 从dc网络获取缓存值
    * @param key 缓存键

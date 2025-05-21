@@ -223,6 +223,7 @@ export class AuthModule implements DCModule, IAuthOperations {
  * @returns [私钥字符串, 错误]
  */
 async generateAppAccount(appId: string,mnemonic: string): Promise<[string | null, Error | null]> {
+   this.assertInitialized();
   const accountManager = new AccountManager(
         this.context
       );
@@ -237,6 +238,7 @@ async generateAppAccount(appId: string,mnemonic: string): Promise<[string | null
    * @returns 是否成功绑定
    */
   async isNftAccountBindSuccess(account: string): Promise<boolean> {
+     this.assertInitialized();
     const accountManager = new AccountManager(
         this.context
       );
@@ -244,6 +246,17 @@ async generateAppAccount(appId: string,mnemonic: string): Promise<[string | null
       return res;
   }
 
+  /**
+ * Apply for free storage space for new users
+ * @returns Promise resolving to [success, error]
+ */
+async applyFreeSpace(): Promise<[boolean, Error | null]> {
+  this.assertInitialized();
+  const accountManager = new AccountManager(
+    this.context
+  );
+  return await accountManager.applyFreeSpace();
+}
 
   /**
    * 检查NFT账号是否已经被绑定
@@ -251,6 +264,7 @@ async generateAppAccount(appId: string,mnemonic: string): Promise<[string | null
    * @returns 是否被其他账号绑定
    */
   async isNftAccountBinded(account: string): Promise<boolean> {
+     this.assertInitialized();
     const accountManager = new AccountManager(
         this.context
       );
@@ -260,6 +274,7 @@ async generateAppAccount(appId: string,mnemonic: string): Promise<[string | null
 
   // 获取用户钱包信息
   async getUserInfoWithAccount(account: string): Promise<User> {
+     this.assertInitialized();
     const res = await this.context.dcChain.getUserInfoWithAccount(account);
     return res;
   }
@@ -269,6 +284,7 @@ async generateAppAccount(appId: string,mnemonic: string): Promise<[string | null
    * 获取用户备用节点
    */
   private async getAccountBackupDc(): Promise<void> {
+    
     // 存在token， 获取用户备用节点
     const accountManager = new AccountManager(
       this.context

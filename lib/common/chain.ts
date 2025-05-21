@@ -264,13 +264,10 @@ export class ChainUtil {
     if (addrParts.length < 2) {
       return;
     }
-
     console.log("nodeAddr", addrParts[1]);
     const addr = multiaddr(addrParts[1]);
     return addr;
   };
-
-  
 
   // 链上查询节点列表
   getDcNodeList = async () => {
@@ -395,5 +392,5 @@ export class ChainUtil {
       const userInfo = await this.getUserInfoWithAccount(hexAccount);
       return userInfo;
     };
-    
+
 }

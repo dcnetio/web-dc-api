@@ -12,6 +12,12 @@ import { base32 } from "multiformats/bases/base32";
 import { Client } from "../../common/dcapi";
 import { CommentType, Direction } from "../../common/define";
 import { DCContext } from "../../interfaces";
+
+//定义Key-Value存储的数据类型
+export enum KeyValueStoreType { //存储主题类型 1:鉴权主题(读写都需要鉴权) 2:公共主题(默认所有用户可读,写需要鉴权)
+  Auth = 1,
+  Public = 2
+}
 // 错误定义
 export class KeyValueError extends Error {
   constructor(message: string) {
@@ -46,12 +52,12 @@ export class KeyValueManager {
     this.context = context;
   }
 
-  async vaCreateStoreTheme(
+  // 创建Key-Value存储
+  async createStore(
     appId: string,
-    themeAuthor: string,
     theme: string,
     space: number,
-    type: number
+    type: KeyValueStoreType, 
   ): Promise<[number, Error | null]> {
     // Default group to "DCAPP" if empty
     if (appId === "") {
@@ -62,14 +68,8 @@ export class KeyValueManager {
     if (space < 1 << 30) {
       space = 1 << 30;
     }
-
-    // Validate theme type, default to 2
-    if (type !== 1 && type !== 2) {
-      type = 2;
-    }
-
-    // Theme must start with "keyvalue_" or "auth_"
-    if (!theme.startsWith("keyvalue_") && !theme.startsWith("auth_")) {
+    // Theme must start with "keyvalue_"
+    if (!theme.startsWith("keyvalue_")) {
       return [
         -1,
         new Error(
@@ -77,12 +77,11 @@ export class KeyValueManager {
         ),
       ];
     }
-
     // NOTE: There seems to be a logical error in the original code:
     // It checks if theme ends with "_pub" and returns an error if it does,
     // but the error message suggests it should end with "_pub".
     // I'm assuming the condition should check if it doesn't end with "_pub"
-    if (type === 2) {
+    if (type === KeyValueStoreType.Public) {
       // Public theme must end with "_pub"
       if (!theme.endsWith("_pub")) {
         return [
@@ -100,8 +99,8 @@ export class KeyValueManager {
       const res = await commentManager.addThemeObj(
         appId,
         theme,
-        OpenFlag.PRIVATE,
-        space || 20 * 1024 * 1024 // 20M
+        OpenFlag.AUTH,
+        space || 50 * 1024 * 1024 // 50M
       );
       return res;
     } catch (error) {
@@ -109,7 +108,8 @@ export class KeyValueManager {
     }
   }
 
-  async vaConfigThemeAuthForVAccount(
+
+  async configAuth(
     appId: string,
     themeAuthor: string,
     theme: string,
@@ -152,12 +152,6 @@ export class KeyValueManager {
     } catch (error) {
       pubkeyFlag = false;
     }
-
-    if (!theme.endsWith("_authlist")) {
-      theme = theme + "_authlist";
-    }
-
-    // Convert to hex
     let forPubkeyHex: string;
     if (pubkeyFlag) {
       forPubkeyHex = forPubkey.string();
@@ -231,12 +225,12 @@ export class KeyValueManager {
     }
   }
 
-  async vaGetThemeAuthListForVAccount(
+  async getAuthList(
     appId: string,
     themeAuthor: string,
     theme: string,
     vaccount?: string
-  ) {
+  ): Promise<[ThemeComment[] | null, Error | null]> {
     if (!theme.endsWith("_authlist")) {
       theme = theme + "_authlist";
     }
@@ -258,7 +252,7 @@ export class KeyValueManager {
         );
         console.log("getThemeComments res:", res);
         if (res[0] && res[0].length == 0) {
-          return [];
+          return [authList, null];
         }
         const resList = res[0];
         authList.push(...resList);
@@ -277,12 +271,13 @@ export class KeyValueManager {
     return [authList, null];
   }
 
-  async vaSetKeyValueForVAccount(
+  async setKeyValue(
     appId: string,
     themeAuthor: string,
     theme: string,
     key: string,
     value: string,
+    indexs: string, //索引列表,格式为key1:value1$$$key2:value2
     vaccount?: string
   ): Promise<[boolean, Error | null]> {
     if (!theme.startsWith("keyvalue_")) {
@@ -303,7 +298,10 @@ export class KeyValueManager {
     if (client.peerAddr === null) {
       return [null, new Error("ErrConnectToAccountPeersFail")];
     }
-    const content = `${key}:${value}`;
+    let content = `${key}:${value}`;
+    if (indexs != "") {
+      content = `$$i_start$$${indexs}$$i_end$$"${content}`;
+    }
     const contentUint8 = new TextEncoder().encode(content);
     const contenthash = await sha256(contentUint8);
     const contentCidBase32 = base32.encode(contenthash);
@@ -358,7 +356,7 @@ export class KeyValueManager {
     }
   }
 
-  async vaGetValueWithKeyForVAccount(
+  async getetValueWithKey(
     appId: string,
     themeAuthor: string,
     theme: string,
@@ -409,7 +407,7 @@ export class KeyValueManager {
     }
   }
 
-  async vaGetValuesWithKeysForVAccount(
+  async getValuesWithKeys(
     appId: string,
     themeAuthor: string,
     theme: string,
@@ -459,4 +457,64 @@ export class KeyValueManager {
       return [null, error];
     }
   }
+
+
+
+  async getValuesWithIndex(
+    appId: string,
+    themeAuthor: string,
+    theme: string,
+    indexKey:string,
+    indexValue:string,
+    seekKey:string, 
+    offset: number,
+    limit: number,
+    vaccount?: string
+  ): Promise<[string, Error | null]> {
+    if (!theme.startsWith("keyvalue_")) {
+      return [
+        null,
+        new Error(
+          "vaGetValuesWithKeysForVAccount failed, theme must start with 'keyvalue_'"
+        ),
+      ];
+    }
+    const themeAuthorPubkey: Ed25519PubKey =
+      Ed25519PubKey.pubkeyToEdStr(themeAuthor);
+    const client = await this.dc.connectToUserDcPeer(themeAuthorPubkey.raw);
+    if (client === null) {
+      return [null, new Error("ErrConnectToAccountPeersFail")];
+    }
+
+    if (client.peerAddr === null) {
+      return [null, new Error("ErrConnectToAccountPeersFail")];
+    }
+
+    const keyValueClient = new KeyValueClient(client, this.context);
+    try {
+      const res = await keyValueClient.getValuesWithIndex(
+        appId,
+        themeAuthor,
+        theme,
+        indexKey,
+        indexValue,
+        seekKey,
+        offset,
+        limit,
+        vaccount
+      );
+
+      if (res == null) {
+        return [
+          null,
+          new Error(`vaGetValuesWithKeysForVAccount fail, resFlag:${res}`),
+        ];
+      }
+      const keyValues = new TextDecoder().decode(res);
+      return [keyValues, null];
+    } catch (error) {
+      return [null, error];
+    }
+  }
+
 }
