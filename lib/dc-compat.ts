@@ -278,7 +278,7 @@ export class DCCompat extends DC {
    * 获取hostid
    */
   getHostID() {
-    const DCManager = require('./implement/dc/manager').DCManager;
+    const DCManager = require('./implements/dc/manager').DCManager;
     const dcManager = new DCManager(this.connectedDc);
     return dcManager.getHostID();
   }

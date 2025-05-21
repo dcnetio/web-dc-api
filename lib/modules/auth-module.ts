@@ -2,17 +2,17 @@
 // 认证功能模块
 
 import { DCContext, IAuthOperations } from "../interfaces";
-import { DCModule, CoreModuleName } from "../module-system";
-import { AccountManager } from "../implement/account/manager";
-import { CommonClient } from "../commonclient";
-import { Client } from "../dcapi";
+import { DCModule, CoreModuleName } from "../common/module-system";
+import { AccountManager } from "../implements/account/manager";
+import { CommonClient } from "../common/commonclient";
+import { Client } from "../common/dcapi";
 import { createLogger } from "../util/logger";
 import { loadPublicKey, loadTokenWithPeerId, savePublicKey, sleep } from "../util/utils";
-import { Ed25519PubKey } from "../dc-key/ed25519";
-import { Errors } from "../error";
-import { dc_protocol, dial_timeout } from "../define";
+import { Ed25519PubKey } from "../common/dc-key/ed25519";
+import { Errors } from "../common/error";
+import { dc_protocol, dial_timeout } from "../common/define";
 import { Multiaddr } from "@multiformats/multiaddr";
-import {WalletManager} from "../implement/wallet/manager";
+import {WalletManager} from "../implements/wallet/manager";
 
 const logger = createLogger('AuthModule');
 

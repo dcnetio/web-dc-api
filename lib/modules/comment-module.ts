@@ -2,8 +2,8 @@
 // 评论功能模块
 
 import { DCContext, ICommentOperations } from "../interfaces";
-import { DCModule, CoreModuleName } from "../module-system";
-import { CommentManager } from "../implement/comment/manager";
+import { DCModule, CoreModuleName } from "../common/module-system";
+import { CommentManager } from "../implements/comment/manager";
 import { createLogger } from "../util/logger";
 
 const logger = createLogger('CommentModule');

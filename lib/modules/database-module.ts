@@ -2,18 +2,18 @@
 // 数据库功能模块
 
 import { DCContext, IDatabaseOperations } from "../interfaces";
-import { DCModule, CoreModuleName } from "../module-system";
+import { DCModule, CoreModuleName } from "../common/module-system";
 import { createLogger } from "../util/logger";
-import { createTxnDatastore } from "../implement/threaddb/common/idbstore-adapter";
-import { newKeyBook } from "../implement/threaddb/lsstoreds/keybook";
-import { newAddrBook } from "../implement/threaddb/lsstoreds/addr_book";
-import { newHeadBook } from "../implement/threaddb/lsstoreds/headbook";
-import { newThreadMetadata } from "../implement/threaddb/lsstoreds/metadata";
-import { newLogstore } from "../implement/threaddb/common/logstore";
+import { createTxnDatastore } from "../implements/threaddb/common/idbstore-adapter";
+import { newKeyBook } from "../implements/threaddb/lsstoreds/keybook";
+import { newAddrBook } from "../implements/threaddb/lsstoreds/addr_book";
+import { newHeadBook } from "../implements/threaddb/lsstoreds/headbook";
+import { newThreadMetadata } from "../implements/threaddb/lsstoreds/metadata";
+import { newLogstore } from "../implements/threaddb/common/logstore";
 import { dagCbor } from "@helia/dag-cbor";
-import { Network } from "../implement/threaddb/net/net";
-import { DBManager } from "../implement/threaddb/dbmanager";
-import { ICollectionConfig } from "../implement/threaddb/core/core";
+import { Network } from "../implements/threaddb/net/net";
+import { DBManager } from "../implements/threaddb/dbmanager";
+import { ICollectionConfig } from "../implements/threaddb/core/core";
 
 const logger = createLogger('DatabaseModule');
 const storagePrefix = "dc-";

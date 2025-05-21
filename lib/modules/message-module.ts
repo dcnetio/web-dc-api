@@ -2,8 +2,8 @@
 // 消息功能模块
 
 import { DCContext, IMessageOperations } from "../interfaces";
-import { DCModule, CoreModuleName } from "../module-system";
-import { MessageManager } from "../implement/message/manager";
+import { DCModule, CoreModuleName } from "../common/module-system";
+import { MessageManager } from "../implements/message/manager";
 import { createLogger } from "../util/logger";
 
 const logger = createLogger('MessageModule');

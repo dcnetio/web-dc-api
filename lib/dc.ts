@@ -2,17 +2,17 @@
 // 主 DC 类，基于模块系统重构
 
 import { type Multiaddr } from "@multiformats/multiaddr";
-import { ChainUtil } from "./chain";
-import type { DCConnectInfo, APPInfo } from "./types/types";
-import { DcUtil } from "./dcutil";
+import { ChainUtil } from "./common/chain";
+import type { DCConnectInfo, APPInfo } from "./common/types/types";
+import { DcUtil } from "./common/dcutil";
 import { type HeliaLibp2p } from "helia";
 import { Libp2p } from "@libp2p/interface";
-import { dc_protocol } from "./define";
-import { DCGrpcServer } from "./implement/threaddb/net/grpcserver";
-import { Ed25519PrivKey, Ed25519PubKey } from "./dc-key/ed25519";
+import { dc_protocol } from "./common/define";
+import { DCGrpcServer } from "./implements/threaddb/net/grpcserver";
+import { Ed25519PrivKey, Ed25519PubKey } from "./common/dc-key/ed25519";
 import { DCContext } from "./interfaces";
 import { createLogger, configureLogger, LogLevel } from "./util/logger";
-import { ModuleSystem, CoreModuleName, DCModule } from "./module-system";
+import { ModuleSystem, CoreModuleName, DCModule } from "./common/module-system";
 import { 
   FileModule, 
   AuthModule, 
@@ -22,7 +22,7 @@ import {
   KeyValueModule, 
   ClientModule
 } from "./modules";
-import { Client } from "./dcapi";
+import { Client } from "./common/dcapi";
 
 const logger = createLogger('DC');
 

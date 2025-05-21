@@ -4,8 +4,8 @@
  */  
 
 // 导入Blowfish实现    
-import { expandKey} from '../blowfish/block';
-import {Cipher,newSaltedCipher,BlockSize} from '../blowfish/cipher';
+import { expandKey} from '../common/blowfish/block';
+import {Cipher,newSaltedCipher,BlockSize} from '../common/blowfish/cipher';
 
 // 常量定义  
 export const MinCost = 4;  

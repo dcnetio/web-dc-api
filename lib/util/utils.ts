@@ -1,4 +1,4 @@
-import { User } from "../types/types";
+import { User } from "../common/types/types";
 import { base32 } from "multiformats/bases/base32";
 import * as JsCrypto from "jscrypto/es6";
 import { Multiaddr, multiaddr } from "@multiformats/multiaddr";

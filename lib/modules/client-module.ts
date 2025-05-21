@@ -2,8 +2,8 @@
 // 消息功能模块
 
 import { DCContext, IClientOperations } from "../interfaces";
-import { DCModule, CoreModuleName } from "../module-system";
-import { DCManager } from "../implement/dc/manager";
+import { DCModule, CoreModuleName } from "../common/module-system";
+import { DCManager } from "../implements/dc/manager";
 import { createLogger } from "../util/logger";
 
 const logger = createLogger('ClientModule');

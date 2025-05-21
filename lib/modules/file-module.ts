@@ -2,12 +2,12 @@
 // 文件功能模块
 
 import { DCContext, IFileOperations } from "../interfaces";
-import { DCModule, CoreModuleName } from "../module-system";
-import { FileManager } from "../implement/file/manager";
-import { FileCacheManager } from "../implement/file/file-cache-manager";
-import { SeekableFileStream } from "../implement/file/seekableFileStream";
+import { DCModule, CoreModuleName } from "../common/module-system";
+import { FileManager } from "../implements/file/manager";
+import { FileCacheManager } from "../implements/file/file-cache-manager";
+import { SeekableFileStream } from "../implements/file/seekableFileStream";
 import { createLogger } from "../util/logger";
-import { registerServiceWorker } from "../service-worker";
+import { registerServiceWorker } from "../common/service-worker";
 
 const logger = createLogger('FileModule');
 

@@ -2,10 +2,10 @@
 // 键值存储功能模块
 
 import { DCContext, IKeyValueOperations } from "../interfaces";
-import { DCModule, CoreModuleName } from "../module-system";
-import { KeyValueManager } from "../implement/keyvalue/manager";
-import { ThemeManager } from "../implement/theme/manager";
-import { keyExpire } from "../define";
+import { DCModule, CoreModuleName } from "../common/module-system";
+import { KeyValueManager } from "../implements/keyvalue/manager";
+import { ThemeManager } from "../implements/theme/manager";
+import { keyExpire } from "../common/define";
 import { createLogger } from "../util/logger";
 
 const logger = createLogger('CacheModule');

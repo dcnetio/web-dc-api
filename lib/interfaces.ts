@@ -1,16 +1,16 @@
 // interfaces.ts
 // 定义系统中使用的各种接口
 
-import { Ed25519PrivKey, Ed25519PubKey } from "./dc-key/ed25519";
-import type { DCConnectInfo, APPInfo } from "./types/types";
+import { Ed25519PrivKey, Ed25519PubKey } from "./common/dc-key/ed25519";
+import type { DCConnectInfo, APPInfo } from "./common/types/types";
 import type { HeliaLibp2p } from "helia";
 import { Libp2p } from "@libp2p/interface";
-import { ChainUtil } from "./chain";
-import { DcUtil } from "./dcutil";
-import { ICollectionConfig } from "./implement/threaddb/core/core";
-import { SeekableFileStream } from "./implement/file/seekableFileStream";
-import { DBManager } from "./implement/threaddb/dbmanager";
-import { DCGrpcServer } from "./implement/threaddb/net/grpcserver";
+import { ChainUtil } from "./common/chain";
+import { DcUtil } from "./common/dcutil";
+import { ICollectionConfig } from "./implements/threaddb/core/core";
+import { SeekableFileStream } from "./implements/file/seekableFileStream";
+import { DBManager } from "./implements/threaddb/dbmanager";
+import { DCGrpcServer } from "./implements/threaddb/net/grpcserver";
 
 /**
  * 核心系统上下文接口
