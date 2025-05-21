@@ -99,7 +99,6 @@ async  seedFromMnemonic(mnemonic: string, password: string): Promise<Uint8Array>
 
 
    
-    //直接生成与 Go ed25519.NewKeyFromSeed 兼容的密钥  
      async getEd25519KeyFromMnemonic(  
         mnemonic: string,  
         password: string = ''  
@@ -116,7 +115,6 @@ async  seedFromMnemonic(mnemonic: string, password: string): Promise<Uint8Array>
 
      
 
-    // 实现与 Go 完全一致的 newKeyFromSeed  
      newKeyFromSeed(seed: Uint8Array): {  
         privateKey: Uint8Array,  
         publicKey: Uint8Array  

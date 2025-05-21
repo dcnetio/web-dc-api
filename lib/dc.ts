@@ -401,4 +401,8 @@ export class DC implements DCContext {
   get client() {
     return this.getModule<ClientModule>(CoreModuleName.CLIENT);
   }
+
+  get cache() {
+    return this.getModule<CacheModule>(CoreModuleName.CACHE);
+  }
 }

@@ -47,4 +47,67 @@ export class AccountClient {
       const decoded = dcnet.pb.BindAccessPeerToUserReply.decode(responseData);
       return decoded.toJSON();
   }
+
+
+
+  async accountBind(context: DCContext, buildedReq:any) {
+      if (this.client.p2pNode == null) {
+        throw new Error("p2pNode is null");
+      }
+      
+      const grpcClient = new Libp2pGrpcClient(
+        this.client.p2pNode,
+        this.client.peerAddr,
+        this.client.token,
+        this.client.protocol
+      );
+      const message = new dcnet.pb.AccountDealRequest({});
+      message.accounthashencrypt = buildedReq.accounthashencrypt;
+      message.accountencrypt = buildedReq.accountencrypt;
+      message.prikeyencrypt2 = buildedReq.prikeyencrypt2;
+      message.blockheight = buildedReq.blockheight;
+      message.loginkeyrandencrypt = buildedReq.loginkeyrandencrypt;
+      message.peerid = buildedReq.peerid;
+      message.signature = buildedReq.signature;
+      const messageBytes = dcnet.pb.AccountDealRequest.encode(message).finish();
+      const responseData = await grpcClient.unaryCall(
+        "/dcnet.pb.Service/AccountBind",
+        messageBytes,
+        30000
+      );
+      const decoded = dcnet.pb.AccountDealReply.decode(responseData);
+      return decoded.toJSON();
+  }
+
+
+
+
+  async addSubPubkey(req :any) {
+      if (this.client.p2pNode == null) {
+        throw new Error("p2pNode is null");
+      }
+      const grpcClient = new Libp2pGrpcClient(
+        this.client.p2pNode,
+        this.client.peerAddr,
+        this.client.token,
+        this.client.protocol
+      );
+
+      const message = new dcnet.pb.AddSubPubkeyRequest({});
+      message.subpubkey = req.subpubkey;
+      message.blockheight = req.blockheight;
+      message.peerid = req.peerid;
+      message.signature = req.signature;
+      const messageBytes = dcnet.pb.BindAccessPeerToUserRequest.encode(message).finish();
+      const responseData = await grpcClient.unaryCall(
+        "/dcnet.pb.Service/AddSubPubkey",
+        messageBytes,
+        30000
+      );
+      const decoded = dcnet.pb.AddSubPubkeyReply.decode(responseData);
+      return decoded.toJSON();
+  }
+
+  
+
 }

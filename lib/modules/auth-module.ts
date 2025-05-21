@@ -3,7 +3,7 @@
 
 import { DCContext, IAuthOperations } from "../interfaces";
 import { DCModule, CoreModuleName } from "../common/module-system";
-import { AccountManager } from "../implements/account/manager";
+import { AccountManager, NFTBindStatus } from "../implements/account/manager";
 import { CommonClient } from "../common/commonclient";
 import { Client } from "../common/dcapi";
 import { createLogger } from "../util/logger";
@@ -13,6 +13,8 @@ import { Errors } from "../common/error";
 import { dc_protocol, dial_timeout } from "../common/define";
 import { Multiaddr } from "@multiformats/multiaddr";
 import {WalletManager} from "../implements/wallet/manager";
+import { AccountClient } from "lib/implements/account/client";
+import { User } from "lib/common/types/types";
 
 const logger = createLogger('AuthModule');
 
@@ -176,7 +178,93 @@ export class AuthModule implements DCModule, IAuthOperations {
     }
   }
 
+
+  /**
+   * 将私钥绑定NFT账号(NFT账号+密码+安全码)
+   * @param account NFT账号
+   * @param password 密码
+   * @param seccode 安全码
+   * @returns [状态码, 错误信息]
+   */
+  async bindNFTAccount(
+    account: string, 
+    password: string, 
+    seccode: string,
+    mnemonic: string,
+  ): Promise<[NFTBindStatus, Error | null]> {
+    this.assertInitialized();
+    
+    if (!this.context.connectedDc?.client) {
+      throw new Error("dcClient is null");
+    }
+    
+    try {
+      const accountManager = new AccountManager(
+        this.context
+      );
+      const res = await accountManager.bindNFTAccount(
+        account,
+        password,
+        seccode,
+        mnemonic
+      );
+      return res
+    } catch (error) {
+      return [NFTBindStatus.Error, error as Error];
+    }
+  }
   
+
+/**
+ * 创建子账号，只有带有助记词的用户才能创建子账号
+ * 子账号创建后，用助记词登陆子账号App，与调用登陆了主账号的App进行授权登陆，是同一个用户
+ * 
+ * @param appId 应用ID
+ * @returns [私钥字符串, 错误]
+ */
+async generateAppAccount(appId: string,mnemonic: string): Promise<[string | null, Error | null]> {
+  const accountManager = new AccountManager(
+        this.context
+      );
+  return await accountManager.generateAppAccount(appId,mnemonic);
+}
+ 
+
+
+  /**
+   * 检查NFT账号是否成功绑定到用户的公钥
+   * @param account NFT账号
+   * @returns 是否成功绑定
+   */
+  async isNftAccountBindSuccess(account: string): Promise<boolean> {
+    const accountManager = new AccountManager(
+        this.context
+      );
+      const res = await accountManager.isNftAccountBindSuccess(account);
+      return res;
+  }
+
+
+  /**
+   * 检查NFT账号是否已经被绑定
+   * @param account NFT账号
+   * @returns 是否被其他账号绑定
+   */
+  async isNftAccountBinded(account: string): Promise<boolean> {
+    const accountManager = new AccountManager(
+        this.context
+      );
+      const res = await accountManager.isNftAccountBinded(account);
+      return res;
+  }
+
+  // 获取用户钱包信息
+  async getUserInfoWithAccount(account: string): Promise<User> {
+    const res = await this.context.dcChain.getUserInfoWithAccount(account);
+    return res;
+  }
+
+ 
   /**
    * 获取用户备用节点
    */
