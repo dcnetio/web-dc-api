@@ -64,7 +64,7 @@ export class DC implements DCContext {
   constructor(options: {
     wssUrl: string;
     backWssUrl: string;
-    appInfo: APPInfo;
+    appInfo: APPInfo ;
     logLevel?: LogLevel;
     names?: string[];
   }) {
@@ -72,7 +72,7 @@ export class DC implements DCContext {
     this.backChainAddr = options.backWssUrl;
     this.dcChain = new ChainUtil();
     this.dcutil = new DcUtil(this.dcChain);
-    this.appInfo = options.appInfo;
+    this.appInfo = options.appInfo || {} as APPInfo;
     
     // 设置日志级别
     if (options.logLevel !== undefined) {

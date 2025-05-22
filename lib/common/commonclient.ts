@@ -1,3 +1,4 @@
+// common/commonClient.ts
 import type { Multiaddr } from "@multiformats/multiaddr";
 import { Ed25519PrivKey } from "./dc-key/ed25519";
 import { KeyManager } from "./dc-key/keyManager";
@@ -55,8 +56,7 @@ export class CommonClient {
     nftAccount: string,
     password: string,
     safecode: string,
-    appId: string
-  ): Promise<Ed25519PrivKey> {
+  ): Promise<string> {
     //登录
     const prikey = await this._accountDoLogin(
       nftAccount,
@@ -67,19 +67,9 @@ export class CommonClient {
     let mnemonic = "";
     if (prikey.startsWith("mnemonic:")) {
       mnemonic = prikey.slice(9);
-    } else if (prikey.startsWith("privatekey:")) {
-      // todo 私钥情况下登陆
-      const basePriKey = prikey.slice(11);
-      let priKey: Uint8Array;
-    }
-    const keymanager = new KeyManager();
-    //const privKey1 = await keymanager.getEd25519KeyFromMnemonic(mnemonic);
-    const privKey = await keymanager.getEd25519KeyFromMnemonic(
-      mnemonic,
-      appId
-    );
-    this.privKey = privKey;
-    return privKey;
+      return mnemonic;
+    } 
+    return '';
   }
 
   async _accountDoLogin(
