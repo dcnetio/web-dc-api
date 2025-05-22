@@ -115,3 +115,8 @@ export interface AIProxyConfig {
   model: string;        // 模型
   remark: string;
 }
+
+// 调用AIProxy的流式回调函数
+// flag: 0表示开始接收数据, 1:权限不足 2:获取失败 3:关闭连接 4: 其他错误
+// content: 接收到的数据
+export type OnStreamResponseType = (flag: number, content: string,err: string) => void; 

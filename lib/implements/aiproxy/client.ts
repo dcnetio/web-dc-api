@@ -6,6 +6,8 @@ import { base58btc } from "multiformats/bases/base58";
 import { toString as uint8ArrayToString } from "uint8arrays/to-string";
 import { Errors } from "../../common/error";
 import { DCContext } from "../../interfaces";
+import { OnStreamResponseType } from "lib/common/types/types";
+import { error } from "ajv/dist/vocabularies/applicator/dependencies";
 
 export class AIProxyClient {
   client: Client;
@@ -141,5 +143,71 @@ export class AIProxyClient {
     }
   }
 
+
+  async  DoAIProxyCall( 
+    appId: string,
+    themeAuthor: string,
+    configThem: string,
+    serverName: string,
+    path: string,
+    headers: string,
+    reqBody: string,
+    model: string,
+    forceRefresh: number,
+    blockHeight: number,
+    signature: Uint8Array,
+    onStreamResponse: OnStreamResponseType = null): Promise<number> {
+    const message = new dcnet.pb.DoAIProxyCallRequest({});
+    message.appId = new TextEncoder().encode(appId);
+    message.themeAuthor = new TextEncoder().encode(themeAuthor);
+    message.theme = new TextEncoder().encode(configThem);
+    message.configKey = new TextEncoder().encode(serverName);
+    message.path = new TextEncoder().encode(path);
+    message.headers = new TextEncoder().encode(headers);
+    message.reqBody = new TextEncoder().encode(reqBody);
+    message.modelConfig = new TextEncoder().encode(model);
+    message.forceRefresh = forceRefresh;
+    message.blockheight = blockHeight;
+    message.signature = signature;
+    const messageBytes = dcnet.pb.DoAIProxyCallRequest.encode(message).finish();
+    const grpcClient = new Libp2pGrpcClient(
+      this.client.p2pNode,
+      this.client.peerAddr,
+      this.client.token,
+      this.client.protocol
+    );
+     const onDataCallback = async (payload: Uint8Array) => {
+            const decodedPayload = dcnet.pb.DoAIProxyCallReply.decode(payload);
+            if (onStreamResponse) {
+               onStreamResponse(decodedPayload.flag,new TextDecoder().decode(decodedPayload.content),new TextDecoder().decode(decodedPayload.err));
+            }
+          };
+    const onEndCallback = async () => {
+        if (onStreamResponse) {
+            onStreamResponse(3,"","");
+        }
+    }
+    const onErrorCallback = async (error: unknown) => {
+        if (onStreamResponse) {
+            onStreamResponse(4,"",error.toString());
+        }
+    }
+    try {
+      await grpcClient.Call(
+        "/dcnet.pb.Service/DoAIProxyCall",
+        messageBytes,
+        100000,
+        "server-streaming",
+        onDataCallback,
+        undefined, // dataSourceCallback not needed for server-streaming
+        onEndCallback,
+        onErrorCallback
+      );
+      return 0;
+    } catch (error) {
+      console.error("DoAIProxyCall error:", error);
+      throw error;
+    }
+  }
 
 }

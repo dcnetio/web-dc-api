@@ -1,6 +1,6 @@
 import type { Multiaddr } from "@multiformats/multiaddr";
-import { AIProxyConfig, DCConnectInfo, ProxyCallConfig, ThemeComment, UserProxyCallConfig } from "../../common/types/types";
-import { cidNeedConnect, OpenFlag } from "../../common/constants";
+import { AIProxyConfig, DCConnectInfo, OnStreamResponseType, ProxyCallConfig, ThemeComment, UserProxyCallConfig } from "../../common/types/types";
+import { AIProxyUserPermission, cidNeedConnect, OpenFlag } from "../../common/constants";
 import { CommentManager } from "../comment/manager";
 import { HeliaLibp2p } from "helia";
 import { ChainUtil } from "../../common/chain";
@@ -29,19 +29,19 @@ import { Errors } from "../cache/manager";
 
 export class AIProxyManager {
   private dc: DcUtil;
-  private connectedDc: DCConnectInfo = {};
+  private accountBackUpDc: DCConnectInfo = {};
   private dcNodeClient: HeliaLibp2p;
   private chainUtil: ChainUtil;
   private context: DCContext;
   constructor(
     dc: DcUtil,
-    connectedDc: DCConnectInfo,
+    accountBackUpDc: DCConnectInfo,
     dcNodeClient: HeliaLibp2p,
     chainUtil: ChainUtil,
     context: DCContext
   ) {
     this.dc = dc;
-    this.connectedDc = connectedDc;
+    this.accountBackUpDc = accountBackUpDc;
     this.dcNodeClient = dcNodeClient;
     this.chainUtil = chainUtil;
     this.context = context;
@@ -79,13 +79,100 @@ export class AIProxyManager {
   }
 
 
+
+  //配置AI代理的访问配置,如果key的值设置为空,则表示删除该key的配置
+  async configAIProxy(
+    appId: string,
+    configAuthor: string,
+    configTheme: string,
+    serverName: string,
+    serverConfig?: AIProxyConfig,
+    vaccount?: string
+  ): Promise<[boolean, Error | null]> {
+    
+    const userPubkey = this.context.getPublicKey();
+    let userPubkeyStr = userPubkey.string();
+
+    let client = this.accountBackUpDc.client;
+       if (configAuthor != this.context.publicKey.string()) {//查询他人主题评论
+         const authorPublicKey: Ed25519PubKey = Ed25519PubKey.edPubkeyFromStr(configAuthor);
+         client = await this.dc.connectToUserDcPeer(authorPublicKey.raw);
+         if (!client) {
+           return [null, Errors.ErrNoDcPeerConnected];
+         }
+         //获取token
+         await client.GetToken(this.context.publicKey.string(),this.context.sign);
+       }
+    let content = '';
+    const key = serverName
+    if (!serverConfig) {
+        content = `${key}`;
+    }else{
+        const value = JSON.stringify(serverConfig)
+        content = `${key}:${value}`;   
+    }
+    const contentUint8 = new TextEncoder().encode(content);
+    const contenthash = await sha256(contentUint8);
+    const contentCidBase32 = base32.encode(contenthash);
+
+    const contentSize = content.length;
+
+    const blockHeight: number = await this.chainUtil.getBlockHeight();
+    const hValue: Uint8Array = uint32ToLittleEndianBytes(
+      blockHeight ? blockHeight : 0
+    );
+    const themeValue: Uint8Array = new TextEncoder().encode(configTheme);
+    const themeAuthorValue: Uint8Array = new TextEncoder().encode(configAuthor);
+    const appIdValue: Uint8Array = new TextEncoder().encode(appId);
+    const contentCidValue: Uint8Array = new TextEncoder().encode(
+      contentCidBase32
+    );
+    const typeValue: Uint8Array = uint32ToLittleEndianBytes(
+      CommentType.KeyValue
+    );
+    const preSign = new Uint8Array([
+      ...themeValue,
+      ...appIdValue,
+      ...themeAuthorValue,
+      ...hValue,
+      ...contentCidValue,
+      ...typeValue,
+    ]);
+    const signature = await this.context.sign(preSign);
+    const keyValueClient = new KeyValueClient(client, this.context);
+    try {
+      const res = await keyValueClient.setKeyValue(
+        configTheme,
+        appId,
+        configAuthor,
+        blockHeight,
+        userPubkeyStr,
+        contentCidBase32,
+        content,
+        contentSize,
+        CommentType.KeyValue,
+        signature,
+        vaccount
+      );
+
+      if (res !== 0) {
+        return [null, new Error(`configAIProxy fail, resFlag:${res}`)];
+      }
+      return [true, null];
+    } catch (error) {
+      return [false, error];
+    }
+  }
+
+
+
   //配置用户的访问权限
   async configAuth(
     appId: string,
     configAuthor: string,
     configTheme: string,
     authPubkey: string,
-    permission: number,
+    permission: AIProxyUserPermission,
     authConfig: ProxyCallConfig,
     vaccount?: string
   ): Promise<[number, Error | null]> {
@@ -96,7 +183,7 @@ export class AIProxyManager {
     const userPubkey = this.context.getPublicKey();
     let userPubkeyStr = userPubkey.string();
 
-    let client = this.connectedDc.client;
+    let client = this.accountBackUpDc.client;
        if (configAuthor != this.context.publicKey.string()) {//查询他人主题评论
          const authorPublicKey: Ed25519PubKey = Ed25519PubKey.edPubkeyFromStr(configAuthor);
          client = await this.dc.connectToUserDcPeer(authorPublicKey.raw);
@@ -211,7 +298,7 @@ export class AIProxyManager {
     const userPubkey = this.context.getPublicKey();
     let userPubkeyStr = userPubkey.string();
 
-    let client = this.connectedDc.client;
+    let client = this.accountBackUpDc.client;
        if (themeAuthor != this.context.publicKey.string()) {//查询他人主题评论
          const authorPublicKey: Ed25519PubKey = Ed25519PubKey.edPubkeyFromStr(themeAuthor);
          client = await this.dc.connectToUserDcPeer(authorPublicKey.raw);
@@ -240,7 +327,7 @@ export class AIProxyManager {
         }
         const fileManager = new FileManager(
             this.dc,
-            this.connectedDc,
+            this.accountBackUpDc,
             this.chainUtil,
             this.dcNodeClient,
             this.context
@@ -328,12 +415,12 @@ export class AIProxyManager {
 
     
   async GetUserOwnAIProxyAuth(
-     appId: string,
+    appId: string,
     themeAuthor: string,
     configThem: string,
   ): Promise<[authConfig: ProxyCallConfig, error: Error | null]> {
     
-     let client = this.connectedDc.client;
+     let client = this.accountBackUpDc.client;
        if (themeAuthor != this.context.publicKey.string()) {//查询他人主题评论
          const authorPublicKey: Ed25519PubKey = Ed25519PubKey.edPubkeyFromStr(themeAuthor);
          client = await this.dc.connectToUserDcPeer(authorPublicKey.raw);
@@ -364,6 +451,68 @@ export class AIProxyManager {
     return [authConfig, error];
   }
     
-
+  //AI相关代理的调用,包括代理与AI的通信或者与MCPServer的通信
+ async DoAIProxyCall( 
+    appId: string,
+    themeAuthor: string,
+    configThem: string,
+    serverName: string,
+    reqBody: string,
+    forceRefresh: boolean,
+    onStreamResponse: OnStreamResponseType = null ,
+    headers?: string,
+    path?: string,
+    model?: string): Promise< number>
+    {
+        const blockHeight = (await this.chainUtil.getBlockHeight()) || 0;
+        const hValue: Uint8Array = uint32ToLittleEndianBytes(
+            blockHeight ? blockHeight : 0
+        );
+        const forceRefreshFlag = forceRefresh ? 1 : 0;
+        const forceRefreshValue: Uint8Array = uint32ToLittleEndianBytes(forceRefreshFlag);
+        const themeAuthorValue: Uint8Array = new TextEncoder().encode(themeAuthor);
+        const themeValue: Uint8Array = new TextEncoder().encode(configThem);
+        const appIdValue: Uint8Array = new TextEncoder().encode(appId);
+        const serverNameValue: Uint8Array = new TextEncoder().encode(serverName);
+        const pathValue: Uint8Array = new TextEncoder().encode(path);
+        const headersValue: Uint8Array = new TextEncoder().encode(headers);
+        const reqBodyValue: Uint8Array = new TextEncoder().encode(reqBody);
+        const modelValue: Uint8Array = new TextEncoder().encode(model);
+        const preSign = new Uint8Array([
+            ...themeValue,
+            ...appIdValue,
+            ...themeAuthorValue,
+            ...hValue,
+            ...serverNameValue,
+            ...pathValue,
+            ...reqBodyValue,
+            ...modelValue,
+            ...forceRefreshValue,
+            ...headersValue
+        ]);
+        const signature = await  this.context.sign(preSign);
+        const proxyClient = new AIProxyClient(
+            this.accountBackUpDc.client,
+            this.context
+        );
+        let res = await proxyClient.DoAIProxyCall(
+            appId,
+            themeAuthor,
+            configThem,
+            serverName,
+            path,
+            headers,
+            reqBody,
+            model,
+            forceRefreshFlag,
+            blockHeight ,
+            signature,
+            onStreamResponse
+        );
+       return res;
+    } catch (err:any) {
+        throw err;
+    }
 
 }
+

@@ -20,3 +20,9 @@ export enum OpenFlag {
 }
 
 
+export enum AIProxyUserPermission {
+  QUERY = 8, //查询
+  ADMIN = 4, //管理员
+}
+
+
