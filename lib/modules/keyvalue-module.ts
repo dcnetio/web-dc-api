@@ -1,7 +1,7 @@
 // modules/keyvalue-module.ts
 // 键值存储功能模块
 
-import {  IKeyValueOperations } from "../interfaces/kvDB-interface";
+import {  IKeyValueOperations } from "../interfaces/keyvalue-interface";
 import { DCContext } from "../../lib/interfaces/DCContext";
 import { DCModule, CoreModuleName } from "../common/module-system";
 import { KeyValueManager, KeyValueStoreType } from "../implements/keyvalue/manager";

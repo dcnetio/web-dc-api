@@ -1,7 +1,7 @@
 // module-system.ts
 // 定义模块注册和管理系统
 
-import { DCContext } from "../interfaces";
+import { DCContext } from "../../lib/interfaces/DCContext";
 import { createLogger } from "../util/logger";
 
 const logger = createLogger('ModuleSystem');
@@ -39,7 +39,8 @@ export enum CoreModuleName {
   MESSAGE = 'message',
   KEYVALUE = 'keyvalue',
   CACHE = 'cache',
-  CLIENT = 'client'
+  CLIENT = 'client',
+  AIPROXY = 'aiproxy'
 }
 
 /**
@@ -99,7 +100,9 @@ export class ModuleSystem {
       CoreModuleName.COMMENT,   // 评论模块
       CoreModuleName.MESSAGE,   // 消息模块
       CoreModuleName.KEYVALUE,   // 键值存储模块
-      CoreModuleName.CLIENT     // 客户端模块
+      CoreModuleName.CLIENT,     // 客户端模块
+      CoreModuleName.CACHE,      // 缓存模块
+      CoreModuleName.AIPROXY    // AIProxy模块
     ];
     
     // 先初始化核心模块

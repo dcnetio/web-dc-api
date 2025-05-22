@@ -85,8 +85,8 @@ export class AIProxyManager {
     appId: string,
     configAuthor: string,
     configTheme: string,
-    serverName: string,
-    serverConfig?: AIProxyConfig,
+    serviceName: string,
+    serviceConfig?: AIProxyConfig,
     vaccount?: string
   ): Promise<[boolean, Error | null]> {
     
@@ -104,11 +104,11 @@ export class AIProxyManager {
          await client.GetToken(this.context.publicKey.string(),this.context.sign);
        }
     let content = '';
-    const key = serverName
-    if (!serverConfig) {
+    const key = serviceName
+    if (!serviceConfig) {
         content = `${key}`;
     }else{
-        const value = JSON.stringify(serverConfig)
+        const value = JSON.stringify(serviceConfig)
         content = `${key}:${value}`;   
     }
     const contentUint8 = new TextEncoder().encode(content);
@@ -456,7 +456,7 @@ export class AIProxyManager {
     appId: string,
     themeAuthor: string,
     configThem: string,
-    serverName: string,
+    serviceName: string,
     reqBody: string,
     forceRefresh: boolean,
     onStreamResponse: OnStreamResponseType = null ,
@@ -473,7 +473,7 @@ export class AIProxyManager {
         const themeAuthorValue: Uint8Array = new TextEncoder().encode(themeAuthor);
         const themeValue: Uint8Array = new TextEncoder().encode(configThem);
         const appIdValue: Uint8Array = new TextEncoder().encode(appId);
-        const serverNameValue: Uint8Array = new TextEncoder().encode(serverName);
+        const serviceNameValue: Uint8Array = new TextEncoder().encode(serviceName);
         const pathValue: Uint8Array = new TextEncoder().encode(path);
         const headersValue: Uint8Array = new TextEncoder().encode(headers);
         const reqBodyValue: Uint8Array = new TextEncoder().encode(reqBody);
@@ -483,7 +483,7 @@ export class AIProxyManager {
             ...appIdValue,
             ...themeAuthorValue,
             ...hValue,
-            ...serverNameValue,
+            ...serviceNameValue,
             ...pathValue,
             ...reqBodyValue,
             ...modelValue,
@@ -499,7 +499,7 @@ export class AIProxyManager {
             appId,
             themeAuthor,
             configThem,
-            serverName,
+            serviceName,
             path,
             headers,
             reqBody,

@@ -148,7 +148,7 @@ export class AIProxyClient {
     appId: string,
     themeAuthor: string,
     configThem: string,
-    serverName: string,
+    serviceName: string,
     path: string,
     headers: string,
     reqBody: string,
@@ -161,7 +161,7 @@ export class AIProxyClient {
     message.appId = new TextEncoder().encode(appId);
     message.themeAuthor = new TextEncoder().encode(themeAuthor);
     message.theme = new TextEncoder().encode(configThem);
-    message.configKey = new TextEncoder().encode(serverName);
+    message.configKey = new TextEncoder().encode(serviceName);
     message.path = new TextEncoder().encode(path);
     message.headers = new TextEncoder().encode(headers);
     message.reqBody = new TextEncoder().encode(reqBody);

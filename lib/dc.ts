@@ -21,7 +21,8 @@ import {
   MessageModule, 
   KeyValueModule, 
   ClientModule,
-  CacheModule
+  CacheModule,
+  AIProxyModule
 } from "./modules";
 import { Client } from "./common/dcapi";
 
@@ -406,5 +407,9 @@ export class DC implements DCContext {
 
   get cache() {
     return this.getModule<CacheModule>(CoreModuleName.CACHE);
+  }
+
+  get aiproxy() {
+    return this.getModule<AIProxyModule>(CoreModuleName.AIPROXY);
   }
 }

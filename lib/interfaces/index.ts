@@ -3,7 +3,7 @@ export type {IClientOperations} from './client-interface';
 export type {IDatabaseOperations} from './database-interface';
 export type {IFileOperations} from './file-interface';
 export type {IMessageOperations} from './message-interface';
-export type {IKeyValueOperations} from './kvDB-interface';
+export type {IKeyValueOperations} from './keyvalue-interface';
 export type {ICommentOperations} from './comment-interface';
 export type {ICacheOperations} from './cache-interface';
 export type {DCContext} from  './DCContext';
