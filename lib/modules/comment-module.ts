@@ -48,7 +48,7 @@ export class CommentModule implements DCModule, ICommentOperations {
   /**
    * 添加用户评论空间
    */
-  async addUserOffChainSpace(): Promise<any> {
+  async addUserOffChainSpace(): Promise<[boolean | null, Error | null]> {
     this.assertInitialized();
     
     try {
@@ -67,7 +67,7 @@ export class CommentModule implements DCModule, ICommentOperations {
    * @param openFlag 开放标志
    * @param commentSpace 评论空间大小
    */
-  async addThemeObj(theme: string, openFlag: number, commentSpace?: number): Promise<any> {
+  async addThemeObj(theme: string, openFlag: number, commentSpace?: number): Promise<[number | null, Error | null]> {
     this.assertInitialized();
     
     try {
@@ -75,7 +75,7 @@ export class CommentModule implements DCModule, ICommentOperations {
         this.context.appInfo?.id || "",
         theme,
         openFlag,
-        commentSpace || 20 * 1024 * 1024 // 20M
+        commentSpace || 50 * 1024 * 1024 // 50M
       );
       logger.info(`为主题 ${theme} 开通评论功能成功`);
       return res;
@@ -110,7 +110,7 @@ export class CommentModule implements DCModule, ICommentOperations {
   /**
    * 发布评论
    * @param theme 主题
-   * @param themeAuthor 主题作者
+   * @param themeAuthor 主题作者 base32编码格式
    * @param commentType 评论类型
    * @param comment 评论内容
    * @param refercommentkey 引用评论的键
@@ -187,7 +187,7 @@ export class CommentModule implements DCModule, ICommentOperations {
     direction?: number,
     offset?: number,
     limit?: number,
-    seekKey?: string
+    seekKey?: string 
   ): Promise<any> {
     this.assertInitialized();
     

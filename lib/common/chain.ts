@@ -49,10 +49,8 @@ export class ChainUtil {
   }
   // 获取用户钱包信息
   async getUserInfoWithAccount(account: string): Promise<User> {
-    console.log("=========getUserInfoWithAccount account", account);
     const walletAccountStorage =
       await this.dcchainapi?.query.dcNode.walletAccountStorage(account);
-    console.log("=========walletAccountStorage", walletAccountStorage);
     if (!walletAccountStorage) {
       throw new Error("walletAccountStorage is null");
     }

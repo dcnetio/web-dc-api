@@ -8,7 +8,7 @@ export interface IFileOperations {
   /**
    * 获取可寻址文件流
    * @param ipfsPath IPFS路径或CID
-   * @param decryptKey 解密密钥
+   * @param decryptKey 解密密钥,base32的symmetric key
    * @returns 可寻址文件流实例
    */
   getSeekableFileStream(ipfsPath: string, decryptKey: string): Promise<SeekableFileStream>;

@@ -1,4 +1,6 @@
+import { ThemePermission } from "lib/common/constants";
 import { ThemeComment } from "lib/common/types/types";
+import { KeyValueStoreType } from "lib/implements/keyvalue/manager";
 
 /**
  * 键值存储操作接口
@@ -6,14 +8,14 @@ import { ThemeComment } from "lib/common/types/types";
  */
 export interface IKeyValueOperations {
   /**
-   * 创建存储主题
-   * @param theme 主题名称
+   * 创建key-value存储库
+   * @param theme 库主题名称
    * @param space 分配的存储空间大小（字节）
-   * @param type 存储类型（0: 普通存储, 1: 加密存储）
+   * @param type 存储主题类型 1:鉴权主题(读写都需要鉴权) 2:公共主题(默认所有用户可读,写需要鉴权)
    * @returns 创建结果，包含主题信息
    * @throws 当用户空间不足或创建失败时抛出错误
    */
-  createStore(theme: string, space: number, type: number): Promise<any>;
+  createStore(theme: string, space: number, type: KeyValueStoreType): Promise<any>;
 
   /**
    * 配置主题的授权信息
@@ -21,7 +23,7 @@ export interface IKeyValueOperations {
    * @param themeAuthor 主题作者的公钥
    * @param theme 主题名称
    * @param authPubkey 被授权者的公钥
-   * @param permission 权限级别（1: 只读, 3: 读写）
+   * @param permission 权限级别
    * @param remark 备注信息
    * @param vaccount 可选的虚拟账户
    * @returns [授权状态码, 错误信息]
@@ -31,7 +33,7 @@ export interface IKeyValueOperations {
     themeAuthor: string,
     theme: string,
     authPubkey: string,
-    permission: number,
+    permission: ThemePermission,
     remark: string,
     vaccount?: string
   ): Promise<[number, Error | null]>;
@@ -58,7 +60,7 @@ export interface IKeyValueOperations {
    * @param theme 主题名称
    * @param key 键名
    * @param value 值内容
-   * @param indexs 索引列表，格式为"key1:value1$$$key2:value2"
+   * @param indexs 索引列表，格式为"key1:value1$$$key2:value2",设置索引后,后续查询可以通过索引快速定位
    * @param vaccount 可选的虚拟账户
    * @returns [是否设置成功, 错误信息]
    */

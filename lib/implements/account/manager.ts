@@ -407,7 +407,7 @@ async isNftAccountBinded(account: string): Promise<boolean> {
  * 子账号创建后，用助记词登陆子账号App，与调用登陆了主账号的App进行授权登陆，是同一个用户
  * 
  * @param appId 应用ID
- * @returns [私钥字符串, 错误]
+ * @returns [私钥字符串,基于base32编码, 错误]
  */
 async generateAppAccount(appId: string,mnemonic: string): Promise<[string | null, Error | null]> {
   if (!mnemonic) {
