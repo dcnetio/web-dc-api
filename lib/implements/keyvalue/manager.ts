@@ -11,7 +11,7 @@ import { sha256, uint32ToLittleEndianBytes } from "../../util/utils";
 import { base32 } from "multiformats/bases/base32";
 import { Client } from "../../common/dcapi";
 import { CommentType, Direction } from "../../common/define";
-import { DCContext } from "../../interfaces";
+import { DCContext } from "../../../lib/interfaces/DCContext";
 
 //定义Key-Value存储的数据类型
 export enum KeyValueStoreType { //存储主题类型 1:鉴权主题(读写都需要鉴权) 2:公共主题(默认所有用户可读,写需要鉴权)

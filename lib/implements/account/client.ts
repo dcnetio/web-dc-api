@@ -2,7 +2,7 @@ import type { Multiaddr } from "@multiformats/multiaddr";
 import type { Client } from "../../common/dcapi";
 import { Libp2pGrpcClient } from "grpc-libp2p-client";
 import { dcnet } from "../../proto/dcnet_proto";
-import { DCContext } from "../../interfaces";
+import { DCContext } from "../../../lib/interfaces/DCContext";
 import { uint32ToLittleEndianBytes } from "../../util/utils";
 
 export class AccountClient {

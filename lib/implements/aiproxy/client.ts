@@ -5,7 +5,7 @@ import { dcnet } from "../../proto/dcnet_proto";
 import { base58btc } from "multiformats/bases/base58";
 import { toString as uint8ArrayToString } from "uint8arrays/to-string";
 import { Errors } from "../../common/error";
-import { DCContext } from "../../interfaces";
+import { DCContext } from "../../../lib/interfaces/DCContext";
 import { OnStreamResponseType } from "lib/common/types/types";
 import { error } from "ajv/dist/vocabularies/applicator/dependencies";
 

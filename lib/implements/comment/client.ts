@@ -7,7 +7,7 @@ import { unixfs } from "@helia/unixfs";
 import { toString as uint8ArrayToString } from "uint8arrays/to-string";
 import { FileManager } from "../file/manager";
 import { Errors } from "../../common/error";
-import { DCContext } from "../../interfaces";
+import { DCContext } from "../../../lib/interfaces/DCContext";
 
 export class CommentClient {
   client: Client;

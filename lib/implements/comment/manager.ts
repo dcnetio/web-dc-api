@@ -15,7 +15,7 @@ import { toString as uint8ArrayToString } from "uint8arrays/to-string";
 import { BrowserLineReader, readLine } from "../../util/BrowserLineReader";
 import { bytesToHex } from "@noble/curves/abstract/utils";
 import { dcnet } from "../../proto/dcnet_proto";
-import { DCContext } from "../../interfaces";
+import { DCContext } from "../../../lib/interfaces/DCContext";
 import { publicKeyFromRaw } from "@libp2p/crypto/keys";
 import { Ed25519PubKey } from "lib/common/dc-key/ed25519";
 const { Buffer } = buffer;

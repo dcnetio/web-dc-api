@@ -1,7 +1,8 @@
 // modules/comment-module.ts
 // 评论功能模块
 
-import { DCContext, ICommentOperations } from "../interfaces";
+import {  ICommentOperations } from "../interfaces/comment-interface";
+import { DCContext } from "../../lib/interfaces/DCContext";
 import { DCModule, CoreModuleName } from "../common/module-system";
 import { CommentManager } from "../implements/comment/manager";
 import { createLogger } from "../util/logger";

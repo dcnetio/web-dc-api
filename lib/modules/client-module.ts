@@ -1,7 +1,8 @@
 // modules/client-module.ts
 // 消息功能模块
 
-import { DCContext, IClientOperations } from "../interfaces";
+import { IClientOperations } from "lib/interfaces/client-interface";
+import { DCContext } from "../../lib/interfaces/DCContext";
 import { DCModule, CoreModuleName } from "../common/module-system";
 import { DCManager } from "../implements/dc/manager";
 import { createLogger } from "../util/logger";

@@ -1,7 +1,8 @@
 // modules/keyvalue-module.ts
 // 键值存储功能模块
 
-import { DCContext, ICacheOperations } from "../interfaces";
+import {  ICacheOperations } from "../interfaces/cache-interface";
+import { DCContext } from "../../lib/interfaces/DCContext";
 import { DCModule, CoreModuleName } from "../common/module-system";
 import { ThemeManager } from "../implements/cache/manager";
 import { keyExpire } from "../common/define";

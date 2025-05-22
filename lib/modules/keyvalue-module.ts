@@ -1,7 +1,8 @@
 // modules/keyvalue-module.ts
 // 键值存储功能模块
 
-import { DCContext, IKeyValueOperations } from "../interfaces";
+import {  IKeyValueOperations } from "../interfaces/kvDB-interface";
+import { DCContext } from "../../lib/interfaces/DCContext";
 import { DCModule, CoreModuleName } from "../common/module-system";
 import { KeyValueManager, KeyValueStoreType } from "../implements/keyvalue/manager";
 import { ThemeManager } from "../implements/cache/manager";
@@ -172,7 +173,7 @@ export class KeyValueModule implements DCModule, IKeyValueOperations {
   }
 
   
-  async getetValueWithKey(
+  async getValueWithKey(
     appId: string,
     themeAuthor: string,
     theme: string,

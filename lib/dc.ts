@@ -10,7 +10,7 @@ import { Libp2p } from "@libp2p/interface";
 import { dc_protocol } from "./common/define";
 import { DCGrpcServer } from "./implements/threaddb/net/grpcserver";
 import { Ed25519PrivKey, Ed25519PubKey } from "./common/dc-key/ed25519";
-import { DCContext } from "./interfaces";
+import { DCContext } from "../lib/interfaces/DCContext";
 import { createLogger, configureLogger, LogLevel } from "./util/logger";
 import { ModuleSystem, CoreModuleName, DCModule } from "./common/module-system";
 import { 

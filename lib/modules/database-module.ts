@@ -1,7 +1,8 @@
 // modules/database-module.ts
 // 数据库功能模块
 
-import { DCContext, IDatabaseOperations } from "../interfaces";
+import { IDatabaseOperations } from "../interfaces/database-interface";
+import { DCContext } from "../../lib/interfaces/DCContext";
 import { DCModule, CoreModuleName } from "../common/module-system";
 import { createLogger } from "../util/logger";
 import { createTxnDatastore } from "../implements/threaddb/common/idbstore-adapter";

@@ -1,7 +1,7 @@
 // modules/auth-module.ts
 // 认证功能模块
 
-import { DCContext, IAuthOperations } from "../interfaces";
+
 import { DCModule, CoreModuleName } from "../common/module-system";
 import { AccountManager, NFTBindStatus } from "../implements/account/manager";
 import { CommonClient } from "../common/commonclient";
@@ -14,6 +14,8 @@ import { dc_protocol } from "../common/define";
 import { Multiaddr } from "@multiformats/multiaddr";
 import {WalletManager} from "../implements/wallet/manager";
 import { User } from "../common/types/types";
+import { IAuthOperations } from "lib/interfaces/auth-interface";
+import { DCContext } from "../../lib/interfaces/DCContext";
 
 const logger = createLogger('AuthModule');
 

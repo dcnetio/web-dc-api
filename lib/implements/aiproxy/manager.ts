@@ -10,7 +10,7 @@ import { sha256, uint32ToLittleEndianBytes } from "../../util/utils";
 import { base32 } from "multiformats/bases/base32";
 import { Client } from "../../common/dcapi";
 import { CommentType, Direction } from "../../common/define";
-import { DCContext } from "../../interfaces";
+import { DCContext } from "../../../lib/interfaces/DCContext";
 import { AIProxyClient } from "./client";
 import { FileManager } from "../file/manager";
 import { toString as uint8ArrayToString } from "uint8arrays/to-string";

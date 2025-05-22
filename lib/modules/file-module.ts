@@ -1,7 +1,8 @@
 // modules/file-module.ts
 // 文件功能模块
 
-import { DCContext, IFileOperations } from "../interfaces";
+import {  IFileOperations } from "../interfaces/file-interface";
+import { DCContext } from "../../lib/interfaces/DCContext";
 import { DCModule, CoreModuleName } from "../common/module-system";
 import { FileManager } from "../implements/file/manager";
 import { FileCacheManager } from "../implements/file/file-cache-manager";

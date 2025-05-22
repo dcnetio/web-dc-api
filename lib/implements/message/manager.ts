@@ -11,7 +11,7 @@ import { HeliaLibp2p } from "helia";
 import { dc_protocol } from "../../common/define";
 import { Client } from "../../common/dcapi";
 import { dcnet } from "../../proto/dcnet_proto";
-import { DCContext } from "../../interfaces";
+import { DCContext } from "../../../lib/interfaces/DCContext";
 const { Buffer } = buffer;
 // 错误定义
 export class DCError extends Error {

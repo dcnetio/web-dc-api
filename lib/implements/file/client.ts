@@ -3,7 +3,7 @@ import type { Client } from "../../common/dcapi";
 import { dcnet } from "../../proto/dcnet_proto";
 import { HeliaLibp2p } from "helia";
 import { Libp2p } from "libp2p";
-import { DCContext } from "../../interfaces";
+import { DCContext } from "../../../lib/interfaces/DCContext";
 import { uint32ToLittleEndianBytes, uint64ToLittleEndianBytes } from "../../util/utils";
 
 const uploadStatus = {

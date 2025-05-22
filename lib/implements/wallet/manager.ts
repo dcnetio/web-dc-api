@@ -1,6 +1,6 @@
 
 import { version, walletOrigin, walletUrl, walletWindowName } from "../../common/define";
-import { DCContext } from "../../interfaces";
+import { DCContext } from "../../../lib/interfaces/DCContext";
 const appOrigin = typeof window !== "undefined" && window.location.origin;//"http://localhost:3002"
 const appUrl = typeof window !== "undefined" && window.location.href ;
 // 错误定义

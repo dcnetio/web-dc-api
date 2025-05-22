@@ -4,7 +4,7 @@ import { Libp2pGrpcClient } from "grpc-libp2p-client";
 import { dcnet } from "../../proto/dcnet_proto";
 import { Errors } from "../../common/error";
 import { toString as uint8ArrayToString } from "uint8arrays/to-string";
-import { DCContext } from "../../interfaces";
+import { DCContext } from "../../../lib/interfaces/DCContext";
 
 export class MessageClient {
   client: Client;

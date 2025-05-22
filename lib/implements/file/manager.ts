@@ -25,7 +25,7 @@ import { Libp2p, Stream } from "@libp2p/interface";
 import { cidNeedConnect } from "../../common/constants";
 import { SeekableFileStream } from "./seekableFileStream";
 import { AccountClient } from "../account/client";
-import { DCContext } from "../../interfaces";
+import { DCContext } from "../../../lib/interfaces/DCContext";
 const { Buffer } = buffer;
 
 const NonceBytes = 12;
