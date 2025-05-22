@@ -2,7 +2,6 @@
 // 导出主要类和功能
 
 export { DC } from './dc';
-export { DCCompat } from './dc-compat';
 export { registerServiceWorker, isServiceWorkerActive, updateServiceWorker } from './common/service-worker';
 export * from './common/types/types';
 export * from './interfaces';

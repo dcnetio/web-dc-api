@@ -56,7 +56,7 @@ export class MessageManager {
       if (!this.accountBackupDc.client) {
         return [null, Errors.ErrNoAccountPeerConnected];
       }
-      const receiverPubkey: Ed25519PubKey = Ed25519PubKey.pubkeyToEdStr(receiver)
+      const receiverPubkey: Ed25519PubKey = Ed25519PubKey.edPubkeyFromStr(receiver)
       const sendPublicKey = await this.context.getPublicKey();
 
       const userMsg = await this.generateMsqBoxReq(

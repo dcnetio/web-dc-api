@@ -16,6 +16,8 @@ import { BrowserLineReader, readLine } from "../../util/BrowserLineReader";
 import { bytesToHex } from "@noble/curves/abstract/utils";
 import { dcnet } from "../../proto/dcnet_proto";
 import { DCContext } from "../../interfaces";
+import { publicKeyFromRaw } from "@libp2p/crypto/keys";
+import { Ed25519PubKey } from "lib/common/dc-key/ed25519";
 const { Buffer } = buffer;
 
 // 创建一个可以取消的信号
@@ -52,7 +54,7 @@ export class CommentManager {
     context: DCContext,
   ) {
     this.dc = context.dcutil;
-    this.connectedDc = context.connectedDc;
+    this.connectedDc = context.AccountBackupDc;
     this.dcNodeClient = context.dcNodeClient;
     this.chainUtil = context.dcChain;
     this.context = context;
@@ -389,11 +391,22 @@ export class CommentManager {
       if (!this.connectedDc?.client) {
         return [null, Errors.ErrNoDcPeerConnected];
       }
+      let client = this.connectedDc.client;
+      if (themeAuthor != this.context.publicKey.string()) {//查询他人主题评论
+        const authorPublicKey: Ed25519PubKey = Ed25519PubKey.edPubkeyFromStr(themeAuthor);
+        client = await this.dc.connectToUserDcPeer(authorPublicKey.raw);
+        if (!client) {
+          return [null, Errors.ErrNoPeerIdIsNull];
+        }
+        //获取token
+        await client.GetToken(this.context.publicKey.string(),this.context.sign);
+      }
       const commentClient = new CommentClient(
-        this.connectedDc.client,
+        client,
         this.dcNodeClient,
         this.context
       );
+     
       const res = await commentClient.getThemeObj(
         appId,
         themeAuthor,
@@ -444,8 +457,19 @@ export class CommentManager {
       if (!this.connectedDc?.client) {
         return [null, Errors.ErrNoDcPeerConnected];
       }
-      const commentClient = new CommentClient(
-        this.connectedDc.client,
+      let client = this.connectedDc.client;
+      if (themeAuthor != this.context.publicKey.string()) {//查询他人主题评论
+        const authorPublicKey: Ed25519PubKey = Ed25519PubKey.edPubkeyFromStr(themeAuthor);
+        client = await this.dc.connectToUserDcPeer(authorPublicKey.raw);
+        if (!client) {
+          return [null, Errors.ErrNoPeerIdIsNull];
+        }
+
+        //获取token
+        await client.GetToken(this.context.publicKey.string(),this.context.sign);
+      }
+       const commentClient = new CommentClient(
+        client,
         this.dcNodeClient,
         this.context
       );

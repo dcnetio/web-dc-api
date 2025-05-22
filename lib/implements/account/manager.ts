@@ -6,7 +6,7 @@ import { AccountClient } from "./client";
 import { sha256, uint32ToLittleEndianBytes } from "../../util/utils";
 import { DCContext, Ed25519PrivKey } from "lib";
 import { PeerId } from "@libp2p/interface";
-import { extractPublicKeyFromPeerId, generateSymKeyForPrikey, KeyManager } from "lib/common/dc-key/keyManager";
+import { extractPublicKeyFromPeerId, generateSymKeyForPrikey, KeyManager } from "../../common/dc-key/keyManager";
 import { SymmetricKey } from "../threaddb/common/key";
 import { peerIdFromString } from "@libp2p/peer-id";
 import { request } from "http";
@@ -170,7 +170,6 @@ async bindNFTAccount(
     }
     
     // 获取客户端
-    
     const accountClient = new AccountClient(
       this.connectedDc.client,
     );
@@ -531,107 +530,6 @@ private async isAppAccountExists(pubkeyStr: string): Promise<boolean> {
 
 
 
-
-/**
- * Apply for free storage space for new users
- * @returns Promise resolving to [success, error]
- */
-async applyFreeSpace(): Promise<[boolean, Error | null]> {
-  try {
-    // Check if this is a new account without space
-    const userInfo = await this.context.dcChain?.getUserInfoWithAccount(this.context.publicKey.toString());
-    if (userInfo && userInfo.subscribeSpace > 0) {
-      return [false, new AccountError("User already has space")];
-    }
-    
-    // Get public key for request
-    const pubKey = this.context.getPublicKey();
-    if (!pubKey) {
-      return [false, new AccountError("User public key not available")];
-    }
-    
-    // Make request to storage service
-    const lang = navigator.language || "en";
-    
-    // Use native fetch instead of the undefined 'request' function
-    const response = await fetch(`storage/give`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        account: pubKey.toString() || '',
-        address: pubKey.toBase58() || '',
-        lang: lang
-      })
-    });
-    
-    if (!response.ok) {
-      return [false, new AccountError("Failed to request free space: " + response.statusText)];
-    }
-    
-    const result = await response.json();
-    if (!result || result.error) {
-      return [false, new AccountError("Storage giving error: " + (result?.error || "Unknown error"))];
-    }
-    
-    // Check if storage was actually allocated
-    // Wait for blockchain confirmation (max 30 seconds)
-    const lastExpire = userInfo?.expireNumber || 0;
-    const lastSubscribeSize = userInfo?.subscribeSpace || 0;
-    
-    // Verify subscription was successful
-    const subscribeSuccess = await this.checkSubscription(lastExpire, lastSubscribeSize);
-    
-    if (subscribeSuccess) {
-      return [true, null];
-    } else {
-      return [false, new AccountError("Storage allocation timed out")];
-    }
-    
-  } catch (error) {
-    console.error("Error applying for free space:", error);
-    return [false, error instanceof Error ? error : new Error(String(error))];
-  }
-}
-
-/**
- * Check if subscription was successful by polling user info
- * @param lastExpire Previous expiration time
- * @param lastSubscribeSize Previous subscription size
- * @returns Promise resolving to boolean indicating success
- */
-private async checkSubscription(
-  lastExpire: number, 
-  lastSubscribeSize: number
-): Promise<boolean> {
-  const maxAttempts = 30; // Try for ~30 seconds
-  
-  for (let attempt = 0; attempt < maxAttempts; attempt++) {
-    try {
-      // Get updated user info
-      const userInfo = await this.context.dcChain?.getUserInfoWithAccount(
-        this.context.publicKey.toString()
-      );
-      
-      if (!userInfo) continue;
-      
-      // Check if either expiration time or space has increased
-      if (
-        Math.abs(Number(userInfo.expireNumber) - lastExpire) > 2 * 60 * 60 * 24 || // ~2 days difference
-        Math.abs(Number(userInfo.subscribeSpace) - lastSubscribeSize) > 10000 // ~10MB difference
-      ) {
-        return true;
-      }
-    } catch (err) {
-      console.warn("Error checking subscription:", err);
-    }
-    // Wait 1 seconds before next check
-    await new Promise(resolve => setTimeout(resolve, 1000));
-  }
-  
-  return false; // Timed out
-}
 
 
 }

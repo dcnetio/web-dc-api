@@ -10,11 +10,10 @@ import { createLogger } from "../util/logger";
 import { loadPublicKey, loadTokenWithPeerId, savePublicKey, sleep } from "../util/utils";
 import { Ed25519PubKey } from "../common/dc-key/ed25519";
 import { Errors } from "../common/error";
-import { dc_protocol, dial_timeout } from "../common/define";
+import { dc_protocol } from "../common/define";
 import { Multiaddr } from "@multiformats/multiaddr";
 import {WalletManager} from "../implements/wallet/manager";
-import { AccountClient } from "lib/implements/account/client";
-import { User } from "lib/common/types/types";
+import { User } from "../common/types/types";
 
 const logger = createLogger('AuthModule');
 
@@ -68,7 +67,7 @@ export class AuthModule implements DCModule, IAuthOperations {
     const publicKeyString = await loadPublicKey();
     if (publicKeyString) {
       // 获取公钥
-      const publicKey = Ed25519PubKey.pubkeyToEdStr(publicKeyString);
+      const publicKey = Ed25519PubKey.edPubkeyFromStr(publicKeyString);
       this.context.publicKey = publicKey;
       // 获取token
       const token = await loadTokenWithPeerId(publicKeyString, peerId);
@@ -246,17 +245,7 @@ async generateAppAccount(appId: string,mnemonic: string): Promise<[string | null
       return res;
   }
 
-  /**
- * Apply for free storage space for new users
- * @returns Promise resolving to [success, error]
- */
-async applyFreeSpace(): Promise<[boolean, Error | null]> {
-  this.assertInitialized();
-  const accountManager = new AccountManager(
-    this.context
-  );
-  return await accountManager.applyFreeSpace();
-}
+
 
   /**
    * 检查NFT账号是否已经被绑定

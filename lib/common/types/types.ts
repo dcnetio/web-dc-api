@@ -84,3 +84,34 @@ export interface ThemeComment {
   signature: string;
   vaccount: string;
 }
+
+
+export interface ProxyCallConfig  {
+    No: number;//订阅序号,每次调用都必须在上次的基础上进行加1
+    Tlim?: number;//总访问次数限制
+    Dlim?: number; //日访问次数限制
+    Wlim?: number; //周访问次数限制
+    Mlim?: number; //月访问次数限制
+    Ylim?: number; //年访问次数限制
+    Exp?: number;//过期区块高度
+}   
+
+
+export interface UserProxyCallConfig  {
+    UserPubkey: string;//用户公钥
+    permission: number;//权限
+    authConfig: ProxyCallConfig;//授权配置
+}  
+
+
+export interface AIProxyConfig {
+  blockheight: number;  // 设置时的区块高度
+  isAIModel: number;    // 0: AI模型 1: MCPServer
+  apiType: number;      // 当type 为0时起作用,表示模型的接口类型,如0:anthropic,1:openai 2:ollama 3:googleai 4:azureopenai
+  authorization: string;
+  endpoint: string;
+  organization: string; // 组织名称或ID (fixed spelling from 'Orgnization')
+  apiVersion: string;   // api版本号
+  model: string;        // 模型
+  remark: string;
+}

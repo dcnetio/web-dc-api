@@ -4,7 +4,7 @@ import { dcnet } from "../../proto/dcnet_proto";
 import { HeliaLibp2p } from "helia";
 import { Libp2p } from "libp2p";
 import { DCContext } from "../../interfaces";
-import { uint32ToLittleEndianBytes, uint64ToLittleEndianBytes } from "lib/util/utils";
+import { uint32ToLittleEndianBytes, uint64ToLittleEndianBytes } from "../../util/utils";
 
 const uploadStatus = {
   OK: 0,

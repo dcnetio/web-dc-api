@@ -121,19 +121,20 @@ export class KeyValueManager {
     if (!theme.endsWith("_authlist")) {
       theme = theme + "_authlist";
     }
-    let client: Client | null = null;
+    
     const userPubkey = this.context.getPublicKey();
     let userPubkeyStr = userPubkey.string();
 
-    if (vaccount !== "") {
-      // Virtual account delegation operation, need to connect to specified virtual account node
-      const account = new TextEncoder().encode(vaccount);
-      client = await this.dc.connectToUserDcPeer(account);
-      userPubkeyStr = vaccount;
-    } else {
-      client = this.accountBackupDc.client;
+    let client = this.connectedDc.client;
+    if (themeAuthor != this.context.publicKey.string()) {//查询他人主题评论
+      const authorPublicKey: Ed25519PubKey = Ed25519PubKey.edPubkeyFromStr(themeAuthor);
+      client = await this.dc.connectToUserDcPeer(authorPublicKey.raw);
+      if (!client) {
+        return [null, Errors.ErrNoDcPeerConnected];
+      }
+      //获取token
+      await client.GetToken(this.context.publicKey.string(),this.context.sign);
     }
-
     if (client === null) {
       return [null, new Error("ErrConnectToAccountPeersFail")];
     }
@@ -143,12 +144,12 @@ export class KeyValueManager {
     }
 
     const themeAuthorPubkey: Ed25519PubKey =
-      Ed25519PubKey.pubkeyToEdStr(themeAuthor);
+      Ed25519PubKey.edPubkeyFromStr(themeAuthor);
 
     let pubkeyFlag = true;
     let forPubkey: Ed25519PubKey;
     try {
-      forPubkey = Ed25519PubKey.pubkeyToEdStr(authPubkey);
+      forPubkey = Ed25519PubKey.edPubkeyFromStr(authPubkey);
     } catch (error) {
       pubkeyFlag = false;
     }
@@ -214,7 +215,8 @@ export class KeyValueManager {
         content,
         contentSize,
         CommentType.KeyValue,
-        signature
+        signature,
+        vaccount
       );
 
       if (res !== 0) {
@@ -288,9 +290,16 @@ export class KeyValueManager {
     }
     const userPubkey = this.context.getPublicKey();
     let userPubkeyStr = userPubkey.string();
-    const themeAuthorPubkey: Ed25519PubKey =
-      Ed25519PubKey.pubkeyToEdStr(themeAuthor);
-    const client = await this.dc.connectToUserDcPeer(themeAuthorPubkey.raw);
+    let client = this.connectedDc.client;
+    if (themeAuthor != this.context.publicKey.string()) {//查询他人主题评论
+      const authorPublicKey: Ed25519PubKey = Ed25519PubKey.edPubkeyFromStr(themeAuthor);
+      client = await this.dc.connectToUserDcPeer(authorPublicKey.raw);
+      if (!client) {
+        return [null, Errors.ErrNoDcPeerConnected];
+      }
+      //获取token
+      await client.GetToken(this.context.publicKey.string(),this.context.sign);
+    }
     if (client === null) {
       return [null, new Error("ErrConnectToAccountPeersFail")];
     }
@@ -356,7 +365,7 @@ export class KeyValueManager {
     }
   }
 
-  async getetValueWithKey(
+  async getValueWithKey(
     appId: string,
     themeAuthor: string,
     theme: string,
@@ -372,9 +381,16 @@ export class KeyValueManager {
         ),
       ];
     }
-    const themeAuthorPubkey: Ed25519PubKey =
-      Ed25519PubKey.pubkeyToEdStr(themeAuthor);
-    const client = await this.dc.connectToUserDcPeer(themeAuthorPubkey.raw);
+    let client = this.connectedDc.client;
+    if (themeAuthor != this.context.publicKey.string()) {//查询他人主题评论
+      const authorPublicKey: Ed25519PubKey = Ed25519PubKey.edPubkeyFromStr(themeAuthor);
+      client = await this.dc.connectToUserDcPeer(authorPublicKey.raw);
+      if (!client) {
+        return [null, Errors.ErrNoDcPeerConnected];
+      }
+      //获取token
+      await client.GetToken(this.context.publicKey.string(),this.context.sign);
+    }
     if (client === null) {
       return [null, new Error("ErrConnectToAccountPeersFail")];
     }
@@ -423,9 +439,16 @@ export class KeyValueManager {
         ),
       ];
     }
-    const themeAuthorPubkey: Ed25519PubKey =
-      Ed25519PubKey.pubkeyToEdStr(themeAuthor);
-    const client = await this.dc.connectToUserDcPeer(themeAuthorPubkey.raw);
+     let client = this.connectedDc.client;
+    if (themeAuthor != this.context.publicKey.string()) {//查询他人主题评论
+      const authorPublicKey: Ed25519PubKey = Ed25519PubKey.edPubkeyFromStr(themeAuthor);
+      client = await this.dc.connectToUserDcPeer(authorPublicKey.raw);
+      if (!client) {
+        return [null, Errors.ErrNoDcPeerConnected];
+      }
+      //获取token
+      await client.GetToken(this.context.publicKey.string(),this.context.sign);
+    }
     if (client === null) {
       return [null, new Error("ErrConnectToAccountPeersFail")];
     }
@@ -479,9 +502,16 @@ export class KeyValueManager {
         ),
       ];
     }
-    const themeAuthorPubkey: Ed25519PubKey =
-      Ed25519PubKey.pubkeyToEdStr(themeAuthor);
-    const client = await this.dc.connectToUserDcPeer(themeAuthorPubkey.raw);
+    let client = this.connectedDc.client;
+    if (themeAuthor != this.context.publicKey.string()) {//查询他人主题评论
+      const authorPublicKey: Ed25519PubKey = Ed25519PubKey.edPubkeyFromStr(themeAuthor);
+      client = await this.dc.connectToUserDcPeer(authorPublicKey.raw);
+      if (!client) {
+        return [null, Errors.ErrNoDcPeerConnected];
+      }
+      //获取token
+      await client.GetToken(this.context.publicKey.string(),this.context.sign);
+    }
     if (client === null) {
       return [null, new Error("ErrConnectToAccountPeersFail")];
     }

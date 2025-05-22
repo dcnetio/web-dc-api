@@ -4,11 +4,9 @@
 import { DCContext, IKeyValueOperations } from "../interfaces";
 import { DCModule, CoreModuleName } from "../common/module-system";
 import { KeyValueManager, KeyValueStoreType } from "../implements/keyvalue/manager";
-import { ThemeManager } from "../implements/theme/manager";
-import { keyExpire } from "../common/define";
+import { ThemeManager } from "../implements/cache/manager";
 import { createLogger } from "../util/logger";
-import { ThemeComment } from "lib/common/types/types";
-
+import { ThemeComment } from "../common/types/types";
 const logger = createLogger('KeyValueModule');
 
 /**
@@ -185,7 +183,7 @@ export class KeyValueModule implements DCModule, IKeyValueOperations {
     this.assertInitialized();
     
     try {
-      const res = await this.keyValueManager.getetValueWithKey(
+      const res = await this.keyValueManager.getValueWithKey(
         appId,
         themeAuthor,
         theme,

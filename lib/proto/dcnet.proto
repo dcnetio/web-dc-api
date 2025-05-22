@@ -1178,8 +1178,6 @@ message GetAIProxyConfigRequest {
     bytes theme = 1; //状态汇聚对象CID
     bytes appId = 2; //应用标志
     bytes themeAuthor = 3;//发布状态汇聚对象的的pubkey
-    uint32 blockheight = 4; //发起请求时的blockheight
-     bytes  signature = 5;
 }
 
 message GetAIProxyConfigReply {
@@ -1192,8 +1190,6 @@ message GetUserOwnAIProxyAuthRequest {
     bytes theme = 1; //状态汇聚对象CID
     bytes appId = 2; //应用标志
     bytes themeAuthor = 3;//发布状态汇聚对象的的pubkey
-    uint32 blockheight = 4; //发起请求时的blockheight
-     bytes  signature = 5;
 }
 
 message GetUserOwnAIProxyAuthReply {

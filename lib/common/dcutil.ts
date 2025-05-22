@@ -150,7 +150,6 @@ export class DcUtil {
       return null;
     }
     const client = new Client(this.dcNodeClient?.libp2p,this.dcNodeClient.blockstore, nodeAddr, dc_protocol);
-
     return client;
   };
 

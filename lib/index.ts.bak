@@ -334,7 +334,7 @@ export class DC implements SignHandler {
     const publicKeyString = await loadPublicKey();
     if(publicKeyString) {
       // 获取公钥
-      const publicKey = Ed25519PubKey.pubkeyToEdStr(publicKeyString);
+      const publicKey = Ed25519PubKey.edPubkeyFromStr(publicKeyString);
       this.publicKey = publicKey;
       // 获取token
       const token = await loadTokenWithPeerId(publicKeyString, peerId);

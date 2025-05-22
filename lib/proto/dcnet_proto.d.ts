@@ -18098,12 +18098,6 @@ export namespace dcnet {
 
             /** GetAIProxyConfigRequest themeAuthor */
             themeAuthor?: (Uint8Array|null);
-
-            /** GetAIProxyConfigRequest blockheight */
-            blockheight?: (number|null);
-
-            /** GetAIProxyConfigRequest signature */
-            signature?: (Uint8Array|null);
         }
 
         /** Represents a GetAIProxyConfigRequest. */
@@ -18123,12 +18117,6 @@ export namespace dcnet {
 
             /** GetAIProxyConfigRequest themeAuthor. */
             public themeAuthor: Uint8Array;
-
-            /** GetAIProxyConfigRequest blockheight. */
-            public blockheight: number;
-
-            /** GetAIProxyConfigRequest signature. */
-            public signature: Uint8Array;
 
             /**
              * Creates a new GetAIProxyConfigRequest instance using the specified properties.
@@ -18328,12 +18316,6 @@ export namespace dcnet {
 
             /** GetUserOwnAIProxyAuthRequest themeAuthor */
             themeAuthor?: (Uint8Array|null);
-
-            /** GetUserOwnAIProxyAuthRequest blockheight */
-            blockheight?: (number|null);
-
-            /** GetUserOwnAIProxyAuthRequest signature */
-            signature?: (Uint8Array|null);
         }
 
         /** Represents a GetUserOwnAIProxyAuthRequest. */
@@ -18353,12 +18335,6 @@ export namespace dcnet {
 
             /** GetUserOwnAIProxyAuthRequest themeAuthor. */
             public themeAuthor: Uint8Array;
-
-            /** GetUserOwnAIProxyAuthRequest blockheight. */
-            public blockheight: number;
-
-            /** GetUserOwnAIProxyAuthRequest signature. */
-            public signature: Uint8Array;
 
             /**
              * Creates a new GetUserOwnAIProxyAuthRequest instance using the specified properties.

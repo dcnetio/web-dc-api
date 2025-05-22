@@ -27,6 +27,7 @@ export class KeyValueClient {
     contentSize: number,
     type: number,
     signature: Uint8Array,
+    vAccount?: string
   ): Promise<number> {
     const message = new dcnet.pb.ConfigThemeObjAuthRequest({});
     message.appId = new TextEncoder().encode(appId);
@@ -39,6 +40,9 @@ export class KeyValueClient {
     message.signature = signature;
     message.type = type;
     message.userPubkey = new TextEncoder().encode(userPubkeyStr);
+    if(vAccount){
+       message.vaccount = new TextEncoder().encode(vAccount)
+     }
     const messageBytes = dcnet.pb.ConfigThemeObjAuthRequest.encode(message).finish();
     const grpcClient = new Libp2pGrpcClient(
       this.client.p2pNode,

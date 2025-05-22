@@ -187,7 +187,7 @@ toMultihash(): MultihashDigest<0> {
         return Ed25519PubKey.fromMultihash(mh)  
     }  
 
-    static pubkeyToEdStr (pubkey: string) {  
+    static edPubkeyFromStr (pubkey: string) {  
         if(pubkey.indexOf('0x') === 0){
           // hex
           return Ed25519PubKey.fromString(pubkey.substring(2));

@@ -3,7 +3,7 @@
 
 import { DCContext, ICacheOperations } from "../interfaces";
 import { DCModule, CoreModuleName } from "../common/module-system";
-import { ThemeManager } from "../implements/theme/manager";
+import { ThemeManager } from "../implements/cache/manager";
 import { keyExpire } from "../common/define";
 import { createLogger } from "../util/logger";
 
