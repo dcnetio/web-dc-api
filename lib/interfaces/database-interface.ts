@@ -1,4 +1,4 @@
-import { ICollectionConfig } from "lib/implements/threaddb/core/core";
+import { ICollectionConfig } from "../implements/threaddb/core/core";
 
 /**
  * 数据库操作接口,这个数据库主要由threadid确保唯一,servicekey,readkey多重加密来确保数据安全,其中readkey永远不离开用户,servicekey会在DC云端的TEE环境中参与数据备份

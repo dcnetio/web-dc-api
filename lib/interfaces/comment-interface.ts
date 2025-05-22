@@ -1,4 +1,4 @@
-import { OpenFlag } from "lib/common/constants";
+import { OpenFlag } from "../common/constants";
 
 /**
  * 评论操作接口

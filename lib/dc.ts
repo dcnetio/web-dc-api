@@ -64,7 +64,7 @@ export class DC implements DCContext {
   constructor(options: {
     wssUrl: string;
     backWssUrl: string;
-    appInfo: APPInfo ;
+    appInfo?: APPInfo ;
     logLevel?: LogLevel;
     names?: string[];
   }) {
