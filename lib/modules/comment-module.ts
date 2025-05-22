@@ -72,7 +72,7 @@ export class CommentModule implements DCModule, ICommentOperations {
     
     try {
       const res = await this.commentManager.addThemeObj(
-        this.context.appInfo?.id || "",
+        this.context.appInfo?.appId || "",
         theme,
         openFlag,
         commentSpace || 50 * 1024 * 1024 // 50M
@@ -95,7 +95,7 @@ export class CommentModule implements DCModule, ICommentOperations {
     
     try {
       const res = await this.commentManager.addThemeSpace(
-        this.context.appInfo?.id || "",
+        this.context.appInfo?.appId || "",
         theme,
         addSpace
       );
@@ -128,7 +128,7 @@ export class CommentModule implements DCModule, ICommentOperations {
     
     try {
       const res = await this.commentManager.publishCommentToTheme(
-        this.context.appInfo?.id || "",
+        this.context.appInfo?.appId || "",
         theme,
         themeAuthor,
         commentType,
@@ -159,7 +159,7 @@ export class CommentModule implements DCModule, ICommentOperations {
     
     try {
       const res = await this.commentManager.deleteSelfComment(
-        this.context.appInfo?.id || "",
+        this.context.appInfo?.appId || "",
         theme,
         themeAuthor,
         commentKey
@@ -193,7 +193,7 @@ export class CommentModule implements DCModule, ICommentOperations {
     
     try {
       const res = await this.commentManager.getThemeObj(
-        this.context.appInfo?.id || "",
+        this.context.appInfo?.appId || "",
         themeAuthor,
         startHeight || 0,
         direction || 0,
@@ -232,7 +232,7 @@ export class CommentModule implements DCModule, ICommentOperations {
     
     try {
       const res = await this.commentManager.getThemeComments(
-        this.context.appInfo?.id || "",
+        this.context.appInfo?.appId || "",
         theme,
         themeAuthor,
         startHeight || 0,
@@ -270,7 +270,7 @@ export class CommentModule implements DCModule, ICommentOperations {
     
     try {
       const res = await this.commentManager.getUserComments(
-        this.context.appInfo?.id || "",
+        this.context.appInfo?.appId || "",
         userPubkey,
         startHeight || 0,
         direction || 0,
