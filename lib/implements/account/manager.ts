@@ -1,7 +1,7 @@
 import type { Multiaddr } from "@multiformats/multiaddr";
 import { ChainUtil } from "../../common/chain";
 import { DcUtil } from "../../common/dcutil";
-import { DCConnectInfo, User } from "../../common/types/types";
+import { DCConnectInfo, NFTBindStatus, User } from "../../common/types/types";
 import { AccountClient } from "./client";
 import { sha256, uint32ToLittleEndianBytes } from "../../util/utils";
 import { Ed25519PrivKey } from "lib";
@@ -12,20 +12,6 @@ import { SymmetricKey } from "../threaddb/common/key";
 import { peerIdFromString } from "@libp2p/peer-id";
 import { request } from "http";
 
-export enum NFTBindStatus {
-  Success = 0,
-  UserBinded = 1,           // 用户已绑定其他nft账号
-  NftAccountBinded = 2,     // nft账号已经被其他用户绑定
-  NoBcAccount = 3,          // 区块链账号不存在
-  DcPeerNotConnected = 4,   // 还没有建立到存储节点的连接
-  EncryptError = 5,         // 加密数据过程出错
-  BlockchainError = 6,      // 区块链相关错误
-  SignError = 7,            // 签名错误
-  SpaceExpired = 8,         // 用户有效期已过
-  NoLeftSpace = 9,          // 空间不足
-  NetworkErr = 10,          // 网络错误
-  Error = 99                // 其他异常
-}
 // 错误定义
 export class AccountError extends Error {
   constructor(message: string) {

@@ -120,3 +120,18 @@ export interface AIProxyConfig {
 // flag: 0表示开始接收数据, 1:权限不足 2:获取失败 3:关闭连接 4: 其他错误
 // content: 接收到的数据
 export type OnStreamResponseType = (flag: number, content: string,err: string) => void; 
+
+export enum NFTBindStatus {
+  Success = 0,
+  UserBinded = 1,           // 用户已绑定其他nft账号
+  NftAccountBinded = 2,     // nft账号已经被其他用户绑定
+  NoBcAccount = 3,          // 区块链账号不存在
+  DcPeerNotConnected = 4,   // 还没有建立到存储节点的连接
+  EncryptError = 5,         // 加密数据过程出错
+  BlockchainError = 6,      // 区块链相关错误
+  SignError = 7,            // 签名错误
+  SpaceExpired = 8,         // 用户有效期已过
+  NoLeftSpace = 9,          // 空间不足
+  NetworkErr = 10,          // 网络错误
+  Error = 99                // 其他异常
+}

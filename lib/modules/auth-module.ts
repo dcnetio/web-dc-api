@@ -8,7 +8,7 @@ import { CommonClient } from "../common/commonclient";
 import { Client } from "../common/dcapi";
 import { createLogger } from "../util/logger";
 import { loadPublicKey, loadTokenWithPeerId, savePublicKey, sleep } from "../util/utils";
-import { Ed25519PubKey } from "../common/dc-key/ed25519";
+import { Ed25519PrivKey, Ed25519PubKey } from "../common/dc-key/ed25519";
 import { Errors } from "../common/error";
 import { dc_protocol } from "../common/define";
 import { Multiaddr } from "@multiformats/multiaddr";
@@ -16,6 +16,7 @@ import {WalletManager} from "../implements/wallet/manager";
 import { User } from "../common/types/types";
 import { IAuthOperations } from "lib/interfaces/auth-interface";
 import { DCContext } from "../../lib/interfaces/DCContext";
+import { KeyManager } from "lib/common/dc-key/keyManager";
 
 const logger = createLogger('AuthModule');
 
@@ -134,21 +135,29 @@ export class AuthModule implements DCModule, IAuthOperations {
    * @param safecode 安全码
    * @returns 是否登录成功
    */
-  async accountLogin(nftAccount: string, password: string, safecode: string): Promise<boolean> {
+  async accountLogin(nftAccount: string, password: string, safecode: string): Promise<{
+    mnemonic: string;
+    privKey: Ed25519PrivKey;
+  }>{
     this.assertInitialized();
     
     if (!this.context.connectedDc?.client) {
       throw new Error("dcClient is null");
     }
     const commonClient = new CommonClient(this.context.connectedDc.client);
-    const privKey = await commonClient.accountLogin(
+    const mnemonic = await commonClient.accountLogin(
       nftAccount,
       password,
       safecode,
-      this.context.appInfo?.id || ""
     );
     
-    if (privKey) {
+    if (mnemonic) {
+      const keymanager = new KeyManager();
+      //const privKey1 = await keymanager.getEd25519KeyFromMnemonic(mnemonic);
+      const privKey = await keymanager.getEd25519KeyFromMnemonic(
+        mnemonic,
+        this.context.appInfo?.id || ""
+      );
       this.context.privKey = privKey;
       // 保存公钥
       const pubkey = this.context.privKey.publicKey;
@@ -166,8 +175,12 @@ export class AuthModule implements DCModule, IAuthOperations {
       }
       // 存在token， 获取用户备用节点
       await this.getAccountBackupDc();
+      return {
+        mnemonic,
+        privKey
+      };
     }
-    return true;
+    return;
   }
 
   async sign(payload: Uint8Array): Promise<Uint8Array>  {

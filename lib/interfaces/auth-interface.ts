@@ -1,3 +1,4 @@
+import { Ed25519PrivKey } from "lib/common/dc-key/ed25519";
 import { DCConnectInfo, User } from "lib/common/types/types";
 import { NFTBindStatus } from "lib/implements/account/manager";
 
@@ -21,7 +22,10 @@ export interface IAuthOperations {
    * @param safecode 安全码,默认000000
    * @returns 是否登录成功
    */
-  accountLogin(nftAccount: string, password: string, safecode: string): Promise<boolean>;
+  accountLogin(nftAccount: string, password: string, safecode: string): Promise<{
+      mnemonic: string;
+      privKey: Ed25519PrivKey;
+    }>;
   
   /**
    * 签名数据
