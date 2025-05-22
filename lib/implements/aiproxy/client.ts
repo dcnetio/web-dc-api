@@ -6,7 +6,7 @@ import { base58btc } from "multiformats/bases/base58";
 import { toString as uint8ArrayToString } from "uint8arrays/to-string";
 import { Errors } from "../../common/error";
 import { DCContext } from "../../../lib/interfaces/DCContext";
-import { OnStreamResponseType } from "lib/common/types/types";
+import { OnStreamResponseType } from "../../common/types/types";
 import { error } from "ajv/dist/vocabularies/applicator/dependencies";
 
 export class AIProxyClient {

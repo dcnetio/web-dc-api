@@ -1,6 +1,6 @@
-import { Ed25519PrivKey } from "lib/common/dc-key/ed25519";
-import { DCConnectInfo, User } from "lib/common/types/types";
-import { NFTBindStatus } from "lib/implements/account/manager";
+import { Ed25519PrivKey } from "../common/dc-key/ed25519";
+import { DCConnectInfo, User } from "../common/types/types";
+import { NFTBindStatus } from "../implements/account/manager";
 
 
 

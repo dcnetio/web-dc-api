@@ -1,7 +1,7 @@
 // modules/message-module.ts
 // 消息功能模块
 
-import { IMessageOperations } from "lib/interfaces/message-interface";
+import { IMessageOperations } from "../interfaces/message-interface";
 import { DCContext } from "../../lib/interfaces/DCContext";
 import { DCModule, CoreModuleName } from "../common/module-system";
 import { MessageManager } from "../implements/message/manager";

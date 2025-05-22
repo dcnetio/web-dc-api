@@ -17,7 +17,7 @@ import { bytesToHex } from "@noble/curves/abstract/utils";
 import { dcnet } from "../../proto/dcnet_proto";
 import { DCContext } from "../../../lib/interfaces/DCContext";
 import { publicKeyFromRaw } from "@libp2p/crypto/keys";
-import { Ed25519PubKey } from "lib/common/dc-key/ed25519";
+import { Ed25519PubKey } from "../../common/dc-key/ed25519";
 const { Buffer } = buffer;
 
 // 创建一个可以取消的信号
