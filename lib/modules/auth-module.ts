@@ -156,7 +156,7 @@ export class AuthModule implements DCModule, IAuthOperations {
       //const privKey1 = await keymanager.getEd25519KeyFromMnemonic(mnemonic);
       const privKey = await keymanager.getEd25519KeyFromMnemonic(
         mnemonic,
-        this.context.appInfo?.id || ""
+        this.context.appInfo?.appId || ""
       );
       this.context.privKey = privKey;
       // 保存公钥

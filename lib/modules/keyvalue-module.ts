@@ -77,7 +77,7 @@ export class KeyValueModule implements DCModule, IKeyValueOperations {
     
     try {
       const res = await this.keyValueManager.createStore(
-        this.context.appInfo.id,
+        this.context.appInfo.appId,
         theme,
         space,
         type

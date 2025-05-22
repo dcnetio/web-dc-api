@@ -209,6 +209,10 @@ export class DC implements DCContext {
       return false;
     }
   };
+
+  setAppInfo(appInfo: APPInfo) {
+    this.appInfo = appInfo;
+  }
   
   /**
    * 关闭并清理资源
