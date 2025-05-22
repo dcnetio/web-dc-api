@@ -3,7 +3,7 @@
 
 
 import { DCModule, CoreModuleName } from "../common/module-system";
-import { AccountManager, NFTBindStatus } from "../implements/account/manager";
+import { AccountManager } from "../implements/account/manager";
 import { CommonClient } from "../common/commonclient";
 import { Client } from "../common/dcapi";
 import { createLogger } from "../util/logger";
@@ -13,7 +13,7 @@ import { Errors } from "../common/error";
 import { dc_protocol } from "../common/define";
 import { Multiaddr } from "@multiformats/multiaddr";
 import {WalletManager} from "../implements/wallet/manager";
-import { User } from "../common/types/types";
+import { NFTBindStatus, User } from "../common/types/types";
 import { IAuthOperations } from "lib/interfaces/auth-interface";
 import { DCContext } from "../../lib/interfaces/DCContext";
 import { KeyManager } from "lib/common/dc-key/keyManager";
