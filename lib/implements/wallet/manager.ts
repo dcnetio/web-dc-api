@@ -27,8 +27,8 @@ export class WalletManager {
   async init() {
     // this.iframeId = 'dcWalletIframe';
     // const flag = dcwallet.initDAPP(
-    //   this.context.appInfo.name, 
-    //   this.context.appInfo.icon, 
+    //   this.context.appInfo.appName, 
+    //   this.context.appInfo.appIcon, 
     //   version
     // );
     // this.initFlag = flag;

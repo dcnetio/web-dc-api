@@ -64,7 +64,7 @@ export class DatabaseModule implements DCModule, IDatabaseOperations {
     }
     
     try {
-      const tdatastore = await createTxnDatastore(this.context.appInfo.name);
+      const tdatastore = await createTxnDatastore(this.context.appInfo?.appName);
       const keyBook = await newKeyBook(tdatastore);
       const addrBook = await newAddrBook(tdatastore);
       const headBook = newHeadBook(tdatastore);

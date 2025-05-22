@@ -60,7 +60,7 @@ export class MessageModule implements DCModule, IMessageOperations {
     
     try {
       const res = await this.messageManager.sendMsgToUserBox(
-        this.context.appInfo?.id || "",
+        this.context.appInfo?.appId || "",
         receiver,
         msg
       );
@@ -83,7 +83,7 @@ export class MessageModule implements DCModule, IMessageOperations {
     
     try {
       const res = await this.messageManager.getMsgFromUserBox(
-        this.context.appInfo?.id || "",
+        this.context.appInfo?.appId || "",
         limit
       );
       
