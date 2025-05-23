@@ -1,69 +1,124 @@
-import resolve from '@rollup/plugin-node-resolve';  
-import commonjs from '@rollup/plugin-commonjs';  
-import typescript from '@rollup/plugin-typescript';  
+import resolve from '@rollup/plugin-node-resolve';
+import commonjs from '@rollup/plugin-commonjs';
+import typescript from '@rollup/plugin-typescript';
+import json from '@rollup/plugin-json';
+import terser from '@rollup/plugin-terser';
 
-import json from '@rollup/plugin-json';  
-// import { terser } from 'rollup-plugin-terser';  
-import dts from 'rollup-plugin-dts';  
-import pkg from './package.json' assert { type: 'json' }; // 使用 .mjs 时  
+import dts from 'rollup-plugin-dts';
+import pkg from './package.json' assert { type: 'json' };
 
-const tsconfig = {  
-  tsconfig: './tsconfig.json',  
-  declaration: false  
+const tsconfig = {
+  tsconfig: './tsconfig.json',
+  declaration: false
 };
-// 获取依赖列表作为外部模块  
-const external = [  
-  ...Object.keys(pkg.dependencies || {}),  
-  ...Object.keys(pkg.peerDependencies || {})  
-];  
 
-export default [  
-  // 主要的 ESM 和 CJS 构建  
-  {  
-    input: 'lib/index.ts', // 入口文件路径  
-    output: [  
-      {  
-        file: pkg.module, // 例如 'dist/index.esm.js'  
-        format: 'esm',  
-        sourcemap: true  
-      },  
-      {  
-        file: pkg.main, // 例如 'dist/index.cjs.js'  
-        format: 'cjs',  
-        sourcemap: true  
-      }  
-    ],  
-    external, // 外部依赖，不会被打包进最终文件  
-    plugins: [  
-      resolve({  
-        preferBuiltins: false, // 优先使用 Node.js 内置模块  
-        // 为难以解析的 Node.js 模块提供替代实现  
-        browser: true,  
-        mainFields: ['browser', 'module', 'main']  
-      }),  
-      commonjs({ 
-        // 有些包可能需要特殊处理  
-        transformMixedEsModules: true,  
-        // 针对特定包的额外配置  
-        namedExports: {  
-          // 'it-pushable': ['pushable'],  
-          // 添加其他需要特殊处理的包  
-        }  
-      }), // 转换 CommonJS 模块  
-      json(), // 支持导入 JSON 文件  
-      typescript(tsconfig),  
-      // 可选: 压缩代码 (生产版本)  
-      // terser()  
-    ]  
-  },  
-  // 类型定义文件构建  
-  {  
-    input: 'lib/index.ts',  
-    output: {  
-      file: pkg.types, // 例如 'dist/index.d.ts'  
-      format: 'es'  
-    },  
-    plugins: [dts()],  
-    external  
-  }  
-];  
+// 外部依赖（这些将不会被打包进最终文件）
+const external = [
+  ...Object.keys(pkg.dependencies || {}),
+  ...Object.keys(pkg.peerDependencies || {})
+];
+
+// 全局变量名
+const GLOBAL_NAME = 'WebDcApi';
+
+export default [
+  // 原有的ESM和CJS构建
+  {
+    input: 'lib/index.ts',
+    output: [
+      {
+        file: pkg.module, // ESM格式
+        format: 'esm',
+        sourcemap: true
+      },
+      {
+        file: pkg.main, // CJS格式
+        format: 'cjs',
+        sourcemap: true
+      }
+    ],
+    external,
+    plugins: [
+      resolve({
+        preferBuiltins: false,
+        browser: true
+      }),
+      commonjs({
+        transformMixedEsModules: true
+      }),
+      json(),
+      typescript(tsconfig)
+    ]
+  },
+  
+  // 类型定义文件
+  {
+    input: 'lib/index.ts',
+    output: {
+      file: pkg.types,
+      format: 'es'
+    },
+    plugins: [dts()],
+    external
+  },
+  
+  // 新增的浏览器UMD构建
+  {
+    input: 'lib/index.ts',
+    output: {
+      file: 'dist/index.browser.js', // 未压缩版本
+      format: 'umd',
+      name: GLOBAL_NAME,
+      sourcemap: true,
+      exports: 'named',
+      // 确保所有导出都正确挂载到全局对象
+      intro: `var global = typeof window !== 'undefined' ? window : this;`
+    },
+    // 注意：浏览器版本应该包含所有依赖（除非是全局可用的）
+    // external: [], // 不设置external，以便捆绑所有依赖
+    plugins: [
+      resolve({
+        browser: true,
+        preferBuiltins: false
+      }),
+      commonjs({
+        transformMixedEsModules: true
+      }),
+      json(),
+      typescript({
+        ...tsconfig,
+        target: 'es5' // 确保更广泛的浏览器兼容性
+      })
+    ]
+  },
+  
+  // 压缩版本
+  {
+    input: 'lib/index.ts',
+    output: {
+      file: 'dist/index.browser.min.js', // 压缩版本
+      format: 'umd',
+      name: GLOBAL_NAME,
+      sourcemap: true,
+      exports: 'named',
+      intro: `var global = typeof window !== 'undefined' ? window : this;`,
+      compact: true,           // 移除不必要的空白
+      minifyInternalExports: true  // 压缩内部导出
+    },
+    plugins: [
+      resolve({
+        browser: true,
+        preferBuiltins: false
+      }),
+      commonjs({
+        transformMixedEsModules: true
+      }),
+      json(),
+      typescript({
+        ...tsconfig,
+        target: 'es5'
+      }),
+      terser() // 添加压缩
+    ]
+  }
+];
