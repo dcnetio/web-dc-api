@@ -66,23 +66,30 @@ export default [
   {
     input: 'lib/index.ts',
     output: {
-      file: 'dist/index.browser.js', // 未压缩版本
+      file: 'dist/web-dc-api.browser.js', // 未压缩版本
       format: 'umd',
       name: GLOBAL_NAME,
       sourcemap: true,
       exports: 'named',
       // 确保所有导出都正确挂载到全局对象
-      intro: `var global = typeof window !== 'undefined' ? window : this;`
+      intro: `var global = typeof window !== 'undefined' ? window : this;`,
+      globals: {
+        // 明确告诉 Rollup 本地包的全局变量名
+        'grpc-libp2p-client': 'GrpcLibp2pClient'
+      }
     },
     // 注意：浏览器版本应该包含所有依赖（除非是全局可用的）
     // external: [], // 不设置external，以便捆绑所有依赖
+    external: ['grpc-libp2p-client'], // 设为外部依赖
     plugins: [
       resolve({
         browser: true,
-        preferBuiltins: false
+        preferBuiltins: false,
+        // 包括node_modules和上级目录
+        paths: ['node_modules', '../']
       }),
       commonjs({
-        transformMixedEsModules: true
+        transformMixedEsModules: true,
       }),
       json(),
       typescript({
@@ -92,33 +99,33 @@ export default [
     ]
   },
   
-  // 压缩版本
-  {
-    input: 'lib/index.ts',
-    output: {
-      file: 'dist/index.browser.min.js', // 压缩版本
-      format: 'umd',
-      name: GLOBAL_NAME,
-      sourcemap: true,
-      exports: 'named',
-      intro: `var global = typeof window !== 'undefined' ? window : this;`,
-      compact: true,           // 移除不必要的空白
-      minifyInternalExports: true  // 压缩内部导出
-    },
-    plugins: [
-      resolve({
-        browser: true,
-        preferBuiltins: false
-      }),
-      commonjs({
-        transformMixedEsModules: true
-      }),
-      json(),
-      typescript({
-        ...tsconfig,
-        target: 'es5'
-      }),
-      terser() // 添加压缩
-    ]
-  }
+  // // 压缩版本
+  // {
+  //   input: 'lib/index.ts',
+  //   output: {
+  //     file: 'dist/web-dc-api.browser.min.js', // 压缩版本
+  //     format: 'umd',
+  //     name: GLOBAL_NAME,
+  //     sourcemap: true,
+  //     exports: 'named',
+  //     intro: `var global = typeof window !== 'undefined' ? window : this;`,
+  //     compact: true,           // 移除不必要的空白
+  //     minifyInternalExports: true  // 压缩内部导出
+  //   },
+  //   plugins: [
+  //     resolve({
+  //       browser: true,
+  //       preferBuiltins: false
+  //     }),
+  //     commonjs({
+  //       transformMixedEsModules: true
+  //     }),
+  //     json(),
+  //     typescript({
+  //       ...tsconfig,
+  //       target: 'es5'
+  //     }),
+  //     terser() // 添加压缩
+  //   ]
+  // }
 ];
