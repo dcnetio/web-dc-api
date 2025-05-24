@@ -107,7 +107,6 @@ export interface UserProxyCallConfig  {
 
 
 export interface AIProxyConfig {
-  blockheight: number;  // 设置时的区块高度
   isAIModel: number;    // 0: AI模型 1: MCPServer
   apiType: number;      // 当type 为0时起作用,表示模型的接口类型,如0:anthropic,1:openai 2:ollama 3:googleai 4:azureopenai
   authorization: string;
@@ -116,6 +115,7 @@ export interface AIProxyConfig {
   apiVersion: string;   // api版本号
   model: string;        // 模型
   remark: string;
+  blockheight?: number;  // 可以不设置,由sdk自动设置
 }
 
 // 调用AIProxy的流式回调函数

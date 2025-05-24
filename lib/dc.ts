@@ -110,6 +110,7 @@ export class DC implements DCContext {
       this.moduleSystem.registerModule(new KeyValueModule());
       this.moduleSystem.registerModule(new ClientModule());
       this.moduleSystem.registerModule(new CacheModule());
+      this.moduleSystem.registerModule(new AIProxyModule());
     }
     
     logger.info("核心模块注册完成");

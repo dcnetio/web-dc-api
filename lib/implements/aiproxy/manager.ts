@@ -89,10 +89,13 @@ export class AIProxyManager {
     serviceConfig?: AIProxyConfig,
     vaccount?: string
   ): Promise<[boolean, Error | null]> {
-    
+    const blockHeight: number = await this.chainUtil.getBlockHeight();
     const userPubkey = this.context.getPublicKey();
     let userPubkeyStr = userPubkey.string();
-
+    if (!configTheme.startsWith("keyvalue_")) {
+            configTheme = "keyvalue_" + configTheme;
+        }
+  
     let client = this.accountBackUpDc.client;
        if (configAuthor != this.context.publicKey.string()) {//查询他人主题评论
          const authorPublicKey: Ed25519PubKey = Ed25519PubKey.edPubkeyFromStr(configAuthor);
@@ -103,11 +106,13 @@ export class AIProxyManager {
          //获取token
          await client.GetToken(this.context.publicKey.string(),this.context.sign);
        }
+
     let content = '';
     const key = serviceName
     if (!serviceConfig) {
         content = `${key}`;
     }else{
+        serviceConfig.blockheight = blockHeight;
         const value = JSON.stringify(serviceConfig)
         content = `${key}:${value}`;   
     }
@@ -117,7 +122,7 @@ export class AIProxyManager {
 
     const contentSize = content.length;
 
-    const blockHeight: number = await this.chainUtil.getBlockHeight();
+    
     const hValue: Uint8Array = uint32ToLittleEndianBytes(
       blockHeight ? blockHeight : 0
     );
@@ -176,6 +181,9 @@ export class AIProxyManager {
     authConfig: ProxyCallConfig,
     vaccount?: string
   ): Promise<[number, Error | null]> {
+    if (!configTheme.startsWith("keyvalue_")) {
+        configTheme = "keyvalue_" + configTheme;
+    }
     if (!configTheme.endsWith("_authlist")) {
       configTheme = configTheme + "_authlist";
     }
@@ -242,7 +250,7 @@ export class AIProxyManager {
     );
     // Create binary representation of type (little endian)
     const typeValue: Uint8Array = uint32ToLittleEndianBytes(
-      CommentType.KeyValue
+      CommentType.Comment
     );
     // sign(Theme+appId+objAuthor+blockheight+contentCid)
     const themeValue: Uint8Array = new TextEncoder().encode(configTheme);
@@ -273,7 +281,7 @@ export class AIProxyManager {
         contentCid,
         content,
         contentSize,
-        CommentType.KeyValue,
+        CommentType.Comment,
         signature
       );
 
@@ -283,6 +291,8 @@ export class AIProxyManager {
     } catch (error) {
       return [null, error];
     }
+
+    return [0, null];
   }
 
   //获取的ai代理的所有配置,包括服务与授权列表
@@ -292,6 +302,9 @@ export class AIProxyManager {
     configThem: string,
     vaccount?: string
   ): Promise<[UserProxyCallConfig[] | null,AIProxyConfig[] | null, Error | null]> {
+    if (!configThem.startsWith("keyvalue_")) {
+        configThem = "keyvalue_" + configThem;
+    }
     if (!configThem.endsWith("_authlist")) {
       configThem = configThem + "_authlist";
     }
@@ -419,6 +432,9 @@ export class AIProxyManager {
     themeAuthor: string,
     configThem: string,
   ): Promise<[authConfig: ProxyCallConfig, error: Error | null]> {
+    if( !configThem.startsWith("keyvalue_")) {
+        configThem = "keyvalue_" + configThem;
+    }
     
      let client = this.accountBackUpDc.client;
        if (themeAuthor != this.context.publicKey.string()) {//查询他人主题评论
@@ -464,6 +480,9 @@ export class AIProxyManager {
     path?: string,
     model?: string): Promise< number>
     {
+       if( !configThem.startsWith("keyvalue_")) {
+            configThem = "keyvalue_" + configThem;
+        }
         const blockHeight = (await this.chainUtil.getBlockHeight()) || 0;
         const hValue: Uint8Array = uint32ToLittleEndianBytes(
             blockHeight ? blockHeight : 0

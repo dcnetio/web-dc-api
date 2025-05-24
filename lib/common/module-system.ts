@@ -121,6 +121,7 @@ export class ModuleSystem {
           return false;
         }
       }
+      
     }
     
     // 然后初始化其余的扩展模块

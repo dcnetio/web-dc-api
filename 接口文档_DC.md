@@ -1,5 +1,7 @@
  # DC API 接口文档
 
+<br>
+
 ## 目录
 
 1. 概览
@@ -15,9 +17,13 @@
 11. AI代理模块 (aiproxy)
 12. 常见使用流程
 
+<br><br>
+
 ## 概览
 
 DC API是一个分布式存储和通信库，提供了身份验证、文件存储、消息传递、评论系统、数据库管理等核心功能。该API基于区块链技术，支持去中心化应用程序开发。
+
+<br><br>
 
 ## 初始化
 
@@ -39,9 +45,11 @@ const dc = new DC({
 await dc.init();
 ```
 
+<br><br>
+
 ## 认证模块 (auth)
 
-负责用户身份验证、账户管理和访问控制。
+负责用户身份验证、账户管理和访问控制。如果只是开发DAPP,用dcwallet钱包登录,可以不用管这个模块,这部分功能大部分都在dcwallet中已经实现,开发者只要专注于认证模块以外的功能即可。
 
 ### 方法
 
@@ -57,11 +65,14 @@ if (success) {
 ```
 
 **参数:**
+
 - `nftAccount`: string - NFT账户名称
 - `password`: string - 密码
 - `safecode`: string - 安全码，默认"000000"
 
 **返回:** Promise<boolean> - 登录是否成功
+
+<br>
 
 #### `bindNFTAccount(account, password, seccode, mnemonic)`
 
@@ -82,6 +93,8 @@ if (status === NFTBindStatus.Success) {
 
 **返回:** Promise<[NFTBindStatus, Error | null]> - 绑定状态码和错误信息
 
+<br>
+
 #### `generateAppAccount(appId, mnemonic)`
 
 创建应用子账号。
@@ -99,6 +112,8 @@ if (privateKey) {
 
 **返回:** Promise<[string | null, Error | null]> - 私钥字符串和错误信息
 
+<br>
+
 #### `isNftAccountBindSuccess(account)`
 
 检查NFT账号是否成功绑定到用户公钥。
@@ -112,6 +127,8 @@ console.log('NFT账号绑定状态:', isBound);
 - `account`: string - NFT账号
 
 **返回:** Promise<boolean> - 是否成功绑定
+
+<br>
 
 #### `isNftAccountBinded(account)`
 
@@ -127,6 +144,8 @@ console.log('NFT账号是否已被绑定:', isAlreadyBinded);
 
 **返回:** Promise<boolean> - 是否已被绑定
 
+<br>
+
 #### `getUserInfoWithNft(nftAccount)`
 
 根据NFT账户获取用户信息。
@@ -141,11 +160,15 @@ console.log('用户信息:', userInfo);
 
 **返回:** Promise<any> - 用户信息对象
 
+<br><br>
+
 ## 文件模块 (file)
 
 提供文件上传、下载和缓存功能。
 
 ### 方法
+
+
 
 #### `addFile(file, enkey, onUpdateTransmitSize)`
 
@@ -168,6 +191,8 @@ console.log('上传结果:', result);
 
 **返回:** Promise<any> - 上传结果，包含CID等信息
 
+<br>
+
 #### `getFile(cid, decryptKey)`
 
 获取文件内容。
@@ -184,6 +209,8 @@ if (fileContent) {
 - `decryptKey`: string - 解密密钥
 
 **返回:** Promise<Uint8Array | undefined> - 文件字节数组
+
+<br>
 
 #### `createFileStream(cid, decryptKey)`
 
@@ -208,6 +235,8 @@ if (stream) {
 
 **返回:** Promise<ReadableStream<Uint8Array> | null> - 文件可读流
 
+<br>
+
 #### `getSeekableFileStream(ipfsPath, decryptKey)`
 
 获取支持随机访问的文件流，适用于视频播放等场景。
@@ -224,6 +253,8 @@ console.log('读取的数据:', data);
 - `decryptKey`: string - 解密密钥
 
 **返回:** Promise<SeekableFileStream> - 可随机访问的文件流
+
+<br>
 
 #### `clearFileCache(pathname)`
 
@@ -242,11 +273,15 @@ dc.file.clearFileCache();
 
 **返回:** void
 
+<br><br>
+
 ## 客户端模块 (client)
 
 提供底层节点连接和网络通信功能。
 
 ### 方法
+
+
 
 #### `getHostID()`
 
@@ -264,11 +299,15 @@ if (hostInfo) {
 
 **返回:** Promise<[{ peerID: string; reqAddr: string } | null, Error | null]> - 主机信息和错误
 
+<br><br>
+
 ## 消息模块 (message)
 
 提供用户消息盒子的发送和接收功能。
 
 ### 方法
+
+
 
 #### `sendMsgToUserBox(receiver, msg)`
 
@@ -285,6 +324,8 @@ console.log('消息发送结果:', result);
 
 **返回:** Promise<any> - 发送结果，包含消息ID和时间戳
 
+<br>
+
 #### `getMsgFromUserBox(limit)`
 
 获取当前用户消息盒子中的消息。
@@ -299,11 +340,15 @@ console.log('收到的消息:', messages);
 
 **返回:** Promise<any> - 消息列表
 
+<br><br>
+
 ## 评论模块 (comment)
 
 提供主题评论功能。
 
 ### 方法
+
+
 
 #### `addUserOffChainSpace()`
 
@@ -319,6 +364,8 @@ if (success) {
 **参数:** 无
 
 **返回:** Promise<[boolean | null, Error | null]> - 操作结果
+
+<br>
 
 #### `addThemeObj(theme, openFlag, commentSpace)`
 
@@ -342,6 +389,8 @@ if (status === 0) {
 
 **返回:** Promise<[number | null, Error | null]> - 状态码和错误
 
+<br>
+
 #### `addThemeSpace(theme, addSpace)`
 
 为已开通评论的主题增加评论空间。
@@ -356,6 +405,8 @@ console.log('增加空间结果:', result);
 - `addSpace`: number - 增加的空间大小(字节)
 
 **返回:** Promise<any> - 操作结果
+
+<br>
 
 #### `publishCommentToTheme(theme, themeAuthor, commentType, comment, refercommentkey, openFlag)`
 
@@ -383,6 +434,8 @@ console.log('评论发布结果:', result);
 
 **返回:** Promise<any> - 发布结果
 
+<br>
+
 #### `deleteSelfComment(theme, themeAuthor, commentKey)`
 
 删除自己发布的评论。
@@ -402,6 +455,8 @@ console.log('删除评论结果:', result);
 - `commentKey`: string - 评论的唯一键
 
 **返回:** Promise<any> - 删除结果
+
+<br>
 
 #### `getThemeComments(theme, themeAuthor, startHeight, direction, offset, limit, seekKey)`
 
@@ -430,11 +485,15 @@ console.log('主题评论:', comments);
 
 **返回:** Promise<any> - 评论列表
 
+<br><br>
+
 ## 键值存储模块 (keyvalue)
 
 提供分布式键值存储功能。
 
 ### 方法
+
+
 
 #### `createStore(theme, space, type)`
 
@@ -455,6 +514,8 @@ console.log('创建存储结果:', result);
 - `type`: number - 存储类型 (0: 普通存储, 1: 加密存储)
 
 **返回:** Promise<any> - 创建结果
+
+<br>
 
 #### `configAuth(appId, themeAuthor, theme, authPubkey, permission, remark, vaccount)`
 
@@ -485,6 +546,8 @@ if (status === 0) {
 
 **返回:** Promise<[number, Error | null]> - 状态码和错误
 
+<br>
+
 #### `setKeyValue(appId, themeAuthor, theme, key, value, indexs, vaccount)`
 
 设置键值对数据。
@@ -514,6 +577,8 @@ if (success) {
 
 **返回:** Promise<[boolean, Error | null]> - 成功状态和错误
 
+<br>
+
 #### `getValueWithKey(appId, themeAuthor, theme, writerPubkey, key, vaccount)`
 
 获取指定键的值。
@@ -541,6 +606,8 @@ if (value) {
 - `vaccount`: string (可选) - 虚拟账户
 
 **返回:** Promise<[string, Error | null]> - 值内容和错误
+
+<br>
 
 #### `getValuesWithIndex(appId, themeAuthor, theme, indexKey, indexValue, seekKey, offset, limit, vaccount)`
 
@@ -576,11 +643,15 @@ if (results) {
 
 **返回:** Promise<[string, Error | null]> - JSON格式查询结果和错误
 
+<br><br>
+
 ## 数据库模块 (database)
 
 提供分布式数据库功能。
 
 ### 方法
+
+
 
 #### `initDBManager()`
 
@@ -594,6 +665,8 @@ console.log('数据库管理器已初始化');
 **参数:** 无
 
 **返回:** Promise<void>
+
+<br>
 
 #### `newDB(name, b32Rk, b32Sk, jsonCollections)`
 
@@ -631,6 +704,8 @@ console.log('创建数据库成功，线程ID:', threadId);
 
 **返回:** Promise<string> - 线程ID
 
+<br>
+
 #### `syncDbFromDC(threadid, dbname, dbAddr, b32Rk, b32Sk, block, collectionInfos)`
 
 从分布式网络同步数据库。
@@ -659,11 +734,15 @@ console.log('数据库同步完成');
 
 **返回:** Promise<void>
 
+<br><br>
+
 ## 缓存模块 (cache)
 
 提供临时缓存功能。
 
 ### 方法
+
+
 
 #### `getCacheValue(key)`
 
@@ -680,6 +759,8 @@ if (value) {
 - `key`: string - 缓存键
 
 **返回:** Promise<string | null> - 缓存值，不存在则返回null
+
+<br>
 
 #### `setCacheKey(value, expire)`
 
@@ -699,11 +780,15 @@ console.log('缓存设置结果:', result);
 
 **返回:** Promise<any> - 设置结果
 
+<br><br>
+
 ## AI代理模块 (aiproxy)
 
 提供AI代理服务配置和调用功能。
 
 ### 方法
+
+
 
 #### `createProxyConfig(appId, configTheme)`
 
@@ -724,6 +809,8 @@ if (status === 0) {
 - `configTheme`: string - 配置主题名称
 
 **返回:** Promise<[number, Error | null]> - 状态码和错误信息
+
+<br>
 
 #### `configAIProxy(appId, configAuthor, configTheme, serverName, serverConfig, vaccount)`
 
@@ -764,6 +851,8 @@ if (success) {
 - `vaccount`: string (可选) - 虚拟账户
 
 **返回:** Promise<[boolean, Error | null]> - 是否配置成功和错误信息
+
+<br>
 
 #### `DoAIProxyCall(appId, themeAuthor, configTheme, serverName, reqBody, forceRefresh, onStreamResponse, headers, path, model)`
 
@@ -809,6 +898,8 @@ console.log('API调用状态:', status);
 - `model`: string (可选) - 模型名称
 
 **返回:** Promise<number> - 调用状态码
+
+<br><br>
 
 ## 常见使用流程
 
@@ -950,67 +1041,3 @@ const result = await dc.aiproxy.DoAIProxyCall(
   response => console.log('AI回复:', response)
 );
 ```
-
-onexie: 怎么把结果导出来,帮我用md格式编写
-
-GitHub Copilot: # 如何导出 Markdown 文档
-
-要将接口文档以 Markdown 格式导出，您可以按照以下步骤操作：
-
-## 方法 1：直接复制到文件
-
-1. 复制我之前提供的完整 Markdown 内容
-2. 打开您喜欢的文本编辑器（如 VS Code、Sublime Text 等）
-3. 粘贴内容
-4. 保存文件，确保使用 `.md` 扩展名，例如 `DC-API-接口文档.md`
-
-## 方法 2：在 VS Code 中使用命令行导出
-
-如果您使用 VS Code，可以使用命令行创建并写入文件：
-
-```bash
-# 在项目目录下
-cat > DC-API-接口文档.md << 'EOL'
-# DC API 接口文档
-
-## 目录
-
-1. [概览](#概览)
-2. [初始化](#初始化)
-...
-EOL
-```
-
-## 方法 3：使用 Node.js 脚本导出
-
-您也可以创建一个小型 Node.js 脚本来保存文档：
-
-```javascript
-// save-doc.js
-const fs = require('fs');
-
-const docContent = `# DC API 接口文档
-
-## 目录
-
-1. [概览](#概览)
-2. [初始化](#初始化)
-...
-`; // 粘贴完整文档内容
-
-fs.writeFileSync('DC-API-接口文档.md', docContent, 'utf8');
-console.log('文档已成功导出到 DC-API-接口文档.md');
-```
-
-然后运行：
-```bash
-node save-doc.js
-```
-
-## 方法 4：导出分享
-
-您可以使用 Markdown 编辑器（如 Typora、Mark Text 等）打开该文件，然后使用其导出功能导出为 PDF、HTML 或其他格式进行分享。
-
----
-
-无论使用哪种方法，您都将获得一个格式良好的 Markdown 文档，可以在任何支持 Markdown 的应用程序中查看，如 GitHub、GitLab、VS Code、Typora 等。

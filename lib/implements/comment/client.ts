@@ -91,6 +91,76 @@ export class CommentClient {
     }
   }
 
+
+  
+
+  async addUserOffChainOpTimes(
+    pubkey: string,
+    blockheight: number,
+    peerid: string,
+    times: number,
+    vaccount: string,
+    signature: Uint8Array
+  ): Promise<boolean> {
+    const message = new dcnet.pb.AddUserOffChainOpTimesRequest({});
+   
+    message.userPubkey = new TextEncoder().encode(pubkey);
+    message.blockheight = blockheight;
+    message.peerid = new TextEncoder().encode(peerid);
+    message.times = times;
+    message.vaccount = new TextEncoder().encode(vaccount);
+    message.signature = signature;
+    const messageBytes =
+      dcnet.pb.AddUserOffChainOpTimesRequest.encode(message).finish();
+
+    try {
+      const grpcClient = new Libp2pGrpcClient(
+        this.client.p2pNode,
+        this.client.peerAddr,
+        this.client.token,
+        this.client.protocol
+      );
+      const reply = await grpcClient.unaryCall(
+        "/dcnet.pb.Service/AddUserOffChainOpTimes",
+        messageBytes,
+        30000
+      );
+      const decoded = dcnet.pb.AddUserOffChainOpTimesReply.decode(reply);
+      return true;
+    } catch (error) {
+      if (error.message.indexOf(Errors.INVALID_TOKEN.message) != -1) {
+        // try to get token
+        const token = await this.client.GetToken(
+          this.context.getPublicKey().string(),
+          (payload: Uint8Array): Promise<Uint8Array> => {
+            return this.context.sign(payload);
+          }
+        );
+        if (!token) {
+          throw new Error(Errors.INVALID_TOKEN.message);
+        }
+        const grpcClient = new Libp2pGrpcClient(
+          this.client.p2pNode,
+          this.client.peerAddr,
+          this.client.token,
+          this.client.protocol
+        );
+        const reply = await grpcClient.unaryCall(
+          "/dcnet.pb.Service/AddUserOffChainOpTimes",
+          messageBytes,
+          30000
+        );
+        const decoded = dcnet.pb.AddUserOffChainOpTimesReply.decode(reply);
+        console.log("AddUserOffChainSpace2 decoded", decoded);
+        return true;
+      }
+      throw error;
+    }
+  }
+
+
+
+
   async addThemeObj(
     appId: string,
     theme: string,

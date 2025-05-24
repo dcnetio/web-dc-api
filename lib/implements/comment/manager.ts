@@ -182,6 +182,86 @@ export class CommentManager {
     }
   }
 
+async addUserOffChainOpTimes(
+  vaccount: string,
+  times: number
+): Promise<[boolean, Error | null]> {
+  try {
+    // 检查连接
+    if (!this.connectedDc?.client) {
+      return [null, Errors.ErrNoDcPeerConnected];
+    }
+    
+    if (!this.context.AccountBackupDc?.client) {
+      return [false, new Error('Connect to account peers failed')];
+    }
+
+    // 获取区块链高度
+    let blockHeight = await this.chainUtil.getBlockHeight();
+    
+
+    // 准备签名数据
+    const hValue = uint32ToLittleEndianBytes(blockHeight);
+    const tValue = uint32ToLittleEndianBytes(times);
+    
+    const peerIdBytes = new TextEncoder().encode(this.connectedDc?.nodeAddr.getPeerId());
+    const preSign = new Uint8Array([
+      ...peerIdBytes,
+      ...tValue,
+      ...hValue
+    ]);
+
+    // 签名
+    const signature = await this.context.sign(preSign);
+    const userPubkey = this.context.getPublicKey();
+
+    // 构建请求
+    const req = {
+      userPubkey: new TextEncoder().encode(userPubkey.string()),
+      blockheight: blockHeight,
+      peerid: peerIdBytes,
+      times: times,
+      signature: signature,
+      vaccount: vaccount ? new TextEncoder().encode(vaccount) : undefined
+    };
+
+    const client = new CommentClient(
+        this.connectedDc.client,
+        this.dcNodeClient,
+        this.context
+      );
+    
+    try {
+  
+      // 第一次尝试调用
+      await client.addUserOffChainOpTimes(userPubkey.string(), blockHeight, this.connectedDc.nodeAddr.getPeerId(), times, vaccount, signature);
+      // 如果成功，返回
+      // console.log("addUserOffChainOpTimes success");
+      return [true, null];
+    } catch (err: any) {
+      // 检查是否是 token 过期错误
+      if (err.message && err.message.includes('invalid token')) {
+        try {
+          // 重新获取 token
+           await this.connectedDc.client.GetToken(this.context.publicKey.string(),this.context.sign);
+          
+          // 重试请求
+         const flag = await client.addUserOffChainOpTimes(userPubkey.string(), blockHeight, this.connectedDc.nodeAddr.getPeerId(), times, vaccount, signature);
+    
+          return [flag, null];
+        } catch (retryErr) {
+          return [false, retryErr as Error];
+        }
+      } else {
+        return [false, err as Error];
+      }
+    }
+  } catch (err) {
+    console.error("addUserOffChainOpTimes error:", err);
+    return [false, err as Error];
+  }
+}
+
   async addThemeSpace(
     appId: string,
     theme: string,
