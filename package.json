@@ -3,12 +3,14 @@
   "version": "0.0.3",
   "description": "web相关的dcapi",
   "type": "module",
+  "browser": "dist/index.umd.js",
   "main": "./dist/index.cjs.js",
   "module": "./dist/index.esm.js",
   "types": "./dist/index.d.ts",
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
+      "browser": "./dist/index.umd.js",
       "import": "./dist/index.esm.js",
       "require": "./dist/index.cjs.js"
     }
@@ -18,8 +20,8 @@
     "lib"
   ],
   "scripts": {
-    "build:w": "rollup -c -w",
-    "build": "rollup -c",
+    "build:w": "npx rollup -c -w",
+    "build": "npx rollup -c",
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "nodemon --watch lib --ext ts,tsx,js,jsx,json --ignore 'src/**/*.test.ts' --exec 'npx yalc publish --push '"
   },
@@ -39,6 +41,7 @@
     "@multiformats/multiaddr": "^12.4.0",
     "@noble/curves": "^1.6.0",
     "@polkadot/api": "11.0.3",
+    "@rollup/plugin-terser": "^0.4.4",
     "@scure/bip32": "^1.5.0",
     "@scure/bip39": "^1.4.0",
     "@stablelib/random": "^2.0.0",
@@ -62,13 +65,15 @@
     "jwt-decode": "^4.0.0",
     "libp2p": "^2.8.1",
     "lodash": "~4.17.0",
+    "lru-cache": "^11.1.0",
     "mp4box": "^0.5.4",
     "multiaddr": "^10.0.1",
     "multiformats": "^13.3.2",
     "protobufjs": "^7.5.0",
     "tweetnacl": "^1.0.3",
     "uint8arrays": "^5.1.0",
-    "ulid": "^2.3.0"
+    "ulid": "^2.3.0",
+    "grpc-libp2p-client": "file:../grpc-libp2p-client"
   },
   "directories": {
     "lib": "lib"

@@ -6,7 +6,7 @@ import { Multiaddr, multiaddr, isMultiaddr } from '@multiformats/multiaddr'
 import {  AddrBook,DumpAddrBook} from '../core/logstore' // 核心接口定义  
 import  * as pb from '../pb/lstore'
 import {uniqueLogIds,uniqueThreadIds,DSOptions,AllowEmptyRestore,dsThreadKey} from './global'
-import LRU from 'lru-cache'  
+import {LRUCache} from 'lru-cache'  
 import { ThreadID } from '@textile/threads-id';
 import {DefaultOpts} from './global'
 
@@ -43,9 +43,9 @@ export async function newAddrBook(ds: Datastore, opts?: DSOptions): Promise<DsAd
     }
     const ab = new DsAddrBook(ds, opts);
     if (opts.CacheSize > 0) {
-        ab.cache = new LRU({ max: opts.CacheSize });
+        ab.cache = new LRUCache({ max: opts.CacheSize });
     } else {
-        ab.cache = new LRU({ max: 0 });
+        ab.cache = new LRUCache({ max: 0 });
     }
     return ab;
 }
@@ -58,12 +58,12 @@ export class DsAddrBook implements AddrBook {
  
   private opts: DSOptions  
   private ds: Datastore  
-   cache: LRU<CacheKey, AddrsRecord>  
+   cache: LRUCache<CacheKey, AddrsRecord>  
 
   constructor( ds: Datastore, opts: DSOptions) {  
     this.opts = opts  
     this.ds = ds  
-    this.cache = new LRU({ max: opts.CacheSize || 0 })   
+    this.cache = new LRUCache({ max: opts.CacheSize || 0 })   
   }  
 
 

@@ -1,6 +1,6 @@
-import { ThemePermission } from "lib/common/constants";
-import { ThemeComment } from "lib/common/types/types";
-import { KeyValueStoreType } from "lib/implements/keyvalue/manager";
+import { ThemePermission } from "../common/constants";
+import { ThemeComment } from "../common/types/types";
+import { KeyValueStoreType } from "../implements/keyvalue/manager";
 
 /**
  * 键值存储操作接口

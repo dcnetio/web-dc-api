@@ -1,4 +1,4 @@
-import { SeekableFileStream } from "lib/implements/file/seekableFileStream";
+import { SeekableFileStream } from "../implements/file/seekableFileStream";
 
 /**
  * 文件操作接口

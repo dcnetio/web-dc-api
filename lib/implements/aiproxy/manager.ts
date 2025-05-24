@@ -15,7 +15,7 @@ import { AIProxyClient } from "./client";
 import { FileManager } from "../file/manager";
 import { toString as uint8ArrayToString } from "uint8arrays/to-string";
 import { BrowserLineReader, readLine } from "../../util/BrowserLineReader";
-import { dcnet } from "lib/proto/dcnet_proto";
+import { dcnet } from "../../proto/dcnet_proto";
 import { bytesToHex } from "@noble/curves/abstract/utils";
 import { KeyValueClient } from "../keyvalue/client";
 import { SymmetricKey } from "../threaddb/common/key";

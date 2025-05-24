@@ -8,8 +8,8 @@ import {  KeyValueStoreType } from "../implements/keyvalue/manager";
 import { ThemeManager } from "../implements/cache/manager";
 import { createLogger } from "../util/logger";
 import { AIProxyConfig, OnStreamResponseType, ProxyCallConfig, ThemeComment, UserProxyCallConfig } from "../common/types/types";
-import { AIProxyManager } from "lib/implements/aiproxy/manager";
-import { AIProxyUserPermission } from "lib/common/constants";
+import { AIProxyManager } from "../implements/aiproxy/manager";
+import { AIProxyUserPermission } from "../common/constants";
 const logger = createLogger('KeyValueModule');
 
 /**

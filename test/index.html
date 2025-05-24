@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+  <script src="../../grpc-libp2p-client/dist/grpc-libp2p-client.browser.js"></script>
+  <script src="../dist/web-dc-api.browser.js"></script>
+  <script>
+    const DC = WebDcApi.DC;
+    let dc = null;
+    const init = async () => {
+      dc = new DC({
+        wssUrl: 'ws://192.168.31.31:9944',
+        backWssUrl: 'ws://192.168.31.31:9944',
+        appInfo: {
+          id: 'DCAPP',  // 应用ID
+          name: 'DCAPP Name',  // 应用名称
+        },
+      });
+      console.log('init dc', dc);
+      // 初始化DC客户端，连接区块链和存储节点
+      await dc.init();
+    };
+    const login = async () => {
+      if(dc && dc.auth) {
+        const res = await dc.auth.accountLogin('a', 'aaaa1111.', '000000');
+        console.log('login res', res);
+      }
+    }
+  </script>
+</head>
+<body>
+  <h1>测试DCAPI</h1>
+  <button onclick="init()">init</button>
+  <br>
+  <button onclick="login()">login</button>
+</body>
+</html>
