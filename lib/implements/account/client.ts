@@ -98,7 +98,7 @@ export class AccountClient {
       message.blockheight = req.blockheight;
       message.peerid = req.peerid;
       message.signature = req.signature;
-      const messageBytes = dcnet.pb.BindAccessPeerToUserRequest.encode(message).finish();
+      const messageBytes = dcnet.pb.AddSubPubkeyRequest.encode(message).finish();
       const responseData = await grpcClient.unaryCall(
         "/dcnet.pb.Service/AddSubPubkey",
         messageBytes,
