@@ -97,15 +97,22 @@ export class AIProxyManager {
         }
   
     let client = this.accountBackUpDc.client;
-       if (configAuthor != this.context.publicKey.string()) {//查询他人主题评论
-         const authorPublicKey: Ed25519PubKey = Ed25519PubKey.edPubkeyFromStr(configAuthor);
-         client = await this.dc.connectToUserDcPeer(authorPublicKey.raw);
-         if (!client) {
-           return [null, Errors.ErrNoDcPeerConnected];
-         }
-         //获取token
-         await client.GetToken(this.context.publicKey.string(),this.context.sign);
-       }
+    if (configAuthor != this.context.publicKey.string()) {//查询他人主题评论
+      const authorPublicKey: Ed25519PubKey = Ed25519PubKey.edPubkeyFromStr(configAuthor);
+      client = await this.dc.connectToUserDcPeer(authorPublicKey.raw);
+      if (!client) {
+        return [null, Errors.ErrNoDcPeerConnected];
+      }
+      //获取token
+      await client.GetToken(this.context.publicKey.string(),this.context.sign);
+    }
+
+    if (client === null) {
+      return [null, Errors.ErrNoDcPeerConnected];
+    }
+    if (client.token  == "") {
+       await client.GetToken(this.context.publicKey.string(),this.context.sign);
+    }
 
     let content = '';
     const key = serviceName
@@ -192,21 +199,22 @@ export class AIProxyManager {
     let userPubkeyStr = userPubkey.string();
 
     let client = this.accountBackUpDc.client;
-       if (configAuthor != this.context.publicKey.string()) {//查询他人主题评论
-         const authorPublicKey: Ed25519PubKey = Ed25519PubKey.edPubkeyFromStr(configAuthor);
-         client = await this.dc.connectToUserDcPeer(authorPublicKey.raw);
-         if (!client) {
-           return [null, Errors.ErrNoDcPeerConnected];
-         }
-         //获取token
-         await client.GetToken(this.context.publicKey.string(),this.context.sign);
-       }
+    if (configAuthor != this.context.publicKey.string()) {//查询他人主题评论
+      const authorPublicKey: Ed25519PubKey = Ed25519PubKey.edPubkeyFromStr(configAuthor);
+      client = await this.dc.connectToUserDcPeer(authorPublicKey.raw);
+      if (!client) {
+        return [null, Errors.ErrNoDcPeerConnected];
+      }
+    }
     if (client === null) {
       return [null, new Error("ErrConnectToAccountPeersFail")];
     }
 
     if (client.peerAddr === null) {
       return [null, new Error("ErrConnectToAccountPeersFail")];
+    }
+    if (client.token  == "") {
+       await client.GetToken(this.context.publicKey.string(),this.context.sign);
     }
 
     const themeAuthorPubkey: Ed25519PubKey =
@@ -316,8 +324,6 @@ export class AIProxyManager {
          if (!client) {
            return [null,null, Errors.ErrNoDcPeerConnected];
          }
-         //获取token
-         await client.GetToken(this.context.publicKey.string(),this.context.sign);
        }
     if (client === null) {
       return [null,null, new Error("ErrConnectToAccountPeersFail")];
@@ -325,6 +331,9 @@ export class AIProxyManager {
 
     if (client.peerAddr === null) {
       return [null,null, new Error("ErrConnectToAccountPeersFail")];
+    }
+    if (client.token  == "") {
+       await client.GetToken(this.context.publicKey.string(),this.context.sign);
     }
     try {
         const aiProxyClient = new AIProxyClient(client, this.context);
@@ -452,8 +461,6 @@ export class AIProxyManager {
          if (!client) {
            return [null, Errors.ErrNoDcPeerConnected];
          }
-         //获取token
-         await client.GetToken(this.context.publicKey.string(),this.context.sign);
        }
 
     if (client === null) {
@@ -462,6 +469,9 @@ export class AIProxyManager {
 
     if (client.peerAddr === null) {
       return [null, new Error("ErrConnectToAccountPeersFail")];
+    }
+    if (client.token  == "") {
+       await client.GetToken(this.context.publicKey.string(),this.context.sign);
     }
     const aiProxyClient = new AIProxyClient(client, this.context);
     const [authInfo, error] = await aiProxyClient.GetUserOwnAIProxyAuth(
@@ -518,6 +528,9 @@ export class AIProxyManager {
             ...forceRefreshValue,
             ...headersValue
         ]);
+        if (this.accountBackUpDc.client.token == "") {
+          await this.accountBackUpDc.client.GetToken(this.context.publicKey.string(),this.context.sign);
+        }
         const signature = await  this.context.sign(preSign);
         const proxyClient = new AIProxyClient(
             this.accountBackUpDc.client,
