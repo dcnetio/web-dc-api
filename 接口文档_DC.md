@@ -909,7 +909,7 @@ console.log('API调用状态:', status);
 // 1. 初始化DC客户端
 const dc = new DC({
   wssUrl: 'wss://blockchain.example.com',
-  appInfo: { id: 'myapp', name: 'My Application' }
+  appInfo: { appId: 'myapp', appName: 'My Application' }
 });
 await dc.init();
 

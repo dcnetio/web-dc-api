@@ -5,6 +5,7 @@ export { DC } from './dc';
 export { registerServiceWorker, isServiceWorkerActive, updateServiceWorker } from './common/service-worker';
 export * from './common/types/types';
 export * from './interfaces';
+export * from './common/define';
 
 // 导出模块系统
 export { ModuleSystem, CoreModuleName } from './common/module-system';

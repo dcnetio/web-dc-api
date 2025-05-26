@@ -507,7 +507,8 @@ async generateAppAccount(appId: string,mnemonic: string): Promise<[string | null
  */
 private async isAppAccountExists(pubkeyStr: string): Promise<boolean> {
   try {
-    const user = await this.context.dcChain?.getUserInfoWithAccount(pubkeyStr);
+    const account = pubkeyStr.indexOf("0x") === 0 ? pubkeyStr : "0x" + pubkeyStr;
+    const user = await this.context.dcChain?.getUserInfoWithAccount(account);
     return !!user;
   } catch (error) {
     return false;

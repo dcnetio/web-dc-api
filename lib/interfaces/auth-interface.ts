@@ -1,5 +1,5 @@
-import { Ed25519PrivKey } from "lib/common/dc-key/ed25519";
-import { DCConnectInfo, NFTBindStatus, User } from "lib/common/types/types";
+import { Ed25519PrivKey } from "../common/dc-key/ed25519";
+import { DCConnectInfo, NFTBindStatus, User } from "../common/types/types";
 
 
 
@@ -14,6 +14,12 @@ export interface IAuthOperations {
    */
   getSavedToken(peerId: string): Promise<void>;
   
+  /**
+   * 账户登录通过钱包
+   * @returns 是否登录成功
+   */
+  accountLoginWithWallet(): Promise<boolean>;
+
   /**
    * 账户登录
    * @param nftAccount NFT账户

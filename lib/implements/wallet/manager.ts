@@ -1,6 +1,9 @@
 
 import { version, walletOrigin, walletUrl, walletWindowName } from "../../common/define";
 import { DCContext } from "../../../lib/interfaces/DCContext";
+import dcwallet from "./dcwallet"; // 假设dcwallet是一个模块，提供钱包相关功能
+
+
 const appOrigin = typeof window !== "undefined" && window.location.origin;//"http://localhost:3002"
 const appUrl = typeof window !== "undefined" && window.location.href ;
 // 错误定义
@@ -25,27 +28,30 @@ export class WalletManager {
   }
 
   async init() {
-    // this.iframeId = 'dcWalletIframe';
-    // const flag = dcwallet.initDAPP(
-    //   this.context.appInfo.appName, 
-    //   this.context.appInfo.appIcon, 
-    //   version
-    // );
-    // this.initFlag = flag;
-    // // html添加iframe标签，id是dcWalletIframe
-    // if (flag) {
-    //   const iframe = document.createElement("iframe");
-    //   iframe.id = this.iframeId;
-    //   iframe.src = `${walletUrl}/iframe?parentOrigin=${appOrigin}`;
-    //   iframe.onload = () => {
-    //     this.initConfig(this);
-    //   };
-    //   // iframe.style.display = "none";
-    //   document.body.appendChild(iframe);
-    //   window.addEventListener("message", (event) => {
-    //     this.listenFromWallet(event);
-    //   });
-    // }
+    if(appOrigin !== walletOrigin) {
+      this.iframeId = 'dcWalletIframe';
+      const flag = dcwallet.initDAPP(
+        this.context.appInfo.appId,
+        this.context.appInfo.appName, 
+        this.context.appInfo.appIcon, 
+        this.context.appInfo.appVersion,
+      );
+      this.initFlag = flag;
+      // html添加iframe标签，id是dcWalletIframe
+      if (flag) {
+        const iframe = document.createElement("iframe");
+        iframe.id = this.iframeId;
+        iframe.src = `${walletUrl}/iframe?parentOrigin=${appOrigin}`;
+        iframe.onload = () => {
+          this.initConfig(this);
+        };
+        // iframe.style.display = "none";
+        document.body.appendChild(iframe);
+        window.addEventListener("message", (event) => {
+          this.listenFromWallet(event);
+        });
+      }
+    }
   }
   // iframe加载完成后，发送初始化配置
   async initConfig  (that) {
@@ -53,11 +59,11 @@ export class WalletManager {
       version: version,
       type: "init",
       data: {
-        appName: "testDAPP",
-        appIcon:
-          "https://dcnetio.cloud/ipfs/bafybeicco3kk3aq5to5l376npfosnvgwk6yr4azz35xinnilqvpa4hmbq4/favicon.ico",
-        appVersion: "1.0.0",
-        appUrl,
+        appId: this.context.appInfo.appId,
+        appName: this.context.appInfo.appName, 
+        appIcon: this.context.appInfo.appIcon, 
+        appVersion: this.context.appInfo.appVersion,
+        appUrl: appUrl,
       },
     };
     that.sendMessageToIframe(message, 5000 * 10)
@@ -115,13 +121,6 @@ export class WalletManager {
    */
   sign = (payload: Uint8Array): Promise<Uint8Array>  => {
     return new Promise((resolve, reject) => {
-      // if (!accountInfo.account) {
-      //   console.log("未连接钱包");
-      //   return;
-      // }
-      const urlWithOrigin = walletUrl + "?origin=" + appOrigin;
-      this.initCommChannel();
-      this.walletWindow = window.open(urlWithOrigin, walletWindowName);
       // 每100ms发送一次消息,直到钱包加载完成
       const message = {
         version: version,
@@ -194,8 +193,10 @@ export class WalletManager {
       type: "signEIP712Message",
       data: {
         account: publicKey.string(),
-        appName: "test",
-        appIcon: "",
+        appId: this.context.appInfo.appId,
+        appVersion: this.context.appInfo.appVersion,
+        appName: this.context.appInfo.appName,
+        appIcon: this.context.appInfo.appIcon,
         appUrl,
         domain: {
           name: "test",
