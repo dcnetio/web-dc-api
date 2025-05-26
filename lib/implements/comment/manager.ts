@@ -1,4 +1,4 @@
-import { DCConnectInfo, ThemeComment, ThemeObj } from "../../common/types/types";
+import { DCConnectInfo, ThemeAuthInfo, ThemeComment, ThemeObj } from "../../common/types/types";
 import type { HeliaLibp2p } from "helia";
 import { ChainUtil } from "../../common/chain";
 import { base32 } from 'multiformats/bases/base32' 
@@ -18,6 +18,7 @@ import { dcnet } from "../../proto/dcnet_proto";
 import { DCContext } from "../../../lib/interfaces/DCContext";
 import { publicKeyFromRaw } from "@libp2p/crypto/keys";
 import { Ed25519PubKey } from "../../common/dc-key/ed25519";
+import { Direction } from "lib/common/define";
 const { Buffer } = buffer;
 
 // 创建一个可以取消的信号
@@ -114,6 +115,9 @@ export class CommentManager {
       if (!this.connectedDc?.client) {
         return [null, Errors.ErrNoDcPeerConnected];
       }
+      if(this.connectedDc.client.token == ""){
+        await this.connectedDc.client.GetToken(this.context.publicKey.string(),this.context.sign);
+      }
       const blockHeight = (await this.chainUtil.getBlockHeight()) || 0;
       const hValue: Uint8Array = uint32ToLittleEndianBytes(
         blockHeight ? blockHeight : 0
@@ -191,9 +195,8 @@ async addUserOffChainOpTimes(
     if (!this.connectedDc?.client) {
       return [null, Errors.ErrNoDcPeerConnected];
     }
-    
-    if (!this.context.AccountBackupDc?.client) {
-      return [false, new Error('Connect to account peers failed')];
+    if(this.connectedDc.client.token == ""){
+      await this.connectedDc.client.GetToken(this.context.publicKey.string(),this.context.sign);
     }
 
     // 获取区块链高度
@@ -244,6 +247,9 @@ async addUserOffChainOpTimes(
       if (!this.connectedDc?.client) {
         return [null, Errors.ErrNoDcPeerConnected];
       }
+      if(this.connectedDc.client.token == ""){
+        await this.connectedDc.client.GetToken(this.context.publicKey.string(),this.context.sign);
+      }
       const blockHeight = (await this.chainUtil.getBlockHeight()) || 0;
       const hValue: Uint8Array = uint32ToLittleEndianBytes(
         blockHeight ? blockHeight : 0
@@ -292,6 +298,9 @@ async addUserOffChainOpTimes(
     try {
       if (!this.connectedDc?.client) {
         return [null, Errors.ErrNoDcPeerConnected];
+      }
+      if(this.connectedDc.client.token == ""){
+        await this.connectedDc.client.GetToken(this.context.publicKey.string(),this.context.sign);
       }
       const blockHeight = (await this.chainUtil.getBlockHeight()) || 0;
       const hValue: Uint8Array = uint32ToLittleEndianBytes(
@@ -388,6 +397,9 @@ async addUserOffChainOpTimes(
       if (!this.connectedDc?.client) {
         return [null, Errors.ErrNoDcPeerConnected];
       }
+      if(this.connectedDc.client.token == ""){
+        await this.connectedDc.client.GetToken(this.context.publicKey.string(),this.context.sign);
+      }
       const blockHeight = (await this.chainUtil.getBlockHeight()) || 0;
       const commentCid = commentKey.split("/")[1];
       const commentBlockHeight = commentKey.split("/")[0];
@@ -451,7 +463,8 @@ async addUserOffChainOpTimes(
         if (!client) {
           return [null, Errors.ErrNoPeerIdIsNull];
         }
-        //获取token
+      }
+      if(client.token == ""){
         await client.GetToken(this.context.publicKey.string(),this.context.sign);
       }
       const commentClient = new CommentClient(
@@ -517,8 +530,8 @@ async addUserOffChainOpTimes(
         if (!client) {
           return [null, Errors.ErrNoPeerIdIsNull];
         }
-
-        //获取token
+      }
+       if(client.token == ""){
         await client.GetToken(this.context.publicKey.string(),this.context.sign);
       }
        const commentClient = new CommentClient(
@@ -564,6 +577,67 @@ async addUserOffChainOpTimes(
     }
   }
 
+
+    async getAuthList(
+      appId: string,
+      themeAuthor: string,
+      theme: string,
+      vaccount?: string
+    ): Promise<[ThemeAuthInfo[]|null,ThemeComment[] | null, Error | null]> {
+      if (!theme.endsWith("_authlist")) {
+        theme = theme + "_authlist";
+      }
+      let seekKey: string = "";
+      let originAuthList: ThemeComment[] = [];
+      let authList: ThemeAuthInfo[] = [];
+      try {
+        while (true) {
+          const commentManager = new CommentManager(this.context);
+          const res = await commentManager.getThemeComments(
+            appId,
+            theme,
+            themeAuthor,
+            0,
+            Direction.Forward,
+            0,
+            1000,
+            seekKey || "",
+            vaccount
+          );
+          if (res[0] && res[0].length == 0) {
+            return [authList,originAuthList, null];
+          }
+          
+          const resList = res[0];
+          for (let i = 0; i < resList.length; i++) {
+              originAuthList.push(resList[i]);
+              const content = resList[i].comment
+              const parts = content.split(":");
+              if (parts.length < 2) {
+                continue;
+              }
+              const authPubkey = parts[0];
+              const permission = parseInt(parts[1]);
+              const remark = content.substring(parts[0].length + 2);
+              authList.push({
+              pubkey: authPubkey,
+              permission: permission,
+              remark: remark,
+            });
+          }
+          if (resList.length < 1000) {
+            break;
+          }
+          seekKey = `${resList[resList.length - 1].blockheight}/${
+            resList[resList.length - 1].commentCid
+          }`;
+        }
+      } catch (error) {
+        return [authList,originAuthList, error];
+      }
+      return [authList,originAuthList, null];
+    }
+
   async getUserComments(
     appId: string,
     userPubkey: string,
@@ -576,6 +650,9 @@ async addUserOffChainOpTimes(
     try {
       if (!this.connectedDc?.client) {
         return [null, Errors.ErrNoDcPeerConnected];
+      }
+      if(this.connectedDc.client.token == ""){
+        await this.connectedDc.client.GetToken(this.context.publicKey.string(),this.context.sign);
       }
       const commentClient = new CommentClient(
         this.connectedDc.client,
@@ -684,6 +761,7 @@ async addUserOffChainOpTimes(
           dcnet.pb.PublishCommentToThemeRequest.decode(plainContent);
         console.log("content:", content);
 
+        
         allContent.push({
           theme: uint8ArrayToString(content.theme),
           appId: uint8ArrayToString(content.appId),

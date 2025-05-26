@@ -1,5 +1,5 @@
 import { ThemePermission } from "../common/constants";
-import { ThemeComment } from "../common/types/types";
+import { ThemeAuthInfo, ThemeComment } from "../common/types/types";
 import { KeyValueStoreType } from "../implements/keyvalue/manager";
 
 /**
@@ -9,13 +9,14 @@ import { KeyValueStoreType } from "../implements/keyvalue/manager";
 export interface IKeyValueOperations {
   /**
    * 创建key-value存储库
+   * @param appId 应用ID
    * @param theme 库主题名称
    * @param space 分配的存储空间大小（字节）
    * @param type 存储主题类型 1:鉴权主题(读写都需要鉴权) 2:公共主题(默认所有用户可读,写需要鉴权)
    * @returns 创建结果，包含主题信息
    * @throws 当用户空间不足或创建失败时抛出错误
    */
-  createStore(theme: string, space: number, type: KeyValueStoreType): Promise<any>;
+  createStore(appId: string,theme: string, space: number, type: KeyValueStoreType): Promise<any>;
 
   /**
    * 配置主题的授权信息
@@ -44,14 +45,14 @@ export interface IKeyValueOperations {
    * @param themeAuthor 主题作者的公钥
    * @param theme 主题名称
    * @param vaccount 可选的虚拟账户
-   * @returns [授权列表, 错误信息]
+   * @returns [授权列表,含签名的原始授权列表, 错误信息]
    */
   getAuthList(
     appId: string,
     themeAuthor: string,
     theme: string,
     vaccount?: string
-  ): Promise<[ThemeComment[] | null, Error | null]>;
+  ): Promise<[ThemeAuthInfo[]|null,ThemeComment[] | null, Error | null]>;
 
   /**
    * 设置键值对，支持索引功能

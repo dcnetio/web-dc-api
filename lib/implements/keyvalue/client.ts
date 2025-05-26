@@ -315,7 +315,7 @@ export class KeyValueClient {
     if(vaccount){
       message.vaccount = new TextEncoder().encode(vaccount)
     }
-    const messageBytes = dcnet.pb.GetValuesWithKeysRequest.encode(message).finish();
+    const messageBytes = dcnet.pb.GetValuesWithIndexRequest.encode(message).finish();
     const grpcClient = new Libp2pGrpcClient(
       this.client.p2pNode,
       this.client.peerAddr,
@@ -329,7 +329,7 @@ export class KeyValueClient {
         30000
       );
       console.log("getValuesWithIndex reply", reply);
-      const decoded = dcnet.pb.GetValuesWithKeysReply.decode(reply);
+      const decoded = dcnet.pb.GetValuesWithIndexReply.decode(reply);
       console.log("getValuesWithIndex decoded", decoded);
       if(decoded.flag == 0) {
         return decoded.keyValues;
@@ -348,19 +348,19 @@ export class KeyValueClient {
           throw new Error(Errors.INVALID_TOKEN.message);
         }
         const reply = await grpcClient.unaryCall(
-          "/dcnet.pb.Service/GetValuesWithKeys",
+          "/dcnet.pb.Service/GetValuesWithIndex",
           messageBytes,
           30000
         );
-        console.log("GetValuesWithKeys reply", reply);
+        console.log("GetValuesWithIndex reply", reply);
         const decoded = dcnet.pb.GetValuesWithIndexReply.decode(reply);
-        console.log("GetValuesWithKeys decoded", decoded);
+        console.log("GetValuesWithIndex decoded", decoded);
         if(decoded.flag == 0) {
           return decoded.keyValues;
         }
         return null;
       }
-      console.error("GetValuesWithKeys error:", error);
+      console.error("GetValuesWithIndex error:", error);
       throw error;
     }
   }

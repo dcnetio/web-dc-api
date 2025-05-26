@@ -1,6 +1,6 @@
 import type { Multiaddr } from "@multiformats/multiaddr";
 import { KeyValueClient } from "./client";
-import { DCConnectInfo, ThemeComment } from "../../common/types/types";
+import { DCConnectInfo, ThemeAuthInfo, ThemeComment } from "../../common/types/types";
 import { OpenFlag } from "../../common/constants";
 import { CommentManager } from "../comment/manager";
 import { HeliaLibp2p } from "helia";
@@ -70,12 +70,7 @@ export class KeyValueManager {
     }
     // Theme must start with "keyvalue_"
     if (!theme.startsWith("keyvalue_")) {
-      return [
-        -1,
-        new Error(
-          "vaCreateStoreTheme failed, auth theme must start with 'keyvalue_' or 'auth_'"
-        ),
-      ];
+      theme = "keyvalue_" + theme;
     }
     // NOTE: There seems to be a logical error in the original code:
     // It checks if theme ends with "_pub" and returns an error if it does,
@@ -118,6 +113,9 @@ export class KeyValueManager {
     remark: string,
     vaccount?: string
   ): Promise<[number, Error | null]> {
+    if (!theme.startsWith("keyvalue_")) {
+      theme = "keyvalue_" + theme;
+    }
     if (!theme.endsWith("_authlist")) {
       theme = theme + "_authlist";
     }
@@ -132,8 +130,7 @@ export class KeyValueManager {
       if (!client) {
         return [null, Errors.ErrNoDcPeerConnected];
       }
-      //获取token
-      await client.GetToken(this.context.publicKey.string(),this.context.sign);
+     
     }
     if (client === null) {
       return [null, new Error("ErrConnectToAccountPeersFail")];
@@ -142,7 +139,9 @@ export class KeyValueManager {
     if (client.peerAddr === null) {
       return [null, new Error("ErrConnectToAccountPeersFail")];
     }
-
+    if(client.token == ""){
+      await client.GetToken(this.context.publicKey.string(),this.context.sign);
+    }
     const themeAuthorPubkey: Ed25519PubKey =
       Ed25519PubKey.edPubkeyFromStr(themeAuthor);
 
@@ -175,7 +174,7 @@ export class KeyValueManager {
       return [null, new Error("ErrGetBlockHeightFail")];
     }
 
-    const contentSize = content.length;
+    const contentSize = commentUint8.length;
 
     // Create binary representation of blockHeight (little endian)
     const hValue: Uint8Array = uint32ToLittleEndianBytes(
@@ -183,7 +182,7 @@ export class KeyValueManager {
     );
     // Create binary representation of type (little endian)
     const typeValue: Uint8Array = uint32ToLittleEndianBytes(
-      CommentType.KeyValue
+      CommentType.Comment
     );
     // sign(Theme+appId+objAuthor+blockheight+contentCid)
     const themeValue: Uint8Array = new TextEncoder().encode(theme);
@@ -214,13 +213,15 @@ export class KeyValueManager {
         contentCid,
         content,
         contentSize,
-        CommentType.KeyValue,
+        CommentType.Comment,
         signature,
         vaccount
       );
 
       if (res !== 0) {
-        return [null, new Error(`configThemeObjAuth fail, resFlag: ${res}`)];
+        return [res, new Error(`configThemeObjAuth fail, resFlag: ${res}`)];
+      }else {
+        return [0, null];
       }
     } catch (error) {
       return [null, error];
@@ -232,12 +233,16 @@ export class KeyValueManager {
     themeAuthor: string,
     theme: string,
     vaccount?: string
-  ): Promise<[ThemeComment[] | null, Error | null]> {
+  ): Promise<[ThemeAuthInfo[]|null,ThemeComment[] | null, Error | null]> {
+     if (!theme.startsWith("keyvalue_")) {
+      theme = "keyvalue_" + theme;
+    }
     if (!theme.endsWith("_authlist")) {
       theme = theme + "_authlist";
     }
     let seekKey: string = "";
-    let authList: ThemeComment[] = [];
+    let originAuthList: ThemeComment[] = [];
+    let authList: ThemeAuthInfo[] = [];
     try {
       while (true) {
         const commentManager = new CommentManager(this.context);
@@ -252,25 +257,38 @@ export class KeyValueManager {
           seekKey || "",
           vaccount
         );
-        console.log("getThemeComments res:", res);
         if (res[0] && res[0].length == 0) {
-          return [authList, null];
+          return [authList,originAuthList, null];
         }
+        
         const resList = res[0];
-        authList.push(...resList);
-
+        for (let i = 0; i < resList.length; i++) {
+            originAuthList.push(resList[i]);
+            const content = resList[i].comment
+            const parts = content.split(":");
+            if (parts.length < 2) {
+              continue;
+            }
+            const authPubkey = parts[0];
+            const permission = parseInt(parts[1]);
+            const remark = content.substring(parts[0].length + 2);
+            authList.push({
+            pubkey: authPubkey,
+            permission: permission,
+            remark: remark,
+          });
+        }
         if (resList.length < 1000) {
           break;
         }
-
         seekKey = `${resList[resList.length - 1].blockheight}/${
           resList[resList.length - 1].commentCid
         }`;
       }
     } catch (error) {
-      return [null, error];
+      return [authList,originAuthList, error];
     }
-    return [authList, null];
+    return [authList,originAuthList, null];
   }
 
   async setKeyValue(
@@ -283,10 +301,7 @@ export class KeyValueManager {
     vaccount?: string
   ): Promise<[boolean, Error | null]> {
     if (!theme.startsWith("keyvalue_")) {
-      return [
-        null,
-        new Error("Va_SetKeyValue failed, theme must start with 'keyvalue_'"),
-      ];
+      theme = "keyvalue_" + theme;
     }
     const userPubkey = this.context.getPublicKey();
     let userPubkeyStr = userPubkey.string();
@@ -297,8 +312,6 @@ export class KeyValueManager {
       if (!client) {
         return [null, Errors.ErrNoDcPeerConnected];
       }
-      //获取token
-      await client.GetToken(this.context.publicKey.string(),this.context.sign);
     }
     if (client === null) {
       return [null, new Error("ErrConnectToAccountPeersFail")];
@@ -307,15 +320,18 @@ export class KeyValueManager {
     if (client.peerAddr === null) {
       return [null, new Error("ErrConnectToAccountPeersFail")];
     }
+    if(client.token == ""){
+      await client.GetToken(this.context.publicKey.string(),this.context.sign);
+    }
     let content = `${key}:${value}`;
     if (indexs != "") {
-      content = `$$i_start$$${indexs}$$i_end$$"${content}`;
+      content = `$$i_start$$${indexs}$$i_end$$${content}`;
     }
     const contentUint8 = new TextEncoder().encode(content);
     const contenthash = await sha256(contentUint8);
     const contentCidBase32 = base32.encode(contenthash);
 
-    const contentSize = content.length;
+    const contentSize = contentUint8.length;
 
     const blockHeight: number = await this.chainUtil.getBlockHeight();
     const hValue: Uint8Array = uint32ToLittleEndianBytes(
@@ -373,13 +389,8 @@ export class KeyValueManager {
     key: string,
     vaccount?: string
   ): Promise<[string, Error | null]> {
-    if (!theme.startsWith("keyvalue_")) {
-      return [
-        null,
-        new Error(
-          "vaGetValueWithKeyForVAccount failed, theme must start with 'keyvalue_'"
-        ),
-      ];
+     if (!theme.startsWith("keyvalue_")) {
+      theme = "keyvalue_" + theme;
     }
     let client = this.connectedDc.client;
     if (themeAuthor != this.context.publicKey.string()) {//查询他人主题评论
@@ -388,8 +399,6 @@ export class KeyValueManager {
       if (!client) {
         return [null, Errors.ErrNoDcPeerConnected];
       }
-      //获取token
-      await client.GetToken(this.context.publicKey.string(),this.context.sign);
     }
     if (client === null) {
       return [null, new Error("ErrConnectToAccountPeersFail")];
@@ -397,6 +406,9 @@ export class KeyValueManager {
 
     if (client.peerAddr === null) {
       return [null, new Error("ErrConnectToAccountPeersFail")];
+    }
+    if(client.token == ""){
+      await client.GetToken(this.context.publicKey.string(),this.context.sign);
     }
 
     const keyValueClient = new KeyValueClient(client, this.context);
@@ -432,12 +444,7 @@ export class KeyValueManager {
     vaccount?: string
   ): Promise<[string, Error | null]> {
     if (!theme.startsWith("keyvalue_")) {
-      return [
-        null,
-        new Error(
-          "vaGetValuesWithKeysForVAccount failed, theme must start with 'keyvalue_'"
-        ),
-      ];
+      theme = "keyvalue_" + theme;
     }
      let client = this.connectedDc.client;
     if (themeAuthor != this.context.publicKey.string()) {//查询他人主题评论
@@ -446,8 +453,6 @@ export class KeyValueManager {
       if (!client) {
         return [null, Errors.ErrNoDcPeerConnected];
       }
-      //获取token
-      await client.GetToken(this.context.publicKey.string(),this.context.sign);
     }
     if (client === null) {
       return [null, new Error("ErrConnectToAccountPeersFail")];
@@ -455,6 +460,9 @@ export class KeyValueManager {
 
     if (client.peerAddr === null) {
       return [null, new Error("ErrConnectToAccountPeersFail")];
+    }
+    if(client.token == ""){
+      await client.GetToken(this.context.publicKey.string(),this.context.sign);
     }
 
     const keyValueClient = new KeyValueClient(client, this.context);
@@ -495,12 +503,7 @@ export class KeyValueManager {
     vaccount?: string
   ): Promise<[string, Error | null]> {
     if (!theme.startsWith("keyvalue_")) {
-      return [
-        null,
-        new Error(
-          "vaGetValuesWithKeysForVAccount failed, theme must start with 'keyvalue_'"
-        ),
-      ];
+      theme = "keyvalue_" + theme;
     }
     let client = this.connectedDc.client;
     if (themeAuthor != this.context.publicKey.string()) {//查询他人主题评论
@@ -518,6 +521,9 @@ export class KeyValueManager {
 
     if (client.peerAddr === null) {
       return [null, new Error("ErrConnectToAccountPeersFail")];
+    }
+    if(client.token == ""){
+      await client.GetToken(this.context.publicKey.string(),this.context.sign);
     }
 
     const keyValueClient = new KeyValueClient(client, this.context);

@@ -1,3 +1,4 @@
+import { ThemeAuthInfo, ThemeComment } from "lib/common/types/types";
 import { OpenFlag } from "../common/constants";
 
 /**
@@ -108,6 +109,22 @@ export interface ICommentOperations {
     seekKey?: string
   ): Promise<any>;
   
+  /**
+   * 获取指定主题的授权列表,
+   * @param appId 应用ID
+   * @param themeAuthor 主题作者的公钥
+   * @param theme 主题/对象标识符
+   * @param vaccount 可选，虚拟账户
+   * @returns [授权列表, 评论列表, 错误信息]
+   */
+ getAuthList(
+      appId: string,
+      themeAuthor: string,
+      theme: string,
+      vaccount?: string
+    ): Promise<[ThemeAuthInfo[]|null,ThemeComment[] | null, Error | null]> 
+     
+
   /**
    * 获取指定用户发布的评论列表,无法查询用户设置为私密的评论
    * @param userPubkey 用户公钥

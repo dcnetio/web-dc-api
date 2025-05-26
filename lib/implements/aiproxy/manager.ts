@@ -127,7 +127,7 @@ export class AIProxyManager {
     const contenthash = await sha256(contentUint8);
     const contentCidBase32 = base32.encode(contenthash);
 
-    const contentSize = content.length;
+    const contentSize = contentUint8.length;
 
     
     const hValue: Uint8Array = uint32ToLittleEndianBytes(
@@ -250,7 +250,7 @@ export class AIProxyManager {
       return [null, new Error("ErrGetBlockHeightFail")];
     }
 
-    const contentSize = content.length;
+    const contentSize = commentUint8.length;
 
     // Create binary representation of blockHeight (little endian)
     const hValue: Uint8Array = uint32ToLittleEndianBytes(

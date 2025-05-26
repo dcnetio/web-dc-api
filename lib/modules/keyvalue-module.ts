@@ -7,7 +7,7 @@ import { DCModule, CoreModuleName } from "../common/module-system";
 import { KeyValueManager, KeyValueStoreType } from "../implements/keyvalue/manager";
 import { ThemeManager } from "../implements/cache/manager";
 import { createLogger } from "../util/logger";
-import { ThemeComment } from "../common/types/types";
+import { ThemeAuthInfo, ThemeComment } from "../common/types/types";
 const logger = createLogger('KeyValueModule');
 
 /**
@@ -62,6 +62,7 @@ export class KeyValueModule implements DCModule, IKeyValueOperations {
   
   /**
    * 创建存储主题
+   * @param appId 应用ID
    * @param themeAuthor 主题作者
    * @param theme 主题名称
    * @param space 空间大小
@@ -69,6 +70,7 @@ export class KeyValueModule implements DCModule, IKeyValueOperations {
    * @returns 创建结果
    */
   async createStore(
+    appId: string,
     theme: string,
     space: number,
     type: KeyValueStoreType
@@ -77,13 +79,11 @@ export class KeyValueModule implements DCModule, IKeyValueOperations {
     
     try {
       const res = await this.keyValueManager.createStore(
-        this.context.appInfo.appId,
+        appId,
         theme,
         space,
         type
       );
-      
-      logger.info(`创建存储主题 ${theme} 成功`);
       return res;
     } catch (error) {
       logger.error(`创建存储主题 ${theme} 失败:`, error);
@@ -125,7 +125,7 @@ export class KeyValueModule implements DCModule, IKeyValueOperations {
     themeAuthor: string,
     theme: string,
     vaccount?: string
-  ): Promise<[ThemeComment[] | null, Error | null]> {
+  ): Promise<[ThemeAuthInfo[]|null,ThemeComment[] | null, Error | null]> {
     this.assertInitialized();
     
     try {

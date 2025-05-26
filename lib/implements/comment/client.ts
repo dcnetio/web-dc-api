@@ -315,7 +315,7 @@ export class CommentClient {
     message.type = commentType;
     message.commentCid = new TextEncoder().encode(commentCid);
     message.comment = new TextEncoder().encode(comment);
-    message.commentSize = comment.length;
+    message.commentSize =  message.comment.length;
     message.refercommentkey = new TextEncoder().encode(refercommentkey);
     if (openFlag !== undefined) {
       message.type = openFlag;

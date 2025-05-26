@@ -67,6 +67,13 @@ export interface ThemeObj {
   vaccount: string;
 }
 
+
+
+ export interface ThemeAuthInfo {
+  pubkey: string; // 用户公钥
+  permission: number; // 权限
+  remark: string; // 预留配置
+}
 export interface ThemeComment {
   theme: string;
   appId: string;
