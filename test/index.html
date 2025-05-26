@@ -6,7 +6,22 @@
   <title>Document</title>
   <script src="../../grpc-libp2p-client/dist/grpc-libp2p-client.browser.js"></script>
   <script src="../dist/web-dc-api.browser.js"></script>
-  <script>
+  <script type="text/typescript">
+    // 声明全局类型
+    declare global {
+      const WebDcApi: {
+        // 运行时可用的类和函数
+        DC: any;
+        KeyManager: any;
+        // ... 其他导出
+      };
+      
+      namespace WebDcApi {
+        // 通过模块增强添加类型
+        type User = import('your-package-name').User;
+      }
+    }
+    console.log('WebDcApi.User', WebDcApi.User);
     const DC = WebDcApi.DC;
     let dc = null;
     const init = async () => {
