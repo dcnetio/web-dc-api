@@ -1,28 +1,33 @@
-// 定义一个变量，用于存储BroadcastChannel对象
-const version = 'v0_0_1';
-const walletOrigin = 'http://localhost:3000'; // 钱包地址
-//const walletUrl = walletOrigin +'/'+version; // todo 钱包地址后面统一改成origin+version
-const walletUrl = walletOrigin
+
 
 import utilHelper from './utilHelper';
 import ethersHelper from "./ethersHelper";
+import { version, walletOrigin, walletUrl } from '../../common/define';
+
+// 定义一个变量，用于存储BroadcastChannel对象
 
 // Dapp信息
 const localStorageKey_dcwallet_opener = 'dcwallet_opener';
 const localStorageKey_recent_account = 'dcwallet_recent_account';
 const localStorageKey_recent_chain = 'dcwallet_recent_chain';
 //let walletLoadedFlag = false; //钱包已加载标志
+let appId = '';
 let appName = '';
 let appIcon = '';
 let appVersion = '';
 
 
 // 初始化DAPP
-const initDAPP = function(name:string,icon:string = '',version:string):boolean {
+const initDAPP = function(id:string,name:string,icon:string,version:string):boolean {
+    if (id == '' ) {
+        console.error('appId is null');
+        return false;
+    }
     if (name == '' ) {
         console.error('appName is null');
         return false;
     }
+    appId = id;
     appName = name;
     appIcon = icon;
     appVersion = version;
@@ -35,6 +40,7 @@ type ConnectReqMessage = {
     type: string,
     origin: string,
     data: {
+        appId: string,
         appName: string,
         appIcon?: string,
         appUrl: string,
@@ -56,6 +62,10 @@ type ConnectResponse = {
 // 连接钱包
 const connectWallet = async (timeout:number,account:string = "",chainId:string = ""):Promise<ConnectResponse> => {
     return new Promise<ConnectResponse>((resolve,reject) => {
+        if (appId == '' ) {
+            reject('appId is null,please init first');
+            return;
+        }
         if (appName == '' ) {
             reject('appName is null,please init first');
             return;
@@ -70,6 +80,7 @@ const connectWallet = async (timeout:number,account:string = "",chainId:string =
                     type: 'connect',
                     origin: window.location.origin,
                     data: {
+                        appId: appId,
                         appName: appName,
                         appIcon: appIcon,
                         appUrl: window.location.origin,
@@ -122,6 +133,7 @@ export type SignReqMessage = {
     type: string,
     origin: string,
     data: {
+        appId: string,
         appName: string,
         appIcon?: string,
         appUrl: string,
@@ -147,6 +159,10 @@ type SignMessageResponse = {
 // 签名消息
 const signMessage = async (message:string,account:string,timeout:number,messageType:string='string'):Promise<SignMessageResponse> => {
     return new Promise<SignMessageResponse>((resolve,reject) => {
+        if (appId == '' ) {
+            reject('appId is null,please init first');
+            return;
+        }
         if (appName == '' ) {
             reject('appName is null,please init first');
             return;
@@ -173,6 +189,7 @@ const signMessage = async (message:string,account:string,timeout:number,messageT
                     type: 'signMessage',
                     origin: window.location.origin,
                     data: {
+                        appId: appId,
                         appName: appName,
                         appIcon: appIcon,
                         appUrl: window.location.origin,
@@ -239,6 +256,7 @@ type EIP712SignReqMessage = {
     origin: string,
     data: {
         account: string,
+        appId: string,
         appName:string,
         appIcon:string,
         appUrl: string,
@@ -253,6 +271,10 @@ type EIP712SignReqMessage = {
 // 签名EIP712消息
 const signEIP712Message = async (message:any,account:string,domain:any,primaryType:string,types:any,timeout:number):Promise<SignMessageResponse> => {
     return new Promise<SignMessageResponse>((resolve,reject) => {
+        if (appId == '' ) {
+            reject('appId is null,please init first');
+            return;
+        }
         if (appName == '' ) {
             reject('appName is null,please init first');
             return;
@@ -287,6 +309,7 @@ const signEIP712Message = async (message:any,account:string,domain:any,primaryTy
                     type: 'signEIP712Message',
                     origin: window.location.origin,
                     data: {
+                        appId: appId,
                         appName: appName,
                         appIcon: appIcon,
                         appUrl: window.location.origin,
@@ -490,9 +513,9 @@ const getRecentChain = () => {
 
 export default {
     initDAPP,
-    connectWallet,
-    signMessage,
-    signEIP712Message,
-    getRecentConnectAccount,
-    getRecentChain,
+    connectWallet, // noframe 没有用上
+    signMessage,// noframe 没有用上
+    signEIP712Message,// noframe 没有用上
+    getRecentConnectAccount, // 没有用上
+    getRecentChain, // 没有用上
 }
