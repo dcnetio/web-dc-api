@@ -223,8 +223,8 @@ async addUserOffChainOpTimes(
     try {
   
       // 第一次尝试调用
-      await client.addUserOffChainOpTimes(userPubkey.string(), blockHeight, this.connectedDc.nodeAddr.getPeerId(), times, signature, vaccount);
-      return [true, null];
+       const res = await client.addUserOffChainOpTimes(userPubkey.string(), blockHeight, this.connectedDc.nodeAddr.getPeerId(), times, signature, vaccount);
+      return [res, null];
     } catch (err: any) {
         return [false, err as Error];
       

@@ -113,10 +113,47 @@ export interface AIProxyConfig {
   endpoint: string;
   organization: string; // 组织名称或ID (fixed spelling from 'Orgnization')
   apiVersion: string;   // api版本号
-  model: string;        // 模型
+  modelConfig: ModelConfig; // 模型配置
   remark: string;
   blockheight?: number;  // 可以不设置,由sdk自动设置
 }
+
+// 函数定义结构
+export interface FunctionDef {
+    name: string;                     // 函数名称
+    description: string;              // 函数描述
+    parameters?: any;                 // 可选参数，可以为任意类型
+}
+
+// 工具定义结构
+export interface ToolDefinition {
+    type: string;                     // 工具类型
+    function?: FunctionDef;           // 可选的函数定义
+}
+
+// 模型配置结构
+export interface ModelConfig {
+    model: string;                    // 模型名称
+    temperature: number;              // 温度参数
+    maxTokens: number;                // 最大 token 数量
+    topP: number;                     // Top-P 采样参数
+    topK: number;                     // Top-K 采样参数
+    stopSequences: string[];          // 停止序列数组
+    systemPrompt: string;             // 系统提示
+    stream: boolean;                  // 是否启用流模式
+    tools?: ToolDefinition[];         // 可选的工具定义数组
+}
+
+// modelConfig := ModelConfig{
+// 		Model:         "tngtech/deepseek-r1t-chimera:free",
+// 		Temperature:   0.7,
+// 		MaxTokens:     10000,
+// 		TopP:          0.9,
+// 		TopK:          40,
+// 		StopSequences: []string{},
+// 		SystemPrompt:  "你是一个软件开发专家.",
+// 		Stream:        true,
+// 	}
 
 // 调用AIProxy的流式回调函数
 // flag: 0表示开始接收数据, 1:权限不足 2:获取失败 3:关闭连接 4: 其他错误

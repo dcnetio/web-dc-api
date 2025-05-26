@@ -1205,7 +1205,7 @@ message DoAIProxyCallRequest {
     bytes appId = 2; //应用标志
     bytes themeAuthor = 3;//发布状态汇聚对象的的pubkey
     uint32 blockheight = 4; //发起请求时的blockheight
-    bytes configKey = 5;// 配置名称
+    bytes configKey = 5;// 配置的名称
     bytes path = 6;//请求路径
     bytes reqBody = 7;//请求数据,当为模型调用时json格式如下:[{Role: "user",Content: [{ Type: "text", Text: "你好" }]},{Role: "assistant",Content: [{  "Type": "image","Source": {"Type": "base64","MediaType": "image/jpeg","Data": "iV..."}]}]
     bytes modelConfig = 8; //模型调用时起作用{"provider": "anthropic", "model": "claude-3-opus-20240229","temperature": 0.7,"maxTokens": 1000, "topP": 0.9,"topK": 40,"stopSequences": ["Human:", "Assistant:"],"systemPrompt": "你是一个专业的图片分析助手...","applySystemPrompt": true,"stream": false,tools: [{"name": "image_analysis","description": "分析图片内容并给出建议","parameters": {"type": "object","properties": {"image_url": {"type": "string","description": "图片的url地址"}}}}]}

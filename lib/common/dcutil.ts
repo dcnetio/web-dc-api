@@ -379,7 +379,7 @@ export class DcUtil {
       console.error("no node connected");
       return;
     }
-
+    
     // 保存默认节点
     const defaultPeerId = (nodeAddr as Multiaddr).getPeerId();
     if (defaultPeerId) {
