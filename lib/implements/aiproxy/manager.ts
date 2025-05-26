@@ -418,7 +418,7 @@ export class AIProxyManager {
             endpoint: content.endpoint,
             organization: content.organization,
             apiVersion: content.apiVersion,
-            model: content.model,
+            modelConfig: content.modelConfig,
             remark: content.remark,
           } as AIProxyConfig);
         }

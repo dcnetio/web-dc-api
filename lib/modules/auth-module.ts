@@ -99,15 +99,19 @@ export class AuthModule implements DCModule, IAuthOperations {
     }
 
     try {
-      const res = await this.walletManager.openConnect();
-      if(!res) {
+      const data = await this.walletManager.openConnect();
+      if(!data) {
         throw new Error("openConnect error");
       }
-      const data = res.responseData;
+      // Check if data is an object with publicKey property
+      if(typeof data !== 'object' || data === null || !('publicKey' in data)) {
+        throw new Error("openConnect response is missing publicKey");
+      }
       if(!data.publicKey) {
         throw new Error("openConnect response is null");
       }
-      const publicKey = Ed25519PubKey.formEd25519PublicKey(data.publicKey);
+      // Type assertion to ensure data.publicKey is treated as Ed25519PublicKey
+      const publicKey = Ed25519PubKey.formEd25519PublicKey(data.publicKey as any);
       this.context.publicKey = publicKey;
       savePublicKey(publicKey.string());
       console.log("accountLogin data", data);
