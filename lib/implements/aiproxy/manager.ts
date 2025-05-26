@@ -305,9 +305,7 @@ export class AIProxyManager {
     if (!configThem.startsWith("keyvalue_")) {
         configThem = "keyvalue_" + configThem;
     }
-    if (!configThem.endsWith("_authlist")) {
-      configThem = configThem + "_authlist";
-    }
+   
     const userPubkey = this.context.getPublicKey();
     let userPubkeyStr = userPubkey.string();
 
@@ -351,13 +349,11 @@ export class AIProxyManager {
             "",
             cidNeedConnect.NOT_NEED
             );
-        console.log("getAIProxyConfig fileContent:", fileContent);
         if (!fileContent) {
         return [[],[], null];
         }
         const fileContentString = uint8ArrayToString(fileContent);
         const [allAuth,allContent] = await this.handleAllConfig(fileContentString,aesKey);
-        console.log("getThemeComments allContent:", allContent);
         return [allAuth,allContent, null];
 
     } catch (error) {
@@ -390,13 +386,19 @@ export class AIProxyManager {
           }
           const lineContent = base32.decode(lineString);
           const plainContent = await decryptKey.decrypt(lineContent);
-          if (plainContent.toString().startsWith("$$auth$$:")) { //授权信息
+          const contentStr = new TextDecoder().decode(plainContent);
+          if (!contentStr) {
+            continue; // 如果内容为空，跳过
+          }
+          if (contentStr.startsWith("$$auth$$:")) { //授权信息
             try {
-              const authContent = plainContent.toString().split("$$auth$$:")[1];
+              const authContent = contentStr.split("$$auth$$:")[1];
               //解析出userpubkey
               const userPubkey = authContent.split(":")[0];
               const permission = authContent.split(":")[1];
-              const authContentStr = authContent.split(":")[2];
+              const authContentStr = authContent.substring(
+                userPubkey.length + permission.length + 2 // +2 for the colon and the next colon
+              );
               //解析到ProxyCallConfig结构
               const authConfig = JSON.parse(authContentStr);
               allAuth.push({
@@ -409,7 +411,14 @@ export class AIProxyManager {
             }
             continue;
           }
-          const content = JSON.parse(plainContent.toString());
+          //keyvalue中取出value
+          const parts: string[] = contentStr.split(":");
+          if (parts.length < 2) {
+            console.error("无效的内容格式:", contentStr);
+            continue; // 如果格式不正确，跳过
+          }
+          const value = contentStr.substring(parts[0].length + 1);
+          const content = JSON.parse(value);
           allContent.push({
             blockheight: content.blockheight,
             isAIModel: content.isAIModel,
