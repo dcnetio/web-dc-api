@@ -72,8 +72,7 @@
     "protobufjs": "^7.5.0",
     "tweetnacl": "^1.0.3",
     "uint8arrays": "^5.1.0",
-    "ulid": "^2.3.0",
-    "grpc-libp2p-client": "file:../grpc-libp2p-client"
+    "ulid": "^2.3.0"
   },
   "directories": {
     "lib": "lib"

@@ -99,8 +99,8 @@ export class CommentClient {
     blockheight: number,
     peerid: string,
     times: number,
-    vaccount: string,
-    signature: Uint8Array
+    signature: Uint8Array,
+    vaccount: string
   ): Promise<boolean> {
     const message = new dcnet.pb.AddUserOffChainOpTimesRequest({});
    

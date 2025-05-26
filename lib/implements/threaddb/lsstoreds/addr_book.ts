@@ -178,7 +178,7 @@ async addrs(t: ThreadID, logId: PeerId): Promise<Multiaddr[]> {
 
 
 async clearAddrs(t: ThreadID, logId: PeerId): Promise<void> {
-    this.cache.del({ threadID: t, peerID: logId.toString() });
+    this.cache.delete({ threadID: t, peerID: logId.toString() });
 
     const key = this.genDSKey(t, logId.toString());
     try {

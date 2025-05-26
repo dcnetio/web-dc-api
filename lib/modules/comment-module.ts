@@ -60,6 +60,24 @@ export class CommentModule implements DCModule, ICommentOperations {
       throw error;
     }
   }
+
+
+async addUserOffChainOpTimes(
+  times: number,
+  vaccount?: string
+): Promise<[boolean, Error | null]> {
+  this.assertInitialized();
+  
+  try {
+    const res = await this.commentManager.addUserOffChainOpTimes(times, vaccount);
+    logger.info("添加用户操作次数成功");
+    return res;
+  } catch (error) {
+    logger.error("添加用户操作次数失败:", error);
+    throw error;
+  }
+}
+
   
   /**
    * 为指定对象开通评论功能

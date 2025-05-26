@@ -20,6 +20,16 @@ export interface ICommentOperations {
    */
   addUserOffChainSpace(): Promise<[boolean | null, Error | null]>
   
+  /**
+   * 为用户添加链下操作次数,DC为了提升性能,用户发布评论等操作,无需上链,用于发布评论等链下操作次数,
+   * @param times 操作次数
+   * @param vaccount 可选，用户的虚拟账号
+   * @returns 操作结果  0:成功 1:评论空间没有配置 2:评论空间不足 3:评论数据同步中
+   */
+  addUserOffChainOpTimes(
+  times: number,
+  vaccount?: string
+): Promise<[boolean, Error | null]>
  
   /**
    * 为已开通评论的主题增加评论空间,为了防止每个主题评论空间浪费,每个主题在创建时会分配50MB的评论空间,如果后续不够,可以通过这个接口增加
