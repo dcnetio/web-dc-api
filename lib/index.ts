@@ -21,7 +21,7 @@ export { createLogger, configureLogger, LogLevel } from './util/logger';
 export { KeyManager } from './common/dc-key/keyManager';
 
 // 导出私钥
-export { Ed25519PrivKey } from './common/dc-key/ed25519';
+export { Ed25519PrivKey, Ed25519PubKey } from './common/dc-key/ed25519';
 
 // 导出错误类型
 export { Errors } from './common/error';

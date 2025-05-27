@@ -4,7 +4,7 @@ import { DcUtil } from "../../common/dcutil";
 import { DCConnectInfo, NFTBindStatus, User } from "../../common/types/types";
 import { AccountClient } from "./client";
 import { sha256, uint32ToLittleEndianBytes } from "../../util/utils";
-import { Ed25519PrivKey } from "lib";
+import { Ed25519PrivKey, Ed25519PubKey } from "../../common/dc-key/ed25519";
 import { DCContext } from "../../../lib/interfaces/DCContext";
 import { PeerId } from "@libp2p/interface";
 import { extractPublicKeyFromPeerId, generateSymKeyForPrikey, KeyManager } from "../../common/dc-key/keyManager";
@@ -127,11 +127,6 @@ async bindNFTAccount(
   mnemonic: string,
 ): Promise<[NFTBindStatus, Error | null]> {
   
-  // 检查区块链账户
-  const pubKey = this.context.getPublicKey();
-  if (!pubKey) {
-    return [NFTBindStatus.NoBcAccount, new AccountError("No blockchain account available")];
-  }
   // 检查节点连接
   if (!this.connectedDc.client) {
     return [NFTBindStatus.DcPeerNotConnected, Errors.ErrNoDcPeerConnected];
@@ -161,7 +156,7 @@ async bindNFTAccount(
       this.connectedDc.client,
     );
     // 调用账户绑定API
-    await accountClient.accountBind(this.context, req);
+    await accountClient.accountBind(req, mnemonic, this.context);
     
     // 绑定成功
     return [NFTBindStatus.Success, null];
@@ -218,12 +213,19 @@ private async generateAccountDealRequest(
     }
 
     // 确定使用的密钥
-    let selfPubkey, selfPrivkey;
+    let selfPubkey: Ed25519PubKey, 
+    selfPrivkey: Ed25519PrivKey;
     selfPubkey = this.context.publicKey;
     selfPrivkey = this.context.privKey;
     
     if (!selfPubkey || !selfPrivkey) {
-      return [null, NFTBindStatus.Error];
+      // 生成
+      const keymanager = new KeyManager();
+      selfPrivkey = await keymanager.getEd25519KeyFromMnemonic(
+        mnemonic,
+        ''
+      );
+      selfPubkey = selfPrivkey.publicKey;
     }
 
     // 用自身公钥加密账号
@@ -305,6 +307,11 @@ private async generateAccountDealRequest(
       accountHashArray.length + accountEncrypt.length + 
       prikeyencryptHash.length + hvalue.length + serverPidBytes.length
     );
+    console.log("accountHashArray:", accountHashArray);
+    console.log("accountEncrypt:", accountEncrypt);
+    console.log("prikeyencryptHash:", prikeyencryptHash);
+    console.log("hvalue:", hvalue);
+    console.log("serverPidBytes:", serverPidBytes);
     
     let offset = 0;
     preSign.set(accountHashArray, offset);
@@ -318,7 +325,7 @@ private async generateAccountDealRequest(
     preSign.set(serverPidBytes, offset);
     
     // 签名
-    const signature = await selfPrivkey.sign(preSign);
+    const signature = selfPrivkey.sign(preSign);
     if (!signature) {
       return [null, NFTBindStatus.SignError];
     }
@@ -343,20 +350,21 @@ private async generateAccountDealRequest(
 
 /**
  * 检查NFT账号是否成功绑定到用户的公钥
- * @param account NFT账号
+ * @param nftAccount NFT账号
+ * @param pubKeyStr 公钥字符串
  * @returns 是否成功绑定
  */
-async isNftAccountBindSuccess(account: string): Promise<boolean> {
+async isNftAccountBindSuccess(nftAccount: string, pubKeyStr: string): Promise<boolean> {
   try {
     if (!this.chainUtil && !this.chainUtil.dcchainapi) {
       return false;
     }
-    const accountBytes = new TextEncoder().encode(account);
+    const accountBytes = new TextEncoder().encode(nftAccount);
     const accountHash = await sha256(accountBytes);
     const nftHexAccount = "0x" + Buffer.from(accountHash).toString("hex");
     const walletAccount = await this.chainUtil.dcchainapi?.query.dcNode.nftToWalletAccount(nftHexAccount);
     // 比较公钥
-    return walletAccount.toString() == "0x" + this.context.publicKey.toString();
+    return walletAccount.toString() == (pubKeyStr.indexOf("0x") === 0 ? pubKeyStr : "0x" + pubKeyStr);
   } catch (error) {
     console.error("检查NFT账号绑定状态失败:", error);
     return false;
@@ -366,19 +374,19 @@ async isNftAccountBindSuccess(account: string): Promise<boolean> {
 
 /**
  * 检查NFT账号是否已经被绑定
- * @param account NFT账号
+ * @param nftAccount NFT账号
  * @returns 是否被其他账号绑定
  */
-async isNftAccountBinded(account: string): Promise<boolean> {
+async isNftAccountBinded(nftAccount: string): Promise<boolean> {
   try {
     if (!this.chainUtil && !this.chainUtil.dcchainapi) {
       return false;
     }
-    const accountBytes = new TextEncoder().encode(account);
+    const accountBytes = new TextEncoder().encode(nftAccount);
     const accountHash = await sha256(accountBytes);
     const nftHexAccount = "0x" + Buffer.from(accountHash).toString("hex");
     const walletAccount = await this.chainUtil.dcchainapi?.query.dcNode.nftToWalletAccount(nftHexAccount);
-    if (!walletAccount) {
+    if (!walletAccount.toJSON()) {
       return false;
     }
   } catch (error) {
@@ -405,8 +413,8 @@ async generateAppAccount(appId: string,mnemonic: string): Promise<[string | null
   let subPrivateKey:Ed25519PrivKey
   try {
     // 生成有效的应用子账号
-     const keymanager = new KeyManager();
-      subPrivateKey = await keymanager.getEd25519KeyFromMnemonic(
+    const keymanager = new KeyManager();
+    subPrivateKey = await keymanager.getEd25519KeyFromMnemonic(
       mnemonic,
       appId
     );
@@ -444,11 +452,25 @@ async generateAppAccount(appId: string,mnemonic: string): Promise<[string | null
     preSign.set(serverPidBytes, offset);
     
     // 使用父私钥签名
-    const signature =  await this.context.sign(preSign);
+    const privateKey = await keymanager.getEd25519KeyFromMnemonic(
+      mnemonic,
+      ''
+    );
+    const signature = privateKey.sign(preSign);
     if (!signature) {
       return [null, new AccountError("Failed to sign with parent private key")];
     }
     
+    // 获取token
+      if(this.connectedDc.client.token == ""){
+        const token = await this.connectedDc.client.GetToken(privateKey.publicKey.string(), async (payload: Uint8Array): Promise<Uint8Array> => {
+          return privateKey.sign(payload);
+        });
+        if (!token) {
+          return [null, new AccountError("Failed to get token")];
+        }
+      }
+   
     // 创建请求对象
     const req = {
       subpubkey: subPubkey.raw,
@@ -460,7 +482,6 @@ async generateAppAccount(appId: string,mnemonic: string): Promise<[string | null
      const client = new AccountClient(
       this.connectedDc.client,
     );
-   
     // 添加子公钥
     await client.addSubPubkey(req);
     // Wait for app account creation

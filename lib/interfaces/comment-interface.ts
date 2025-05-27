@@ -1,4 +1,4 @@
-import { ThemeAuthInfo, ThemeComment } from "lib/common/types/types";
+import { ThemeAuthInfo, ThemeComment } from "../common/types/types";
 import { OpenFlag } from "../common/constants";
 
 /**

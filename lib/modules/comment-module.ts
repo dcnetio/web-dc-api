@@ -6,7 +6,7 @@ import { DCContext } from "../../lib/interfaces/DCContext";
 import { DCModule, CoreModuleName } from "../common/module-system";
 import { CommentManager } from "../implements/comment/manager";
 import { createLogger } from "../util/logger";
-import { ThemeAuthInfo, ThemeComment } from "lib/common/types/types";
+import { ThemeAuthInfo, ThemeComment } from "../common/types/types";
 
 const logger = createLogger('CommentModule');
 

@@ -18,7 +18,7 @@ export interface IAuthOperations {
    * 账户登录通过钱包
    * @returns 是否登录成功
    */
-  accountLoginWithWallet(): Promise<boolean>;
+  accountLoginWithWallet(): Promise<any>;
 
   /**
    * 账户登录
@@ -60,9 +60,10 @@ export interface IAuthOperations {
   /**
    * 检查NFT账号是否成功绑定到当前用户的公钥
    * @param nftAccount NFT账号
+   * @param pubKeyStr 公钥字符串
    * @returns 是否成功绑定
    */
-  isNftAccountBindSuccess(nftAccount: string): Promise<boolean>;
+  isNftAccountBindSuccess(nftAccount: string, pubKeyStr: string): Promise<boolean>;
   
   /**
    * 检查NFT账号是否已经被公钥绑定
