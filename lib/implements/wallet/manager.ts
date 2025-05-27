@@ -89,7 +89,7 @@ export class WalletManager {
           origin: appOrigin,
         },
       };
-      this.sendMessageToIframe(message, 60000)
+      this.sendMessageToIframe(message, 600000)
         .then((response) => {
           console.log("openConnect response", response);
           if (response) {

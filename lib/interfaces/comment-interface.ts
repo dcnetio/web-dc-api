@@ -1,5 +1,5 @@
-import { ThemeAuthInfo, ThemeComment } from "lib/common/types/types";
 import { OpenFlag, ThemePermission } from "../common/constants";
+import { ThemeAuthInfo, ThemeComment } from "../common/types/types";
 
 /**
  * 评论操作接口

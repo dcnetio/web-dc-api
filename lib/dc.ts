@@ -250,10 +250,7 @@ export class DC implements DCContext {
    * @returns 签名结果
    */
   sign =async (payload: Uint8Array): Promise<Uint8Array>  => {
-    if (!this.privKey) {
-      throw new Error("私钥未初始化，无法进行签名");
-    }
-    const signature = this.privKey.sign(payload);
+    const signature = this.auth.signWithWallet(payload);
     return signature;
   };
 
@@ -262,10 +259,9 @@ export class DC implements DCContext {
    * @param content 加密内容
    * @returns 解密后的内容
    */
+  // todo getUserComments 获取文件解密用到，后期改成aes
   decrypt = async (content: Uint8Array): Promise<Uint8Array> => {
-    if (!this.privKey) {
-      throw new Error("私钥未初始化，无法进行解密");
-    }
+    // 钱包那边解密todo: 
     const decodeContent = await this.privKey.decrypt(content);
     return decodeContent; 
   }

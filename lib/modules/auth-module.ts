@@ -91,7 +91,7 @@ export class AuthModule implements DCModule, IAuthOperations {
    * 账户登录
    * @returns 是否登录成功
    */
-  async accountLoginWithWallet(): Promise<boolean> {
+  async accountLoginWithWallet(): Promise<any> {
     this.assertInitialized();
 
     if (!this.context.connectedDc?.client) {
@@ -99,11 +99,12 @@ export class AuthModule implements DCModule, IAuthOperations {
     }
 
     try {
-      const data = await this.walletManager.openConnect();
-      if(!data) {
+      const res = await this.walletManager.openConnect();
+      if(!res || !res.responseData) {
         throw new Error("openConnect error");
       }
       // Check if data is an object with publicKey property
+      const data = res.responseData      ;
       if(typeof data !== 'object' || data === null || !('publicKey' in data)) {
         throw new Error("openConnect response is missing publicKey");
       }
@@ -111,7 +112,7 @@ export class AuthModule implements DCModule, IAuthOperations {
         throw new Error("openConnect response is null");
       }
       // Type assertion to ensure data.publicKey is treated as Ed25519PublicKey
-      const publicKey = Ed25519PubKey.formEd25519PublicKey(data.publicKey as any);
+      const publicKey = Ed25519PubKey.formEd25519PublicKey(data.publicKey);
       this.context.publicKey = publicKey;
       savePublicKey(publicKey.string());
       console.log("accountLogin data", data);
@@ -119,7 +120,7 @@ export class AuthModule implements DCModule, IAuthOperations {
       const token = await this.context.connectedDc?.client.GetToken(
         publicKey.string(),
         (payload: Uint8Array): Promise<Uint8Array> => {
-          return this.sign(payload);
+          return this.signWithWallet(payload);
         }
       );
 
@@ -128,16 +129,16 @@ export class AuthModule implements DCModule, IAuthOperations {
       }
       // 存在token， 获取用户备用节点
       await this.getAccountBackupDc();
+      return data;
 
     } catch (error) {
       console.error("accountLogin error", error);
-
-    }
-    return true;
+      return;
+    };
   }
 
   /**
-   * 账户登录
+   * 账户登录(钱包登录)
    * @param nftAccount NFT账户
    * @param password 密码
    * @param safecode 安全码
@@ -164,29 +165,14 @@ export class AuthModule implements DCModule, IAuthOperations {
     );
 
     if (mnemonic) {
-      const keymanager = new KeyManager();
-      //const privKey1 = await keymanager.getEd25519KeyFromMnemonic(mnemonic);
-      const privKey = await keymanager.getEd25519KeyFromMnemonic(
-        mnemonic,
-        this.context.appInfo?.appId || ""
-      );
-      this.context.privKey = privKey;
-      // 保存公钥
-      const pubkey = this.context.privKey.publicKey;
-      this.context.publicKey = pubkey;
-      console.log("accountLogin pubkey base32", pubkey.string());
-      await savePublicKey(pubkey.string());
-      // 获取token
-      const token = await this.context.connectedDc?.client.GetToken(
-        pubkey.string(),
-        this.context.sign
-      );
-
-      if (!token) {
-        throw new Error("GetToken error");
+      const accountManager = new AccountManager(this.context);
+      const res = await accountManager.generateAppAccount(this.context.appInfo?.appId, mnemonic);
+      if (res[0] === null) {
+        throw res[1] || new Error("generateAppAccount error");
       }
-      // 存在token， 获取用户备用节点
-      await this.getAccountBackupDc();
+      // 获取私钥
+      const privKey = Ed25519PrivKey.unmarshalString(res[0]);
+
       return {
         mnemonic,
         privKey,
@@ -195,7 +181,7 @@ export class AuthModule implements DCModule, IAuthOperations {
     return;
   }
 
-  async sign(payload: Uint8Array): Promise<Uint8Array> {
+  async signWithWallet(payload: Uint8Array): Promise<Uint8Array> {
     if (!this.walletManager) {
       throw new Error("walletManager is null");
     } else {
@@ -255,25 +241,26 @@ export class AuthModule implements DCModule, IAuthOperations {
 
   /**
    * 检查NFT账号是否成功绑定到用户的公钥
-   * @param account NFT账号
+   * @param nftAccount NFT账号
+   * @param pubKeyStr 公钥字符串
    * @returns 是否成功绑定
    */
-  async isNftAccountBindSuccess(account: string): Promise<boolean> {
+  async isNftAccountBindSuccess(nftAccount: string, pubKeyStr: string): Promise<boolean> {
     this.assertInitialized();
     const accountManager = new AccountManager(this.context);
-    const res = await accountManager.isNftAccountBindSuccess(account);
+    const res = await accountManager.isNftAccountBindSuccess(nftAccount, pubKeyStr);
     return res;
   }
 
   /**
    * 检查NFT账号是否已经被绑定
-   * @param account NFT账号
+   * @param nftAccount NFT账号
    * @returns 是否被其他账号绑定
    */
-  async isNftAccountBinded(account: string): Promise<boolean> {
+  async isNftAccountBinded(nftAccount: string): Promise<boolean> {
     this.assertInitialized();
     const accountManager = new AccountManager(this.context);
-    const res = await accountManager.isNftAccountBinded(account);
+    const res = await accountManager.isNftAccountBinded(nftAccount);
     return res;
   }
 

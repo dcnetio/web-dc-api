@@ -18,7 +18,7 @@ import { dcnet } from "../../proto/dcnet_proto";
 import { DCContext } from "../../../lib/interfaces/DCContext";
 import { publicKeyFromRaw } from "@libp2p/crypto/keys";
 import { Ed25519PubKey } from "../../common/dc-key/ed25519";
-import { CommentType, Direction } from "lib/common/define";
+import { CommentType, Direction } from "../../common/define";
 const { Buffer } = buffer;
 
 // 创建一个可以取消的信号
