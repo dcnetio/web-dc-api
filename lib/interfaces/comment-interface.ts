@@ -1,5 +1,5 @@
 import { ThemeAuthInfo, ThemeComment } from "lib/common/types/types";
-import { OpenFlag } from "../common/constants";
+import { OpenFlag, ThemePermission } from "../common/constants";
 
 /**
  * 评论操作接口
@@ -108,6 +108,29 @@ export interface ICommentOperations {
     limit?: number,
     seekKey?: string
   ): Promise<any>;
+
+
+   /**
+     * 配置主题的授权信息
+     * @param appId 应用ID
+     * @param themeAuthor 主题作者的公钥
+     * @param theme 主题名称
+     * @param authPubkey 被授权者的公钥
+     * @param permission 权限级别
+     * @param remark 备注信息
+     * @param vaccount 可选的虚拟账户
+     * @returns [授权状态码, 错误信息]
+     */
+    configAuth(
+      appId: string,
+      themeAuthor: string,
+      theme: string,
+      authPubkey: string,
+      permission: ThemePermission,
+      remark: string,
+      vaccount?: string
+    ): Promise<[number, Error | null]>;
+  
   
   /**
    * 获取指定主题的授权列表,

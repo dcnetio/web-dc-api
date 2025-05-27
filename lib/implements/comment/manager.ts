@@ -18,7 +18,7 @@ import { dcnet } from "../../proto/dcnet_proto";
 import { DCContext } from "../../../lib/interfaces/DCContext";
 import { publicKeyFromRaw } from "@libp2p/crypto/keys";
 import { Ed25519PubKey } from "../../common/dc-key/ed25519";
-import { Direction } from "lib/common/define";
+import { CommentType, Direction } from "lib/common/define";
 const { Buffer } = buffer;
 
 // 创建一个可以取消的信号
@@ -576,6 +576,133 @@ async addUserOffChainOpTimes(
       throw err;
     }
   }
+
+
+
+    async configAuth(
+      appId: string,
+      themeAuthor: string,
+      theme: string,
+      authPubkey: string,
+      permission: number,
+      remark: string,
+      vaccount?: string
+    ): Promise<[number, Error | null]> {
+      if (!theme.endsWith("_authlist")) {
+        theme = theme + "_authlist";
+      }
+      
+      const userPubkey = this.context.getPublicKey();
+      let userPubkeyStr = userPubkey.string();
+  
+      let client = this.connectedDc.client;
+      if (themeAuthor != this.context.publicKey.string()) {//查询他人主题评论
+        const authorPublicKey: Ed25519PubKey = Ed25519PubKey.edPubkeyFromStr(themeAuthor);
+        client = await this.dc.connectToUserDcPeer(authorPublicKey.raw);
+        if (!client) {
+          return [null, Errors.ErrNoDcPeerConnected];
+        }
+       
+      }
+      if (client === null) {
+        return [null, new Error("ErrConnectToAccountPeersFail")];
+      }
+  
+      if (client.peerAddr === null) {
+        return [null, new Error("ErrConnectToAccountPeersFail")];
+      }
+      if(client.token == ""){
+        await client.GetToken(this.context.publicKey.string(),this.context.sign);
+      }
+      const themeAuthorPubkey: Ed25519PubKey =
+        Ed25519PubKey.edPubkeyFromStr(themeAuthor);
+  
+      let pubkeyFlag = true;
+      let forPubkey: Ed25519PubKey;
+      try {
+        forPubkey = Ed25519PubKey.edPubkeyFromStr(authPubkey);
+      } catch (error) {
+        pubkeyFlag = false;
+      }
+      let forPubkeyHex: string;
+      if (pubkeyFlag) {
+        forPubkeyHex = forPubkey.string();
+      } else {
+        forPubkeyHex = authPubkey;
+      }
+  
+      const content = `${forPubkeyHex}:${permission}:${remark}`;
+  
+      // Generate contentCid (sha256 of content)
+      const commentUint8 = new TextEncoder().encode(content);
+      const contentHash = await sha256(commentUint8);
+      const contentCid = base32.encode(contentHash);
+  
+      // Get blockchain height
+      let blockHeight: number;
+      try {
+        blockHeight = await this.chainUtil.getBlockHeight();
+      } catch (error) {
+        return [null, new Error("ErrGetBlockHeightFail")];
+      }
+  
+      const contentSize = commentUint8.length;
+  
+      // Create binary representation of blockHeight (little endian)
+      const hValue: Uint8Array = uint32ToLittleEndianBytes(
+        blockHeight ? blockHeight : 0
+      );
+      // Create binary representation of type (little endian)
+      const typeValue: Uint8Array = uint32ToLittleEndianBytes(
+        CommentType.Comment
+      );
+      // sign(Theme+appId+objAuthor+blockheight+contentCid)
+      const themeValue: Uint8Array = new TextEncoder().encode(theme);
+      const appIdValue: Uint8Array = new TextEncoder().encode(appId);
+      const themeAuthorValue: Uint8Array = new TextEncoder().encode(
+        themeAuthorPubkey.string()
+      );
+      const contentCidValue: Uint8Array = new TextEncoder().encode(contentCid);
+      let preSign = new Uint8Array([
+        ...themeValue,
+        ...appIdValue,
+        ...themeAuthorValue,
+        ...hValue,
+        ...contentCidValue,
+        ...typeValue,
+      ]);
+  
+      const signature = await this.context.sign(preSign);
+  
+       const commentClient = new CommentClient(
+        client,
+        this.dcNodeClient,
+        this.context
+      );
+      try {
+        const res = await commentClient.configThemeObjAuth(
+          theme,
+          appId,
+          themeAuthor,
+          blockHeight,
+          userPubkeyStr,
+          contentCid,
+          content,
+          contentSize,
+          CommentType.Comment,
+          signature,
+          vaccount
+        );
+  
+        if (res !== 0) {
+          return [res, new Error(`configThemeObjAuth fail, resFlag: ${res}`)];
+        }else {
+          return [0, null];
+        }
+      } catch (error) {
+        return [null, error];
+      }
+    }
 
 
     async getAuthList(

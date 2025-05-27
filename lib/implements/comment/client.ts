@@ -372,6 +372,79 @@ export class CommentClient {
     }
   }
 
+
+
+  async configThemeObjAuth(
+    theme: string,
+    appId: string,
+    themeAuthor: string,
+    blockHeight: number,
+    userPubkeyStr: string,
+    contentCid: string,
+    content: string,
+    contentSize: number,
+    type: number,
+    signature: Uint8Array,
+    vAccount?: string
+  ): Promise<number> {
+    const message = new dcnet.pb.ConfigThemeObjAuthRequest({});
+    message.appId = new TextEncoder().encode(appId);
+    message.themeAuthor = new TextEncoder().encode(themeAuthor);
+    message.theme = new TextEncoder().encode(theme);
+    message.blockheight = blockHeight;
+    message.content = new TextEncoder().encode(content);
+    message.contentCid = new TextEncoder().encode(contentCid)
+    message.contentSize = contentSize
+    message.signature = signature;
+    message.type = type;
+    message.userPubkey = new TextEncoder().encode(userPubkeyStr);
+    if(vAccount){
+       message.vaccount = new TextEncoder().encode(vAccount)
+     }
+    const messageBytes = dcnet.pb.ConfigThemeObjAuthRequest.encode(message).finish();
+    const grpcClient = new Libp2pGrpcClient(
+      this.client.p2pNode,
+      this.client.peerAddr,
+      this.client.token,
+      this.client.protocol
+    );
+    try {
+      const reply = await grpcClient.unaryCall(
+        "/dcnet.pb.Service/ConfigThemeObjAuth",
+        messageBytes,
+        30000
+      );
+      console.log("ConfigThemeObjAuth reply", reply);
+      const decoded = dcnet.pb.ConfigThemeObjAuthReply.decode(reply);
+      console.log("ConfigThemeObjAuth decoded", decoded);
+      return decoded.flag;
+    } catch (error) {
+      if (error.message.indexOf(Errors.INVALID_TOKEN.message) != -1) {
+        // try to get token
+        const token = await this.client.GetToken(
+          this.context.getPublicKey().string(),
+          (payload: Uint8Array): Promise<Uint8Array> => {
+            return this.context.sign(payload);
+          }
+        );
+        if (!token) {
+          throw new Error(Errors.INVALID_TOKEN.message);
+        }
+        const reply = await grpcClient.unaryCall(
+          "/dcnet.pb.Service/ConfigThemeObjAuth",
+          messageBytes,
+          30000
+        );
+        console.log("ConfigThemeObjAuth reply", reply);
+        const decoded = dcnet.pb.GetUserCommentsReply.decode(reply);
+        console.log("ConfigThemeObjAuth decoded", decoded);
+        return decoded.flag;
+      }
+      console.error("ConfigThemeObjAuth error:", error);
+      throw error;
+    }
+  }
+
   async deleteSelfComment(
     appId: string,
     theme: string,
