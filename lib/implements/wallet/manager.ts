@@ -49,7 +49,7 @@ export class WalletManager {
         iframe.onload = () => {
           this.initConfig(this);
         };
-        // iframe.style.display = "none";
+        iframe.style.display = "none";
         document.body.appendChild(iframe);
         window.addEventListener("message", (event) => {
           this.listenFromWallet(event);
