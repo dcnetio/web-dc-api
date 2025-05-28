@@ -13177,6 +13177,9 @@ export namespace dcnet {
 
             /** GetThemeCommentsRequest vaccount */
             vaccount?: (Uint8Array|null);
+
+            /** GetThemeCommentsRequest aesKey */
+            aesKey?: (Uint8Array|null);
         }
 
         /** Represents a GetThemeCommentsRequest. */
@@ -13214,6 +13217,9 @@ export namespace dcnet {
 
             /** GetThemeCommentsRequest vaccount. */
             public vaccount: Uint8Array;
+
+            /** GetThemeCommentsRequest aesKey. */
+            public aesKey: Uint8Array;
 
             /**
              * Creates a new GetThemeCommentsRequest instance using the specified properties.
@@ -13930,6 +13936,9 @@ export namespace dcnet {
 
             /** GetUserCommentsRequest vaccount */
             vaccount?: (Uint8Array|null);
+
+            /** GetUserCommentsRequest aesKey */
+            aesKey?: (Uint8Array|null);
         }
 
         /** Represents a GetUserCommentsRequest. */
@@ -13964,6 +13973,9 @@ export namespace dcnet {
 
             /** GetUserCommentsRequest vaccount. */
             public vaccount: Uint8Array;
+
+            /** GetUserCommentsRequest aesKey. */
+            public aesKey: Uint8Array;
 
             /**
              * Creates a new GetUserCommentsRequest instance using the specified properties.
@@ -16730,6 +16742,9 @@ export namespace dcnet {
 
             /** GetDeviceStatusListRequest authSignature */
             authSignature?: (Uint8Array|null);
+
+            /** GetDeviceStatusListRequest aesKey */
+            aesKey?: (Uint8Array|null);
         }
 
         /** Represents a GetDeviceStatusListRequest. */
@@ -16785,6 +16800,9 @@ export namespace dcnet {
 
             /** GetDeviceStatusListRequest authSignature. */
             public authSignature: Uint8Array;
+
+            /** GetDeviceStatusListRequest aesKey. */
+            public aesKey: Uint8Array;
 
             /**
              * Creates a new GetDeviceStatusListRequest instance using the specified properties.
