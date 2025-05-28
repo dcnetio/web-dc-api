@@ -1,9 +1,6 @@
 // common/commonClient.ts
 import type { Multiaddr } from "@multiformats/multiaddr";
-import { Ed25519PrivKey } from "./dc-key/ed25519";
-import { KeyManager } from "./dc-key/keyManager";
 import type { Client } from "./dcapi";
-import { DCGrpcClient } from "./grpc-dc";
 import { keys } from "@libp2p/crypto";
 import { Ed25519PubKey } from "./dc-key/ed25519";
 import {
@@ -28,28 +25,10 @@ interface AccountLoginRequest {
 
 export class CommonClient {
   client: Client;
-  privKey: Ed25519PrivKey | undefined;
 
   constructor(dcClient: Client) {
     this.client = dcClient;
   }
-
-  // // 注册
-  // async register(
-  //   appId: string
-  // ): Promise<Ed25519PrivKey> {
-  //   //生成助记词
-  //    const mnemonic = KeyManager.generateMnemonic();
-  //   const keymanager = new KeyManager();
-  //   const privKey = await keymanager.getEd25519KeyFromMnemonic(
-  //     mnemonic,
-  //     appId,
-  //   );
-  //   this.privKey = privKey;
-  //   console.log("Mnemonic:", mnemonic);
-  //   console.log("PrivateKey:", privKey);
-  //   return privKey;
-  // }
 
   // 登陆
   async accountLogin(
@@ -149,16 +128,6 @@ export class CommonClient {
       console.error("AccountLogin error:", err);
       throw err;
     }
-  }
-
-  signCallback(payload: Uint8Array): Uint8Array {
-    // Implement your signCallback logic here
-    console.log("signCallback start ");
-    if (!this.privKey) {
-      throw new Error("Private key is not initialized");
-    }
-    const signature = this.privKey?.sign(payload);
-    return signature;
   }
 }
 
