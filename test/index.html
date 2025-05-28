@@ -4,24 +4,9 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Document</title>
-  <script src="../../grpc-libp2p-client/dist/grpc-libp2p-client.browser.js"></script>
-  <script src="../dist/web-dc-api.browser.js"></script>
-  <script type="text/typescript">
-    // 声明全局类型
-    declare global {
-      const WebDcApi: {
-        // 运行时可用的类和函数
-        DC: any;
-        KeyManager: any;
-        // ... 其他导出
-      };
-      
-      namespace WebDcApi {
-        // 通过模块增强添加类型
-        type User = import('your-package-name').User;
-      }
-    }
-    console.log('WebDcApi.User', WebDcApi.User);
+  <script src="../../grpc-libp2p-client/dist/grpc-libp2p-client.browser.min.js"></script>
+  <script src="../dist/web-dc-api.browser.min.js"></script>
+  <script>
     const DC = WebDcApi.DC;
     let dc = null;
     const init = async () => {
@@ -29,8 +14,10 @@
         wssUrl: 'ws://192.168.31.31:9944',
         backWssUrl: 'ws://192.168.31.31:9944',
         appInfo: {
-          appId: 'DCAPP',  // 应用ID
-          appName: 'DCAPP Name',  // 应用名称
+          appId: 'testHtml',  // 应用ID
+          appName: 'testHtml Name',  // 应用名称
+          appVersion: 'v0.0.1', // 应用版本号
+          walletVersion: 'v0_0_1',
         },
       });
       console.log('init dc', dc);
@@ -43,12 +30,81 @@
         console.log('login res', res);
       }
     }
+
+    const accountLoginWithWallet = async () => {
+      if(dc && dc.auth) {
+        const res = await dc.auth.accountLoginWithWallet();
+        console.log('accountLoginWithWallet res', res);
+      }
+    }
+
+    let fileCID = '';
+    const uploadFile = async () => {
+      if (!dc) {
+        console.error("dc not init");
+        return;
+      }
+      const fileInput = document.getElementById('fileInput');
+      const file = fileInput.files?.[0];
+      if (!file) {
+        console.error("file not found");
+        return;
+      }
+      const res = await dc.file.addFile(file, "blgxhdql744v247fn53adtdjdji5dp7msui5tc24uzvjtxlr4edyq", onUpdateTransmitSize);
+      console.log("==========uploadFile", res);
+      fileCID = res[0];
+    }
+    const onUpdateTransmitSize = (status, size) => {
+      console.log("==========onUpdateTransmitSize", status, size);
+    }
+
+
+    const getFile = async () => {
+      const fileContent = await dc.file.getFile(fileCID, "blgxhdql744v247fn53adtdjdji5dp7msui5tc24uzvjtxlr4edyq");
+      console.log("==========getFile fileContent", fileContent);
+      if (fileContent) {
+        const heifIdentifiers = [
+          'ftypheic', 'ftypheix', 'ftyphevc', 'ftyphevx',
+          'ftypmif1', 'ftypmsf1'
+        ];
+        var bytes = new Uint8Array(fileContent);
+        const headerString = String.fromCharCode.apply(null, Array.from(bytes.slice(4, 12)));
+        const isHEIC = heifIdentifiers.some((identifier) => headerString.includes(identifier));
+        console.log("isHEIC", isHEIC);
+        let blob = new Blob([bytes], { type: "image/jpeg" });
+        if (isHEIC) {
+          const heicBlob = await heic2any({
+            blob: new Blob([bytes], { type: "image/heic" }),
+            toType: "image/jpeg",
+          })
+          blob = Array.isArray(heicBlob) ? heicBlob[0] : heicBlob;
+        }
+        var blobUrl = URL.createObjectURL(blob);
+        const img = document.getElementById('previewImage');
+        if (img) {
+          img.src = blobUrl;
+        }
+      }
+    }
+
   </script>
 </head>
 <body>
   <h1>测试DCAPI</h1>
   <button onclick="init()">init</button>
   <br>
+  <br>
   <button onclick="login()">login</button>
+  <br>
+  <br>
+  <button onclick="accountLoginWithWallet()">accountLoginWithWallet</button>
+  <br>
+  <br>
+  <input type="file" id="fileInput" @change="uploadFile" />
+  <button onclick="uploadFile()">uploadFile</button>
+  <br>
+  <br>
+  <button onclick="getFile()">getFile</button>
+  <img id="previewImage" alt="Preview" width="300">
 </body>
 </html>
