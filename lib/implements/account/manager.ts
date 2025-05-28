@@ -386,7 +386,7 @@ async isNftAccountBinded(nftAccount: string): Promise<boolean> {
     const accountHash = await sha256(accountBytes);
     const nftHexAccount = "0x" + Buffer.from(accountHash).toString("hex");
     const walletAccount = await this.chainUtil.dcchainapi?.query.dcNode.nftToWalletAccount(nftHexAccount);
-    if (!walletAccount.toJSON()) {
+    if (!walletAccount.toString()) {
       return false;
     }
   } catch (error) {
