@@ -1,8 +1,9 @@
 
-import { version, walletOrigin, walletUrl, walletWindowName } from "../../common/define";
+import { walletOrigin, walletWindowName } from "../../common/define";
 import { DCContext } from "../../../lib/interfaces/DCContext";
 import dcwallet from "./dcwallet"; // 假设dcwallet是一个模块，提供钱包相关功能
 
+let walletUrl = walletOrigin; // 钱包地址
 
 const appOrigin = typeof window !== "undefined" && window.location.origin;//"http://localhost:3002"
 const appUrl = typeof window !== "undefined" && window.location.href ;
@@ -30,12 +31,15 @@ export class WalletManager {
   async init() {
     if(appOrigin !== walletOrigin) {
       this.iframeId = 'dcWalletIframe';
-      const flag = dcwallet.initDAPP(
-        this.context.appInfo.appId,
-        this.context.appInfo.appName, 
-        this.context.appInfo.appIcon, 
-        this.context.appInfo.appVersion,
-      );
+      const flag = dcwallet.initDAPP({
+        appId: this.context.appInfo.appId,
+        appName: this.context.appInfo.appName, 
+        appIcon: this.context.appInfo.appIcon, 
+        appVersion: this.context.appInfo.appVersion,
+        appUrl: appUrl,
+        walletVersion: this.context.appInfo.walletVersion
+      });
+      // walletUrl = walletOrigin +'/'+ this.context.appInfo.walletVersion; // todo 钱包地址后面统一改成origin+version
       this.initFlag = flag;
       // html添加iframe标签，id是dcWalletIframe
       if (flag) {
@@ -56,7 +60,7 @@ export class WalletManager {
   // iframe加载完成后，发送初始化配置
   async initConfig  (that) {
     const message = {
-      version: version,
+      version: this.context.appInfo.walletVersion || '',
       type: "init",
       data: {
         appId: this.context.appInfo.appId,
@@ -83,7 +87,7 @@ export class WalletManager {
       this.walletWindow = window.open(urlWithOrigin, walletWindowName);
       this.initCommChannel();
       const message = {
-        version: version,
+        version: this.context.appInfo.walletVersion || '',
         type: "connect",
         data: {
           origin: appOrigin,
@@ -123,7 +127,7 @@ export class WalletManager {
     return new Promise((resolve, reject) => {
       // 每100ms发送一次消息,直到钱包加载完成
       const message = {
-        version: version,
+        version: this.context.appInfo.walletVersion || '',
         type: "sign",
         data: {
           message: payload,
@@ -163,7 +167,7 @@ export class WalletManager {
     this.walletWindow = window.open(urlWithOrigin, walletWindowName);
     // 每100ms发送一次消息,直到钱包加载完成
     const message = {
-      version: version,
+      version: this.context.appInfo.walletVersion || '',
       type: "signMessage",
       data,
     };
@@ -189,7 +193,7 @@ export class WalletManager {
     this.walletWindow = window.open(urlWithOrigin, walletWindowName);
     // port1 转移给iframe
     const message = {
-      version: version,
+      version: this.context.appInfo.walletVersion || '',
       type: "signEIP712Message",
       data: {
         account: publicKey.string(),
@@ -261,7 +265,7 @@ export class WalletManager {
         if (this.channelPort2) {
           //port2转移给钱包
           const message = {
-            version: version,
+            version: this.context.appInfo.walletVersion || '',
             type: "channelPort2",
             origin: appOrigin,
           };
@@ -285,7 +289,7 @@ export class WalletManager {
     if (iframe) {
       const message = {
         code: "0",
-        version: version,
+        version: this.context.appInfo.walletVersion || '',
         type: "channelPort1",
       };
       try {

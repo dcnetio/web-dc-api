@@ -121,7 +121,7 @@ export class ChainUtil {
     const walletAccount =
       await this.dcchainapi?.query.dcNode.nftToWalletAccount(nftHexAccount);
     console.log("=========walletAccount", walletAccount);
-    if (!walletAccount) {
+    if (!walletAccount.toString()) {
       throw new Error("walletAccount is null");
     }
     const userInfo = await this.getUserInfoWithAccount(

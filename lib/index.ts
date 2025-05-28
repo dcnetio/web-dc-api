@@ -26,6 +26,4 @@ export { Ed25519PrivKey, Ed25519PubKey } from './common/dc-key/ed25519';
 // 导出错误类型
 export { Errors } from './common/error';
 
-// 版本信息
-export const VERSION = '1.0.0';
 
