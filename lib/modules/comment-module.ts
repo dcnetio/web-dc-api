@@ -55,7 +55,9 @@ export class CommentModule implements DCModule, ICommentOperations {
     
     try {
       const res = await this.commentManager.addUserOffChainSpace();
-      logger.info("添加用户评论空间成功");
+      if(!res[1]){
+        logger.info("添加用户评论空间成功");
+      }
       return res;
     } catch (error) {
       logger.error("添加用户评论空间失败:", error);
@@ -72,7 +74,9 @@ async addUserOffChainOpTimes(
   
   try {
     const res = await this.commentManager.addUserOffChainOpTimes(times, vaccount);
-    logger.info("添加用户操作次数成功");
+    if(!res[1]){
+      logger.info("添加用户操作次数成功");
+    }
     return res;
   } catch (error) {
     logger.error("添加用户操作次数失败:", error);
@@ -97,7 +101,9 @@ async addUserOffChainOpTimes(
         openFlag,
         commentSpace || 50 * 1024 * 1024 // 50M
       );
-      logger.info(`为主题 ${theme} 开通评论功能成功`);
+      if(!res[1]){
+        logger.info(`为主题 ${theme} 开通评论功能成功`);
+      }
       return res;
     } catch (error) {
       logger.error(`为主题 ${theme} 开通评论功能失败:`, error);
@@ -119,7 +125,9 @@ async addUserOffChainOpTimes(
         theme,
         addSpace
       );
-      logger.info(`为主题 ${theme} 增加 ${addSpace} 字节评论空间成功`);
+      if(!res[1]){
+        logger.info(`为主题 ${theme} 增加 ${addSpace} 字节评论空间成功`);
+      }
       return res;
     } catch (error) {
       logger.error(`为主题 ${theme} 增加评论空间失败:`, error);
@@ -156,7 +164,9 @@ async addUserOffChainOpTimes(
         refercommentkey || "",
         openFlag
       );
-      logger.info(`发布评论到主题 ${theme} 成功`);
+      if(!res[1]){
+        logger.info(`发布评论到主题 ${theme} 成功`);
+      }
       return res;
     } catch (error) {
       logger.error(`发布评论到主题 ${theme} 失败:`, error);
@@ -184,7 +194,9 @@ async addUserOffChainOpTimes(
         themeAuthor,
         commentKey
       );
-      logger.info(`删除评论 ${commentKey} 成功`);
+      if(!res[1]){
+        logger.info(`删除评论 ${commentKey} 成功`);
+      }
       return res;
     } catch (error) {
       logger.error(`删除评论 ${commentKey} 失败:`, error);
@@ -221,7 +233,9 @@ async addUserOffChainOpTimes(
         limit || 100,
         seekKey || ""
       );
-      logger.info(`获取作者 ${themeAuthor} 的主题对象列表成功`);
+      if(!res[1]){
+        logger.info(`获取作者 ${themeAuthor} 的主题对象列表成功`);
+      }
       return res;
     } catch (error) {
       logger.error(`获取作者 ${themeAuthor} 的主题对象列表失败:`, error);
@@ -261,7 +275,9 @@ async addUserOffChainOpTimes(
         limit || 100,
         seekKey || ""
       );
-      logger.info(`获取主题 ${theme} 的评论列表成功`);
+      if(!res[1]){
+        logger.info(`获取主题 ${theme} 的评论列表成功`);
+      }
       return res;
     } catch (error) {
       logger.error(`获取主题 ${theme} 的评论列表失败:`, error);
@@ -355,7 +371,9 @@ async addUserOffChainOpTimes(
         limit || 100,
         seekKey || ""
       );
-      logger.info(`获取用户 ${userPubkey} 的评论列表成功`);
+      if(!res[1]){
+        logger.info(`获取用户 ${userPubkey} 的评论列表成功`);
+      }
       return res;
     } catch (error) {
       logger.error(`获取用户 ${userPubkey} 的评论列表失败:`, error);

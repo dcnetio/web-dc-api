@@ -19,6 +19,7 @@ import { DCContext } from "../../../lib/interfaces/DCContext";
 import { publicKeyFromRaw } from "@libp2p/crypto/keys";
 import { Ed25519PubKey } from "../../common/dc-key/ed25519";
 import { CommentType, Direction } from "../../common/define";
+import { SymmetricKey } from "../threaddb/common/key";
 const { Buffer } = buffer;
 
 // 创建一个可以取消的信号
@@ -534,6 +535,7 @@ async addUserOffChainOpTimes(
        if(client.token == ""){
         await client.GetToken(this.context.publicKey.string(),this.context.sign);
       }
+      const aesKey = SymmetricKey.new();// 生成aeskey文件加密密码
        const commentClient = new CommentClient(
         client,
         this.dcNodeClient,
@@ -548,6 +550,7 @@ async addUserOffChainOpTimes(
         offset || 0,
         limit || 0,
         seekKey || '',
+        aesKey ? aesKey.toString() : "",
         vaccount,
       );
       const fileManager = new FileManager(
@@ -568,7 +571,7 @@ async addUserOffChainOpTimes(
         return [[], null];
       }
       const fileContentString = uint8ArrayToString(fileContent);
-      const allContent = await this.handleThemeComments(fileContentString);
+      const allContent = await this.handleThemeComments(fileContentString, aesKey);
       console.log("getThemeComments allContent:", allContent);
       return [allContent, null];
     } catch (err) {
@@ -781,6 +784,7 @@ async addUserOffChainOpTimes(
       if(this.connectedDc.client.token == ""){
         await this.connectedDc.client.GetToken(this.context.publicKey.string(),this.context.sign);
       }
+      const aesKey = SymmetricKey.new();// 生成aeskey文件加密密码
       const commentClient = new CommentClient(
         this.connectedDc.client,
         this.dcNodeClient,
@@ -794,6 +798,7 @@ async addUserOffChainOpTimes(
         offset || 0,
         limit || 0,
         seekKey || '',
+        aesKey ? aesKey.toString()  : ''
       );
       const fileManager = new FileManager(
         this.dc,
@@ -813,7 +818,7 @@ async addUserOffChainOpTimes(
         return [[], null];
       }
       const fileContentString = uint8ArrayToString(fileContent);
-      const allContent = await this.handleThemeComments(fileContentString);
+      const allContent = await this.handleThemeComments(fileContentString, aesKey);
       console.log("getUserComments allContent:", allContent);
       return [allContent, null];
     } catch (err) {
@@ -862,7 +867,7 @@ async addUserOffChainOpTimes(
     }
     return allContent;
   };
-  private handleThemeComments = async (fileContentString: string) => {
+  private handleThemeComments = async (fileContentString: string, aesKey: SymmetricKey) => {
     const reader = new BrowserLineReader(fileContentString);
     let allContent: Array<ThemeComment> = [];
 
@@ -883,7 +888,7 @@ async addUserOffChainOpTimes(
           break;
         }
         const lineContent = base32.decode(lineString);
-        const plainContent = await this.context.decrypt(lineContent);
+        const plainContent = await aesKey.decrypt(lineContent);
         const content =
           dcnet.pb.PublishCommentToThemeRequest.decode(plainContent);
         console.log("content:", content);
