@@ -11,6 +11,7 @@ import { User } from "./types/types";
 import { hexToBytes } from "@noble/curves/abstract/utils";
 import { base32 } from "multiformats/bases/base32";
 import * as buffer from "buffer/";
+import { WalletManager } from "lib/implements/wallet/manager";
 const { Buffer } = buffer;
 
 export interface StoreunitInfo {  

@@ -125,9 +125,7 @@ export class WalletManager {
 
   decrypt = (payload: Uint8Array): Promise<Uint8Array> => {
     return new Promise((resolve, reject) => {
-      // 每100ms发送一次消息,直到钱包加载完成
       const message = {
-        version: this.context.appInfo.walletVersion || '',
         type: "decrypt",
         data: {
           message: payload,

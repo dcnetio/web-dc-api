@@ -1,4 +1,5 @@
-# DC API 接口文档
+
+# DCAPI 开发文档
 
 <br>
 
@@ -21,7 +22,7 @@
 
 ## 概览
 
-DC API 提供了一整套去中心化云服务接口。基于这些接口，开发者只需关注前端的呈现效果。一旦开发完成，应用可以直接打包并发布到 DC 去中心化云服务中，生成访问链接后即可邀请用户使用，无需任何服务器端的部署和维护。如果希望将开发完成的应用发布到自己的域名，只需进行简单的配置即可完成。DC API 提供了身份验证、文件存储、消息传递、评论系统和数据库管理等核心功能，且基于区块链技术，支持各种去中心化应用程序的开发。
+DCAPI 提供了一整套去中心化云服务接口。基于这些接口，开发者只需关注前端的呈现效果。一旦开发完成，应用可以直接打包并发布到 DC 去中心化云服务中，生成访问链接后即可邀请用户使用，无需任何服务器端的部署和维护。如果希望将开发完成的应用发布到自己的域名，只需进行简单的配置即可完成。DC API 提供了身份验证、文件存储、消息传递、评论系统和数据库管理等核心功能，且基于区块链技术，支持各种去中心化应用程序的开发。
 
 <br><br>
 
@@ -183,13 +184,6 @@ interface AccountInfo{
 
 用NFT账户登录系统。
 
-```typescript
-const success = await dc.auth.accountLogin('my-nft-account', 'password', '000000');
-if (success) {
-  console.log('登录成功');
-}
-```
-
 **参数:**
 
 - `nftAccount`: string - NFT账户名称
@@ -198,18 +192,18 @@ if (success) {
 
 **返回:** Promise<boolean> - 登录是否成功
 
+```typescript
+const success = await dc.auth.accountLogin('my-nft-account', 'password', '000000');
+if (success) {
+  console.log('登录成功');
+}
+```
+
 <br>
 
 #### `bindNFTAccount(account, password, seccode, mnemonic)`
 
 将私钥绑定到NFT账号。
-
-```typescript
-const [status, error] = await dc.auth.bindNFTAccount('nft-id', 'password', 'seccode', 'mnemonic phrase');
-if (status === NFTBindStatus.Success) {
-  console.log('绑定成功');
-}
-```
 
 **参数:**
 
@@ -220,18 +214,18 @@ if (status === NFTBindStatus.Success) {
 
 **返回:** Promise<[NFTBindStatus, Error | null]> - 绑定状态码和错误信息
 
+```typescript
+const [status, error] = await dc.auth.bindNFTAccount('nft-id', 'password', 'seccode', 'mnemonic phrase');
+if (status === NFTBindStatus.Success) {
+  console.log('绑定成功');
+}
+```
+
 <br>
 
 #### `generateAppAccount(appId, mnemonic)`
 
 创建应用子账号。
-
-```typescript
-const [privateKey, error] = await dc.auth.generateAppAccount('myapp', 'mnemonic phrase');
-if (privateKey) {
-  console.log('子账号私钥:', privateKey);
-}
-```
 
 **参数:**
 
@@ -240,16 +234,18 @@ if (privateKey) {
 
 **返回:** Promise<[string | null, Error | null]> - 私钥字符串和错误信息
 
+```typescript
+const [privateKey, error] = await dc.auth.generateAppAccount('myapp', 'mnemonic phrase');
+if (privateKey) {
+  console.log('子账号私钥:', privateKey);
+}
+```
+
 <br>
 
 #### `isNftAccountBindSuccess(account)`
 
 检查NFT账号是否成功绑定到用户公钥。
-
-```typescript
-const isBound = await dc.auth.isNftAccountBindSuccess('nft-account');
-console.log('NFT账号绑定状态:', isBound);
-```
 
 **参数:**
 
@@ -257,16 +253,16 @@ console.log('NFT账号绑定状态:', isBound);
 
 **返回:** Promise<boolean> - 是否成功绑定
 
+```typescript
+const isBound = await dc.auth.isNftAccountBindSuccess('nft-account');
+console.log('NFT账号绑定状态:', isBound);
+```
+
 <br>
 
 #### `isNftAccountBinded(account)`
 
 检查NFT账号是否已被任何账号绑定。
-
-```typescript
-const isAlreadyBinded = await dc.auth.isNftAccountBinded('nft-account');
-console.log('NFT账号是否已被绑定:', isAlreadyBinded);
-```
 
 **参数:**
 
@@ -274,16 +270,16 @@ console.log('NFT账号是否已被绑定:', isAlreadyBinded);
 
 **返回:** Promise<boolean> - 是否已被绑定
 
+```typescript
+const isAlreadyBinded = await dc.auth.isNftAccountBinded('nft-account');
+console.log('NFT账号是否已被绑定:', isAlreadyBinded);
+```
+
 <br>
 
 #### `getUserInfoWithNft(nftAccount)`
 
 根据NFT账户获取用户信息。
-
-```typescript
-const userInfo = await dc.auth.getUserInfoWithNft('nft-account');
-console.log('用户信息:', userInfo);
-```
 
 **参数:**
 
@@ -291,20 +287,25 @@ console.log('用户信息:', userInfo);
 
 **返回:** Promise<any> - 用户信息对象
 
+```typescript
+const userInfo = await dc.auth.getUserInfoWithNft('nft-account');
+console.log('用户信息:', userInfo);
+```
+
 <br>
 
 #### `getUserInfoWithAccount(pubkeyAccount: string)`
-
-```typescript
-const userInfo = await dc.auth.getUserInfoWithAccount('pubkeyAccount');
-console.log('用户信息:', userInfo);
-```
 
 **参数:**
 
 - `pubkeyAccount`: string - 公钥账号,即pubkey
 
 **返回:** Promise<User> - 用户信息对象
+
+```typescript
+const userInfo = await dc.auth.getUserInfoWithAccount('pubkeyAccount');
+console.log('用户信息:', userInfo);
+```
 
 ```typescript
 export interface User {
@@ -337,6 +338,11 @@ export interface User {
 
 #### `ifEnoughUserSpace(needSize?: number)`
 
+**参数:**
+
+- `needSize`: number (可选) - 需要检查的空间大小，单位为字节，默认不传则检查当前用户空间是否足够
+
+**返回:** Promise<boolean> - 是否有足够的用户空间
 
 ```typescript
 const flag = await dc.auth.ifEnoughUserSpace(100 * 1024*1024); // 检查是否有100MB空间
@@ -347,36 +353,30 @@ if (flag) {
 }
 ```
 
-**参数:**
-
-- `needSize`: number (可选) - 需要检查的空间大小，单位为字节，默认不传则检查当前用户空间是否足够
-
-**返回:** Promise<boolean> - 是否有足够的用户空间
-
 <br>
 
 #### `refreshUserInfo()`
+
+**返回:** Promise<User> - 刷新后的用户信息对象
 
 ```typescript
 const userInfo = await dc.auth.refreshUserInfo();
 console.log('刷新后的用户信息:', userInfo);
 ```
 
-**返回:** Promise<User> - 刷新后的用户信息对象
-
 #### sign(payload: Uint8Array)
-
-```typescript
-const payload = new TextEncoder().encode('需要签名的数据');
-const signature = await dc.auth.sign(payload);
-console.log('签名结果:', signature);
-```
 
 **参数:**
 
 - `payload`: Uint8Array - 需要签名的数据
 
 **返回:** Promise<Uint8Array> - 签名结果
+
+```typescript
+const payload = new TextEncoder().encode('需要签名的数据');
+const signature = await dc.auth.sign(payload);
+console.log('签名结果:', signature);
+```
 
 <br><br>
 
@@ -390,6 +390,14 @@ console.log('签名结果:', signature);
 
 上传文件到存储系统。
 
+**参数:**
+
+- `file`: File - 要上传的文件
+- `enkey`: string - 加密密钥
+- `onUpdateTransmitSize`: (status: number, size: number) => void - 进度回调函数
+
+**返回:** Promise<any> - 上传结果，包含CID等信息
+
 ```typescript
 const file = new File(['content'], 'test.txt');
 const result = await dc.file.addFile(
@@ -400,26 +408,11 @@ const result = await dc.file.addFile(
 console.log('上传结果:', result);
 ```
 
-**参数:**
-
-- `file`: File - 要上传的文件
-- `enkey`: string - 加密密钥
-- `onUpdateTransmitSize`: (status: number, size: number) => void - 进度回调函数
-
-**返回:** Promise<any> - 上传结果，包含CID等信息
-
 <br>
 
 #### `getFile(cid, decryptKey)`
 
 获取文件内容。
-
-```typescript
-const fileContent = await dc.file.getFile('QmFileHash...', 'decryption-key');
-if (fileContent) {
-  console.log('文件内容字节长度:', fileContent.length);
-}
-```
 
 **参数:**
 
@@ -428,11 +421,25 @@ if (fileContent) {
 
 **返回:** Promise<Uint8Array | undefined> - 文件字节数组
 
+```typescript
+const fileContent = await dc.file.getFile('QmFileHash...', 'decryption-key');
+if (fileContent) {
+  console.log('文件内容字节长度:', fileContent.length);
+}
+```
+
 <br>
 
 #### `createFileStream(cid, decryptKey)`
 
 创建文件可读流，适用于大文件处理。
+
+**参数:**
+
+- `cid`: string - 文件内容标识符
+- `decryptKey`: string - 解密密钥
+
+**返回:** Promise<ReadableStream<Uint8Array> | null> - 文件可读流
 
 ```typescript
 const stream = await dc.file.createFileStream('QmFileHash...', 'decryption-key');
@@ -447,25 +454,11 @@ if (stream) {
 }
 ```
 
-**参数:**
-
-- `cid`: string - 文件内容标识符
-- `decryptKey`: string - 解密密钥
-
-**返回:** Promise<ReadableStream<Uint8Array> | null> - 文件可读流
-
 <br>
 
 #### `getSeekableFileStream(ipfsPath, decryptKey)`
 
 获取支持随机访问的文件流，适用于视频播放等场景。
-
-```typescript
-const seekableStream = await dc.file.getSeekableFileStream('/ipfs/QmFileHash...', 'decryption-key');
-// 从文件的第1000字节开始读取
-const data = await seekableStream.read(1000, 1024);
-console.log('读取的数据:', data);
-```
 
 **参数:**
 
@@ -474,11 +467,24 @@ console.log('读取的数据:', data);
 
 **返回:** Promise<SeekableFileStream> - 可随机访问的文件流
 
+```typescript
+const seekableStream = await dc.file.getSeekableFileStream('/ipfs/QmFileHash...', 'decryption-key');
+// 从文件的第1000字节开始读取
+const data = await seekableStream.read(1000, 1024);
+console.log('读取的数据:', data);
+```
+
 <br>
 
 #### `clearFileCache(pathname)`
 
 清理文件缓存。
+
+**参数:**
+
+- `pathname`: string (可选) - 特定文件路径，不提供则清除所有缓存
+
+**返回:** void
 
 ```typescript
 // 清理特定文件缓存
@@ -487,12 +493,6 @@ dc.file.clearFileCache('/ipfs/QmFileHash...');
 // 清理所有缓存
 dc.file.clearFileCache();
 ```
-
-**参数:**
-
-- `pathname`: string (可选) - 特定文件路径，不提供则清除所有缓存
-
-**返回:** void
 
 <br><br>
 
@@ -506,6 +506,10 @@ dc.file.clearFileCache();
 
 获取当前连接的节点ID和客户端公网地址。
 
+**参数:** 无
+
+**返回:** Promise<[{ peerID: string; reqAddr: string } | null, Error | null]> - 主机信息和错误
+
 ```typescript
 const [hostInfo, error] = await dc.client.getHostID();
 if (hostInfo) {
@@ -513,10 +517,6 @@ if (hostInfo) {
   console.log('客户端公网地址:', hostInfo.reqAddr);
 }
 ```
-
-**参数:** 无
-
-**返回:** Promise<[{ peerID: string; reqAddr: string } | null, Error | null]> - 主机信息和错误
 
 <br><br>
 
@@ -530,11 +530,6 @@ if (hostInfo) {
 
 向用户消息盒子发送消息。
 
-```typescript
-const result = await dc.message.sendMsgToUserBox('receiver-pubkey', 'Hello World!');
-console.log('消息发送结果:', result);
-```
-
 **参数:**
 
 - `receiver`: string - 接收者的公钥
@@ -542,22 +537,27 @@ console.log('消息发送结果:', result);
 
 **返回:** Promise<any> - 发送结果，包含消息ID和时间戳
 
+```typescript
+const result = await dc.message.sendMsgToUserBox('receiver-pubkey', 'Hello World!');
+console.log('消息发送结果:', result);
+```
+
 <br>
 
 #### `getMsgFromUserBox(limit)`
 
 获取当前用户消息盒子中的消息。
 
-```typescript
-const messages = await dc.message.getMsgFromUserBox(10);
-console.log('收到的消息:', messages);
-```
-
 **参数:**
 
 - `limit`: number (可选) - 返回消息的最大数量
 
 **返回:** Promise<any> - 消息列表
+
+```typescript
+const messages = await dc.message.getMsgFromUserBox(10);
+console.log('收到的消息:', messages);
+```
 
 <br><br>
 
@@ -571,6 +571,10 @@ console.log('收到的消息:', messages);
 
 为当前用户添加链下评论空间。当用户首次登录成功后,应该先调用此方法来完成链下空间配置。如果是集成sdk,sdk会自动完成这部操作。
 
+**参数:** 无
+
+**返回:** Promise<[boolean | null, Error | null]> - 操作结果
+
 ```typescript
 const [success, error] = await dc.comment.addUserOffChainSpace();
 if (success) {
@@ -578,22 +582,11 @@ if (success) {
 }
 ```
 
-**参数:** 无
-
-**返回:** Promise<[boolean | null, Error | null]> - 操作结果
-
 <br>
 
 #### `addUserOffChainOpTimes(times, vaccount?)`
 
 为用户添加链下操作次数,DC为了提升性能,用户发布评论等操作,无需上链,用于发布评论等链下操作次数,当用户首次登录成功后,应该先调用此方法来完成链下操作次数配置。如果是集成sdk,sdk会自动完成这部操作。
-
-```typescript
-const [result, error] = await dc.comment.addUserOffChainOpTimes(10);
-if (result) {
-  console.log('成功添加用户链下操作次数');
-}
-```
 
 **参数:**
 
@@ -602,11 +595,20 @@ if (result) {
 
 **返回:** Promise<[boolean | null, Error | null]> - 操作结果, 0:成功 1:评论空间没有配置 2:评论空间不足 3:评论数据同步中
 
+```typescript
+const [result, error] = await dc.comment.addUserOffChainOpTimes(10);
+if (result) {
+  console.log('成功添加用户链下操作次数');
+}
+```
+
 <br>
 
 #### `getThemeObj(themeAuthor, startHeight, direction, offset, limit, seekKey)`
 
 获取指定用户的主题对象列表。
+
+**参数:** Promise<string> - 主题对象列表
 
 ```javascript
 const themes = await dc.comment.getThemeObj(
@@ -620,13 +622,19 @@ const themes = await dc.comment.getThemeObj(
 console.log('主题对象列表:', themes);
 ```
 
-**参数:** Promise<string> - 主题对象列表
-
 <br>
 
 #### `addThemeObj(theme, openFlag, commentSpace)`
 
 为指定主题开通评论功能。
+
+**参数:**
+
+- `theme`: string - 主题标识符
+- `openFlag`: OpenFlag - 评论可见性标志
+- `commentSpace`: number (可选) - 评论空间大小，默认50MB
+
+**返回:** Promise<[number | null, Error | null]> - 状态码和错误
 
 ```typescript
 const [status, error] = await dc.comment.addThemeObj(
@@ -639,24 +647,11 @@ if (status === 0) {
 }
 ```
 
-**参数:**
-
-- `theme`: string - 主题标识符
-- `openFlag`: OpenFlag - 评论可见性标志
-- `commentSpace`: number (可选) - 评论空间大小，默认50MB
-
-**返回:** Promise<[number | null, Error | null]> - 状态码和错误
-
 <br>
 
 #### `addThemeSpace(theme, addSpace)`
 
 为已开通评论的主题增加评论空间。
-
-```typescript
-const result = await dc.comment.addThemeSpace('my-article-1', 50 * 1024 * 1024); // 增加50MB
-console.log('增加空间结果:', result);
-```
 
 **参数:**
 
@@ -665,11 +660,27 @@ console.log('增加空间结果:', result);
 
 **返回:** Promise<any> - 操作结果
 
+```typescript
+const result = await dc.comment.addThemeSpace('my-article-1', 50 * 1024 * 1024); // 增加50MB
+console.log('增加空间结果:', result);
+```
+
 <br>
 
 #### `publishCommentToTheme(theme, themeAuthor, commentType, comment, refercommentkey, openFlag)`
 
 发表评论到指定主题。
+
+**参数:**
+
+- `theme`: string - 主题标识符
+- `themeAuthor`: string - 主题作者的公钥
+- `commentType`: number - 评论类型 (0:普通评论, 1:回复评论等)
+- `comment`: string - 评论内容
+- `refercommentkey`: string (可选) - 引用评论的键
+- `openFlag`: number (可选) - 评论可见性
+
+**返回:** Promise<any> - 发布结果
 
 ```typescript
 const result = await dc.comment.publishCommentToTheme(
@@ -683,22 +694,19 @@ const result = await dc.comment.publishCommentToTheme(
 console.log('评论发布结果:', result);
 ```
 
-**参数:**
-
-- `theme`: string - 主题标识符
-- `themeAuthor`: string - 主题作者的公钥
-- `commentType`: number - 评论类型 (0:普通评论, 1:回复评论等)
-- `comment`: string - 评论内容
-- `refercommentkey`: string (可选) - 引用评论的键
-- `openFlag`: number (可选) - 评论可见性
-
-**返回:** Promise<any> - 发布结果
-
 <br>
 
 #### `deleteSelfComment(theme, themeAuthor, commentKey)`
 
 删除自己发布的评论。
+
+**参数:**
+
+- `theme`: string - 主题标识符
+- `themeAuthor`: string - 主题作者的公钥
+- `commentKey`: string - 评论的唯一键
+
+**返回:** Promise<any> - 删除结果
 
 ```typescript
 const result = await dc.comment.deleteSelfComment(
@@ -709,31 +717,11 @@ const result = await dc.comment.deleteSelfComment(
 console.log('删除评论结果:', result);
 ```
 
-**参数:**
-
-- `theme`: string - 主题标识符
-- `themeAuthor`: string - 主题作者的公钥
-- `commentKey`: string - 评论的唯一键
-
-**返回:** Promise<any> - 删除结果
-
 <br>
 
 #### `getThemeComments(theme, themeAuthor, startHeight, direction, offset, limit, seekKey)`
 
 获取指定主题的评论列表,无法查询作者设置为私密的评论
-
-```typescript
-const comments = await dc.comment.getThemeComments(
-  'my-article-1',
-  'author-pubkey',
-  0, // 起始高度
-  0, // 从新到旧
-  0, // 不偏移
-  50 // 最多返回50条
-);
-console.log('主题评论:', comments);
-```
 
 **参数:**
 
@@ -747,15 +735,37 @@ console.log('主题评论:', comments);
 
 **返回:** Promise<any> - 评论列表
 
+```typescript
+const comments = await dc.comment.getThemeComments(
+  'my-article-1',
+  'author-pubkey',
+  0, // 起始高度
+  0, // 从新到旧
+  0, // 不偏移
+  50 // 最多返回50条
+);
+console.log('主题评论:', comments);
+```
+
 <br>
 
-#### `configAuth(appId, themeAuthor, theme, authPubkey, permission, remark, vaccount)`
+#### `configAuth( themeAuthor, theme, authPubkey, permission, remark, vaccount)`
 
 配置主题的授权信息,即为其他用户授权评论权限。
 
+**参数:**
+
+- `themeAuthor`: string - 主题作者的公钥
+- `theme`: string - 主题名称
+- `authPubkey`: string - 被授权者的公钥
+- `permission`: ThemePermission - 权限级别 (1:只读, 3:读写)
+- `remark`: string - 备注信息
+- `vaccount`: string (可选) - 虚拟账户
+  
+**返回:** Promise<[number, Error | null]> - 状态码和错误信息
+
 ```typescript
 const [status, error] = await dc.comment.configAuth(
-  'myapp',
   'theme-author-pubkey',
   'my-article-1',
   'user-to-authorize-pubkey',
@@ -798,27 +808,22 @@ export enum ThemePermission {
 }
 ```
 
-**参数:**
-
-- `appId`: string - 应用ID
-- `themeAuthor`: string - 主题作者的公钥
-- `theme`: string - 主题名称
-- `authPubkey`: string - 被授权者的公钥
-- `permission`: ThemePermission - 权限级别 (1:只读, 3:读写)
-- `remark`: string - 备注信息
-- `vaccount`: string (可选) - 虚拟账户
-  
-**返回:** Promise<[number, Error | null]> - 状态码和错误信息
-
 <br>
 
-#### `getAuthList(appId, themeAuthor, theme, vaccount)`
+#### `getAuthList(themeAuthor, theme, vaccount)`
 
 获取指定主题的授权列表
 
+**参数:**
+
+- `themeAuthor`: string - 主题作者的公钥
+- `theme`: string - 主题/对象标识符
+- `vaccount`: string (可选) - 虚拟账户
+  
+**返回:** Promise<[ThemeAuthInfo[] | null, ThemeComment[] | null, Error | null]> - 存授权列表、评论列表格式的授权列表(带原始签名)和错误信息
+
 ```typescript
 const [authList, commentList, error] = await dc.comment.getAuthList(
-  'myapp',
   'theme-author-pubkey',
   'my-article-1',
   'virtual-account-id' // 可选
@@ -829,20 +834,22 @@ if (authList) {
 }
 ```
 
-**参数:**
-
-- `appId`: string - 应用ID
-- `themeAuthor`: string - 主题作者的公钥
-- `theme`: string - 主题/对象标识符
-- `vaccount`: string (可选) - 虚拟账户
-  
-**返回:** Promise<[ThemeAuthInfo[] | null, ThemeComment[] | null, Error | null]> - 存授权列表、评论列表格式的授权列表(带原始签名)和错误信息
-
 <br>
 
 #### `getUserComments(userPubkey, startHeight, direction, offset, limit, seekKey)`
 
 获取指定用户发布的评论列表,无法查询用户设置为私密的评论
+
+**参数:**
+
+- `userPubkey`: string - 用户公钥
+- `startHeight`: number (可选) - 查询起始高度，默认0
+- `direction`: number (可选) - 查询方向 (0:从新到旧, 1:从旧到新)，默认0
+- `offset`: number (可选) - 结果集偏移量，默认0
+- `limit`: number (可选) - 最大返回数量，默认100
+- `seekKey`: string (可选) - 查询的起始键，格式为"blockheight/key"
+  
+**返回:** Promise<string> - 用户的评论列表
 
 ```typescript
 const userComments = await dc.comment.getUserComments(
@@ -856,17 +863,6 @@ const userComments = await dc.comment.getUserComments(
 console.log('用户评论列表:', userComments);
 ```
 
-**参数:**
-
-- `userPubkey`: string - 用户公钥
-- `startHeight`: number (可选) - 查询起始高度，默认0
-- `direction`: number (可选) - 查询方向 (0:从新到旧, 1:从旧到新)，默认0
-- `offset`: number (可选) - 结果集偏移量，默认0
-- `limit`: number (可选) - 最大返回数量，默认100
-- `seekKey`: string (可选) - 查询的起始键，格式为"blockheight/key"
-  
-**返回:** Promise<string> - 用户的评论列表
-
 <br><br>
 
 ## 键值存储模块 (keyvalue)
@@ -875,219 +871,312 @@ console.log('用户评论列表:', userComments);
 
 ### 方法
 
-#### `createStore(theme, space, type)`
+#### `createStore(appId, theme, space, type)`
 
-创建一个键值存储主题。
+创建一个键值存储主题。传入的空间大小如果少于100M,将会自动分配100M空间,如果传入的空间大于100M,则会分配指定大小的空间。
+
+**参数:**
+
+- `appId`: string - 应用ID
+- `theme`: string - 主题名称
+- `space`: number - 分配的存储空间大小(字节)
+- `type`: KeyValueStoreType - 存储类型 (1: 鉴权主题-读写都需要鉴权, 2: 公共主题-默认所有用户可读,写需要鉴权)
+
+**返回:** Promise<KeyValueDB> - 创建的keyvalue数据库实例
 
 ```typescript
 const result = await dc.keyvalue.createStore(
+  'myapp',
   'my-app-settings',
-  50 * 1024 * 1024, // 50MB
+  100 * 1024 * 1024, // 100MB
   1 // 认证存储
 );
 console.log('创建存储结果:', result);
 ```
 
+<br>
+
+#### `getStore(appId, theme, themeAuthor)`
+
+获取指定主题的keyvalue数据库实例。
+
 **参数:**
 
+- `appId`: string - 应用ID
 - `theme`: string - 主题名称
-- `space`: number - 分配的存储空间大小(字节)
-- `type`: number - 存储类型 (0: 普通存储, 1: 加密存储)
+- `themeAuthor`: string - 数据库创建者的公钥
 
-**返回:** Promise<any> - 创建结果
+**返回:** Promise<KeyValueDB> - keyvalue数据库实例
+
+```typescript
+const store = await dc.keyvalue.getStore(
+  'myapp',
+  'my-app-settings',
+  'theme-author-pubkey'
+);
+console.log('获取到存储实例:', store);
+```
 
 <br>
 
-#### `configAuth(appId, themeAuthor, theme, authPubkey, permission, remark, vaccount)`
+#### `configAuth(kvdb, authPubkey, permission, remark, vaccount)`
 
 配置主题的授权信息。
 
+**参数:**
+
+- `kvdb`: KeyValueDB - keyvalue数据库实例
+- `authPubkey`: string - 被授权者的公钥
+- `permission`: ThemePermission - 权限级别
+- `remark`: string - 备注信息
+- `vaccount`: string (可选) - 虚拟账户
+
+**返回:** Promise<[number, Error | null]> - 状态码和错误信息
+
 ```typescript
-const [status, error] = await dc.keyvalue.configAuth(
+const store = await dc.keyvalue.getStore(
   'myapp',
-  'theme-author-pubkey',
-  'my-app-settings',
+  'my-app-settings', 
+  'theme-author-pubkey'
+);
+
+const [status, error] = await dc.keyvalue.configAuth(
+  store,
   'user-to-authorize-pubkey',
-  Permission.READ, // 只读权限
+  ThemePermission.READ, // 只读权限
   '测试授权'
 );
+
 if (status === 0) {
   console.log('授权配置成功');
 }
 ```
 
-**参数:**
-
-- `appId`: string - 应用ID
-- `themeAuthor`: string - 主题作者的公钥
-- `theme`: string - 主题名称
-- `authPubkey`: string - 被授权者的公钥
-- `permission`: number - 权限级别 (1:只读, 3:读写)
-- `remark`: string - 备注信息
-- `vaccount`: string (可选) - 虚拟账户
-
-**返回:** Promise<[number, Error | null]> - 状态码和错误
-
 <br>
 
+#### `getAuthList(kvdb, vaccount)`
 
-#### `getAuthList(appId, themeAuthor, theme, vaccount)`
+获取指定keyvalue的授权列表。
 
-获取指定keyvalue的的授权列表
+**参数:**
+
+- `kvdb`: KeyValueDB - keyvalue数据库实例
+- `vaccount`: string (可选) - 虚拟账户
+
+**返回:** Promise<[ThemeAuthInfo[] | null, ThemeComment[] | null, Error | null]> - 授权列表、含签名的原始授权列表和错误信息
 
 ```typescript
-const [authList, commentList, error] = await dc.comment.getAuthList(
+const store = await dc.keyvalue.getStore(
   'myapp',
-  'theme-author-pubkey',
-  'my-article-1',
+  'my-app-settings',
+  'theme-author-pubkey'
+);
+
+const [authList, commentList, error] = await dc.keyvalue.getAuthList(
+  store,
   'virtual-account-id' // 可选
 );
+
 if (authList) {
   console.log('授权列表:', authList);
   console.log('评论格式列表:', commentList);
 }
 ```
 
-**参数:**
-
-- `appId`: string - 应用ID
-- `themeAuthor`: string - keystore作者的公钥
-- `theme`: string - 主题/对象标识符
-- `vaccount`: string (可选) - 虚拟账户
-  
-**返回:** Promise<[ThemeAuthInfo[] | null, ThemeComment[] | null, Error | null]> - 存授权列表、评论列表格式的授权列表(带原始签名)和错误信息
-
 <br>
 
-#### `setKeyValue(appId, themeAuthor, theme, key, value, indexs, vaccount)`
+#### `set(kvdb, key, value, indexs, vaccount)`
 
-设置键值对数据。
+设置键值对，支持索引功能。
+
+**参数:**
+
+- `kvdb`: KeyValueDB - keyvalue数据库实例
+- `key`: string - 键名
+- `value`: string - 值内容
+- `indexs`: string - 索引列表，格式为"key1:value1$$$key2:value2"，设置索引后可通过索引快速定位
+- `vaccount`: string (可选) - 虚拟账户
+
+**返回:** Promise<[boolean, Error | null]> - 成功状态和错误信息
 
 ```typescript
-const [success, error] = await dc.keyvalue.setKeyValue(
+const store = await dc.keyvalue.getStore(
   'myapp',
-  'theme-author-pubkey',
   'my-app-settings',
+  'theme-author-pubkey'
+);
+
+const [success, error] = await dc.keyvalue.set(
+  store,
   'user:prefs',
   JSON.stringify({theme: 'dark', fontSize: 14}),
-  'type:prefs$$$user:123' // 设置两个索引
+  'type:prefs$$$user:123', // 设置两个索引
+  'virtual-account-id' // 可选
 );
+
 if (success) {
   console.log('数据保存成功');
 }
 ```
 
-**参数:**
-
-- `appId`: string - 应用ID
-- `themeAuthor`: string - 主题作者的公钥
-- `theme`: string - 主题名称
-- `key`: string - 键名
-- `value`: string - 值内容
-- `indexs`: string - 索引列表，格式为"key1:value1$$$key2:value2"
-- `vaccount`: string (可选) - 虚拟账户
-
-**返回:** Promise<[boolean, Error | null]> - 成功状态和错误
-
 <br>
 
-#### `getValueWithKey(appId, themeAuthor, theme, writerPubkey, key, vaccount)`
+#### `get(kvdb, key, writerPubkey, vaccount)`
 
 获取指定键的值。
 
+**参数:**
+
+- `kvdb`: KeyValueDB - keyvalue数据库实例
+- `key`: string - 键名
+- `writerPubkey`: string (可选) - 写入者的公钥，默认为主题作者
+- `vaccount`: string (可选) - 虚拟账户
+
+**返回:** Promise<[string, Error | null]> - 值内容和错误信息
+
 ```typescript
-const [value, error] = await dc.keyvalue.getValueWithKey(
+const store = await dc.keyvalue.getStore(
   'myapp',
-  'theme-author-pubkey',
   'my-app-settings',
-  'writer-pubkey',
-  'user:prefs'
+  'theme-author-pubkey'
 );
+
+const [value, error] = await dc.keyvalue.get(
+  store,
+  'user:prefs',
+  'writer-pubkey', // 可选，默认为主题作者
+  'virtual-account-id' // 可选
+);
+
 if (value) {
   const prefs = JSON.parse(value);
   console.log('用户偏好设置:', prefs);
 }
 ```
 
-**参数:**
-
-- `appId`: string - 应用ID
-- `themeAuthor`: string - 主题作者的公钥
-- `theme`: string - 主题名称
-- `writerPubkey`: string - 写入者的公钥
-- `key`: string - 键名
-- `vaccount`: string (可选) - 虚拟账户
-
-**返回:** Promise<[string, Error | null]> - 值内容和错误
-
 <br>
 
-#### `getValuesWithIndex(appId, themeAuthor, theme, indexKey, indexValue, seekKey, offset, limit, vaccount)`
+#### `getBatch(kvdb, keys, writerPubkey, vaccount)`
 
-通过索引查询键值对。
-
-```typescript
-const [results, error] = await dc.keyvalue.getValuesWithIndex(
-  'myapp',
-  'theme-author-pubkey',
-  'my-app-settings',
-  'type', // 索引键
-  'prefs', // 索引值
-  '', // 查询起始键
-  0, // 偏移量
-  100 // 最大返回数量
-);
-if (results) {
-  const prefsArray = JSON.parse(results);
-  console.log('所有偏好设置:', prefsArray);
-}
-```
+批量获取多个键的值。
 
 **参数:**
 
-- `appId`: string - 应用ID
-- `themeAuthor`: string - 主题作者的公钥
-- `theme`: string - 主题名称
-- `indexKey`: string - 索引键名
-- `indexValue`: string - 索引值
-- `seekKey`: string - 查询起始键
-- `offset`: number - 结果偏移量
-- `limit`: number - 返回结果数量限制
+- `kvdb`: KeyValueDB - keyvalue数据库实例
+- `keys`: string - 键名列表，多个键用$$$分隔
+- `writerPubkey`: string (可选) - 写入者的公钥，默认为主题作者
 - `vaccount`: string (可选) - 虚拟账户
 
-**返回:** Promise<[string, Error | null]> - JSON格式查询结果和错误
-
-<br>
-
-#### `getValuesWithKeys(appId, themeAuthor, theme, writerPubkey, keys, vaccount)`
-
-获取多个键的值。
+**返回:** Promise<[string, Error | null]> - JSON格式查询结果和错误信息
 
 ```typescript
-const [results, error] = await dc.keyvalue.getValuesWithKeys(
+const store = await dc.keyvalue.getStore(
   'myapp',
-  'theme-author-pubkey',
   'my-app-settings',
-  'writer-pubkey',
-  'user:prefs$$$user:settings' // 多个键用$$$分隔
+  'theme-author-pubkey'
 );
+
+const [results, error] = await dc.keyvalue.getBatch(
+  store,
+  'user:prefs$$$user:settings', // 多个键用$$$分隔
+  'writer-pubkey', // 可选，默认为主题作者
+  'virtual-account-id' // 可选
+);
+
 if (results) {
   const values = JSON.parse(results);
   console.log('获取的键值对:', values);
 }
 ```
 
+<br>
+
+#### `getWithIndex(kvdb, indexKey, indexValue, limit, seekKey, offset, vaccount)`
+
+通过索引查询键值对。
+
 **参数:**
 
-- `appId`: string - 应用ID
-- `themeAuthor`: string - 主题作者的公钥
-- `theme`: string - 主题名称
-- `writerPubkey`: string - 写入者的公钥
-- `keys`: string - 键名列表，多个键用$$$分隔
+- `kvdb`: KeyValueDB - keyvalue数据库实例
+- `indexKey`: string - 索引键名
+- `indexValue`: string - 索引值
+- `limit`: number - 返回结果数量限制
+- `seekKey`: string - 查询起始键
+- `offset`: number - 结果偏移量
 - `vaccount`: string (可选) - 虚拟账户
 
-**返回:** Promise<[string, Error | null]> - JSON格式查询结果和错误
+**返回:** Promise<[string, Error | null]> - JSON格式查询结果和错误信息
 
+```typescript
+const store = await dc.keyvalue.getStore(
+  'myapp',
+  'my-app-settings',
+  'theme-author-pubkey'
+);
+
+const [results, error] = await dc.keyvalue.getWithIndex(
+  store,
+  'type', // 索引键
+  'prefs', // 索引值
+  100, // 最大返回数量
+  '', // 查询起始键
+  0, // 偏移量
+  'virtual-account-id' // 可选
+);
+
+if (results) {
+  const items = JSON.parse(results);
+  console.log('索引查询结果:', items);
+}
+```
+
+<br>
+
+## 简化使用示例
+
+```typescript
+// 完整的键值存储使用流程示例
+
+// 1. 创建存储主题
+await dc.keyvalue.createStore('myapp', 'app-settings', 10 * 1024 * 1024, 1);
+
+// 2. 获取存储实例
+const store = await dc.keyvalue.getStore('myapp', 'app-settings', dc.auth.getPublicKey());
+
+// 3. 存储用户偏好设置
+await dc.keyvalue.set(
+  store,
+  'user:preferences',
+  JSON.stringify({
+    theme: 'dark',
+    fontSize: 16,
+    notifications: true
+  }),
+  'type:preferences$$$user:current' // 设置两个索引
+);
+
+// 4. 读取用户偏好设置
+const [prefsData, error] = await dc.keyvalue.get(store, 'user:preferences');
+if (prefsData) {
+  const preferences = JSON.parse(prefsData);
+  console.log('用户偏好设置:', preferences);
+}
+
+// 5. 根据索引查询所有偏好设置类型的数据
+const [indexed, indexError] = await dc.keyvalue.getWithIndex(
+  store,
+  'type', // 索引键
+  'preferences', // 索引值
+  50, // 最多返回50条
+  '', // 不使用起始键
+  0 // 不偏移
+);
+
+if (indexed) {
+  const allPreferences = JSON.parse(indexed);
+  console.log('所有偏好设置:', allPreferences);
+}
+```
  
 <br><br>
 
@@ -1101,23 +1190,34 @@ if (results) {
 
 初始化数据库管理器，创建数据库操作所需的组件和服务。
 
-```typescript
-// 初始化数据库管理器
-await dc.database.initDBManager();
-console.log('数据库管理器已初始化');
-```
-
 **参数:** 无
 
 **返回:** Promise<void>
 
 **异常:** 初始化失败时抛出错误
 
+```typescript
+// 初始化数据库管理器
+await dc.database.initDBManager();
+console.log('数据库管理器已初始化');
+```
+
 <br>
 
 ### `newDB(name, b32Rk, b32Sk, jsonCollections)`
 
 创建新数据库。
+
+**参数:**
+
+- `name`: string - 数据库名称
+- `b32Rk`: string - base32编码的读取密钥
+- `b32Sk`: string - base32编码的服务密钥
+- `jsonCollections`: ICollectionConfig[] - 集合配置数组，定义数据库中的集合结构
+
+**返回:** Promise<string> - 创建的threadID
+
+**异常:** 创建失败时抛出错误
 
 ```typescript
 // 定义集合配置
@@ -1162,22 +1262,25 @@ const threadId = await dc.database.newDB(
 console.log('创建数据库成功，threadID:', threadId);
 ```
 
-**参数:**
-
-- `name`: string - 数据库名称
-- `b32Rk`: string - base32编码的读取密钥
-- `b32Sk`: string - base32编码的服务密钥
-- `jsonCollections`: ICollectionConfig[] - 集合配置数组，定义数据库中的集合结构
-
-**返回:** Promise<string> - 创建的threadID
-
-**异常:** 创建失败时抛出错误
-
 <br>
 
 ### `syncDbFromDC(threadid, dbname, dbAddr, b32Rk, b32Sk, block, collectionInfos)`
 
 从分布式网络同步数据库。
+
+**参数:**
+
+- `threadid`: string - threadID
+- `dbname`: string - 数据库名称
+- `dbAddr`: string - 数据库地址
+- `b32Rk`: string - base32编码的读取密钥
+- `b32Sk`: string - base32编码的服务密钥
+- `block`: boolean - 是否阻塞等待同步完成
+- `collectionInfos`: ICollectionConfig[] - 集合配置数组，定义数据库中的集合结构
+
+**返回:** Promise<void>
+
+**异常:** 同步失败时抛出错误
 
 ```typescript
 // 同步数据库配置
@@ -1210,25 +1313,17 @@ await dc.database.syncDbFromDC(
 console.log('数据库同步完成');
 ```
 
-**参数:**
-
-- `threadid`: string - threadID
-- `dbname`: string - 数据库名称
-- `dbAddr`: string - 数据库地址
-- `b32Rk`: string - base32编码的读取密钥
-- `b32Sk`: string - base32编码的服务密钥
-- `block`: boolean - 是否阻塞等待同步完成
-- `collectionInfos`: ICollectionConfig[] - 集合配置数组，定义数据库中的集合结构
-
-**返回:** Promise<void>
-
-**异常:** 同步失败时抛出错误
-
 <br>
 
 ### `refreshDBFromDC(threadid)`
 
 刷新数据库，从分布式网络获取最新数据。
+
+**参数:**
+
+- `threadid`: string - 数据库threadID
+
+**返回:** Promise<Error | null> - 错误信息或null表示成功
 
 ```typescript
 // 刷新数据库，获取最新数据
@@ -1241,17 +1336,17 @@ if (error === null) {
 }
 ```
 
-**参数:**
-
-- `threadid`: string - 数据库threadID
-
-**返回:** Promise<Error | null> - 错误信息或null表示成功
-
 <br>
 
 ### `syncDBToDC(tId)`
 
 同步数据库到分布式网络。
+
+**参数:**
+
+- `tId`: string - threadID
+
+**返回:** Promise<Error | null> - 错误信息或null表示成功
 
 ```typescript
 // 将本地数据库同步到分布式网络
@@ -1264,23 +1359,11 @@ if (error === null) {
 }
 ```
 
-**参数:**
-
-- `tId`: string - threadID
-
-**返回:** Promise<Error | null> - 错误信息或null表示成功
-
 <br>
 
 ### `close()`
 
 关闭数据库管理器。
-
-```typescript
-// 关闭数据库管理器
-await dc.database.close();
-console.log('数据库管理器已关闭');
-```
 
 **参数:** 无
 
@@ -1288,11 +1371,27 @@ console.log('数据库管理器已关闭');
 
 **异常:** 关闭失败时抛出错误
 
+```typescript
+// 关闭数据库管理器
+await dc.database.close();
+console.log('数据库管理器已关闭');
+```
+
 <br>
 
 ### `create(threadId, collectionName, jsonInstance)`
 
 在集合中创建新对象实例。
+
+**参数:**
+
+- `threadId`: string - threadID
+- `collectionName`: string - 集合名称
+- `jsonInstance`: string - JSON字符串表示的实例对象
+
+**返回:** Promise<string> - 创建的实例ID
+
+**异常:** 创建失败时抛出错误
 
 ```typescript
 // 创建用户实例
@@ -1332,21 +1431,21 @@ const postId = await dc.database.create(
 console.log('创建的文章ID:', postId);
 ```
 
-**参数:**
-
-- `threadId`: string - threadID
-- `collectionName`: string - 集合名称
-- `jsonInstance`: string - JSON字符串表示的实例对象
-
-**返回:** Promise<string> - 创建的实例ID
-
-**异常:** 创建失败时抛出错误
-
 <br>
 
 ### `delete(threadId, collectionName, instanceID)`
 
 通过ID删除实例。
+
+**参数:**
+
+- `threadId`: string - threadID
+- `collectionName`: string - 集合名称
+- `instanceID`: string - 要删除的实例ID
+
+**返回:** Promise<void>
+
+**异常:** 删除失败时抛出错误
 
 ```typescript
 // 删除指定ID的用户
@@ -1359,21 +1458,21 @@ await dc.database.delete(
 console.log('用户已删除');
 ```
 
-**参数:**
-
-- `threadId`: string - threadID
-- `collectionName`: string - 集合名称
-- `instanceID`: string - 要删除的实例ID
-
-**返回:** Promise<void>
-
-**异常:** 删除失败时抛出错误
-
 <br>
 
 ### `save(threadId, collectionName, instance)`
 
 更新已存在的实例。
+
+**参数:**
+
+- `threadId`: string - threadID
+- `collectionName`: string - 集合名称
+- `instance`: string - JSON字符串表示的实例对象
+
+**返回:** Promise<void>
+
+**异常:** 更新失败时抛出错误
 
 ```typescript
 // 获取要更新的用户
@@ -1400,21 +1499,21 @@ await dc.database.save(
 console.log('用户信息已更新');
 ```
 
-**参数:**
-
-- `threadId`: string - threadID
-- `collectionName`: string - 集合名称
-- `instance`: string - JSON字符串表示的实例对象
-
-**返回:** Promise<void>
-
-**异常:** 更新失败时抛出错误
-
 <br>
 
 ### `deleteMany(threadId, collectionName, instanceIDs)`
 
 批量删除多个实例。
+
+**参数:**
+
+- `threadId`: string - threadID
+- `collectionName`: string - 集合名称
+- `instanceIDs`: string - 逗号分隔或JSON数组表示的实例ID列表
+
+**返回:** Promise<void>
+
+**异常:** 删除失败时抛出错误
 
 ```typescript
 // 删除多个文章实例
@@ -1440,21 +1539,19 @@ await dc.database.deleteMany(
 console.log('多篇文章已删除');
 ```
 
-**参数:**
-
-- `threadId`: string - threadID
-- `collectionName`: string - 集合名称
-- `instanceIDs`: string - 逗号分隔或JSON数组表示的实例ID列表
-
-**返回:** Promise<void>
-
-**异常:** 删除失败时抛出错误
-
 <br>
 
 ### `has(threadId, collectionName, instanceID)`
 
 检查指定实例是否存在。
+
+**参数:**
+
+- `threadId`: string - threadID
+- `collectionName`: string - 集合名称
+- `instanceID`: string - 要检查的实例ID
+
+**返回:** Promise<boolean> - 布尔值表示实例是否存在
 
 ```typescript
 // 检查用户是否存在
@@ -1471,19 +1568,25 @@ if (exists) {
 }
 ```
 
-**参数:**
-
-- `threadId`: string - threadID
-- `collectionName`: string - 集合名称
-- `instanceID`: string - 要检查的实例ID
-
-**返回:** Promise<boolean> - 布尔值表示实例是否存在
-
 <br>
 
 ### `find(threadId, collectionName, queryString)`
 
 根据查询条件查找实例。
+
+**参数:**
+
+- `threadId`: string - threadID
+- `collectionName`: string - 集合名称
+- `queryString`: string - JSON字符串表示的查询条件,
+  格式举例:(condition表示and条件组合, ors表示或条件组合, sort表示排序, seek表示分页)
+  格式1: `{"condition":"age=80 and name='John'"}`,"sort":{"fieldPath":"age","desc":true}}`
+  格式2: `{"ors":[{"condition":"age = 21 and name = 'foo'"}]}`
+  格式3: `{"condition":"age > 21 ","ors":[{"condition":"age = 21 and name = 'foo'"}],"sort":{"fieldPath":"age","desc":true},"seek":"01fyc691gh671nf0s8qpt0ych8"}`
+
+**返回:** Promise<string> - JSON字符串表示的查询结果
+
+**异常:** 查询失败时抛出错误
 
 ```typescript
 // 示例1: 简单查询 - 查找年龄为28的用户
@@ -1542,25 +1645,21 @@ const results4 = await dc.database.find(
 console.log('复杂查询结果:', JSON.parse(results4));
 ```
 
-**参数:**
-
-- `threadId`: string - threadID
-- `collectionName`: string - 集合名称
-- `queryString`: string - JSON字符串表示的查询条件,
-  格式举例:(condition表示and条件组合, ors表示或条件组合, sort表示排序, seek表示分页)
-  格式1: `{"condition":"age=80 and name='John'"}`,"sort":{"fieldPath":"age","desc":true}}`
-  格式2: `{"ors":[{"condition":"age = 21 and name = 'foo'"}]}`
-  格式3: `{"condition":"age > 21 ","ors":[{"condition":"age = 21 and name = 'foo'"}],"sort":{"fieldPath":"age","desc":true},"seek":"01fyc691gh671nf0s8qpt0ych8"}`
-
-**返回:** Promise<string> - JSON字符串表示的查询结果
-
-**异常:** 查询失败时抛出错误
-
 <br>
 
 ### `findByID(threadId, collectionName, instanceID)`
 
 通过ID查找实例。
+
+**参数:**
+
+- `threadId`: string - threadID
+- `collectionName`: string - 集合名称
+- `instanceID`: string - 实例ID
+
+**返回:** Promise<string> - JSON字符串表示的实例
+
+**异常:** 查询失败时抛出错误
 
 ```typescript
 // 通过ID查找用户
@@ -1578,21 +1677,21 @@ if (userJson) {
 }
 ```
 
-**参数:**
-
-- `threadId`: string - threadID
-- `collectionName`: string - 集合名称
-- `instanceID`: string - 实例ID
-
-**返回:** Promise<string> - JSON字符串表示的实例
-
-**异常:** 查询失败时抛出错误
-
 <br>
 
 ### `modifiedSince(threadId, collectionName, time)`
 
 获取在指定时间后被修改的实例ID列表。
+
+**参数:**
+
+- `threadId`: string - threadID
+- `collectionName`: string - 集合名称
+- `time`: number - 时间戳（毫秒）
+
+**返回:** Promise<string> - JSON字符串表示的实例ID列表
+
+**异常:** 查询失败时抛出错误
 
 ```typescript
 // 获取过去24小时内修改的所有用户ID
@@ -1619,16 +1718,6 @@ if (modifiedIds.length > 0) {
   console.log('最近修改的用户信息:', JSON.parse(userJson));
 }
 ```
-
-**参数:**
-
-- `threadId`: string - threadID
-- `collectionName`: string - 集合名称
-- `time`: number - 时间戳（毫秒）
-
-**返回:** Promise<string> - JSON字符串表示的实例ID列表
-
-**异常:** 查询失败时抛出错误
 
 <br>
 
@@ -1781,6 +1870,12 @@ taskManagerExample();
 
 获取缓存值。
 
+**参数:**
+
+- `key`: string - 缓存键
+
+**返回:** Promise<string | null> - 缓存值，不存在则返回null
+
 ```typescript
 const value = await dc.cache.getCacheValue('cache-key');
 if (value) {
@@ -1788,17 +1883,18 @@ if (value) {
 }
 ```
 
-**参数:**
-
-- `key`: string - 缓存键
-
-**返回:** Promise<string | null> - 缓存值，不存在则返回null
-
 <br>
 
 #### `setCacheKey(value, expire)`
 
 设置缓存值。
+
+**参数:**
+
+- `value`: string - 缓存值
+- `expire`: number (可选) - 过期时间(秒)，默认1天
+
+**返回:** Promise<any> - 设置结果
 
 ```typescript
 const result = await dc.cache.setCacheKey(
@@ -1807,13 +1903,6 @@ const result = await dc.cache.setCacheKey(
 );
 console.log('缓存设置结果:', result);
 ```
-
-**参数:**
-
-- `value`: string - 缓存值
-- `expire`: number (可选) - 过期时间(秒)，默认1天
-
-**返回:** Promise<any> - 设置结果
 
 <br><br>
 
@@ -1827,6 +1916,13 @@ console.log('缓存设置结果:', result);
 
 创建AI调用代理配置。
 
+**参数:**
+
+- `appId`: string - 应用ID
+- `configTheme`: string - 配置主题名称
+
+**返回:** Promise<[number, Error | null]> - 状态码和错误信息
+
 ```typescript
 const [status, error] = await dc.aiproxy.createProxyConfig(
   'myapp',
@@ -1837,18 +1933,22 @@ if (status === 0) {
 }
 ```
 
-**参数:**
-
-- `appId`: string - 应用ID
-- `configTheme`: string - 配置主题名称
-
-**返回:** Promise<[number, Error | null]> - 状态码和错误信息
-
 <br>
 
 #### `configAIProxy(appId, configAuthor, configTheme, serverName, serverConfig, vaccount)`
 
 配置AI代理访问设置。
+
+**参数:**
+
+- `appId`: string - 应用ID
+- `configAuthor`: string - 配置作者公钥
+- `configTheme`: string - 配置主题名称
+- `serverName`: string - 服务器名称
+- `serverConfig`: AIProxyConfig (可选) - 服务器配置，为空则表示删除该服务器的配置
+- `vaccount`: string (可选) - 虚拟账户
+
+**返回:** Promise<[boolean, Error | null]> - 是否配置成功和错误信息
 
 ```typescript
 const config = {
@@ -1876,21 +1976,22 @@ if (success) {
 }
 ```
 
+<br>
+
+#### `configAuth(appId, configAuthor, configTheme, authPubkey, permission, authConfig, vaccount)`
+配置用户的访问权限。
+
 **参数:**
 
 - `appId`: string - 应用ID
 - `configAuthor`: string - 配置作者公钥
 - `configTheme`: string - 配置主题名称
-- `serverName`: string - 服务器名称
-- `serverConfig`: AIProxyConfig (可选) - 服务器配置，为空则表示删除该服务器的配置
+- `authPubkey`: string - 用户公钥
+- `permission`: AIProxyUserPermission - 用户权限枚举
+- `authConfig`: ProxyCallConfig - 用户访问配置
 - `vaccount`: string (可选) - 虚拟账户
-
-**返回:** Promise<[boolean, Error | null]> - 是否配置成功和错误信息
-
-<br>
-
-#### `configAuth(appId, configAuthor, configTheme, authPubkey, permission, authConfig, vaccount)`
-配置用户的访问权限。
+  
+**返回:** Promise<[number, Error | null]> - 状态码和错误信息
 
 ```typescript
 export enum AIProxyUserPermission {
@@ -1932,22 +2033,19 @@ if (status === 0) {
 }
 ```
 
-**参数:**
-
-- `appId`: string - 应用ID
-- `configAuthor`: string - 配置作者公钥
-- `configTheme`: string - 配置主题名称
-- `authPubkey`: string - 用户公钥
-- `permission`: AIProxyUserPermission - 用户权限枚举
-- `authConfig`: ProxyCallConfig - 用户访问配置
-- `vaccount`: string (可选) - 虚拟账户
-  
-**返回:** Promise<[number, Error | null]> - 状态码和错误信息
-
 <br>
 
 #### `GetAIProxyConfig(appId, themeAuthor, configThem, vaccount)`
 获取的ai代理的所有配置,包括服务与授权列表
+
+**参数:**
+
+- `appId`: string - 应用ID
+- `themeAuthor`: string - 主题作者公钥
+- `configThem`: string - 配置主题名称
+- `vaccount`: string (可选) - 虚拟账户
+
+**返回:** Promise<[UserProxyCallConfig[] | null, AIProxyConfig[] | null, Error | null]> - 用户代理调用配置、AI代理服务配置和错误信息
 
 ```typescript
 const [userConfigs, aiConfigs, error] = await dc.aiproxy.GetAIProxyConfig(
@@ -1963,6 +2061,11 @@ if (error) {
 }
 ```
 
+<br>
+
+#### `GetUserOwnAIProxyAuth(appId, themeAuthor, configThem)`
+获取用户自身的AI代理授权配置。
+
 **参数:**
 
 - `appId`: string - 应用ID
@@ -1970,12 +2073,7 @@ if (error) {
 - `configThem`: string - 配置主题名称
 - `vaccount`: string (可选) - 虚拟账户
 
-**返回:** Promise<[UserProxyCallConfig[] | null, AIProxyConfig[] | null, Error | null]> - 用户代理调用配置、AI代理服务配置和错误信息
-
-<br>
-
-#### `GetUserOwnAIProxyAuth(appId, themeAuthor, configThem)`
-获取用户自身的AI代理授权配置。
+**返回:** Promise<[authConfig: ProxyCallConfig, error: Error | null]> - 用户AI代理授权配置和错误信息
 
 ```typescript
 const [authConfig, error] = await dc.aiproxy.GetUserOwnAIProxyAuth(
@@ -1990,20 +2088,26 @@ if (error) {
 }
 ```
 
-**参数:**
-
-- `appId`: string - 应用ID
-- `themeAuthor`: string - 主题作者公钥
-- `configThem`: string - 配置主题名称
-- `vaccount`: string (可选) - 虚拟账户
-
-**返回:** Promise<[authConfig: ProxyCallConfig, error: Error | null]> - 用户AI代理授权配置和错误信息
-
 <br>
 
 #### `DoAIProxyCall(appId, themeAuthor, configTheme, serverName, reqBody, forceRefresh, onStreamResponse, headers, path, model)`
 
 执行AI代理调用。
+
+**参数:**
+
+- `appId`: string - 应用ID
+- `themeAuthor`: string - 主题作者公钥
+- `configTheme`: string - 配置主题名称
+- `serverName`: string - 服务器名称
+- `reqBody`: string - 请求体
+- `forceRefresh`: boolean - 是否强制刷新
+- `onStreamResponse`: (chunk: any) => void (可选) - 流式响应回调
+- `headers`: string (可选) - 请求头
+- `path`: string (可选) - 请求路径
+- `model`: string (可选) - 模型名称
+
+**返回:** Promise<number> - 调用状态码
 
 ```typescript
 const reqBody = JSON.stringify({
@@ -2031,21 +2135,6 @@ const status = await dc.aiproxy.DoAIProxyCall(
 
 console.log('API调用状态:', status);
 ```
-
-**参数:**
-
-- `appId`: string - 应用ID
-- `themeAuthor`: string - 主题作者公钥
-- `configTheme`: string - 配置主题名称
-- `serverName`: string - 服务器名称
-- `reqBody`: string - 请求体
-- `forceRefresh`: boolean - 是否强制刷新
-- `onStreamResponse`: (chunk: any) => void (可选) - 流式响应回调
-- `headers`: string (可选) - 请求头
-- `path`: string (可选) - 请求路径
-- `model`: string (可选) - 模型名称
-
-**返回:** Promise<number> - 调用状态码
 
 <br><br>
 

@@ -4,7 +4,7 @@
 import {  IKeyValueOperations } from "../interfaces/keyvalue-interface";
 import { DCContext } from "../../lib/interfaces/DCContext";
 import { DCModule, CoreModuleName } from "../common/module-system";
-import { KeyValueManager, KeyValueStoreType } from "../implements/keyvalue/manager";
+import { KeyValueManager, KeyValueStoreType, KeyValueDB } from "../implements/keyvalue/manager";
 import { ThemeManager } from "../implements/cache/manager";
 import { createLogger } from "../util/logger";
 import { ThemeAuthInfo, ThemeComment } from "../common/types/types";
@@ -74,19 +74,45 @@ export class KeyValueModule implements DCModule, IKeyValueOperations {
     theme: string,
     space: number,
     type: KeyValueStoreType
-  ): Promise<any> {
+  ): Promise<KeyValueDB> {
     this.assertInitialized();
     
     try {
-      const res = await this.keyValueManager.createStore(
+      const kvdb = await this.keyValueManager.createStore(
         appId,
         theme,
         space,
         type
       );
-      return res;
+      if(kvdb[1]) {
+        throw kvdb[1];
+      }
+      return kvdb[0];
     } catch (error) {
       logger.error(`创建存储主题 ${theme} 失败:`, error);
+      throw error;
+    }
+  }
+
+  
+  async getStore(
+    appId: string,
+    theme: string,
+    themeAuthor: string
+  ): Promise<KeyValueDB> {
+    this.assertInitialized();
+    try {
+      const kvdb = await this.keyValueManager.getKeyValueDB(
+        appId,
+        theme,
+        themeAuthor
+      );
+      if(kvdb[1]) {
+        throw kvdb[1];
+      }
+      return kvdb[0];
+    } catch (error) {
+      logger.error(`获取存储主题 ${theme} 失败:`, error);
       throw error;
     }
   }
@@ -94,9 +120,7 @@ export class KeyValueModule implements DCModule, IKeyValueOperations {
 
   
    async configAuth(
-    appId: string,
-    themeAuthor: string,
-    theme: string,
+    kvdb: KeyValueDB,
     authPubkey: string,
     permission: number,
     remark: string,
@@ -105,15 +129,7 @@ export class KeyValueModule implements DCModule, IKeyValueOperations {
     this.assertInitialized();
     
     try {
-      const res = await this.keyValueManager.configAuth(
-        appId,
-        themeAuthor,
-        theme,
-        authPubkey,
-        permission,
-        remark,
-        vaccount
-      );
+       const res = await kvdb.configAuth(authPubkey, permission, remark, vaccount);
       return res;
     } catch (error) {
       logger.error(`配置权限失败:`, error);
@@ -121,21 +137,13 @@ export class KeyValueModule implements DCModule, IKeyValueOperations {
     }
   }
    async getAuthList(
-    appId: string,
-    themeAuthor: string,
-    theme: string,
+    kvdb: KeyValueDB,
     vaccount?: string
   ): Promise<[ThemeAuthInfo[]|null,ThemeComment[] | null, Error | null]> {
     this.assertInitialized();
     
     try {
-      const res = await this.keyValueManager.getAuthList(
-        appId,
-        themeAuthor,
-        theme,
-        vaccount
-      );
-
+      const res = await kvdb.getAuthList(vaccount);
       return res;
     } catch (error) {
       logger.error(`获取权限列表失败:`, error);
@@ -144,10 +152,8 @@ export class KeyValueModule implements DCModule, IKeyValueOperations {
   }
   
   
-  async setKeyValue(
-    appId: string,
-    themeAuthor: string,
-    theme: string,
+  async set(
+    kvdb: KeyValueDB,
     key: string,
     value: string,
     indexs: string, //索引列表,格式为key1:value1$$$key2:value2
@@ -156,15 +162,7 @@ export class KeyValueModule implements DCModule, IKeyValueOperations {
     this.assertInitialized();
     
     try {
-      const res = await this.keyValueManager.setKeyValue(
-        appId,
-        themeAuthor,
-        theme,
-        key,
-        value,
-        indexs,
-        vaccount
-      );
+      const res = await kvdb.set(key, value, indexs, vaccount);
       return res;
     } catch (error) {
       logger.error(`设置key-value失败:`, error);
@@ -173,25 +171,16 @@ export class KeyValueModule implements DCModule, IKeyValueOperations {
   }
 
   
-  async getValueWithKey(
-    appId: string,
-    themeAuthor: string,
-    theme: string,
-    writerPubkey: string,
+  async get(
+    kvdb: KeyValueDB,
     key: string,
+    writerPubkey?: string,
     vaccount?: string
   ): Promise<[string, Error | null]> {
     this.assertInitialized();
     
     try {
-      const res = await this.keyValueManager.getValueWithKey(
-        appId,
-        themeAuthor,
-        theme,
-        writerPubkey,
-        key,
-        vaccount
-      );
+      const res = await kvdb.get(key, writerPubkey, vaccount);
       return res;
     } catch (error) {
       logger.error(`获取key-value失败:`, error);
@@ -200,25 +189,16 @@ export class KeyValueModule implements DCModule, IKeyValueOperations {
   }
 
   
-  async getValuesWithKeys(
-    appId: string,
-    themeAuthor: string,
-    theme: string,
-    writerPubkey: string,
+  async getBatch(
+    kvdb: KeyValueDB,
     keys: string,
+    writerPubkey?: string,
     vaccount?: string
   ): Promise<[string, Error | null]> {
     this.assertInitialized();
     
     try {
-      const res = await this.keyValueManager.getValuesWithKeys(
-        appId,
-        themeAuthor,
-        theme,
-        writerPubkey,
-        keys,
-        vaccount
-      );
+      const res = await kvdb.getBatch(writerPubkey, keys, vaccount);
       return res;
     } catch (error) {
       logger.error(`获取key-value失败:`, error);
@@ -226,31 +206,19 @@ export class KeyValueModule implements DCModule, IKeyValueOperations {
     }
   }
 
-   async getValuesWithIndex(
-    appId: string,
-    themeAuthor: string,
-    theme: string,
+   async getWithIndex(
+    kvdb: KeyValueDB,
     indexKey:string,
     indexValue:string,
+    limit: number,
     seekKey:string, 
     offset: number,
-    limit: number,
     vaccount?: string
   ): Promise<[string, Error | null]> {
     this.assertInitialized();
     
     try {
-      const res = await this.keyValueManager.getValuesWithIndex(
-        appId,
-        themeAuthor,
-        theme,
-        indexKey,
-        indexValue,
-        seekKey,
-        offset,
-        limit,
-        vaccount
-      );
+      const res = await kvdb.getWithIndex(indexKey, indexValue, limit,seekKey, offset,  vaccount);
       return res;
     } catch (error) {
       logger.error(`获取key-value失败:`, error);

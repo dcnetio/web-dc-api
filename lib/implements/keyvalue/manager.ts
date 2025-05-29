@@ -29,6 +29,75 @@ export const Errors = {
   ErrNoDcPeerConnected: new KeyValueError("no dc peer connected"),
 };
 
+export class KeyValueDB {
+   private appId: string;
+   private dbname: string;
+   private themeAuthor: string;
+    private manager: KeyValueManager;
+    constructor(appId: string, dbname: string, themeAuthor: string,manager: KeyValueManager) {
+    this.appId = appId;
+    this.dbname = dbname;
+    this.themeAuthor = themeAuthor;
+    this.manager = manager;
+    }
+    
+    //设置键值对
+    async set(key: string, value: any, indexs?: string,vaccount?: string): Promise<[boolean, Error | null]> {
+       return this.manager.setKeyValue(this.appId, this.themeAuthor, this.dbname, key, value, indexs, vaccount);
+    }
+    
+    //获取键值对
+    async get(key: string,writerPubkey?: string,vaccount?: string):  Promise<[string, Error | null]> {
+      if (!writerPubkey) {
+        writerPubkey = this.themeAuthor;
+      }
+      return this.manager.getValueWithKey(this.appId, this.themeAuthor, this.dbname, writerPubkey, key,vaccount);
+    }
+
+    //批量获取键值对
+    async getBatch(keys: string,writerPubkey?: string,vaccount?: string):  Promise<[string, Error | null]> {
+      if (!writerPubkey) {
+        writerPubkey = this.themeAuthor;
+      }
+      return this.manager.getValuesWithKeys(this.appId, this.themeAuthor, this.dbname, writerPubkey, keys,vaccount);
+    }
+
+    //通过索引获取键值对
+    async getWithIndex(indexKey:string,
+    indexValue:string,
+    limit?: number,
+    seekKey?:string, 
+    offset?: number,
+    vaccount?: string):  Promise<[string, Error | null]> {
+      return this.manager.getWithIndex(this.appId, this.themeAuthor, this.dbname, indexKey, indexValue, seekKey, offset, limit, vaccount);
+    }
+
+   //配置授权
+    async configAuth(
+      authPubkey: string,
+      permission: number,
+      remark: string,
+      vaccount?: string
+    ): Promise<[number, Error | null]> {
+      return this.manager.doConfigAuth(
+        this.appId,
+        this.themeAuthor,
+        this.dbname,
+        authPubkey,
+        permission,
+        remark,
+        vaccount
+      );
+    }
+    
+
+    //获取授权列表
+    async getAuthList(vaccount?: string):  Promise<[ThemeAuthInfo[]|null,ThemeComment[] | null, Error | null]> {
+      return this.manager.getAuthList(this.appId, this.themeAuthor, this.dbname, vaccount);
+    }
+  }
+
+
 export class KeyValueManager {
   private dc: DcUtil;
   private connectedDc: DCConnectInfo = {};
@@ -58,15 +127,15 @@ export class KeyValueManager {
     theme: string,
     space: number,
     type: KeyValueStoreType, 
-  ): Promise<[number, Error | null]> {
+  ): Promise<[KeyValueDB, Error | null]> {
     // Default group to "DCAPP" if empty
     if (appId === "") {
       appId = "DCAPP";
     }
 
-    // Set minimum space (1GB)
-    if (space < 1 << 30) {
-      space = 1 << 30;
+    // Set minimum space (100M)
+    if (space < 100 << 20) {
+      space = 100 << 20;
     }
     // Theme must start with "keyvalue_"
     if (!theme.startsWith("keyvalue_")) {
@@ -80,7 +149,7 @@ export class KeyValueManager {
       // Public theme must end with "_pub"
       if (!theme.endsWith("_pub")) {
         return [
-          -1,
+          null,
           new Error(
             "vaCreateStoreTheme failed, public theme must end with '_pub'"
           ),
@@ -97,14 +166,40 @@ export class KeyValueManager {
         OpenFlag.AUTH,
         space || 50 * 1024 * 1024 // 50M
       );
-      return res;
+      if (res[0] !== 0 || res[1] !== null) {
+        return [null, new Error(`vaCreateStoreTheme failed, resFlag: ${res}`)];
+      }
+      // Create KeyValueDB instance
+      const keyValueDB = new KeyValueDB(
+        appId,
+        theme,
+        this.context.publicKey.string(),
+        this
+      );
+      return [keyValueDB, null];
     } catch (error) {
       return [null, error as Error];
     }
   }
 
 
-  async configAuth(
+  async getKeyValueDB(
+    appId: string,
+    theme: string,
+    ThemeAuthor: string
+  ): Promise<[KeyValueDB, Error | null]> {
+    const keyValueDB = new KeyValueDB(
+      appId,
+      theme,
+      ThemeAuthor,
+      this
+    );
+    return [keyValueDB, null];
+  }
+
+  
+
+  async doConfigAuth(
     appId: string,
     themeAuthor: string,
     theme: string,
@@ -491,7 +586,7 @@ export class KeyValueManager {
 
 
 
-  async getValuesWithIndex(
+  async getWithIndex(
     appId: string,
     themeAuthor: string,
     theme: string,

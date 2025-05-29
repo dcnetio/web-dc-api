@@ -287,7 +287,6 @@ async addUserOffChainOpTimes(
   
   /**
      * 配置主题的授权信息
-     * @param appId 应用ID
      * @param themeAuthor 主题作者的公钥
      * @param theme 主题名称
      * @param authPubkey 被授权者的公钥
@@ -297,7 +296,6 @@ async addUserOffChainOpTimes(
      * @returns [授权状态码, 错误信息]
      */
    async configAuth(
-      appId: string,
       themeAuthor: string,
       theme: string,
       authPubkey: string,
@@ -307,7 +305,7 @@ async addUserOffChainOpTimes(
     ): Promise<[number, Error | null]> {
       this.assertInitialized();
       return await this.commentManager.configAuth(
-        appId,
+        this.context.appInfo?.appId || "",
         themeAuthor,
         theme,
         authPubkey,
@@ -320,21 +318,19 @@ async addUserOffChainOpTimes(
 
  /**
    * 获取指定主题的授权列表,
-   * @param appId 应用ID
    * @param themeAuthor 主题作者的公钥
    * @param theme 主题/对象标识符
    * @param vaccount 可选，虚拟账户
    * @returns [授权列表, 评论列表, 错误信息]
    */
  async getAuthList(
-      appId: string,
       themeAuthor: string,
       theme: string,
       vaccount?: string
     ): Promise<[ThemeAuthInfo[]|null,ThemeComment[] | null, Error | null]> {
     this.assertInitialized();
     return await this.commentManager.getAuthList(
-      appId,
+      this.context.appInfo?.appId || "",
       themeAuthor,
       theme,
       vaccount

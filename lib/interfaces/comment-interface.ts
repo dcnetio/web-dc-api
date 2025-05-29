@@ -122,7 +122,6 @@ export interface ICommentOperations {
      * @returns [授权状态码, 错误信息]
      */
     configAuth(
-      appId: string,
       themeAuthor: string,
       theme: string,
       authPubkey: string,
@@ -141,7 +140,6 @@ export interface ICommentOperations {
    * @returns [授权列表, 评论列表, 错误信息]
    */
  getAuthList(
-      appId: string,
       themeAuthor: string,
       theme: string,
       vaccount?: string
