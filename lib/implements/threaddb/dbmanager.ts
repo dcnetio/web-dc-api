@@ -1237,8 +1237,9 @@ async newDB(
     
 }  
 
-async refreshDBFromDC(tId: ThreadID): Promise<Error | null> {  
+async refreshDBFromDC(threadId:string): Promise<Error | null> {  
     try {  
+        const tId = await this.decodeThreadId(threadId);
         await this.network.pullThread( tId,600);  
         return null;  
     } catch (error) {  
@@ -1246,11 +1247,12 @@ async refreshDBFromDC(tId: ThreadID): Promise<Error | null> {
     }  
 }  
 
-async syncDBToDC(tId: ThreadID): Promise<Error | null> {  
+async syncDBToDC(threadId:string): Promise<Error | null> {  
     if (!this.network) {  
         return Errors.ErrP2pNetworkNotInit;  
     }  
     try {  
+        const tId = await this.decodeThreadId(threadId);
         await this.network.exchange( tId);  
         return null;  
     } catch (error) {  

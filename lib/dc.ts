@@ -409,10 +409,18 @@ export class DC implements DCContext {
     return this.getModule<ClientModule>(CoreModuleName.CLIENT);
   }
 
+  /**
+   * 缓存模块
+   * @returns 缓存模块实例
+   */
   get cache() {
     return this.getModule<CacheModule>(CoreModuleName.CACHE);
   }
 
+  /**
+   * AI代理模块
+   * @returns AI代理模块实例
+   */
   get aiproxy() {
     return this.getModule<AIProxyModule>(CoreModuleName.AIPROXY);
   }

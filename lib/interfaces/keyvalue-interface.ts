@@ -61,7 +61,7 @@ export interface IKeyValueOperations {
    * @param theme 主题名称
    * @param key 键名
    * @param value 值内容
-   * @param indexs 索引列表，格式为"key1:value1$$$key2:value2",设置索引后,后续查询可以通过索引快速定位
+   * @param indexs 索引列表，格式为"indexkey1:value$$$indexkey2:value",设置索引后,后续查询可以通过索引快速定位
    * @param vaccount 可选的虚拟账户
    * @returns [是否设置成功, 错误信息]
    */

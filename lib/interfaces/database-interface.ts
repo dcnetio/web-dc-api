@@ -50,19 +50,102 @@ export interface IDatabaseOperations {
   ): Promise<void>;
   
   /**
-   * 创建数据库查询
-   * @param collectionName 集合名称
-   * @param threadId 线程ID
-   * @returns 查询对象
-   * @throws 创建查询失败时抛出错误
+   * 刷新数据库，从分布式网络获取最新数据
+   * @param threadid 数据库线程ID
+   * @returns 错误信息或null表示成功
    */
-  // createQuery(collectionName: string, threadId: string): Promise<any>;
+  refreshDBFromDC(threadid: string): Promise<Error | null>;
   
   /**
-   * 创建数据库事务
-   * @param threadId 线程ID
-   * @returns 事务对象
-   * @throws 创建事务失败时抛出错误
+   * 同步数据库到分布式网络
+   * @param tId 线程ID
+   * @returns 错误信息或null表示成功
    */
-  // createTransaction(threadId: string): Promise<any>;
+  syncDBToDC(tId: string): Promise<Error | null>;
+  
+  /**
+   * 关闭数据库管理器
+   * @throws 关闭失败时抛出错误
+   */
+  close(): Promise<void>;
+  
+  /**
+   * 在集合中创建新对象实例
+   * @param threadId 线程ID
+   * @param collectionName 集合名称
+   * @param jsonInstance JSON字符串表示的实例对象
+   * @returns 创建的实例ID
+   * @throws 创建失败时抛出错误
+   */
+  create(threadId: string, collectionName: string, jsonInstance: string): Promise<string>;
+  
+  /**
+   * 通过ID删除实例
+   * @param threadId 线程ID
+   * @param collectionName 集合名称
+   * @param instanceID 要删除的实例ID
+   * @throws 删除失败时抛出错误
+   */
+  delete(threadId: string, collectionName: string, instanceID: string): Promise<void>;
+  
+  /**
+   * 更新已存在的实例
+   * @param threadId 线程ID
+   * @param collectionName 集合名称
+   * @param instance JSON字符串表示的实例对象
+   * @throws 更新失败时抛出错误
+   */
+  save(threadId: string, collectionName: string, instance: string): Promise<void>;
+  
+  /**
+   * 批量删除多个实例
+   * @param threadId 线程ID
+   * @param collectionName 集合名称
+   * @param instanceIDs 逗号分隔或JSON数组表示的实例ID列表
+   * @throws 删除失败时抛出错误
+   */
+  deleteMany(threadId: string, collectionName: string, instanceIDs: string): Promise<void>;
+  
+  /**
+   * 检查指定实例是否存在
+   * @param threadId 线程ID
+   * @param collectionName 集合名称
+   * @param instanceID 要检查的实例ID
+   * @returns 布尔值表示实例是否存在
+   */
+  has(threadId: string, collectionName: string, instanceID: string): Promise<boolean>;
+  
+  /**
+   * 根据查询条件查找实例
+   * @param threadId 线程ID
+   * @param collectionName 集合名称
+   * @param queryString JSON字符串表示的查询条件,
+   * 格式举例:(condition表示and条件组合, ors表示或条件组合, sort表示排序, seek表示分页)
+   * 格式1: `{"condition":"age=80 and name='John'"}`,"sort":{"fieldPath":"age","desc":true}}`
+   * 格式2: `{"ors":[{"condition":"age = 21 and name = 'foo'"}]}`
+   * 格式3: `{"condition":"age > 21 ","ors":[{"condition":"age = 21 and name = 'foo'"}],"sort":{"fieldPath":"age","desc":true},"seek":"01fyc691gh671nf0s8qpt0ych8"}`
+   * @returns JSON字符串表示的查询结果
+   * @throws 查询失败时抛出错误
+   */
+  find(threadId: string, collectionName: string, queryString: string): Promise<string>;
+  
+  /**
+   * 通过ID查找实例
+   * @param threadId 线程ID
+   * @param collectionName 集合名称
+   * @param instanceID 实例ID
+   * @returns JSON字符串表示的实例
+   * @throws 查询失败时抛出错误
+   */
+  findByID(threadId: string, collectionName: string, instanceID: string): Promise<string>;
+  
+  /**
+   * 获取在指定时间后被修改的实例ID列表
+   * @param threadId 线程ID
+   * @param collectionName 集合名称
+   * @param time 时间戳（毫秒）
+   * @returns JSON字符串表示的实例ID列表
+   * @throws 查询失败时抛出错误
+   */
+  modifiedSince(threadId: string, collectionName: string, time: number): Promise<string>;
 }

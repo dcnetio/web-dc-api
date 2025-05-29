@@ -1,0 +1,1838 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>接口文档_DC.md</title>
+<meta http-equiv="Content-type" content="text/html;charset=UTF-8">
+
+<style>
+/* https://github.com/microsoft/vscode/blob/master/extensions/markdown-language-features/media/markdown.css */
+/*---------------------------------------------------------------------------------------------
+ *  Copyright (c) Microsoft Corporation. All rights reserved.
+ *  Licensed under the MIT License. See License.txt in the project root for license information.
+ *--------------------------------------------------------------------------------------------*/
+
+body {
+	font-family: var(--vscode-markdown-font-family, -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", "Ubuntu", "Droid Sans", sans-serif);
+	font-size: var(--vscode-markdown-font-size, 14px);
+	padding: 0 26px;
+	line-height: var(--vscode-markdown-line-height, 22px);
+	word-wrap: break-word;
+}
+
+#code-csp-warning {
+	position: fixed;
+	top: 0;
+	right: 0;
+	color: white;
+	margin: 16px;
+	text-align: center;
+	font-size: 12px;
+	font-family: sans-serif;
+	background-color:#444444;
+	cursor: pointer;
+	padding: 6px;
+	box-shadow: 1px 1px 1px rgba(0,0,0,.25);
+}
+
+#code-csp-warning:hover {
+	text-decoration: none;
+	background-color:#007acc;
+	box-shadow: 2px 2px 2px rgba(0,0,0,.25);
+}
+
+body.scrollBeyondLastLine {
+	margin-bottom: calc(100vh - 22px);
+}
+
+body.showEditorSelection .code-line {
+	position: relative;
+}
+
+body.showEditorSelection .code-active-line:before,
+body.showEditorSelection .code-line:hover:before {
+	content: "";
+	display: block;
+	position: absolute;
+	top: 0;
+	left: -12px;
+	height: 100%;
+}
+
+body.showEditorSelection li.code-active-line:before,
+body.showEditorSelection li.code-line:hover:before {
+	left: -30px;
+}
+
+.vscode-light.showEditorSelection .code-active-line:before {
+	border-left: 3px solid rgba(0, 0, 0, 0.15);
+}
+
+.vscode-light.showEditorSelection .code-line:hover:before {
+	border-left: 3px solid rgba(0, 0, 0, 0.40);
+}
+
+.vscode-light.showEditorSelection .code-line .code-line:hover:before {
+	border-left: none;
+}
+
+.vscode-dark.showEditorSelection .code-active-line:before {
+	border-left: 3px solid rgba(255, 255, 255, 0.4);
+}
+
+.vscode-dark.showEditorSelection .code-line:hover:before {
+	border-left: 3px solid rgba(255, 255, 255, 0.60);
+}
+
+.vscode-dark.showEditorSelection .code-line .code-line:hover:before {
+	border-left: none;
+}
+
+.vscode-high-contrast.showEditorSelection .code-active-line:before {
+	border-left: 3px solid rgba(255, 160, 0, 0.7);
+}
+
+.vscode-high-contrast.showEditorSelection .code-line:hover:before {
+	border-left: 3px solid rgba(255, 160, 0, 1);
+}
+
+.vscode-high-contrast.showEditorSelection .code-line .code-line:hover:before {
+	border-left: none;
+}
+
+img {
+	max-width: 100%;
+	max-height: 100%;
+}
+
+a {
+	text-decoration: none;
+}
+
+a:hover {
+	text-decoration: underline;
+}
+
+a:focus,
+input:focus,
+select:focus,
+textarea:focus {
+	outline: 1px solid -webkit-focus-ring-color;
+	outline-offset: -1px;
+}
+
+hr {
+	border: 0;
+	height: 2px;
+	border-bottom: 2px solid;
+}
+
+h1 {
+	padding-bottom: 0.3em;
+	line-height: 1.2;
+	border-bottom-width: 1px;
+	border-bottom-style: solid;
+}
+
+h1, h2, h3 {
+	font-weight: normal;
+}
+
+table {
+	border-collapse: collapse;
+}
+
+table > thead > tr > th {
+	text-align: left;
+	border-bottom: 1px solid;
+}
+
+table > thead > tr > th,
+table > thead > tr > td,
+table > tbody > tr > th,
+table > tbody > tr > td {
+	padding: 5px 10px;
+}
+
+table > tbody > tr + tr > td {
+	border-top: 1px solid;
+}
+
+blockquote {
+	margin: 0 7px 0 5px;
+	padding: 0 16px 0 10px;
+	border-left-width: 5px;
+	border-left-style: solid;
+}
+
+code {
+	font-family: Menlo, Monaco, Consolas, "Droid Sans Mono", "Courier New", monospace, "Droid Sans Fallback";
+	font-size: 1em;
+	line-height: 1.357em;
+}
+
+body.wordWrap pre {
+	white-space: pre-wrap;
+}
+
+pre:not(.hljs),
+pre.hljs code > div {
+	padding: 16px;
+	border-radius: 3px;
+	overflow: auto;
+}
+
+pre code {
+	color: var(--vscode-editor-foreground);
+	tab-size: 4;
+}
+
+/** Theming */
+
+.vscode-light pre {
+	background-color: rgba(220, 220, 220, 0.4);
+}
+
+.vscode-dark pre {
+	background-color: rgba(10, 10, 10, 0.4);
+}
+
+.vscode-high-contrast pre {
+	background-color: rgb(0, 0, 0);
+}
+
+.vscode-high-contrast h1 {
+	border-color: rgb(0, 0, 0);
+}
+
+.vscode-light table > thead > tr > th {
+	border-color: rgba(0, 0, 0, 0.69);
+}
+
+.vscode-dark table > thead > tr > th {
+	border-color: rgba(255, 255, 255, 0.69);
+}
+
+.vscode-light h1,
+.vscode-light hr,
+.vscode-light table > tbody > tr + tr > td {
+	border-color: rgba(0, 0, 0, 0.18);
+}
+
+.vscode-dark h1,
+.vscode-dark hr,
+.vscode-dark table > tbody > tr + tr > td {
+	border-color: rgba(255, 255, 255, 0.18);
+}
+
+</style>
+
+<style>
+/* Tomorrow Theme */
+/* http://jmblog.github.com/color-themes-for-google-code-highlightjs */
+/* Original theme - https://github.com/chriskempson/tomorrow-theme */
+
+/* Tomorrow Comment */
+.hljs-comment,
+.hljs-quote {
+	color: #8e908c;
+}
+
+/* Tomorrow Red */
+.hljs-variable,
+.hljs-template-variable,
+.hljs-tag,
+.hljs-name,
+.hljs-selector-id,
+.hljs-selector-class,
+.hljs-regexp,
+.hljs-deletion {
+	color: #c82829;
+}
+
+/* Tomorrow Orange */
+.hljs-number,
+.hljs-built_in,
+.hljs-builtin-name,
+.hljs-literal,
+.hljs-type,
+.hljs-params,
+.hljs-meta,
+.hljs-link {
+	color: #f5871f;
+}
+
+/* Tomorrow Yellow */
+.hljs-attribute {
+	color: #eab700;
+}
+
+/* Tomorrow Green */
+.hljs-string,
+.hljs-symbol,
+.hljs-bullet,
+.hljs-addition {
+	color: #718c00;
+}
+
+/* Tomorrow Blue */
+.hljs-title,
+.hljs-section {
+	color: #4271ae;
+}
+
+/* Tomorrow Purple */
+.hljs-keyword,
+.hljs-selector-tag {
+	color: #8959a8;
+}
+
+.hljs {
+	display: block;
+	overflow-x: auto;
+	color: #4d4d4c;
+	padding: 0.5em;
+}
+
+.hljs-emphasis {
+	font-style: italic;
+}
+
+.hljs-strong {
+	font-weight: bold;
+}
+</style>
+
+<style>
+/*
+ * Markdown PDF CSS
+ */
+
+ body {
+	font-family: -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", "Ubuntu", "Droid Sans", sans-serif, "Meiryo";
+	padding: 0 12px;
+}
+
+pre {
+	background-color: #f8f8f8;
+	border: 1px solid #cccccc;
+	border-radius: 3px;
+	overflow-x: auto;
+	white-space: pre-wrap;
+	overflow-wrap: break-word;
+}
+
+pre:not(.hljs) {
+	padding: 23px;
+	line-height: 19px;
+}
+
+blockquote {
+	background: rgba(127, 127, 127, 0.1);
+	border-color: rgba(0, 122, 204, 0.5);
+}
+
+.emoji {
+	height: 1.4em;
+}
+
+code {
+	font-size: 14px;
+	line-height: 19px;
+}
+
+/* for inline code */
+:not(pre):not(.hljs) > code {
+	color: #C9AE75; /* Change the old color so it seems less like an error */
+	font-size: inherit;
+}
+
+/* Page Break : use <div class="page"/> to insert page break
+-------------------------------------------------------- */
+.page {
+	page-break-after: always;
+}
+
+</style>
+
+<script src="https://unpkg.com/mermaid/dist/mermaid.min.js"></script>
+</head>
+<body>
+  <script>
+    mermaid.initialize({
+      startOnLoad: true,
+      theme: document.body.classList.contains('vscode-dark') || document.body.classList.contains('vscode-high-contrast')
+          ? 'dark'
+          : 'default'
+    });
+  </script>
+<h1 id="dc-api-%E6%8E%A5%E5%8F%A3%E6%96%87%E6%A1%A3">DC API 接口文档</h1>
+<h2 id="%E7%9B%AE%E5%BD%95">目录</h2>
+<ol>
+<li>概览</li>
+<li>初始化</li>
+<li>认证模块 (auth)</li>
+<li>文件模块 (file)</li>
+<li>客户端模块 (client)</li>
+<li>消息模块 (message)</li>
+<li>评论模块 (comment)</li>
+<li>键值存储模块 (keyvalue)</li>
+<li>数据库模块 (database)</li>
+<li>缓存模块 (cache)</li>
+<li>AI代理模块 (aiproxy)</li>
+<li>常见使用流程</li>
+</ol>
+<h2 id="%E6%A6%82%E8%A7%88">概览</h2>
+<p>DC API是一个分布式存储和通信库，提供了身份验证、文件存储、消息传递、评论系统、数据库管理等核心功能。该API基于区块链技术，支持去中心化应用程序开发。</p>
+<h2 id="%E5%88%9D%E5%A7%8B%E5%8C%96">初始化</h2>
+<p>首先需要创建DC实例并初始化它:</p>
+<pre class="hljs"><code><div><span class="hljs-keyword">import</span> { DC } <span class="hljs-keyword">from</span> <span class="hljs-string">'web-dc-api'</span>;
+
+<span class="hljs-keyword">const</span> dc = <span class="hljs-keyword">new</span> DC({
+  wssUrl: <span class="hljs-string">'区块链路径'</span>,
+  backWssUrl: <span class="hljs-string">'区块链备用路径'</span>,
+  appInfo: {
+    id: <span class="hljs-string">'DCAPP'</span>,  <span class="hljs-comment">// 应用ID</span>
+    name: <span class="hljs-string">'DCAPP Name'</span>,  <span class="hljs-comment">// 应用名称</span>
+  },
+});
+
+<span class="hljs-comment">// 初始化DC客户端，连接区块链和存储节点</span>
+<span class="hljs-keyword">await</span> dc.init();
+</div></code></pre>
+<h2 id="%E8%AE%A4%E8%AF%81%E6%A8%A1%E5%9D%97-auth">认证模块 (auth)</h2>
+<p>负责用户身份验证、账户管理和访问控制。如果只是开发DAPP，用dcwallet钱包登录，可以不用管这个模块，这部分功能大部分都在dcwallet中已经实现，开发者只要专注于认证模块以外的功能即可。</p>
+<h3 id="%E6%96%B9%E6%B3%95">方法</h3>
+<h4 id="accountloginnftaccount-password-safecode"><code>accountLogin(nftAccount, password, safecode)</code></h4>
+<p>用NFT账户登录系统。</p>
+<pre class="hljs"><code><div><span class="hljs-keyword">const</span> result = <span class="hljs-keyword">await</span> dc.auth.accountLogin(<span class="hljs-string">'my-nft-account'</span>, <span class="hljs-string">'password'</span>, <span class="hljs-string">'000000'</span>);
+<span class="hljs-keyword">if</span> (result &amp;&amp; result.privKey) {
+  <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'登录成功，获取到私钥和助记词'</span>);
+  <span class="hljs-comment">// 助记词需要安全存储</span>
+  <span class="hljs-keyword">const</span> mnemonic = result.mnemonic;
+}
+</div></code></pre>
+<p><strong>参数:</strong></p>
+<ul>
+<li><code>nftAccount</code>: string - NFT账户名称</li>
+<li><code>password</code>: string - 密码</li>
+<li><code>safecode</code>: string - 安全码，默认&quot;000000&quot;</li>
+</ul>
+<p><strong>返回:</strong> Promise&lt;{ mnemonic: string; privKey: Ed25519PrivKey }&gt; - 包含助记词和私钥的对象</p>
+<br>
+<h4 id="accountloginwithwallet"><code>accountLoginWithWallet()</code></h4>
+<p>通过钱包登录账户。</p>
+<pre class="hljs"><code><div><span class="hljs-keyword">const</span> walletLoginResult = <span class="hljs-keyword">await</span> dc.auth.accountLoginWithWallet();
+<span class="hljs-keyword">if</span> (walletLoginResult) {
+  <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'钱包登录成功'</span>);
+}
+</div></code></pre>
+<p><strong>参数:</strong> 无</p>
+<p><strong>返回:</strong> Promise<any> - 登录结果</p>
+<br>
+<h4 id="bindnftaccountaccount-password-seccode-mnemonic"><code>bindNFTAccount(account, password, seccode, mnemonic)</code></h4>
+<p>将私钥绑定到NFT账号。</p>
+<pre class="hljs"><code><div><span class="hljs-keyword">const</span> [status, error] = <span class="hljs-keyword">await</span> dc.auth.bindNFTAccount(<span class="hljs-string">'nft-id'</span>, <span class="hljs-string">'password'</span>, <span class="hljs-string">'seccode'</span>, <span class="hljs-string">'mnemonic phrase'</span>);
+<span class="hljs-keyword">if</span> (status === NFTBindStatus.Success) {
+  <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'绑定成功'</span>);
+} <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span> (error) {
+  <span class="hljs-built_in">console</span>.error(<span class="hljs-string">'绑定失败:'</span>, error.message);
+}
+</div></code></pre>
+<p><strong>参数:</strong></p>
+<ul>
+<li><code>account</code>: string - NFT账号</li>
+<li><code>password</code>: string - 密码</li>
+<li><code>seccode</code>: string - 安全码</li>
+<li><code>mnemonic</code>: string - 助记词</li>
+</ul>
+<p><strong>返回:</strong> Promise&lt;[NFTBindStatus, Error | null]&gt; - 绑定状态码和错误信息</p>
+<br>
+<h4 id="generateappaccountappid-mnemonic"><code>generateAppAccount(appId, mnemonic)</code></h4>
+<p>创建应用子账号。</p>
+<pre class="hljs"><code><div><span class="hljs-keyword">const</span> [privateKey, error] = <span class="hljs-keyword">await</span> dc.auth.generateAppAccount(<span class="hljs-string">'myapp'</span>, <span class="hljs-string">'mnemonic phrase'</span>);
+<span class="hljs-keyword">if</span> (privateKey) {
+  <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'子账号私钥:'</span>, privateKey);
+} <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span> (error) {
+  <span class="hljs-built_in">console</span>.error(<span class="hljs-string">'创建应用账号失败:'</span>, error.message);
+}
+</div></code></pre>
+<p><strong>参数:</strong></p>
+<ul>
+<li><code>appId</code>: string - 应用ID</li>
+<li><code>mnemonic</code>: string - 助记词</li>
+</ul>
+<p><strong>返回:</strong> Promise&lt;[string | null, Error | null]&gt; - 私钥字符串和错误信息</p>
+<br>
+<h4 id="isnftaccountbindsuccessaccount-pubkeystr"><code>isNftAccountBindSuccess(account, pubKeyStr)</code></h4>
+<p>检查NFT账号是否成功绑定到指定公钥。</p>
+<pre class="hljs"><code><div><span class="hljs-keyword">const</span> pubKeyStr = dc.auth.getPublicKey().toString();
+<span class="hljs-keyword">const</span> isBound = <span class="hljs-keyword">await</span> dc.auth.isNftAccountBindSuccess(<span class="hljs-string">'nft-account'</span>, pubKeyStr);
+<span class="hljs-built_in">console</span>.log(<span class="hljs-string">'NFT账号绑定状态:'</span>, isBound);
+</div></code></pre>
+<p><strong>参数:</strong></p>
+<ul>
+<li><code>account</code>: string - NFT账号</li>
+<li><code>pubKeyStr</code>: string - 公钥字符串</li>
+</ul>
+<p><strong>返回:</strong> Promise<boolean> - 是否成功绑定</p>
+<br>
+<h4 id="isnftaccountbindedaccount"><code>isNftAccountBinded(account)</code></h4>
+<p>检查NFT账号是否已被任何账号绑定。</p>
+<pre class="hljs"><code><div><span class="hljs-keyword">const</span> isAlreadyBinded = <span class="hljs-keyword">await</span> dc.auth.isNftAccountBinded(<span class="hljs-string">'nft-account'</span>);
+<span class="hljs-built_in">console</span>.log(<span class="hljs-string">'NFT账号是否已被绑定:'</span>, isAlreadyBinded);
+</div></code></pre>
+<p><strong>参数:</strong></p>
+<ul>
+<li><code>account</code>: string - NFT账号</li>
+</ul>
+<p><strong>返回:</strong> Promise<boolean> - 是否已被绑定</p>
+<br>
+<h4 id="getuserinfowithnftnftaccount"><code>getUserInfoWithNft(nftAccount)</code></h4>
+<p>根据NFT账户获取用户信息。</p>
+<pre class="hljs"><code><div><span class="hljs-keyword">const</span> userInfo = <span class="hljs-keyword">await</span> dc.auth.getUserInfoWithNft(<span class="hljs-string">'nft-account'</span>);
+<span class="hljs-keyword">if</span> (userInfo) {
+  <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'用户信息:'</span>, userInfo);
+  <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'用户名:'</span>, userInfo.name);
+  <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'用户公钥:'</span>, userInfo.pubkey);
+}
+</div></code></pre>
+<p><strong>参数:</strong></p>
+<ul>
+<li><code>nftAccount</code>: string - NFT账户</li>
+</ul>
+<p><strong>返回:</strong> Promise<any> - 用户信息对象</p>
+<br>
+<h4 id="getuserinfowithaccountpubkeyaccount"><code>getUserInfoWithAccount(pubkeyAccount)</code></h4>
+<p>根据公钥账户获取用户信息。</p>
+<pre class="hljs"><code><div><span class="hljs-keyword">const</span> userInfo = <span class="hljs-keyword">await</span> dc.auth.getUserInfoWithAccount(<span class="hljs-string">'pubkey-account'</span>);
+<span class="hljs-keyword">if</span> (userInfo) {
+  <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'用户名:'</span>, userInfo.name);
+  <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'账户余额:'</span>, userInfo.balance);
+}
+</div></code></pre>
+<p><strong>参数:</strong></p>
+<ul>
+<li><code>pubkeyAccount</code>: string - 公钥账户名</li>
+</ul>
+<p><strong>返回:</strong> Promise<User> - 用户信息对象</p>
+<br>
+<h4 id="ifenoughuserspaceneedsize"><code>ifEnoughUserSpace(needSize)</code></h4>
+<p>检查用户空间是否足够。</p>
+<pre class="hljs"><code><div><span class="hljs-comment">// 检查是否有10MB可用空间</span>
+<span class="hljs-keyword">const</span> spaceInfo = <span class="hljs-keyword">await</span> dc.auth.ifEnoughUserSpace(<span class="hljs-number">10</span> * <span class="hljs-number">1024</span> * <span class="hljs-number">1024</span>);
+<span class="hljs-keyword">if</span> (spaceInfo &amp;&amp; spaceInfo.enough) {
+  <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'用户空间足够'</span>);
+  <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'总空间:'</span>, spaceInfo.totalSpace);
+  <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'已用空间:'</span>, spaceInfo.usedSpace);
+}
+</div></code></pre>
+<p><strong>参数:</strong></p>
+<ul>
+<li><code>needSize</code>: number (可选) - 需要的空间大小(字节)</li>
+</ul>
+<p><strong>返回:</strong> Promise<any> - 空间信息，包括是否足够、总空间和已用空间</p>
+<br>
+<h4 id="refreshuserinfo"><code>refreshUserInfo()</code></h4>
+<p>刷新用户信息。</p>
+<pre class="hljs"><code><div><span class="hljs-keyword">const</span> updatedUserInfo = <span class="hljs-keyword">await</span> dc.auth.refreshUserInfo();
+<span class="hljs-built_in">console</span>.log(<span class="hljs-string">'已刷新用户信息:'</span>, updatedUserInfo);
+</div></code></pre>
+<p><strong>参数:</strong> 无</p>
+<p><strong>返回:</strong> Promise<any> - 更新后的用户信息</p>
+<br>
+<h2 id="%E6%96%87%E4%BB%B6%E6%A8%A1%E5%9D%97-file">文件模块 (file)</h2>
+<p>提供文件上传、下载和缓存功能。</p>
+<h3 id="%E6%96%B9%E6%B3%95">方法</h3>
+<h4 id="addfilefile-enkey-onupdatetransmitsize"><code>addFile(file, enkey, onUpdateTransmitSize)</code></h4>
+<p>上传文件到存储系统。</p>
+<pre class="hljs"><code><div><span class="hljs-keyword">const</span> file = <span class="hljs-keyword">new</span> File([<span class="hljs-string">'content'</span>], <span class="hljs-string">'test.txt'</span>);
+<span class="hljs-keyword">const</span> result = <span class="hljs-keyword">await</span> dc.file.addFile(
+  file,
+  <span class="hljs-string">'encryption-key'</span>,
+  <span class="hljs-function">(<span class="hljs-params">status, size</span>) =&gt;</span> <span class="hljs-built_in">console</span>.log(<span class="hljs-string">`上传进度：<span class="hljs-subst">${status}</span>%, 大小：<span class="hljs-subst">${size}</span>字节`</span>)
+);
+<span class="hljs-built_in">console</span>.log(<span class="hljs-string">'上传结果:'</span>, result);
+<span class="hljs-built_in">console</span>.log(<span class="hljs-string">'文件CID:'</span>, result.cid);
+</div></code></pre>
+<p><strong>参数:</strong></p>
+<ul>
+<li><code>file</code>: File - 要上传的文件</li>
+<li><code>enkey</code>: string - 加密密钥</li>
+<li><code>onUpdateTransmitSize</code>: (status: number, size: number) =&gt; void - 进度回调函数</li>
+</ul>
+<p><strong>返回:</strong> Promise<any> - 上传结果，包含CID等信息</p>
+<br>
+<h4 id="getfilecid-decryptkey"><code>getFile(cid, decryptKey)</code></h4>
+<p>获取文件内容。</p>
+<pre class="hljs"><code><div><span class="hljs-keyword">const</span> fileContent = <span class="hljs-keyword">await</span> dc.file.getFile(<span class="hljs-string">'QmFileHash...'</span>, <span class="hljs-string">'decryption-key'</span>);
+<span class="hljs-keyword">if</span> (fileContent) {
+  <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'文件内容字节长度:'</span>, fileContent.length);
+  
+  <span class="hljs-comment">// 如果是文本文件，可以转换为字符串</span>
+  <span class="hljs-keyword">const</span> textDecoder = <span class="hljs-keyword">new</span> TextDecoder();
+  <span class="hljs-keyword">const</span> textContent = textDecoder.decode(fileContent);
+  <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'文件内容:'</span>, textContent);
+}
+</div></code></pre>
+<p><strong>参数:</strong></p>
+<ul>
+<li><code>cid</code>: string - 文件内容标识符</li>
+<li><code>decryptKey</code>: string - 解密密钥</li>
+</ul>
+<p><strong>返回:</strong> Promise&lt;Uint8Array | undefined&gt; - 文件字节数组</p>
+<br>
+<h4 id="createfilestreamcid-decryptkey"><code>createFileStream(cid, decryptKey)</code></h4>
+<p>创建文件可读流，适用于大文件处理。</p>
+<pre class="hljs"><code><div><span class="hljs-keyword">const</span> stream = <span class="hljs-keyword">await</span> dc.file.createFileStream(<span class="hljs-string">'QmFileHash...'</span>, <span class="hljs-string">'decryption-key'</span>);
+<span class="hljs-keyword">if</span> (stream) {
+  <span class="hljs-comment">// 使用可读流处理文件</span>
+  <span class="hljs-keyword">const</span> reader = stream.getReader();
+  <span class="hljs-keyword">const</span> chunks = [];
+  
+  <span class="hljs-keyword">while</span> (<span class="hljs-literal">true</span>) {
+    <span class="hljs-keyword">const</span> { done, value } = <span class="hljs-keyword">await</span> reader.read();
+    <span class="hljs-keyword">if</span> (done) <span class="hljs-keyword">break</span>;
+    <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'读取数据块:'</span>, value.length, <span class="hljs-string">'字节'</span>);
+    chunks.push(value);
+  }
+  
+  <span class="hljs-comment">// 合并所有数据块</span>
+  <span class="hljs-keyword">const</span> totalLength = chunks.reduce(<span class="hljs-function">(<span class="hljs-params">acc, chunk</span>) =&gt;</span> acc + chunk.length, <span class="hljs-number">0</span>);
+  <span class="hljs-keyword">const</span> result = <span class="hljs-keyword">new</span> <span class="hljs-built_in">Uint8Array</span>(totalLength);
+  <span class="hljs-keyword">let</span> offset = <span class="hljs-number">0</span>;
+  
+  <span class="hljs-keyword">for</span> (<span class="hljs-keyword">const</span> chunk of chunks) {
+    result.set(chunk, offset);
+    offset += chunk.length;
+  }
+  
+  <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'完整文件大小:'</span>, result.length, <span class="hljs-string">'字节'</span>);
+}
+</div></code></pre>
+<p><strong>参数:</strong></p>
+<ul>
+<li><code>cid</code>: string - 文件内容标识符</li>
+<li><code>decryptKey</code>: string - 解密密钥</li>
+</ul>
+<p><strong>返回:</strong> Promise&lt;ReadableStream<Uint8Array> | null&gt; - 文件可读流</p>
+<br>
+<h4 id="getseekablefilestreamipfspath-decryptkey"><code>getSeekableFileStream(ipfsPath, decryptKey)</code></h4>
+<p>获取支持随机访问的文件流，适用于视频播放等场景。</p>
+<pre class="hljs"><code><div><span class="hljs-keyword">const</span> seekableStream = <span class="hljs-keyword">await</span> dc.file.getSeekableFileStream(<span class="hljs-string">'/ipfs/QmFileHash...'</span>, <span class="hljs-string">'decryption-key'</span>);
+
+<span class="hljs-comment">// 获取文件大小</span>
+<span class="hljs-keyword">const</span> fileSize = <span class="hljs-keyword">await</span> seekableStream.size();
+<span class="hljs-built_in">console</span>.log(<span class="hljs-string">'文件总大小:'</span>, fileSize, <span class="hljs-string">'字节'</span>);
+
+<span class="hljs-comment">// 从文件的第1000字节开始读取1024字节</span>
+<span class="hljs-keyword">const</span> data = <span class="hljs-keyword">await</span> seekableStream.read(<span class="hljs-number">1000</span>, <span class="hljs-number">1024</span>);
+<span class="hljs-built_in">console</span>.log(<span class="hljs-string">'读取的数据长度:'</span>, data.length);
+
+<span class="hljs-comment">// 从头开始读取前100字节</span>
+<span class="hljs-keyword">const</span> header = <span class="hljs-keyword">await</span> seekableStream.read(<span class="hljs-number">0</span>, <span class="hljs-number">100</span>);
+<span class="hljs-built_in">console</span>.log(<span class="hljs-string">'文件头部数据:'</span>, header);
+
+<span class="hljs-comment">// 读取文件末尾的100字节</span>
+<span class="hljs-keyword">const</span> footer = <span class="hljs-keyword">await</span> seekableStream.read(fileSize - <span class="hljs-number">100</span>, <span class="hljs-number">100</span>);
+<span class="hljs-built_in">console</span>.log(<span class="hljs-string">'文件尾部数据:'</span>, footer);
+</div></code></pre>
+<p><strong>参数:</strong></p>
+<ul>
+<li><code>ipfsPath</code>: string - IPFS路径或CID</li>
+<li><code>decryptKey</code>: string - 解密密钥</li>
+</ul>
+<p><strong>返回:</strong> Promise<SeekableFileStream> - 可随机访问的文件流</p>
+<br>
+<h4 id="clearfilecachepathname"><code>clearFileCache(pathname)</code></h4>
+<p>清理文件缓存。</p>
+<pre class="hljs"><code><div><span class="hljs-comment">// 清理特定文件缓存</span>
+dc.file.clearFileCache(<span class="hljs-string">'/ipfs/QmFileHash...'</span>);
+<span class="hljs-built_in">console</span>.log(<span class="hljs-string">'已清理特定文件缓存'</span>);
+
+<span class="hljs-comment">// 清理所有缓存</span>
+dc.file.clearFileCache();
+<span class="hljs-built_in">console</span>.log(<span class="hljs-string">'已清理所有文件缓存'</span>);
+
+<span class="hljs-comment">// 查看缓存统计</span>
+<span class="hljs-keyword">const</span> cacheStats = dc.file.getCacheStats();
+<span class="hljs-built_in">console</span>.log(<span class="hljs-string">'缓存总数:'</span>, cacheStats.total);
+<span class="hljs-built_in">console</span>.log(<span class="hljs-string">'缓存键列表:'</span>, cacheStats.keys);
+</div></code></pre>
+<p><strong>参数:</strong></p>
+<ul>
+<li><code>pathname</code>: string (可选) - 特定文件路径，不提供则清除所有缓存</li>
+</ul>
+<p><strong>返回:</strong> void</p>
+<br>
+<h2 id="%E5%AE%A2%E6%88%B7%E7%AB%AF%E6%A8%A1%E5%9D%97-client">客户端模块 (client)</h2>
+<p>提供底层节点连接和网络通信功能。</p>
+<h3 id="%E6%96%B9%E6%B3%95">方法</h3>
+<h4 id="gethostid"><code>getHostID()</code></h4>
+<p>获取当前连接的节点ID和客户端公网地址。</p>
+<pre class="hljs"><code><div><span class="hljs-keyword">const</span> [hostInfo, error] = <span class="hljs-keyword">await</span> dc.client.getHostID();
+<span class="hljs-keyword">if</span> (hostInfo) {
+  <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'节点ID:'</span>, hostInfo.peerID);
+  <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'客户端公网地址:'</span>, hostInfo.reqAddr);
+} <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span> (error) {
+  <span class="hljs-built_in">console</span>.error(<span class="hljs-string">'获取主机信息失败:'</span>, error.message);
+}
+</div></code></pre>
+<p><strong>参数:</strong> 无</p>
+<p><strong>返回:</strong> Promise&lt;[{ peerID: string; reqAddr: string } | null, Error | null]&gt; - 主机信息和错误</p>
+<br>
+<h2 id="%E6%B6%88%E6%81%AF%E6%A8%A1%E5%9D%97-message">消息模块 (message)</h2>
+<p>提供用户消息盒子的发送和接收功能。</p>
+<h3 id="%E6%96%B9%E6%B3%95">方法</h3>
+<h4 id="sendmsgtouserboxreceiver-msg"><code>sendMsgToUserBox(receiver, msg)</code></h4>
+<p>向用户消息盒子发送消息。</p>
+<pre class="hljs"><code><div><span class="hljs-keyword">const</span> result = <span class="hljs-keyword">await</span> dc.message.sendMsgToUserBox(<span class="hljs-string">'receiver-pubkey'</span>, <span class="hljs-string">'Hello World!'</span>);
+<span class="hljs-built_in">console</span>.log(<span class="hljs-string">'消息发送结果:'</span>, result);
+<span class="hljs-keyword">if</span> (result) {
+  <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'消息ID:'</span>, result.msgid);
+  <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'发送时间戳:'</span>, result.timestamp);
+}
+</div></code></pre>
+<p><strong>参数:</strong></p>
+<ul>
+<li><code>receiver</code>: string - 接收者的公钥或账号标识</li>
+<li><code>msg</code>: string - 消息内容</li>
+</ul>
+<p><strong>返回:</strong> Promise<any> - 发送结果，包含消息ID和时间戳</p>
+<br>
+<h4 id="getmsgfromuserboxlimit"><code>getMsgFromUserBox(limit)</code></h4>
+<p>获取当前用户消息盒子中的消息。</p>
+<pre class="hljs"><code><div><span class="hljs-comment">// 获取最新的10条消息</span>
+<span class="hljs-keyword">const</span> messages = <span class="hljs-keyword">await</span> dc.message.getMsgFromUserBox(<span class="hljs-number">10</span>);
+<span class="hljs-built_in">console</span>.log(<span class="hljs-string">'收到的消息总数:'</span>, messages.length);
+
+<span class="hljs-comment">// 遍历消息</span>
+messages.forEach(<span class="hljs-function">(<span class="hljs-params">msg, index</span>) =&gt;</span> {
+  <span class="hljs-built_in">console</span>.log(<span class="hljs-string">`消息 <span class="hljs-subst">${index + <span class="hljs-number">1</span>}</span>:`</span>);
+  <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'发送者:'</span>, msg.sender);
+  <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'内容:'</span>, msg.content);
+  <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'时间:'</span>, <span class="hljs-keyword">new</span> <span class="hljs-built_in">Date</span>(msg.timestamp).toLocaleString());
+});
+</div></code></pre>
+<p><strong>参数:</strong></p>
+<ul>
+<li><code>limit</code>: number (可选) - 返回消息的最大数量，默认由系统决定</li>
+</ul>
+<p><strong>返回:</strong> Promise<any> - 消息列表</p>
+<br>
+<h2 id="%E8%AF%84%E8%AE%BA%E6%A8%A1%E5%9D%97-comment">评论模块 (comment)</h2>
+<p>提供主题评论功能。</p>
+<h3 id="%E6%96%B9%E6%B3%95">方法</h3>
+<h4 id="adduseroffchainspace"><code>addUserOffChainSpace()</code></h4>
+<p>为当前用户添加链下评论空间。</p>
+<pre class="hljs"><code><div><span class="hljs-keyword">const</span> [success, error] = <span class="hljs-keyword">await</span> dc.comment.addUserOffChainSpace();
+<span class="hljs-keyword">if</span> (success) {
+  <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'成功添加用户评论空间'</span>);
+} <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span> (error) {
+  <span class="hljs-built_in">console</span>.error(<span class="hljs-string">'添加评论空间失败:'</span>, error.message);
+}
+</div></code></pre>
+<p><strong>参数:</strong> 无</p>
+<p><strong>返回:</strong> Promise&lt;[boolean | null, Error | null]&gt; - 操作结果</p>
+<br>
+<h4 id="adduseroffchainoptimestimes-vaccount"><code>addUserOffChainOpTimes(times, vaccount)</code></h4>
+<p>为用户添加链下操作次数。</p>
+<pre class="hljs"><code><div><span class="hljs-keyword">const</span> [success, error] = <span class="hljs-keyword">await</span> dc.comment.addUserOffChainOpTimes(<span class="hljs-number">100</span>);
+<span class="hljs-keyword">if</span> (success) {
+  <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'成功增加操作次数'</span>);
+} <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span> (error) {
+  <span class="hljs-built_in">console</span>.error(<span class="hljs-string">'增加操作次数失败:'</span>, error.message);
+}
+</div></code></pre>
+<p><strong>参数:</strong></p>
+<ul>
+<li><code>times</code>: number - 操作次数</li>
+<li><code>vaccount</code>: string (可选) - 用户的虚拟账号</li>
+</ul>
+<p><strong>返回:</strong> Promise&lt;[boolean, Error | null]&gt; - 操作结果</p>
+<br>
+<h4 id="addthemeobjtheme-openflag-commentspace"><code>addThemeObj(theme, openFlag, commentSpace)</code></h4>
+<p>为指定主题开通评论功能。</p>
+<pre class="hljs"><code><div><span class="hljs-keyword">const</span> [status, error] = <span class="hljs-keyword">await</span> dc.comment.addThemeObj(
+  <span class="hljs-string">'my-article-1'</span>,
+  OpenFlag.PUBLIC, <span class="hljs-comment">// 评论设为公开</span>
+  <span class="hljs-number">100</span> * <span class="hljs-number">1024</span> * <span class="hljs-number">1024</span> <span class="hljs-comment">// 100MB</span>
+);
+
+<span class="hljs-keyword">if</span> (status === <span class="hljs-number">0</span>) {
+  <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'成功开通评论功能'</span>);
+} <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span> (error) {
+  <span class="hljs-built_in">console</span>.error(<span class="hljs-string">'开通评论功能失败:'</span>, error.message);
+} <span class="hljs-keyword">else</span> {
+  <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'状态码:'</span>, status);
+  <span class="hljs-comment">// 状态码含义:</span>
+  <span class="hljs-comment">// 1:评论空间没有配置</span>
+  <span class="hljs-comment">// 2:评论空间不足</span>
+  <span class="hljs-comment">// 3:评论数据同步中</span>
+}
+</div></code></pre>
+<p><strong>参数:</strong></p>
+<ul>
+<li><code>theme</code>: string - 主题标识符</li>
+<li><code>openFlag</code>: OpenFlag - 评论可见性标志</li>
+<li><code>commentSpace</code>: number (可选) - 评论空间大小，默认50MB</li>
+</ul>
+<p><strong>返回:</strong> Promise&lt;[number | null, Error | null]&gt; - 状态码和错误</p>
+<br>
+<h4 id="addthemespacetheme-addspace"><code>addThemeSpace(theme, addSpace)</code></h4>
+<p>为已开通评论的主题增加评论空间。</p>
+<pre class="hljs"><code><div><span class="hljs-keyword">const</span> result = <span class="hljs-keyword">await</span> dc.comment.addThemeSpace(<span class="hljs-string">'my-article-1'</span>, <span class="hljs-number">50</span> * <span class="hljs-number">1024</span> * <span class="hljs-number">1024</span>); <span class="hljs-comment">// 增加50MB</span>
+<span class="hljs-built_in">console</span>.log(<span class="hljs-string">'增加空间结果:'</span>, result);
+<span class="hljs-keyword">if</span> (result &amp;&amp; result.success) {
+  <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'成功增加评论空间'</span>);
+  <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'新的总空间:'</span>, result.totalSpace);
+}
+</div></code></pre>
+<p><strong>参数:</strong></p>
+<ul>
+<li><code>theme</code>: string - 主题标识符</li>
+<li><code>addSpace</code>: number - 增加的空间大小(字节)</li>
+</ul>
+<p><strong>返回:</strong> Promise<any> - 操作结果</p>
+<br>
+<h4 id="publishcommenttothemetheme-themeauthor-commenttype-comment-refercommentkey-openflag"><code>publishCommentToTheme(theme, themeAuthor, commentType, comment, refercommentkey, openFlag)</code></h4>
+<p>发表评论到指定主题。</p>
+<pre class="hljs"><code><div><span class="hljs-keyword">const</span> result = <span class="hljs-keyword">await</span> dc.comment.publishCommentToTheme(
+  <span class="hljs-string">'my-article-1'</span>,
+  <span class="hljs-string">'author-pubkey'</span>,
+  <span class="hljs-number">0</span>, <span class="hljs-comment">// 普通评论</span>
+  <span class="hljs-string">'这是一条评论内容'</span>,
+  <span class="hljs-string">''</span>, <span class="hljs-comment">// 不引用其他评论</span>
+  OpenFlag.PUBLIC <span class="hljs-comment">// 公开评论</span>
+);
+
+<span class="hljs-built_in">console</span>.log(<span class="hljs-string">'评论发布结果:'</span>, result);
+<span class="hljs-keyword">if</span> (result &amp;&amp; result.success) {
+  <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'评论发布成功'</span>);
+  <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'评论ID:'</span>, result.commentId);
+  <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'发布时间:'</span>, result.timestamp);
+}
+</div></code></pre>
+<p><strong>参数:</strong></p>
+<ul>
+<li><code>theme</code>: string - 主题标识符</li>
+<li><code>themeAuthor</code>: string - 主题作者的公钥</li>
+<li><code>commentType</code>: number - 评论类型 (0:普通评论, 1:回复评论等)</li>
+<li><code>comment</code>: string - 评论内容</li>
+<li><code>refercommentkey</code>: string (可选) - 引用评论的键</li>
+<li><code>openFlag</code>: number (可选) - 评论可见性</li>
+</ul>
+<p><strong>返回:</strong> Promise<any> - 发布结果</p>
+<br>
+<h4 id="deleteselfcommenttheme-themeauthor-commentkey"><code>deleteSelfComment(theme, themeAuthor, commentKey)</code></h4>
+<p>删除自己发布的评论。</p>
+<pre class="hljs"><code><div><span class="hljs-keyword">const</span> result = <span class="hljs-keyword">await</span> dc.comment.deleteSelfComment(
+  <span class="hljs-string">'my-article-1'</span>,
+  <span class="hljs-string">'author-pubkey'</span>,
+  <span class="hljs-string">'comment-key-123'</span>
+);
+<span class="hljs-built_in">console</span>.log(<span class="hljs-string">'删除评论结果:'</span>, result);
+<span class="hljs-keyword">if</span> (result &amp;&amp; result.success) {
+  <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'成功删除评论'</span>);
+}
+</div></code></pre>
+<p><strong>参数:</strong></p>
+<ul>
+<li><code>theme</code>: string - 主题标识符</li>
+<li><code>themeAuthor</code>: string - 主题作者的公钥</li>
+<li><code>commentKey</code>: string - 评论的唯一键</li>
+</ul>
+<p><strong>返回:</strong> Promise<any> - 删除结果</p>
+<br>
+<h4 id="getthemecommentstheme-themeauthor-startheight-direction-offset-limit-seekkey"><code>getThemeComments(theme, themeAuthor, startHeight, direction, offset, limit, seekKey)</code></h4>
+<p>获取主题的评论列表。</p>
+<pre class="hljs"><code><div><span class="hljs-keyword">const</span> comments = <span class="hljs-keyword">await</span> dc.comment.getThemeComments(
+  <span class="hljs-string">'my-article-1'</span>,
+  <span class="hljs-string">'author-pubkey'</span>,
+  <span class="hljs-number">0</span>, <span class="hljs-comment">// 起始高度</span>
+  <span class="hljs-number">0</span>, <span class="hljs-comment">// 从新到旧</span>
+  <span class="hljs-number">0</span>, <span class="hljs-comment">// 不偏移</span>
+  <span class="hljs-number">50</span> <span class="hljs-comment">// 最多返回50条</span>
+);
+
+<span class="hljs-built_in">console</span>.log(<span class="hljs-string">'评论总数:'</span>, comments.length);
+comments.forEach(<span class="hljs-function">(<span class="hljs-params">comment, index</span>) =&gt;</span> {
+  <span class="hljs-built_in">console</span>.log(<span class="hljs-string">`评论 <span class="hljs-subst">${index + <span class="hljs-number">1</span>}</span>:`</span>);
+  <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'作者:'</span>, comment.author);
+  <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'内容:'</span>, comment.content);
+  <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'时间:'</span>, <span class="hljs-keyword">new</span> <span class="hljs-built_in">Date</span>(comment.timestamp).toLocaleString());
+  <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'类型:'</span>, comment.type);
+  
+  <span class="hljs-comment">// 如果是回复评论，显示引用的评论</span>
+  <span class="hljs-keyword">if</span> (comment.referComment) {
+    <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'引用评论:'</span>, comment.referComment);
+  }
+});
+
+<span class="hljs-comment">// 使用seekKey分页加载更多评论</span>
+<span class="hljs-keyword">if</span> (comments.length &gt; <span class="hljs-number">0</span>) {
+  <span class="hljs-keyword">const</span> lastComment = comments[comments.length - <span class="hljs-number">1</span>];
+  <span class="hljs-keyword">const</span> nextPageComments = <span class="hljs-keyword">await</span> dc.comment.getThemeComments(
+    <span class="hljs-string">'my-article-1'</span>,
+    <span class="hljs-string">'author-pubkey'</span>,
+    <span class="hljs-number">0</span>, 
+    <span class="hljs-number">0</span>,
+    <span class="hljs-number">0</span>,
+    <span class="hljs-number">50</span>,
+    <span class="hljs-string">`<span class="hljs-subst">${lastComment.blockheight}</span>/<span class="hljs-subst">${lastComment.key}</span>`</span>
+  );
+  <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'下一页评论数:'</span>, nextPageComments.length);
+}
+</div></code></pre>
+<p><strong>参数:</strong></p>
+<ul>
+<li><code>theme</code>: string - 主题标识符</li>
+<li><code>themeAuthor</code>: string - 主题作者的公钥</li>
+<li><code>startHeight</code>: number (可选) - 查询起始高度，默认0</li>
+<li><code>direction</code>: number (可选) - 查询方向 (0:从新到旧, 1:从旧到新)，默认0</li>
+<li><code>offset</code>: number (可选) - 结果集偏移量，默认0</li>
+<li><code>limit</code>: number (可选) - 最大返回数量，默认100</li>
+<li><code>seekKey</code>: string (可选) - 查询的起始键，格式为&quot;blockheight/key&quot;</li>
+</ul>
+<p><strong>返回:</strong> Promise<any> - 评论列表</p>
+<br>
+<h4 id="configauthappid-themeauthor-theme-authpubkey-permission-remark-vaccount"><code>configAuth(appId, themeAuthor, theme, authPubkey, permission, remark, vaccount)</code></h4>
+<p>配置主题的授权信息。</p>
+<pre class="hljs"><code><div><span class="hljs-keyword">const</span> [status, error] = <span class="hljs-keyword">await</span> dc.comment.configAuth(
+  <span class="hljs-string">'myapp'</span>,
+  <span class="hljs-string">'theme-author-pubkey'</span>,
+  <span class="hljs-string">'my-article-1'</span>,
+  <span class="hljs-string">'user-to-authorize-pubkey'</span>,
+  ThemePermission.READ, <span class="hljs-comment">// 只读权限</span>
+  <span class="hljs-string">'测试授权'</span>
+);
+
+<span class="hljs-keyword">if</span> (status === <span class="hljs-number">0</span>) {
+  <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'授权配置成功'</span>);
+} <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span> (error) {
+  <span class="hljs-built_in">console</span>.error(<span class="hljs-string">'授权配置失败:'</span>, error.message);
+}
+</div></code></pre>
+<p><strong>参数:</strong></p>
+<ul>
+<li><code>appId</code>: string - 应用ID</li>
+<li><code>themeAuthor</code>: string - 主题作者的公钥</li>
+<li><code>theme</code>: string - 主题名称</li>
+<li><code>authPubkey</code>: string - 被授权者的公钥</li>
+<li><code>permission</code>: ThemePermission - 权限级别</li>
+<li><code>remark</code>: string - 备注信息</li>
+<li><code>vaccount</code>: string (可选) - 虚拟账户</li>
+</ul>
+<p><strong>返回:</strong> Promise&lt;[number, Error | null]&gt; - 状态码和错误</p>
+<br>
+<h4 id="getauthlistappid-themeauthor-theme-vaccount"><code>getAuthList(appId, themeAuthor, theme, vaccount)</code></h4>
+<p>获取指定主题的授权列表。</p>
+<pre class="hljs"><code><div><span class="hljs-keyword">const</span> [authList, commentList, error] = <span class="hljs-keyword">await</span> dc.comment.getAuthList(
+  <span class="hljs-string">'myapp'</span>,
+  <span class="hljs-string">'theme-author-pubkey'</span>,
+  <span class="hljs-string">'my-article-1'</span>
+);
+
+<span class="hljs-keyword">if</span> (authList) {
+  <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'授权列表:'</span>, authList);
+  authList.forEach(<span class="hljs-function">(<span class="hljs-params">auth, index</span>) =&gt;</span> {
+    <span class="hljs-built_in">console</span>.log(<span class="hljs-string">`授权 <span class="hljs-subst">${index + <span class="hljs-number">1</span>}</span>:`</span>);
+    <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'被授权者:'</span>, auth.authPubkey);
+    <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'权限级别:'</span>, auth.permission);
+    <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'备注:'</span>, auth.remark);
+  });
+}
+
+<span class="hljs-keyword">if</span> (commentList) {
+  <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'原始评论列表:'</span>, commentList);
+}
+
+<span class="hljs-keyword">if</span> (error) {
+  <span class="hljs-built_in">console</span>.error(<span class="hljs-string">'获取授权列表失败:'</span>, error.message);
+}
+</div></code></pre>
+<p><strong>参数:</strong></p>
+<ul>
+<li><code>appId</code>: string - 应用ID</li>
+<li><code>themeAuthor</code>: string - 主题作者的公钥</li>
+<li><code>theme</code>: string - 主题名称</li>
+<li><code>vaccount</code>: string (可选) - 虚拟账户</li>
+</ul>
+<p><strong>返回:</strong> Promise&lt;[ThemeAuthInfo[] | null, ThemeComment[] | null, Error | null]&gt; - 授权列表、原始评论列表和错误信息</p>
+<br>
+<h4 id="getusercommentsuserpubkey-startheight-direction-offset-limit-seekkey"><code>getUserComments(userPubkey, startHeight, direction, offset, limit, seekKey)</code></h4>
+<p>获取指定用户发布的评论列表。</p>
+<pre class="hljs"><code><div><span class="hljs-keyword">const</span> userComments = <span class="hljs-keyword">await</span> dc.comment.getUserComments(
+  <span class="hljs-string">'user-pubkey'</span>,
+  <span class="hljs-number">0</span>, <span class="hljs-comment">// 起始高度</span>
+  <span class="hljs-number">0</span>, <span class="hljs-comment">// 从新到旧</span>
+  <span class="hljs-number">0</span>, <span class="hljs-comment">// 不偏移</span>
+  <span class="hljs-number">50</span> <span class="hljs-comment">// 最多返回50条</span>
+);
+
+<span class="hljs-built_in">console</span>.log(<span class="hljs-string">'用户评论总数:'</span>, userComments.length);
+userComments.forEach(<span class="hljs-function">(<span class="hljs-params">comment, index</span>) =&gt;</span> {
+  <span class="hljs-built_in">console</span>.log(<span class="hljs-string">`评论 <span class="hljs-subst">${index + <span class="hljs-number">1</span>}</span>:`</span>);
+  <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'主题:'</span>, comment.theme);
+  <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'内容:'</span>, comment.content);
+  <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'时间:'</span>, <span class="hljs-keyword">new</span> <span class="hljs-built_in">Date</span>(comment.timestamp).toLocaleString());
+});
+</div></code></pre>
+<p><strong>参数:</strong></p>
+<ul>
+<li><code>userPubkey</code>: string - 用户公钥</li>
+<li><code>startHeight</code>: number (可选) - 查询起始高度，默认0</li>
+<li><code>direction</code>: number (可选) - 查询方向 (0:从新到旧, 1:从旧到新)，默认0</li>
+<li><code>offset</code>: number (可选) - 结果集偏移量，默认0</li>
+<li><code>limit</code>: number (可选) - 最大返回数量，默认100</li>
+<li><code>seekKey</code>: string (可选) - 查询的起始键，格式为&quot;blockheight/key&quot;</li>
+</ul>
+<p><strong>返回:</strong> Promise<any> - 用户评论列表</p>
+<br>
+<h2 id="%E9%94%AE%E5%80%BC%E5%AD%98%E5%82%A8%E6%A8%A1%E5%9D%97-keyvalue">键值存储模块 (keyvalue)</h2>
+<p>提供分布式键值存储功能。</p>
+<h3 id="%E6%96%B9%E6%B3%95">方法</h3>
+<h4 id="createstoreappid-theme-space-type"><code>createStore(appId, theme, space, type)</code></h4>
+<p>创建一个键值存储主题。</p>
+<pre class="hljs"><code><div><span class="hljs-keyword">const</span> result = <span class="hljs-keyword">await</span> dc.keyvalue.createStore(
+  <span class="hljs-string">'myapp'</span>,
+  <span class="hljs-string">'my-app-settings'</span>,
+  <span class="hljs-number">50</span> * <span class="hljs-number">1024</span> * <span class="hljs-number">1024</span>, <span class="hljs-comment">// 50MB</span>
+  KeyValueStoreType.AUTH <span class="hljs-comment">// 认证存储</span>
+);
+
+<span class="hljs-built_in">console</span>.log(<span class="hljs-string">'创建存储结果:'</span>, result);
+<span class="hljs-keyword">if</span> (result &amp;&amp; result.success) {
+  <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'存储主题创建成功'</span>);
+  <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'主题名称:'</span>, result.theme);
+  <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'分配空间:'</span>, result.space, <span class="hljs-string">'字节'</span>);
+}
+</div></code></pre>
+<p><strong>参数:</strong></p>
+<ul>
+<li><code>appId</code>: string - 应用ID</li>
+<li><code>theme</code>: string - 主题名称</li>
+<li><code>space</code>: number - 分配的存储空间大小(字节)</li>
+<li><code>type</code>: KeyValueStoreType - 存储类型 (AUTH:鉴权主题, PUBLIC:公共主题)</li>
+</ul>
+<p><strong>返回:</strong> Promise<any> - 创建结果</p>
+<br>
+<h4 id="configauthappid-themeauthor-theme-authpubkey-permission-remark-vaccount"><code>configAuth(appId, themeAuthor, theme, authPubkey, permission, remark, vaccount)</code></h4>
+<p>配置主题的授权信息。</p>
+<pre class="hljs"><code><div><span class="hljs-keyword">const</span> [status, error] = <span class="hljs-keyword">await</span> dc.keyvalue.configAuth(
+  <span class="hljs-string">'myapp'</span>,
+  <span class="hljs-string">'theme-author-pubkey'</span>,
+  <span class="hljs-string">'my-app-settings'</span>,
+  <span class="hljs-string">'user-to-authorize-pubkey'</span>,
+  ThemePermission.READ, <span class="hljs-comment">// 只读权限</span>
+  <span class="hljs-string">'测试授权'</span>
+);
+
+<span class="hljs-keyword">if</span> (status === <span class="hljs-number">0</span>) {
+  <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'授权配置成功'</span>);
+} <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span> (error) {
+  <span class="hljs-built_in">console</span>.error(<span class="hljs-string">'授权配置失败:'</span>, error.message);
+}
+</div></code></pre>
+<p><strong>参数:</strong></p>
+<ul>
+<li><code>appId</code>: string - 应用ID</li>
+<li><code>themeAuthor</code>: string - 主题作者的公钥</li>
+<li><code>theme</code>: string - 主题名称</li>
+<li><code>authPubkey</code>: string - 被授权者的公钥</li>
+<li><code>permission</code>: ThemePermission - 权限级别</li>
+<li><code>remark</code>: string - 备注信息</li>
+<li><code>vaccount</code>: string (可选) - 虚拟账户</li>
+</ul>
+<p><strong>返回:</strong> Promise&lt;[number, Error | null]&gt; - 状态码和错误</p>
+<br>
+<h4 id="getauthlistappid-themeauthor-theme-vaccount"><code>getAuthList(appId, themeAuthor, theme, vaccount)</code></h4>
+<p>获取主题的授权列表。</p>
+<pre class="hljs"><code><div><span class="hljs-keyword">const</span> [authList, rawAuthList, error] = <span class="hljs-keyword">await</span> dc.keyvalue.getAuthList(
+  <span class="hljs-string">'myapp'</span>,
+  <span class="hljs-string">'theme-author-pubkey'</span>,
+  <span class="hljs-string">'my-app-settings'</span>
+);
+
+<span class="hljs-keyword">if</span> (authList) {
+  <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'授权列表:'</span>, authList);
+  authList.forEach(<span class="hljs-function">(<span class="hljs-params">auth, index</span>) =&gt;</span> {
+    <span class="hljs-built_in">console</span>.log(<span class="hljs-string">`授权 <span class="hljs-subst">${index + <span class="hljs-number">1</span>}</span>:`</span>);
+    <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'被授权者:'</span>, auth.authPubkey);
+    <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'权限级别:'</span>, auth.permission);
+    <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'备注:'</span>, auth.remark);
+  });
+}
+
+<span class="hljs-keyword">if</span> (error) {
+  <span class="hljs-built_in">console</span>.error(<span class="hljs-string">'获取授权列表失败:'</span>, error.message);
+}
+</div></code></pre>
+<p><strong>参数:</strong></p>
+<ul>
+<li><code>appId</code>: string - 应用ID</li>
+<li><code>themeAuthor</code>: string - 主题作者的公钥</li>
+<li><code>theme</code>: string - 主题名称</li>
+<li><code>vaccount</code>: string (可选) - 虚拟账户</li>
+</ul>
+<p><strong>返回:</strong> Promise&lt;[ThemeAuthInfo[] | null, ThemeComment[] | null, Error | null]&gt; - 授权列表、原始授权列表和错误信息</p>
+<br>
+<h4 id="setkeyvalueappid-themeauthor-theme-key-value-indexs-vaccount"><code>setKeyValue(appId, themeAuthor, theme, key, value, indexs, vaccount)</code></h4>
+<p>设置键值对数据。</p>
+<pre class="hljs"><code><div><span class="hljs-keyword">const</span> [success, error] = <span class="hljs-keyword">await</span> dc.keyvalue.setKeyValue(
+  <span class="hljs-string">'myapp'</span>,
+  <span class="hljs-string">'theme-author-pubkey'</span>,
+  <span class="hljs-string">'my-app-settings'</span>,
+  <span class="hljs-string">'user:prefs'</span>,
+  <span class="hljs-built_in">JSON</span>.stringify({theme: <span class="hljs-string">'dark'</span>, fontSize: <span class="hljs-number">14</span>}),
+  <span class="hljs-string">'type:prefs$$$user:123'</span> <span class="hljs-comment">// 设置两个索引</span>
+);
+
+<span class="hljs-keyword">if</span> (success) {
+  <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'数据保存成功'</span>);
+} <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span> (error) {
+  <span class="hljs-built_in">console</span>.error(<span class="hljs-string">'数据保存失败:'</span>, error.message);
+}
+</div></code></pre>
+<p><strong>参数:</strong></p>
+<ul>
+<li><code>appId</code>: string - 应用ID</li>
+<li><code>themeAuthor</code>: string - 主题作者的公钥</li>
+<li><code>theme</code>: string - 主题名称</li>
+<li><code>key</code>: string - 键名</li>
+<li><code>value</code>: string - 值内容</li>
+<li><code>indexs</code>: string - 索引列表，格式为&quot;key1:value1$$$key2:value2&quot;</li>
+<li><code>vaccount</code>: string (可选) - 虚拟账户</li>
+</ul>
+<p><strong>返回:</strong> Promise&lt;[boolean, Error | null]&gt; - 成功状态和错误</p>
+<br>
+<h4 id="getvaluewithkeyappid-themeauthor-theme-writerpubkey-key-vaccount"><code>getValueWithKey(appId, themeAuthor, theme, writerPubkey, key, vaccount)</code></h4>
+<p>获取指定键的值。</p>
+<pre class="hljs"><code><div><span class="hljs-keyword">const</span> [value, error] = <span class="hljs-keyword">await</span> dc.keyvalue.getValueWithKey(
+  <span class="hljs-string">'myapp'</span>,
+  <span class="hljs-string">'theme-author-pubkey'</span>,
+  <span class="hljs-string">'my-app-settings'</span>,
+  <span class="hljs-string">'writer-pubkey'</span>,
+  <span class="hljs-string">'user:prefs'</span>
+);
+
+<span class="hljs-keyword">if</span> (value) {
+  <span class="hljs-keyword">try</span> {
+    <span class="hljs-keyword">const</span> prefs = <span class="hljs-built_in">JSON</span>.parse(value);
+    <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'用户偏好设置:'</span>, prefs);
+    <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'主题:'</span>, prefs.theme);
+    <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'字体大小:'</span>, prefs.fontSize);
+  } <span class="hljs-keyword">catch</span> (e) {
+    <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'原始值:'</span>, value);
+  }
+} <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span> (error) {
+  <span class="hljs-built_in">console</span>.error(<span class="hljs-string">'获取值失败:'</span>, error.message);
+}
+</div></code></pre>
+<p><strong>参数:</strong></p>
+<ul>
+<li><code>appId</code>: string - 应用ID</li>
+<li><code>themeAuthor</code>: string - 主题作者的公钥</li>
+<li><code>theme</code>: string - 主题名称</li>
+<li><code>writerPubkey</code>: string - 写入者的公钥</li>
+<li><code>key</code>: string - 键名</li>
+<li><code>vaccount</code>: string (可选) - 虚拟账户</li>
+</ul>
+<p><strong>返回:</strong> Promise&lt;[string, Error | null]&gt; - 值内容和错误</p>
+<br>
+<h4 id="getvalueswithkeysappid-themeauthor-theme-writerpubkey-keys-vaccount"><code>getValuesWithKeys(appId, themeAuthor, theme, writerPubkey, keys, vaccount)</code></h4>
+<p>批量获取多个键的值。</p>
+<pre class="hljs"><code><div><span class="hljs-keyword">const</span> [results, error] = <span class="hljs-keyword">await</span> dc.keyvalue.getValuesWithKeys(
+  <span class="hljs-string">'myapp'</span>,
+  <span class="hljs-string">'theme-author-pubkey'</span>,
+  <span class="hljs-string">'my-app-settings'</span>,
+  <span class="hljs-string">'writer-pubkey'</span>,
+  <span class="hljs-string">'user:prefs,app:settings,notifications'</span> <span class="hljs-comment">// 多个键，逗号分隔</span>
+);
+
+<span class="hljs-keyword">if</span> (results) {
+  <span class="hljs-keyword">try</span> {
+    <span class="hljs-keyword">const</span> values = <span class="hljs-built_in">JSON</span>.parse(results);
+    <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'获取到的值:'</span>, values);
+    
+    <span class="hljs-comment">// 遍历所有结果</span>
+    <span class="hljs-built_in">Object</span>.entries(values).forEach(<span class="hljs-function">(<span class="hljs-params">[key, value]</span>) =&gt;</span> {
+      <span class="hljs-built_in">console</span>.log(<span class="hljs-string">`键 "<span class="hljs-subst">${key}</span>" 的值:`</span>, value);
+    });
+  } <span class="hljs-keyword">catch</span> (e) {
+    <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'原始结果:'</span>, results);
+  }
+} <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span> (error) {
+  <span class="hljs-built_in">console</span>.error(<span class="hljs-string">'批量获取值失败:'</span>, error.message);
+}
+</div></code></pre>
+<p><strong>参数:</strong></p>
+<ul>
+<li><code>appId</code>: string - 应用ID</li>
+<li><code>themeAuthor</code>: string - 主题作者的公钥</li>
+<li><code>theme</code>: string - 主题名称</li>
+<li><code>writerPubkey</code>: string - 写入者的公钥</li>
+<li><code>keys</code>: string - 多个键名，逗号分隔</li>
+<li><code>vaccount</code>: string (可选) - 虚拟账户</li>
+</ul>
+<p><strong>返回:</strong> Promise&lt;[string, Error | null]&gt; - JSON格式值内容和错误</p>
+<br>
+<h4 id="getvalueswithindexappid-themeauthor-theme-indexkey-indexvalue-seekkey-offset-limit-vaccount"><code>getValuesWithIndex(appId, themeAuthor, theme, indexKey, indexValue, seekKey, offset, limit, vaccount)</code></h4>
+<p>通过索引查询键值对。</p>
+<pre class="hljs"><code><div><span class="hljs-keyword">const</span> [results, error] = <span class="hljs-keyword">await</span> dc.keyvalue.getValuesWithIndex(
+  <span class="hljs-string">'myapp'</span>,
+  <span class="hljs-string">'theme-author-pubkey'</span>,
+  <span class="hljs-string">'my-app-settings'</span>,
+  <span class="hljs-string">'type'</span>, <span class="hljs-comment">// 索引键</span>
+  <span class="hljs-string">'prefs'</span>, <span class="hljs-comment">// 索引值</span>
+  <span class="hljs-string">''</span>, <span class="hljs-comment">// 查询起始键</span>
+  <span class="hljs-number">0</span>, <span class="hljs-comment">// 偏移量</span>
+  <span class="hljs-number">100</span> <span class="hljs-comment">// 最大返回数量</span>
+);
+
+<span class="hljs-keyword">if</span> (results) {
+  <span class="hljs-keyword">try</span> {
+    <span class="hljs-keyword">const</span> valuesList = <span class="hljs-built_in">JSON</span>.parse(results);
+    <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'查询结果总数:'</span>, valuesList.length);
+    
+    <span class="hljs-comment">// 遍历结果</span>
+    valuesList.forEach(<span class="hljs-function">(<span class="hljs-params">item, index</span>) =&gt;</span> {
+      <span class="hljs-built_in">console</span>.log(<span class="hljs-string">`结果 <span class="hljs-subst">${index + <span class="hljs-number">1</span>}</span>:`</span>);
+      <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'键:'</span>, item.key);
+      <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'值:'</span>, item.value);
+      <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'作者:'</span>, item.writer);
+      <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'区块高度:'</span>, item.blockheight);
+    });
+  } <span class="hljs-keyword">catch</span> (e) {
+    <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'原始结果:'</span>, results);
+  }
+} <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span> (error) {
+  <span class="hljs-built_in">console</span>.error(<span class="hljs-string">'索引查询失败:'</span>, error.message);
+}
+</div></code></pre>
+<p><strong>参数:</strong></p>
+<ul>
+<li><code>appId</code>: string - 应用ID</li>
+<li><code>themeAuthor</code>: string - 主题作者的公钥</li>
+<li><code>theme</code>: string - 主题名称</li>
+<li><code>indexKey</code>: string - 索引键名</li>
+<li><code>indexValue</code>: string - 索引值</li>
+<li><code>seekKey</code>: string - 查询起始键</li>
+<li><code>offset</code>: number - 结果偏移量</li>
+<li><code>limit</code>: number - 返回结果数量限制</li>
+<li><code>vaccount</code>: string (可选) - 虚拟账户</li>
+</ul>
+<p><strong>返回:</strong> Promise&lt;[string, Error | null]&gt; - JSON格式查询结果和错误</p>
+<br>
+<h2 id="%E6%95%B0%E6%8D%AE%E5%BA%93%E6%A8%A1%E5%9D%97-database">数据库模块 (database)</h2>
+<p>提供分布式数据库功能。</p>
+<h3 id="%E6%96%B9%E6%B3%95">方法</h3>
+<h4 id="initdbmanager"><code>initDBManager()</code></h4>
+<p>初始化数据库管理器。</p>
+<pre class="hljs"><code><div><span class="hljs-keyword">try</span> {
+  <span class="hljs-keyword">await</span> dc.database.initDBManager();
+  <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'数据库管理器已初始化'</span>);
+} <span class="hljs-keyword">catch</span> (error) {
+  <span class="hljs-built_in">console</span>.error(<span class="hljs-string">'初始化数据库管理器失败:'</span>, error.message);
+}
+</div></code></pre>
+<p><strong>参数:</strong> 无</p>
+<p><strong>返回:</strong> Promise<void></p>
+<br>
+<h4 id="newdbname-b32rk-b32sk-jsoncollections"><code>newDB(name, b32Rk, b32Sk, jsonCollections)</code></h4>
+<p>创建新数据库。</p>
+<pre class="hljs"><code><div><span class="hljs-keyword">const</span> collections = [
+  {
+    name: <span class="hljs-string">'users'</span>,
+    schema: {
+      title: <span class="hljs-string">'User'</span>,
+      <span class="hljs-keyword">type</span>: <span class="hljs-string">'object'</span>,
+      properties: {
+        name: { <span class="hljs-keyword">type</span>: <span class="hljs-string">'string'</span> },
+        email: { <span class="hljs-keyword">type</span>: <span class="hljs-string">'string'</span> },
+        age: { <span class="hljs-keyword">type</span>: <span class="hljs-string">'integer'</span> }
+      },
+      required: [<span class="hljs-string">'name'</span>, <span class="hljs-string">'email'</span>]
+    }
+  },
+  {
+    name: <span class="hljs-string">'posts'</span>,
+    schema: {
+      title: <span class="hljs-string">'Post'</span>,
+      <span class="hljs-keyword">type</span>: <span class="hljs-string">'object'</span>,
+      properties: {
+        title: { <span class="hljs-keyword">type</span>: <span class="hljs-string">'string'</span> },
+        content: { <span class="hljs-keyword">type</span>: <span class="hljs-string">'string'</span> },
+        author: { <span class="hljs-keyword">type</span>: <span class="hljs-string">'string'</span> },
+        tags: { 
+          <span class="hljs-keyword">type</span>: <span class="hljs-string">'array'</span>,
+          items: { <span class="hljs-keyword">type</span>: <span class="hljs-string">'string'</span> }
+        }
+      },
+      required: [<span class="hljs-string">'title'</span>, <span class="hljs-string">'content'</span>, <span class="hljs-string">'author'</span>]
+    }
+  }
+];
+
+<span class="hljs-keyword">try</span> {
+  <span class="hljs-keyword">const</span> threadId = <span class="hljs-keyword">await</span> dc.database.newDB(
+    <span class="hljs-string">'myapp-db'</span>,
+    <span class="hljs-string">'base32-read-key'</span>, <span class="hljs-comment">// 读取密钥</span>
+    <span class="hljs-string">'base32-write-key'</span>, <span class="hljs-comment">// 写入密钥</span>
+    collections
+  );
+  <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'创建数据库成功，线程ID:'</span>, threadId);
+  
+  <span class="hljs-comment">// 保存线程ID，后续操作需要使用</span>
+  localStorage.setItem(<span class="hljs-string">'db-thread-id'</span>, threadId);
+} <span class="hljs-keyword">catch</span> (error) {
+  <span class="hljs-built_in">console</span>.error(<span class="hljs-string">'创建数据库失败:'</span>, error.message);
+}
+</div></code></pre>
+<p><strong>参数:</strong></p>
+<ul>
+<li><code>name</code>: string - 数据库名称</li>
+<li><code>b32Rk</code>: string - base32编码的读取密钥</li>
+<li><code>b32Sk</code>: string - base32编码的服务密钥</li>
+<li><code>jsonCollections</code>: ICollectionConfig[] - 集合配置数组</li>
+</ul>
+<p><strong>返回:</strong> Promise<string> - 线程ID</p>
+<br>
+<h4 id="syncdbfromdcthreadid-dbname-dbaddr-b32rk-b32sk-block-collectioninfos"><code>syncDbFromDC(threadid, dbname, dbAddr, b32Rk, b32Sk, block, collectionInfos)</code></h4>
+<p>从分布式网络同步数据库。</p>
+<pre class="hljs"><code><div><span class="hljs-keyword">const</span> collections = [
+  {
+    name: <span class="hljs-string">'users'</span>,
+    schema: {
+      title: <span class="hljs-string">'User'</span>,
+      <span class="hljs-keyword">type</span>: <span class="hljs-string">'object'</span>,
+      properties: {
+        name: { <span class="hljs-keyword">type</span>: <span class="hljs-string">'string'</span> },
+        email: { <span class="hljs-keyword">type</span>: <span class="hljs-string">'string'</span> }
+      }
+    }
+  },
+  {
+    name: <span class="hljs-string">'posts'</span>,
+    schema: {
+      title: <span class="hljs-string">'Post'</span>,
+      <span class="hljs-keyword">type</span>: <span class="hljs-string">'object'</span>,
+      properties: {
+        title: { <span class="hljs-keyword">type</span>: <span class="hljs-string">'string'</span> },
+        content: { <span class="hljs-keyword">type</span>: <span class="hljs-string">'string'</span> }
+      }
+    }
+  }
+];
+
+<span class="hljs-keyword">try</span> {
+  <span class="hljs-keyword">await</span> dc.database.syncDbFromDC(
+    <span class="hljs-string">'thread-id'</span>,
+    <span class="hljs-string">'myapp-db'</span>,
+    <span class="hljs-string">'db-address'</span>,
+    <span class="hljs-string">'base32-read-key'</span>,
+    <span class="hljs-string">'base32-write-key'</span>,
+    <span class="hljs-literal">true</span>, <span class="hljs-comment">// 阻塞等待直到同步完成</span>
+    collections
+  );
+  <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'数据库同步完成'</span>);
+} <span class="hljs-keyword">catch</span> (error) {
+  <span class="hljs-built_in">console</span>.error(<span class="hljs-string">'同步数据库失败:'</span>, error.message);
+}
+</div></code></pre>
+<p><strong>参数:</strong></p>
+<ul>
+<li><code>threadid</code>: string - 线程ID</li>
+<li><code>dbname</code>: string - 数据库名称</li>
+<li><code>dbAddr</code>: string - 数据库地址</li>
+<li><code>b32Rk</code>: string - base32编码的读取密钥</li>
+<li><code>b32Sk</code>: string - base32编码的服务密钥</li>
+<li><code>block</code>: boolean - 是否阻塞等待同步完成</li>
+<li><code>collectionInfos</code>: ICollectionConfig[] - 集合配置数组</li>
+</ul>
+<p><strong>返回:</strong> Promise<void></p>
+<br>
+<h2 id="%E7%BC%93%E5%AD%98%E6%A8%A1%E5%9D%97-cache">缓存模块 (cache)</h2>
+<p>提供临时缓存功能。</p>
+<h3 id="%E6%96%B9%E6%B3%95">方法</h3>
+<h4 id="getcachevaluekey"><code>getCacheValue(key)</code></h4>
+<p>获取缓存值。</p>
+<pre class="hljs"><code><div><span class="hljs-keyword">try</span> {
+  <span class="hljs-keyword">const</span> value = <span class="hljs-keyword">await</span> dc.cache.getCacheValue(<span class="hljs-string">'cache-key'</span>);
+  <span class="hljs-keyword">if</span> (value) {
+    <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'缓存值:'</span>, value);
+    
+    <span class="hljs-comment">// 如果缓存的是JSON数据</span>
+    <span class="hljs-keyword">try</span> {
+      <span class="hljs-keyword">const</span> jsonValue = <span class="hljs-built_in">JSON</span>.parse(value);
+      <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'解析后的JSON数据:'</span>, jsonValue);
+    } <span class="hljs-keyword">catch</span> (e) {
+      <span class="hljs-comment">// 不是JSON数据，使用原始值</span>
+    }
+  } <span class="hljs-keyword">else</span> {
+    <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'缓存键不存在或已过期'</span>);
+  }
+} <span class="hljs-keyword">catch</span> (error) {
+  <span class="hljs-built_in">console</span>.error(<span class="hljs-string">'获取缓存失败:'</span>, error.message);
+}
+</div></code></pre>
+<p><strong>参数:</strong></p>
+<ul>
+<li><code>key</code>: string - 缓存键</li>
+</ul>
+<p><strong>返回:</strong> Promise&lt;string | null&gt; - 缓存值，不存在则返回null</p>
+<br>
+<h4 id="setcachekeyvalue-expire"><code>setCacheKey(value, expire)</code></h4>
+<p>设置缓存值。</p>
+<pre class="hljs"><code><div><span class="hljs-keyword">try</span> {
+  <span class="hljs-comment">// 缓存简单值，1小时过期</span>
+  <span class="hljs-keyword">const</span> result1 = <span class="hljs-keyword">await</span> dc.cache.setCacheKey(<span class="hljs-string">'simple-value'</span>, <span class="hljs-number">3600</span>);
+  <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'缓存简单值结果:'</span>, result1);
+  
+  <span class="hljs-comment">// 缓存JSON对象，默认1天过期</span>
+  <span class="hljs-keyword">const</span> jsonData = { name: <span class="hljs-string">'test'</span>, values: [<span class="hljs-number">1</span>, <span class="hljs-number">2</span>, <span class="hljs-number">3</span>], timestamp: <span class="hljs-built_in">Date</span>.now() };
+  <span class="hljs-keyword">const</span> result2 = <span class="hljs-keyword">await</span> dc.cache.setCacheKey(<span class="hljs-built_in">JSON</span>.stringify(jsonData));
+  <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'缓存JSON对象结果:'</span>, result2);
+  
+  <span class="hljs-comment">// 缓存长期值，30天过期</span>
+  <span class="hljs-keyword">const</span> result3 = <span class="hljs-keyword">await</span> dc.cache.setCacheKey(<span class="hljs-string">'long-term-value'</span>, <span class="hljs-number">30</span> * <span class="hljs-number">24</span> * <span class="hljs-number">3600</span>);
+  <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'缓存长期值结果:'</span>, result3);
+} <span class="hljs-keyword">catch</span> (error) {
+  <span class="hljs-built_in">console</span>.error(<span class="hljs-string">'设置缓存失败:'</span>, error.message);
+}
+</div></code></pre>
+<p><strong>参数:</strong></p>
+<ul>
+<li><code>value</code>: string - 缓存值</li>
+<li><code>expire</code>: number (可选) - 过期时间(秒)，默认1天</li>
+</ul>
+<p><strong>返回:</strong> Promise<any> - 设置结果</p>
+<br>
+<h2 id="ai%E4%BB%A3%E7%90%86%E6%A8%A1%E5%9D%97-aiproxy">AI代理模块 (aiproxy)</h2>
+<p>提供AI代理服务配置和调用功能。</p>
+<h3 id="%E6%96%B9%E6%B3%95">方法</h3>
+<h4 id="createproxyconfigappid-configtheme"><code>createProxyConfig(appId, configTheme)</code></h4>
+<p>创建AI调用代理配置。</p>
+<pre class="hljs"><code><div><span class="hljs-keyword">const</span> [status, error] = <span class="hljs-keyword">await</span> dc.aiproxy.createProxyConfig(
+  <span class="hljs-string">'myapp'</span>,
+  <span class="hljs-string">'ai-services'</span>
+);
+
+<span class="hljs-keyword">if</span> (status === <span class="hljs-number">0</span>) {
+  <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'创建AI代理配置成功'</span>);
+} <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span> (error) {
+  <span class="hljs-built_in">console</span>.error(<span class="hljs-string">'创建AI代理配置失败:'</span>, error.message);
+} <span class="hljs-keyword">else</span> {
+  <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'创建状态码:'</span>, status);
+}
+</div></code></pre>
+<p><strong>参数:</strong></p>
+<ul>
+<li><code>appId</code>: string - 应用ID</li>
+<li><code>configTheme</code>: string - 配置主题名称</li>
+</ul>
+<p><strong>返回:</strong> Promise&lt;[number, Error | null]&gt; - 状态码和错误信息</p>
+<br>
+<h4 id="configaiproxyappid-configauthor-configtheme-servicename-serviceconfig-vaccount"><code>configAIProxy(appId, configAuthor, configTheme, serviceName, serviceConfig, vaccount)</code></h4>
+<p>配置AI代理访问设置。</p>
+<pre class="hljs"><code><div><span class="hljs-comment">// 配置一个OpenAI API服务</span>
+<span class="hljs-keyword">const</span> openAIConfig = {
+  blockheight: <span class="hljs-number">12345</span>,
+  isAIModel: <span class="hljs-number">0</span>, <span class="hljs-comment">// 0表示普通API</span>
+  apiType: <span class="hljs-number">1</span>, <span class="hljs-comment">// OpenAI API类型</span>
+  authorization: <span class="hljs-string">'Bearer sk-xxxx'</span>, <span class="hljs-comment">// API密钥</span>
+  endpoint: <span class="hljs-string">'https://api.openai.com/v1'</span>,
+  organization: <span class="hljs-string">'org-id'</span>, <span class="hljs-comment">// 可选</span>
+  apiVersion: <span class="hljs-string">'2023-05-15'</span>,
+  model: <span class="hljs-string">'gpt-4'</span>,
+  remark: <span class="hljs-string">'OpenAI GPT-4服务'</span>
+};
+
+<span class="hljs-keyword">const</span> [success, error] = <span class="hljs-keyword">await</span> dc.aiproxy.configAIProxy(
+  <span class="hljs-string">'myapp'</span>,
+  <span class="hljs-string">'config-author-pubkey'</span>,
+  <span class="hljs-string">'ai-services'</span>,
+  <span class="hljs-string">'openai-gpt4'</span>,
+  openAIConfig
+);
+
+<span class="hljs-keyword">if</span> (success) {
+  <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'AI代理配置成功'</span>);
+} <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span> (error) {
+  <span class="hljs-built_in">console</span>.error(<span class="hljs-string">'AI代理配置失败:'</span>, error.message);
+}
+
+<span class="hljs-comment">// 删除一个服务配置</span>
+<span class="hljs-keyword">const</span> [deleteSuccess, deleteError] = <span class="hljs-keyword">await</span> dc.aiproxy.configAIProxy(
+  <span class="hljs-string">'myapp'</span>,
+  <span class="hljs-string">'config-author-pubkey'</span>,
+  <span class="hljs-string">'ai-services'</span>,
+  <span class="hljs-string">'service-to-delete'</span>,
+  <span class="hljs-literal">undefined</span> <span class="hljs-comment">// 不提供配置表示删除</span>
+);
+
+<span class="hljs-keyword">if</span> (deleteSuccess) {
+  <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'成功删除服务配置'</span>);
+}
+</div></code></pre>
+<p><strong>参数:</strong></p>
+<ul>
+<li><code>appId</code>: string - 应用ID</li>
+<li><code>configAuthor</code>: string - 配置作者公钥</li>
+<li><code>configTheme</code>: string - 配置主题名称</li>
+<li><code>serviceName</code>: string - 服务名称</li>
+<li><code>serviceConfig</code>: AIProxyConfig (可选) - 服务配置，为空则表示删除该服务的配置</li>
+<li><code>vaccount</code>: string (可选) - 虚拟账户</li>
+</ul>
+<p><strong>返回:</strong> Promise&lt;[boolean, Error | null]&gt; - 是否配置成功和错误信息</p>
+<br>
+<h4 id="configauthappid-configauthor-configtheme-authpubkey-permission-authconfig-vaccount"><code>configAuth(appId, configAuthor, configTheme, authPubkey, permission, authConfig, vaccount)</code></h4>
+<p>配置用户的AI代理访问权限。</p>
+<pre class="hljs"><code><div><span class="hljs-comment">// 配置用户的访问权限</span>
+<span class="hljs-keyword">const</span> authConfig = {
+  serviceLimit: {
+    <span class="hljs-string">'openai-gpt4'</span>: {
+      dailyTokenLimit: <span class="hljs-number">10000</span>, <span class="hljs-comment">// 每日令牌限制</span>
+      monthlyTokenLimit: <span class="hljs-number">100000</span>, <span class="hljs-comment">// 每月令牌限制</span>
+      requestInterval: <span class="hljs-number">1000</span> <span class="hljs-comment">// 请求间隔(毫秒)</span>
+    }
+  }
+};
+
+<span class="hljs-keyword">const</span> [status, error] = <span class="hljs-keyword">await</span> dc.aiproxy.configAuth(
+  <span class="hljs-string">'myapp'</span>,
+  <span class="hljs-string">'config-author-pubkey'</span>,
+  <span class="hljs-string">'ai-services'</span>,
+  <span class="hljs-string">'user-to-authorize-pubkey'</span>,
+  AIProxyUserPermission.USER, <span class="hljs-comment">// 普通用户权限</span>
+  authConfig
+);
+
+<span class="hljs-keyword">if</span> (status === <span class="hljs-number">0</span>) {
+  <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'用户AI代理授权配置成功'</span>);
+} <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span> (error) {
+  <span class="hljs-built_in">console</span>.error(<span class="hljs-string">'用户AI代理授权配置失败:'</span>, error.message);
+} <span class="hljs-keyword">else</span> {
+  <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'授权状态码:'</span>, status);
+}
+</div></code></pre>
+<p><strong>参数:</strong></p>
+<ul>
+<li><code>appId</code>: string - 应用ID</li>
+<li><code>configAuthor</code>: string - 配置作者公钥</li>
+<li><code>configTheme</code>: string - 配置主题名称</li>
+<li><code>authPubkey</code>: string - 被授权用户的公钥</li>
+<li><code>permission</code>: AIProxyUserPermission - 权限级别</li>
+<li><code>authConfig</code>: ProxyCallConfig - 授权配置</li>
+<li><code>vaccount</code>: string (可选) - 虚拟账户</li>
+</ul>
+<p><strong>返回:</strong> Promise&lt;[number, Error | null]&gt; - 状态码和错误信息</p>
+<br>
+<h4 id="getaiproxyconfigappid-themeauthor-configtheme-vaccount"><code>GetAIProxyConfig(appId, themeAuthor, configTheme, vaccount)</code></h4>
+<p>获取AI代理的所有配置，包括服务与授权列表。</p>
+<pre class="hljs"><code><div><span class="hljs-keyword">const</span> [userConfigs, aiConfigs, error] = <span class="hljs-keyword">await</span> dc.aiproxy.GetAIProxyConfig(
+  <span class="hljs-string">'myapp'</span>,
+  <span class="hljs-string">'config-author-pubkey'</span>,
+  <span class="hljs-string">'ai-services'</span>
+);
+
+<span class="hljs-keyword">if</span> (userConfigs) {
+  <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'用户授权配置总数:'</span>, userConfigs.length);
+  userConfigs.forEach(<span class="hljs-function">(<span class="hljs-params">config, index</span>) =&gt;</span> {
+    <span class="hljs-built_in">console</span>.log(<span class="hljs-string">`用户授权 <span class="hljs-subst">${index + <span class="hljs-number">1</span>}</span>:`</span>);
+    <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'用户公钥:'</span>, config.userPubkey);
+    <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'权限级别:'</span>, config.permission);
+    <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'服务限制:'</span>, config.serviceLimit);
+  });
+}
+
+<span class="hljs-keyword">if</span> (aiConfigs) {
+  <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'AI服务配置总数:'</span>, aiConfigs.length);
+  aiConfigs.forEach(<span class="hljs-function">(<span class="hljs-params">config, index</span>) =&gt;</span> {
+    <span class="hljs-built_in">console</span>.log(<span class="hljs-string">`AI服务 <span class="hljs-subst">${index + <span class="hljs-number">1</span>}</span>:`</span>);
+    <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'服务名称:'</span>, config.serviceName);
+    <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'API类型:'</span>, config.apiType);
+    <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'模型:'</span>, config.model);
+    <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'备注:'</span>, config.remark);
+  });
+}
+
+<span class="hljs-keyword">if</span> (error) {
+  <span class="hljs-built_in">console</span>.error(<span class="hljs-string">'获取AI代理配置失败:'</span>, error.message);
+}
+</div></code></pre>
+<p><strong>参数:</strong></p>
+<ul>
+<li><code>appId</code>: string - 应用ID</li>
+<li><code>themeAuthor</code>: string - 主题作者的公钥</li>
+<li><code>configTheme</code>: string - 配置主题名称</li>
+<li><code>vaccount</code>: string (可选) - 虚拟账户</li>
+</ul>
+<p><strong>返回:</strong> Promise&lt;[UserProxyCallConfig[] | null, AIProxyConfig[] | null, Error | null]&gt; - 用户授权配置列表、AI代理配置列表和错误信息</p>
+<br>
+<h4 id="getuserownaiproxyauthappid-themeauthor-configtheme"><code>GetUserOwnAIProxyAuth(appId, themeAuthor, configTheme)</code></h4>
+<p>获取当前用户自身的AI代理授权信息。</p>
+<pre class="hljs"><code><div><span class="hljs-keyword">const</span> [authConfig, error] = <span class="hljs-keyword">await</span> dc.aiproxy.GetUserOwnAIProxyAuth(
+  <span class="hljs-string">'myapp'</span>,
+  <span class="hljs-string">'config-author-pubkey'</span>,
+  <span class="hljs-string">'ai-services'</span>
+);
+
+<span class="hljs-keyword">if</span> (authConfig) {
+  <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'当前用户的AI代理授权信息:'</span>);
+  <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'服务限制:'</span>, authConfig.serviceLimit);
+  
+  <span class="hljs-comment">// 查看特定服务的限制</span>
+  <span class="hljs-keyword">if</span> (authConfig.serviceLimit &amp;&amp; authConfig.serviceLimit[<span class="hljs-string">'openai-gpt4'</span>]) {
+    <span class="hljs-keyword">const</span> gpt4Limits = authConfig.serviceLimit[<span class="hljs-string">'openai-gpt4'</span>];
+    <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'GPT-4服务日限额:'</span>, gpt4Limits.dailyTokenLimit);
+    <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'GPT-4服务月限额:'</span>, gpt4Limits.monthlyTokenLimit);
+  }
+} <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span> (error) {
+  <span class="hljs-built_in">console</span>.error(<span class="hljs-string">'获取用户AI代理授权失败:'</span>, error.message);
+}
+</div></code></pre>
+<p><strong>参数:</strong></p>
+<ul>
+<li><code>appId</code>: string - 应用ID</li>
+<li><code>themeAuthor</code>: string - 主题作者的公钥</li>
+<li><code>configTheme</code>: string - 配置主题名称</li>
+</ul>
+<p><strong>返回:</strong> Promise&lt;[ProxyCallConfig, Error | null]&gt; - 授权配置和错误信息</p>
+<br>
+<h4 id="doaiproxycallappid-themeauthor-configtheme-servicename-reqbody-forcerefresh-onstreamresponse-headers-path-model"><code>DoAIProxyCall(appId, themeAuthor, configTheme, serviceName, reqBody, forceRefresh, onStreamResponse, headers, path, model)</code></h4>
+<p>执行AI代理调用。</p>
+<pre class="hljs"><code><div><span class="hljs-comment">// 准备请求体 - OpenAI聊天完成</span>
+<span class="hljs-keyword">const</span> chatRequest = {
+  messages: [
+    {role: <span class="hljs-string">'system'</span>, content: <span class="hljs-string">'You are a helpful assistant.'</span>},
+    {role: <span class="hljs-string">'user'</span>, content: <span class="hljs-string">'请生成一个JavaScript求和函数'</span>}
+  ],
+  temperature: <span class="hljs-number">0.7</span>,
+  max_tokens: <span class="hljs-number">1000</span>
+};
+
+<span class="hljs-comment">// 流式响应处理函数</span>
+<span class="hljs-keyword">const</span> handleStreamResponse = <span class="hljs-function">(<span class="hljs-params">chunk</span>) =&gt;</span> {
+  <span class="hljs-keyword">if</span> (chunk &amp;&amp; chunk.choices &amp;&amp; chunk.choices[<span class="hljs-number">0</span>]) {
+    <span class="hljs-keyword">const</span> content = chunk.choices[<span class="hljs-number">0</span>].delta.content;
+    <span class="hljs-keyword">if</span> (content) {
+      process.stdout.write(content); <span class="hljs-comment">// 实时输出内容</span>
+    }
+  }
+};
+
+<span class="hljs-comment">// 执行AI调用</span>
+<span class="hljs-keyword">try</span> {
+  <span class="hljs-keyword">const</span> status = <span class="hljs-keyword">await</span> dc.aiproxy.DoAIProxyCall(
+    <span class="hljs-string">'myapp'</span>,
+    <span class="hljs-string">'config-author-pubkey'</span>,
+    <span class="hljs-string">'ai-services'</span>,
+    <span class="hljs-string">'openai-gpt4'</span>, <span class="hljs-comment">// 服务名称</span>
+    <span class="hljs-built_in">JSON</span>.stringify(chatRequest), <span class="hljs-comment">// 请求体</span>
+    <span class="hljs-literal">false</span>, <span class="hljs-comment">// 不强制刷新</span>
+    handleStreamResponse, <span class="hljs-comment">// 流式响应回调</span>
+    <span class="hljs-string">'Content-Type: application/json'</span>, <span class="hljs-comment">// 请求头</span>
+    <span class="hljs-string">'/v1/chat/completions'</span>, <span class="hljs-comment">// API路径</span>
+    <span class="hljs-string">'gpt-4'</span> <span class="hljs-comment">// 模型名称(可选，会覆盖配置中的模型)</span>
+  );
+  
+  <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'\nAPI调用状态码:'</span>, status);
+  <span class="hljs-comment">// 状态码含义:</span>
+  <span class="hljs-comment">// 0: 成功</span>
+  <span class="hljs-comment">// 其他值: 各种错误状态</span>
+} <span class="hljs-keyword">catch</span> (error) {
+  <span class="hljs-built_in">console</span>.error(<span class="hljs-string">'AI代理调用失败:'</span>, error.message);
+}
+
+<span class="hljs-comment">// 非流式调用示例</span>
+<span class="hljs-keyword">try</span> {
+  <span class="hljs-keyword">const</span> embeddingRequest = {
+    input: <span class="hljs-string">"The food was delicious and the service was excellent."</span>,
+    model: <span class="hljs-string">"text-embedding-ada-002"</span>
+  };
+  
+  <span class="hljs-keyword">let</span> responseData = <span class="hljs-string">''</span>;
+  <span class="hljs-keyword">const</span> collectResponse = <span class="hljs-function">(<span class="hljs-params">chunk</span>) =&gt;</span> {
+    <span class="hljs-keyword">if</span> (<span class="hljs-keyword">typeof</span> chunk === <span class="hljs-string">'string'</span>) {
+      responseData += chunk;
+    } <span class="hljs-keyword">else</span> {
+      responseData += <span class="hljs-built_in">JSON</span>.stringify(chunk);
+    }
+  };
+  
+  <span class="hljs-keyword">await</span> dc.aiproxy.DoAIProxyCall(
+    <span class="hljs-string">'myapp'</span>,
+    <span class="hljs-string">'config-author-pubkey'</span>,
+    <span class="hljs-string">'ai-services'</span>,
+    <span class="hljs-string">'openai-embeddings'</span>,
+    <span class="hljs-built_in">JSON</span>.stringify(embeddingRequest),
+    <span class="hljs-literal">false</span>,
+    collectResponse,
+    <span class="hljs-string">'Content-Type: application/json'</span>,
+    <span class="hljs-string">'/v1/embeddings'</span>
+  );
+  
+  <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'响应数据:'</span>, responseData);
+  <span class="hljs-keyword">try</span> {
+    <span class="hljs-keyword">const</span> jsonResponse = <span class="hljs-built_in">JSON</span>.parse(responseData);
+    <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'嵌入向量维度:'</span>, jsonResponse.data[<span class="hljs-number">0</span>].embedding.length);
+  } <span class="hljs-keyword">catch</span> (e) {
+    <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'无法解析JSON响应'</span>);
+  }
+} <span class="hljs-keyword">catch</span> (error) {
+  <span class="hljs-built_in">console</span>.error(<span class="hljs-string">'嵌入调用失败:'</span>, error.message);
+}
+</div></code></pre>
+<p><strong>参数:</strong></p>
+<ul>
+<li><code>appId</code>: string - 应用ID</li>
+<li><code>themeAuthor</code>: string - 主题作者公钥</li>
+<li><code>configTheme</code>: string - 配置主题名称</li>
+<li><code>serviceName</code>: string - 服务名称</li>
+<li><code>reqBody</code>: string - 请求体</li>
+<li><code>forceRefresh</code>: boolean - 是否强制刷新</li>
+<li><code>onStreamResponse</code>: (chunk: any) =&gt; void (可选) - 流式响应回调</li>
+<li><code>headers</code>: string (可选) - 请求头</li>
+<li><code>path</code>: string (可选) - 请求路径</li>
+<li><code>model</code>: string (可选) - 模型名称</li>
+</ul>
+<p><strong>返回:</strong> Promise<number> - 调用状态码</p>
+<br>
+<h2 id="%E5%B8%B8%E8%A7%81%E4%BD%BF%E7%94%A8%E6%B5%81%E7%A8%8B">常见使用流程</h2>
+<h3 id="1-%E7%94%A8%E6%88%B7%E8%AE%A4%E8%AF%81%E6%B5%81%E7%A8%8B">1. 用户认证流程</h3>
+<pre class="hljs"><code><div><span class="hljs-comment">// 1. 初始化DC客户端</span>
+<span class="hljs-keyword">const</span> dc = <span class="hljs-keyword">new</span> DC({
+  wssUrl: <span class="hljs-string">'wss://blockchain.example.com'</span>,
+  appInfo: { appId: <span class="hljs-string">'myapp'</span>, appName: <span class="hljs-string">'My Application'</span> }
+});
+<span class="hljs-keyword">await</span> dc.init();
+
+<span class="hljs-comment">// 2. 使用NFT账号登录</span>
+<span class="hljs-keyword">const</span> loginResult = <span class="hljs-keyword">await</span> dc.auth.accountLogin(<span class="hljs-string">'user-nft-account'</span>, <span class="hljs-string">'password'</span>, <span class="hljs-string">'000000'</span>);
+<span class="hljs-keyword">if</span> (!loginResult) {
+  <span class="hljs-built_in">console</span>.error(<span class="hljs-string">'登录失败'</span>);
+  <span class="hljs-keyword">return</span>;
+}
+
+<span class="hljs-comment">// 3. 获取用户信息</span>
+<span class="hljs-keyword">const</span> userInfo = <span class="hljs-keyword">await</span> dc.auth.getUserInfoWithNft(<span class="hljs-string">'user-nft-account'</span>);
+<span class="hljs-built_in">console</span>.log(<span class="hljs-string">'欢迎回来,'</span>, userInfo.name);
+</div></code></pre>
+<h3 id="2-%E6%96%87%E4%BB%B6%E4%B8%8A%E4%BC%A0%E4%B8%8E%E8%AE%BF%E9%97%AE%E6%B5%81%E7%A8%8B">2. 文件上传与访问流程</h3>
+<pre class="hljs"><code><div><span class="hljs-comment">// 1. 上传文件</span>
+<span class="hljs-keyword">const</span> file = <span class="hljs-keyword">new</span> File([<span class="hljs-string">'file content'</span>], <span class="hljs-string">'document.txt'</span>);
+<span class="hljs-keyword">const</span> uploadResult = <span class="hljs-keyword">await</span> dc.file.addFile(
+  file,
+  <span class="hljs-string">'encryption-key'</span>,
+  <span class="hljs-function">(<span class="hljs-params">status, size</span>) =&gt;</span> <span class="hljs-built_in">console</span>.log(<span class="hljs-string">`上传进度: <span class="hljs-subst">${status}</span>%, 已上传: <span class="hljs-subst">${size}</span> 字节`</span>)
+);
+
+<span class="hljs-keyword">const</span> fileCid = uploadResult.cid;
+<span class="hljs-built_in">console</span>.log(<span class="hljs-string">'文件已上传，CID:'</span>, fileCid);
+
+<span class="hljs-comment">// 2. 下载并使用文件</span>
+<span class="hljs-keyword">const</span> fileContent = <span class="hljs-keyword">await</span> dc.file.getFile(fileCid, <span class="hljs-string">'encryption-key'</span>);
+<span class="hljs-built_in">console</span>.log(<span class="hljs-string">'文件内容:'</span>, <span class="hljs-keyword">new</span> TextDecoder().decode(fileContent));
+
+<span class="hljs-comment">// 3. 创建流式访问（适用于大文件）</span>
+<span class="hljs-keyword">const</span> stream = <span class="hljs-keyword">await</span> dc.file.createFileStream(fileCid, <span class="hljs-string">'encryption-key'</span>);
+<span class="hljs-comment">// 处理流...</span>
+</div></code></pre>
+<h3 id="3-%E8%AF%84%E8%AE%BA%E7%B3%BB%E7%BB%9F%E4%BD%BF%E7%94%A8%E6%B5%81%E7%A8%8B">3. 评论系统使用流程</h3>
+<pre class="hljs"><code><div><span class="hljs-comment">// 1. 为用户开通评论空间</span>
+<span class="hljs-keyword">await</span> dc.comment.addUserOffChainSpace();
+
+<span class="hljs-comment">// 2. 为主题开通评论功能</span>
+<span class="hljs-keyword">await</span> dc.comment.addThemeObj(<span class="hljs-string">'article-123'</span>, OpenFlag.PUBLIC);
+
+<span class="hljs-comment">// 3. 发布评论</span>
+<span class="hljs-keyword">const</span> commentResult = <span class="hljs-keyword">await</span> dc.comment.publishCommentToTheme(
+  <span class="hljs-string">'article-123'</span>,
+  <span class="hljs-string">'article-author-pubkey'</span>,
+  <span class="hljs-number">0</span>, <span class="hljs-comment">// 普通评论</span>
+  <span class="hljs-string">'这是一条评论'</span>
+);
+
+<span class="hljs-comment">// 4. 获取评论列表</span>
+<span class="hljs-keyword">const</span> comments = <span class="hljs-keyword">await</span> dc.comment.getThemeComments(<span class="hljs-string">'article-123'</span>, <span class="hljs-string">'article-author-pubkey'</span>);
+<span class="hljs-built_in">console</span>.log(<span class="hljs-string">'文章评论:'</span>, comments);
+</div></code></pre>
+<h3 id="4-%E9%94%AE%E5%80%BC%E5%AD%98%E5%82%A8%E4%BD%BF%E7%94%A8%E6%B5%81%E7%A8%8B">4. 键值存储使用流程</h3>
+<pre class="hljs"><code><div><span class="hljs-comment">// 1. 创建存储主题</span>
+<span class="hljs-keyword">await</span> dc.keyvalue.createStore(<span class="hljs-string">'myapp'</span>, <span class="hljs-string">'app-data'</span>, <span class="hljs-number">10</span> * <span class="hljs-number">1024</span> * <span class="hljs-number">1024</span>, <span class="hljs-number">1</span>);
+
+<span class="hljs-comment">// 2. 存储数据</span>
+<span class="hljs-keyword">await</span> dc.keyvalue.setKeyValue(
+  <span class="hljs-string">'myapp'</span>,
+  dc.auth.getPublicKey().toString(),
+  <span class="hljs-string">'app-data'</span>,
+  <span class="hljs-string">'settings'</span>,
+  <span class="hljs-built_in">JSON</span>.stringify({theme: <span class="hljs-string">'dark'</span>, notifications: <span class="hljs-literal">true</span>}),
+  <span class="hljs-string">'type:settings'</span>
+);
+
+<span class="hljs-comment">// 3. 读取数据</span>
+<span class="hljs-keyword">const</span> [value, error] = <span class="hljs-keyword">await</span> dc.keyvalue.getValueWithKey(
+  <span class="hljs-string">'myapp'</span>,
+  dc.auth.getPublicKey().toString(),
+  <span class="hljs-string">'app-data'</span>,
+  dc.auth.getPublicKey().toString(),
+  <span class="hljs-string">'settings'</span>
+);
+
+<span class="hljs-keyword">if</span> (value) {
+  <span class="hljs-keyword">const</span> settings = <span class="hljs-built_in">JSON</span>.parse(value);
+  <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'应用设置:'</span>, settings);
+}
+</div></code></pre>
+<h3 id="5-ai%E4%BB%A3%E7%90%86%E8%B0%83%E7%94%A8%E6%B5%81%E7%A8%8B">5. AI代理调用流程</h3>
+<pre class="hljs"><code><div><span class="hljs-comment">// 1. 创建AI代理配置</span>
+<span class="hljs-keyword">await</span> dc.aiproxy.createProxyConfig(<span class="hljs-string">'myapp'</span>, <span class="hljs-string">'ai-services'</span>);
+
+<span class="hljs-comment">// 2. 配置AI服务</span>
+<span class="hljs-keyword">const</span> config = {
+  blockheight: <span class="hljs-number">12345</span>,
+  isAIModel: <span class="hljs-number">0</span>,
+  apiType: <span class="hljs-number">1</span>, <span class="hljs-comment">// OpenAI API</span>
+  authorization: <span class="hljs-string">'Bearer sk-xxxx'</span>,
+  endpoint: <span class="hljs-string">'https://api.openai.com/v1'</span>,
+  organization: <span class="hljs-string">''</span>,
+  apiVersion: <span class="hljs-string">'2023-05-15'</span>,
+  model: <span class="hljs-string">'gpt-3.5-turbo'</span>,
+  remark: <span class="hljs-string">'通用AI服务'</span>
+};
+
+<span class="hljs-keyword">await</span> dc.aiproxy.configAIProxy(
+  <span class="hljs-string">'myapp'</span>,
+  dc.auth.getPublicKey().toString(),
+  <span class="hljs-string">'ai-services'</span>,
+  <span class="hljs-string">'my-openai'</span>,
+  config
+);
+
+<span class="hljs-comment">// 3. 获取配置信息</span>
+<span class="hljs-keyword">const</span> [userConfigs, aiConfigs] = <span class="hljs-keyword">await</span> dc.aiproxy.GetAIProxyConfig(
+  <span class="hljs-string">'myapp'</span>,
+  dc.auth.getPublicKey().toString(),
+  <span class="hljs-string">'ai-services'</span>
+);
+
+<span class="hljs-comment">// 4. 调用AI服务</span>
+<span class="hljs-keyword">const</span> result = <span class="hljs-keyword">await</span> dc.aiproxy.DoAIProxyCall(
+  <span class="hljs-string">'myapp'</span>,
+  dc.auth.getPublicKey().toString(),
+  <span class="hljs-string">'ai-services'</span>,
+  <span class="hljs-string">'my-openai'</span>,
+  <span class="hljs-built_in">JSON</span>.stringify({
+    messages: [{role: <span class="hljs-string">'user'</span>, content: <span class="hljs-string">'Hello AI!'</span>}]
+  }),
+  <span class="hljs-literal">false</span>,
+  <span class="hljs-function"><span class="hljs-params">response</span> =&gt;</span> <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'AI回复:'</span>, response)
+);
+</div></code></pre>
+
+</body>
+<script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script type="text/x-mathjax-config"> MathJax.Hub.Config({ tex2jax: {inlineMath: [['$', '$']]}, messageStyle: "none" });</script>
+</html>
+

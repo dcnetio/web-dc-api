@@ -187,50 +187,277 @@ export class DatabaseModule implements DCModule, IDatabaseOperations {
       throw error;
     }
   }
+
+
+
+  /**
+   * 刷新数据库
+   * @param threadid 数据库ID
+   * @returns 错误信息或null
+   */
+  async refreshDBFromDC(threadid: string,  ): Promise<Error | null> {  
+      this.assertInitialized();
+    await this.initDBManager();
+    
+    if (!this.context.dbManager) {
+      throw new Error("数据库管理器未初始化");
+    }
+    try {  
+        await this.context.dbManager.refreshDBFromDC(threadid);  
+        return null;  
+      } catch (error) {  
+        logger.error(`刷新数据库 ${threadid} 失败:`, error);  
+        return error as Error;  
+      }
+  }  
   
-  // /**
-  //  * 创建数据库查询
-  //  * @param collectionName 集合名称
-  //  * @param threadId 线程ID
-  //  * @returns 查询对象
-  //  */
-  // async createQuery(collectionName: string, threadId: string): Promise<any> {
-  //   this.assertInitialized();
-  //   await this.initDBManager();
+
+  /**
+   * 同步数据库到DC
+   * @param tId 线程ID
+   * @returns 错误信息或null
+   */
+  async syncDBToDC(tId: string): Promise<Error | null> {  
+    this.assertInitialized();
+    await this.initDBManager();
     
-  //   if (!this.context.dbManager) {
-  //     throw new Error("数据库管理器未初始化");
-  //   }
+    if (!this.context.dbManager) {
+      throw new Error("数据库管理器未初始化");
+    }
     
-  //   try {
-  //     return this.context.dbManager.newQuery(collectionName, threadId);
-  //   } catch (error) {
-  //     logger.error(`创建查询失败:`, error);
-  //     throw error;
-  //   }
-  // }
-  
-  // /**
-  //  * 创建数据库事务
-  //  * @param threadId 线程ID
-  //  * @returns 事务对象
-  //  */
-  // async createTransaction(threadId: string): Promise<any> {
-  //   this.assertInitialized();
-  //   await this.initDBManager();
+    try {
+      await this.context.dbManager.syncDBToDC(tId);
+      logger.info(`同步数据库 ${tId} 到DC成功`);
+      return null;
+    } catch (error) {
+      logger.error(`同步数据库 ${tId} 到DC失败:`, error);
+      return error as Error;
+    }
+  }  
+
+
+
+  /**
+   * 关闭数据库管理器
+   */
+async close(): Promise<void> {  
+    this.assertInitialized();
+    if (!this.context.dbManager) {
+      throw new Error("数据库管理器未初始化");
+    }
     
-  //   if (!this.context.dbManager) {
-  //     throw new Error("数据库管理器未初始化");
-  //   }
+    try {
+      await this.context.dbManager.close();
+      logger.info("数据库管理器关闭成功");
+    } catch (error) {
+      logger.error("关闭数据库管理器失败:", error);
+      throw error;
+    }
+}  
+
+
+/**
+     * Create creates new instances of objects in a collection
+     * @param threadId Thread ID string
+     * @param collectionName Collection name
+     * @param jsonInstance JSON string representing the instance
+     * @returns Promise resolving to the created instance ID
+     * @throws Error if creation fails
+     */
+async  create(threadId: string, collectionName: string, jsonInstance: string): Promise<string> {
+    this.assertInitialized();
+    await this.initDBManager();
     
-  //   try {
-  //     return this.context.dbManager.newTransaction(threadId);
-  //   } catch (error) {
-  //     logger.error(`创建事务失败:`, error);
-  //     throw error;
-  //   }
-  // }
-  
+    if (!this.context.dbManager) {
+      throw new Error("数据库管理器未初始化");
+    }
+    
+    try {
+      const instanceId = await this.context.dbManager.create(threadId, collectionName, jsonInstance);
+      logger.info(`创建实例成功，ID: ${instanceId}`);
+      return instanceId;
+    } catch (error) {
+      logger.error(`创建实例失败:`, error);
+      throw error;
+    }
+  }
+
+
+  /**
+     * Delete deletes an instance by ID
+     * @param threadId Thread ID string
+     * @param collectionName Collection name
+     * @param instanceID Instance ID to delete
+     * @throws Error if deletion fails
+     */
+async delete(threadId: string, collectionName: string, instanceID: string): Promise<void> {
+    this.assertInitialized();
+    await this.initDBManager();
+    
+    if (!this.context.dbManager) {
+      throw new Error("数据库管理器未初始化");
+    }
+    
+    try {
+      await this.context.dbManager.delete(threadId, collectionName, instanceID);
+      logger.info(`删除实例成功，ID: ${instanceID}`);
+    } catch (error) {
+      logger.error(`删除实例失败:`, error);
+      throw error;
+    }
+  }
+
+
+
+/**
+ * Save updates an existing instance
+ * @param threadId Thread ID string
+ * @param collectionName Collection name
+ * @param instance JSON string representing the instance
+ * @throws Error if update fails
+ */
+async save(threadId: string, collectionName: string, instance: string): Promise<void> {
+    this.assertInitialized();
+    await this.initDBManager();
+    
+    if (!this.context.dbManager) {
+      throw new Error("数据库管理器未初始化");
+    }
+    
+    try {
+      await this.context.dbManager.save(threadId, collectionName, instance);
+      logger.info(`更新实例成功`);
+    } catch (error) {
+      logger.error(`更新实例失败:`, error);
+      throw error;
+    }
+  }
+
+
+  /**
+ * DeleteMany deletes multiple instances by their IDs
+ * @param threadId Thread ID string
+ * @param collectionName Collection name
+ * @param instanceIDs Comma-separated or JSON array of instance IDs
+ * @throws Error if deletion fails
+ */
+async deleteMany(threadId: string, collectionName: string, instanceIDs: string): Promise<void> {  
+    this.assertInitialized();
+    await this.initDBManager();
+    
+    if (!this.context.dbManager) {
+      throw new Error("数据库管理器未初始化");
+    }
+    
+    try {
+      await this.context.dbManager.deleteMany(threadId, collectionName, instanceIDs);
+      logger.info(`删除多个实例成功`);
+    } catch (error) {
+      logger.error(`删除多个实例失败:`, error);
+      throw error;
+    }
+  }
+
+
+  /**
+ * Has checks if the specified instance exists
+ * @param threadId Thread ID string
+ * @param collectionName Collection name
+ * @param instanceID Instance ID to check
+ * @returns Promise resolving to a boolean indicating if instance exists
+ */
+async has(threadId: string, collectionName: string, instanceID: string): Promise<boolean> {  
+    this.assertInitialized();
+    await this.initDBManager();
+    
+    if (!this.context.dbManager) {
+      throw new Error("数据库管理器未初始化");
+    }
+    
+    try {
+      return await this.context.dbManager.has(threadId, collectionName, instanceID);
+    } catch (error) {
+      logger.error(`检查实例是否存在失败:`, error);
+      throw error;
+    }
+  }
+
+
+  /**
+ * Find finds instances by query
+ * @param threadId Thread ID string
+ * @param collectionName Collection name
+ * @param queryString JSON string representing the query
+ * @returns Promise resolving to a JSON string with found instances
+ * @throws Error if query fails
+ */
+async find(threadId: string, collectionName: string, queryString: string): Promise<string> {  
+    this.assertInitialized();
+    await this.initDBManager();
+    
+    if (!this.context.dbManager) {
+      throw new Error("数据库管理器未初始化");
+    }
+    
+    try {
+      return await this.context.dbManager.find(threadId, collectionName, queryString);
+    } catch (error) {
+      logger.error(`查询实例失败:`, error);
+      throw error;
+    }
+  }
+
+
+  /**
+ * FindByID finds an instance by ID
+ * @param threadId Thread ID string
+ * @param collectionName Collection name
+ * @param instanceID Instance ID to find
+ * @returns Promise resolving to a JSON string with found instance
+ * @throws Error if query fails
+ */
+async findByID(threadId: string, collectionName: string, instanceID: string): Promise<string> {
+    this.assertInitialized();
+    await this.initDBManager();
+    
+    if (!this.context.dbManager) {
+      throw new Error("数据库管理器未初始化");
+    }
+    
+    try {
+      return await this.context.dbManager.findByID(threadId, collectionName, instanceID);
+    } catch (error) {
+      logger.error(`通过ID查询实例失败:`, error);
+      throw error;
+    }
+}
+
+
+/**
+ * ModifiedSince returns instance IDs modified since the given time
+ * @param threadId Thread ID string
+ * @param collectionName Collection name
+ * @param time Unix timestamp in milliseconds
+ * @returns Promise resolving to a JSON string with instance IDs
+ * @throws Error if query fails
+ */
+async modifiedSince(threadId: string, collectionName: string, time: number): Promise<string> {
+    this.assertInitialized();
+    await this.initDBManager();
+    
+    if (!this.context.dbManager) {
+      throw new Error("数据库管理器未初始化");
+    }
+    
+    try {
+      return await this.context.dbManager.modifiedSince(threadId, collectionName, time);
+    } catch (error) {
+      logger.error(`查询修改时间大于指定时间的实例ID失败:`, error);
+      throw error;
+    }
+  }
+
+
   /**
    * 断言模块已初始化
    */
