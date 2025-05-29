@@ -1,5 +1,12 @@
 
-export const walletOrigin = "http://localhost:3000"; //
+let _baseUrl = '/v0_0_1'
+let _walletOrigin = 'https://wallet.dcnetio.com'
+if (process.env.NODE_ENV === 'development') {
+  _baseUrl =''
+  _walletOrigin = 'http://localhost:3000'
+}
+export const walletOrigin = _walletOrigin;
+export const  walletUrl = _walletOrigin + _baseUrl; // 钱包地址后面统一改成origin+version
 export const walletWindowName = "walletWindow"; // 窗口名称
 export const dc_protocol = "/dc/thread/0.0.1";
 export const dial_timeout = 2000;
