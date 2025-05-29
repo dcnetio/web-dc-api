@@ -1,5 +1,5 @@
 
-let _baseUrl = '/v0_0_1'
+let _baseUrl = '/v0_0_2'
 let _walletOrigin = 'https://wallet.dcnetio.com'
 if (process.env.NODE_ENV === 'development') {
   _baseUrl =''

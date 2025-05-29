@@ -17,14 +17,14 @@
     "forceConsistentCasingInFileNames": true,
     "outDir": "dist",            // 编译输出目录  
     "rootDir": "lib",            // 源码目录
-    "paths": {
-      "grpc-libp2p-client": [
-        "../grpc-libp2p-client/src/index"
-      ],
-      "grpc-libp2p-client/*": [
-        "../grpc-libp2p-client/src/*"
-      ], 
-    }
+    // "paths": {
+    //   "grpc-libp2p-client": [
+    //     "../grpc-libp2p-client/src/index"
+    //   ],
+    //   "grpc-libp2p-client/*": [
+    //     "../grpc-libp2p-client/src/*"
+    //   ], 
+    // }
   },  
   "include": ["lib/**/*"],  
   "exclude": ["node_modules", "dist"]  
