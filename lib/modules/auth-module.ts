@@ -100,11 +100,11 @@ export class AuthModule implements DCModule, IAuthOperations {
 
     try {
       const res = await this.walletManager.openConnect();
-      if(!res || !res.responseData) {
+      if(!res || !(res as any).responseData) {
         throw new Error("openConnect error");
       }
       // Check if data is an object with publicKey property
-      const data = res.responseData      ;
+      const data = (res as any).responseData      ;
       if(typeof data !== 'object' || data === null || !('publicKey' in data)) {
         throw new Error("openConnect response is missing publicKey");
       }
@@ -188,6 +188,10 @@ export class AuthModule implements DCModule, IAuthOperations {
       const signature = await this.walletManager.sign(payload);
       return signature;
     }
+  }
+
+   async sign(payload: Uint8Array): Promise<Uint8Array> {
+    return  this.signWithWallet(payload);
   }
 
   /**
@@ -318,8 +322,8 @@ export class AuthModule implements DCModule, IAuthOperations {
     }
     this.tokenTask = true;
 
-    // 10秒一次心跳维持连接
-    const period = 10000;
+    // 60秒一次心跳维持连接
+    const period = 60000;
     let count = 0;
 
     // 启动ticker
@@ -477,7 +481,7 @@ export class AuthModule implements DCModule, IAuthOperations {
    * @param needSize 需要的空间大小
    * @returns 空间信息
    */
-  async ifEnoughUserSpace(needSize?: number): Promise<any> {
+  async ifEnoughUserSpace(needSize?: number): Promise<boolean> {
     this.assertInitialized();
 
     const pubkeyRaw = this.context.getPubkeyRaw();

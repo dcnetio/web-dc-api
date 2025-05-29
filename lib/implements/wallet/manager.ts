@@ -117,6 +117,43 @@ export class WalletManager {
     });
   };
 
+/**
+ * 用私钥解密数据
+ * @param payload 需要解密的数据
+ * @returns 解密结果
+ */
+
+  decrypt = (payload: Uint8Array): Promise<Uint8Array> => {
+    return new Promise((resolve, reject) => {
+      // 每100ms发送一次消息,直到钱包加载完成
+      const message = {
+        version: this.context.appInfo.walletVersion || '',
+        type: "decrypt",
+        data: {
+          message: payload,
+        },
+      };
+      this.sendMessageToIframe(message, 60000)
+        .then((response) => {
+          console.log("decrypt response", response);
+          const data = response.data.data;
+          console.log("decrypt success", data);
+          if(!data.success) {
+            console.error("decrypt not success");
+            reject(new WalletError("decrypt not success"));
+          }
+          if(!data.message) {
+            console.error("decrypt response is null");
+            reject(new WalletError("decrypt response is null"));
+          }
+          resolve(data.message);
+        })
+        .catch((error) => {
+          console.error("decrypt error", error);
+          reject(error);
+        });
+    });
+  };
 
   /**
    * 签名方法

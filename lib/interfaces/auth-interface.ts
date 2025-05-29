@@ -1,5 +1,5 @@
 import { Ed25519PrivKey } from "../common/dc-key/ed25519";
-import { DCConnectInfo, NFTBindStatus, User } from "../common/types/types";
+import { DCConnectInfo, NFTBindStatus, User,AccountInfo } from "../common/types/types";
 
 
 
@@ -18,7 +18,7 @@ export interface IAuthOperations {
    * 账户登录通过钱包
    * @returns 是否登录成功
    */
-  accountLoginWithWallet(): Promise<any>;
+  accountLoginWithWallet(): Promise<[flag: boolean, accountInfo:AccountInfo | null]>;
 
   /**
    * 账户登录
@@ -109,11 +109,11 @@ export interface IAuthOperations {
    * @param needSize 需要的空间大小
    * @returns 空间信息
    */
-  ifEnoughUserSpace(needSize?: number): Promise<any>;
+  ifEnoughUserSpace(needSize?: number): Promise<boolean>;
   
   /**
    * 刷新用户信息
    * @returns 用户信息
    */
-  refreshUserInfo(): Promise<any>;
+  refreshUserInfo(): Promise<User>;
 }

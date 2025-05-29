@@ -3,29 +3,31 @@ import { PublicKey } from "@libp2p/interface";
 import type { Client } from "../dcapi";
 import { Ed25519PubKey } from "../dc-key/ed25519";
 export interface User {
-  callMinusNumber: number;
-  commentFrozenStatus: number;
-  commentReportAmount: number;
-  commentReportNumber: number;
-  dbConfig: string;
-  dbUpdateNumber: number;
-  encNftAccount: string;
-  expireNumber: number;
-  loginNumber: number;
-  nftUpdateNumber: number;
-  offchainOptimes: number;
-  offchainSpace: number;
-  parentAccount: string;
-  peers: Array<string>;
-  purchaseNumber: number;
-  requestPeers: Array<string>;
-  spamFrozenStatus: number;
-  spamReportAmount: number;
-  spamReportNumber: number;
-  subscribePrice: string;
-  subscribeSpace: number;
-  usedSpace: number;
+  callMinusNumber: number; //调用手续费单位（与用户订阅的空间大小相关，空间越大这个值越小）
+  commentFrozenStatus: number; //评论相关功能(包括keyvalue数据库、主题评论等功能)冻结状态
+  commentReportAmount: number; //评论举报次数
+  commentReportNumber: number; //下一次消除举报次数的区块高度
+  dbConfig: string; //用户个体库配置信息，格式（threadid|sk|rk)加密后的值，（用户公钥加密后的字符串值，用户私钥可以解密）
+  dbUpdateNumber: number; //用户个体库信息更新区块高度
+  encNftAccount: string; //用户绑定的账号加密后字符串（用户公钥加密后的值，用户私钥可以解密）
+  expireNumber: number; //订阅过期区块高度
+  loginNumber: number; //登录次数
+  nftUpdateNumber: number; //用户nft账号更新区块高度
+  offchainOptimes: number; //链下允许总调用次数,当前会一直累加
+  offchainSpace: number; //链下允许总调用空间，当前会一直累加
+  parentAccount: string; //父账号pubkey
+  peers: Array<string>; //账号登录信息存储的节点ID列表
+  purchaseNumber: number; //购买次数
+  requestPeers: Array<string>; //允许上传文件的节点ID列表,如果不在列表中则无法上传文件,需要先发起绑定请求
+  spamFrozenStatus: number; //垃圾信息相关功能冻结状态
+  spamReportAmount: number; //垃圾信息举报次数
+  spamReportNumber: number; //下一次消除垃圾信息举报次数的区块高度
+  subscribePrice: string; //订阅价格
+  subscribeSpace: number; //订阅空间大小，单位KB
+  usedSpace: number; //已使用空间大小，单位KB
 }
+
+	
 
 export interface DCConnectInfo {
   client?: Client | undefined;
@@ -150,6 +152,15 @@ export interface ModelConfig {
     systemPrompt: string;             // 系统提示
     stream: boolean;                  // 是否启用流模式
     tools?: ToolDefinition[];         // 可选的工具定义数组
+}
+
+
+export  interface AccountInfo{
+      nftAccount:string, // NFT账号
+      appAccount:Ed25519PubKey, // 应用专用账号公钥 
+      ethAccount:string, // 以太坊兼容链上账号
+      chainId:string, // 区块链ID
+      chainName:string, // 区块链名称
 }
 
 // modelConfig := ModelConfig{
