@@ -51,7 +51,6 @@ export interface APPInfo {
   appIcon: string;
   appUrl: string;
   appVersion: string;
-  walletVersion?: string;
 }
 
 export interface ThemeObj {

@@ -66,7 +66,7 @@ export default [
   {
     input: 'lib/index.ts',
     output: {
-      file: 'dist/web-dc-api.browser.js', // 未压缩版本
+      file: 'dist/dc.js', // 未压缩版本
       format: 'umd',
       name: GLOBAL_NAME,
       sourcemap: true,
@@ -103,7 +103,7 @@ export default [
   {
     input: 'lib/index.ts',
     output: {
-      file: 'dist/web-dc-api.browser.min.js', // 未压缩版本
+      file: 'dist/dc.min.js', // 未压缩版本
       format: 'umd',
       name: GLOBAL_NAME,
       sourcemap: true,

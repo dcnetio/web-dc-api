@@ -1,12 +1,14 @@
 
-import { walletOrigin, walletWindowName } from "../../common/define";
+import { walletOrigin, walletUrl, walletWindowName } from "../../common/define";
 import { DCContext } from "../../../lib/interfaces/DCContext";
-import dcwallet from "./dcwallet"; // 假设dcwallet是一个模块，提供钱包相关功能
+import { Ed25519PubKey } from "lib/common/dc-key/ed25519";
 
-let walletUrl = walletOrigin; // 钱包地址
 
 const appOrigin = typeof window !== "undefined" && window.location.origin;//"http://localhost:3002"
 const appUrl = typeof window !== "undefined" && window.location.href ;
+
+let defaultPublicKey: Ed25519PubKey | null = null;
+
 // 错误定义
 export class WalletError extends Error {
   constructor(message: string) {
@@ -19,64 +21,63 @@ export const Errors = {
 
 export class WalletManager {
   private context: DCContext;
-  private initFlag: boolean = false;
   private walletWindow: Window | null = null;
   private iframeId: string | null = null;
   private channelPort2: MessagePort | null = null;
   constructor(context: DCContext) {
     this.context = context;
-    this.initFlag = false;
   }
 
-  async init() {
-    if(appOrigin !== walletOrigin) {
-      this.iframeId = 'dcWalletIframe';
-      const flag = dcwallet.initDAPP({
-        appId: this.context.appInfo.appId,
-        appName: this.context.appInfo.appName, 
-        appIcon: this.context.appInfo.appIcon, 
-        appVersion: this.context.appInfo.appVersion,
-        appUrl: appUrl,
-        walletVersion: this.context.appInfo.walletVersion
-      });
-      // walletUrl = walletOrigin +'/'+ this.context.appInfo.walletVersion; // todo 钱包地址后面统一改成origin+version
-      this.initFlag = flag;
-      // html添加iframe标签，id是dcWalletIframe
-      if (flag) {
+  async init():  Promise<Ed25519PubKey | null> {
+    if(appOrigin.indexOf(walletOrigin) === -1) {
+      return new Promise((resolve, reject) => {
+        this.iframeId = 'dcWalletIframe';
+        // html添加iframe标签，id是dcWalletIframe
         const iframe = document.createElement("iframe");
         iframe.id = this.iframeId;
         iframe.src = `${walletUrl}/iframe?parentOrigin=${appOrigin}`;
-        iframe.onload = () => {
-          this.initConfig(this);
+        iframe.onload = async () => {
+          const publicKey = await this.initConfig(this);
+          resolve(publicKey);
         };
         iframe.style.display = "none";
         document.body.appendChild(iframe);
         window.addEventListener("message", (event) => {
           this.listenFromWallet(event);
         });
-      }
+      });
+    }else {
+      return null;
     }
   }
   // iframe加载完成后，发送初始化配置
-  async initConfig  (that) {
-    const message = {
-      version: this.context.appInfo.walletVersion || '',
-      type: "init",
-      data: {
-        appId: this.context.appInfo.appId,
-        appName: this.context.appInfo.appName, 
-        appIcon: this.context.appInfo.appIcon, 
-        appVersion: this.context.appInfo.appVersion,
-        appUrl: appUrl,
-      },
-    };
-    that.sendMessageToIframe(message, 5000 * 10)
-      .then((response) => {
-        console.log("initConfig response", response);
-      })
-      .catch((error) => {
-        console.error("initConfig error", error);
-      });
+  async initConfig  (that): Promise<Ed25519PubKey | null> {
+    return new Promise((resolve, reject) => { 
+      const message = {
+        type: "init",
+        data: {
+          appId: this.context.appInfo.appId,
+          appName: this.context.appInfo.appName, 
+          appIcon: this.context.appInfo.appIcon, 
+          appVersion: this.context.appInfo.appVersion,
+          appUrl: appUrl,
+        },
+      };
+      that.sendMessageToIframe(message, 5000 * 10)
+        .then((response) => {
+          console.log("initConfig response", response);
+          if(!response || !response.data || !response.data.data) {
+            console.error("initConfig response is null");
+            resolve(null);
+          }
+          defaultPublicKey = response.data.data.publicKey;
+          resolve(defaultPublicKey);
+        })
+        .catch((error) => {
+          console.error("initConfig error", error);
+          resolve(null);
+        });
+    });
   };
 
 
@@ -87,7 +88,6 @@ export class WalletManager {
       this.walletWindow = window.open(urlWithOrigin, walletWindowName);
       this.initCommChannel();
       const message = {
-        version: this.context.appInfo.walletVersion || '',
         type: "connect",
         data: {
           origin: appOrigin,
@@ -164,7 +164,6 @@ export class WalletManager {
     return new Promise((resolve, reject) => {
       // 每100ms发送一次消息,直到钱包加载完成
       const message = {
-        version: this.context.appInfo.walletVersion || '',
         type: "sign",
         data: {
           message: payload,
@@ -204,7 +203,6 @@ export class WalletManager {
     this.walletWindow = window.open(urlWithOrigin, walletWindowName);
     // 每100ms发送一次消息,直到钱包加载完成
     const message = {
-      version: this.context.appInfo.walletVersion || '',
       type: "signMessage",
       data,
     };
@@ -230,7 +228,6 @@ export class WalletManager {
     this.walletWindow = window.open(urlWithOrigin, walletWindowName);
     // port1 转移给iframe
     const message = {
-      version: this.context.appInfo.walletVersion || '',
       type: "signEIP712Message",
       data: {
         account: publicKey.string(),
@@ -302,7 +299,6 @@ export class WalletManager {
         if (this.channelPort2) {
           //port2转移给钱包
           const message = {
-            version: this.context.appInfo.walletVersion || '',
             type: "channelPort2",
             origin: appOrigin,
           };
@@ -326,7 +322,6 @@ export class WalletManager {
     if (iframe) {
       const message = {
         code: "0",
-        version: this.context.appInfo.walletVersion || '',
         type: "channelPort1",
       };
       try {
