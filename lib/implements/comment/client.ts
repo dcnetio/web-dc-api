@@ -600,6 +600,7 @@ export class CommentClient {
     offset: number,
     limit: number,
     seekKey: string,
+    aesKey: string,
     vaccount?: string
   ) {
     const message = new dcnet.pb.GetThemeCommentsRequest({});
@@ -611,6 +612,7 @@ export class CommentClient {
     message.offset = offset;
     message.limit = limit;
     message.seekKey = new TextEncoder().encode(seekKey);
+    message.aesKey = new TextEncoder().encode(aesKey);
     // if(vaccount){ // todo 没有vaccount
     //   message.vaccount = new TextEncoder().encode(vaccount);
     // }
@@ -680,7 +682,8 @@ export class CommentClient {
     direction: number,
     offset: number,
     limit: number,
-    seekKey: string
+    seekKey: string,
+    aesKey: string,
   ) {
     const message = new dcnet.pb.GetUserCommentsRequest({});
     message.appId = new TextEncoder().encode(appId);
@@ -690,6 +693,7 @@ export class CommentClient {
     message.offset = offset;
     message.limit = limit;
     message.seekKey = new TextEncoder().encode(seekKey);
+    message.aesKey = new TextEncoder().encode(aesKey);
     const messageBytes =
       dcnet.pb.GetUserCommentsRequest.encode(message).finish();
     const grpcClient = new Libp2pGrpcClient(

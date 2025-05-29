@@ -1,7 +1,5 @@
-export const version = 'v0_0_1';
+
 export const walletOrigin = "http://localhost:3000"; //
-export const walletUrl = walletOrigin; // 钱包地址
-//export const walletUrl = walletOrigin +'/'+version; // todo 钱包地址后面统一改成origin+version
 export const walletWindowName = "walletWindow"; // 窗口名称
 export const dc_protocol = "/dc/thread/0.0.1";
 export const dial_timeout = 2000;

@@ -10,9 +10,13 @@
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "browser": "./dist/index.umd.js",
       "import": "./dist/index.esm.js",
       "require": "./dist/index.cjs.js"
+    },
+    "./dc-key/ed25519": {
+      "types": "./dist/dc-key/ed25519.d.ts",
+      "import": "./dist/dc-key/ed25519.esm.js",
+      "require": "./dist/dc-key/ed25519.cjs.js"
     }
   },
   "files": [
