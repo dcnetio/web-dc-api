@@ -9,7 +9,7 @@ import { ThemeManager } from "../implements/cache/manager";
 import { createLogger } from "../util/logger";
 import { ThemeAuthInfo, ThemeComment } from "../common/types/types";
 const logger = createLogger('KeyValueModule');
-
+const indexkey_dckv = "indexkey_dckv"; //索引键名，keyvalue设置过程中key本身的索引键
 /**
  * 键值存储模块
  * 提供键值存储功能
@@ -165,7 +165,7 @@ export class KeyValueModule implements DCModule, IKeyValueOperations {
       const res = await kvdb.set(key, value, indexs, vaccount);
       return res;
     } catch (error) {
-      logger.error(`设置key-value失败:`, error);
+      logger.error(`设置set-value失败:`, error);
       throw error;
     }
   }
@@ -188,6 +188,35 @@ export class KeyValueModule implements DCModule, IKeyValueOperations {
     }
   }
 
+
+   /**
+   * 获取指定键的值列表,包括所有用户写入的值,可以用在类似排名这些需要多人数据汇总的场景,key为场景名称,各个用户写入的值为各自在该场景下的内容
+   * @param kvdb: KeyValueDB,
+   * @param key 键名
+   * @param limit 返回结果数量限制
+   * @param seekKey 查询起始键,用于分页查询
+   * @param offset 结果偏移量
+   * @param vaccount 可选的虚拟账户
+   * @returns [值列表生成的json字符串, 错误信息]
+   */
+  async getValues(
+    kvdb: KeyValueDB,
+    key: string,
+    limit: number,
+    seekKey:string, 
+    offset: number,
+    vaccount?: string
+  ): Promise<[string, Error | null]> {
+    this.assertInitialized();
+    
+    try {
+      const res = await kvdb.getWithIndex(indexkey_dckv, key, limit,seekKey, offset,  vaccount);
+      return res;
+    } catch (error) {
+      logger.error(`getValues失败:`, error);
+      throw error;
+    }
+  }
   
   async getBatch(
     kvdb: KeyValueDB,
@@ -201,7 +230,7 @@ export class KeyValueModule implements DCModule, IKeyValueOperations {
       const res = await kvdb.getBatch(writerPubkey, keys, vaccount);
       return res;
     } catch (error) {
-      logger.error(`获取key-value失败:`, error);
+      logger.error(`getBatch失败:`, error);
       throw error;
     }
   }
@@ -221,7 +250,7 @@ export class KeyValueModule implements DCModule, IKeyValueOperations {
       const res = await kvdb.getWithIndex(indexKey, indexValue, limit,seekKey, offset,  vaccount);
       return res;
     } catch (error) {
-      logger.error(`获取key-value失败:`, error);
+      logger.error(`getWithIndex失败:`, error);
       throw error;
     }
   }

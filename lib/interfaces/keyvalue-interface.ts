@@ -87,6 +87,27 @@ export interface IKeyValueOperations {
     vaccount?: string
   ): Promise<[string, Error | null]>;
 
+
+ /**
+   * 获取指定键的值列表,包括所有用户写入的值,可以用在类似排名这些需要多人数据汇总的场景,key为场景名称,各个用户写入的值为各自在该场景下的内容
+   * @param kvdb: KeyValueDB,
+   * @param key 键名
+   * @param limit 返回结果数量限制
+   * @param seekKey 查询起始键,用于分页查询
+   * @param offset 结果偏移量
+   * @param vaccount 可选的虚拟账户
+   * @returns [值列表生成的json字符串, 错误信息]
+   */
+  getValues(
+    kvdb: KeyValueDB,
+    key: string,
+    limit: number,
+    seekKey:string, 
+    offset: number,
+    vaccount?: string
+  ): Promise<[string, Error | null]>;
+
+
   /**
    * 批量获取多个键的值
    * @param kvdb: KeyValueDB,
