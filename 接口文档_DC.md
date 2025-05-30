@@ -107,7 +107,7 @@ flowchart TD
 
 首先需要创建DC实例并初始化它,可以通过两种方式来引入DC API:
 
-1. 使用CDN引入
+1. 使用CDN引入,必须同时引入web-dc-api和grpc-libp2p-client两个库。
   
 ```html
 <script src="https://cdn.jsdelivr.net/npm/web-dc-api@latest/dist/dc.min.js"></script>
