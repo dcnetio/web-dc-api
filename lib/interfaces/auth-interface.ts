@@ -1,4 +1,3 @@
-import { Ed25519PrivKey } from "../common/dc-key/ed25519";
 import { DCConnectInfo, NFTBindStatus, User,AccountInfo } from "../common/types/types";
 
 
@@ -29,7 +28,6 @@ export interface IAuthOperations {
    */
   accountLogin(nftAccount: string, password: string, safecode: string): Promise<{
       mnemonic: string;
-      privKey: Ed25519PrivKey;
     }>;
   
   /**

@@ -50,6 +50,7 @@ export class DC implements DCContext {
   public grpcServer: DCGrpcServer;
   public appInfo: APPInfo;
   public dbManager: any;
+  public swUrl: string = "";
   
   // 模块系统
   private moduleSystem: ModuleSystem;
@@ -65,11 +66,13 @@ export class DC implements DCContext {
     wssUrl: string;
     backWssUrl: string;
     appInfo?: APPInfo ;
+    swUrl?: string;
     logLevel?: LogLevel;
     names?: string[];
   }) {
     this.blockChainAddr = options.wssUrl;
     this.backChainAddr = options.backWssUrl;
+    this.swUrl = options.swUrl || "";
     this.dcChain = new ChainUtil();
     this.dcutil = new DcUtil(this.dcChain);
     // //todo remove 
@@ -105,7 +108,7 @@ export class DC implements DCContext {
       }
     }else {
       // 注册核心功能模块
-      this.moduleSystem.registerModule(new FileModule());
+      this.moduleSystem.registerModule(new FileModule(this.swUrl || ""));
       this.moduleSystem.registerModule(new AuthModule());
       this.moduleSystem.registerModule(new CommentModule());
       this.moduleSystem.registerModule(new DatabaseModule());
