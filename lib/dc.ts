@@ -72,9 +72,9 @@ export class DC implements DCContext {
     this.backChainAddr = options.backWssUrl;
     this.dcChain = new ChainUtil();
     this.dcutil = new DcUtil(this.dcChain);
-    //todo remove 
-    this.dcutil.defaultPeerId= "12D3KooWEGzh4AcbJrfZMfQb63wncBUpscMEEyiMemSWzEnjVCPf";
-    //todo remove end
+    // //todo remove 
+    // this.dcutil.defaultPeerId= "12D3KooWEGzh4AcbJrfZMfQb63wncBUpscMEEyiMemSWzEnjVCPf";
+    // //todo remove end
     this.appInfo = options.appInfo || {} as APPInfo;
     
     // 设置日志级别
