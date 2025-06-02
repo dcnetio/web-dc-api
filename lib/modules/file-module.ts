@@ -22,7 +22,12 @@ export class FileModule implements DCModule, IFileOperations {
   private fileCacheManager: FileCacheManager;
   private context: DCContext;
   private initialized: boolean = false;
+  private swUrl: string;
   
+  constructor(url: string) {
+    this.swUrl = url;
+  }
+
   /**
    * 初始化文件模块
    * @param context DC上下文
@@ -43,7 +48,7 @@ export class FileModule implements DCModule, IFileOperations {
       
       // 注册 Service Worker
       try {
-        await registerServiceWorker(this);
+        await registerServiceWorker(this, this.swUrl || '');
         logger.info('Service Worker 已注册');
       } catch (err) {
         logger.warn('Service Worker 注册失败:', err);

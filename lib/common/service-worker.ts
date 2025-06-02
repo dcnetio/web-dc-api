@@ -11,7 +11,7 @@ const logger = createLogger('ServiceWorker');
  * @param fileOps 文件操作对象，用于处理IPFS请求
  * @returns Promise<ServiceWorkerRegistration | null>
  */
-export async function registerServiceWorker(fileOps?: IFileOperations): Promise<ServiceWorkerRegistration | null> {
+export async function registerServiceWorker(fileOps?: IFileOperations, swUrl: string = ''): Promise<ServiceWorkerRegistration | null> {
   if ('serviceWorker' in navigator) {
     try {
       // const registration = await navigator.serviceWorker.register(
@@ -20,7 +20,7 @@ export async function registerServiceWorker(fileOps?: IFileOperations): Promise<
       
       // 路径在函数内部解析，不在模块顶层
       const swPath = typeof window !== 'undefined' 
-      ? (new URL('/sw.js', window.location.origin).href)
+      ? (new URL(swUrl || '/sw.js', window.location.origin).href)
       : '/sw.js';
       
       const registration = await navigator.serviceWorker.register(swPath);

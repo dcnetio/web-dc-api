@@ -150,7 +150,6 @@ export class AuthModule implements DCModule, IAuthOperations {
     safecode: string
   ): Promise<{
     mnemonic: string;
-    privKey: Ed25519PrivKey;
   }> {
     this.assertInitialized();
 
@@ -163,19 +162,22 @@ export class AuthModule implements DCModule, IAuthOperations {
       password,
       safecode
     );
+    console.log("=================accountLogin success");
 
     if (mnemonic) {
-      const accountManager = new AccountManager(this.context);
-      const res = await accountManager.generateAppAccount(this.context.appInfo?.appId, mnemonic);
-      if (res[0] === null) {
-        throw res[1] || new Error("generateAppAccount error");
+      if(this.context.appInfo?.appId){
+        const accountManager = new AccountManager(this.context);
+        const res = await accountManager.generateAppAccount(this.context.appInfo?.appId, mnemonic);
+        console.log("=================generateAppAccount success");
+        if (res[0] === null) {
+          throw res[1] || new Error("generateAppAccount error");
+        }
+        // 获取私钥
+        const privKey = Ed25519PrivKey.unmarshalString(res[0]);
+        console.log("=================获取私钥 success");
       }
-      // 获取私钥
-      const privKey = Ed25519PrivKey.unmarshalString(res[0]);
-
       return {
         mnemonic,
-        privKey,
       };
     }
     return;
