@@ -5,14 +5,8 @@ import { HeliaLibp2p } from "helia";
 import { Libp2p } from "libp2p";
 import { DCContext } from "../../../lib/interfaces/DCContext";
 import { uint32ToLittleEndianBytes, uint64ToLittleEndianBytes } from "../../util/utils";
-
-const uploadStatus = {
-  OK: 0,
-  ENCRYPTING: 1, // 加密中
-  UPLOADING: 2, // 上传中
-  ERROR: 3,
-  ABNORMAL: 4,
-};
+import CID from "cids";
+import { UploadStatus } from "../../common/types/types";
 
 const uploadRespondStatus = {
   FilePulling: 3, //文件拉取中
@@ -83,31 +77,31 @@ export class FileClient {
     //  const signatureDataSource = new DataSource();
       const onDataCallback = async (payload: Uint8Array) => {
         const decodedPayload = dcnet.pb.StroeFileReply.decode(payload);
-        let resStatus = uploadStatus.UPLOADING;
+        let resStatus = UploadStatus.UPLOADING;
         switch (decodedPayload.status) {
           case uploadRespondStatus.FilePulling:
-            resStatus = uploadStatus.UPLOADING;
+            resStatus = UploadStatus.UPLOADING;
             break;
           case uploadRespondStatus.PullFail:
-            resStatus = uploadStatus.ERROR;
+            resStatus = UploadStatus.ERROR;
             break;
           case uploadRespondStatus.PullSuccess:
-            resStatus = uploadStatus.OK;
+            resStatus = UploadStatus.OK;
             break;
           case uploadRespondStatus.BlockFinality:
-            resStatus = uploadStatus.OK;
+            resStatus = UploadStatus.OK;
             break;
           case uploadRespondStatus.FinalityTimeout:
-            resStatus = uploadStatus.ABNORMAL;
+            resStatus = UploadStatus.ABNORMAL;
             break;
           case uploadRespondStatus.FaultSize:
-            resStatus = uploadStatus.ERROR;
+            resStatus = UploadStatus.ERROR;
             break;
           case uploadRespondStatus.FaultCount:
-            resStatus = uploadStatus.ERROR;
+            resStatus = UploadStatus.ERROR;
             break;
           case uploadRespondStatus.NoUserSpace:
-            resStatus = uploadStatus.ERROR;
+            resStatus = UploadStatus.ERROR;
             break;
         }
         if(onUpdateTransmitSize ) {
@@ -144,4 +138,116 @@ export class FileClient {
       throw err;
     }
   }
+
+
+/**
+ * Stores a folder on the DC network
+ * @param id - CID of the folder to store
+ * @param options - File options including signature, size, etc.
+ * @returns AsyncIterable that yields storage status updates
+ */
+async storeFolder(
+  cid: string,
+  options: {
+    signature: Uint8Array;
+    blockHeight: number;
+    fileSize: number;
+    fileCount: number;
+    pubkey: Uint8Array;
+    vaccount?: any;
+  },
+  updateTransmitCount: (status: UploadStatus, total: number, progress: number) => void,
+  onErrorCallback?: (error: Error) => void
+){
+  try {
+    // Check client
+    if (this.client.p2pNode == null) {
+      throw new Error("p2pNode is null");
+    }
+
+    // Create the request message
+    const message = new dcnet.pb.StoreFolderRequest({
+      cid: new TextEncoder().encode(cid),
+      filecount: options.fileCount,
+      foldersize: options.fileSize,
+      blockheight: options.blockHeight,
+      signature: options.signature
+    });
+
+    // Add virtual account if provided
+    if (options.vaccount) {
+      try {
+        message.vaccount = options.vaccount.pubKeyRaw;
+      } catch (error) {
+        throw new Error("Failed to parse virtual account: " + error.message);
+      }
+    }
+
+    // Encode the message
+    const messageBytes = dcnet.pb.StoreFolderRequest.encode(message).finish();
+   const onDataCallback = async (payload: Uint8Array) => {
+      try {
+        const decodedPayload = dcnet.pb.StoreFolderReply.decode(payload);
+         let resStatus = UploadStatus.UPLOADING;
+        switch (decodedPayload.status) {
+          case uploadRespondStatus.FilePulling:
+            resStatus = UploadStatus.UPLOADING;
+            break;
+          case uploadRespondStatus.PullFail:
+            resStatus = UploadStatus.ERROR;
+            break;
+          case uploadRespondStatus.PullSuccess:
+            resStatus = UploadStatus.OK;
+            break;
+          case uploadRespondStatus.BlockFinality:
+            resStatus = UploadStatus.OK;
+            break;
+          case uploadRespondStatus.FinalityTimeout:
+            resStatus = UploadStatus.ABNORMAL;
+            break;
+          case uploadRespondStatus.FaultSize:
+            resStatus = UploadStatus.ERROR;
+            break;
+          case uploadRespondStatus.FaultCount:
+            resStatus = UploadStatus.ERROR;
+            break;
+          case uploadRespondStatus.NoUserSpace:
+            resStatus = UploadStatus.ERROR;
+            break;
+        }
+        if (updateTransmitCount !== null) {
+          updateTransmitCount(resStatus, options.fileCount, decodedPayload.receivecount);
+        }
+      
+      } catch (error) {
+        console.error("Error decoding StoreFolderReply:", error);
+        if (onErrorCallback) {
+          onErrorCallback(new Error("Failed to decode StoreFolderReply: " + error.message));
+        }
+      }
+    };
+  
+    // 使用方法
+  const grpcClient = new Libp2pGrpcClient(
+    this.client.p2pNode,
+    this.client.peerAddr,
+    this.client.token,
+    this.client.protocol
+  );
+
+  await grpcClient.Call(
+    "/dcnet.pb.Service/StoreFolder",
+    messageBytes,
+    100000,
+    "server-streaming",
+    onDataCallback,
+  );
+}catch (err) {
+  console.error("storeFolder error:", err);
+  if (onErrorCallback) {
+    onErrorCallback(new Error("StoreFolder failed: " + (err instanceof Error ? err.message : String(err))));
+  }
+  }
+}
+
 }

@@ -1,4 +1,4 @@
-import type { DCConnectInfo } from "../../common/types/types";
+import { UploadStatus, type DCConnectInfo } from "../../common/types/types";
 import { FileClient } from "./client";
 import type { HeliaLibp2p } from "helia";
 import { ChainUtil } from "../../common/chain";
@@ -15,7 +15,7 @@ import {
 
 import { unixfs } from "@helia/unixfs";
 import { SymmetricKey } from "../threaddb/common/key";
-import { CID } from "multiformats/cid";
+import { CID, Version } from "multiformats/cid";
 import { BrowserType, DcUtil } from "../../common/dcutil";
 import toBuffer from "it-to-buffer";
 import { decryptContent } from "../../util/dccrypt";
@@ -192,7 +192,7 @@ async isAccessPeerIdBinded(): Promise<boolean> {
   async addFile(
     file: File,
     enkey: string,
-    onUpdateTransmitSize: (status: number, size: number) => void,
+    onUpdateTransmitSize: (status: UploadStatus, size: number) => void,
     vaccount?: string,
   ): Promise<[string | null, Error | null]> {
     if (!this.connectedDc?.client) {
@@ -296,7 +296,7 @@ async isAccessPeerIdBinded(): Promise<boolean> {
       if (resError) {
         return [null, resError];
       }
-      if (resStatus !== 2) {
+      if (resStatus !== UploadStatus.UPLOADING) {
         //不是上传中，不需要操作
         return [null, Errors.ErrNoNeedUpload];
       }
@@ -315,6 +315,490 @@ async isAccessPeerIdBinded(): Promise<boolean> {
     }
     return [resCid, null];
   }
+
+
+/**
+ * Adds a folder to the DC network using browser FileList
+ * @param folderInput - Files from a directory input element
+ * @param enkey - Encryption key
+ * @param updateTransmitCount - Callback for progress updates
+ * @param vaccount - Optional virtual account
+ * @returns Promise with CID string and error if any
+ */
+async addFolder(
+  fileList: FileList,
+  enkey: string,
+  updateTransmitCount: (status: UploadStatus, total: number, progress: number) => void,
+  vaccount?: string
+): Promise<[string | null, Error | null]> {
+  if (!this.connectedDc?.client) {
+      return [null, Errors.ErrNoDcPeerConnected];
+    }
+    if (!this.connectedDc || !this.connectedDc.nodeAddr) {
+      console.error("=========Errors.ErrNoDcPeerConnected");
+      return [null, Errors.ErrNoDcPeerConnected];
+    }
+
+    // this.dcNodeClient.libp2p.dialProtocol(this.connectedDc.nodeAddr, '/ipfs/bitswap/1.2.0')
+    const blockHeight = await this.chainUtil.getBlockHeight();
+    const peerId = this.connectedDc.nodeAddr?.getPeerId();
+    if (!peerId) {
+      return [null, Errors.ErrNoPeerIdIsNull];
+    }
+     let nodeAddr = await this.dc?._getNodeAddr(peerId);
+      if (!nodeAddr) {
+        return [null, Errors.ErrNoDcPeerConnected];
+      }
+    try {
+       if (!await this.isAccessPeerIdBinded()) {// 检查当前连接的节点是否已经绑定到用户账户,没绑定,执行绑定
+          const accountClient = new AccountClient(this.connectedDc.client);
+          await accountClient.bindAccessPeerToUser(this.context, blockHeight ? blockHeight : 0,peerId);
+          //等待绑定信息上链,最多等待20秒
+          let waitCount = 0;
+          while (true) {
+            if (await this.isAccessPeerIdBinded()) {
+              break;
+            }
+            waitCount += 1;
+            if (waitCount > 30) {
+              return [null, new FileError("No access auth to peer")]; // 使用正确的错误返回格式
+            }
+            await sleep(1000); // 使用毫秒，等同于1秒
+          }
+      }
+    }catch (error) {
+  //    return  [null, error];
+    }
+
+
+  try {
+    // Create IPFS file system interface
+    const fs = unixfs(this.dcNodeClient);
+
+    // Generate user flag file (dc_ownuser)
+    let pubkeyBytes = this.context.getPubkeyRaw();
+
+    
+   
+    // Create hash of public key for owner file
+    const pubkeyHash = await crypto.subtle.digest("SHA-256", pubkeyBytes);
+    const ownerFileContent = new Uint8Array(pubkeyHash);
+    
+    
+    // Create folder structure using MFS (memory file system)
+    // Get root folder name
+    const rootFolderName = this.extractRootFolderName(fileList);
+    //排除掉 dc_ownuser 文件,然后又加上去,防止重复添加
+    const files = Array.from(fileList).filter(file => file.name !== "dc_ownuser");
+    const fileCount = files.length;
+    //将ownerFileContent作为文件内容,最后添加到根目录
+   const ownerPath = rootFolderName + "/dc_ownuser";
+   files.push(new File([ownerFileContent], "dc_ownuser", { type: "text/plain" }));
+
+// 将文件路径与内容流映射
+const source = Array.from(files).map(file => ({
+    path: file.name === "dc_ownuser" ? ownerPath : file.webkitRelativePath,  // 获取文件相对路径
+    content: this.fileToStream(file,enkey),    // 使用文件流
+}));
+
+const results =  fs.addAll(source);
+let rootCID: CID<unknown, number, number, Version>;
+for await (const { path, cid } of results) {
+  // The entry with path equal to the root folder name is our root
+  if (path === rootFolderName) {
+    rootCID = cid;
+    break; // We found what we need, no need to continue
+  }
+}
+if (!rootCID) {
+  console.error("Failed to find root directory CID in IPFS results");
+  return [null, new Error("Failed to find root directory CID")];
+}
+// 找到根目录CID后，获取所有文件大小
+const {  totalSize } = await this.getRootDirectoryFileSizes(rootCID);
+
+    
+    // Get final node and CID
+    const finalCid = rootCID.toString();
+    const folderSize = totalSize;
+    
+    // Sign folder data
+    const serverPidBytes = new TextEncoder().encode(peerId);
+    const sizeValue = uint64ToLittleEndianBytes(folderSize);
+    const heightValue = uint32ToLittleEndianBytes(blockHeight || 0);
+    const typeValue = uint32ToLittleEndianBytes(2); // Folder type = 2
+    
+    // Create signature payload
+    let preSign = new TextEncoder().encode(finalCid);
+    preSign = mergeUInt8Arrays(preSign, sizeValue);
+    preSign = mergeUInt8Arrays(preSign, heightValue);
+    preSign = mergeUInt8Arrays(preSign, typeValue);
+    preSign = mergeUInt8Arrays(preSign, serverPidBytes);
+    
+    // Sign the data
+    const signature = await this.context.sign(preSign);
+    
+    // Create file options
+    const fileOptions = {
+      signature,
+      blockHeight: blockHeight || 0,
+      fileSize: folderSize,
+      fileCount: fileCount + 1, // +1 for owner file
+      pubkey: this.context.getPubkeyRaw(),
+      vaccount:""
+    };
+    
+    if (vaccount) {
+      fileOptions.vaccount = vaccount;
+    }
+    
+    // Store folder on DC network
+    const fileClient = new FileClient(
+      this.connectedDc.client,
+      this.dcNodeClient,
+      this.context
+    );
+    
+    let resFlag = false;
+    let resStatus = 0;
+    let resError = null;
+    // Create channel for async communication
+    await fileClient.storeFolder(rootCID.toString(),fileOptions,(status: UploadStatus, total: number,processed: number): void => {
+          resFlag = true;
+          resStatus = status;
+         updateTransmitCount(status, total, processed);
+        }, async (error: Error) => {
+            resFlag = true;
+            resError = error;
+        });
+    while (!resFlag) {
+      await sleep(100);
+    }
+    if (resError) {
+      updateTransmitCount(UploadStatus.ERROR, 0, 0);
+      return [null, resError];
+    }
+     if (resStatus !== UploadStatus.UPLOADING) {
+        //不是上传中，不需要操作
+        return [null, Errors.ErrNoNeedUpload];
+      }
+     //创建文件主动上报流
+      await this.dc.createTransferStream(
+        this.dcNodeClient.libp2p,
+        this.dcNodeClient.blockstore,
+        nodeAddr,
+        BrowserType.File,
+        finalCid
+      );
+    return [finalCid, null];
+    
+  } catch (error) {
+    console.error("Folder upload failed:", error);
+    return [null, error instanceof Error ? error : new Error(String(error))];
+  }
+}
+
+
+/**
+ * Creates a custom FileList object from file paths and contents
+ * @param filesMap - Map of file paths to content (string or Uint8Array)
+ * @param rootFolderName - Optional root folder name (defaults to "upload")
+ * @returns A FileList-like object that can be used with addFolder
+ */
+ static createCustomFileList(
+  filesMap: Map<string, string | Uint8Array | ArrayBuffer> | Record<string, string | Uint8Array | ArrayBuffer>,
+  rootFolderName: string = "upload"
+): FileList {
+  // Convert object to Map if needed
+  const filesMapObj = filesMap instanceof Map ? filesMap : new Map(Object.entries(filesMap));
+  
+  // Create File objects with proper webkitRelativePath
+  const files: File[] = [];
+  
+  filesMapObj.forEach((content, path) => {
+    // Ensure path starts with rootFolderName
+    const fullPath = path.startsWith(rootFolderName) ? path : `${rootFolderName}/${path}`;
+    
+    // Convert content to proper format
+    let fileContent: Blob;
+    if (typeof content === "string") {
+      fileContent = new Blob([content], { type: "text/plain" });
+    } else {
+      fileContent = new Blob([content]);
+    }
+    
+    // Create File object with webkitRelativePath
+    const file = new File([fileContent], path.split('/').pop() || "unnamed", {
+      type: "application/octet-stream",
+    }) as File & { webkitRelativePath: string };
+    
+    // Set webkitRelativePath property
+    file.webkitRelativePath = fullPath;
+    
+    files.push(file);
+  });
+  
+  // Create a FileList-like object
+  const fileList = {
+    length: files.length,
+    item(index: number): File {
+      return files[index];
+    },
+    [Symbol.iterator](): Iterator<File> {
+      let index = 0;
+      return {
+        next(): IteratorResult<File> {
+          if (index < files.length) {
+            return { value: files[index++], done: false };
+          } else {
+            return { value: null as any, done: true };
+          }
+        }
+      };
+    },
+    ...files
+  } as unknown as FileList;
+  
+  return fileList;
+}
+
+private fileToStream(file: File, enkey: string): ReadableStream<Uint8Array> {
+  const symKey = enkey ? SymmetricKey.fromString(enkey) : null;
+  const { readable, writable } = new TransformStream<Uint8Array, Uint8Array>();
+  const writer = writable.getWriter();
+  const fileReader = new FileReader();
+  const chunkSize = 1024 * 1024; // 1MB chunks
+  let offset = 0;
+  const processFile = async () => {
+    try {
+      while (offset < file.size) {
+        // Read chunk
+        const chunk = file.slice(offset, offset + chunkSize);
+        const buffer = await new Promise<ArrayBuffer>((resolve, reject) => {
+          fileReader.onload = () => resolve(fileReader.result as ArrayBuffer);
+          fileReader.onerror = reject;
+          fileReader.readAsArrayBuffer(chunk);
+        });
+        const content = new Uint8Array(buffer);
+        // Encrypt if needed
+        if (symKey && file.name !== "dc_ownuser") {
+          const encrypted = await symKey.encrypt(content);
+          await writer.write(encrypted);
+        } else {
+          await writer.write(content);
+        }
+        offset += chunkSize;
+      }
+    } catch (error) {
+      console.error("Error processing file:", error);
+    } finally {
+      await writer.close();
+    }
+  };
+  // Start processing the file
+  processFile().catch(error => {
+    console.error("Error in file processing:", error);
+  });
+  return readable;
+}
+
+/**
+ * 获取根目录下所有文件的大小
+ * @param rootCID - 根目录的CID
+ * @returns Promise 包含文件名和大小的映射，以及总大小
+ */
+async getRootDirectoryFileSizes(rootCID: CID): Promise<{
+  files: Map<string, number>, 
+  totalSize: number
+}> {
+  try {
+    const fs = unixfs(this.dcNodeClient);
+    const result = new Map<string, number>();
+    let totalSize = 0;
+    
+    // 列出根目录中的所有文件和子目录
+    for await (const entry of fs.ls(rootCID)) {
+      const { name,path, cid, type, size } = entry;
+      
+      // 只处理根目录下的文件，不递归进入子目录
+      if (type === 'raw') {
+        // 获取文件大小
+        const fileSize = size || 0;
+        // Convert to number in case size is a bigint
+        const fileSizeNumber = typeof fileSize === 'bigint' ? Number(fileSize) : fileSize;
+        result.set(path, fileSizeNumber);
+        totalSize += fileSizeNumber;
+        
+        console.debug(`File: ${name}, Size: ${fileSizeNumber} bytes`);
+      }else if (type === 'directory') {
+        // 如果是目录，递归获取其文件大小
+        const dirSize = await this.getRootDirectoryFileSizes(cid);
+        result.set(path, dirSize.totalSize);
+        totalSize += dirSize.totalSize;
+      }
+    }
+    
+    return { files: result, totalSize };
+  } catch (error) {
+    console.error("Error getting root directory file sizes:", error);
+    throw error;
+  }
+}
+
+
+
+
+/**
+ * Extract the root folder name from a FileList
+ */
+private extractRootFolderName(files: FileList): string {
+  if (files.length === 0) return "root";
+  
+  const path = files[0].webkitRelativePath || files[0].name;
+  const parts = path.split('/');
+  
+  return parts[0] || "root";
+}
+
+/**
+ * Create a folder in IPFS
+ */
+private async createFolderInIpfs(folderName: string): Promise<CID> {
+  const fs = unixfs(this.dcNodeClient);
+  const dirCid = await fs.addDirectory({
+    path: folderName
+ });
+  return dirCid;
+}
+
+/**
+ * Calculate the size of all files in a folder
+ */
+private calculateFolderSize(files: FileList): number {
+  let totalSize = 0;
+  for (let i = 0; i < files.length; i++) {
+    totalSize += files[i].size;
+  }
+  return totalSize;
+}
+
+
+
+/**
+ * Adds a file to MFS file system folder with optional encryption
+ * @param parentDir - The parent directory in MFS
+ * @param dirPath - The directory path
+ * @param fileName - The name of the file
+ * @param enkey - Optional encryption key
+ * @returns Promise with result or error
+ */
+async addFileToMfsFolder(
+  parentDir: any, // MFS Directory type (replace with actual type)
+  dirPath: string,
+  fileName: File,
+  enkey: string
+): Promise<[string | null, Error | null]> {
+  let symKey: SymmetricKey | null = null;
+  const readPath = `${dirPath}/${fileName}`; // Use path joining appropriate for your env
+  
+  try {
+    // Open file (implementation depends on environment - browser vs Node.js)
+    const fileContent = await this.readFile(readPath);
+    if (!fileContent) {
+      return [null, new Error("Could not open file")];
+    }
+    
+    // Create encryption key if needed
+    if (enkey !== "") {
+      symKey = SymmetricKey.fromString(enkey);
+    }
+    
+    // Create readable and writable streams for processing
+    const { readable, writable } = new TransformStream<Uint8Array, Uint8Array>();
+    const writer = writable.getWriter();
+    
+    // Process the file in a separate async function (equivalent to goroutine)
+    (async () => {
+      try {
+        const file = await fetch(readPath).then(r => r.blob());
+        const fileReader = new FileReader();
+        const chunkSize = 1024;
+        let offset = 0;
+        
+        while (offset < file.size) {
+          // Check for abort signal if needed
+          // if (signal?.aborted) throw new Error("Operation cancelled");
+          
+          // Read chunk
+          const chunk = file.slice(offset, offset + chunkSize);
+          const buffer = await new Promise<ArrayBuffer>((resolve, reject) => {
+            fileReader.onload = () => resolve(fileReader.result as ArrayBuffer);
+            fileReader.onerror = reject;
+            fileReader.readAsArrayBuffer(chunk);
+          });
+          
+          const content = new Uint8Array(buffer);
+          
+          // Encrypt if needed
+          if (symKey) {
+            const encrypted = await symKey.encrypt(content);
+            await writer.write(encrypted);
+          } else {
+            await writer.write(content);
+          }
+          
+          offset += chunkSize;
+        }
+      } catch (error) {
+        console.error("Error processing file:", error);
+      } finally {
+        await writer.close();
+      }
+    })();
+    
+    // Add file to IPFS
+    const fs = unixfs(this.dcNodeClient);
+    const cid = await fs.addByteStream(this.streamToAsyncIterable(readable), {
+      rawLeaves: false,
+      leafType: "file",
+      shardSplitThresholdBytes: 256 * 1024,
+    });
+    
+    // Add to parent directory in MFS
+    await parentDir.addChild(fileName, cid);
+    await parentDir.flush();
+    
+    return [cid.toString(), null];
+  } catch (error) {
+    return [null, error instanceof Error ? error : new Error(String(error))];
+  }
+}
+
+// Helper method to convert a ReadableStream to AsyncIterable
+private async *streamToAsyncIterable(stream: ReadableStream<Uint8Array>): AsyncGenerator<Uint8Array> {
+  const reader = stream.getReader();
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      yield value;
+    }
+  } finally {
+    reader.releaseLock();
+  }
+}
+
+// Helper to read a file (implementation depends on environment)
+private async readFile(path: string): Promise<Blob | null> {
+  try {
+    // Browser implementation example - replace with appropriate method
+    const response = await fetch(path);
+    return await response.blob();
+  } catch (error) {
+    console.error("Error reading file:", error);
+    return null;
+  }
+}
 
   private async *chunkGenerator(stream: Stream): AsyncGenerator<Uint8Array> {
     const iterator = stream.source[Symbol.asyncIterator]();

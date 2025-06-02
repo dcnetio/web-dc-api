@@ -192,3 +192,13 @@ export enum NFTBindStatus {
   NetworkErr = 10,          // 网络错误
   Error = 99                // 其他异常
 }
+
+
+
+export enum UploadStatus {
+  OK= 0,
+  ENCRYPTING=1, // 加密中
+  UPLOADING=2, // 上传中
+  ERROR=3,
+  ABNORMAL=4,
+};

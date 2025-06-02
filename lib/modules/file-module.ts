@@ -173,6 +173,27 @@ export class FileModule implements DCModule, IFileOperations {
       throw new Error(`添加文件失败: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
+
+  /**
+   * 添加文件夹
+   */
+  async addFolder(
+    files: FileList,
+    enkey: string,
+    onUpdateTransmitCount: (status: number, total: number, process: number) => void
+  ): Promise<any> {
+    this.assertInitialized();
+    try {
+      if (!files || files.length === 0) {
+        throw new Error("文件夹不能为空");
+      }
+      const res = await this.fileManager.addFolder(files, enkey, onUpdateTransmitCount);
+      return res;
+    } catch (error) {
+      logger.error(`添加文件夹失败`, error);
+      throw new Error(`添加文件夹失败: ${error instanceof Error ? error.message : String(error)}`);
+    }
+  }
   
   /**
    * 断言模块已初始化
