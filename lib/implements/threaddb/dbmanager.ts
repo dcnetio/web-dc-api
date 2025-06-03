@@ -79,7 +79,7 @@ export class DBManager {
     private storagePrefix: string;
     private context: DCContext;
 
-    constructor(  
+     constructor(  
         store: TxnDatastoreExtended,  //实际上是一个LevelDatastore实例,用levelDatastoreAdapter包装
         network: Net,  
         dc: DcUtil,
@@ -101,6 +101,54 @@ export class DBManager {
         this.connectedDc = connectedDc;
         this.context = context
     }  
+    async loadDbs():Promise<void>{ 
+      // Query for existing databases
+      console.log("manager: loading dbs");
+      try {
+        const q = { prefix: dsManagerBaseKey.toString(), keysOnly: true };
+        const results = this.store.query(q);
+        // Create a map to track loaded databases and prevent duplicates
+        const loaded = new Map<string, boolean>();
+        // Process each result
+        for await (const result of results) {
+            try {
+              // Parse the key to extract thread ID
+              const parts = result.key.toString().split('/');
+              if (parts.length < 3) {
+                continue;
+              }
+              const id = ThreadID.fromString(parts[2]);
+              // Check if already loaded
+              if (loaded.has(id.toString())) {
+                return;
+              }
+              // Mark as loaded
+              loaded.set(id.toString(), true)
+              // Wrap and create database
+              const [store, opts, err] = await this.wrapDB(
+                this.store,
+                id,
+                this.opts,
+                "",
+                []
+              );
+              
+              if (err) {
+                throw new Error(`wrapping db: ${err.message}`);
+              }
+              const db = await ThreadDb.newDB(store, this.network, id, opts);
+              // Add to map of databases
+              this.dbs.set(id.toString(), db);
+            } catch (err) {
+              console.error(`Error loading database: ${err instanceof Error ? err.message : String(err)}`);
+            } 
+        }
+      }catch (err) {
+        console.error(`Failed to load databases: ${err instanceof Error ? err.message : String(err)}`);
+        throw err;
+      }
+    }
+  
 
      /**  
      * Gets the log key for a thread. If it doesn't exist, creates a new one.  
@@ -1339,6 +1387,31 @@ async getDB(id: ThreadID, opts?: ManagedOptions): Promise<ThreadDb> {
     return db;
     
 }
+
+
+async getDBInfo(id: ThreadID, opts?: ManagedOptions): Promise<[string, Error|null]> {
+   let infoStr = "";
+    try {
+        const db = this.dbs.get(id.toString());
+        if (!db) {
+            throw Errors.ErrDBNotFound;
+        }
+        const dbInfo = db.getDBInfo(opts);
+        if (!dbInfo) {
+            throw new Error(`No info available for db ${id}`);
+        }
+        // Return the database info as a string
+        infoStr = JSON.stringify(dbInfo);
+    }catch (err) {
+        console.error(`Error getting DB info for ${id}:`, err);
+        return ['', err as Error];
+    }  
+    return [infoStr,null];
+}
+
+
+
+
 
 // DeleteDB deletes a db by id.
 async deleteDB( id: ThreadID, deleteThreadFlag: boolean, opts?: ManagedOptions): Promise<void> {

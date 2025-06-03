@@ -37,6 +37,14 @@ export interface IAuthOperations {
    */
   sign(payload: Uint8Array): Promise<Uint8Array>;
   
+
+  /**
+   * 解密数据
+   * @param payload 要解密的数据
+   * @returns 解密结果
+   */
+  decryptWithWallet(payload: Uint8Array): Promise<Uint8Array> ;
+
   /**
    * 将公钥绑定NFT账号
    * @param account NFT账号
@@ -114,4 +122,14 @@ export interface IAuthOperations {
    * @returns 用户信息
    */
   refreshUserInfo(): Promise<User>;
+
+  /**
+   * 获取用户默认数据库
+   * @param threadId 数据库ID
+   * @param rk 读取密钥,主要用来加解密真正的数据,注意对数据记录进行加密和解密
+   * @param sk 服务密钥,主要用来处理传输过程加解密,主要对数据链表头进行加密和解密
+   * @param remark 备注信息
+   * @returns 用户默认数据库信息
+   */
+  setUserDefaultDB(threadId: string, rk: string,sk: string,remark: string,vaccount?: string): Promise<void>;
 }

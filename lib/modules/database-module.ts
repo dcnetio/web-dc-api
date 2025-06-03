@@ -12,9 +12,11 @@ import { newHeadBook } from "../implements/threaddb/lsstoreds/headbook";
 import { newThreadMetadata } from "../implements/threaddb/lsstoreds/metadata";
 import { newLogstore } from "../implements/threaddb/common/logstore";
 import { dagCbor } from "@helia/dag-cbor";
+import { DB as ThreadDb } from '../implements/threaddb/db/db';
 import { Network } from "../implements/threaddb/net/net";
 import { DBManager } from "../implements/threaddb/dbmanager";
-import { ICollectionConfig } from "../implements/threaddb/core/core";
+import { ICollectionConfig, ManagedOptions } from "../implements/threaddb/core/core";
+import ThreadID from "@textile/threads-id";
 
 const logger = createLogger('DatabaseModule');
 const storagePrefix = "dc-";
@@ -97,7 +99,7 @@ export class DatabaseModule implements DCModule, IDatabaseOperations {
         storagePrefix,
         this.context
       );
-      
+      await dbmanager.loadDbs();// 加载现有数据库
       this.context.dbManager = dbmanager;
       logger.info("数据库管理器初始化成功");
     } catch (error) {
@@ -255,6 +257,25 @@ async close(): Promise<void> {
     }
 }  
 
+
+
+
+
+/**
+ * 获取数据库信息
+ * @param id threaddbID
+ * @returns 数据库信息字符串,或错误
+ */ 
+async getDBInfo(id: string): Promise<[string, Error|null]> {
+    this.assertInitialized();
+    await this.initDBManager();
+    
+    if (!this.context.dbManager) {
+      return ["", new Error("数据库管理器未初始化")];
+    } 
+    const tid = ThreadID.fromString(id);
+    return await this.context.dbManager.getDBInfo(tid);
+  }
 
 /**
      * Create creates new instances of objects in a collection

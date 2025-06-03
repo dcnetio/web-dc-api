@@ -427,4 +427,12 @@ export class DC implements DCContext {
   get aiproxy() {
     return this.getModule<AIProxyModule>(CoreModuleName.AIPROXY);
   }
+
+  /**
+   * 工具模块
+   * @returns 工具模块实例
+   */
+  get util() {
+    return  this.getModule<AIProxyModule>(CoreModuleName.UTIL);
+  }
 }

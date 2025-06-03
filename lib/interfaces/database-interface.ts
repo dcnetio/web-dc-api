@@ -1,3 +1,4 @@
+import ThreadID from "@textile/threads-id";
 import { ICollectionConfig } from "../implements/threaddb/core/core";
 
 /**
@@ -63,6 +64,15 @@ export interface IDatabaseOperations {
    */
   syncDBToDC(tId: string): Promise<Error | null>;
   
+
+/**
+ * 获取数据库信息
+ * @param id threaddbID
+ * @returns 数据库信息字符串
+ * @throws 获取失败时抛出错误
+ */ 
+ getDBInfo(id: string): Promise<[string, Error|null]>  ;
+
   /**
    * 关闭数据库管理器
    * @throws 关闭失败时抛出错误
