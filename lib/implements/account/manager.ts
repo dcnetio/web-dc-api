@@ -131,6 +131,9 @@ async bindNFTAccount(
   if (!this.connectedDc.client) {
     return [NFTBindStatus.DcPeerNotConnected, Errors.ErrNoDcPeerConnected];
   }
+  if (!this.connectedDc.nodeAddr) {
+    return [NFTBindStatus.DcPeerNotConnected, Errors.ErrNodeAddrIsNull];
+  }
   
   try {
     const connectedPeerIdStr = this.connectedDc.nodeAddr.getPeerId();
@@ -215,10 +218,7 @@ private async generateAccountDealRequest(
     // 确定使用的密钥
     let selfPubkey: Ed25519PubKey, 
     selfPrivkey: Ed25519PrivKey;
-    selfPubkey = this.context.publicKey;
-    selfPrivkey = this.context.privKey;
-    
-    if (!selfPubkey || !selfPrivkey) {
+    if (!this.context.publicKey || !this.context.privKey) {
       // 生成
       const keymanager = new KeyManager();
       selfPrivkey = await keymanager.getEd25519KeyFromMnemonic(
@@ -226,6 +226,9 @@ private async generateAccountDealRequest(
         ''
       );
       selfPubkey = selfPrivkey.publicKey;
+    } else {
+      selfPubkey = this.context.publicKey;
+      selfPrivkey = this.context.privKey;
     }
 
     // 用自身公钥加密账号
@@ -356,7 +359,7 @@ private async generateAccountDealRequest(
  */
 async isNftAccountBindSuccess(nftAccount: string, pubKeyStr: string): Promise<boolean> {
   try {
-    if (!this.chainUtil && !this.chainUtil.dcchainapi) {
+    if (!this.chainUtil || !this.chainUtil.dcchainapi) {
       return false;
     }
     const accountBytes = new TextEncoder().encode(nftAccount);
@@ -379,7 +382,7 @@ async isNftAccountBindSuccess(nftAccount: string, pubKeyStr: string): Promise<bo
  */
 async isNftAccountBinded(nftAccount: string): Promise<boolean> {
   try {
-    if (!this.chainUtil && !this.chainUtil.dcchainapi) {
+    if (!this.chainUtil || !this.chainUtil.dcchainapi) {
       return false;
     }
     const accountBytes = new TextEncoder().encode(nftAccount);
@@ -409,6 +412,9 @@ async generateAppAccount(appId: string,mnemonic: string): Promise<[string | null
   }
   if (!appId) {
     return [null, new AccountError("App ID is required")];
+  }
+  if(!this.connectedDc.nodeAddr) {
+    return [null, new AccountError("No connected node")];
   }
   let subPrivateKey:Ed25519PrivKey
   try {
@@ -462,14 +468,17 @@ async generateAppAccount(appId: string,mnemonic: string): Promise<[string | null
     }
     
     // 获取token
-      if(this.connectedDc.client.token == ""){
-        const token = await this.connectedDc.client.GetToken(privateKey.publicKey.string(), async (payload: Uint8Array): Promise<Uint8Array> => {
-          return privateKey.sign(payload);
-        });
-        if (!token) {
-          return [null, new AccountError("Failed to get token")];
-        }
+    if(!this.connectedDc.client){
+        throw [null,  Errors.ErrNoAccountPeerConnected];
+    }
+    if(this.connectedDc.client.token == ""){
+      const token = await this.connectedDc.client.GetToken(privateKey.publicKey.string(), async (payload: Uint8Array): Promise<Uint8Array> => {
+        return privateKey.sign(payload);
+      });
+      if (!token) {
+        return [null, new AccountError("Failed to get token")];
       }
+    }
    
     // 创建请求对象
     const req = {

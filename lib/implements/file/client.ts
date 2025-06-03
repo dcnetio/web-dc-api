@@ -178,7 +178,7 @@ async storeFolder(
     if (options.vaccount) {
       try {
         message.vaccount = options.vaccount.pubKeyRaw;
-      } catch (error) {
+      } catch (error: any) {
         throw new Error("Failed to parse virtual account: " + error.message);
       }
     }
@@ -219,7 +219,7 @@ async storeFolder(
           updateTransmitCount(resStatus, options.fileCount, decodedPayload.receivecount);
         }
       
-      } catch (error) {
+      } catch (error: any) {
         console.error("Error decoding StoreFolderReply:", error);
         if (onErrorCallback) {
           onErrorCallback(new Error("Failed to decode StoreFolderReply: " + error.message));

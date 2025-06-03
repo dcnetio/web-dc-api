@@ -20,7 +20,6 @@ import { WalletManager } from "../implements/wallet/manager";
 import { NFTBindStatus, User } from "../common/types/types";
 import { IAuthOperations } from "../interfaces/auth-interface";
 import { DCContext } from "../../lib/interfaces/DCContext";
-import { KeyManager } from "../common/dc-key/keyManager";
 
 const logger = createLogger("AuthModule");
 
@@ -30,10 +29,10 @@ const logger = createLogger("AuthModule");
  */
 export class AuthModule implements DCModule, IAuthOperations {
   readonly moduleName = CoreModuleName.AUTH;
-  private context: DCContext;
+  private context!: DCContext;
   private initialized: boolean = false;
   private tokenTask: boolean = false;
-  private walletManager: WalletManager;
+  private walletManager!: WalletManager;
 
   /**
    * 初始化认证模块
@@ -69,6 +68,9 @@ export class AuthModule implements DCModule, IAuthOperations {
    */
   async getSavedToken(peerId: string): Promise<void> {
     this.assertInitialized();
+    if(!this.context.connectedDc?.client) {
+      throw new Error("dcClient is null");
+    }
 
     // 获取存储的pubkey
     const publicKeyString = await loadPublicKey();
@@ -149,7 +151,7 @@ export class AuthModule implements DCModule, IAuthOperations {
     password: string,
     safecode: string
   ): Promise<{
-    mnemonic: string;
+    mnemonic: string | null;
   }> {
     this.assertInitialized();
 
@@ -180,7 +182,9 @@ export class AuthModule implements DCModule, IAuthOperations {
         mnemonic,
       };
     }
-    return;
+    return {
+      mnemonic: '',
+    };
   }
 
   async signWithWallet(payload: Uint8Array): Promise<Uint8Array> {

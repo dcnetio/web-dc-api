@@ -5,7 +5,6 @@ import {  IKeyValueOperations } from "../interfaces/keyvalue-interface";
 import { DCContext } from "../../lib/interfaces/DCContext";
 import { DCModule, CoreModuleName } from "../common/module-system";
 import { KeyValueManager, KeyValueStoreType, KeyValueDB } from "../implements/keyvalue/manager";
-import { ThemeManager } from "../implements/cache/manager";
 import { createLogger } from "../util/logger";
 import { ThemeAuthInfo, ThemeComment } from "../common/types/types";
 const logger = createLogger('KeyValueModule');
@@ -16,9 +15,7 @@ const indexkey_dckv = "indexkey_dckv"; //索引键名，keyvalue设置过程中k
  */
 export class KeyValueModule implements DCModule, IKeyValueOperations {
   readonly moduleName = CoreModuleName.KEYVALUE;
-  private context: DCContext;
-  private keyValueManager: KeyValueManager;
-  private themeManager: ThemeManager;
+  private keyValueManager!: KeyValueManager;
   private initialized: boolean = false;
   
   /**
@@ -28,19 +25,11 @@ export class KeyValueModule implements DCModule, IKeyValueOperations {
    */
   async initialize(context: DCContext): Promise<boolean> {
     try {
-      this.context = context;
       this.keyValueManager = new KeyValueManager(
         context.dcutil,
         context.connectedDc,
         context.AccountBackupDc,
         context.dcNodeClient,
-        context.dcChain,
-        context
-      );
-      
-      this.themeManager = new ThemeManager(
-        context.connectedDc,
-        context.dcutil,
         context.dcChain,
         context
       );
@@ -74,7 +63,7 @@ export class KeyValueModule implements DCModule, IKeyValueOperations {
     theme: string,
     space: number,
     type: KeyValueStoreType
-  ): Promise<KeyValueDB> {
+  ): Promise<KeyValueDB | null> {
     this.assertInitialized();
     
     try {
@@ -125,7 +114,7 @@ export class KeyValueModule implements DCModule, IKeyValueOperations {
     permission: number,
     remark: string,
     vaccount?: string
-  ): Promise<[number, Error | null]> {
+  ): Promise<[number | null, Error | null]> {
     this.assertInitialized();
     
     try {
@@ -158,7 +147,7 @@ export class KeyValueModule implements DCModule, IKeyValueOperations {
     value: string,
     indexs: string, //索引列表,格式为key1:value1$$$key2:value2
     vaccount?: string
-  ): Promise<[boolean, Error | null]> {
+  ): Promise<[boolean | null, Error | null]> {
     this.assertInitialized();
     
     try {
@@ -176,7 +165,7 @@ export class KeyValueModule implements DCModule, IKeyValueOperations {
     key: string,
     writerPubkey?: string,
     vaccount?: string
-  ): Promise<[string, Error | null]> {
+  ): Promise<[string | null, Error | null]> {
     this.assertInitialized();
     
     try {
@@ -206,7 +195,7 @@ export class KeyValueModule implements DCModule, IKeyValueOperations {
     seekKey:string, 
     offset: number,
     vaccount?: string
-  ): Promise<[string, Error | null]> {
+  ): Promise<[string | null, Error | null]> {
     this.assertInitialized();
     
     try {
@@ -221,11 +210,11 @@ export class KeyValueModule implements DCModule, IKeyValueOperations {
   async getBatch(
     kvdb: KeyValueDB,
     keys: string,
-    writerPubkey?: string,
-    vaccount?: string
-  ): Promise<[string, Error | null]> {
+    writerPubkey: string = "",
+    vaccount: string = ""
+  ): Promise<[string | null, Error | null]> {
     this.assertInitialized();
-    
+
     try {
       const res = await kvdb.getBatch(writerPubkey, keys, vaccount);
       return res;
@@ -243,7 +232,7 @@ export class KeyValueModule implements DCModule, IKeyValueOperations {
     seekKey:string, 
     offset: number,
     vaccount?: string
-  ): Promise<[string, Error | null]> {
+  ): Promise<[string | null, Error | null]> {
     this.assertInitialized();
     
     try {

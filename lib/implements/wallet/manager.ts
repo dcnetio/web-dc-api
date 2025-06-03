@@ -4,8 +4,8 @@ import { DCContext } from "../../../lib/interfaces/DCContext";
 import { Ed25519PubKey } from "lib/common/dc-key/ed25519";
 
 
-const appOrigin = typeof window !== "undefined" && window.location.origin;//"http://localhost:3002"
-const appUrl = typeof window !== "undefined" && window.location.href ;
+const appOrigin = typeof window !== "undefined" ? window.location.origin : "";//"http://localhost:3002"
+const appUrl = typeof window !== "undefined" ? window.location.href :  "";
 
 let defaultPublicKey: Ed25519PubKey | null = null;
 
@@ -22,7 +22,7 @@ export const Errors = {
 export class WalletManager {
   private context: DCContext;
   private walletWindow: Window | null = null;
-  private iframeId: string | null = null;
+  private iframeId: string  = 'dcWalletIframe';
   private channelPort2: MessagePort | null = null;
   constructor(context: DCContext) {
     this.context = context;
@@ -31,7 +31,6 @@ export class WalletManager {
   async init():  Promise<Ed25519PubKey | null> {
     if(appOrigin.indexOf(walletOrigin) === -1) {
       return new Promise((resolve, reject) => {
-        this.iframeId = 'dcWalletIframe';
         // html添加iframe标签，id是dcWalletIframe
         const iframe = document.createElement("iframe");
         iframe.id = this.iframeId;
@@ -51,7 +50,7 @@ export class WalletManager {
     }
   }
   // iframe加载完成后，发送初始化配置
-  async initConfig  (that): Promise<Ed25519PubKey | null> {
+  async initConfig  (that: WalletManager): Promise<Ed25519PubKey | null> {
     return new Promise((resolve, reject) => { 
       const message = {
         type: "init",
@@ -69,6 +68,7 @@ export class WalletManager {
           if(!response || !response.data || !response.data.data) {
             console.error("initConfig response is null");
             resolve(null);
+            return;
           }
           defaultPublicKey = response.data.data.publicKey;
           resolve(defaultPublicKey);
@@ -134,6 +134,11 @@ export class WalletManager {
       this.sendMessageToIframe(message, 60000)
         .then((response) => {
           console.log("decrypt response", response);
+          if(!response || !response.data || !response.data.data) {
+            console.error("initConfig response is null");
+            reject(new WalletError("initConfig response is null"));
+            return;
+          }
           const data = response.data.data;
           console.log("decrypt success", data);
           if(!data.success) {
@@ -170,6 +175,11 @@ export class WalletManager {
       this.sendMessageToIframe(message, 60000)
         .then((response) => {
           console.log("sign response", response);
+          if(!response || !response.data || !response.data.data) {
+            console.error("initConfig response is null");
+            reject(new WalletError("initConfig response is null"));
+            return;
+          }
           const data = response.data.data;
           console.log("sign success", data);
           if(!data.success) {
@@ -191,7 +201,7 @@ export class WalletManager {
 
 
   // 签名普通消息
-  async signMessage (data) {
+  async signMessage (data:object) {
     // if (!accountInfo.account) {
     //   console.log("未连接钱包");
     //   return;
@@ -215,7 +225,7 @@ export class WalletManager {
 
 
   // 签名EIP712消息
-  async signEIP712Message  () {
+  async signEIP712Message  (data: object) {
     if (!this.context) {
       console.log("未连接钱包");
       return;
@@ -227,43 +237,7 @@ export class WalletManager {
     // port1 转移给iframe
     const message = {
       type: "signEIP712Message",
-      data: {
-        account: publicKey.string(),
-        appId: this.context.appInfo.appId,
-        appVersion: this.context.appInfo.appVersion,
-        appName: this.context.appInfo.appName,
-        appIcon: this.context.appInfo.appIcon,
-        appUrl,
-        domain: {
-          name: "test",
-          version: "1",
-          chainId: 1,
-          verifyingContract: "0x1234567890123456789012345678901234567890",
-        },
-        types: {
-          Person: [
-            { name: "name", type: "string" },
-            { name: "wallet", type: "address" },
-          ],
-          Trans: [
-            { name: "from", type: "Person" },
-            { name: "to", type: "Person" },
-            { name: "contents", type: "string" },
-          ],
-        },
-        primaryType: "Trans",
-        message: {
-          from: {
-            name: "Cow",
-            wallet: "0x601C2e6cDE6917deF84Ee2eEe68DB92a7dD989C4",
-          },
-          to: {
-            name: "Bob",
-            wallet: "0xFf64d3F6efE2317EE2807d223a0Bdc4c0c49dfDB",
-          },
-          contents: "Hello, Bob!",
-        },
-      },
+      data: data
     };
     this.sendMessageToIframe(message, 60000)
       .then((response) => {

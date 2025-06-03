@@ -37,7 +37,7 @@ export class DC implements DCContext {
   blockChainAddr: string;
   backChainAddr: string;
   dcChain: ChainUtil;
-  dcNodeClient: HeliaLibp2p<Libp2p<any>>;
+  dcNodeClient!: HeliaLibp2p<Libp2p<any>>;
   dcutil: DcUtil;
   privKey: Ed25519PrivKey | undefined;
   publicKey: Ed25519PubKey | undefined;
@@ -47,7 +47,7 @@ export class DC implements DCContext {
   public AccountBackupDc: DCConnectInfo = {};
   public Identity: string = "";
   public Blockheight: number = 0;
-  public grpcServer: DCGrpcServer;
+  public grpcServer!: DCGrpcServer;
   public appInfo: APPInfo;
   public dbManager: any;
   public swUrl: string = "";
@@ -197,8 +197,11 @@ export class DC implements DCContext {
           // 在这里设置初始化标志，确保后续模块方法可以正常访问
           this.initialized = true;
           
-          // 获取存储的token
-          await this.auth.getSavedToken(nodeAddr.getPeerId());
+          const peerId = nodeAddr.getPeerId();
+          if (peerId) {
+            // 获取存储的token
+            await this.auth.getSavedToken(peerId);
+          }
           
           // 定时维系token
           this.auth.startDcPeerTokenKeepValidTask();
@@ -256,18 +259,6 @@ export class DC implements DCContext {
     const signature = this.auth.signWithWallet(payload);
     return signature;
   };
-
-  /**
-   * 解密方法
-   * @param content 加密内容
-   * @returns 解密后的内容
-   */
-  // todo getUserComments 获取文件解密用到，后期改成aes
-  decrypt = async (content: Uint8Array): Promise<Uint8Array> => {
-    // 钱包那边解密todo: 
-    const decodeContent = await this.privKey.decrypt(content);
-    return decodeContent; 
-  }
 
   /**
    * 获取公钥

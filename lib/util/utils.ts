@@ -3,7 +3,7 @@ import { base32 } from "multiformats/bases/base32";
 import * as JsCrypto from "jscrypto/es6";
 import { Multiaddr, multiaddr } from "@multiformats/multiaddr";
 import { peerIdFromString } from "@libp2p/peer-id";
-import { PeerId } from "@libp2p/interface";
+import { Ed25519PrivateKey, PeerId } from "@libp2p/interface";
 import { keys } from "@libp2p/crypto";
 import * as buffer from "buffer/";
 const { Buffer } = buffer;
@@ -164,12 +164,12 @@ const decodeKey = (str: string) =>
   Uint8Array.from(atob(str), (c) => c.charCodeAt(0));
 
 // 使用 Web Crypto API 安全存储
-async function saveKeyPair(key, keyPair) {
+async function saveKeyPair(key: string, keyPair: Ed25519PrivateKey) {
   // 导出密钥（正确参数）
   const privateKey = encodeKey(keyPair.raw);
   localStorage.setItem(key, privateKey);
 }
-async function loadKeyPair(key) {
+async function loadKeyPair(key:  string) {
   const privateKey = localStorage.getItem(key);
   if (privateKey) {
     const keyPair = keys.privateKeyFromRaw(decodeKey(privateKey));

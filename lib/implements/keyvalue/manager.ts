@@ -1,6 +1,10 @@
 import type { Multiaddr } from "@multiformats/multiaddr";
 import { KeyValueClient } from "./client";
-import { DCConnectInfo, ThemeAuthInfo, ThemeComment } from "../../common/types/types";
+import {
+  DCConnectInfo,
+  ThemeAuthInfo,
+  ThemeComment,
+} from "../../common/types/types";
 import { OpenFlag } from "../../common/constants";
 import { CommentManager } from "../comment/manager";
 import { HeliaLibp2p } from "helia";
@@ -12,11 +16,12 @@ import { base32 } from "multiformats/bases/base32";
 import { Client } from "../../common/dcapi";
 import { CommentType, Direction } from "../../common/define";
 import { DCContext } from "../../../lib/interfaces/DCContext";
+import { AnyExtensionField } from "protobufjs";
 
 //定义Key-Value存储的数据类型
 export enum KeyValueStoreType { //存储主题类型 1:鉴权主题(读写都需要鉴权) 2:公共主题(默认所有用户可读,写需要鉴权)
   Auth = 1,
-  Public = 2
+  Public = 2,
 }
 // 错误定义
 export class KeyValueError extends Error {
@@ -27,76 +32,134 @@ export class KeyValueError extends Error {
 }
 export const Errors = {
   ErrNoDcPeerConnected: new KeyValueError("no dc peer connected"),
+  ErrPublicKeyIsNull: new KeyValueError("publickey is null"),
 };
 
 export class KeyValueDB {
-   private appId: string;
-   private dbname: string;
-   private themeAuthor: string;
-    private manager: KeyValueManager;
-    constructor(appId: string, dbname: string, themeAuthor: string,manager: KeyValueManager) {
+  private appId: string;
+  private dbname: string;
+  private themeAuthor: string;
+  private manager: KeyValueManager;
+  constructor(
+    appId: string,
+    dbname: string,
+    themeAuthor: string,
+    manager: KeyValueManager
+  ) {
     this.appId = appId;
     this.dbname = dbname;
     this.themeAuthor = themeAuthor;
     this.manager = manager;
-    }
-    
-    //设置键值对
-    async set(key: string, value: any, indexs?: string,vaccount?: string): Promise<[boolean, Error | null]> {
-       return this.manager.setKeyValue(this.appId, this.themeAuthor, this.dbname, key, value, indexs, vaccount);
-    }
-    
-    //获取键值对
-    async get(key: string,writerPubkey?: string,vaccount?: string):  Promise<[string, Error | null]> {
-      if (!writerPubkey) {
-        writerPubkey = this.themeAuthor;
-      }
-      return this.manager.getValueWithKey(this.appId, this.themeAuthor, this.dbname, writerPubkey, key,vaccount);
-    }
-
-    //批量获取键值对
-    async getBatch(keys: string,writerPubkey?: string,vaccount?: string):  Promise<[string, Error | null]> {
-      if (!writerPubkey) {
-        writerPubkey = this.themeAuthor;
-      }
-      return this.manager.getValuesWithKeys(this.appId, this.themeAuthor, this.dbname, writerPubkey, keys,vaccount);
-    }
-
-    //通过索引获取键值对
-    async getWithIndex(indexKey:string,
-    indexValue:string,
-    limit?: number,
-    seekKey?:string, 
-    offset?: number,
-    vaccount?: string):  Promise<[string, Error | null]> {
-      return this.manager.getWithIndex(this.appId, this.themeAuthor, this.dbname, indexKey, indexValue, seekKey, offset, limit, vaccount);
-    }
-
-   //配置授权
-    async configAuth(
-      authPubkey: string,
-      permission: number,
-      remark: string,
-      vaccount?: string
-    ): Promise<[number, Error | null]> {
-      return this.manager.doConfigAuth(
-        this.appId,
-        this.themeAuthor,
-        this.dbname,
-        authPubkey,
-        permission,
-        remark,
-        vaccount
-      );
-    }
-    
-
-    //获取授权列表
-    async getAuthList(vaccount?: string):  Promise<[ThemeAuthInfo[]|null,ThemeComment[] | null, Error | null]> {
-      return this.manager.getAuthList(this.appId, this.themeAuthor, this.dbname, vaccount);
-    }
   }
 
+  //设置键值对
+  async set(
+    key: string,
+    value: any,
+    indexs: string = "",
+    vaccount: string = ""
+  ): Promise<[boolean | null, Error | null]> {
+    return this.manager.setKeyValue(
+      this.appId,
+      this.themeAuthor,
+      this.dbname,
+      key,
+      value,
+      indexs,
+      vaccount
+    );
+  }
+
+  //获取键值对
+  async get(
+    key: string,
+    writerPubkey?: string,
+    vaccount?: string
+  ): Promise<[string | null, Error | null]> {
+    if (!writerPubkey) {
+      writerPubkey = this.themeAuthor;
+    }
+    return this.manager.getValueWithKey(
+      this.appId,
+      this.themeAuthor,
+      this.dbname,
+      writerPubkey,
+      key,
+      vaccount
+    );
+  }
+
+  //批量获取键值对
+  async getBatch(
+    keys: string,
+    writerPubkey: string,
+    vaccount: string
+  ): Promise<[string | null, Error | null]> {
+    if (!writerPubkey) {
+      writerPubkey = this.themeAuthor;
+    }
+    return this.manager.getValuesWithKeys(
+      this.appId,
+      this.themeAuthor,
+      this.dbname,
+      writerPubkey,
+      keys,
+      vaccount
+    );
+  }
+
+  //通过索引获取键值对
+  async getWithIndex(
+    indexKey: string,
+    indexValue: string,
+    limit: number = 1000,
+    seekKey: string = "",
+    offset: number = 0,
+    vaccount: string = ""
+  ): Promise<[string | null, Error | null]> {
+    return this.manager.getWithIndex(
+      this.appId,
+      this.themeAuthor,
+      this.dbname,
+      indexKey,
+      indexValue,
+      seekKey,
+      offset,
+      limit,
+      vaccount
+    );
+  }
+
+  //配置授权
+  async configAuth(
+    authPubkey: string,
+    permission: number,
+    remark: string,
+    vaccount?: string
+  ): Promise<[number | null, Error | null]> {
+    return this.manager.doConfigAuth(
+      this.appId,
+      this.themeAuthor,
+      this.dbname,
+      authPubkey,
+      permission,
+      remark,
+      vaccount
+    );
+  }
+
+  //获取授权列表
+  async getAuthList(
+    vaccount?: string
+  ): Promise<[ThemeAuthInfo[] | null, ThemeComment[] | null, Error | null]> {
+    return this.manager.getAuthList(
+      this.appId,
+      this.themeAuthor,
+      this.dbname,
+      vaccount
+    );
+  }
+}
 
 export class KeyValueManager {
   private dc: DcUtil;
@@ -126,8 +189,11 @@ export class KeyValueManager {
     appId: string,
     theme: string,
     space: number,
-    type: KeyValueStoreType, 
-  ): Promise<[KeyValueDB, Error | null]> {
+    type: KeyValueStoreType
+  ): Promise<[KeyValueDB | null, Error | null]> {
+    if(!this.context.publicKey){
+      return [null, Errors.ErrPublicKeyIsNull];
+    }
     // Default group to "DCAPP" if empty
     if (appId === "") {
       appId = "DCAPP";
@@ -182,22 +248,14 @@ export class KeyValueManager {
     }
   }
 
-
   async getKeyValueDB(
     appId: string,
     theme: string,
     ThemeAuthor: string
   ): Promise<[KeyValueDB, Error | null]> {
-    const keyValueDB = new KeyValueDB(
-      appId,
-      theme,
-      ThemeAuthor,
-      this
-    );
+    const keyValueDB = new KeyValueDB(appId, theme, ThemeAuthor, this);
     return [keyValueDB, null];
   }
-
-  
 
   async doConfigAuth(
     appId: string,
@@ -207,25 +265,29 @@ export class KeyValueManager {
     permission: number,
     remark: string,
     vaccount?: string
-  ): Promise<[number, Error | null]> {
+  ): Promise<[number | null, Error | null]> {
+    if(!this.context.publicKey){
+      return [null, Errors.ErrPublicKeyIsNull];
+    }
     if (!theme.startsWith("keyvalue_")) {
       theme = "keyvalue_" + theme;
     }
     if (!theme.endsWith("_authlist")) {
       theme = theme + "_authlist";
     }
-    
+
     const userPubkey = this.context.getPublicKey();
     let userPubkeyStr = userPubkey.string();
 
-    let client = this.connectedDc.client;
-    if (themeAuthor != this.context.publicKey.string()) {//查询他人主题评论
-      const authorPublicKey: Ed25519PubKey = Ed25519PubKey.edPubkeyFromStr(themeAuthor);
+    let client = this.connectedDc.client || null;
+    if (themeAuthor != this.context.publicKey.string()) {
+      //查询他人主题评论
+      const authorPublicKey: Ed25519PubKey =
+        Ed25519PubKey.edPubkeyFromStr(themeAuthor);
       client = await this.dc.connectToUserDcPeer(authorPublicKey.raw);
       if (!client) {
         return [null, Errors.ErrNoDcPeerConnected];
       }
-     
     }
     if (client === null) {
       return [null, new Error("ErrConnectToAccountPeersFail")];
@@ -234,21 +296,21 @@ export class KeyValueManager {
     if (client.peerAddr === null) {
       return [null, new Error("ErrConnectToAccountPeersFail")];
     }
-    if(client.token == ""){
-      await client.GetToken(this.context.publicKey.string(),this.context.sign);
+    if (client.token == "") {
+      await client.GetToken(this.context.publicKey.string(), this.context.sign);
     }
     const themeAuthorPubkey: Ed25519PubKey =
       Ed25519PubKey.edPubkeyFromStr(themeAuthor);
 
     let pubkeyFlag = true;
-    let forPubkey: Ed25519PubKey;
+    let forPubkey: Ed25519PubKey | null = null;
     try {
       forPubkey = Ed25519PubKey.edPubkeyFromStr(authPubkey);
     } catch (error) {
       pubkeyFlag = false;
     }
     let forPubkeyHex: string;
-    if (pubkeyFlag) {
+    if (pubkeyFlag && forPubkey !== null) {
       forPubkeyHex = forPubkey.string();
     } else {
       forPubkeyHex = authPubkey;
@@ -264,7 +326,7 @@ export class KeyValueManager {
     // Get blockchain height
     let blockHeight: number;
     try {
-      blockHeight = await this.chainUtil.getBlockHeight();
+      blockHeight = await this.chainUtil.getBlockHeight() || 0;
     } catch (error) {
       return [null, new Error("ErrGetBlockHeightFail")];
     }
@@ -315,10 +377,10 @@ export class KeyValueManager {
 
       if (res !== 0) {
         return [res, new Error(`configThemeObjAuth fail, resFlag: ${res}`)];
-      }else {
+      } else {
         return [0, null];
       }
-    } catch (error) {
+    } catch (error: any) {
       return [null, error];
     }
   }
@@ -328,8 +390,8 @@ export class KeyValueManager {
     themeAuthor: string,
     theme: string,
     vaccount?: string
-  ): Promise<[ThemeAuthInfo[]|null,ThemeComment[] | null, Error | null]> {
-     if (!theme.startsWith("keyvalue_")) {
+  ): Promise<[ThemeAuthInfo[] | null, ThemeComment[] | null, Error | null]> {
+    if (!theme.startsWith("keyvalue_")) {
       theme = "keyvalue_" + theme;
     }
     if (!theme.endsWith("_authlist")) {
@@ -353,21 +415,24 @@ export class KeyValueManager {
           vaccount
         );
         if (res[0] && res[0].length == 0) {
-          return [authList,originAuthList, null];
+          break;
         }
-        
+
         const resList = res[0];
+        if(!resList || resList.length == 0){
+          break;
+        }
         for (let i = 0; i < resList.length; i++) {
-            originAuthList.push(resList[i]);
-            const content = resList[i].comment
-            const parts = content.split(":");
-            if (parts.length < 2) {
-              continue;
-            }
-            const authPubkey = parts[0];
-            const permission = parseInt(parts[1]);
-            const remark = content.substring(parts[0].length + 2);
-            authList.push({
+          originAuthList.push(resList[i]);
+          const content = resList[i].comment;
+          const parts = content.split(":");
+          if (parts.length < 2) {
+            continue;
+          }
+          const authPubkey = parts[0];
+          const permission = parseInt(parts[1]);
+          const remark = content.substring(parts[0].length + 2);
+          authList.push({
             pubkey: authPubkey,
             permission: permission,
             remark: remark,
@@ -380,10 +445,10 @@ export class KeyValueManager {
           resList[resList.length - 1].commentCid
         }`;
       }
-    } catch (error) {
-      return [authList,originAuthList, error];
+    } catch (error: any) {
+      return [authList, originAuthList, error];
     }
-    return [authList,originAuthList, null];
+    return [authList, originAuthList, null];
   }
 
   async setKeyValue(
@@ -394,15 +459,20 @@ export class KeyValueManager {
     value: string,
     indexs: string, //索引列表,格式为key1:value1$$$key2:value2
     vaccount?: string
-  ): Promise<[boolean, Error | null]> {
+  ): Promise<[boolean | null, Error | null]> {
+    if(!this.context.publicKey){
+      return [null, Errors.ErrPublicKeyIsNull];
+    }
     if (!theme.startsWith("keyvalue_")) {
       theme = "keyvalue_" + theme;
     }
     const userPubkey = this.context.getPublicKey();
     let userPubkeyStr = userPubkey.string();
-    let client = this.connectedDc.client;
-    if (themeAuthor != this.context.publicKey.string()) {//查询他人主题评论
-      const authorPublicKey: Ed25519PubKey = Ed25519PubKey.edPubkeyFromStr(themeAuthor);
+    let client = this.connectedDc.client || null;
+    if (themeAuthor != this.context.publicKey.string()) {
+      //查询他人主题评论
+      const authorPublicKey: Ed25519PubKey =
+        Ed25519PubKey.edPubkeyFromStr(themeAuthor);
       client = await this.dc.connectToUserDcPeer(authorPublicKey.raw);
       if (!client) {
         return [null, Errors.ErrNoDcPeerConnected];
@@ -415,8 +485,8 @@ export class KeyValueManager {
     if (client.peerAddr === null) {
       return [null, new Error("ErrConnectToAccountPeersFail")];
     }
-    if(client.token == ""){
-      await client.GetToken(this.context.publicKey.string(),this.context.sign);
+    if (client.token == "") {
+      await client.GetToken(this.context.publicKey.string(), this.context.sign);
     }
     let content = `${key}:${value}`;
     if (indexs != "") {
@@ -428,7 +498,7 @@ export class KeyValueManager {
 
     const contentSize = contentUint8.length;
 
-    const blockHeight: number = await this.chainUtil.getBlockHeight();
+    const blockHeight: number = await this.chainUtil.getBlockHeight() || 0;
     const hValue: Uint8Array = uint32ToLittleEndianBytes(
       blockHeight ? blockHeight : 0
     );
@@ -471,7 +541,7 @@ export class KeyValueManager {
         return [null, new Error(`setKeyValue fail, resFlag:${res}`)];
       }
       return [true, null];
-    } catch (error) {
+    } catch (error: any) {
       return [null, error];
     }
   }
@@ -483,13 +553,18 @@ export class KeyValueManager {
     writerPubkey: string,
     key: string,
     vaccount?: string
-  ): Promise<[string, Error | null]> {
-     if (!theme.startsWith("keyvalue_")) {
+  ): Promise<[string | null, Error | null]> {
+    if(!this.context.publicKey){
+      return [null, Errors.ErrPublicKeyIsNull];
+    }
+    if (!theme.startsWith("keyvalue_")) {
       theme = "keyvalue_" + theme;
     }
-    let client = this.connectedDc.client;
-    if (themeAuthor != this.context.publicKey.string()) {//查询他人主题评论
-      const authorPublicKey: Ed25519PubKey = Ed25519PubKey.edPubkeyFromStr(themeAuthor);
+    let client = this.connectedDc.client || null;
+    if (themeAuthor != this.context.publicKey.string()) {
+      //查询他人主题评论
+      const authorPublicKey: Ed25519PubKey =
+        Ed25519PubKey.edPubkeyFromStr(themeAuthor);
       client = await this.dc.connectToUserDcPeer(authorPublicKey.raw);
       if (!client) {
         return [null, Errors.ErrNoDcPeerConnected];
@@ -502,8 +577,8 @@ export class KeyValueManager {
     if (client.peerAddr === null) {
       return [null, new Error("ErrConnectToAccountPeersFail")];
     }
-    if(client.token == ""){
-      await client.GetToken(this.context.publicKey.string(),this.context.sign);
+    if (client.token == "") {
+      await client.GetToken(this.context.publicKey.string(), this.context.sign);
     }
 
     const keyValueClient = new KeyValueClient(client, this.context);
@@ -525,7 +600,7 @@ export class KeyValueManager {
       }
       const keyValue = new TextDecoder().decode(res);
       return [keyValue, null];
-    } catch (error) {
+    } catch (error: any) {
       return [null, error];
     }
   }
@@ -537,13 +612,18 @@ export class KeyValueManager {
     writerPubkey: string,
     keys: string,
     vaccount?: string
-  ): Promise<[string, Error | null]> {
+  ): Promise<[string | null, Error | null]> {
+    if(!this.context.publicKey){
+      return [null, Errors.ErrPublicKeyIsNull];
+    }
     if (!theme.startsWith("keyvalue_")) {
       theme = "keyvalue_" + theme;
     }
-     let client = this.connectedDc.client;
-    if (themeAuthor != this.context.publicKey.string()) {//查询他人主题评论
-      const authorPublicKey: Ed25519PubKey = Ed25519PubKey.edPubkeyFromStr(themeAuthor);
+    let client = this.connectedDc.client || null;
+    if (themeAuthor != this.context.publicKey.string()) {
+      //查询他人主题评论
+      const authorPublicKey: Ed25519PubKey =
+        Ed25519PubKey.edPubkeyFromStr(themeAuthor);
       client = await this.dc.connectToUserDcPeer(authorPublicKey.raw);
       if (!client) {
         return [null, Errors.ErrNoDcPeerConnected];
@@ -556,8 +636,8 @@ export class KeyValueManager {
     if (client.peerAddr === null) {
       return [null, new Error("ErrConnectToAccountPeersFail")];
     }
-    if(client.token == ""){
-      await client.GetToken(this.context.publicKey.string(),this.context.sign);
+    if (client.token == "") {
+      await client.GetToken(this.context.publicKey.string(), this.context.sign);
     }
 
     const keyValueClient = new KeyValueClient(client, this.context);
@@ -579,36 +659,39 @@ export class KeyValueManager {
       }
       const keyValues = new TextDecoder().decode(res);
       return [keyValues, null];
-    } catch (error) {
+    } catch (error: any) {
       return [null, error];
     }
   }
-
-
 
   async getWithIndex(
     appId: string,
     themeAuthor: string,
     theme: string,
-    indexKey:string,
-    indexValue:string,
-    seekKey:string, 
+    indexKey: string,
+    indexValue: string,
+    seekKey: string,
     offset: number,
     limit: number,
     vaccount?: string
-  ): Promise<[string, Error | null]> {
+  ): Promise<[string | null, Error | null]> {
+    if(!this.context.publicKey){
+      return [null, Errors.ErrPublicKeyIsNull];
+    }
     if (!theme.startsWith("keyvalue_")) {
       theme = "keyvalue_" + theme;
     }
-    let client = this.connectedDc.client;
-    if (themeAuthor != this.context.publicKey.string()) {//查询他人主题评论
-      const authorPublicKey: Ed25519PubKey = Ed25519PubKey.edPubkeyFromStr(themeAuthor);
+    let client = this.connectedDc.client || null;
+    if (themeAuthor != this.context.publicKey.string()) {
+      //查询他人主题评论
+      const authorPublicKey: Ed25519PubKey =
+        Ed25519PubKey.edPubkeyFromStr(themeAuthor);
       client = await this.dc.connectToUserDcPeer(authorPublicKey.raw);
       if (!client) {
         return [null, Errors.ErrNoDcPeerConnected];
       }
       //获取token
-      await client.GetToken(this.context.publicKey.string(),this.context.sign);
+      await client.GetToken(this.context.publicKey.string(), this.context.sign);
     }
     if (client === null) {
       return [null, new Error("ErrConnectToAccountPeersFail")];
@@ -617,8 +700,8 @@ export class KeyValueManager {
     if (client.peerAddr === null) {
       return [null, new Error("ErrConnectToAccountPeersFail")];
     }
-    if(client.token == ""){
-      await client.GetToken(this.context.publicKey.string(),this.context.sign);
+    if (client.token == "") {
+      await client.GetToken(this.context.publicKey.string(), this.context.sign);
     }
 
     const keyValueClient = new KeyValueClient(client, this.context);
@@ -643,9 +726,8 @@ export class KeyValueManager {
       }
       const keyValues = new TextDecoder().decode(res);
       return [keyValues, null];
-    } catch (error) {
+    } catch (error: any) {
       return [null, error];
     }
   }
-
 }

@@ -30,7 +30,7 @@ export interface ICommentOperations {
   addUserOffChainOpTimes(
   times: number,
   vaccount?: string
-): Promise<[boolean, Error | null]>
+): Promise<[boolean | null, Error | null]>
  
   /**
    * 为已开通评论的主题增加评论空间,为了防止每个主题评论空间浪费,每个主题在创建时会分配50MB的评论空间,如果后续不够,可以通过这个接口增加
@@ -128,7 +128,7 @@ export interface ICommentOperations {
       permission: ThemePermission,
       remark: string,
       vaccount?: string
-    ): Promise<[number, Error | null]>;
+    ): Promise<[number | null, Error | null]>;
   
   
   /**

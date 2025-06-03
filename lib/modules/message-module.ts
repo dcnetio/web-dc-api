@@ -15,8 +15,8 @@ const logger = createLogger('MessageModule');
  */
 export class MessageModule implements DCModule, IMessageOperations {
   readonly moduleName = CoreModuleName.MESSAGE;
-  private context: DCContext;
-  private messageManager: MessageManager;
+  private context!: DCContext;
+  private messageManager!: MessageManager;
   private initialized: boolean = false;
   
   /**

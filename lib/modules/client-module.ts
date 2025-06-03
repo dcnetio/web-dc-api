@@ -15,8 +15,7 @@ const logger = createLogger('ClientModule');
  */
 export class ClientModule implements DCModule, IClientOperations {
   readonly moduleName = CoreModuleName.CLIENT;
-  private context: DCContext;
-  private clientManager: DCManager;
+  private clientManager!: DCManager;
   private initialized: boolean = false;
   
   /**
@@ -26,7 +25,6 @@ export class ClientModule implements DCModule, IClientOperations {
    */
   async initialize(context: DCContext): Promise<boolean> {
     try {
-      this.context = context;
       this.clientManager = new DCManager(
         context.connectedDc,
       );

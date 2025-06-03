@@ -101,7 +101,7 @@ export class CommonClient {
     accounthashencrypt: Uint8Array,
     pubkeyencrypt: Uint8Array,
     loginkeyrandencrypt: Uint8Array,
-    peerAddr
+    peerAddr: Multiaddr
   ): Promise<Uint8Array> {
     try {
       const grpcClient = new Libp2pGrpcClient(

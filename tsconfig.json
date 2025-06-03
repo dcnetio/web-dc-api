@@ -1,7 +1,13 @@
 {  
   "compilerOptions": {  
+    "noImplicitReturns": true,  // 确保所有代码路径都有返回值
+    "strict": true,             // 启用所有严格类型检查
+    "noImplicitAny": true,       // 禁止隐式 any 类型
+    "strictFunctionTypes": true,
+    "strictNullChecks": true,
+    "exactOptionalPropertyTypes": true,
     "baseUrl": ".",  // 这很重要，确保相对路径正确
-    "target": "ES2020",  
+    "target": "es2015",  
     "module": "ESNext",  
     "moduleResolution": "Bundler",  // Bundler ： TypeScript 4.7+ 新选项，专为现代打包工具优化  
     "moduleDetection": "force",     // 强制将所有文件视为模块  
@@ -13,19 +19,21 @@
     "declarationMap": true,         // 生成声明文件的映射  
     "sourceMap": true,  
     // "strict": true,  
-    "skipLibCheck": true,  
+    // "skipLibCheck": true,  
     "forceConsistentCasingInFileNames": true,
     "outDir": "dist",            // 编译输出目录  
     "rootDir": "lib",            // 源码目录
-    // "paths": {
+    // 添加以下两条防止无限类型递归
+    "maxNodeModuleJsDepth": 2,
+    "paths": {
     //   "grpc-libp2p-client": [
     //     "../grpc-libp2p-client/src/index"
     //   ],
     //   "grpc-libp2p-client/*": [
     //     "../grpc-libp2p-client/src/*"
     //   ], 
-    // }
+    }
   },  
-  "include": ["lib/**/*"],  
+  "include": ["lib/**/*.ts", "lib/**/*.tsx"],
   "exclude": ["node_modules", "dist"]  
 }  

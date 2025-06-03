@@ -11,7 +11,6 @@ import { User } from "./types/types";
 import { hexToBytes } from "@noble/curves/abstract/utils";
 import { base32 } from "multiformats/bases/base32";
 import * as buffer from "buffer/";
-import { WalletManager } from "lib/implements/wallet/manager";
 const { Buffer } = buffer;
 
 export interface StoreunitInfo {  
@@ -28,7 +27,7 @@ export interface StoreunitInfo {
 export class ChainUtil {
   dcchainapi: ApiPromise | undefined;
   // 连接链节点
-  create = async (blockChainAddr) => {
+  create = async (blockChainAddr: string) => {
     const chainProvider = new WsProvider(blockChainAddr);
     this.dcchainapi = await ApiPromise.create({
       provider: chainProvider,
@@ -122,7 +121,7 @@ export class ChainUtil {
     const walletAccount =
       await this.dcchainapi?.query.dcNode.nftToWalletAccount(nftHexAccount);
     console.log("=========walletAccount", walletAccount);
-    if (!walletAccount.toString()) {
+    if (!walletAccount || !walletAccount.toString()) {
       throw new Error("walletAccount is null");
     }
     const userInfo = await this.getUserInfoWithAccount(
@@ -281,12 +280,17 @@ export class ChainUtil {
       return [];
     }
     let peers: string[] = [];
-    for (let i = 0; i < (peerListJson as string[]).length; i++) {
-      const peerJson = Buffer.from(peerListJson[i].slice(2), "hex").toString(
-        "utf8"
-      );
-      console.log("peerJson", peerJson);
-      peers = peers.concat(peerJson);
+    if (Array.isArray(peerListJson)) {
+      for (let i = 0; i < peerListJson.length; i++) {
+        const peer = peerListJson[i];
+        if (typeof peer === "string") {
+          const peerJson = Buffer.from(peer.slice(2), "hex").toString(
+            "utf8"
+          );
+          console.log("peerJson", peerJson);
+          peers = peers.concat(peerJson);
+        }
+      }
     }
     console.log("peers", peers);
     return peers;
@@ -308,13 +312,14 @@ export class ChainUtil {
       if (!data) {  
           return null;  
       }  
-      // 构造返回数据  
+    // 构造返回数据  
+    if (typeof data === "object" && data !== null && !Array.isArray(data)) {
       return {  
-        size: Number(data['fileSize'] || 0),  
-        utype: Number(data['fileType'] || 0),  
+        size: Number((data as any)['fileSize'] || 0),  
+        utype: Number((data as any)['fileType'] || 0),  
         peers: new Set(
-          Array.isArray(data['peers']) 
-            ? data['peers'].map(peer => {
+          Array.isArray((data as any)['peers']) 
+            ? (data as any)['peers'].map((peer: any) => {
                 try {
                   return hexToAscii(String(peer));
                 } catch (e) {
@@ -324,10 +329,10 @@ export class ChainUtil {
               })
             : []
         ),   
-        users: new Set(Array.isArray(data['users']) ? data['users'].map(String) : []),  
+        users: new Set(Array.isArray((data as any)['users']) ? (data as any)['users'].map(String) : []),  
         mbusers: new Set(
-          Array.isArray(data['users']) 
-            ? data['users'].map(user => {
+          Array.isArray((data as any)['users']) 
+            ? (data as any)['users'].map((user: any) => {
                 try {
                   const userBytes = hexToBytes(user.slice(2));
                   const mbUser =  base32.encode(userBytes); 
@@ -340,8 +345,8 @@ export class ChainUtil {
             : []
         ),   
         logs: new Set(
-          Array.isArray(data['dbLog']) 
-            ? data['dbLog'].map(log => {
+          Array.isArray((data as any)['dbLog']) 
+            ? (data as any)['dbLog'].map((log: any) => {
                 try {
                   return hexToAscii(String(log));
                 } catch (e) {
@@ -351,7 +356,9 @@ export class ChainUtil {
               })
             : []
         ),   
-    };    
+      };    
+    }
+    return null;
   }
 
     ifEnoughUserSpace = async (

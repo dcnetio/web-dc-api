@@ -59,7 +59,7 @@ export class MessageClient {
       const decoded = dcnet.pb.SendMsgToUserBoxReply.decode(responseData);
       console.log("SendMsgToUserBox decoded", decoded);
       return decoded.flag;
-    } catch (error) {
+    } catch (error: any) {
       if (error.message.indexOf(Errors.INVALID_TOKEN.message) != -1) {
         // try to get token
         const token = await this.receiverClient.GetToken(
@@ -107,7 +107,7 @@ export class MessageClient {
       const decoded = dcnet.pb.GetToUserBoxAuthReply.decode(responseData);
       console.log("GetToUserBoxAuth decoded", decoded);
       return decoded.signature;
-    } catch (error) {
+    } catch (error: any) {
       if (error.message.indexOf(Errors.INVALID_TOKEN.message) != -1) {
         // try to get token
         const token = await this.client.GetToken(
@@ -153,7 +153,7 @@ export class MessageClient {
       );
       const decoded = dcnet.pb.GetMaxKeyFromUserBoxReply.decode(responseData);
       return decoded.maxkey ? uint8ArrayToString(decoded.maxkey) : '';
-    } catch (error) {
+    } catch (error: any) {
       if (error.message.indexOf(Errors.INVALID_TOKEN.message) != -1) {
         // try to get token
         const token = await this.client.GetToken(
@@ -213,7 +213,7 @@ export class MessageClient {
       );
       const decoded = dcnet.pb.GetMsgFromUserBoxReply.decode(responseData);
       return decoded.toJSON();
-    } catch (error) {
+    } catch (error: any) {
       if (error.message.indexOf(Errors.INVALID_TOKEN.message) != -1) {
         // try to get token
         const token = await this.client.GetToken(

@@ -145,7 +145,7 @@ export class MessageManager {
               );
               const list = res && res.msgs ? res.msgs : [];
               console.log('messageClient.getMsgFromUserBox list', list)
-              list.map((item) => {
+              list.map((item: dcnet.pb.IUserMsg) => {
                 if(item && item.messageId) {
                   allMsgs.push(item)
                 }
@@ -163,7 +163,7 @@ export class MessageManager {
         }
       }
       return [allMsgs, null]
-    } catch (error) {
+    } catch (error: any) {
       return [null, error]
     }
   };

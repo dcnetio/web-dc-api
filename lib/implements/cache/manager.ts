@@ -77,7 +77,7 @@ export class ThemeManager{
       return [reply, null];
     } catch (err) {
       console.log("getCacheValue error:", err);
-      return [null, err];
+      return [null, err as Error];
     }
   }
 

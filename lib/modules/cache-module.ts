@@ -16,8 +16,7 @@ const logger = createLogger('CacheModule');
  */
 export class CacheModule implements DCModule, ICacheOperations {
   readonly moduleName = CoreModuleName.CACHE;
-  private context: DCContext;
-  private themeManager: ThemeManager;
+  private themeManager!: ThemeManager;
   private initialized: boolean = false;
   
   /**
@@ -27,8 +26,6 @@ export class CacheModule implements DCModule, ICacheOperations {
    */
   async initialize(context: DCContext): Promise<boolean> {
     try {
-      this.context = context;
-
       this.themeManager = new ThemeManager(
         context.connectedDc,
         context.dcutil,

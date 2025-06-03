@@ -227,8 +227,8 @@ async isAccessPeerIdBinded(): Promise<boolean> {
             await sleep(1000); // 使用毫秒，等同于1秒
           }
       }
-    }catch (error) {
-      return 
+    }catch (error:  any) {
+      return [null, error];
     }
 
     try {
@@ -402,7 +402,7 @@ const source = Array.from(files).map(file => ({
 }));
 
 const results =  fs.addAll(source);
-let rootCID: CID<unknown, number, number, Version>;
+let rootCID: CID<unknown, number, number, Version> | undefined = undefined;
 for await (const { path, cid } of results) {
   // The entry with path equal to the root folder name is our root
   if (path === rootFolderName) {
@@ -873,7 +873,7 @@ private async readFile(path: string): Promise<Blob | null> {
 
   // 从dc网络获取指定文件
   // flag 是否需要连接节点，0-获取，1-不获取
-  getFileFromDc = async (cid: string, decryptKey: string, flag?: number) => {
+  getFileFromDc = async (cid: string, decryptKey: string, flag?: number) : Promise<Uint8Array | null> => {
     if (flag !== cidNeedConnect.NOT_NEED) {
       const res = await this.dc?._connectToObjNodes(cid);
       if (!res) {
@@ -969,7 +969,7 @@ private async readFile(path: string): Promise<Blob | null> {
       return fileContent;
     } catch (error) {
       console.error("getFileFromDc error", error);
-      return ;
+      return null;
     }
   };
 

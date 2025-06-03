@@ -50,7 +50,13 @@ export class AIProxyClient {
     const aesKey = new TextDecoder().decode(decoded.aeskey);
     return [proxyConfigCid,aesKey, null];
     } catch (error) {
-      if (error.message.indexOf(Errors.INVALID_TOKEN.message) != -1) {
+      if (
+        typeof error === "object" &&
+        error !== null &&
+        "message" in error &&
+        typeof (error as any).message === "string" &&
+        (error as any).message.indexOf(Errors.INVALID_TOKEN.message) != -1
+      ) {
         // try to get token
         const token = await this.client.GetToken(
           this.context.getPublicKey().string(),
@@ -113,7 +119,13 @@ export class AIProxyClient {
     const authInfo = new TextDecoder().decode(decoded.authInfo);
     return [authInfo, null];
     } catch (error) {
-      if (error.message.indexOf(Errors.INVALID_TOKEN.message) != -1) {
+      if (
+        typeof error === "object" &&
+        error !== null &&
+        "message" in error &&
+        typeof (error as any).message === "string" &&
+        (error as any).message.indexOf(Errors.INVALID_TOKEN.message) != -1
+      ) {
         // try to get token
         const token = await this.client.GetToken(
           this.context.getPublicKey().string(),
@@ -156,7 +168,7 @@ export class AIProxyClient {
     forceRefresh: number,
     blockHeight: number,
     signature: Uint8Array,
-    onStreamResponse: OnStreamResponseType = null): Promise<number> {
+    onStreamResponse: OnStreamResponseType | null = null): Promise<number> {
     const message = new dcnet.pb.DoAIProxyCallRequest({});
     message.appId = new TextEncoder().encode(appId);
     message.themeAuthor = new TextEncoder().encode(themeAuthor);
@@ -189,7 +201,7 @@ export class AIProxyClient {
     }
     const onErrorCallback = async (error: unknown) => {
         if (onStreamResponse) {
-            onStreamResponse(4,"",error.toString());
+            onStreamResponse(4, "", error instanceof Error ? error.message : String(error));
         }
     }
     try {

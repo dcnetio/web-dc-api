@@ -1,13 +1,10 @@
 // modules/keyvalue-module.ts
 // 键值存储功能模块
 
-import {  IKeyValueOperations } from "../interfaces/keyvalue-interface";
 import { DCContext } from "../../lib/interfaces/DCContext";
 import { DCModule, CoreModuleName } from "../common/module-system";
-import {  KeyValueStoreType } from "../implements/keyvalue/manager";
-import { ThemeManager } from "../implements/cache/manager";
 import { createLogger } from "../util/logger";
-import { AIProxyConfig, OnStreamResponseType, ProxyCallConfig, ThemeComment, UserProxyCallConfig } from "../common/types/types";
+import { AIProxyConfig, OnStreamResponseType, ProxyCallConfig, UserProxyCallConfig } from "../common/types/types";
 import { AIProxyManager } from "../implements/aiproxy/manager";
 import { AIProxyUserPermission } from "../common/constants";
 const logger = createLogger('KeyValueModule');
@@ -18,8 +15,7 @@ const logger = createLogger('KeyValueModule');
  */
 export class AIProxyModule implements DCModule {
   readonly moduleName = CoreModuleName.AIPROXY;
-  private context: DCContext;
-  private aiProxyManager: AIProxyManager;
+  private aiProxyManager!: AIProxyManager;
   private initialized: boolean = false;
   
   /**
@@ -29,7 +25,6 @@ export class AIProxyModule implements DCModule {
    */
   async initialize(context: DCContext): Promise<boolean> {
     try {
-      this.context = context;
       this.aiProxyManager = new AIProxyManager(
         context.dcutil,
         context.AccountBackupDc,
@@ -57,7 +52,7 @@ export class AIProxyModule implements DCModule {
   async createProxyConfig(
     appId: string,
     configTheme: string, 
-  ): Promise<[number, Error | null]> {
+  ): Promise<[number | null, Error | null]> {
     this.assertInitialized();
     return this.aiProxyManager.createProxyConfig(appId, configTheme);
   }
@@ -71,7 +66,7 @@ configAIProxy(
     serviceName: string,
     serviceConfig?: AIProxyConfig,
     vaccount?: string
-  ): Promise<[boolean, Error | null]> {
+  ): Promise<[boolean | null, Error | null]> {
     this.assertInitialized();
     return this.aiProxyManager.configAIProxy(appId, configAuthor, configTheme, serviceName, serviceConfig, vaccount);
 }
@@ -86,7 +81,7 @@ authPubkey: string,
 permission: AIProxyUserPermission,
 authConfig: ProxyCallConfig,
 vaccount?: string
-): Promise<[number, Error | null]> {
+): Promise<[number | null, Error | null]> {
     this.assertInitialized();
     return this.aiProxyManager.configAuth(appId, configAuthor, configTheme, authPubkey, permission, authConfig, vaccount);
 }
@@ -108,7 +103,7 @@ async GetUserOwnAIProxyAuth(
     appId: string,
     themeAuthor: string,
     configThem: string,
-    ): Promise<[authConfig: ProxyCallConfig, error: Error | null]> {
+    ): Promise<[authConfig: ProxyCallConfig | null, error: Error | null]> {
     this.assertInitialized();
     return this.aiProxyManager.GetUserOwnAIProxyAuth(appId, themeAuthor, configThem);
 }
@@ -122,7 +117,7 @@ async GetUserOwnAIProxyAuth(
     serviceName: string,
     reqBody: string,
     forceRefresh: boolean,
-    onStreamResponse: OnStreamResponseType = null ,
+    onStreamResponse: OnStreamResponseType | null = null ,
     headers?: string,
     path?: string,
     model?: string): Promise< number>

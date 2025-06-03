@@ -60,7 +60,7 @@ export class KeyValueClient {
       const decoded = dcnet.pb.ConfigThemeObjAuthReply.decode(reply);
       console.log("ConfigThemeObjAuth decoded", decoded);
       return decoded.flag;
-    } catch (error) {
+    } catch (error: any) {
       if (error.message.indexOf(Errors.INVALID_TOKEN.message) != -1) {
         // try to get token
         const token = await this.client.GetToken(
@@ -131,7 +131,7 @@ export class KeyValueClient {
       const decoded = dcnet.pb.SetKeyValueReply.decode(reply);
       console.log("SetKeyValue decoded", decoded);
       return decoded.flag;
-    } catch (error) {
+    } catch (error: any) {
       if (error.message.indexOf(Errors.INVALID_TOKEN.message) != -1) {
         // try to get token
         const token = await this.client.GetToken(
@@ -195,7 +195,7 @@ export class KeyValueClient {
         return decoded.value;
       }
       return null;
-    } catch (error) {
+    } catch (error: any) {
       if (error.message.indexOf(Errors.INVALID_TOKEN.message) != -1) {
         // try to get token
         const token = await this.client.GetToken(
@@ -262,7 +262,7 @@ export class KeyValueClient {
         return decoded.keyValues;
       }
       return null;
-    } catch (error) {
+    } catch (error: any) {
       if (error.message.indexOf(Errors.INVALID_TOKEN.message) != -1) {
         // try to get token
         const token = await this.client.GetToken(
@@ -335,7 +335,7 @@ export class KeyValueClient {
         return decoded.keyValues;
       }
       return null;
-    } catch (error) {
+    } catch (error:any) {
       if (error.message.indexOf(Errors.INVALID_TOKEN.message) != -1) {
         // try to get token
         const token = await this.client.GetToken(

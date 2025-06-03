@@ -17,8 +17,8 @@ const logger = createLogger('CommentModule');
  */
 export class CommentModule implements DCModule, ICommentOperations {
   readonly moduleName = CoreModuleName.COMMENT;
-  private context: DCContext;
-  private commentManager: CommentManager;
+  private context!: DCContext;
+  private commentManager!: CommentManager;
   private initialized: boolean = false;
   
   /**
@@ -69,7 +69,7 @@ export class CommentModule implements DCModule, ICommentOperations {
 async addUserOffChainOpTimes(
   times: number,
   vaccount?: string
-): Promise<[boolean, Error | null]> {
+): Promise<[boolean | null, Error | null]> {
   this.assertInitialized();
   
   try {
@@ -302,7 +302,7 @@ async addUserOffChainOpTimes(
       permission: ThemePermission,
       remark: string,
       vaccount?: string
-    ): Promise<[number, Error | null]> {
+    ): Promise<[number | null, Error | null]> {
       this.assertInitialized();
       return await this.commentManager.configAuth(
         this.context.appInfo?.appId || "",

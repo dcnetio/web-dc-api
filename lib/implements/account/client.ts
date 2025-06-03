@@ -71,10 +71,7 @@ export class AccountClient {
       // try to get token
       let selfPubkey: Ed25519PubKey, 
       selfPrivkey: Ed25519PrivKey;
-      selfPubkey = context.publicKey;
-      selfPrivkey = context.privKey;
-      
-      if (!selfPubkey || !selfPrivkey) {
+      if (!context.publicKey || !context.privKey) {
         // 生成
         const keymanager = new KeyManager();
         selfPrivkey = await keymanager.getEd25519KeyFromMnemonic(
@@ -82,6 +79,9 @@ export class AccountClient {
           ''
         );
         selfPubkey = selfPrivkey.publicKey;
+      } else {
+        selfPubkey = context.publicKey;
+        selfPrivkey = context.privKey;
       }
       const token = await this.client.GetToken(
         selfPubkey.string(),

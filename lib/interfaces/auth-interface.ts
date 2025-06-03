@@ -26,9 +26,7 @@ export interface IAuthOperations {
    * @param safecode 安全码,默认000000
    * @returns 是否登录成功
    */
-  accountLogin(nftAccount: string, password: string, safecode: string): Promise<{
-      mnemonic: string;
-    }>;
+  accountLogin(nftAccount: string, password: string, safecode: string): Promise<{mnemonic: string | null;}>;
   
   /**
    * 签名数据
