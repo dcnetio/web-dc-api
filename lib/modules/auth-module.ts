@@ -158,7 +158,15 @@ export class AuthModule implements DCModule, IAuthOperations {
     if (!this.context.connectedDc?.client) {
       throw new Error("dcClient is null");
     }
-    const commonClient = new CommonClient(this.context.connectedDc.client);
+    //连接account所在的节点,并获取client
+    let client = this.context.connectedDc?.client
+    const walletAccount = await this.context.dcChain?.getUserWalletAccount(nftAccount);
+    const userPubkey: Ed25519PubKey = Ed25519PubKey.edPubkeyFromStr(walletAccount);
+    client = await this.context.dcutil.connectToUserDcPeer(userPubkey.raw);
+    if (!client) {
+      throw new Error("connect to user dc peer failed");
+    }
+    const commonClient = new CommonClient(client);
     const mnemonic = await commonClient.accountLogin(
       nftAccount,
       password,

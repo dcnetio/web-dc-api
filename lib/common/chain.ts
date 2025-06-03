@@ -174,6 +174,19 @@ export class ChainUtil {
     return userInfo;
   }
 
+
+  async getUserWalletAccount(nftAccount: string): Promise<string | null> {
+    const accountBytes = new TextEncoder().encode(nftAccount);
+    const accountHash = await sha256(accountBytes);
+    const nftHexAccount = "0x" + Buffer.from(accountHash).toString("hex");
+    const walletAccount =
+      await this.dcchainapi?.query.dcNode.nftToWalletAccount(nftHexAccount);
+    if (!walletAccount.toString()) {
+      throw new Error("walletAccount is null");
+    }
+    return walletAccount.toString();
+  }
+
   // 获取所有文件存储节点
   getObjNodes = async (cid: string): Promise<string[] | undefined> => {
     const fileInfo = (await this.dcchainapi?.query.dcNode.files(cid)) || null;
