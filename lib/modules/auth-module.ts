@@ -17,7 +17,7 @@ import { Errors } from "../common/error";
 import { dc_protocol } from "../common/define";
 import { Multiaddr } from "@multiformats/multiaddr";
 import { WalletManager } from "../implements/wallet/manager";
-import { NFTBindStatus, User } from "../common/types/types";
+import { AccountInfo, NFTBindStatus, User } from "../common/types/types";
 import { IAuthOperations } from "../interfaces/auth-interface";
 import { DCContext } from "../../lib/interfaces/DCContext";
 
@@ -93,7 +93,7 @@ export class AuthModule implements DCModule, IAuthOperations {
    * 账户登录
    * @returns 是否登录成功
    */
-  async accountLoginWithWallet(): Promise<any> {
+  async accountLoginWithWallet(): Promise<[flag: boolean, accountInfo:AccountInfo | null]> {
     this.assertInitialized();
 
     if (!this.context.connectedDc?.client) {
@@ -159,13 +159,17 @@ export class AuthModule implements DCModule, IAuthOperations {
       throw new Error("dcClient is null");
     }
     //连接account所在的节点,并获取client
-    let client = this.context.connectedDc?.client
+    let client = this.context.connectedDc?.client || null;
     const walletAccount = await this.context.dcChain?.getUserWalletAccount(nftAccount);
+    if(!walletAccount) {
+      throw new Error("getUserWalletAccount error");
+    }
     const userPubkey: Ed25519PubKey = Ed25519PubKey.edPubkeyFromStr(walletAccount);
-    client = await this.context.dcutil.connectToUserDcPeer(userPubkey.raw);
-    if (!client) {
+    const connectedClient = await this.context.dcutil.connectToUserDcPeer(userPubkey.raw);
+    if (!connectedClient) {
       throw new Error("connect to user dc peer failed");
     }
+    client = connectedClient;
     const commonClient = new CommonClient(client);
     const mnemonic = await commonClient.accountLogin(
       nftAccount,
@@ -480,7 +484,7 @@ export class AuthModule implements DCModule, IAuthOperations {
    * @param nftAccount NFT账户
    * @returns 用户信息
    */
-  async getUserInfoWithNft(nftAccount: string): Promise<any> {
+  async getUserInfoWithNft(nftAccount: string): Promise<[User | null, Error | null]> {
     this.assertInitialized();
 
     const accountManager = new AccountManager(this.context);
@@ -506,7 +510,7 @@ export class AuthModule implements DCModule, IAuthOperations {
    * 刷新用户信息
    * @returns 用户信息
    */
-  async refreshUserInfo(): Promise<any> {
+  async refreshUserInfo(): Promise<User> {
     this.assertInitialized();
 
     const pubkeyRaw = this.context.getPubkeyRaw();

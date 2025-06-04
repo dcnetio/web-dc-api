@@ -169,7 +169,7 @@ export class CommentClient {
     userPubkey: string,
     openFlag: number,
     signature: Uint8Array
-  ) {
+  ): Promise<number> {
     const message = new dcnet.pb.AddThemeObjRequest({});
     message.theme = new TextEncoder().encode(theme);
     message.appId = new TextEncoder().encode(appId);
@@ -235,7 +235,7 @@ export class CommentClient {
     addSpace: number,
     userPubkey: string,
     signature: Uint8Array
-  ) {
+  ): Promise<number> {
     const message = new dcnet.pb.AddThemeSpaceRequest({});
     message.theme = new TextEncoder().encode(theme);
     message.appId = new TextEncoder().encode(appId);
@@ -305,7 +305,7 @@ export class CommentClient {
     refercommentkey: string,
     signature: Uint8Array,
     openFlag?: number
-  ) {
+  ): Promise<number> {
     const message = new dcnet.pb.PublishCommentToThemeRequest({});
     message.theme = new TextEncoder().encode(theme);
     message.appId = new TextEncoder().encode(appId);
@@ -454,7 +454,7 @@ export class CommentClient {
     commentCid: string,
     commentBlockHeight: number,
     signature: Uint8Array
-  ) {
+  ): Promise<number> {
     const message = new dcnet.pb.DeleteSelfCommentRequest({});
     message.theme = new TextEncoder().encode(theme);
     message.appId = new TextEncoder().encode(appId);
@@ -523,7 +523,7 @@ export class CommentClient {
     offset: number,
     limit: number,
     seekKey: string
-  ) {
+  ): Promise<string> {
     const message = new dcnet.pb.GetThemeObjRequest({});
     message.appId = new TextEncoder().encode(appId);
     message.themeAuthor = new TextEncoder().encode(themeAuthor);
@@ -602,7 +602,7 @@ export class CommentClient {
     seekKey: string,
     aesKey: string,
     vaccount?: string
-  ) {
+  ): Promise<string> {
     const message = new dcnet.pb.GetThemeCommentsRequest({});
     message.appId = new TextEncoder().encode(appId);
     message.theme = new TextEncoder().encode(theme);
@@ -684,7 +684,7 @@ export class CommentClient {
     limit: number,
     seekKey: string,
     aesKey: string,
-  ) {
+  ): Promise<string> {
     const message = new dcnet.pb.GetUserCommentsRequest({});
     message.appId = new TextEncoder().encode(appId);
     message.UserPubkey = new TextEncoder().encode(userPubkey);

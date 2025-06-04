@@ -18,7 +18,7 @@ export class AccountClient {
     context: DCContext,
     blockHeight: number,
     peerId: string
-  ) {
+  ): Promise<boolean> {
     if (this.client.p2pNode == null) {
       throw new Error("p2pNode is null");
     }
@@ -51,10 +51,10 @@ export class AccountClient {
       30000
     );
     const decoded = dcnet.pb.BindAccessPeerToUserReply.decode(responseData);
-    return decoded.toJSON();
+    return true;
   }
 
-  async accountBind(buildedReq: any, mnemonic: string, context: DCContext) {
+  async accountBind(buildedReq: any, mnemonic: string, context: DCContext): Promise<boolean> {
     if (this.client.p2pNode == null) {
       throw new Error("p2pNode is null");
     }
@@ -107,10 +107,10 @@ export class AccountClient {
       30000
     );
     const decoded = dcnet.pb.AccountDealReply.decode(responseData);
-    return decoded.toJSON();
+    return true;
   }
 
-  async addSubPubkey(req: any) {
+  async addSubPubkey(req: any): Promise<boolean> {
     if (this.client.p2pNode == null) {
       throw new Error("p2pNode is null");
     }
@@ -133,6 +133,6 @@ export class AccountClient {
       30000
     );
     const decoded = dcnet.pb.AddSubPubkeyReply.decode(responseData);
-    return decoded.toJSON();
+    return true;
   }
 }

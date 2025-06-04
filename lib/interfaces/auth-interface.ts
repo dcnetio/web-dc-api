@@ -73,7 +73,7 @@ export interface IAuthOperations {
    * @param nftAccount NFT账户
    * @returns 用户信息
    */
-  getUserInfoWithNft(nftAccount: string): Promise<any>;
+  getUserInfoWithNft(nftAccount: string): Promise<[User | null, Error | null]>;
   
 
   /**

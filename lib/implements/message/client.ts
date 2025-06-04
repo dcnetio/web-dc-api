@@ -21,7 +21,7 @@ export class MessageClient {
     this.receiverClient = receiverClient;
   }
 
-  sendMsgToUserBox = async (userMsg: dcnet.pb.UserMsg) => {
+  sendMsgToUserBox = async (userMsg: dcnet.pb.UserMsg): Promise<number> => {
     const peerId = this.client.peerAddr.getPeerId();
     if (!peerId) {
       throw new Error("peerId is undefined");
@@ -86,7 +86,7 @@ export class MessageClient {
     }
   };
 
-  private getToUserBoxAuth = async (signature: Uint8Array) => {
+  private getToUserBoxAuth = async (signature: Uint8Array): Promise<Uint8Array> => {
     const message = new dcnet.pb.GetToUserBoxAuthRequest({});
     message.msgSignature = signature;
     const messageBytes =

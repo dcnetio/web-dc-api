@@ -46,7 +46,7 @@ export class FileClient {
     peerId: string,
     onUpdateTransmitSize: (status: number, size: number) => void,
     onErrorCallback: (error: Error) => void
-  ) {
+  ): Promise<void> {
 
       const sizeValue = uint64ToLittleEndianBytes(fileSize);
       const bhValue = uint32ToLittleEndianBytes(blockHeight ? blockHeight : 0);
@@ -158,7 +158,7 @@ async storeFolder(
   },
   updateTransmitCount: (status: UploadStatus, total: number, progress: number) => void,
   onErrorCallback?: (error: Error) => void
-){
+): Promise<void> {
   try {
     // Check client
     if (this.client.p2pNode == null) {

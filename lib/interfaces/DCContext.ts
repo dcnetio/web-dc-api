@@ -14,7 +14,7 @@ import { DCGrpcServer } from "../implements/threaddb/net/grpcserver";
  */
 export interface DCContext {
   // 核心基础设施
-  dcNodeClient: HeliaLibp2p<Libp2p<any>>;
+  dcNodeClient: HeliaLibp2p<Libp2p>;
   dcChain: ChainUtil;
   dcutil: DcUtil;
   

@@ -7,7 +7,7 @@ import { DCModule, CoreModuleName } from "../common/module-system";
 import { CommentManager } from "../implements/comment/manager";
 import { createLogger } from "../util/logger";
 import { ThemePermission } from "../common/constants";
-import { ThemeAuthInfo, ThemeComment } from "../common/types/types";
+import { ThemeAuthInfo, ThemeComment, ThemeObj } from "../common/types/types";
 
 const logger = createLogger('CommentModule');
 
@@ -116,7 +116,7 @@ async addUserOffChainOpTimes(
    * @param theme 主题
    * @param addSpace 增加的空间大小
    */
-  async addThemeSpace(theme: string, addSpace: number): Promise<any> {
+  async addThemeSpace(theme: string, addSpace: number): Promise<[number | null, Error | null]> {
     this.assertInitialized();
     
     try {
@@ -151,7 +151,7 @@ async addUserOffChainOpTimes(
     comment: string,
     refercommentkey?: string,
     openFlag?: number
-  ): Promise<any> {
+  ): Promise<[string | null, Error | null]> {
     this.assertInitialized();
     
     try {
@@ -184,7 +184,7 @@ async addUserOffChainOpTimes(
     theme: string,
     themeAuthor: string,
     commentKey: string
-  ): Promise<any> {
+  ): Promise<[number | null, Error | null]> {
     this.assertInitialized();
     
     try {
@@ -220,7 +220,7 @@ async addUserOffChainOpTimes(
     offset?: number,
     limit?: number,
     seekKey?: string 
-  ): Promise<any> {
+  ): Promise<[ThemeObj[] | null, Error | null]> {
     this.assertInitialized();
     
     try {
@@ -261,7 +261,7 @@ async addUserOffChainOpTimes(
     offset?: number,
     limit?: number,
     seekKey?: string
-  ): Promise<any> {
+  ): Promise<[ThemeComment[] | null, Error | null]> {
     this.assertInitialized();
     
     try {
@@ -354,7 +354,7 @@ async addUserOffChainOpTimes(
     offset?: number,
     limit?: number,
     seekKey?: string
-  ): Promise<any> {
+  ): Promise<[ThemeComment[] | null, Error | null]> {
     this.assertInitialized();
     
     try {

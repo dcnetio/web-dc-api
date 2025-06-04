@@ -860,7 +860,7 @@ async addUserOffChainOpTimes(
       throw err;
     }
   }
-  private handleThemeObj = async (fileContentString: string) => {
+  private handleThemeObj = async (fileContentString: string): Promise<ThemeObj[]> => {
     const reader = new BrowserLineReader(fileContentString);
 
     let allContent: Array<ThemeObj> = [];
@@ -901,7 +901,7 @@ async addUserOffChainOpTimes(
     }
     return allContent;
   };
-  private handleThemeComments = async (fileContentString: string, aesKey: SymmetricKey) => {
+  private handleThemeComments = async (fileContentString: string, aesKey: SymmetricKey): Promise<ThemeComment[]> => {
     const reader = new BrowserLineReader(fileContentString);
     let allContent: Array<ThemeComment> = [];
 

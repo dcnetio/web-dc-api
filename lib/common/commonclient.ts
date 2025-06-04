@@ -56,7 +56,7 @@ export class CommonClient {
     password: string,
     seccode: string,
     peerAddr: Multiaddr
-  ) {
+  ): Promise<string> {
     if (this.client.p2pNode == null || this.client.p2pNode.peerId == null) {
       throw new Error("p2pNode is null or node privateKey is null");
     }

@@ -82,7 +82,7 @@ export class WalletManager {
 
 
 
-  async openConnect() {
+  async openConnect(): Promise<object> {
     return new Promise((resolve, reject) => {
       const urlWithOrigin = walletUrl + "?origin=" + appOrigin;
       this.walletWindow = window.open(urlWithOrigin, walletWindowName);
@@ -201,54 +201,64 @@ export class WalletManager {
 
 
   // 签名普通消息
-  async signMessage (data:object) {
-    // if (!accountInfo.account) {
-    //   console.log("未连接钱包");
-    //   return;
-    // }
-    const urlWithOrigin = walletUrl + "?origin=" + appOrigin;
-    this.initCommChannel();
-    this.walletWindow = window.open(urlWithOrigin, walletWindowName);
-    // 每100ms发送一次消息,直到钱包加载完成
-    const message = {
-      type: "signMessage",
-      data,
-    };
-    this.sendMessageToIframe(message, 60000)
-      .then((response) => {
-        console.log("signMessage response", response);
-      })
-      .catch((error) => {
-        console.error("signMessage error", error);
-      });
+  async signMessage (data:object): Promise<MessageEvent | null> {
+    return new Promise((resolve, reject) => {
+      if (!this.context) {
+        console.log("未连接钱包");
+        reject(new WalletError("未连接钱包"));
+        return;
+      }
+      const urlWithOrigin = walletUrl + "?origin=" + appOrigin;
+      this.initCommChannel();
+      this.walletWindow = window.open(urlWithOrigin, walletWindowName);
+      // 每100ms发送一次消息,直到钱包加载完成
+      const message = {
+        type: "signMessage",
+        data,
+      };
+      this.sendMessageToIframe(message, 60000)
+        .then((response: MessageEvent | null) => {
+          console.log("signMessage response", response);
+          resolve(response);
+        })
+        .catch((error) => {
+          console.error("signMessage error", error);
+          reject(error);
+        });
+    })
   };
 
 
   // 签名EIP712消息
-  async signEIP712Message  (data: object) {
-    if (!this.context) {
-      console.log("未连接钱包");
-      return;
-    }
-    const publicKey = this.context.getPublicKey();
-    const urlWithOrigin = walletUrl + "?origin=" + appOrigin;
-    this.initCommChannel();
-    this.walletWindow = window.open(urlWithOrigin, walletWindowName);
-    // port1 转移给iframe
-    const message = {
-      type: "signEIP712Message",
-      data: data
-    };
-    this.sendMessageToIframe(message, 60000)
-      .then((response) => {
-        console.log("signEIP712Message response", response);
-      })
-      .catch((error) => {
-        console.error("signEIP712Message error", error);
-      });
+  async signEIP712Message (data: object): Promise<MessageEvent | null> {
+    return new Promise((resolve, reject) => {
+      if (!this.context) {
+        console.log("未连接钱包");
+        reject(new WalletError("未连接钱包"));
+        return;
+      }
+      const publicKey = this.context.getPublicKey();
+      const urlWithOrigin = walletUrl + "?origin=" + appOrigin;
+      this.initCommChannel();
+      this.walletWindow = window.open(urlWithOrigin, walletWindowName);
+      // port1 转移给iframe
+      const message = {
+        type: "signEIP712Message",
+        data: data
+      };
+      this.sendMessageToIframe(message, 60000)
+        .then((response) => {
+          console.log("signEIP712Message response", response);
+          resolve(response);
+        })
+        .catch((error) => {
+          console.error("signEIP712Message error", error);
+          reject(error);
+        });
+    })
   };
 
-  private async listenFromWallet(event: MessageEvent) {
+  private async listenFromWallet(event: MessageEvent): Promise<void> {
     console.log('=========listenFromWallet', event.data)
     // if (event.origin !== "todo来源") return; // 可选：对源进行验证
     try {
@@ -288,7 +298,7 @@ export class WalletManager {
     }
   }
 
-  private async initCommChannel() {
+  private async initCommChannel(): Promise<void> {
     const iframe = document.getElementById(this.iframeId) as HTMLIFrameElement;
     // port1转移给iframe
     if (iframe) {

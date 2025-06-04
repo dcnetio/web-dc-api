@@ -37,7 +37,7 @@ export class DC implements DCContext {
   blockChainAddr: string;
   backChainAddr: string;
   dcChain: ChainUtil;
-  dcNodeClient!: HeliaLibp2p<Libp2p<any>>;
+  dcNodeClient!: HeliaLibp2p<Libp2p>;
   dcutil: DcUtil;
   privKey: Ed25519PrivKey | undefined;
   publicKey: Ed25519PubKey | undefined;
@@ -221,7 +221,7 @@ export class DC implements DCContext {
     }
   };
 
-  setAppInfo(appInfo: APPInfo) {
+  setAppInfo(appInfo: APPInfo): void {
     this.appInfo = appInfo;
   }
   

@@ -402,13 +402,13 @@ export class AIProxyManager {
   }
 
 
-  private handleAllConfig = async (fileContentString: string,aesKey:string) => {
+  private handleAllConfig = async (fileContentString: string,aesKey:string): Promise<[UserProxyCallConfig[],AIProxyConfig[]] | null> => {
       const reader = new BrowserLineReader(fileContentString);
       let allContent: Array<AIProxyConfig> = [];
        let allAuth: Array<UserProxyCallConfig> = [];
   
       if (!this.context.getPublicKey()) {
-        return;
+        return null;
       }
       const decryptKey = SymmetricKey.fromString(aesKey);
       // readLine 循环

@@ -166,7 +166,7 @@ export class FileModule implements DCModule, IFileOperations {
     file: File,
     enkey: string,
     onUpdateTransmitSize: (status: number, size: number) => void
-  ): Promise<any> {
+  ): Promise<[string | null, Error | null]> {
     this.assertInitialized();
     try {
       if (!file) {
@@ -188,7 +188,7 @@ export class FileModule implements DCModule, IFileOperations {
     files: FileList,
     enkey: string,
     onUpdateTransmitCount: (status: number, total: number, process: number) => void
-  ): Promise<any> {
+  ): Promise<[string | null, Error | null]> {
     this.assertInitialized();
     try {
       if (!files || files.length === 0) {

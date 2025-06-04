@@ -18,5 +18,5 @@ export interface ICacheOperations {
    * @returns 设置操作的结果
    * @throws 当操作失败时抛出错误
    */
-  setCacheKey(value: string, expire?: number): Promise<any>;
+  setCacheKey(value: string, expire?: number): Promise<[string | null, Error | null]>;
 }

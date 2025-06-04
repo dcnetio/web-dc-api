@@ -52,7 +52,7 @@ async function handleIpfsRequest(
   data: { id: string, pathname: string, range?: string }, 
   port: MessagePort, 
   fileOps?: IFileOperations
-) {
+): Promise<void> {
   const { id, pathname, range } = data;
   let fileSize = 0;
   

@@ -2,7 +2,7 @@
  * 区块链相关的方法
  */
 
-import { multiaddr } from "@multiformats/multiaddr";
+import { Multiaddr, multiaddr } from "@multiformats/multiaddr";
 import { ApiPromise, WsProvider } from "@polkadot/api";
 
 import { isUser, sha256,hexToAscii } from "../util/utils";
@@ -42,10 +42,10 @@ export class ChainUtil {
   };
 
   // 获取区块高度
-  async getBlockHeight() {
+  async getBlockHeight():  Promise<number> {
     const lastBlock = await this.dcchainapi?.rpc.chain.getBlock();
     const blockHeight = lastBlock?.block.header.number.toNumber();
-    return blockHeight;
+    return blockHeight || 0;
   }
   // 获取用户钱包信息
   async getUserInfoWithAccount(account: string): Promise<User> {
@@ -181,7 +181,7 @@ export class ChainUtil {
     const nftHexAccount = "0x" + Buffer.from(accountHash).toString("hex");
     const walletAccount =
       await this.dcchainapi?.query.dcNode.nftToWalletAccount(nftHexAccount);
-    if (!walletAccount.toString()) {
+    if (!walletAccount || !walletAccount.toString()) {
       throw new Error("walletAccount is null");
     }
     return walletAccount.toString();
@@ -207,7 +207,7 @@ export class ChainUtil {
   };
 
   // 获取用户节点列表
-  getAccountPeers = async (account: Uint8Array) => {
+  getAccountPeers = async (account: Uint8Array): Promise<string[] | null> => {
     const hexAccount = "0x" + Buffer.from(account).toString("hex");
     const userInfo = await this.getUserInfoWithAccount(hexAccount);
     if (!userInfo || !isUser(userInfo)) {
@@ -256,7 +256,7 @@ export class ChainUtil {
   // 链上查询节点webrtc direct的地址信息,
   // peerid: 节点的peerid
   // 直接连接节点的地址
-  getDcNodeWebrtcDirectAddr = async (peerid: string) => {
+  getDcNodeWebrtcDirectAddr = async (peerid: string): Promise<Multiaddr | null> => {
     const peerInfo = await this.dcchainapi?.query.dcNode.peers(peerid);
     const peerInfoJson = peerInfo?.toJSON();
     if (
@@ -265,7 +265,7 @@ export class ChainUtil {
       (peerInfoJson as { ipAddress: string }).ipAddress == ""
     ) {
       console.error("no ip address found for peer: ", peerid);
-      return;
+      return null;
     }
     let nodeAddr = Buffer.from(
       (peerInfoJson as { ipAddress: string }).ipAddress.slice(2),
@@ -273,7 +273,7 @@ export class ChainUtil {
     ).toString("utf8");
     let addrParts = nodeAddr.split(",");
     if (addrParts.length < 2) {
-      return;
+      return null;
     }
     console.log("nodeAddr", addrParts[1]);
     const addr = multiaddr(addrParts[1]);
@@ -281,7 +281,7 @@ export class ChainUtil {
   };
 
   // 链上查询节点列表
-  getDcNodeList = async () => {
+  getDcNodeList = async (): Promise<string[]> => {
     const peerList = await this.dcchainapi?.query.dcNode.onlineNodesAddress();
     const peerListJson = peerList?.toJSON();
     console.log(

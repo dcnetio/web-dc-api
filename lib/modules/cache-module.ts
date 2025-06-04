@@ -76,7 +76,7 @@ export class CacheModule implements DCModule, ICacheOperations {
    * @param expire 过期时间
    * @returns 设置结果
    */
-  async setCacheKey(value: string, expire?: number): Promise<any> {
+  async setCacheKey(value: string, expire?: number): Promise<[string | null, Error | null]> {
     this.assertInitialized();
     
     try {

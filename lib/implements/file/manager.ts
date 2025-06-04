@@ -121,7 +121,7 @@ export class FileManager {
     resumeState = { offset: 0, chunkHashes: [] },
     pubkeyBytes?: Uint8Array,
     symKey?: SymmetricKey | null
-  ) {
+  ): Promise<CID | null> {
     const fs = unixfs(this.dcNodeClient);
 
     let offset = resumeState.offset || 0;
@@ -254,10 +254,10 @@ export class FileManager {
         pubkeyBytes,
         symKey
       );
-      console.log("==========_uploadLargeFileAdvanced", cid.toString());
       if (!cid) {
         return [resCid, Errors.ErrNoFileChose];
       }
+      console.log("==========_uploadLargeFileAdvanced", cid.toString());
       resCid = cid.toString();
       console.log("=========resCid", resCid);
 

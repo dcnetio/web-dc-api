@@ -51,7 +51,7 @@ export class MessageManager {
     appId: string,
     receiver: string, 
     msg: string
-  ) => {
+  ): Promise<[number | null, Error | null]> => {
     try {
       if (!this.accountBackupDc.client) {
         return [null, Errors.ErrNoAccountPeerConnected];
@@ -96,7 +96,7 @@ export class MessageManager {
   getMsgFromUserBox = async (
     appId: string,
     limit: number = 100
-  ): Promise<[{ [k: string]: any }[] | null, Error | null]> => {
+  ): Promise<[dcnet.pb.IUserMsg[] | null, Error | null]> => {
     try {
       if (!this.accountBackupDc.client) {
         return [null, Errors.ErrNoAccountPeerConnected];
