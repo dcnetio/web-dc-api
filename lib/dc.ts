@@ -197,12 +197,6 @@ export class DC implements DCContext {
           // 在这里设置初始化标志，确保后续模块方法可以正常访问
           this.initialized = true;
           
-          const peerId = nodeAddr.getPeerId();
-          if (peerId) {
-            // 获取存储的token
-            await this.auth.getSavedToken(peerId);
-          }
-          
           // 定时维系token
           this.auth.startDcPeerTokenKeepValidTask();
           

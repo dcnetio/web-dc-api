@@ -1,7 +1,7 @@
 
 import { walletOrigin, walletUrl, walletWindowName } from "../../common/define";
 import { DCContext } from "../../../lib/interfaces/DCContext";
-import { Ed25519PubKey } from "lib/common/dc-key/ed25519";
+import { Ed25519PubKey } from "../../common/dc-key/ed25519";
 import type { AccountInfo, EIP712SignReqMessage, SendMessage, SignReqMessage, SignResponseMessage } from "lib/common/types/types";
 
 
@@ -77,7 +77,7 @@ export class WalletManager {
             resolve(null);
             return;
           }
-          this.context.publicKey = data.publicKey;
+          this.context.publicKey = new Ed25519PubKey(data.publicKey.raw);
           resolve(data.publicKey);
         })
         .catch((error) => {

@@ -63,33 +63,6 @@ export class AuthModule implements DCModule, IAuthOperations {
   }
 
   /**
-   * 获取存储的token
-   * @param peerId 节点ID
-   */
-  async getSavedToken(peerId: string): Promise<void> {
-    this.assertInitialized();
-    if(!this.context.connectedDc?.client) {
-      throw new Error("dcClient is null");
-    }
-
-    // 获取存储的pubkey
-    const publicKeyString = await loadPublicKey();
-    if (publicKeyString) {
-      // 获取公钥
-      const publicKey = Ed25519PubKey.edPubkeyFromStr(publicKeyString);
-      this.context.publicKey = publicKey;
-      // 获取token
-      const token = await loadTokenWithPeerId(publicKeyString, peerId);
-      if (token) {
-        // 连接token还在
-        this.context.connectedDc.client.token = token;
-      }
-      // token不在，说明换了节点，则重新获取
-      await this.getTokenWithDCConnectInfo(this.context.connectedDc);
-    }
-  }
-
-  /**
    * 账户登录
    * @returns 是否登录成功
    */
@@ -455,6 +428,7 @@ export class AuthModule implements DCModule, IAuthOperations {
         }
         logger.info("刷新Token");
         await connectInfo.client?.refreshToken(
+          this.context.appInfo.appId || '',
           this.context.publicKey.string(),
           this.context.sign
         );

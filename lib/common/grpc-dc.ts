@@ -3,6 +3,7 @@ import type { Multiaddr } from "@multiformats/multiaddr";
 import { dcnet } from "../proto/dcnet_proto";
 import { Libp2pGrpcClient } from "grpc-libp2p-client";
 import { DataSource } from "../proto/datasource";
+import { Ed25519PubKey } from "./dc-key/ed25519";
 
 export class DCGrpcClient {
   grpcClient: Libp2pGrpcClient;
@@ -25,6 +26,7 @@ export class DCGrpcClient {
   ): Promise<string> {
     let token: string = "";
     try {
+      let error: Error | null = null;
       const signatureDataSource = new DataSource();
       const message = new dcnet.pb.GetTokenRequest({});
       message.key = appId + "_" + pubkey;
@@ -35,7 +37,11 @@ export class DCGrpcClient {
           const challenge = decodedPayload.challenge;
           const signature = await signCallback(challenge);
           const message = new dcnet.pb.GetTokenRequest({});
-          message.signature = signature;
+          message.signature = challenge;
+          // 签名验证
+          const publicKey = Ed25519PubKey.edPubkeyFromStr(pubkey);
+          const flag = publicKey.verify(challenge, signature);
+          console.log("verify:", flag);
           const messageBytes =
             dcnet.pb.GetTokenRequest.encode(message).finish();
           signatureDataSource.setData(messageBytes);
@@ -52,14 +58,28 @@ export class DCGrpcClient {
         console.log("dataSourceCallback");
         return signatureDataSource.getDataSource();
       };
+      const onEndCallback = async () => {
+        console.log("onEndCallback");
+        signatureDataSource.close();
+      }
+      const onErrorCallback = async (err: unknown) => {
+        console.log("onErrorCallback", err);
+        error = err instanceof Error ? err : new Error(String(err));
+        signatureDataSource.close();
+      }
       await this.grpcClient.Call(
         "/dcnet.pb.Service/GetToken",
         messageBytes,
         30000,
         "bidirectional",
         onDataCallback,
-        dataSourceCallback
+        dataSourceCallback,
+        onEndCallback,
+        onErrorCallback
       );
+      if(error){
+        throw error;
+      }
       this.token = token;
       this.grpcClient.setToken(token);
       return token;
