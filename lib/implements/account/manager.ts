@@ -535,6 +535,7 @@ export class AccountManager {
       }
       if (this.connectedDc.client.token == "") {
         const token = await this.connectedDc.client.GetToken(
+          this.context.appInfo.appId || "",
           privateKey.publicKey.string(),
           async (payload: Uint8Array): Promise<Uint8Array> => {
             return privateKey.sign(payload);
@@ -645,6 +646,7 @@ export class AccountManager {
     }
     if (this.connectedDc.client.token == "") {
       const token = await this.connectedDc.client.GetToken(
+        this.context.appInfo.appId || "",
         this.context.publicKey.string(),
         async (payload: Uint8Array): Promise<Uint8Array> => {
           return this.context.sign(payload);

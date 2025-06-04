@@ -122,7 +122,7 @@ export class CommentManager {
         return [null, Errors.ErrPublicKeyIsNull];
       }
       if(this.connectedDc.client.token == ""){
-        await this.connectedDc.client.GetToken(this.context.publicKey.string(),this.context.sign);
+        await this.connectedDc.client.GetToken(appId, this.context.publicKey.string(),this.context.sign);
       }
       const blockHeight = (await this.chainUtil.getBlockHeight()) || 0;
       const hValue: Uint8Array = uint32ToLittleEndianBytes(
@@ -210,7 +210,10 @@ async addUserOffChainOpTimes(
       return [null, Errors.ErrPublicKeyIsNull];
     }
     if(this.connectedDc.client.token == ""){
-      await this.connectedDc.client.GetToken(this.context.publicKey.string(),this.context.sign);
+      await this.connectedDc.client.GetToken(
+        this.context.appInfo.appId || "",
+        this.context.publicKey.string(),
+        this.context.sign);
     }
 
     // 获取区块链高度
@@ -265,7 +268,7 @@ async addUserOffChainOpTimes(
         return [null, Errors.ErrPublicKeyIsNull];
       }
       if(this.connectedDc.client.token == ""){
-        await this.connectedDc.client.GetToken(this.context.publicKey.string(),this.context.sign);
+        await this.connectedDc.client.GetToken(appId, this.context.publicKey.string(),this.context.sign);
       }
       const blockHeight = (await this.chainUtil.getBlockHeight()) || 0;
       const hValue: Uint8Array = uint32ToLittleEndianBytes(
@@ -320,7 +323,7 @@ async addUserOffChainOpTimes(
         return [null, Errors.ErrPublicKeyIsNull];
       }
       if(this.connectedDc.client.token == ""){
-        await this.connectedDc.client.GetToken(this.context.publicKey.string(),this.context.sign);
+        await this.connectedDc.client.GetToken(appId, this.context.publicKey.string(),this.context.sign);
       }
       const blockHeight = (await this.chainUtil.getBlockHeight()) || 0;
       const hValue: Uint8Array = uint32ToLittleEndianBytes(
@@ -421,7 +424,7 @@ async addUserOffChainOpTimes(
         return [null, Errors.ErrPublicKeyIsNull];
       }
       if(this.connectedDc.client.token == ""){
-        await this.connectedDc.client.GetToken(this.context.publicKey.string(),this.context.sign);
+        await this.connectedDc.client.GetToken(appId, this.context.publicKey.string(),this.context.sign);
       }
       const blockHeight = (await this.chainUtil.getBlockHeight()) || 0;
       const commentCid = commentKey.split("/")[1];
@@ -492,7 +495,7 @@ async addUserOffChainOpTimes(
         client = connectedClient;
       }
       if(client.token == ""){
-        await client.GetToken(this.context.publicKey.string(),this.context.sign);
+        await client.GetToken(appId, this.context.publicKey.string(),this.context.sign);
       }
       const commentClient = new CommentClient(
         client,
@@ -563,7 +566,7 @@ async addUserOffChainOpTimes(
         client = connectedClient;
       }
        if(client.token == ""){
-        await client.GetToken(this.context.publicKey.string(),this.context.sign);
+        await client.GetToken(appId, this.context.publicKey.string(),this.context.sign);
       }
       const aesKey = SymmetricKey.new();// 生成aeskey文件加密密码
        const commentClient = new CommentClient(
@@ -649,7 +652,7 @@ async addUserOffChainOpTimes(
         return [null, new Error("ErrConnectToAccountPeersFail")];
       }
       if(client.token == ""){
-        await client.GetToken(this.context.publicKey.string(),this.context.sign);
+        await client.GetToken(appId, this.context.publicKey.string(),this.context.sign);
       }
       const themeAuthorPubkey: Ed25519PubKey =
         Ed25519PubKey.edPubkeyFromStr(themeAuthor);
@@ -816,7 +819,7 @@ async addUserOffChainOpTimes(
         return [null, Errors.ErrPublicKeyIsNull];
       }
       if(this.connectedDc.client.token == ""){
-        await this.connectedDc.client.GetToken(this.context.publicKey.string(),this.context.sign);
+        await this.connectedDc.client.GetToken(appId, this.context.publicKey.string(),this.context.sign);
       }
       const aesKey = SymmetricKey.new();// 生成aeskey文件加密密码
       const commentClient = new CommentClient(

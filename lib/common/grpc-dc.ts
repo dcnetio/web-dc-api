@@ -19,6 +19,7 @@ export class DCGrpcClient {
   }
 
   async GetToken(
+    appId: string,
     pubkey: string,
     signCallback: (payload: Uint8Array) => Promise<Uint8Array> ,
   ): Promise<string> {
@@ -26,7 +27,7 @@ export class DCGrpcClient {
     try {
       const signatureDataSource = new DataSource();
       const message = new dcnet.pb.GetTokenRequest({});
-      message.key = "testapp_" + pubkey;
+      message.key = appId + "_" + pubkey;
       const messageBytes = dcnet.pb.GetTokenRequest.encode(message).finish();
       const onDataCallback = async (payload: Uint8Array) => {
         const decodedPayload = dcnet.pb.GetTokenReply.decode(payload);

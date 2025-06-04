@@ -483,6 +483,7 @@ export class FileManager {
       }
       if (client.token == "") {
         await client.GetToken(
+          this.context.appInfo.appId || "",
           this.context.publicKey.string(),
           this.context.sign
         );

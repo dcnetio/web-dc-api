@@ -297,7 +297,7 @@ export class KeyValueManager {
       return [null, new Error("ErrConnectToAccountPeersFail")];
     }
     if (client.token == "") {
-      await client.GetToken(this.context.publicKey.string(), this.context.sign);
+      await client.GetToken(appId, this.context.publicKey.string(), this.context.sign);
     }
     const themeAuthorPubkey: Ed25519PubKey =
       Ed25519PubKey.edPubkeyFromStr(themeAuthor);
@@ -486,7 +486,7 @@ export class KeyValueManager {
       return [null, new Error("ErrConnectToAccountPeersFail")];
     }
     if (client.token == "") {
-      await client.GetToken(this.context.publicKey.string(), this.context.sign);
+      await client.GetToken(appId, this.context.publicKey.string(), this.context.sign);
     }
     let content = `${key}:${value}`;
     if (indexs != "") {
@@ -578,7 +578,7 @@ export class KeyValueManager {
       return [null, new Error("ErrConnectToAccountPeersFail")];
     }
     if (client.token == "") {
-      await client.GetToken(this.context.publicKey.string(), this.context.sign);
+      await client.GetToken(appId, this.context.publicKey.string(), this.context.sign);
     }
 
     const keyValueClient = new KeyValueClient(client, this.context);
@@ -637,7 +637,7 @@ export class KeyValueManager {
       return [null, new Error("ErrConnectToAccountPeersFail")];
     }
     if (client.token == "") {
-      await client.GetToken(this.context.publicKey.string(), this.context.sign);
+      await client.GetToken(appId, this.context.publicKey.string(), this.context.sign);
     }
 
     const keyValueClient = new KeyValueClient(client, this.context);
@@ -691,7 +691,7 @@ export class KeyValueManager {
         return [null, Errors.ErrNoDcPeerConnected];
       }
       //获取token
-      await client.GetToken(this.context.publicKey.string(), this.context.sign);
+      await client.GetToken(appId, this.context.publicKey.string(), this.context.sign);
     }
     if (client === null) {
       return [null, new Error("ErrConnectToAccountPeersFail")];
@@ -701,7 +701,7 @@ export class KeyValueManager {
       return [null, new Error("ErrConnectToAccountPeersFail")];
     }
     if (client.token == "") {
-      await client.GetToken(this.context.publicKey.string(), this.context.sign);
+      await client.GetToken(appId, this.context.publicKey.string(), this.context.sign);
     }
 
     const keyValueClient = new KeyValueClient(client, this.context);

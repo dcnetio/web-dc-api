@@ -84,6 +84,7 @@ export class AccountClient {
         selfPrivkey = context.privKey;
       }
       const token = await this.client.GetToken(
+        context.appInfo.appId || "",
         selfPubkey.string(),
         async (payload: Uint8Array): Promise<Uint8Array> => {
           return selfPrivkey.sign(payload);

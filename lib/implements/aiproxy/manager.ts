@@ -125,14 +125,22 @@ export class AIProxyManager {
         return [null, Errors.ErrNoDcPeerConnected];
       }
       //获取token
-      await client.GetToken(this.context.publicKey.string(),this.context.sign);
+      await client.GetToken(
+          this.context.appInfo.appId || "",
+          this.context.publicKey.string(),
+          this.context.sign
+        );
     }
 
     if (client === null) {
       return [null, Errors.ErrNoDcPeerConnected];
     }
     if (client.token  == "") {
-       await client.GetToken(this.context.publicKey.string(),this.context.sign);
+       await client.GetToken(
+          this.context.appInfo.appId || "",
+          this.context.publicKey.string(),
+          this.context.sign
+        );
     }
 
     let content = '';
@@ -238,7 +246,11 @@ export class AIProxyManager {
       return [null, new Error("ErrConnectToAccountPeersFail")];
     }
     if (client.token  == "") {
-       await client.GetToken(this.context.publicKey.string(),this.context.sign);
+       await client.GetToken(
+          this.context.appInfo.appId || "",
+          this.context.publicKey.string(),
+          this.context.sign
+        );
     }
 
     const themeAuthorPubkey: Ed25519PubKey =
@@ -360,7 +372,11 @@ export class AIProxyManager {
       return [null,null, new Error("ErrConnectToAccountPeersFail")];
     }
     if (client.token  == "") {
-       await client.GetToken(this.context.publicKey.string(),this.context.sign);
+       await client.GetToken(
+          this.context.appInfo.appId || "",
+          this.context.publicKey.string(),
+          this.context.sign
+        );
     }
     try {
         const aiProxyClient = new AIProxyClient(client, this.context);
@@ -505,7 +521,11 @@ export class AIProxyManager {
       return [null, new Error("ErrConnectToAccountPeersFail")];
     }
     if (client.token  == "") {
-       await client.GetToken(this.context.publicKey.string(),this.context.sign);
+       await client.GetToken(
+          this.context.appInfo.appId || "",
+          this.context.publicKey.string(),
+          this.context.sign
+        );
     }
     const aiProxyClient = new AIProxyClient(client, this.context);
     const [authInfo, error] = await aiProxyClient.GetUserOwnAIProxyAuth(
@@ -570,7 +590,11 @@ export class AIProxyManager {
         }
 
         if (this.accountBackUpDc.client.token == "") {
-          await this.accountBackUpDc.client.GetToken(this.context.publicKey.string(),this.context.sign);
+          await this.accountBackUpDc.client.GetToken(
+              this.context.appInfo.appId || "",
+              this.context.publicKey.string(),
+              this.context.sign
+            );
         }
         const signature = await  this.context.sign(preSign);
         const proxyClient = new AIProxyClient(

@@ -260,6 +260,9 @@ export class DC implements DCContext {
     return signature;
   };
 
+  setPublicKey(publicKey: Ed25519PubKey) {
+    this.publicKey = publicKey;
+  }
   /**
    * 获取公钥
    * @returns 公钥对象
@@ -270,6 +273,7 @@ export class DC implements DCContext {
     }
     return this.publicKey;
   }
+
 
   /**
    * 获取原始公钥数据

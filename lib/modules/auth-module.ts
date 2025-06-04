@@ -17,7 +17,7 @@ import { Errors } from "../common/error";
 import { dc_protocol } from "../common/define";
 import { Multiaddr } from "@multiformats/multiaddr";
 import { WalletManager } from "../implements/wallet/manager";
-import { AccountInfo, NFTBindStatus, User } from "../common/types/types";
+import { AccountInfo, EIP712SignReqMessage, NFTBindStatus, SignReqMessage, SignResponseMessage, User } from "../common/types/types";
 import { IAuthOperations } from "../interfaces/auth-interface";
 import { DCContext } from "../../lib/interfaces/DCContext";
 
@@ -120,6 +120,7 @@ export class AuthModule implements DCModule, IAuthOperations {
       console.log("accountLogin data", data);
       // 获取token
       const token = await this.context.connectedDc?.client.GetToken(
+        this.context.appInfo.appId || "",
         publicKey.string(),
         (payload: Uint8Array): Promise<Uint8Array> => {
           return this.signWithWallet(payload);
@@ -220,6 +221,24 @@ export class AuthModule implements DCModule, IAuthOperations {
     } else {
       const signature = await this.walletManager.decrypt(payload);
       return signature;
+    }
+  }
+
+  async signMessageWithWallet(data: SignReqMessage): Promise<SignResponseMessage | null> {
+    if (!this.walletManager) {
+      throw new Error("walletManager is null");
+    } else {
+      const response = await this.walletManager.signMessage(data);
+      return response;
+    }
+  }
+
+  async signEIP712MessageWithWallet(data: EIP712SignReqMessage): Promise<SignResponseMessage | null> {
+    if (!this.walletManager) {
+      throw new Error("walletManager is null");
+    } else {
+      const response = await this.walletManager.signEIP712Message(data);
+      return response;
     }
   }
   /**
@@ -417,6 +436,7 @@ export class AuthModule implements DCModule, IAuthOperations {
       }
       logger.info("获取新Token");
       await connectInfo.client?.GetToken(
+        this.context.appInfo.appId || '',
         this.context.publicKey.string(),
         this.context.sign
       );
@@ -475,6 +495,7 @@ export class AuthModule implements DCModule, IAuthOperations {
           }
           logger.info("获取新Token");
           await connectInfo.client?.GetToken(
+            this.context.appInfo.appId || '',
             this.context.publicKey.string(),
             this.context.sign
           );

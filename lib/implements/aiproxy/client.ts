@@ -59,6 +59,7 @@ export class AIProxyClient {
       ) {
         // try to get token
         const token = await this.client.GetToken(
+          this.context.appInfo.appId || "",
           this.context.getPublicKey().string(),
           (payload: Uint8Array): Promise<Uint8Array> => {
             return this.context.sign(payload);
@@ -128,6 +129,7 @@ export class AIProxyClient {
       ) {
         // try to get token
         const token = await this.client.GetToken(
+          this.context.appInfo.appId || "",
           this.context.getPublicKey().string(),
           (payload: Uint8Array): Promise<Uint8Array> => {
             return this.context.sign(payload);

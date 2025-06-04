@@ -62,6 +62,7 @@ export class CommentClient {
       if (error.message.indexOf(Errors.INVALID_TOKEN.message) != -1) {
         // try to get token
         const token = await this.client.GetToken(
+          this.context.appInfo.appId || "",
           this.context.getPublicKey().string(),
           (payload: Uint8Array): Promise<Uint8Array> => {
             return this.context.sign(payload);
@@ -131,6 +132,7 @@ export class CommentClient {
       if (error.message.indexOf(Errors.INVALID_TOKEN.message) != -1) {
         // try to get token
         const token = await this.client.GetToken(
+          this.context.appInfo.appId || "",
           this.context.getPublicKey().string(),
           (payload: Uint8Array): Promise<Uint8Array> => {
             return this.context.sign(payload);
@@ -199,6 +201,7 @@ export class CommentClient {
       if (error.message.indexOf(Errors.INVALID_TOKEN.message) != -1) {
         // try to get token
         const token = await this.client.GetToken(
+          appId || "",
           userPubkey,
           (payload: Uint8Array): Promise<Uint8Array> => {
             return this.context.sign(payload);
@@ -264,6 +267,7 @@ export class CommentClient {
       if (error.message.indexOf(Errors.INVALID_TOKEN.message) != -1) {
         // try to get token
         const token = await this.client.GetToken(
+          appId || "",
           userPubkey,
           (payload: Uint8Array): Promise<Uint8Array> => {
             return this.context.sign(payload);
@@ -343,6 +347,7 @@ export class CommentClient {
       if (error.message.indexOf(Errors.INVALID_TOKEN.message) != -1) {
         // try to get token
         const token = await this.client.GetToken(
+          appId || "",
           userPubkey,
           (payload: Uint8Array): Promise<Uint8Array> => {
             return this.context.sign(payload);
@@ -422,6 +427,7 @@ export class CommentClient {
       if (error.message.indexOf(Errors.INVALID_TOKEN.message) != -1) {
         // try to get token
         const token = await this.client.GetToken(
+          appId || "",
           this.context.getPublicKey().string(),
           (payload: Uint8Array): Promise<Uint8Array> => {
             return this.context.sign(payload);
@@ -486,6 +492,7 @@ export class CommentClient {
       if (error.message.indexOf(Errors.INVALID_TOKEN.message) != -1) {
         // try to get token
         const token = await this.client.GetToken(
+          appId || "",
           userPubkey,
           (payload: Uint8Array): Promise<Uint8Array> => {
             return this.context.sign(payload);
@@ -558,6 +565,7 @@ export class CommentClient {
       if (error.message.indexOf(Errors.INVALID_TOKEN.message) != -1) {
         // try to get token
         const token = await this.client.GetToken(
+          appId || "",
           this.context.getPublicKey().string(),
           (payload: Uint8Array): Promise<Uint8Array> => {
             return this.context.sign(payload);
