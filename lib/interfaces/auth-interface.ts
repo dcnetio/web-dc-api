@@ -7,11 +7,6 @@ import { DCConnectInfo, NFTBindStatus, User,AccountInfo } from "../common/types/
  * 处理用户身份验证、账户管理和访问控制
  */
 export interface IAuthOperations {
-  /**
-   * 获取存储的token
-   * @param peerId 节点ID
-   */
-  getSavedToken(peerId: string): Promise<void>;
   
   /**
    * 账户登录通过钱包
