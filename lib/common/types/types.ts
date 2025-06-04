@@ -202,3 +202,37 @@ export enum UploadStatus {
   ERROR=3,
   ABNORMAL=4,
 };
+
+
+export type SignReqMessage = {
+    version: string,
+    type: string,
+    origin: string,
+    data: {
+        appName: string,
+        appIcon?: string,
+        appUrl: string,
+        appVersion: string,
+        account: string,
+        messageType?: string,
+        message: string,
+    }
+}
+
+
+
+export  type EIP712SignReqMessage = {
+    version: string,
+    type: string,
+    origin: string,
+    data: {
+        account: string,
+        appName:string,
+        appIcon?:string,
+        appUrl: string,
+        domain: any,
+        types: any,
+        primaryType: string,
+        message: any,
+    }
+}

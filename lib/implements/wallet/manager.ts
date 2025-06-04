@@ -2,6 +2,7 @@
 import { walletOrigin, walletUrl, walletWindowName } from "../../common/define";
 import { DCContext } from "../../../lib/interfaces/DCContext";
 import { Ed25519PubKey } from "lib/common/dc-key/ed25519";
+import { SignReqMessage } from "lib/common/types/types";
 
 
 const appOrigin = typeof window !== "undefined" ? window.location.origin : "";//"http://localhost:3002"
@@ -176,8 +177,8 @@ export class WalletManager {
         .then((response) => {
           console.log("sign response", response);
           if(!response || !response.data || !response.data.data) {
-            console.error("initConfig response is null");
-            reject(new WalletError("initConfig response is null"));
+            console.error("sign response is null");
+            reject(new WalletError("sign response is null"));
             return;
           }
           const data = response.data.data;
@@ -201,7 +202,7 @@ export class WalletManager {
 
 
   // 签名普通消息
-  async signMessage (data:object): Promise<MessageEvent | null> {
+  async signMessage (data: SignReqMessage): Promise<MessageEvent | null> {
     return new Promise((resolve, reject) => {
       if (!this.context) {
         console.log("未连接钱包");
@@ -219,7 +220,22 @@ export class WalletManager {
       this.sendMessageToIframe(message, 60000)
         .then((response: MessageEvent | null) => {
           console.log("signMessage response", response);
-          resolve(response);
+          if(!response || !response.data || !response.data.data) {
+            console.error("signMessage response is null");
+            reject(new WalletError("signMessage response is null"));
+            return;
+          }
+          const data = response.data.data;
+          console.log("signMessage success", data);
+          if(!data.success) {
+            console.error("signMessage not success");
+            reject(new WalletError("signMessage not success"));
+          }
+          if(!data.message) {
+            console.error("signMessage response is null");
+            reject(new WalletError("signMessage response is null"));
+          }
+          resolve(data.message);
         })
         .catch((error) => {
           console.error("signMessage error", error);
