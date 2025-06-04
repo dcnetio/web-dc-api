@@ -44,6 +44,8 @@ export const Errors = {
   ErrCommentSpaceNotConfig: new FileError("comment space not config"),
   // 评论数据同步中
   ErrCommentDataSync: new FileError("comment data sync"),
+  // publickey is null
+  ErrPublicKeyIsNull: new FileError("publickey is null"),
 };
 
 export class CommentManager {
@@ -116,8 +118,11 @@ export class CommentManager {
       if (!this.connectedDc?.client) {
         return [null, Errors.ErrNoDcPeerConnected];
       }
+      if (!this.context.publicKey) {
+        return [null, Errors.ErrPublicKeyIsNull];
+      }
       if(this.connectedDc.client.token == ""){
-        await this.connectedDc.client.GetToken(this.context.publicKey.string(),this.context.sign);
+        await this.connectedDc.client.GetToken(appId, this.context.publicKey.string(),this.context.sign);
       }
       const blockHeight = (await this.chainUtil.getBlockHeight()) || 0;
       const hValue: Uint8Array = uint32ToLittleEndianBytes(
@@ -189,25 +194,37 @@ export class CommentManager {
 
 async addUserOffChainOpTimes(
   times: number,
-  vaccount?: string
-): Promise<[boolean, Error | null]> {
+  vaccount: string = "",
+): Promise<[boolean | null, Error | null]> {
   try {
     // 检查连接
     if (!this.connectedDc?.client) {
       return [null, Errors.ErrNoDcPeerConnected];
     }
+    if(!this.connectedDc?.nodeAddr){
+      return [null, Errors.ErrNoDcPeerConnected];
+    }
+
+    // 检查公钥
+    if (!this.context.publicKey) {
+      return [null, Errors.ErrPublicKeyIsNull];
+    }
     if(this.connectedDc.client.token == ""){
-      await this.connectedDc.client.GetToken(this.context.publicKey.string(),this.context.sign);
+      await this.connectedDc.client.GetToken(
+        this.context.appInfo.appId || "",
+        this.context.publicKey.string(),
+        this.context.sign);
     }
 
     // 获取区块链高度
-    let blockHeight = await this.chainUtil.getBlockHeight();
+    let blockHeight = await this.chainUtil.getBlockHeight() || 0;
     
 
     // 准备签名数据
     const hValue = uint32ToLittleEndianBytes(blockHeight);
     const tValue = uint32ToLittleEndianBytes(times);
-    const peerIdBytes = new TextEncoder().encode(this.connectedDc?.nodeAddr.getPeerId());
+    const peerId = this.connectedDc?.nodeAddr.getPeerId() || "";
+    const peerIdBytes = new TextEncoder().encode(peerId);
     const preSign = new Uint8Array([
       ...peerIdBytes,
       ...tValue,
@@ -225,9 +242,8 @@ async addUserOffChainOpTimes(
       );
     
     try {
-  
       // 第一次尝试调用
-       const res = await client.addUserOffChainOpTimes(userPubkey.string(), blockHeight, this.connectedDc.nodeAddr.getPeerId(), times, signature, vaccount);
+       const res = await client.addUserOffChainOpTimes(userPubkey.string(), blockHeight, peerId, times, signature, vaccount);
       return [res, null];
     } catch (err: any) {
         return [false, err as Error];
@@ -248,8 +264,11 @@ async addUserOffChainOpTimes(
       if (!this.connectedDc?.client) {
         return [null, Errors.ErrNoDcPeerConnected];
       }
+      if (!this.context.publicKey) {
+        return [null, Errors.ErrPublicKeyIsNull];
+      }
       if(this.connectedDc.client.token == ""){
-        await this.connectedDc.client.GetToken(this.context.publicKey.string(),this.context.sign);
+        await this.connectedDc.client.GetToken(appId, this.context.publicKey.string(),this.context.sign);
       }
       const blockHeight = (await this.chainUtil.getBlockHeight()) || 0;
       const hValue: Uint8Array = uint32ToLittleEndianBytes(
@@ -300,8 +319,11 @@ async addUserOffChainOpTimes(
       if (!this.connectedDc?.client) {
         return [null, Errors.ErrNoDcPeerConnected];
       }
+      if (!this.context.publicKey) {
+        return [null, Errors.ErrPublicKeyIsNull];
+      }
       if(this.connectedDc.client.token == ""){
-        await this.connectedDc.client.GetToken(this.context.publicKey.string(),this.context.sign);
+        await this.connectedDc.client.GetToken(appId, this.context.publicKey.string(),this.context.sign);
       }
       const blockHeight = (await this.chainUtil.getBlockHeight()) || 0;
       const hValue: Uint8Array = uint32ToLittleEndianBytes(
@@ -398,8 +420,11 @@ async addUserOffChainOpTimes(
       if (!this.connectedDc?.client) {
         return [null, Errors.ErrNoDcPeerConnected];
       }
+      if (!this.context.publicKey) {
+        return [null, Errors.ErrPublicKeyIsNull];
+      }
       if(this.connectedDc.client.token == ""){
-        await this.connectedDc.client.GetToken(this.context.publicKey.string(),this.context.sign);
+        await this.connectedDc.client.GetToken(appId, this.context.publicKey.string(),this.context.sign);
       }
       const blockHeight = (await this.chainUtil.getBlockHeight()) || 0;
       const commentCid = commentKey.split("/")[1];
@@ -457,16 +482,20 @@ async addUserOffChainOpTimes(
       if (!this.connectedDc?.client) {
         return [null, Errors.ErrNoDcPeerConnected];
       }
+      if (!this.context.publicKey) {
+        return [null, Errors.ErrPublicKeyIsNull];
+      }
       let client = this.connectedDc.client;
       if (themeAuthor != this.context.publicKey.string()) {//查询他人主题评论
         const authorPublicKey: Ed25519PubKey = Ed25519PubKey.edPubkeyFromStr(themeAuthor);
-        client = await this.dc.connectToUserDcPeer(authorPublicKey.raw);
-        if (!client) {
+        const connectedClient = await this.dc.connectToUserDcPeer(authorPublicKey.raw);
+        if (!connectedClient) {
           return [null, Errors.ErrNoPeerIdIsNull];
         }
+        client = connectedClient;
       }
       if(client.token == ""){
-        await client.GetToken(this.context.publicKey.string(),this.context.sign);
+        await client.GetToken(appId, this.context.publicKey.string(),this.context.sign);
       }
       const commentClient = new CommentClient(
         client,
@@ -524,16 +553,20 @@ async addUserOffChainOpTimes(
       if (!this.connectedDc?.client) {
         return [null, Errors.ErrNoDcPeerConnected];
       }
+      if (!this.context.publicKey) {
+        return [null, Errors.ErrPublicKeyIsNull];
+      }
       let client = this.connectedDc.client;
       if (themeAuthor != this.context.publicKey.string()) {//查询他人主题评论
         const authorPublicKey: Ed25519PubKey = Ed25519PubKey.edPubkeyFromStr(themeAuthor);
-        client = await this.dc.connectToUserDcPeer(authorPublicKey.raw);
-        if (!client) {
+        const connectedClient = await this.dc.connectToUserDcPeer(authorPublicKey.raw);
+        if (!connectedClient) {
           return [null, Errors.ErrNoPeerIdIsNull];
         }
+        client = connectedClient;
       }
        if(client.token == ""){
-        await client.GetToken(this.context.publicKey.string(),this.context.sign);
+        await client.GetToken(appId, this.context.publicKey.string(),this.context.sign);
       }
       const aesKey = SymmetricKey.new();// 生成aeskey文件加密密码
        const commentClient = new CommentClient(
@@ -573,7 +606,7 @@ async addUserOffChainOpTimes(
       const fileContentString = uint8ArrayToString(fileContent);
       const allContent = await this.handleThemeComments(fileContentString, aesKey);
       console.log("getThemeComments allContent:", allContent);
-      return [allContent, null];
+      return [allContent || null, null];
     } catch (err) {
       console.error("getThemeComments error:", err);
       throw err;
@@ -590,24 +623,28 @@ async addUserOffChainOpTimes(
       permission: number,
       remark: string,
       vaccount?: string
-    ): Promise<[number, Error | null]> {
+    ): Promise<[number | null, Error | null]> {
       if (!theme.endsWith("_authlist")) {
         theme = theme + "_authlist";
       }
+      if(!this.context.publicKey){
+        return [null, Errors.ErrPublicKeyIsNull];
+      }
       
-      const userPubkey = this.context.getPublicKey();
+      const userPubkey = this.context.publicKey;
       let userPubkeyStr = userPubkey.string();
   
       let client = this.connectedDc.client;
-      if (themeAuthor != this.context.publicKey.string()) {//查询他人主题评论
+      if (themeAuthor != userPubkeyStr) {//查询他人主题评论
         const authorPublicKey: Ed25519PubKey = Ed25519PubKey.edPubkeyFromStr(themeAuthor);
-        client = await this.dc.connectToUserDcPeer(authorPublicKey.raw);
-        if (!client) {
-          return [null, Errors.ErrNoDcPeerConnected];
+        const connectedClient = await this.dc.connectToUserDcPeer(authorPublicKey.raw);
+        if (!connectedClient) {
+          return [null, Errors.ErrNoPeerIdIsNull];
         }
+        client = connectedClient;
        
       }
-      if (client === null) {
+      if (!client) {
         return [null, new Error("ErrConnectToAccountPeersFail")];
       }
   
@@ -615,22 +652,16 @@ async addUserOffChainOpTimes(
         return [null, new Error("ErrConnectToAccountPeersFail")];
       }
       if(client.token == ""){
-        await client.GetToken(this.context.publicKey.string(),this.context.sign);
+        await client.GetToken(appId, this.context.publicKey.string(),this.context.sign);
       }
       const themeAuthorPubkey: Ed25519PubKey =
         Ed25519PubKey.edPubkeyFromStr(themeAuthor);
   
-      let pubkeyFlag = true;
-      let forPubkey: Ed25519PubKey;
-      try {
-        forPubkey = Ed25519PubKey.edPubkeyFromStr(authPubkey);
-      } catch (error) {
-        pubkeyFlag = false;
-      }
       let forPubkeyHex: string;
-      if (pubkeyFlag) {
+      try {
+        const forPubkey = Ed25519PubKey.edPubkeyFromStr(authPubkey);
         forPubkeyHex = forPubkey.string();
-      } else {
+      } catch (error) {
         forPubkeyHex = authPubkey;
       }
   
@@ -644,7 +675,7 @@ async addUserOffChainOpTimes(
       // Get blockchain height
       let blockHeight: number;
       try {
-        blockHeight = await this.chainUtil.getBlockHeight();
+        blockHeight = await this.chainUtil.getBlockHeight() || 0;
       } catch (error) {
         return [null, new Error("ErrGetBlockHeightFail")];
       }
@@ -702,7 +733,7 @@ async addUserOffChainOpTimes(
         }else {
           return [0, null];
         }
-      } catch (error) {
+      } catch (error: any) {
         return [null, error];
       }
     }
@@ -739,6 +770,9 @@ async addUserOffChainOpTimes(
           }
           
           const resList = res[0];
+          if (!resList || resList.length == 0) {
+            break;
+          }
           for (let i = 0; i < resList.length; i++) {
               originAuthList.push(resList[i]);
               const content = resList[i].comment
@@ -762,7 +796,7 @@ async addUserOffChainOpTimes(
             resList[resList.length - 1].commentCid
           }`;
         }
-      } catch (error) {
+      } catch (error: any) {
         return [authList,originAuthList, error];
       }
       return [authList,originAuthList, null];
@@ -781,8 +815,11 @@ async addUserOffChainOpTimes(
       if (!this.connectedDc?.client) {
         return [null, Errors.ErrNoDcPeerConnected];
       }
+      if(!this.context.publicKey){
+        return [null, Errors.ErrPublicKeyIsNull];
+      }
       if(this.connectedDc.client.token == ""){
-        await this.connectedDc.client.GetToken(this.context.publicKey.string(),this.context.sign);
+        await this.connectedDc.client.GetToken(appId, this.context.publicKey.string(),this.context.sign);
       }
       const aesKey = SymmetricKey.new();// 生成aeskey文件加密密码
       const commentClient = new CommentClient(
@@ -820,13 +857,13 @@ async addUserOffChainOpTimes(
       const fileContentString = uint8ArrayToString(fileContent);
       const allContent = await this.handleThemeComments(fileContentString, aesKey);
       console.log("getUserComments allContent:", allContent);
-      return [allContent, null];
+      return [allContent || null, null];
     } catch (err) {
       console.error("getUserComments error:", err);
       throw err;
     }
   }
-  private handleThemeObj = async (fileContentString: string) => {
+  private handleThemeObj = async (fileContentString: string): Promise<ThemeObj[]> => {
     const reader = new BrowserLineReader(fileContentString);
 
     let allContent: Array<ThemeObj> = [];
@@ -867,7 +904,7 @@ async addUserOffChainOpTimes(
     }
     return allContent;
   };
-  private handleThemeComments = async (fileContentString: string, aesKey: SymmetricKey) => {
+  private handleThemeComments = async (fileContentString: string, aesKey: SymmetricKey): Promise<ThemeComment[]> => {
     const reader = new BrowserLineReader(fileContentString);
     let allContent: Array<ThemeComment> = [];
 

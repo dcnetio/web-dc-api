@@ -18,7 +18,7 @@ export class AccountClient {
     context: DCContext,
     blockHeight: number,
     peerId: string
-  ) {
+  ): Promise<boolean> {
     if (this.client.p2pNode == null) {
       throw new Error("p2pNode is null");
     }
@@ -51,10 +51,10 @@ export class AccountClient {
       30000
     );
     const decoded = dcnet.pb.BindAccessPeerToUserReply.decode(responseData);
-    return decoded.toJSON();
+    return true;
   }
 
-  async accountBind(buildedReq: any, mnemonic: string, context: DCContext) {
+  async accountBind(buildedReq: any, mnemonic: string, context: DCContext): Promise<boolean> {
     if (this.client.p2pNode == null) {
       throw new Error("p2pNode is null");
     }
@@ -71,10 +71,7 @@ export class AccountClient {
       // try to get token
       let selfPubkey: Ed25519PubKey, 
       selfPrivkey: Ed25519PrivKey;
-      selfPubkey = context.publicKey;
-      selfPrivkey = context.privKey;
-      
-      if (!selfPubkey || !selfPrivkey) {
+      if (!context.publicKey || !context.privKey) {
         // 生成
         const keymanager = new KeyManager();
         selfPrivkey = await keymanager.getEd25519KeyFromMnemonic(
@@ -82,8 +79,12 @@ export class AccountClient {
           ''
         );
         selfPubkey = selfPrivkey.publicKey;
+      } else {
+        selfPubkey = context.publicKey;
+        selfPrivkey = context.privKey;
       }
       const token = await this.client.GetToken(
+        context.appInfo.appId || "",
         selfPubkey.string(),
         async (payload: Uint8Array): Promise<Uint8Array> => {
           return selfPrivkey.sign(payload);
@@ -107,10 +108,10 @@ export class AccountClient {
       30000
     );
     const decoded = dcnet.pb.AccountDealReply.decode(responseData);
-    return decoded.toJSON();
+    return true;
   }
 
-  async addSubPubkey(req: any) {
+  async addSubPubkey(req: any): Promise<boolean> {
     if (this.client.p2pNode == null) {
       throw new Error("p2pNode is null");
     }
@@ -133,7 +134,7 @@ export class AccountClient {
       30000
     );
     const decoded = dcnet.pb.AddSubPubkeyReply.decode(responseData);
-    return decoded.toJSON();
+    return true;
   }
 /**
  * 设置用户默认数据库

@@ -18,9 +18,8 @@ const logger = createLogger('FileModule');
  */
 export class FileModule implements DCModule, IFileOperations {
   readonly moduleName = CoreModuleName.FILE;
-  private fileManager: FileManager;
-  private fileCacheManager: FileCacheManager;
-  private context: DCContext;
+  private fileManager!: FileManager;
+  private fileCacheManager!: FileCacheManager;
   private initialized: boolean = false;
   private swUrl: string;
   
@@ -35,7 +34,6 @@ export class FileModule implements DCModule, IFileOperations {
    */
   async initialize(context: DCContext): Promise<boolean> {
     try {
-      this.context = context;
       this.fileManager = new FileManager(
         context.dcutil,
         context.connectedDc,
@@ -90,11 +88,12 @@ export class FileModule implements DCModule, IFileOperations {
       
       // 没有缓存，创建新的流
       const fileStream = await this.fileManager.createSeekableFileStream(ipfsPath, decryptKey);
-      
-      if (fileStream) {
-        // 将新创建的流保存到缓存
-        this.fileCacheManager.cacheFileStream(ipfsPath, decryptKey, fileStream);
+      if(!fileStream) {
+        throw new Error(`获取文件流失败: ${ipfsPath}`);
       }
+      
+      // 将新创建的流保存到缓存
+      this.fileCacheManager.cacheFileStream(ipfsPath, decryptKey, fileStream);
       
       return fileStream;
     } catch (error) {
@@ -126,7 +125,7 @@ export class FileModule implements DCModule, IFileOperations {
   /**
    * 获取文件内容
    */
-  async getFile(cid: string, decryptKey: string): Promise<Uint8Array | undefined> {
+  async getFile(cid: string, decryptKey: string): Promise<Uint8Array | null> {
     this.assertInitialized();
     try {
       const fileContent = await this.fileManager.getFileFromDc(cid, decryptKey);
@@ -150,6 +149,9 @@ export class FileModule implements DCModule, IFileOperations {
         cid,
         decryptKey
       );
+      if(!fileStream) {
+        return null;
+      }
       return fileStream.createReadableStream();
     } catch (error) {
       logger.error(`创建文件流失败: ${cid}`, error);
@@ -164,7 +166,7 @@ export class FileModule implements DCModule, IFileOperations {
     file: File,
     enkey: string,
     onUpdateTransmitSize: (status: number, size: number) => void
-  ): Promise<any> {
+  ): Promise<[string | null, Error | null]> {
     this.assertInitialized();
     try {
       if (!file) {
@@ -186,7 +188,7 @@ export class FileModule implements DCModule, IFileOperations {
     files: FileList,
     enkey: string,
     onUpdateTransmitCount: (status: number, total: number, process: number) => void
-  ): Promise<any> {
+  ): Promise<[string | null, Error | null]> {
     this.assertInitialized();
     try {
       if (!files || files.length === 0) {

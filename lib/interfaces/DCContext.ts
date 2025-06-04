@@ -14,7 +14,7 @@ import { DCGrpcServer } from "../implements/threaddb/net/grpcserver";
  */
 export interface DCContext {
   // 核心基础设施
-  dcNodeClient: HeliaLibp2p<Libp2p<any>>;
+  dcNodeClient: HeliaLibp2p<Libp2p>;
   dcChain: ChainUtil;
   dcutil: DcUtil;
   
@@ -30,8 +30,8 @@ export interface DCContext {
   dbManager?: DBManager;
   
   // 身份相关
-  publicKey?: Ed25519PubKey;
-  privKey?: Ed25519PrivKey;
+  publicKey: Ed25519PubKey | undefined;
+  privKey: Ed25519PrivKey | undefined;
 
   grpcServer: DCGrpcServer;
   
@@ -39,5 +39,4 @@ export interface DCContext {
   sign(payload: Uint8Array): Promise<Uint8Array> ;
   getPubkeyRaw(): Uint8Array;
   getPublicKey(): Ed25519PubKey;
-  decrypt(data: Uint8Array): Promise<Uint8Array>;
 }

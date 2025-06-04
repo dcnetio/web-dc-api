@@ -51,7 +51,7 @@ export class MessageManager {
     appId: string,
     receiver: string, 
     msg: string
-  ) => {
+  ): Promise<[number | null, Error | null]> => {
     try {
       if (!this.accountBackupDc.client) {
         return [null, Errors.ErrNoAccountPeerConnected];
@@ -72,6 +72,7 @@ export class MessageManager {
         return [null, Errors.ErrNoReceiverPeerConnected]
       }
       const token = await receiverClient.GetToken(
+        appId,
         sendPublicKey.string(),
         (payload: Uint8Array): Promise<Uint8Array> => {
           return this.context.sign(payload);
@@ -96,7 +97,7 @@ export class MessageManager {
   getMsgFromUserBox = async (
     appId: string,
     limit: number = 100
-  ): Promise<[{ [k: string]: any }[] | null, Error | null]> => {
+  ): Promise<[dcnet.pb.IUserMsg[] | null, Error | null]> => {
     try {
       if (!this.accountBackupDc.client) {
         return [null, Errors.ErrNoAccountPeerConnected];
@@ -116,6 +117,7 @@ export class MessageManager {
           // 获取token
           if(!client.token) {
             const token = await client.GetToken(
+              appId,
               publicKeyString,
               (payload: Uint8Array): Promise<Uint8Array> => {
                 return this.context.sign(payload);
@@ -145,7 +147,7 @@ export class MessageManager {
               );
               const list = res && res.msgs ? res.msgs : [];
               console.log('messageClient.getMsgFromUserBox list', list)
-              list.map((item) => {
+              list.map((item: dcnet.pb.IUserMsg) => {
                 if(item && item.messageId) {
                   allMsgs.push(item)
                 }
@@ -163,7 +165,7 @@ export class MessageManager {
         }
       }
       return [allMsgs, null]
-    } catch (error) {
+    } catch (error: any) {
       return [null, error]
     }
   };

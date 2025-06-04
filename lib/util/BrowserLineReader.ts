@@ -7,7 +7,7 @@ export class BrowserLineReader {
   position: number;
   lines: any;
   currentLine: number;  
-  constructor(text) {  
+  constructor(text: string) {
     this.text = text;  
     this.position = 0;  
     this.lines = text.split(/\r?\n/);  
@@ -48,7 +48,7 @@ export class BrowserLineReader {
  * @param {BrowserLineReader} reader - 行读取器  
  * @returns {{line: Uint8Array, error: Error|null}} 读取结果  
  */  
-export function readLine(reader): {line: Uint8Array, error: Error|null} {  
+export function readLine(reader: BrowserLineReader): {line: Uint8Array, error: Error|null} {  
   let ln = new Uint8Array(0);  
   let isPrefix = true;  
   let error = null;  

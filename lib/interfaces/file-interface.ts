@@ -31,7 +31,7 @@ export interface IFileOperations {
    * @param decryptKey 解密密钥
    * @returns 文件的字节数组，失败则返回undefined
    */
-  getFile(cid: string, decryptKey: string): Promise<Uint8Array | undefined>;
+  getFile(cid: string, decryptKey: string): Promise<Uint8Array | null>;
   
   /**
    * 创建文件可读流
@@ -48,7 +48,7 @@ export interface IFileOperations {
    * @param onUpdateTransmitSize 传输进度回调函数
    * @returns 添加结果
    */
-  addFile(file: File, enkey: string, onUpdateTransmitSize: (status: number, size: number) => void): Promise<any>;
+  addFile(file: File, enkey: string, onUpdateTransmitSize: (status: number, size: number) => void): Promise<[string | null, Error | null]>;
 
 
   /**
@@ -58,6 +58,6 @@ export interface IFileOperations {
    * @param onUpdateTransmitCount 传输进度回调函数
    * @returns 添加结果
    */
-  addFolder(files: FileList, enkey: string, onUpdateTransmitCount: (status: number,total: number, process: number) => void): Promise<any>;
+  addFolder(files: FileList, enkey: string, onUpdateTransmitCount: (status: number,total: number, process: number) => void): Promise<[string | null, Error | null]>;
 
 }

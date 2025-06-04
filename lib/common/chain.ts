@@ -2,7 +2,7 @@
  * 区块链相关的方法
  */
 
-import { multiaddr } from "@multiformats/multiaddr";
+import { Multiaddr, multiaddr } from "@multiformats/multiaddr";
 import { ApiPromise, WsProvider } from "@polkadot/api";
 
 import { isUser, sha256,hexToAscii } from "../util/utils";
@@ -11,7 +11,6 @@ import { User } from "./types/types";
 import { hexToBytes } from "@noble/curves/abstract/utils";
 import { base32 } from "multiformats/bases/base32";
 import * as buffer from "buffer/";
-import { WalletManager } from "lib/implements/wallet/manager";
 const { Buffer } = buffer;
 
 export interface StoreunitInfo {  
@@ -28,7 +27,7 @@ export interface StoreunitInfo {
 export class ChainUtil {
   dcchainapi: ApiPromise | undefined;
   // 连接链节点
-  create = async (blockChainAddr) => {
+  create = async (blockChainAddr: string) => {
     const chainProvider = new WsProvider(blockChainAddr);
     this.dcchainapi = await ApiPromise.create({
       provider: chainProvider,
@@ -43,10 +42,10 @@ export class ChainUtil {
   };
 
   // 获取区块高度
-  async getBlockHeight() {
+  async getBlockHeight():  Promise<number> {
     const lastBlock = await this.dcchainapi?.rpc.chain.getBlock();
     const blockHeight = lastBlock?.block.header.number.toNumber();
-    return blockHeight;
+    return blockHeight || 0;
   }
   // 获取用户钱包信息
   async getUserInfoWithAccount(account: string): Promise<User> {
@@ -132,7 +131,7 @@ export class ChainUtil {
     const walletAccount =
       await this.dcchainapi?.query.dcNode.nftToWalletAccount(nftHexAccount);
     console.log("=========walletAccount", walletAccount);
-    if (!walletAccount.toString()) {
+    if (!walletAccount || !walletAccount.toString()) {
       throw new Error("walletAccount is null");
     }
     const userInfo = await this.getUserInfoWithAccount(
@@ -192,7 +191,7 @@ export class ChainUtil {
     const nftHexAccount = "0x" + Buffer.from(accountHash).toString("hex");
     const walletAccount =
       await this.dcchainapi?.query.dcNode.nftToWalletAccount(nftHexAccount);
-    if (!walletAccount.toString()) {
+    if (!walletAccount || !walletAccount.toString()) {
       throw new Error("walletAccount is null");
     }
     return walletAccount.toString();
@@ -218,7 +217,7 @@ export class ChainUtil {
   };
 
   // 获取用户节点列表
-  getAccountPeers = async (account: Uint8Array) => {
+  getAccountPeers = async (account: Uint8Array): Promise<string[] | null> => {
     const hexAccount = "0x" + Buffer.from(account).toString("hex");
     const userInfo = await this.getUserInfoWithAccount(hexAccount);
     if (!userInfo || !isUser(userInfo)) {
@@ -267,7 +266,7 @@ export class ChainUtil {
   // 链上查询节点webrtc direct的地址信息,
   // peerid: 节点的peerid
   // 直接连接节点的地址
-  getDcNodeWebrtcDirectAddr = async (peerid: string) => {
+  getDcNodeWebrtcDirectAddr = async (peerid: string): Promise<Multiaddr | null> => {
     const peerInfo = await this.dcchainapi?.query.dcNode.peers(peerid);
     const peerInfoJson = peerInfo?.toJSON();
     if (
@@ -276,7 +275,7 @@ export class ChainUtil {
       (peerInfoJson as { ipAddress: string }).ipAddress == ""
     ) {
       console.error("no ip address found for peer: ", peerid);
-      return;
+      return null;
     }
     let nodeAddr = Buffer.from(
       (peerInfoJson as { ipAddress: string }).ipAddress.slice(2),
@@ -284,7 +283,7 @@ export class ChainUtil {
     ).toString("utf8");
     let addrParts = nodeAddr.split(",");
     if (addrParts.length < 2) {
-      return;
+      return null;
     }
     console.log("nodeAddr", addrParts[1]);
     const addr = multiaddr(addrParts[1]);
@@ -292,7 +291,7 @@ export class ChainUtil {
   };
 
   // 链上查询节点列表
-  getDcNodeList = async () => {
+  getDcNodeList = async (): Promise<string[]> => {
     const peerList = await this.dcchainapi?.query.dcNode.onlineNodesAddress();
     const peerListJson = peerList?.toJSON();
     console.log(
@@ -304,12 +303,17 @@ export class ChainUtil {
       return [];
     }
     let peers: string[] = [];
-    for (let i = 0; i < (peerListJson as string[]).length; i++) {
-      const peerJson = Buffer.from(peerListJson[i].slice(2), "hex").toString(
-        "utf8"
-      );
-      console.log("peerJson", peerJson);
-      peers = peers.concat(peerJson);
+    if (Array.isArray(peerListJson)) {
+      for (let i = 0; i < peerListJson.length; i++) {
+        const peer = peerListJson[i];
+        if (typeof peer === "string") {
+          const peerJson = Buffer.from(peer.slice(2), "hex").toString(
+            "utf8"
+          );
+          console.log("peerJson", peerJson);
+          peers = peers.concat(peerJson);
+        }
+      }
     }
     console.log("peers", peers);
     return peers;
@@ -331,13 +335,14 @@ export class ChainUtil {
       if (!data) {  
           return null;  
       }  
-      // 构造返回数据  
+    // 构造返回数据  
+    if (typeof data === "object" && data !== null && !Array.isArray(data)) {
       return {  
-        size: Number(data['fileSize'] || 0),  
-        utype: Number(data['fileType'] || 0),  
+        size: Number((data as any)['fileSize'] || 0),  
+        utype: Number((data as any)['fileType'] || 0),  
         peers: new Set(
-          Array.isArray(data['peers']) 
-            ? data['peers'].map(peer => {
+          Array.isArray((data as any)['peers']) 
+            ? (data as any)['peers'].map((peer: any) => {
                 try {
                   return hexToAscii(String(peer));
                 } catch (e) {
@@ -347,10 +352,10 @@ export class ChainUtil {
               })
             : []
         ),   
-        users: new Set(Array.isArray(data['users']) ? data['users'].map(String) : []),  
+        users: new Set(Array.isArray((data as any)['users']) ? (data as any)['users'].map(String) : []),  
         mbusers: new Set(
-          Array.isArray(data['users']) 
-            ? data['users'].map(user => {
+          Array.isArray((data as any)['users']) 
+            ? (data as any)['users'].map((user: any) => {
                 try {
                   const userBytes = hexToBytes(user.slice(2));
                   const mbUser =  base32.encode(userBytes); 
@@ -363,8 +368,8 @@ export class ChainUtil {
             : []
         ),   
         logs: new Set(
-          Array.isArray(data['dbLog']) 
-            ? data['dbLog'].map(log => {
+          Array.isArray((data as any)['dbLog']) 
+            ? (data as any)['dbLog'].map((log: any) => {
                 try {
                   return hexToAscii(String(log));
                 } catch (e) {
@@ -374,7 +379,9 @@ export class ChainUtil {
               })
             : []
         ),   
-    };    
+      };    
+    }
+    return null;
   }
 
     ifEnoughUserSpace = async (

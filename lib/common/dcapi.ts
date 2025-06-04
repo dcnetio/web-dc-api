@@ -26,6 +26,7 @@ export class Client {
   }
 
   async GetToken(
+    appId: string,
     pubkey: string,
     signCallback: (payload: Uint8Array) =>  Promise<Uint8Array> ,
     peerAddr?: Multiaddr
@@ -43,7 +44,7 @@ export class Client {
         this.token,
         this.protocol
       );
-      const token = await grpcClient.GetToken(pubkey, signCallback);
+      const token = await grpcClient.GetToken(appId, pubkey, signCallback);
       this.token = token;
       return token;
     } catch (err) {
@@ -84,11 +85,12 @@ export class Client {
 
   // 获取Token
   async refreshToken(
+    appId: string,
     pubkey: string,
     signCallback: (payload: Uint8Array) =>  Promise<Uint8Array>,
     peerAddr?: Multiaddr
   ): Promise<string> {
     this.ClearToken();
-    return await this.GetToken(pubkey, signCallback, peerAddr);
+    return await this.GetToken(appId, pubkey, signCallback, peerAddr);
   }
 }

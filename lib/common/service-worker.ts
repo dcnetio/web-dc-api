@@ -52,7 +52,7 @@ async function handleIpfsRequest(
   data: { id: string, pathname: string, range?: string }, 
   port: MessagePort, 
   fileOps?: IFileOperations
-) {
+): Promise<void> {
   const { id, pathname, range } = data;
   let fileSize = 0;
   
@@ -112,7 +112,7 @@ async function handleIpfsRequest(
         }
       } else {
         // 普通文件请求
-        fileData = await fileOps.getFile(ipfsPath, decryptKey);
+        fileData = (await fileOps.getFile(ipfsPath, decryptKey)) ?? null;
         fileSize = fileData ? fileData.length : 0;
         // 非范围请求的文件读取完成后，清理缓存
         fileOps.clearFileCache(pathname);

@@ -48,6 +48,7 @@ export const Errors = {
   ErrNoFileChose: new FileError("no file choose"),
   ErrNoPeerIdIsNull: new FileError("peerId is null"),
   ErrNoNeedUpload: new FileError("no need upload"),
+  ErrPublicKeyIsNull: new FileError("publickey is null"),
 };
 
 export interface MediaController {
@@ -120,7 +121,7 @@ export class FileManager {
     resumeState = { offset: 0, chunkHashes: [] },
     pubkeyBytes?: Uint8Array,
     symKey?: SymmetricKey | null
-  ) {
+  ): Promise<CID | null> {
     const fs = unixfs(this.dcNodeClient);
 
     let offset = resumeState.offset || 0;
@@ -232,8 +233,8 @@ export class FileManager {
           await sleep(1000); // 使用毫秒，等同于1秒
         }
       }
-    } catch (error) {
-      return;
+    }catch (error:  any) {
+      return [null, error];
     }
 
     try {
@@ -253,10 +254,10 @@ export class FileManager {
         pubkeyBytes,
         symKey
       );
-      console.log("==========_uploadLargeFileAdvanced", cid.toString());
       if (!cid) {
         return [resCid, Errors.ErrNoFileChose];
       }
+      console.log("==========_uploadLargeFileAdvanced", cid.toString());
       resCid = cid.toString();
       console.log("=========resCid", resCid);
 
@@ -379,7 +380,7 @@ export class FileManager {
           await sleep(1000); // 使用毫秒，等同于1秒
         }
       }
-    } catch (error) {
+    } catch (error: any) {
           return  [null, error];
     }
 
@@ -414,7 +415,7 @@ export class FileManager {
       }));
 
        const results = fs.addAll(source);
-      let rootCID: CID<unknown, number, number, Version>;
+      let rootCID: CID<unknown, number, number, Version> | null = null;
       let totalSize = 0;
     //  let fileCount = 0;
       for await (const { path,size, cid } of results) {
@@ -477,8 +478,12 @@ export class FileManager {
       if (client.peerAddr === null) {
         return ["", new Error("ErrConnectToAccountPeersFail")];
       }
+      if(!this.context.publicKey){
+        return [null, Errors.ErrPublicKeyIsNull];
+      }
       if (client.token == "") {
         await client.GetToken(
+          this.context.appInfo.appId || "",
           this.context.publicKey.string(),
           this.context.sign
         );
@@ -911,7 +916,7 @@ async countDirectoryBlocks(rootCID: CID): Promise<number> {
 
   // 从dc网络获取指定文件
   // flag 是否需要连接节点，0-获取，1-不获取
-  getFileFromDc = async (cid: string, decryptKey: string, flag?: number) => {
+  getFileFromDc = async (cid: string, decryptKey: string, flag?: number) : Promise<Uint8Array | null> => {
     if (flag !== cidNeedConnect.NOT_NEED) {
       const res = await this.dc?._connectToObjNodes(cid);
       if (!res) {
@@ -1001,7 +1006,7 @@ async countDirectoryBlocks(rootCID: CID): Promise<number> {
       return fileContent;
     } catch (error) {
       console.error("getFileFromDc error", error);
-      return;
+      return null;
     }
   };
 

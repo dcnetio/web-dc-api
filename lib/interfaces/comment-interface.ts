@@ -1,5 +1,5 @@
 import { OpenFlag, ThemePermission } from "../common/constants";
-import { ThemeAuthInfo, ThemeComment } from "../common/types/types";
+import { ThemeAuthInfo, ThemeComment, ThemeObj } from "../common/types/types";
 
 /**
  * 评论操作接口
@@ -30,7 +30,7 @@ export interface ICommentOperations {
   addUserOffChainOpTimes(
   times: number,
   vaccount?: string
-): Promise<[boolean, Error | null]>
+): Promise<[boolean | null, Error | null]>
  
   /**
    * 为已开通评论的主题增加评论空间,为了防止每个主题评论空间浪费,每个主题在创建时会分配50MB的评论空间,如果后续不够,可以通过这个接口增加
@@ -39,7 +39,7 @@ export interface ICommentOperations {
    * @param addSpace 要增加的空间大小(字节)
    * @returns 操作结果
    */
-  addThemeSpace(theme: string, addSpace: number): Promise<any>;
+  addThemeSpace(theme: string, addSpace: number): Promise<[number | null, Error | null]>;
   
   /**
    * 向指定主题发布评论
@@ -58,7 +58,7 @@ export interface ICommentOperations {
     comment: string,
     refercommentkey?: string,
     openFlag?: number
-  ): Promise<any>;
+  ): Promise<[string | null, Error | null]>;
   
   /**
    * 删除自己发布的评论,只是删除了在自己列表中的评论,不能删除已经发布到主题下的评论
@@ -67,7 +67,7 @@ export interface ICommentOperations {
    * @param commentKey 评论的唯一键
    * @returns 删除操作结果
    */
-  deleteSelfComment(theme: string, themeAuthor: string, commentKey: string): Promise<any>;
+  deleteSelfComment(theme: string, themeAuthor: string, commentKey: string): Promise<[number | null, Error | null]>;
   
   /**
    * 获取指定作者的主题对象列表,无法查询作者设置为私密的主题
@@ -86,7 +86,7 @@ export interface ICommentOperations {
     offset?: number,
     limit?: number,
     seekKey?: string
-  ): Promise<any>;
+  ): Promise<[ThemeObj[] | null, Error | null]>;
   
   /**
    * 获取指定主题的评论列表,无法查询作者设置为私密的评论
@@ -107,7 +107,7 @@ export interface ICommentOperations {
     offset?: number,
     limit?: number,
     seekKey?: string
-  ): Promise<any>;
+  ): Promise<[ThemeComment[] | null, Error | null]>;
 
 
    /**
@@ -128,7 +128,7 @@ export interface ICommentOperations {
       permission: ThemePermission,
       remark: string,
       vaccount?: string
-    ): Promise<[number, Error | null]>;
+    ): Promise<[number | null, Error | null]>;
   
   
   /**
@@ -163,5 +163,5 @@ export interface ICommentOperations {
     offset?: number,
     limit?: number,
     seekKey?: string
-  ): Promise<any>;
+  ): Promise<[ThemeComment[] | null, Error | null]>;
 }

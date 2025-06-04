@@ -21,7 +21,7 @@ export class MessageClient {
     this.receiverClient = receiverClient;
   }
 
-  sendMsgToUserBox = async (userMsg: dcnet.pb.UserMsg) => {
+  sendMsgToUserBox = async (userMsg: dcnet.pb.UserMsg): Promise<number> => {
     const peerId = this.client.peerAddr.getPeerId();
     if (!peerId) {
       throw new Error("peerId is undefined");
@@ -59,10 +59,11 @@ export class MessageClient {
       const decoded = dcnet.pb.SendMsgToUserBoxReply.decode(responseData);
       console.log("SendMsgToUserBox decoded", decoded);
       return decoded.flag;
-    } catch (error) {
+    } catch (error: any) {
       if (error.message.indexOf(Errors.INVALID_TOKEN.message) != -1) {
         // try to get token
         const token = await this.receiverClient.GetToken(
+          this.context.appInfo.appId || '',
           this.context.getPublicKey().string(),
           (payload: Uint8Array): Promise<Uint8Array> => {
             return this.context.sign(payload);
@@ -86,7 +87,7 @@ export class MessageClient {
     }
   };
 
-  private getToUserBoxAuth = async (signature: Uint8Array) => {
+  private getToUserBoxAuth = async (signature: Uint8Array): Promise<Uint8Array> => {
     const message = new dcnet.pb.GetToUserBoxAuthRequest({});
     message.msgSignature = signature;
     const messageBytes =
@@ -107,10 +108,11 @@ export class MessageClient {
       const decoded = dcnet.pb.GetToUserBoxAuthReply.decode(responseData);
       console.log("GetToUserBoxAuth decoded", decoded);
       return decoded.signature;
-    } catch (error) {
+    } catch (error: any) {
       if (error.message.indexOf(Errors.INVALID_TOKEN.message) != -1) {
         // try to get token
         const token = await this.client.GetToken(
+          this.context.appInfo.appId || '',
           this.context.getPublicKey().string(),
           (payload: Uint8Array): Promise<Uint8Array> => {
             return this.context.sign(payload);
@@ -153,10 +155,11 @@ export class MessageClient {
       );
       const decoded = dcnet.pb.GetMaxKeyFromUserBoxReply.decode(responseData);
       return decoded.maxkey ? uint8ArrayToString(decoded.maxkey) : '';
-    } catch (error) {
+    } catch (error: any) {
       if (error.message.indexOf(Errors.INVALID_TOKEN.message) != -1) {
         // try to get token
         const token = await this.client.GetToken(
+          appId,
           this.context.getPublicKey().string(),
           (payload: Uint8Array): Promise<Uint8Array> => {
             return this.context.sign(payload);
@@ -213,10 +216,11 @@ export class MessageClient {
       );
       const decoded = dcnet.pb.GetMsgFromUserBoxReply.decode(responseData);
       return decoded.toJSON();
-    } catch (error) {
+    } catch (error: any) {
       if (error.message.indexOf(Errors.INVALID_TOKEN.message) != -1) {
         // try to get token
         const token = await this.client.GetToken(
+          appId,
           this.context.getPublicKey().string(),
           (payload: Uint8Array): Promise<Uint8Array> => {
             return this.context.sign(payload);

@@ -17,10 +17,9 @@ import { Errors } from "../common/error";
 import { dc_protocol } from "../common/define";
 import { Multiaddr } from "@multiformats/multiaddr";
 import { WalletManager } from "../implements/wallet/manager";
-import { NFTBindStatus, User } from "../common/types/types";
+import { AccountInfo, EIP712SignReqMessage, NFTBindStatus, SignReqMessage, SignResponseMessage, User } from "../common/types/types";
 import { IAuthOperations } from "../interfaces/auth-interface";
 import { DCContext } from "../../lib/interfaces/DCContext";
-import { KeyManager } from "../common/dc-key/keyManager";
 
 const logger = createLogger("AuthModule");
 
@@ -30,10 +29,10 @@ const logger = createLogger("AuthModule");
  */
 export class AuthModule implements DCModule, IAuthOperations {
   readonly moduleName = CoreModuleName.AUTH;
-  private context: DCContext;
+  private context!: DCContext;
   private initialized: boolean = false;
   private tokenTask: boolean = false;
-  private walletManager: WalletManager;
+  private walletManager!: WalletManager;
 
   /**
    * 初始化认证模块
@@ -64,34 +63,10 @@ export class AuthModule implements DCModule, IAuthOperations {
   }
 
   /**
-   * 获取存储的token
-   * @param peerId 节点ID
-   */
-  async getSavedToken(peerId: string): Promise<void> {
-    this.assertInitialized();
-
-    // 获取存储的pubkey
-    const publicKeyString = await loadPublicKey();
-    if (publicKeyString) {
-      // 获取公钥
-      const publicKey = Ed25519PubKey.edPubkeyFromStr(publicKeyString);
-      this.context.publicKey = publicKey;
-      // 获取token
-      const token = await loadTokenWithPeerId(publicKeyString, peerId);
-      if (token) {
-        // 连接token还在
-        this.context.connectedDc.client.token = token;
-      }
-      // token不在，说明换了节点，则重新获取
-      await this.getTokenWithDCConnectInfo(this.context.connectedDc);
-    }
-  }
-
-  /**
    * 账户登录
    * @returns 是否登录成功
    */
-  async accountLoginWithWallet(): Promise<any> {
+  async accountLoginWithWallet(): Promise<AccountInfo | null> {
     this.assertInitialized();
 
     if (!this.context.connectedDc?.client) {
@@ -118,6 +93,7 @@ export class AuthModule implements DCModule, IAuthOperations {
       console.log("accountLogin data", data);
       // 获取token
       const token = await this.context.connectedDc?.client.GetToken(
+        this.context.appInfo.appId || "",
         publicKey.string(),
         (payload: Uint8Array): Promise<Uint8Array> => {
           return this.signWithWallet(payload);
@@ -133,7 +109,7 @@ export class AuthModule implements DCModule, IAuthOperations {
 
     } catch (error) {
       console.error("accountLogin error", error);
-      return;
+      return null;
     };
   }
 
@@ -149,7 +125,7 @@ export class AuthModule implements DCModule, IAuthOperations {
     password: string,
     safecode: string
   ): Promise<{
-    mnemonic: string;
+    mnemonic: string | null;
   }> {
     this.assertInitialized();
 
@@ -157,13 +133,17 @@ export class AuthModule implements DCModule, IAuthOperations {
       throw new Error("dcClient is null");
     }
     //连接account所在的节点,并获取client
-    let client = this.context.connectedDc?.client
+    let client = this.context.connectedDc?.client || null;
     const walletAccount = await this.context.dcChain?.getUserWalletAccount(nftAccount);
+    if(!walletAccount) {
+      throw new Error("getUserWalletAccount error");
+    }
     const userPubkey: Ed25519PubKey = Ed25519PubKey.edPubkeyFromStr(walletAccount);
-    client = await this.context.dcutil.connectToUserDcPeer(userPubkey.raw);
-    if (!client) {
+    const connectedClient = await this.context.dcutil.connectToUserDcPeer(userPubkey.raw);
+    if (!connectedClient) {
       throw new Error("connect to user dc peer failed");
     }
+    client = connectedClient;
     this.context.AccountBackupDc.client = client;
     const commonClient = new CommonClient(client);
     const mnemonic = await commonClient.accountLogin(
@@ -189,7 +169,9 @@ export class AuthModule implements DCModule, IAuthOperations {
         mnemonic,
       };
     }
-    return;
+    return {
+      mnemonic: '',
+    };
   }
 
   async signWithWallet(payload: Uint8Array): Promise<Uint8Array> {
@@ -212,6 +194,24 @@ export class AuthModule implements DCModule, IAuthOperations {
     } else {
       const signature = await this.walletManager.decrypt(payload);
       return signature;
+    }
+  }
+
+  async signMessageWithWallet(data: SignReqMessage): Promise<SignResponseMessage | null> {
+    if (!this.walletManager) {
+      throw new Error("walletManager is null");
+    } else {
+      const response = await this.walletManager.signMessage(data);
+      return response;
+    }
+  }
+
+  async signEIP712MessageWithWallet(data: EIP712SignReqMessage): Promise<SignResponseMessage | null> {
+    if (!this.walletManager) {
+      throw new Error("walletManager is null");
+    } else {
+      const response = await this.walletManager.signEIP712Message(data);
+      return response;
     }
   }
   /**
@@ -409,6 +409,7 @@ export class AuthModule implements DCModule, IAuthOperations {
       }
       logger.info("获取新Token");
       await connectInfo.client?.GetToken(
+        this.context.appInfo.appId || '',
         this.context.publicKey.string(),
         this.context.sign
       );
@@ -427,6 +428,7 @@ export class AuthModule implements DCModule, IAuthOperations {
         }
         logger.info("刷新Token");
         await connectInfo.client?.refreshToken(
+          this.context.appInfo.appId || '',
           this.context.publicKey.string(),
           this.context.sign
         );
@@ -467,6 +469,7 @@ export class AuthModule implements DCModule, IAuthOperations {
           }
           logger.info("获取新Token");
           await connectInfo.client?.GetToken(
+            this.context.appInfo.appId || '',
             this.context.publicKey.string(),
             this.context.sign
           );
@@ -486,7 +489,7 @@ export class AuthModule implements DCModule, IAuthOperations {
    * @param nftAccount NFT账户
    * @returns 用户信息
    */
-  async getUserInfoWithNft(nftAccount: string): Promise<any> {
+  async getUserInfoWithNft(nftAccount: string): Promise<[User | null, Error | null]> {
     this.assertInitialized();
 
     const accountManager = new AccountManager(this.context);
@@ -512,7 +515,7 @@ export class AuthModule implements DCModule, IAuthOperations {
    * 刷新用户信息
    * @returns 用户信息
    */
-  async refreshUserInfo(): Promise<any> {
+  async refreshUserInfo(): Promise<User> {
     this.assertInitialized();
 
     const pubkeyRaw = this.context.getPubkeyRaw();

@@ -94,7 +94,7 @@ export class StreamWriter {
   }  
 
    
-  get queueSize() {  
+  get queueSize():number {  
     return this.p._queueSize  
   }  
 

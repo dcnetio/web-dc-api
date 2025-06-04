@@ -58,10 +58,11 @@ export class CommentClient {
       const decoded = dcnet.pb.AddUserOffChainSpaceReply.decode(reply);
       console.log("AddUserOffChainSpace2 decoded", decoded);
       return true;
-    } catch (error) {
+    } catch (error: any) {
       if (error.message.indexOf(Errors.INVALID_TOKEN.message) != -1) {
         // try to get token
         const token = await this.client.GetToken(
+          this.context.appInfo.appId || "",
           this.context.getPublicKey().string(),
           (payload: Uint8Array): Promise<Uint8Array> => {
             return this.context.sign(payload);
@@ -127,10 +128,11 @@ export class CommentClient {
       );
       const decoded = dcnet.pb.AddUserOffChainOpTimesReply.decode(reply);
       return true;
-    } catch (error) {
+    } catch (error: any) {
       if (error.message.indexOf(Errors.INVALID_TOKEN.message) != -1) {
         // try to get token
         const token = await this.client.GetToken(
+          this.context.appInfo.appId || "",
           this.context.getPublicKey().string(),
           (payload: Uint8Array): Promise<Uint8Array> => {
             return this.context.sign(payload);
@@ -169,7 +171,7 @@ export class CommentClient {
     userPubkey: string,
     openFlag: number,
     signature: Uint8Array
-  ) {
+  ): Promise<number> {
     const message = new dcnet.pb.AddThemeObjRequest({});
     message.theme = new TextEncoder().encode(theme);
     message.appId = new TextEncoder().encode(appId);
@@ -195,10 +197,11 @@ export class CommentClient {
       const decoded = dcnet.pb.AddThemeObjReply.decode(reply);
       console.log("AddThemeObj decoded", decoded);
       return decoded.flag;
-    } catch (error) {
+    } catch (error: any) {
       if (error.message.indexOf(Errors.INVALID_TOKEN.message) != -1) {
         // try to get token
         const token = await this.client.GetToken(
+          appId || "",
           userPubkey,
           (payload: Uint8Array): Promise<Uint8Array> => {
             return this.context.sign(payload);
@@ -235,7 +238,7 @@ export class CommentClient {
     addSpace: number,
     userPubkey: string,
     signature: Uint8Array
-  ) {
+  ): Promise<number> {
     const message = new dcnet.pb.AddThemeSpaceRequest({});
     message.theme = new TextEncoder().encode(theme);
     message.appId = new TextEncoder().encode(appId);
@@ -260,10 +263,11 @@ export class CommentClient {
       const decoded = dcnet.pb.AddThemeSpaceReply.decode(reply);
       console.log("AddThemeSpace decoded", decoded);
       return decoded.flag;
-    } catch (error) {
+    } catch (error: any) {
       if (error.message.indexOf(Errors.INVALID_TOKEN.message) != -1) {
         // try to get token
         const token = await this.client.GetToken(
+          appId || "",
           userPubkey,
           (payload: Uint8Array): Promise<Uint8Array> => {
             return this.context.sign(payload);
@@ -305,7 +309,7 @@ export class CommentClient {
     refercommentkey: string,
     signature: Uint8Array,
     openFlag?: number
-  ) {
+  ): Promise<number> {
     const message = new dcnet.pb.PublishCommentToThemeRequest({});
     message.theme = new TextEncoder().encode(theme);
     message.appId = new TextEncoder().encode(appId);
@@ -339,10 +343,11 @@ export class CommentClient {
       const decoded = dcnet.pb.PublishCommentToThemeReply.decode(reply);
       console.log("PublishCommentToTheme decoded", decoded);
       return decoded.flag;
-    } catch (error) {
+    } catch (error: any) {
       if (error.message.indexOf(Errors.INVALID_TOKEN.message) != -1) {
         // try to get token
         const token = await this.client.GetToken(
+          appId || "",
           userPubkey,
           (payload: Uint8Array): Promise<Uint8Array> => {
             return this.context.sign(payload);
@@ -418,10 +423,11 @@ export class CommentClient {
       const decoded = dcnet.pb.ConfigThemeObjAuthReply.decode(reply);
       console.log("ConfigThemeObjAuth decoded", decoded);
       return decoded.flag;
-    } catch (error) {
+    } catch (error: any) {
       if (error.message.indexOf(Errors.INVALID_TOKEN.message) != -1) {
         // try to get token
         const token = await this.client.GetToken(
+          appId || "",
           this.context.getPublicKey().string(),
           (payload: Uint8Array): Promise<Uint8Array> => {
             return this.context.sign(payload);
@@ -454,7 +460,7 @@ export class CommentClient {
     commentCid: string,
     commentBlockHeight: number,
     signature: Uint8Array
-  ) {
+  ): Promise<number> {
     const message = new dcnet.pb.DeleteSelfCommentRequest({});
     message.theme = new TextEncoder().encode(theme);
     message.appId = new TextEncoder().encode(appId);
@@ -482,10 +488,11 @@ export class CommentClient {
       const decoded = dcnet.pb.DeleteSelfCommentReply.decode(reply);
       console.log("DeleteSelfComment decoded", decoded);
       return decoded.flag;
-    } catch (error) {
+    } catch (error: any) {
       if (error.message.indexOf(Errors.INVALID_TOKEN.message) != -1) {
         // try to get token
         const token = await this.client.GetToken(
+          appId || "",
           userPubkey,
           (payload: Uint8Array): Promise<Uint8Array> => {
             return this.context.sign(payload);
@@ -523,7 +530,7 @@ export class CommentClient {
     offset: number,
     limit: number,
     seekKey: string
-  ) {
+  ): Promise<string> {
     const message = new dcnet.pb.GetThemeObjRequest({});
     message.appId = new TextEncoder().encode(appId);
     message.themeAuthor = new TextEncoder().encode(themeAuthor);
@@ -554,10 +561,11 @@ export class CommentClient {
         ? uint8ArrayToString(decoded.objsCid)
         : "";
       return objsCid;
-    } catch (error) {
+    } catch (error: any) {
       if (error.message.indexOf(Errors.INVALID_TOKEN.message) != -1) {
         // try to get token
         const token = await this.client.GetToken(
+          appId || "",
           this.context.getPublicKey().string(),
           (payload: Uint8Array): Promise<Uint8Array> => {
             return this.context.sign(payload);
@@ -602,7 +610,7 @@ export class CommentClient {
     seekKey: string,
     aesKey: string,
     vaccount?: string
-  ) {
+  ): Promise<string> {
     const message = new dcnet.pb.GetThemeCommentsRequest({});
     message.appId = new TextEncoder().encode(appId);
     message.theme = new TextEncoder().encode(theme);
@@ -638,7 +646,7 @@ export class CommentClient {
         ? uint8ArrayToString(decoded.commentsCid)
         : "";
       return commentsCid;
-    } catch (error) {
+    } catch (error: any) {
       if (error.message.indexOf(Errors.INVALID_TOKEN.message) != -1) {
         // try to get token
         const token = await this.client.GetToken(
@@ -684,7 +692,7 @@ export class CommentClient {
     limit: number,
     seekKey: string,
     aesKey: string,
-  ) {
+  ): Promise<string> {
     const message = new dcnet.pb.GetUserCommentsRequest({});
     message.appId = new TextEncoder().encode(appId);
     message.UserPubkey = new TextEncoder().encode(userPubkey);
@@ -716,7 +724,7 @@ export class CommentClient {
         ? uint8ArrayToString(decoded.commentsCid)
         : "";
       return commentsCid;
-    } catch (error) {
+    } catch (error: any) {
       if (error.message.indexOf(Errors.INVALID_TOKEN.message) != -1) {
         // try to get token
         const token = await this.client.GetToken(

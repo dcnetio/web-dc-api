@@ -7,7 +7,7 @@ import { DCModule, CoreModuleName } from "../common/module-system";
 import { CommentManager } from "../implements/comment/manager";
 import { createLogger } from "../util/logger";
 import { ThemePermission } from "../common/constants";
-import { ThemeAuthInfo, ThemeComment } from "../common/types/types";
+import { ThemeAuthInfo, ThemeComment, ThemeObj } from "../common/types/types";
 
 const logger = createLogger('CommentModule');
 
@@ -17,8 +17,8 @@ const logger = createLogger('CommentModule');
  */
 export class CommentModule implements DCModule, ICommentOperations {
   readonly moduleName = CoreModuleName.COMMENT;
-  private context: DCContext;
-  private commentManager: CommentManager;
+  private context!: DCContext;
+  private commentManager!: CommentManager;
   private initialized: boolean = false;
   
   /**
@@ -69,7 +69,7 @@ export class CommentModule implements DCModule, ICommentOperations {
 async addUserOffChainOpTimes(
   times: number,
   vaccount?: string
-): Promise<[boolean, Error | null]> {
+): Promise<[boolean | null, Error | null]> {
   this.assertInitialized();
   
   try {
@@ -116,7 +116,7 @@ async addUserOffChainOpTimes(
    * @param theme 主题
    * @param addSpace 增加的空间大小
    */
-  async addThemeSpace(theme: string, addSpace: number): Promise<any> {
+  async addThemeSpace(theme: string, addSpace: number): Promise<[number | null, Error | null]> {
     this.assertInitialized();
     
     try {
@@ -151,7 +151,7 @@ async addUserOffChainOpTimes(
     comment: string,
     refercommentkey?: string,
     openFlag?: number
-  ): Promise<any> {
+  ): Promise<[string | null, Error | null]> {
     this.assertInitialized();
     
     try {
@@ -184,7 +184,7 @@ async addUserOffChainOpTimes(
     theme: string,
     themeAuthor: string,
     commentKey: string
-  ): Promise<any> {
+  ): Promise<[number | null, Error | null]> {
     this.assertInitialized();
     
     try {
@@ -220,7 +220,7 @@ async addUserOffChainOpTimes(
     offset?: number,
     limit?: number,
     seekKey?: string 
-  ): Promise<any> {
+  ): Promise<[ThemeObj[] | null, Error | null]> {
     this.assertInitialized();
     
     try {
@@ -261,7 +261,7 @@ async addUserOffChainOpTimes(
     offset?: number,
     limit?: number,
     seekKey?: string
-  ): Promise<any> {
+  ): Promise<[ThemeComment[] | null, Error | null]> {
     this.assertInitialized();
     
     try {
@@ -302,7 +302,7 @@ async addUserOffChainOpTimes(
       permission: ThemePermission,
       remark: string,
       vaccount?: string
-    ): Promise<[number, Error | null]> {
+    ): Promise<[number | null, Error | null]> {
       this.assertInitialized();
       return await this.commentManager.configAuth(
         this.context.appInfo?.appId || "",
@@ -354,7 +354,7 @@ async addUserOffChainOpTimes(
     offset?: number,
     limit?: number,
     seekKey?: string
-  ): Promise<any> {
+  ): Promise<[ThemeComment[] | null, Error | null]> {
     this.assertInitialized();
     
     try {

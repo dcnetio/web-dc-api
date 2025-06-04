@@ -1,13 +1,13 @@
 
 import { walletOrigin, walletUrl, walletWindowName } from "../../common/define";
 import { DCContext } from "../../../lib/interfaces/DCContext";
-import { Ed25519PubKey } from "lib/common/dc-key/ed25519";
+import { Ed25519PubKey } from "../../common/dc-key/ed25519";
+import type { AccountInfo, EIP712SignReqMessage, SendMessage, SignReqMessage, SignResponseMessage } from "lib/common/types/types";
 
 
-const appOrigin = typeof window !== "undefined" && window.location.origin;//"http://localhost:3002"
-const appUrl = typeof window !== "undefined" && window.location.href ;
+const appOrigin = typeof window !== "undefined" ? window.location.origin : "";//"http://localhost:3002"
+const appUrl = typeof window !== "undefined" ? window.location.href :  "";
 
-let defaultPublicKey: Ed25519PubKey | null = null;
 
 // 错误定义
 export class WalletError extends Error {
@@ -22,7 +22,7 @@ export const Errors = {
 export class WalletManager {
   private context: DCContext;
   private walletWindow: Window | null = null;
-  private iframeId: string | null = null;
+  private iframeId: string  = 'dcWalletIframe';
   private channelPort2: MessagePort | null = null;
   constructor(context: DCContext) {
     this.context = context;
@@ -31,7 +31,6 @@ export class WalletManager {
   async init():  Promise<Ed25519PubKey | null> {
     if(appOrigin.indexOf(walletOrigin) === -1) {
       return new Promise((resolve, reject) => {
-        this.iframeId = 'dcWalletIframe';
         // html添加iframe标签，id是dcWalletIframe
         const iframe = document.createElement("iframe");
         iframe.id = this.iframeId;
@@ -51,7 +50,7 @@ export class WalletManager {
     }
   }
   // iframe加载完成后，发送初始化配置
-  async initConfig  (that): Promise<Ed25519PubKey | null> {
+  async initConfig  (that: WalletManager): Promise<Ed25519PubKey | null> {
     return new Promise((resolve, reject) => { 
       const message = {
         type: "init",
@@ -69,9 +68,17 @@ export class WalletManager {
           if(!response || !response.data || !response.data.data) {
             console.error("initConfig response is null");
             resolve(null);
+            return;
           }
-          defaultPublicKey = response.data.data.publicKey;
-          resolve(defaultPublicKey);
+          const messageData = response.data;
+          const data = messageData.data;
+          if(data.success === false || !data.publicKey) {
+            console.error("initConfig error", data.message);
+            resolve(null);
+            return;
+          }
+          this.context.publicKey = new Ed25519PubKey(data.publicKey.raw);
+          resolve(data.publicKey);
         })
         .catch((error) => {
           console.error("initConfig error", error);
@@ -82,7 +89,7 @@ export class WalletManager {
 
 
 
-  async openConnect() {
+  async openConnect(): Promise<AccountInfo> {
     return new Promise((resolve, reject) => {
       const urlWithOrigin = walletUrl + "?origin=" + appOrigin;
       this.walletWindow = window.open(urlWithOrigin, walletWindowName);
@@ -97,12 +104,16 @@ export class WalletManager {
         .then((response) => {
           console.log("openConnect response", response);
           if (response) {
-            const data = response.data.data;
-            console.log("openConnect success", data);
-            // 公钥
-            if(!data.account) {
-              console.error("openConnect response is null");
+            const message = response.data;
+            console.log("openConnect success", message);
+            if(!message || !message.data) {
               reject(new WalletError("openConnect response is null"));
+              return;
+            }
+            const data = message.data;
+            if(!data.publicKey) {
+              reject(new WalletError("openConnect publicKey is null"));
+              return;
             }
             resolve(data);
           } else {
@@ -134,15 +145,22 @@ export class WalletManager {
       this.sendMessageToIframe(message, 60000)
         .then((response) => {
           console.log("decrypt response", response);
+          if(!response || !response.data || !response.data.data) {
+            console.error("initConfig response is null");
+            reject(new WalletError("initConfig response is null"));
+            return;
+          }
           const data = response.data.data;
           console.log("decrypt success", data);
           if(!data.success) {
             console.error("decrypt not success");
             reject(new WalletError("decrypt not success"));
+            return;
           }
           if(!data.message) {
             console.error("decrypt response is null");
             reject(new WalletError("decrypt response is null"));
+            return;
           }
           resolve(data.message);
         })
@@ -170,15 +188,22 @@ export class WalletManager {
       this.sendMessageToIframe(message, 60000)
         .then((response) => {
           console.log("sign response", response);
+          if(!response || !response.data || !response.data.data) {
+            console.error("sign response is null");
+            reject(new WalletError("sign response is null"));
+            return;
+          }
           const data = response.data.data;
           console.log("sign success", data);
           if(!data.success) {
             console.error("sign not success");
             reject(new WalletError("sign not success"));
+            return;
           }
           if(!data.message) {
             console.error("sign response is null");
             reject(new WalletError("sign response is null"));
+            return;
           }
           resolve(data.message);
         })
@@ -191,100 +216,108 @@ export class WalletManager {
 
 
   // 签名普通消息
-  async signMessage (data) {
-    // if (!accountInfo.account) {
-    //   console.log("未连接钱包");
-    //   return;
-    // }
-    const urlWithOrigin = walletUrl + "?origin=" + appOrigin;
-    this.initCommChannel();
-    this.walletWindow = window.open(urlWithOrigin, walletWindowName);
-    // 每100ms发送一次消息,直到钱包加载完成
-    const message = {
-      type: "signMessage",
-      data,
-    };
-    this.sendMessageToIframe(message, 60000)
-      .then((response) => {
-        console.log("signMessage response", response);
-      })
-      .catch((error) => {
-        console.error("signMessage error", error);
-      });
+  async signMessage (data: SignReqMessage): Promise<SignResponseMessage | null> {
+    return new Promise((resolve, reject) => {
+      if (!this.context) {
+        console.log("未连接钱包");
+        reject(new WalletError("未连接钱包"));
+        return;
+      }
+      const urlWithOrigin = walletUrl + "?origin=" + appOrigin;
+      this.initCommChannel();
+      this.walletWindow = window.open(urlWithOrigin, walletWindowName);
+      // 每100ms发送一次消息,直到钱包加载完成
+      const message = {
+        type: "signMessage",
+        data,
+      };
+      this.sendMessageToIframe(message, 60000)
+        .then((response: MessageEvent | null) => {
+          console.log("signMessage response", response);
+          if(!response || !response.data || !response.data.data) {
+            console.error("signMessage response is null");
+            reject(new WalletError("signMessage response is null"));
+            return;
+          }
+          const data = response.data.data;
+          console.log("signMessage success", data);
+          if(!data.success) {
+            console.error("signMessage not success");
+            reject(new WalletError(data.message || "signEIP712Message not success"));
+            return;
+          }
+          if(!data.message) {
+            console.error("signMessage response is null");
+            reject(new WalletError("signMessage response is null"));
+            return;
+          }
+          resolve(data.message);
+        })
+        .catch((error) => {
+          console.error("signMessage error", error);
+          reject(error);
+        });
+    })
   };
 
 
   // 签名EIP712消息
-  async signEIP712Message  () {
-    if (!this.context) {
-      console.log("未连接钱包");
-      return;
-    }
-    const publicKey = this.context.getPublicKey();
-    const urlWithOrigin = walletUrl + "?origin=" + appOrigin;
-    this.initCommChannel();
-    this.walletWindow = window.open(urlWithOrigin, walletWindowName);
-    // port1 转移给iframe
-    const message = {
-      type: "signEIP712Message",
-      data: {
-        account: publicKey.string(),
-        appId: this.context.appInfo.appId,
-        appVersion: this.context.appInfo.appVersion,
-        appName: this.context.appInfo.appName,
-        appIcon: this.context.appInfo.appIcon,
-        appUrl,
-        domain: {
-          name: "test",
-          version: "1",
-          chainId: 1,
-          verifyingContract: "0x1234567890123456789012345678901234567890",
-        },
-        types: {
-          Person: [
-            { name: "name", type: "string" },
-            { name: "wallet", type: "address" },
-          ],
-          Trans: [
-            { name: "from", type: "Person" },
-            { name: "to", type: "Person" },
-            { name: "contents", type: "string" },
-          ],
-        },
-        primaryType: "Trans",
-        message: {
-          from: {
-            name: "Cow",
-            wallet: "0x601C2e6cDE6917deF84Ee2eEe68DB92a7dD989C4",
-          },
-          to: {
-            name: "Bob",
-            wallet: "0xFf64d3F6efE2317EE2807d223a0Bdc4c0c49dfDB",
-          },
-          contents: "Hello, Bob!",
-        },
-      },
-    };
-    this.sendMessageToIframe(message, 60000)
-      .then((response) => {
-        console.log("signEIP712Message response", response);
-      })
-      .catch((error) => {
-        console.error("signEIP712Message error", error);
-      });
+  async signEIP712Message (data: EIP712SignReqMessage): Promise<SignResponseMessage | null> {
+    return new Promise((resolve, reject) => {
+      if (!this.context) {
+        console.log("未连接钱包");
+        reject(new WalletError("未连接钱包"));
+        return;
+      }
+      const publicKey = this.context.getPublicKey();
+      const urlWithOrigin = walletUrl + "?origin=" + appOrigin;
+      this.initCommChannel();
+      this.walletWindow = window.open(urlWithOrigin, walletWindowName);
+      // port1 转移给iframe
+      const message = {
+        type: "signEIP712Message",
+        data: data
+      };
+      this.sendMessageToIframe(message, 60000)
+        .then((response) => {
+          console.log("signEIP712Message response", response);
+          if(!response || !response.data || !response.data.data) {
+            console.error("signEIP712Message response is null");
+            reject(new WalletError("signEIP712Message response is null"));
+            return;
+          }
+          const data = response.data.data;
+          console.log("signEIP712Message success", data);
+          if(!data.success) {
+            console.error("signEIP712Message not success");
+            reject(new WalletError(data.message || "signEIP712Message not success"));
+            return;
+          }
+          if(!data.message) {
+            console.error("signEIP712Message response is null");
+            reject(new WalletError("signEIP712Message response is null"));
+            return;
+          }
+          resolve(data.message);
+        })
+        .catch((error) => {
+          console.error("signEIP712Message error", error);
+          reject(error);
+        });
+    })
   };
 
-  private async listenFromWallet(event: MessageEvent) {
+  private async listenFromWallet(event: MessageEvent): Promise<void> {
     console.log('=========listenFromWallet', event.data)
     // if (event.origin !== "todo来源") return; // 可选：对源进行验证
     try {
-      const data = event.data;
-      if (!data.type) {
+      const message = event.data;
+      if (!message.type) {
         //非钱包插件
         return;
       }
-      if (data.type === "walletLoaded") {
-        console.log('walletLoaded', data)
+      if (message.type === "walletLoaded") {
+        console.log('walletLoaded', message)
         console.log('event.origin', event.origin)
         console.log('walletOrigin', walletOrigin)
         //钱包加载完成
@@ -293,7 +326,7 @@ export class WalletManager {
           return;
         }
         // 钱包打开成功
-        console.log("钱包打开成功", data.data);
+        console.log("钱包打开成功", message.data);
         if (this.channelPort2) {
           //port2转移给钱包
           const message = {
@@ -314,7 +347,7 @@ export class WalletManager {
     }
   }
 
-  private async initCommChannel() {
+  private async initCommChannel(): Promise<void> {
     const iframe = document.getElementById(this.iframeId) as HTMLIFrameElement;
     // port1转移给iframe
     if (iframe) {
@@ -338,7 +371,7 @@ export class WalletManager {
   }
   // 利用messageChannel通信
   private async sendMessageToIframe  (
-    message: object,
+    message: SendMessage<any>,
     timeout: number
   ): Promise<MessageEvent | null> {
     const iframe = document.getElementById(this.iframeId) as HTMLIFrameElement;

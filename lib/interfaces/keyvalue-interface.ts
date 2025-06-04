@@ -16,7 +16,7 @@ export interface IKeyValueOperations {
    * @returns 创建的keyvalue数据库
    * @throws 当用户空间不足或创建失败时抛出错误
    */
-  createStore(appId: string,theme: string, space: number, type: KeyValueStoreType): Promise<KeyValueDB>;
+  createStore(appId: string,theme: string, space: number, type: KeyValueStoreType): Promise<KeyValueDB | null>;
 
   /**
    * 获取指定主题的keyvalue数据库
@@ -42,7 +42,7 @@ export interface IKeyValueOperations {
     permission: ThemePermission,
     remark: string,
     vaccount?: string
-  ): Promise<[number, Error | null]>;
+  ): Promise<[number | null, Error | null]>;
 
   /**
    * 获取主题的授权列表
@@ -70,7 +70,7 @@ export interface IKeyValueOperations {
     value: string,
     indexs: string,
     vaccount?: string
-  ): Promise<[boolean, Error | null]>;
+  ): Promise<[boolean | null, Error | null]>;
 
   /**
    * 获取指定键的值
@@ -85,7 +85,7 @@ export interface IKeyValueOperations {
     key: string,
     writerPubkey?: string,
     vaccount?: string
-  ): Promise<[string, Error | null]>;
+  ): Promise<[string | null, Error | null]>;
 
 
  /**
@@ -105,7 +105,7 @@ export interface IKeyValueOperations {
     seekKey:string, 
     offset: number,
     vaccount?: string
-  ): Promise<[string, Error | null]>;
+  ): Promise<[string | null, Error | null]>;
 
 
   /**
@@ -121,7 +121,7 @@ export interface IKeyValueOperations {
     keys: string,
     writerPubkey?: string,
     vaccount?: string
-  ): Promise<[string, Error | null]>;
+  ): Promise<[string | null, Error | null]>;
 
   /**
    * 通过索引查询键值对
@@ -142,5 +142,5 @@ export interface IKeyValueOperations {
     seekKey: string,
     offset: number,
     vaccount?: string
-  ): Promise<[string, Error | null]>;
+  ): Promise<[string | null, Error | null]>;
 }

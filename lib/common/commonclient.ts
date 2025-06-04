@@ -56,7 +56,7 @@ export class CommonClient {
     password: string,
     seccode: string,
     peerAddr: Multiaddr
-  ) {
+  ): Promise<string> {
     if (this.client.p2pNode == null || this.client.p2pNode.peerId == null) {
       throw new Error("p2pNode is null or node privateKey is null");
     }
@@ -101,7 +101,7 @@ export class CommonClient {
     accounthashencrypt: Uint8Array,
     pubkeyencrypt: Uint8Array,
     loginkeyrandencrypt: Uint8Array,
-    peerAddr
+    peerAddr: Multiaddr
   ): Promise<Uint8Array> {
     try {
       const grpcClient = new Libp2pGrpcClient(

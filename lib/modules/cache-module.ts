@@ -16,8 +16,7 @@ const logger = createLogger('CacheModule');
  */
 export class CacheModule implements DCModule, ICacheOperations {
   readonly moduleName = CoreModuleName.CACHE;
-  private context: DCContext;
-  private themeManager: ThemeManager;
+  private themeManager!: ThemeManager;
   private initialized: boolean = false;
   
   /**
@@ -27,8 +26,6 @@ export class CacheModule implements DCModule, ICacheOperations {
    */
   async initialize(context: DCContext): Promise<boolean> {
     try {
-      this.context = context;
-
       this.themeManager = new ThemeManager(
         context.connectedDc,
         context.dcutil,
@@ -79,7 +76,7 @@ export class CacheModule implements DCModule, ICacheOperations {
    * @param expire 过期时间
    * @returns 设置结果
    */
-  async setCacheKey(value: string, expire?: number): Promise<any> {
+  async setCacheKey(value: string, expire?: number): Promise<[string | null, Error | null]> {
     this.assertInitialized();
     
     try {

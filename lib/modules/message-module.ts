@@ -6,6 +6,7 @@ import { DCContext } from "../../lib/interfaces/DCContext";
 import { DCModule, CoreModuleName } from "../common/module-system";
 import { MessageManager } from "../implements/message/manager";
 import { createLogger } from "../util/logger";
+import { dcnet } from "lib/proto/dcnet_proto";
 
 const logger = createLogger('MessageModule');
 
@@ -15,8 +16,8 @@ const logger = createLogger('MessageModule');
  */
 export class MessageModule implements DCModule, IMessageOperations {
   readonly moduleName = CoreModuleName.MESSAGE;
-  private context: DCContext;
-  private messageManager: MessageManager;
+  private context!: DCContext;
+  private messageManager!: MessageManager;
   private initialized: boolean = false;
   
   /**
@@ -55,7 +56,7 @@ export class MessageModule implements DCModule, IMessageOperations {
    * @param msg 消息内容
    * @returns 发送结果
    */
-  async sendMsgToUserBox(receiver: string, msg: string): Promise<any> {
+  async sendMsgToUserBox(receiver: string, msg: string): Promise<[number | null, Error | null]> {
     this.assertInitialized();
     
     try {
@@ -78,7 +79,7 @@ export class MessageModule implements DCModule, IMessageOperations {
    * @param limit 限制数量
    * @returns 消息列表
    */
-  async getMsgFromUserBox(limit?: number): Promise<any> {
+  async getMsgFromUserBox(limit?: number): Promise<[dcnet.pb.IUserMsg[] | null, Error | null]> {
     this.assertInitialized();
     
     try {

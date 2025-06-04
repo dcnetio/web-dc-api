@@ -46,7 +46,7 @@ export class FileClient {
     peerId: string,
     onUpdateTransmitSize: (status: number, size: number) => void,
     onErrorCallback: (error: Error) => void
-  ) {
+  ): Promise<void> {
 
       const sizeValue = uint64ToLittleEndianBytes(fileSize);
       const bhValue = uint32ToLittleEndianBytes(blockHeight ? blockHeight : 0);
@@ -158,7 +158,7 @@ async storeFolder(
   },
   updateTransmitCount: (status: UploadStatus, total: number, progress: number) => void,
   onErrorCallback?: (error: Error) => void
-){
+): Promise<void> {
   try {
     // Check client
     if (this.client.p2pNode == null) {
@@ -178,7 +178,7 @@ async storeFolder(
     if (options.vaccount) {
       try {
         message.vaccount = options.vaccount.pubKeyRaw;
-      } catch (error) {
+      } catch (error: any) {
         throw new Error("Failed to parse virtual account: " + error.message);
       }
     }
@@ -219,7 +219,7 @@ async storeFolder(
           updateTransmitCount(resStatus, options.fileCount, decodedPayload.receivecount);
         }
       
-      } catch (error) {
+      } catch (error: any) {
         console.error("Error decoding StoreFolderReply:", error);
         if (onErrorCallback) {
           onErrorCallback(new Error("Failed to decode StoreFolderReply: " + error.message));

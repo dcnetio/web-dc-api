@@ -71,11 +71,11 @@ export class DcUtil {
     this.connectLength = 5;
   }
   // 连接到所有文件存储节点
-  _connectToObjNodes = async (cid: string) => {
+  _connectToObjNodes = async (cid: string): Promise<Multiaddr | null> => {
     const peers = await this.dcChain.getObjNodes(cid);
     if (!peers) {
       console.error("peers is null");
-      return;
+      return null;
     }
     const res = await this._connectPeers(peers);
     return res;
@@ -119,10 +119,18 @@ export class DcUtil {
             }
           }
         } catch (error) {
-          console.error("dial nodeAddr error,error:%s", error.message);
-          num++;
-          if (num >= len) {
-            reject(error.message);
+          if (error && typeof error === "object" && "message" in error) {
+            console.error("dial nodeAddr error,error:%s", (error as any).message);
+            num++;
+            if (num >= len) {
+              reject((error as any).message);
+            }
+          } else {
+            console.error("dial nodeAddr error,error:", error);
+            num++;
+            if (num >= len) {
+              reject(error);
+            }
           }
         }
       }
@@ -187,7 +195,7 @@ export class DcUtil {
   };
 
   // 连接节点列表
-  _connectNodeAddrs = (peers: string[]) => {
+  _connectNodeAddrs = (peers: string[]): Promise<Multiaddr | null> => {
     return new Promise((reslove, reject) => {
       const _this = this;
       const len = peers.length;
@@ -199,7 +207,7 @@ export class DcUtil {
           console.log("nodeAddr return");
           num++;
           if (num >= len) {
-            reslove(false);
+            reslove(null);
           }
           return;
         }
@@ -221,13 +229,13 @@ export class DcUtil {
           }
           num++;
           if (num >= len) {
-            reslove(false);
+            reslove(null);
           }
         } catch (error) {
           console.error("nodeAddr catch return", error);
           num++;
           if (num >= len) {
-            reslove(false);
+            reslove(null);
           }
         }
       }
@@ -241,7 +249,7 @@ export class DcUtil {
 
 
 
-  _createHeliaNode = async () => {
+  _createHeliaNode = async ():  Promise<HeliaLibp2p<Libp2p>> => {
     console.log("_createHeliaNode=======");
     const datastore = new IDBDatastore("helia-meta");
     await datastore.open();
@@ -308,7 +316,7 @@ export class DcUtil {
     console.log("libp2p 服务列表:", Object.keys(libp2p.services));
     console.log("libp2p 已连接节点列表:", Object.keys(libp2p.getPeers()));
 
-    const dcNodeClient = await createHelia({
+    const dcNodeClient: HeliaLibp2p<Libp2p> = await createHelia({
       blockBrokers: [
         bitswap({
           maxInboundStreams: 64,

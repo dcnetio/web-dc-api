@@ -27,7 +27,7 @@ const storagePrefix = "dc-";
  */
 export class DatabaseModule implements DCModule, IDatabaseOperations {
   readonly moduleName = CoreModuleName.DATABASE;
-  private context: DCContext;
+  private context!: DCContext;
   private initialized: boolean = false;
   
   /**

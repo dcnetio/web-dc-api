@@ -19,8 +19,26 @@ import { dcnet } from "../../proto/dcnet_proto";
 import { bytesToHex } from "@noble/curves/abstract/utils";
 import { KeyValueClient } from "../keyvalue/client";
 import { SymmetricKey } from "../threaddb/common/key";
-import { Errors } from "../cache/manager";
 
+// 错误定义
+export class AIProxyError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "AIProxyError";
+  }
+}
+export const Errors = {
+  ErrNoDcPeerConnected: new AIProxyError("no dc peer connected"),
+  ErrKeyNotValid: new AIProxyError("key not valid"),
+  // nodeAddr is null
+  ErrNodeAddrIsNull: new AIProxyError("nodeAddr is null"),
+  // chainUtil is null
+  ErrChainUtilIsNull: new AIProxyError("chainUtil is null"),
+  // account privatekey sign is null
+  ErrAccountPrivateSignIsNull: new AIProxyError("account privatekey sign is null"),
+  // account publickey is null
+  ErrAccountPublicKeyIsNull: new AIProxyError("account publickey is null"),
+};
 
 
 
@@ -51,7 +69,7 @@ export class AIProxyManager {
   async createProxyConfig(
     appId: string,
     configTheme: string, 
-  ): Promise<[number, Error | null]> {
+  ): Promise<[number | null, Error | null]> {
     // Default group to "DCAPP" if empty
     if (appId === "") {
       appId = "DCAPP";
@@ -88,15 +106,18 @@ export class AIProxyManager {
     serviceName: string,
     serviceConfig?: AIProxyConfig,
     vaccount?: string
-  ): Promise<[boolean, Error | null]> {
-    const blockHeight: number = await this.chainUtil.getBlockHeight();
+  ): Promise<[boolean | null, Error | null]> {
+    if(!this.context.publicKey) {
+      return [null, Errors.ErrNoDcPeerConnected];
+    }
+    const blockHeight: number = await this.chainUtil.getBlockHeight() || 0;
     const userPubkey = this.context.getPublicKey();
     let userPubkeyStr = userPubkey.string();
     if (!configTheme.startsWith("keyvalue_")) {
-            configTheme = "keyvalue_" + configTheme;
-        }
+        configTheme = "keyvalue_" + configTheme;
+    }
   
-    let client = this.accountBackUpDc.client;
+    let client = this.accountBackUpDc.client || null;
     if (configAuthor != this.context.publicKey.string()) {//查询他人主题评论
       const authorPublicKey: Ed25519PubKey = Ed25519PubKey.edPubkeyFromStr(configAuthor);
       client = await this.dc.connectToUserDcPeer(authorPublicKey.raw);
@@ -104,14 +125,22 @@ export class AIProxyManager {
         return [null, Errors.ErrNoDcPeerConnected];
       }
       //获取token
-      await client.GetToken(this.context.publicKey.string(),this.context.sign);
+      await client.GetToken(
+          this.context.appInfo.appId || "",
+          this.context.publicKey.string(),
+          this.context.sign
+        );
     }
 
     if (client === null) {
       return [null, Errors.ErrNoDcPeerConnected];
     }
     if (client.token  == "") {
-       await client.GetToken(this.context.publicKey.string(),this.context.sign);
+       await client.GetToken(
+          this.context.appInfo.appId || "",
+          this.context.publicKey.string(),
+          this.context.sign
+        );
     }
 
     let content = '';
@@ -172,7 +201,7 @@ export class AIProxyManager {
       }
       return [true, null];
     } catch (error) {
-      return [false, error];
+      return [false, error as Error];
     }
   }
 
@@ -187,7 +216,10 @@ export class AIProxyManager {
     permission: AIProxyUserPermission,
     authConfig: ProxyCallConfig,
     vaccount?: string
-  ): Promise<[number, Error | null]> {
+  ): Promise<[number | null, Error | null]> {
+    if(!this.context.publicKey) {
+      return [null, Errors.ErrAccountPublicKeyIsNull];
+    }
     if (!configTheme.startsWith("keyvalue_")) {
         configTheme = "keyvalue_" + configTheme;
     }
@@ -198,12 +230,12 @@ export class AIProxyManager {
     const userPubkey = this.context.getPublicKey();
     let userPubkeyStr = userPubkey.string();
 
-    let client = this.accountBackUpDc.client;
+    let client = this.accountBackUpDc.client || null;
     if (configAuthor != this.context.publicKey.string()) {//查询他人主题评论
       const authorPublicKey: Ed25519PubKey = Ed25519PubKey.edPubkeyFromStr(configAuthor);
       client = await this.dc.connectToUserDcPeer(authorPublicKey.raw);
       if (!client) {
-        return [null, Errors.ErrNoDcPeerConnected];
+        return [null, Errors.ErrAccountPublicKeyIsNull];
       }
     }
     if (client === null) {
@@ -214,21 +246,25 @@ export class AIProxyManager {
       return [null, new Error("ErrConnectToAccountPeersFail")];
     }
     if (client.token  == "") {
-       await client.GetToken(this.context.publicKey.string(),this.context.sign);
+       await client.GetToken(
+          this.context.appInfo.appId || "",
+          this.context.publicKey.string(),
+          this.context.sign
+        );
     }
 
     const themeAuthorPubkey: Ed25519PubKey =
       Ed25519PubKey.edPubkeyFromStr(configAuthor);
 
     let pubkeyFlag = true;
-    let forPubkey: Ed25519PubKey;
+    let forPubkey: Ed25519PubKey | null  = null;
     try {
       forPubkey = Ed25519PubKey.edPubkeyFromStr(authPubkey);
     } catch (error) {
       pubkeyFlag = false;
     }
     let forPubkeyHex: string;
-    if (pubkeyFlag) {
+    if (pubkeyFlag && forPubkey) {
       forPubkeyHex = forPubkey.string();
     } else {
       forPubkeyHex = authPubkey;
@@ -245,7 +281,7 @@ export class AIProxyManager {
     // Get blockchain height
     let blockHeight: number;
     try {
-      blockHeight = await this.chainUtil.getBlockHeight();
+      blockHeight = await this.chainUtil.getBlockHeight() || 0;
     } catch (error) {
       return [null, new Error("ErrGetBlockHeightFail")];
     }
@@ -297,7 +333,7 @@ export class AIProxyManager {
         return [null, new Error(`configThemeObjAuth fail, resFlag: ${res}`)];
       }
     } catch (error) {
-      return [null, error];
+      return [null, error as Error];
     }
 
     return [0, null];
@@ -310,6 +346,9 @@ export class AIProxyManager {
     configThem: string,
     vaccount?: string
   ): Promise<[UserProxyCallConfig[] | null,AIProxyConfig[] | null, Error | null]> {
+    if(!this.context.publicKey) {
+      return [null,null, Errors.ErrAccountPublicKeyIsNull];
+    }
     if (!configThem.startsWith("keyvalue_")) {
         configThem = "keyvalue_" + configThem;
     }
@@ -317,7 +356,7 @@ export class AIProxyManager {
     const userPubkey = this.context.getPublicKey();
     let userPubkeyStr = userPubkey.string();
 
-    let client = this.accountBackUpDc.client;
+    let client = this.accountBackUpDc.client || null;
        if (themeAuthor != this.context.publicKey.string()) {//查询他人主题评论
          const authorPublicKey: Ed25519PubKey = Ed25519PubKey.edPubkeyFromStr(themeAuthor);
          client = await this.dc.connectToUserDcPeer(authorPublicKey.raw);
@@ -333,7 +372,11 @@ export class AIProxyManager {
       return [null,null, new Error("ErrConnectToAccountPeersFail")];
     }
     if (client.token  == "") {
-       await client.GetToken(this.context.publicKey.string(),this.context.sign);
+       await client.GetToken(
+          this.context.appInfo.appId || "",
+          this.context.publicKey.string(),
+          this.context.sign
+        );
     }
     try {
         const aiProxyClient = new AIProxyClient(client, this.context);
@@ -362,22 +405,26 @@ export class AIProxyManager {
         return [[],[], null];
         }
         const fileContentString = uint8ArrayToString(fileContent);
-        const [allAuth,allContent] = await this.handleAllConfig(fileContentString,aesKey);
-        return [allAuth,allContent, null];
+        const result = await this.handleAllConfig(fileContentString, aesKey);
+        if (!result) {
+          return [[], [], null];
+        }
+        const [allAuth, allContent] = result;
+        return [allAuth, allContent, null];
 
     } catch (error) {
-      return [null,null, error];
+      return [null, null, error as  Error];
     }
   }
 
 
-  private handleAllConfig = async (fileContentString: string,aesKey:string) => {
+  private handleAllConfig = async (fileContentString: string,aesKey:string): Promise<[UserProxyCallConfig[],AIProxyConfig[]] | null> => {
       const reader = new BrowserLineReader(fileContentString);
       let allContent: Array<AIProxyConfig> = [];
        let allAuth: Array<UserProxyCallConfig> = [];
   
       if (!this.context.getPublicKey()) {
-        return;
+        return null;
       }
       const decryptKey = SymmetricKey.fromString(aesKey);
       // readLine 循环
@@ -449,12 +496,15 @@ export class AIProxyManager {
     appId: string,
     themeAuthor: string,
     configThem: string,
-  ): Promise<[authConfig: ProxyCallConfig, error: Error | null]> {
+  ): Promise<[authConfig: ProxyCallConfig | null, error: Error | null]> {
+    if(!this.context.publicKey) {
+        return [null, new Error("ErrConnectToAccountPeersFail")];
+    }
     if( !configThem.startsWith("keyvalue_")) {
         configThem = "keyvalue_" + configThem;
     }
     
-     let client = this.accountBackUpDc.client;
+     let client = this.accountBackUpDc.client || null;
        if (themeAuthor != this.context.publicKey.string()) {//查询他人主题评论
          const authorPublicKey: Ed25519PubKey = Ed25519PubKey.edPubkeyFromStr(themeAuthor);
          client = await this.dc.connectToUserDcPeer(authorPublicKey.raw);
@@ -471,7 +521,11 @@ export class AIProxyManager {
       return [null, new Error("ErrConnectToAccountPeersFail")];
     }
     if (client.token  == "") {
-       await client.GetToken(this.context.publicKey.string(),this.context.sign);
+       await client.GetToken(
+          this.context.appInfo.appId || "",
+          this.context.publicKey.string(),
+          this.context.sign
+        );
     }
     const aiProxyClient = new AIProxyClient(client, this.context);
     const [authInfo, error] = await aiProxyClient.GetUserOwnAIProxyAuth(
@@ -494,7 +548,7 @@ export class AIProxyManager {
     serviceName: string,
     reqBody: string,
     forceRefresh: boolean,
-    onStreamResponse: OnStreamResponseType = null ,
+    onStreamResponse: OnStreamResponseType | null = null ,
     headers?: string,
     path?: string,
     model?: string): Promise< number>
@@ -528,8 +582,19 @@ export class AIProxyManager {
             ...forceRefreshValue,
             ...headersValue
         ]);
+        if (!this.accountBackUpDc.client) {
+          throw new Error("ErrConnectToAccountPeersFail");
+        }
+        if(!this.context.publicKey){
+            throw new Error("ErrConnectToAccountPeersFail");
+        }
+
         if (this.accountBackUpDc.client.token == "") {
-          await this.accountBackUpDc.client.GetToken(this.context.publicKey.string(),this.context.sign);
+          await this.accountBackUpDc.client.GetToken(
+              this.context.appInfo.appId || "",
+              this.context.publicKey.string(),
+              this.context.sign
+            );
         }
         const signature = await  this.context.sign(preSign);
         const proxyClient = new AIProxyClient(
@@ -541,10 +606,10 @@ export class AIProxyManager {
             themeAuthor,
             configThem,
             serviceName,
-            path,
-            headers,
+            path || "",
+            headers || "",
             reqBody,
-            model,
+            model || "",
             forceRefreshFlag,
             blockHeight ,
             signature,

@@ -17,7 +17,7 @@ export interface IAuthOperations {
    * 账户登录通过钱包
    * @returns 是否登录成功
    */
-  accountLoginWithWallet(): Promise<[flag: boolean, accountInfo:AccountInfo | null]>;
+  accountLoginWithWallet(): Promise<AccountInfo | null>;
 
   /**
    * 账户登录
@@ -26,9 +26,7 @@ export interface IAuthOperations {
    * @param safecode 安全码,默认000000
    * @returns 是否登录成功
    */
-  accountLogin(nftAccount: string, password: string, safecode: string): Promise<{
-      mnemonic: string;
-    }>;
+  accountLogin(nftAccount: string, password: string, safecode: string): Promise<{mnemonic: string | null;}>;
   
   /**
    * 签名数据
@@ -83,7 +81,7 @@ export interface IAuthOperations {
    * @param nftAccount NFT账户
    * @returns 用户信息
    */
-  getUserInfoWithNft(nftAccount: string): Promise<any>;
+  getUserInfoWithNft(nftAccount: string): Promise<[User | null, Error | null]>;
   
 
   /**
