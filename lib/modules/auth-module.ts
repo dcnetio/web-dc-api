@@ -170,6 +170,7 @@ export class AuthModule implements DCModule, IAuthOperations {
       throw new Error("connect to user dc peer failed");
     }
     client = connectedClient;
+    this.context.AccountBackupDc.client = client;
     const commonClient = new CommonClient(client);
     const mnemonic = await commonClient.accountLogin(
       nftAccount,
@@ -212,6 +213,15 @@ export class AuthModule implements DCModule, IAuthOperations {
     return  this.signWithWallet(payload);
   }
 
+
+   async decryptWithWallet(payload: Uint8Array): Promise<Uint8Array> {
+     if (!this.walletManager) {
+      throw new Error("walletManager is null");
+    } else {
+      const signature = await this.walletManager.decrypt(payload);
+      return signature;
+    }
+  }
   /**
    * 将私钥绑定NFT账号(NFT账号+密码+安全码)
    * @param account NFT账号
@@ -515,6 +525,20 @@ export class AuthModule implements DCModule, IAuthOperations {
 
     const pubkeyRaw = this.context.getPubkeyRaw();
     return this.context.dcChain.refreshUserInfo(pubkeyRaw);
+  }
+
+  /**
+   * 获取用户默认数据库
+   * @param threadId 数据库ID
+   * @param rk 读取密钥,主要用来加解密真正的数据,注意对数据记录进行加密和解密
+   * @param sk 服务密钥,主要用来处理传输过程加解密,主要对数据链表头进行加密和解密
+   * @param remark 备注信息
+   * @returns 用户默认数据库信息
+   */
+  async setUserDefaultDB(threadId: string, rk: string,sk: string,remark: string,vaccount?: string): Promise<void> {
+    this.assertInitialized();
+     const accountManager = new AccountManager(this.context);
+    return accountManager.setUserDefaultDB(threadId,rk,sk,remark,vaccount);
   }
 
   /**

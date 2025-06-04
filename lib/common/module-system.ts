@@ -4,7 +4,7 @@
 import { DCContext } from "../../lib/interfaces/DCContext";
 import { createLogger } from "../util/logger";
 
-const logger = createLogger('ModuleSystem');
+const logger = createLogger("ModuleSystem");
 
 /**
  * 模块接口，所有功能模块必须实现此接口
@@ -14,14 +14,14 @@ export interface DCModule {
    * 模块名称，用于标识和日志
    */
   readonly moduleName: string;
-  
+
   /**
    * 模块初始化方法
    * @param context DC上下文
    * @returns 是否初始化成功
    */
   initialize(context: DCContext): Promise<boolean>;
-  
+
   /**
    * 模块关闭方法
    */
@@ -32,15 +32,16 @@ export interface DCModule {
  * 核心模块名称枚举
  */
 export enum CoreModuleName {
-  FILE = 'file',
-  AUTH = 'auth',
-  COMMENT = 'comment',
-  DATABASE = 'database',
-  MESSAGE = 'message',
-  KEYVALUE = 'keyvalue',
-  CACHE = 'cache',
-  CLIENT = 'client',
-  AIPROXY = 'aiproxy'
+  FILE = "file",
+  AUTH = "auth",
+  COMMENT = "comment",
+  DATABASE = "database",
+  MESSAGE = "message",
+  KEYVALUE = "keyvalue",
+  CACHE = "cache",
+  CLIENT = "client",
+  AIPROXY = "aiproxy",
+  UTIL = "util",
 }
 
 /**
@@ -51,7 +52,7 @@ export class ModuleSystem {
   private modules: Map<string, DCModule> = new Map();
   private context: DCContext;
   private initialized: boolean = false;
-  
+
   /**
    * 创建模块系统
    * @param context DC上下文
@@ -59,7 +60,7 @@ export class ModuleSystem {
   constructor(context: DCContext) {
     this.context = context;
   }
-  
+
   /**
    * 注册模块
    * @param module 要注册的模块
@@ -70,12 +71,12 @@ export class ModuleSystem {
       logger.warn(`模块 ${module.moduleName} 已存在，无法重复注册`);
       return false;
     }
-    
+
     this.modules.set(module.moduleName, module);
     logger.info(`模块 ${module.moduleName} 已注册`);
     return true;
   }
-  
+
   /**
    * 获取模块
    * @param moduleName 模块名称
@@ -84,27 +85,27 @@ export class ModuleSystem {
   getModule<T extends DCModule>(moduleName: string): T | undefined {
     return this.modules.get(moduleName) as T | undefined;
   }
-  
+
   /**
    * 初始化所有已注册的模块
    * @returns 是否所有模块都成功初始化
    */
   async initializeAll(): Promise<boolean> {
     logger.info("开始初始化所有模块...");
-    
+
     // 按照特定顺序初始化核心模块
     const initOrder = [
-      CoreModuleName.AUTH,      // 认证模块优先，因为其他模块可能依赖认证
-      CoreModuleName.FILE,      // 文件模块其次，许多功能依赖文件操作
-      CoreModuleName.DATABASE,  // 数据库模块
-      CoreModuleName.COMMENT,   // 评论模块
-      CoreModuleName.MESSAGE,   // 消息模块
-      CoreModuleName.KEYVALUE,   // 键值存储模块
-      CoreModuleName.CLIENT,     // 客户端模块
-      CoreModuleName.CACHE,      // 缓存模块
-      CoreModuleName.AIPROXY    // AIProxy模块
+      CoreModuleName.AUTH, // 认证模块优先，因为其他模块可能依赖认证
+      CoreModuleName.FILE, // 文件模块其次，许多功能依赖文件操作
+      CoreModuleName.DATABASE, // 数据库模块
+      CoreModuleName.COMMENT, // 评论模块
+      CoreModuleName.MESSAGE, // 消息模块
+      CoreModuleName.KEYVALUE, // 键值存储模块
+      CoreModuleName.CLIENT, // 客户端模块
+      CoreModuleName.CACHE, // 缓存模块
+      CoreModuleName.AIPROXY, // AIProxy模块
     ];
-    
+
     // 先初始化核心模块
     for (const moduleName of initOrder) {
       const module = this.modules.get(moduleName);
@@ -121,9 +122,8 @@ export class ModuleSystem {
           return false;
         }
       }
-      
     }
-    
+
     // 然后初始化其余的扩展模块
     for (const [name, module] of this.modules.entries()) {
       if (!initOrder.includes(name as CoreModuleName)) {
@@ -140,18 +140,18 @@ export class ModuleSystem {
         }
       }
     }
-    
+
     this.initialized = true;
     logger.info("所有模块初始化完成");
     return true;
   }
-  
+
   /**
    * 关闭所有模块
    */
   async shutdownAll(): Promise<void> {
     logger.info("开始关闭所有模块...");
-    
+
     // 逆序关闭模块
     const modules = Array.from(this.modules.entries());
     for (let i = modules.length - 1; i >= 0; i--) {
@@ -163,18 +163,18 @@ export class ModuleSystem {
         logger.error(`关闭模块 ${name} 时出错:`, error);
       }
     }
-    
+
     this.initialized = false;
     logger.info("所有模块已关闭");
   }
-  
+
   /**
    * 检查模块系统是否已初始化
    */
   isInitialized(): boolean {
     return this.initialized;
   }
-  
+
   /**
    * 获取已注册的模块列表
    */

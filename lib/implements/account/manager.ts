@@ -609,4 +609,65 @@ export class AccountManager {
       return false;
     }
   }
+  /**
+   * 获取用户默认数据库
+   * @param threadId 数据库ID
+   * @param rk 读取密钥,主要用来加解密真正的数据,注意对数据记录进行加密和解密
+   * @param sk 服务密钥,主要用来处理传输过程加解密,主要对数据链表头进行加密和解密
+   * @param remark 备注信息
+   * @returns 用户默认数据库信息
+   */
+  async setUserDefaultDB(
+    threadId: string,
+    rk: string,
+    sk: string,
+    remark: string,
+    vaccount?: string
+  ): Promise<void> {
+    const dbinfo = threadId + "|" + rk + "|" + sk + "|" + remark;
+    const dbinfocrypto = await this.context.publicKey.encrypt(
+      new TextEncoder().encode(dbinfo)
+    );
+    const blockHeight = await this.chainUtil?.getBlockHeight();
+    if (blockHeight === undefined) {
+      throw new AccountError("Failed to get blockchain height");
+    }
+    if (this.connectedDc.client.token == "") {
+      const token = await this.connectedDc.client.GetToken(
+        this.context.publicKey.string(),
+        async (payload: Uint8Array): Promise<Uint8Array> => {
+          return this.context.sign(payload);
+        }
+      );
+      if (!token) {
+        throw new AccountError("Failed to get token");
+      }
+    }
+    const accountClient = new AccountClient(this.connectedDc.client);
+    const serverPidStr = this.connectedDc.nodeAddr.getPeerId();
+    const serverPidBytes = new TextEncoder().encode(serverPidStr);
+    // 生成签名数据
+    const hvalue = uint32ToLittleEndianBytes(blockHeight);
+    // 组合预签名数据: subPubkey + blockHeight + peerid
+    const preSign = new Uint8Array(
+      dbinfocrypto.length + hvalue.length + serverPidBytes.length
+    );
+    let offset = 0;
+    preSign.set(dbinfocrypto, offset);
+    offset += dbinfocrypto.length;
+    preSign.set(hvalue, offset);
+    offset += hvalue.length;
+    preSign.set(serverPidBytes, offset);
+    // 使用私钥签名
+    const signature = await this.context.sign(preSign);
+
+    await accountClient.setUserDefaultDB(
+      dbinfocrypto,
+      blockHeight ? blockHeight : 0,
+      serverPidStr,
+      signature,
+      vaccount
+    );
+    return;
+  }
 }

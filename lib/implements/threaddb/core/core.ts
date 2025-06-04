@@ -163,6 +163,12 @@ export interface IThreadInfo {
   getFirstPrivKeyLog() :IThreadLogInfo | undefined
 }  
 
+export interface IDBInfo {
+  name: string;
+  addrs: ThreadMuliaddr[];
+  key: ThreadKey;
+}
+
 export class ThreadInfo  implements IThreadInfo {  
   constructor(  
     public id: ThreadID, 

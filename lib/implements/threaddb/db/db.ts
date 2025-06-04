@@ -4,7 +4,7 @@ import { } from '../common/transformed-datastore'
 import { Key, Query } from 'interface-datastore';
 import { Key as ThreadKey } from '../common/key';
 import { Connector } from '../core/app';
-import {Context} from '../core/core';
+import {Context, IDBInfo, ManagedOptions, ThreadInfo} from '../core/core';
 import { EventCodec, Errors,pullThreadBackgroundTimeout ,PullTimeout} from '../core/db';
 import { IThreadRecord } from '../core/record'
 import { Ed25519PubKey } from '../../../common/dc-key/ed25519';
@@ -242,6 +242,31 @@ export class DB implements App,IDB {
     }
     return dbInstance;
   }  
+
+
+/**
+ * GetDBInfo returns the addresses and key that can be used to join the DB thread.
+ * @param options Optional settings for the operation
+ * @returns Promise resolving to thread info
+ */
+async getDBInfo(options?:  ManagedOptions): Promise<IDBInfo> {
+  console.debug(`getting db info in ${this.name}`);
+  
+  try {
+    const threadInfo = await this.connector.net.getThread(
+      this.connector.threadId,
+      { token: options.token }
+    );
+    
+    return {
+      name: this.name,
+      addrs: threadInfo.addrs,
+      key: threadInfo.key
+    };
+  } catch (err) {
+    throw new Error(`Failed to get DB info: ${err instanceof Error ? err.message : String(err)}`);
+  }
+}
 
 
   async saveName(prevName: string): Promise<void> {  
