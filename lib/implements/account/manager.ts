@@ -33,6 +33,8 @@ export const Errors = {
   ErrAccountPrivateSignIsNull: new AccountError(
     "account privatekey sign is null"
   ),
+  // 公钥唯恐
+  ErrAccountPublicKeyIsNull: new AccountError("account publickey is null"),
 };
 export class AccountManager {
   dc: DcUtil;
@@ -624,6 +626,15 @@ export class AccountManager {
     remark: string,
     vaccount?: string
   ): Promise<void> {
+    if(!this.context.publicKey){
+      throw Errors.ErrAccountPublicKeyIsNull;
+    }
+    if(!this.connectedDc.client){
+      throw Errors.ErrNoDcPeerConnected;
+    }
+    if(!this.connectedDc.nodeAddr){
+      throw Errors.ErrNodeAddrIsNull;
+    }
     const dbinfo = threadId + "|" + rk + "|" + sk + "|" + remark;
     const dbinfocrypto = await this.context.publicKey.encrypt(
       new TextEncoder().encode(dbinfo)
@@ -644,7 +655,7 @@ export class AccountManager {
       }
     }
     const accountClient = new AccountClient(this.connectedDc.client);
-    const serverPidStr = this.connectedDc.nodeAddr.getPeerId();
+    const serverPidStr = this.connectedDc.nodeAddr.getPeerId() || "";
     const serverPidBytes = new TextEncoder().encode(serverPidStr);
     // 生成签名数据
     const hvalue = uint32ToLittleEndianBytes(blockHeight);
