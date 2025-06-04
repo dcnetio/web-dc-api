@@ -255,7 +255,7 @@ async getDBInfo(options?:  ManagedOptions): Promise<IDBInfo> {
   try {
     const threadInfo = await this.connector.net.getThread(
       this.connector.threadId,
-      { token: options.token }
+      { token: options?.token }
     );
     
     return {

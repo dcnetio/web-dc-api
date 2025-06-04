@@ -157,6 +157,9 @@ export class DBGrpcClient {
                 30000
             );
         } catch (err) {
+          if (err.message.includes("log has binded to thread")) {
+            return 
+          }
             console.error("AddLogToThread error:", err);  
             throw err;
         }

@@ -1000,13 +1000,11 @@ async syncDBFromDC(
     
 
       
-        const collections = await Promise.all(  
-            collectionInfos.map(async info => ({  
-                name: info.name,  
-                schema: info.schema,  
-                indexes: info.indexes || []  
-            }))  
-        );  
+        const collections = collectionInfos.map(info => ({  
+          name: info.name,  
+          schema: info.schema,  
+          indexes: info.indexes || []  
+      }));
 
         const dbOpts: NewOptions = {  
             name: dbname, 
@@ -1243,13 +1241,11 @@ async newDB(
 
         const threadInfo = await dbClient.createThread(threadID.toString(), opts);  
 
-        const collections = await Promise.all(  
-            collectionInfos.map(async info => ({  
-                name: info.name,  
-                schema: info.schema,  
-                indexes: info.indexes || []  
-            }))  
-        );  
+         const collections = collectionInfos.map(info => ({  
+            name: info.name,  
+            schema: info.schema,  
+            indexes: info.indexes || []  
+        })); 
 
        
      

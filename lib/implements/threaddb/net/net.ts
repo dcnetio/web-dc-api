@@ -6,7 +6,7 @@ import { Multiaddr as TMultiaddr, multiaddr,protocols } from '@multiformats/mult
 import { Head } from '../core/head'; 
 import { ThreadID } from '@textile/threads-id'; 
 import { Ed25519PrivKey,Ed25519PubKey } from "../../../common/dc-key/ed25519";
-import type { PeerId,PublicKey,PrivateKey } from "@libp2p/interface"; 
+import type { PeerId,PublicKey,PrivateKey, Ed25519PublicKey } from "@libp2p/interface"; 
 import { SymmetricKey, Key as ThreadKey } from '../common/key';
 import {validateIDData} from '../lsstoreds/global';
 import {  ThreadInfo, IThreadLogInfo, SymKey, IThreadInfo, ThreadMuliaddr} from '../core/core';
@@ -49,6 +49,7 @@ import {
 } from '../pb/proto-custom-types' 
 import * as buffer from "buffer/";
 import { AsyncMutex } from '../common/AsyncMutex';
+import { DCContext } from 'lib/interfaces';
 const { Buffer } = buffer;
 
 
@@ -71,17 +72,17 @@ export class Network implements Net {
   private dc: DcUtil;
   private dagService: DAGCBOR; 
   private hostID: string;  
-  private privateKey: Ed25519PrivKey;  
+  private context: DCContext;  
   private server:DCGrpcServer;
   private libp2p: Libp2p;
   private connectors: Record<string, Connector>;
   private cachePeers: Record<string, TMultiaddr> = {};
   private threadMutexes: Record<string, AsyncMutex> = {};
 
-  constructor(dcUtil  : DcUtil,dcChain: ChainUtil,libp2p:Libp2p,grpcServer:DCGrpcServer,logstore: ILogstore,bstore: Blocks,dagService: DAGCBOR,  privateKey: Ed25519PrivKey) {  
+  constructor(dcUtil  : DcUtil,dcChain: ChainUtil,libp2p:Libp2p,grpcServer:DCGrpcServer,logstore: ILogstore,bstore: Blocks,dagService: DAGCBOR,  context: DCContext) {  
     this.logstore = logstore;  
     this.hostID = libp2p.peerId.toString();  
-    this.privateKey = privateKey;  
+    this.context = context;  
     this.bstore = bstore;
     this.dagService = dagService;
     this.libp2p = libp2p;
@@ -93,10 +94,10 @@ export class Network implements Net {
 
    // 签名,后续应该改成发送到钱包iframe中签名,发送数据包含payload和用户公钥
    sign =  async (payload: Uint8Array): Promise<Uint8Array> => {
-    if (!this.privateKey) {
+    if (!this.context) {
       throw new Error("privKey is null");
     }
-    const signature = this.privateKey.sign(payload);
+    const signature = this.context.sign(payload);
     return signature;
   }
 
@@ -115,7 +116,7 @@ export class Network implements Net {
     const addr = multiaddr(peerAddr);
     const client = new Client(this.libp2p,this.bstore,addr, dc_protocol);
     //获取token
-    const token = await client.GetToken(this.privateKey.publicKey.string(),(payload: Uint8Array):Promise<Uint8Array> => {
+    const token = await client.GetToken(this.context.publicKey.string(),(payload: Uint8Array):Promise<Uint8Array> => {
       return this.sign(payload);
     });
     if (!token) {
@@ -127,7 +128,7 @@ export class Network implements Net {
         } 
         const addr = multiaddr(peerAddr);
         const client = new Client(this.libp2p,this.bstore,addr, dc_protocol);
-        const token = await client.GetToken(this.privateKey.publicKey.string(),(payload: Uint8Array) => {
+        const token = await client.GetToken(this.context.publicKey.string(),(payload: Uint8Array) => {
           return this.sign(payload);
         });
         if (token) {
@@ -174,9 +175,9 @@ export class Network implements Net {
    * 创建threaddb  
    */  
   async createThread(id: ThreadID, options: { token: ThreadToken; logKey?: Ed25519PrivKey|Ed25519PubKey, threadKey?: ThreadKey }): Promise<ThreadInfo> {  
-    const identity = await this.validate(id, options.token);  
+    const identity = this.context.publicKey;  
     if (identity) {  
-      console.debug("Creating thread with identity:", identity.toString());  
+      console.debug("Creating thread with identity:", this.context.publicKey.toString());  
     } else {  
       throw new Error("Identity creation failed.");  
     }  
@@ -217,7 +218,7 @@ async addThread(
     if (identity) {
       console.debug(`Adding thread with identity: ${identity.toString()}`);
     } else {
-      identity = this.privateKey.publicKey;
+      identity = this.context.publicKey;
     }
 
     // 确保日志唯一性
@@ -381,7 +382,7 @@ async deleteThread(
     if (!token) {  
       return 
     }
-    return await token.validate(this.privateKey);  
+    return token.pubKey()
   }  
 
  
@@ -415,7 +416,7 @@ async ensureUniqueLog(id: ThreadID, key?: Ed25519PrivKey | Ed25519PubKey, identi
         const lidb = await this.logstore.metadata.getBytes(id, identity.toString());
         if (!lidb || lidb.length === 0) {
           // 检查是否有旧式"own"（未索引）日志
-          if (identity.equals(this.privateKey.publicKey)) {
+          if (identity.equals(this.context.publicKey)) {
             const firstPrivKeyLog = thrd.getFirstPrivKeyLog();
             if (firstPrivKeyLog && firstPrivKeyLog.privKey) {
               throw new Error("Thread exists");
@@ -1441,13 +1442,8 @@ async createRecord(
   options: { token?: ThreadToken, apiToken?: Token } = {}
 ): Promise<IThreadRecord> {
   try {
-    // 验证身份
-    let identity = await this.validate(id, options.token);
-    
-    if (!identity) {
-      identity = this.privateKey.publicKey;
-    }
-    
+    // 验证身份,用节点的pubkey
+    const identity = Ed25519PubKey.formEd25519PublicKey(this.libp2p.peerId.publicKey as Ed25519PublicKey);
     // 获取并验证连接器
     const [con, ok] = this.getConnectorProtected(id, options.apiToken);
     
@@ -1501,14 +1497,14 @@ async createRecord(
 async getOrCreateLog(id: ThreadID, identity: PublicKey): Promise<IThreadLogInfo> {
   // 默认使用当前主机身份，如果未提供
   if (!identity) {
-    identity = this.privateKey.publicKey;
+    throw new Error("No identity provided");
   }
   
   // 尝试获取此身份的现有日志ID
   const lidb = await this.logstore.metadata.getBytes(id, identity.toString());
   
   // 检查旧式"自有"日志
-  if (!lidb && identity.equals(this.privateKey.publicKey)) {
+  if (!lidb && identity.equals(this.context.publicKey)) {
     const thrd = await this.logstore.getThread(id);
     const ownLog = thrd.getFirstPrivKeyLog();
     if (ownLog) {
@@ -1522,7 +1518,7 @@ async getOrCreateLog(id: ThreadID, identity: PublicKey): Promise<IThreadLogInfo>
   }
   
   // 创建新日志，如果不存在
-  return this.createLog(id, this.privateKey, identity);
+  return this.createLog(id, null, identity);
 }
 
 /**
@@ -1556,7 +1552,7 @@ async newRecord(id: ThreadID, lg: IThreadLogInfo, body: IPLDNode, identity: Publ
     block: event,
     prev: prev,
     key: lg.privKey as Ed25519PrivKey,
-    pubKey: this.privateKey.publicKey,
+    pubKey: this.context.publicKey,
     serviceKey: sk
   })
   return rec

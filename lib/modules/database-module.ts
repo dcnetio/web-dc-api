@@ -86,7 +86,7 @@ export class DatabaseModule implements DCModule, IDatabaseOperations {
         logstore,
         this.context.dcNodeClient.blockstore,
         dagService,
-        this.context.privKey
+        this.context
       );
       
       const dbmanager = new DBManager(

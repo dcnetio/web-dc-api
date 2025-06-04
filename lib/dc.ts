@@ -22,7 +22,8 @@ import {
   KeyValueModule, 
   ClientModule,
   CacheModule,
-  AIProxyModule
+  AIProxyModule,
+  UtilModule
 } from "./modules";
 import { Client } from "./common/dcapi";
 
@@ -117,6 +118,7 @@ export class DC implements DCContext {
       this.moduleSystem.registerModule(new ClientModule());
       this.moduleSystem.registerModule(new CacheModule());
       this.moduleSystem.registerModule(new AIProxyModule());
+      this.moduleSystem.registerModule(new UtilModule());
     }
     
     logger.info("核心模块注册完成");

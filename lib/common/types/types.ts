@@ -7,7 +7,9 @@ export interface User {
   commentFrozenStatus: number; //评论相关功能(包括keyvalue数据库、主题评论等功能)冻结状态
   commentReportAmount: number; //评论举报次数
   commentReportNumber: number; //下一次消除举报次数的区块高度
-  dbConfig: string; //用户个体库配置信息，格式（threadid|sk|rk)加密后的值，（用户公钥加密后的字符串值，用户私钥可以解密）
+  dbConfigStr: string; //用户个体库配置信息，格式（threadid|sk|rk)加密后的值，（用户公钥加密后的字符串值，用户私钥可以解密）
+  dbConfig: string; //dbConfig,私钥加密后的
+  dbConfigRaw: Uint8Array; //dbConfig,私钥加密后的原始值
   dbUpdateNumber: number; //用户个体库信息更新区块高度
   encNftAccount: string; //用户绑定的账号加密后字符串（用户公钥加密后的值，用户私钥可以解密）
   expireNumber: number; //订阅过期区块高度

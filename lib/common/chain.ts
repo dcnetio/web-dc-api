@@ -59,6 +59,8 @@ export class ChainUtil {
     if (userInfo === null) {
       throw new Error("userInfo is null");
     }
+   
+   
     if (!isUser(userInfo)) {
       throw new Error("walletAccountStorage is not user");
     }
@@ -98,6 +100,14 @@ export class ChainUtil {
       }
       for (let i = 0; i < userInfo.requestPeers.length; i++) {
         userInfo.requestPeers[i] = hexToAscii(userInfo.requestPeers[i]);
+      }
+      if (userInfo.dbConfig.length <= 2) {
+        userInfo.dbConfig = ""; // 如果 dbConfig 为空，则设置为 ""
+      }else{
+        userInfo.dbConfigRaw = hexToBytes(userInfo.dbConfig.slice(2));
+      }
+      if (userInfo.encNftAccount.length <= 2) {
+        userInfo.encNftAccount = ""; 
       }
    // 对 userInfo.peers 按与用户公钥的 XOR 距离进行排序
     if (userInfo.peers && Array.isArray(userInfo.peers) && account) {
