@@ -91,8 +91,8 @@ export class AuthModule implements DCModule, IAuthOperations {
       if (!token) {
         throw new Error("GetToken error");
       }
-      // 存在token， 获取用户备用节点
-      await this.getAccountBackupDc();
+      // todo 临时注释存在token， 获取用户备用节点
+      // await this.getAccountBackupDc();
       return data;
 
     } catch (error) {
