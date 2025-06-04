@@ -158,7 +158,7 @@ export interface ModelConfig {
 
 export  interface AccountInfo{
       nftAccount:string, // NFT账号
-      appAccount:Ed25519PubKey, // 应用专用账号公钥 
+      appAccount:Uint8Array, // 应用专用账号公钥 
       ethAccount:string, // 以太坊兼容链上账号
       chainId:string, // 区块链ID
       chainName:string, // 区块链名称

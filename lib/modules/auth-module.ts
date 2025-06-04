@@ -43,9 +43,9 @@ export class AuthModule implements DCModule, IAuthOperations {
     try {
       this.context = context;
       const walletManager = new WalletManager(this.context);
-      await walletManager.init();
       this.walletManager = walletManager;
       this.initialized = true;
+      await walletManager.init();
       return true;
     } catch (error) {
       logger.error("认证模块初始化失败:", error);
@@ -74,20 +74,8 @@ export class AuthModule implements DCModule, IAuthOperations {
     }
 
     try {
-      const res = await this.walletManager.openConnect();
-      if(!res || !(res as any).responseData) {
-        throw new Error("openConnect error");
-      }
-      // Check if data is an object with publicKey property
-      const data = (res as any).responseData      ;
-      if(typeof data !== 'object' || data === null || !('publicKey' in data)) {
-        throw new Error("openConnect response is missing publicKey");
-      }
-      if(!data.publicKey) {
-        throw new Error("openConnect response is null");
-      }
-      // Type assertion to ensure data.publicKey is treated as Ed25519PublicKey
-      const publicKey = Ed25519PubKey.formEd25519PublicKey(data.publicKey);
+      const data = await this.walletManager.openConnect();
+      const publicKey = new Ed25519PubKey(data.appAccount);
       this.context.publicKey = publicKey;
       savePublicKey(publicKey.string());
       console.log("accountLogin data", data);

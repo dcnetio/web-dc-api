@@ -28,7 +28,7 @@ export class WalletManager {
     this.context = context;
   }
 
-  async init():  Promise<Ed25519PubKey | null> {
+  async init():  Promise<boolean> {
     if(appOrigin.indexOf(walletOrigin) === -1) {
       return new Promise((resolve, reject) => {
         // html添加iframe标签，id是dcWalletIframe
@@ -36,8 +36,8 @@ export class WalletManager {
         iframe.id = this.iframeId;
         iframe.src = `${walletUrl}/iframe?parentOrigin=${appOrigin}`;
         iframe.onload = async () => {
-          const publicKey = await this.initConfig(this);
-          resolve(publicKey);
+          const bool = await this.initConfig(this);
+          resolve(bool);
         };
         iframe.style.display = "none";
         document.body.appendChild(iframe);
@@ -46,11 +46,11 @@ export class WalletManager {
         });
       });
     }else {
-      return null;
+      return true;
     }
   }
   // iframe加载完成后，发送初始化配置
-  async initConfig  (that: WalletManager): Promise<Ed25519PubKey | null> {
+  async initConfig  (that: WalletManager): Promise<boolean> {
     return new Promise((resolve, reject) => { 
       const message = {
         type: "init",
@@ -67,22 +67,22 @@ export class WalletManager {
           console.log("initConfig response", response);
           if(!response || !response.data || !response.data.data) {
             console.error("initConfig response is null");
-            resolve(null);
+            resolve(false);
             return;
           }
-          const messageData = response.data;
-          const data = messageData.data;
-          if(data.success === false || !data.publicKey) {
-            console.error("initConfig error", data.message);
-            resolve(null);
+          const data = response.data?.data;
+          const messageData = data.message;
+          if(data.success === false || !messageData.publicKey) {
+            console.error("initConfig error", message);
+            resolve(false);
             return;
           }
-          this.context.publicKey = new Ed25519PubKey(data.publicKey.raw);
-          resolve(data.publicKey);
+          this.context.publicKey = new Ed25519PubKey(messageData.publicKey);
+          resolve(true);
         })
         .catch((error) => {
           console.error("initConfig error", error);
-          resolve(null);
+          resolve(false);
         });
     });
   };
@@ -103,23 +103,20 @@ export class WalletManager {
       this.sendMessageToIframe(message, 600000)
         .then((response) => {
           console.log("openConnect response", response);
-          if (response) {
-            const message = response.data;
-            console.log("openConnect success", message);
-            if(!message || !message.data) {
-              reject(new WalletError("openConnect response is null"));
-              return;
-            }
-            const data = message.data;
-            if(!data.publicKey) {
-              reject(new WalletError("openConnect publicKey is null"));
-              return;
-            }
-            resolve(data);
-          } else {
+          if(!response || !response.data || !response.data.data) {
             console.error("openConnect response is null");
             reject(new WalletError("openConnect response is null"));
+            return;
           }
+          const data = response.data?.data;
+          const messageData = data.message;
+          if(data.success === false || !messageData.appAccount) {
+            console.error("openConnect error", message);
+            reject(new WalletError("openConnect appAccount is null"));
+            return;
+          }
+          console.log("openConnect success", messageData);
+          resolve(messageData);
         })
         .catch((error) => {
           console.error("openConnect error", error);
@@ -146,23 +143,19 @@ export class WalletManager {
         .then((response) => {
           console.log("decrypt response", response);
           if(!response || !response.data || !response.data.data) {
-            console.error("initConfig response is null");
-            reject(new WalletError("initConfig response is null"));
-            return;
-          }
-          const data = response.data.data;
-          console.log("decrypt success", data);
-          if(!data.success) {
-            console.error("decrypt not success");
-            reject(new WalletError("decrypt not success"));
-            return;
-          }
-          if(!data.message) {
             console.error("decrypt response is null");
             reject(new WalletError("decrypt response is null"));
             return;
           }
-          resolve(data.message);
+          const data = response.data?.data;
+          const messageData = data.message;
+          if(data.success === false || !messageData) {
+            console.error("decrypt error", message);
+            reject(new WalletError("decrypt messageData is null"));
+            return;
+          }
+          console.log("decrypt success", messageData);
+          resolve(messageData);
         })
         .catch((error) => {
           console.error("decrypt error", error);
@@ -193,19 +186,15 @@ export class WalletManager {
             reject(new WalletError("sign response is null"));
             return;
           }
-          const data = response.data.data;
-          console.log("sign success", data);
-          if(!data.success) {
-            console.error("sign not success");
-            reject(new WalletError("sign not success"));
+          const data = response.data?.data;
+          const messageData = data.message;
+          if(data.success === false || !messageData) {
+            console.error("sign error", message);
+            reject(new WalletError("sign messageData is null"));
             return;
           }
-          if(!data.message) {
-            console.error("sign response is null");
-            reject(new WalletError("sign response is null"));
-            return;
-          }
-          resolve(data.message);
+          console.log("sign success", messageData);
+          resolve(messageData);
         })
         .catch((error) => {
           console.error("sign error", error);
@@ -239,19 +228,15 @@ export class WalletManager {
             reject(new WalletError("signMessage response is null"));
             return;
           }
-          const data = response.data.data;
-          console.log("signMessage success", data);
-          if(!data.success) {
-            console.error("signMessage not success");
-            reject(new WalletError(data.message || "signEIP712Message not success"));
+          const data = response.data?.data;
+          const messageData = data.message;
+          if(data.success === false || !messageData) {
+            console.error("signMessage error", message);
+            reject(new WalletError("signMessage messageData is null"));
             return;
           }
-          if(!data.message) {
-            console.error("signMessage response is null");
-            reject(new WalletError("signMessage response is null"));
-            return;
-          }
-          resolve(data.message);
+          console.log("signMessage success", messageData);
+          resolve(messageData);
         })
         .catch((error) => {
           console.error("signMessage error", error);
@@ -269,7 +254,6 @@ export class WalletManager {
         reject(new WalletError("未连接钱包"));
         return;
       }
-      const publicKey = this.context.getPublicKey();
       const urlWithOrigin = walletUrl + "?origin=" + appOrigin;
       this.initCommChannel();
       this.walletWindow = window.open(urlWithOrigin, walletWindowName);
@@ -286,19 +270,15 @@ export class WalletManager {
             reject(new WalletError("signEIP712Message response is null"));
             return;
           }
-          const data = response.data.data;
-          console.log("signEIP712Message success", data);
-          if(!data.success) {
-            console.error("signEIP712Message not success");
-            reject(new WalletError(data.message || "signEIP712Message not success"));
+          const data = response.data?.data;
+          const messageData = data.message;
+          if(data.success === false || !messageData) {
+            console.error("signEIP712Message error", message);
+            reject(new WalletError("signEIP712Message messageData is null"));
             return;
           }
-          if(!data.message) {
-            console.error("signEIP712Message response is null");
-            reject(new WalletError("signEIP712Message response is null"));
-            return;
-          }
-          resolve(data.message);
+          console.log("messageData success", messageData);
+          resolve(messageData);
         })
         .catch((error) => {
           console.error("signEIP712Message error", error);
