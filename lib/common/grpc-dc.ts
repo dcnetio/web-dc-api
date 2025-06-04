@@ -37,11 +37,7 @@ export class DCGrpcClient {
           const challenge = decodedPayload.challenge;
           const signature = await signCallback(challenge);
           const message = new dcnet.pb.GetTokenRequest({});
-          message.signature = challenge;
-          // 签名验证
-          const publicKey = Ed25519PubKey.edPubkeyFromStr(pubkey);
-          const flag = publicKey.verify(challenge, signature);
-          console.log("verify:", flag);
+          message.signature = signature;
           const messageBytes =
             dcnet.pb.GetTokenRequest.encode(message).finish();
           signatureDataSource.setData(messageBytes);
