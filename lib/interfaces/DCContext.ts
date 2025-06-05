@@ -31,7 +31,6 @@ export interface DCContext {
   
   // 身份相关
   publicKey: Ed25519PubKey | undefined;
-  privKey: Ed25519PrivKey | undefined;
 
   grpcServer: DCGrpcServer;
   
