@@ -28,25 +28,25 @@ const controller = new AbortController();
 const { signal } = controller;
 
 // 错误定义
-export class FileError extends Error {
+export class CommentError extends Error {
   constructor(message: string) {
     super(message);
-    this.name = "FileError";
+    this.name = "CommentError";
   }
 }
 export const Errors = {
-  ErrNoDcPeerConnected: new FileError("no dc peer connected"),
-  ErrNodeAddrIsNull: new FileError("nodeAddr is null"),
-  ErrNoFileChose: new FileError("no file choose"),
-  ErrNoPeerIdIsNull: new FileError("peerId is null"),
-  ErrAddThemeObj: new FileError("add theme obj error"),
-  ErrPublishCommentToTheme: new FileError("publish comment error"),
+  ErrNoDcPeerConnected: new CommentError("no dc peer connected"),
+  ErrNodeAddrIsNull: new CommentError("nodeAddr is null"),
+  ErrNoFileChose: new CommentError("no file choose"),
+  ErrNoPeerIdIsNull: new CommentError("peerId is null"),
+  ErrAddThemeObj: new CommentError("add theme obj error"),
+  ErrPublishCommentToTheme: new CommentError("publish comment error"),
   // 评论空间没有配置
-  ErrCommentSpaceNotConfig: new FileError("comment space not config"),
+  ErrCommentSpaceNotConfig: new CommentError("comment space not config"),
   // 评论数据同步中
-  ErrCommentDataSync: new FileError("comment data sync"),
+  ErrCommentDataSync: new CommentError("comment data sync"),
   // publickey is null
-  ErrPublicKeyIsNull: new FileError("publickey is null"),
+  ErrPublicKeyIsNull: new CommentError("publickey is null"),
 };
 
 export class CommentManager {
@@ -455,18 +455,12 @@ async addUserOffChainOpTimes(
         this.dcNodeClient,
         this.context
       );
-      const delSelfRes = await commentClient.deleteSelfComment(
-        appId,
-        theme,
-        themeAuthor,
-        blockHeight || 0,
-        userPubkey.string(),
-        commentCid,
-        commentBlockHeightUint32,
-        signature,
-      );
-      if(delSelfRes === 0){
-        const delObjRes = await commentClient.deleteCommentToObj(
+      let delSelfRes: number = -1;
+      let delObjRes: number = -1;
+      let delSelfError: CommentError | null = null;
+      let delObjError: CommentError | null = null;
+      try {
+        delSelfRes = await commentClient.deleteSelfComment(
           appId,
           theme,
           themeAuthor,
@@ -476,12 +470,31 @@ async addUserOffChainOpTimes(
           commentBlockHeightUint32,
           signature,
         );
-        if(delObjRes === 0){
-          return [0, null];
-        }
-        return [delObjRes, new Error("deleteCommentToObj error")];
+      } catch (error: any) {
+        delSelfError = new CommentError("deleteSelfComment error" + (error && error.message));
       }
-      return [delSelfRes, new Error("deleteSelfComment error")];
+      try {
+        delObjRes = await commentClient.deleteCommentToObj(
+          appId,
+          theme,
+          themeAuthor,
+          blockHeight || 0,
+          userPubkey.string(),
+          commentCid,
+          commentBlockHeightUint32,
+          signature,
+        );
+      } catch (error: any) {
+        delObjError = new CommentError("deleteCommentToObj error" + (error && error.message));
+      }
+      
+      if(delSelfRes !== 0){
+        return [delSelfRes, delSelfError || new CommentError("deleteSelfComment error")];
+      }
+      if(delObjRes !== 0){
+        return [delObjRes, delObjError || new CommentError("deleteCommentToObj error")];
+      }
+      return [0, null];
     } catch (err) {
       console.error("deleteSelfComment error:", err);
       throw err;
