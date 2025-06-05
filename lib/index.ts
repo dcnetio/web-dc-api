@@ -26,4 +26,7 @@ export { Ed25519PrivKey, Ed25519PubKey } from './common/dc-key/ed25519';
 // 导出错误类型
 export { Errors } from './common/error';
 
+// 导出AI调用参数设置类型
+export { AICallConfig } from './modules/aiproxy-module';
+
 

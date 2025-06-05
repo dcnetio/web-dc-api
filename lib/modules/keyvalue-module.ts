@@ -28,8 +28,6 @@ export class KeyValueModule implements DCModule, IKeyValueOperations {
       this.keyValueManager = new KeyValueManager(
         context.dcutil,
         context.connectedDc,
-        context.AccountBackupDc,
-        context.dcNodeClient,
         context.dcChain,
         context
       );

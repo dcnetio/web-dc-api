@@ -40,7 +40,6 @@ export class DC implements DCContext {
   dcChain: ChainUtil;
   dcNodeClient!: HeliaLibp2p<Libp2p>;
   dcutil: DcUtil;
-  privKey: Ed25519PrivKey | undefined;
   publicKey: Ed25519PubKey | undefined;
   
   // 连接相关

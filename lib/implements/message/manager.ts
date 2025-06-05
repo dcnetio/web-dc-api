@@ -1,5 +1,5 @@
 import { ChainUtil } from "../../common/chain";
-import { DCConnectInfo, User } from "../../common/types/types";
+import { DCConnectInfo } from "../../common/types/types";
 import * as buffer from "buffer/";
 import { MessageClient } from "./client";
 import { CID } from "multiformats";
@@ -7,9 +7,6 @@ import { sha256 } from "multiformats/hashes/sha2";
 import { Ed25519PubKey } from "../../common/dc-key/ed25519";
 import { uint32ToLittleEndianBytes } from "../../util/utils";
 import { DcUtil } from "../../common/dcutil";
-import { HeliaLibp2p } from "helia";
-import { dc_protocol } from "../../common/define";
-import { Client } from "../../common/dcapi";
 import { dcnet } from "../../proto/dcnet_proto";
 import { DCContext } from "../../../lib/interfaces/DCContext";
 const { Buffer } = buffer;
@@ -31,19 +28,16 @@ export class MessageManager {
   private accountBackupDc: DCConnectInfo = {};
   private context: DCContext;
   private chainUtil: ChainUtil;
-  private dcNodeClient: HeliaLibp2p;
   private dc: DcUtil;
   constructor(
     accountBackupDc: DCConnectInfo,
     dc: DcUtil,
     chainUtil: ChainUtil,
-    dcNodeClient: HeliaLibp2p,
     context: DCContext
   ) {
     this.accountBackupDc = accountBackupDc;
     this.dc = dc;
     this.chainUtil = chainUtil;
-    this.dcNodeClient = dcNodeClient;
     this.context = context;
   }
 

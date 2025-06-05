@@ -9,6 +9,34 @@ import { AIProxyManager } from "../implements/aiproxy/manager";
 import { AIProxyUserPermission } from "../common/constants";
 const logger = createLogger('KeyValueModule');
 
+export class AICallConfig {
+  appId: string ;
+  themeAuthor: string ;
+  configTheme: string ;
+  serviceName: string ;
+  headers: string ;
+  path: string ;
+  model: string ;
+
+  constructor(
+    appId: string,
+    themeAuthor: string,
+    configTheme: string,
+    serviceName: string,
+    headers: string,
+    path: string,
+    model: string
+  ) {
+    this.appId = appId;
+    this.themeAuthor = themeAuthor;
+    this.configTheme = configTheme;
+    this.serviceName = serviceName;
+    this.headers = headers;
+    this.path = path;
+    this.model = model;
+  }
+}
+
 /**
  * AI代理模块
  * 提供AI代理的配置和调用
@@ -17,6 +45,7 @@ export class AIProxyModule implements DCModule {
   readonly moduleName = CoreModuleName.AIPROXY;
   private aiProxyManager!: AIProxyManager;
   private initialized: boolean = false;
+  private aiCallConfig: AICallConfig | null = null;
   
   /**
    * 初始化AI代理模块
@@ -28,7 +57,7 @@ export class AIProxyModule implements DCModule {
       this.aiProxyManager = new AIProxyManager(
         context.dcutil,
         context.AccountBackupDc,
-        context.dcNodeClient,
+        context.dcNodeClient as any, // Type assertion to bypass service map differences
         context.dcChain,
         context
       );
@@ -111,21 +140,42 @@ async GetUserOwnAIProxyAuth(
 
   //AI相关代理的调用,包括代理与AI的通信或者与MCPServer的通信
  async DoAIProxyCall( 
-    appId: string,
-    themeAuthor: string,
-    configThem: string,
-    serviceName: string,
     reqBody: string,
     forceRefresh: boolean,
-    onStreamResponse: OnStreamResponseType | null = null ,
+    onStreamResponse: OnStreamResponseType,
+    appId?: string,
+    themeAuthor?: string,
+    configTheme?: string,
+    serviceName?: string,
     headers?: string,
     path?: string,
     model?: string): Promise< number>
     {
         this.assertInitialized();
-        return this.aiProxyManager.DoAIProxyCall(appId, themeAuthor, configThem, serviceName, reqBody, forceRefresh, onStreamResponse, headers, path, model);
+        if (this.aiCallConfig == null && (!appId || !themeAuthor || !configTheme || !serviceName)) {
+            throw new Error("AI调用配置未设置");
+        }
+        return this.aiProxyManager.DoAIProxyCall(appId || this.aiCallConfig!.appId, themeAuthor|| this.aiCallConfig!.themeAuthor, configTheme || this.aiCallConfig!.configTheme, serviceName|| this.aiCallConfig!.serviceName, reqBody, forceRefresh, onStreamResponse, headers|| this.aiCallConfig!.headers, path|| this.aiCallConfig!.path, model|| this.aiCallConfig!.model);
     }
 
+
+    /**
+   * 设置AI调用的配置
+   * @param appId 应用ID
+   * @param themeAuthor 主题作者的公钥
+   * @param configTheme 配置主题
+   * @param serviceName 服务名称
+   * @param headers 请求头(可选)
+   * @param path 请求路径(可选)
+   * @param model 模型名称(可选)
+   * @returns Promise<void>
+   * */
+  SetAICallConfig(
+    callConfig:AICallConfig
+  ) {
+    this.assertInitialized();
+    this.aiCallConfig = callConfig
+  }
 
   /**
    * 断言模块已初始化

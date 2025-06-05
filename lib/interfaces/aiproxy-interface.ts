@@ -90,28 +90,49 @@ export interface IAIProxyOperations {
   /**
    * 执行AI代理调用
    * 包括代理与AI的通信或者与MCPServer的通信
-   * @param appId 应用ID
-   * @param themeAuthor 主题作者的公钥
-   * @param configTheme 配置主题
-   * @param serviceName 服务器名称
    * @param reqBody 请求体
    * @param forceRefresh 是否强制刷新,强制刷鞋会消耗一定数量的token,一般在更新了用户授权后,才需要强制刷新
    * @param onStreamResponse 流式响应回调函数
-   * @param headers 请求头(可选)
-   * @param path 请求路径(可选)
-   * @param model 模型名称(可选)
+   * @param appId 应用ID(可选),为空时使用默认的调用配置中的appId
+   * @param themeAuthor(可选) 主题作者的公钥,为空时使用默认的调用配置中的themeAuthor
+   * @param configTheme(可选) 配置主题,为空时使用默认的调用配置中的configTheme
+   * @param serviceName(可选) 服务器名称,为空时使用默认的调用配置中的serviceName
+   * @param headers 请求头(可选),为空时使用默认的调用配置中的headers
+   * @param path 请求路径(可选),为空时使用默认的调用配置中的path
+   * @param model 模型名称(可选),为空时使用默认的调用配置中的model
    * @returns 调用状态码
    */
   DoAIProxyCall(
-    appId: string,
-    themeAuthor: string,
-    configTheme: string,
-    serviceName: string,
     reqBody: string,
     forceRefresh: boolean,
-    onStreamResponse?: OnStreamResponseType,
+    onStreamResponse: OnStreamResponseType,
+    appId?: string,
+    themeAuthor?: string,
+    configTheme?: string,
+    serviceName?: string,
     headers?: string,
     path?: string,
     model?: string
   ): Promise<number>;
+
+  /**
+   * 设置AI调用的配置
+   * @param appId 应用ID
+   * @param themeAuthor 主题作者的公钥
+   * @param configTheme 配置主题
+   * @param serviceName 服务名称
+   * @param headers 请求头(可选)
+   * @param path 请求路径(可选)
+   * @param model 模型名称(可选)
+   * @returns Promise<void>
+   * */
+  SetAICallConfig(
+    appId: string,
+    themeAuthor: string,
+    configTheme: string,
+    serviceName: string,
+    headers?: string,
+    path?: string,
+    model?: string
+  ): Promise<void>;
 }

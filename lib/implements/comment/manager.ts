@@ -455,7 +455,7 @@ async addUserOffChainOpTimes(
         this.dcNodeClient,
         this.context
       );
-      const res = await commentClient.deleteSelfComment(
+      const delSelfRes = await commentClient.deleteSelfComment(
         appId,
         theme,
         themeAuthor,
@@ -465,7 +465,23 @@ async addUserOffChainOpTimes(
         commentBlockHeightUint32,
         signature,
       );
-      return [res, null];
+      if(delSelfRes === 0){
+        const delObjRes = await commentClient.deleteCommentToObj(
+          appId,
+          theme,
+          themeAuthor,
+          blockHeight || 0,
+          userPubkey.string(),
+          commentCid,
+          commentBlockHeightUint32,
+          signature,
+        );
+        if(delObjRes === 0){
+          return [0, null];
+        }
+        return [delObjRes, new Error("deleteCommentToObj error")];
+      }
+      return [delSelfRes, new Error("deleteSelfComment error")];
     } catch (err) {
       console.error("deleteSelfComment error:", err);
       throw err;

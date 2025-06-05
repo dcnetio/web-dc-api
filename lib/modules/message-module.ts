@@ -32,7 +32,6 @@ export class MessageModule implements DCModule, IMessageOperations {
         context.AccountBackupDc,
         context.dcutil,
         context.dcChain,
-        context.dcNodeClient,
         context
       );
       this.initialized = true;
