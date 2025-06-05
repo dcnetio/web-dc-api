@@ -14,7 +14,7 @@ import { newLogstore } from "../implements/threaddb/common/logstore";
 import { dagCbor } from "@helia/dag-cbor";
 import { DB as ThreadDb } from '../implements/threaddb/db/db';
 import { Network } from "../implements/threaddb/net/net";
-import { DBManager } from "../implements/threaddb/dbmanager";
+import { createContext, DBManager } from "../implements/threaddb/dbmanager";
 import { ICollectionConfig, ManagedOptions } from "../implements/threaddb/core/core";
 import ThreadID from "@textile/threads-id";
 
@@ -172,8 +172,9 @@ export class DatabaseModule implements DCModule, IDatabaseOperations {
     }
     
     try {
+      const ctx = createContext(30000);
       await this.context.dbManager.syncDBFromDC(
-        null,
+        ctx,
         threadid,
         dbname,
         dbAddr,

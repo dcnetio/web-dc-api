@@ -120,7 +120,7 @@ export class DBManager {
               const id = ThreadID.fromString(parts[2]);
               // Check if already loaded
               if (loaded.has(id.toString())) {
-                return;
+                continue;
               }
               // Mark as loaded
               loaded.set(id.toString(), true)
@@ -134,7 +134,7 @@ export class DBManager {
               );
               
               if (err) {
-                throw new Error(`wrapping db: ${err.message}`);
+                continue;
               }
               const db = await ThreadDb.newDB(store, this.network, id, opts);
               // Add to map of databases
@@ -171,7 +171,7 @@ export class DBManager {
                 this.store.put(new Key(storageKey), Buffer.from(key.raw));
                 return key;  
             }  
-        } catch (err) {  
+        } catch (err : any) {  
             if (err.code === 'ERR_NOT_FOUND') {  
                 // Create new key if none exists  
                 const key = await this.newLogKey();  
@@ -217,7 +217,8 @@ export class DBManager {
       
       const idstr = parts[index + 1]  
       return ThreadID.fromString(idstr)  
-    } catch (err) {  
+    } catch (err:any) {  
+     
       throw new Error(`Failed to extract ID from multiaddr: ${err.message}`)  
     }  
   }  
@@ -230,7 +231,7 @@ export class DBManager {
     try {  
       const addr = multiaddr(`/${Protocol.name}/${this.toString()}`)  
       return addr  
-    } catch (err) {  
+    } catch (err:any) {  
       // This should not happen with valid IDs  
       throw new Error(`Failed to create multiaddr: ${err.message}`)  
     }  
@@ -244,7 +245,9 @@ export class DBManager {
         const id =  addr.id;  
         
         return await this.lock.acquire('dbs', async () => {  
+         
             if (this.dbs.has(id.toString())) {  
+          
                 throw Errors.ErrDBExists;  
             }  
 
@@ -255,17 +258,22 @@ export class DBManager {
             if (key.defined() && !key.canRead()) {  
                 throw Errors.ErrThreadReadKeyRequired;  
             }  
-
-            await this.network.addThread(addr, {  
+       
+            await this.network.addThread(addr, {
+                token: opts.token ,
                 logKey: opts.logKey,  
-                token: opts.token,  
                 threadKey:key,  
             });  
+    
             const collections = opts.collections || [];
             const name = opts.name || '';
-            const [store, dbOpts] = await this.wrapDB(this.store,id, this.opts,name, collections);  
+
+            const [store, dbOpts, err] = await this.wrapDB(this.store,id, this.opts,name, collections); 
+            if (err) {  
+                throw new Error(`wrapping db: ${err.message}`);  
+            } 
             const db = await ThreadDb.newDB(store, this.network, id, dbOpts);  
-            
+     
             this.dbs.set(id.toString(), db);  
             
             if (opts.block) {  
@@ -350,7 +358,7 @@ async preloadDBFromDC(
     const ctx = createContext(30000);
     try {
       await this.addLogToThreadStart(ctx, tID, lid);
-    } catch (err) {
+    } catch (err:any) {
       console.warn(`Warning: could not add log to thread: ${err.message}`);
     }
   
@@ -446,7 +454,9 @@ async preloadDBFromDC(
         throw err;
       }
     }
-  
+    if (this.dc.dcNodeClient == null) {
+      throw Errors.ErrNoDcNodeClient;
+    }
     // Create context with extended timeout for file download
     const tctx = createContext(PullTimeout * 30);
      const fileManager = new FileManager(
@@ -457,6 +467,10 @@ async preloadDBFromDC(
             this.context
           );
     const fileStream = await fileManager.createSeekableFileStream(fid, "");
+  
+    if (fileStream == null) {
+      throw Errors.ErrFileNotFound;
+    }
  
     // Preload database from reader
     const threadMultiaddr = new ThreadMuliaddr(multiAddr!, tID);
@@ -548,7 +562,7 @@ async preloadDBFromReader(
     const textDecoder = new TextDecoder();
     
     // 读取第一行并更新线程信息的日志头
-    let stateValue: string;
+    let stateValue = "";
     try {
       const value = await lineReader.readLine();
       if (value) {
@@ -558,7 +572,9 @@ async preloadDBFromReader(
     } catch (err) {
       throw err;
     }
-    
+    if (stateValue == "") {
+      throw new Error(`empty state value for thread ${id}`);
+    }
     // 移除头部32位hash
     stateValue = stateValue.slice(32);
     
@@ -730,7 +746,7 @@ async importDBStateFromReader(
   // 设置行读取
   const textDecoder = new TextDecoder();
   let done = false;
-  let line =""
+  let line:string|null = ""
   while (true) {
        line = await lineReader.readLine();
       if (!line) {
@@ -853,7 +869,6 @@ async  wrapDB(
     if (!isValid) {  
       return [null as unknown as TxnDatastoreExtended, null as unknown as NewOptions, new Error('Invalid Thread ID')];  
     }  
-   
      // 创建前缀转换器并包装数据存储  
   const prefix = dsManagerBaseKey.child(new Key(id.toString())).toString();  
   const transform = new PrefixTransform(prefix);  
@@ -919,7 +934,7 @@ async ifSyncDBToDCSuccess(tId: string): Promise<boolean> {
 
 private compareThreadSync(local: ThreadInfo, remote: ThreadInfo, storeUnit: StoreunitInfo): boolean {  
     for (const logInfo of local.logs) {  
-        if (!storeUnit.logs[logInfo.id.toString()]) {  
+        if (!storeUnit.logs.has(logInfo.id.toString())) {  
             continue;  
         }  
         if (!logInfo.head){
@@ -980,7 +995,8 @@ async syncDBFromDC(
                               signal: AbortSignal.timeout(dial_timeout)
                             });
             } catch (error) {
-                console.log("connect to %s catch return, error:%s",dbAddr, error.message);
+              const errMsg  = (error as any).message;
+                console.log("connect to %s catch return, error:%s",dbAddr, errMsg);
             }
         }   
 
@@ -1020,7 +1036,8 @@ async syncDBFromDC(
         try {  
             await this.deleteDB(tID, false);  
         } catch (error) {  
-            if ( error.message != Errors.ErrDBNotFound.message && error.message != Errors.ErrThreadNotFound.message) {
+          const errMsg  = (error as any).message;
+            if ( errMsg != Errors.ErrDBNotFound.message && errMsg != Errors.ErrThreadNotFound.message) {
                 throw error;  
             }  
         }  
@@ -1028,8 +1045,9 @@ async syncDBFromDC(
         await this.newDBFromAddr(threadMultiaddr,  threadKey, dbOpts);  
         return null;  
     } catch (error) {  
-        if (error.message == Errors.ErrorThreadIDValidation.message) {
-            return error;  
+       const errMsg  = (error as any).message;
+        if (errMsg == Errors.ErrorThreadIDValidation.message) {
+            return errMsg;  
         }  
         return error as Error;  
     }  
@@ -1238,7 +1256,6 @@ async newDB(
             blockHeight: blockHeight,
             signature: signature,
         };  
-
         const threadInfo = await dbClient.createThread(threadID.toString(), opts);  
 
          const collections = collectionInfos.map(info => ({  
@@ -1328,10 +1345,11 @@ private async decodeThreadId(threadid: string): Promise<ThreadID> {
 
         return threadID;  
     } catch (error) {  
-        if (error.message === Errors.ErrorThreadIDValidation.message) {  
+     const errMsg  = (error as any).message;
+        if (errMsg === Errors.ErrorThreadIDValidation.message) {  
             throw error;  
         }  
-        throw new  Error(`Failed to decode thread ID: ${error.message}`);  
+        throw new  Error(`Failed to decode thread ID: $errMsg}`);  
     }  
 }  
 
@@ -1392,7 +1410,7 @@ async getDBInfo(id: ThreadID, opts?: ManagedOptions): Promise<[string, Error|nul
         if (!db) {
             throw Errors.ErrDBNotFound;
         }
-        const dbInfo = db.getDBInfo(opts);
+        const dbInfo = await db.getDBInfo(opts);
         if (!dbInfo) {
             throw new Error(`No info available for db ${id}`);
         }
@@ -1810,7 +1828,7 @@ function isValidName(name: string): boolean {
     return /^[a-zA-Z0-9_-]+$/.test(name);  
 }  
 
-function createContext(timeout: number): Context {  
+export function createContext(timeout: number): Context {  
     const ctx : Context = {
         deadline: new Date(Date.now() + timeout)
     };

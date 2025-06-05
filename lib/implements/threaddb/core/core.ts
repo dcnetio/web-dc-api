@@ -21,8 +21,8 @@ import { Protocol } from '../net/define';
 
 // 上下文接口  
 export interface Context {  
-  signal?: AbortSignal  
-  deadline?: Date  
+  signal?: AbortSignal | undefined  
+  deadline?: Date | undefined  
 }  
 
 export interface IPLDNode {  
@@ -42,7 +42,7 @@ export interface IBlock {
 // 接口定义  
 export interface INet {  
   createThread( id: ThreadID, options: { token: ThreadToken; logKey?: Ed25519PrivKey|Ed25519PubKey, threadKey?: ThreadKey }): Promise<ThreadInfo>;  
-  addThread(addr: ThreadMuliaddr,options: { token?: ThreadToken; logKey?: Ed25519PrivKey | Ed25519PubKey; threadKey?: ThreadKey } ): Promise<ThreadInfo>;
+  addThread(addr: ThreadMuliaddr,options: { token?: ThreadToken | undefined; logKey?: Ed25519PrivKey | Ed25519PubKey | undefined; threadKey?: ThreadKey | undefined } ): Promise<ThreadInfo>;
   getThread( id: ThreadID, ...opts: any[]): Promise<ThreadInfo>;  
   getThreadFromPeer( id: ThreadID, peer: PeerId, options: { token?: ThreadToken }): Promise<ThreadInfo>;
   deleteThread( id: ThreadID, ...opts: any[]): Promise<void>;  
@@ -75,14 +75,14 @@ export interface DBInfo {
 
  
 export class NewOptions {  
-  name?: string;  
-  collections?: ICollectionConfig[];  
-  eventCodec?: EventCodec;  
-  debug?: boolean;  
-  key?: ThreadKey;
-  logKey?: Ed25519PrivKey | Ed25519PubKey;
-  block?: boolean;
-  token?: ThreadToken; 
+  name?: string | undefined;  
+  collections?: ICollectionConfig[] | undefined;  
+  eventCodec?: EventCodec | undefined;  
+  debug?: boolean | undefined;  
+  key?: ThreadKey | undefined;
+  logKey?: Ed25519PrivKey | Ed25519PubKey | undefined;
+  block?: boolean | undefined;
+  token?: ThreadToken | undefined; 
 
   constructor(init?: Partial<NewOptions>) {  
       Object.assign(this, init);  
@@ -157,25 +157,40 @@ export  class ThreadMuliaddr{
 // 定义 Thread Info 的接口  
 export interface IThreadInfo {  
   id: ThreadID;  
-  key?: ThreadKey;  
+  key: ThreadKey | undefined;  
   logs: IThreadLogInfo[];
-	addrs: ThreadMuliaddr[];
+  addrs: ThreadMuliaddr[];
   getFirstPrivKeyLog() :IThreadLogInfo | undefined
 }  
 
 export interface IDBInfo {
+  id: string;
   name: string;
-  addrs: ThreadMuliaddr[];
-  key: ThreadKey;
+  addrs: string[];
+  key: string | undefined;
 }
 
 export class ThreadInfo  implements IThreadInfo {  
+   public id: ThreadID;
+    public logs: IThreadLogInfo[]; 
+    public addrs: ThreadMuliaddr[];
+    public key: ThreadKey | undefined;
   constructor(  
-    public id: ThreadID, 
-    public logs: IThreadLogInfo[],  
-    public addrs: ThreadMuliaddr[] ,
-    public key?: ThreadKey,  
-  ) {}
+    id: ThreadID, 
+   logs: IThreadLogInfo[],  
+   addrs: ThreadMuliaddr[] ,
+   key?: ThreadKey,  
+  ) {
+    this.id = id;
+    this.logs = logs;
+    this.addrs = addrs;
+    if (key) {
+      this.key = key;
+    }else {
+      this.key = undefined;
+    }
+    
+  }
 
 
 public getFirstPrivKeyLog() :IThreadLogInfo | undefined {

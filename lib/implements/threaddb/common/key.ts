@@ -220,7 +220,9 @@ export class Key {
 
   constructor(sk: SymmetricKey , rk?: SymmetricKey ) {  
     this.sk = sk  
-    this.rk = rk  
+    if(rk) {  
+      this.rk = rk  
+    }
   }  
 
   static new(sk: SymmetricKey, rk?: SymmetricKey ): Key {  

@@ -37,6 +37,7 @@ export class DCGrpcClient {
           const challenge = decodedPayload.challenge;
           const signature = await signCallback(challenge);
           const message = new dcnet.pb.GetTokenRequest({});
+
           message.signature = signature;
           const messageBytes =
             dcnet.pb.GetTokenRequest.encode(message).finish();
@@ -47,7 +48,6 @@ export class DCGrpcClient {
           token = decodedPayload.token;
           signatureDataSource.close(); //关闭数据源
         }
-        console.log("onDataCallback:", payload);
       };
       // 使用方法
       const dataSourceCallback = (): AsyncIterable<Uint8Array> => {
@@ -80,7 +80,6 @@ export class DCGrpcClient {
       this.grpcClient.setToken(token);
       return token;
     } catch (err) {
-      console.error("GetToken error:", err);
       throw err;
     }
   }

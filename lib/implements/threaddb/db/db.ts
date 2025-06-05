@@ -4,7 +4,7 @@ import { } from '../common/transformed-datastore'
 import { Key, Query } from 'interface-datastore';
 import { Key as ThreadKey } from '../common/key';
 import { Connector } from '../core/app';
-import {Context, IDBInfo, ManagedOptions, ThreadInfo} from '../core/core';
+import {Context, IDBInfo, ManagedOptions, ThreadInfo, ThreadMuliaddr} from '../core/core';
 import { EventCodec, Errors,pullThreadBackgroundTimeout ,PullTimeout} from '../core/db';
 import { IThreadRecord } from '../core/record'
 import { Ed25519PubKey } from '../../../common/dc-key/ed25519';
@@ -202,6 +202,7 @@ export class DB implements App,IDB {
     }
     
     const dbInstance = new DB(store, n, id.toString(), args);
+    dbInstance.name = ""
     dbInstance.dispatcher = new Dispatcher(store);
     dbInstance.localEventsBus = new LocalEventsBus();
     
@@ -217,7 +218,6 @@ export class DB implements App,IDB {
     } else if (prevName === "") {
       dbInstance.name = "unnamed";
     }
-    
     await dbInstance.saveName(prevName);  
     await dbInstance.reCreateCollections();  
     dbInstance.dispatcher.register(dbInstance);
@@ -259,9 +259,10 @@ async getDBInfo(options?:  ManagedOptions): Promise<IDBInfo> {
     );
     
     return {
+      id: this.connector.threadId.toString(),
       name: this.name,
-      addrs: threadInfo.addrs,
-      key: threadInfo.key
+      addrs: threadInfo.addrs.map((addr: ThreadMuliaddr) => addr.toString()),
+      key: threadInfo.key?.toString(),
     };
   } catch (err) {
     throw new Error(`Failed to get DB info: ${err instanceof Error ? err.message : String(err)}`);
@@ -271,17 +272,18 @@ async getDBInfo(options?:  ManagedOptions): Promise<IDBInfo> {
 
   async saveName(prevName: string): Promise<void> {  
     if (this.name === prevName) return;  
-    if (!this.name.match(/a-zA-Z0-9+/)) { // 根据需求定义规则  
+    if (!this.name.match(/^[a-zA-Z0-9]+$/)) { // 根据需求定义规则  
+     
       throw new Error('Invalid name');  
     }  
-    await this.datastore.put(new Key('dbName'), new TextEncoder().encode(this.name)); 
+    await this.datastore.put(DBPrefix.dsName, new TextEncoder().encode(this.name)); 
   }  
 
  
   async loadName(): Promise<void> {  
     try {  
       const nameBuffer = await this.datastore.get(DBPrefix.dsName);  
-      if (nameBuffer) {  
+      if (nameBuffer) { 
         this.name = new TextDecoder().decode(nameBuffer);  
       }  
     } catch (error) {  
@@ -324,7 +326,7 @@ async getDBInfo(options?:  ManagedOptions): Promise<IDBInfo> {
       }) as AsyncIterable<{ key: Key, value: Uint8Array }>;  
 
       try {  
-        for await (const res of results) {  
+        for await (const res of results) { 
           const name = res.key.name();  
           const schema = JSON.parse(new TextDecoder().decode(res.value));  
 

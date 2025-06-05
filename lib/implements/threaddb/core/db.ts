@@ -25,6 +25,8 @@ export const Errors = {
     ErrCollectionNotFound: new Error('collection not found'),
     ErrNodeAddrIsNull: new Error('node address is null'),
     ErrNoThreadOnDc: new Error('no thread on dc'),
+    ErrNoDcNodeClient: new Error('no dc node client'),
+    ErrFileNotFound: new Error('file not found'),
 };  
 
 export const pullThreadBackgroundTimeout = 3600000; // 1 hour in milliseconds

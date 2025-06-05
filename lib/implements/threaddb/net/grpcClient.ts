@@ -106,7 +106,6 @@ export class DBGrpcClient {
 
     async createThread(tid: string,opts:NewThreadOptions): Promise<ThreadInfo> {
         try {
-     
             if (this.grpcClient.node == null || this.grpcClient.node.peerId == null) {
                 throw new Error("p2pNode is null or node privateKey is null");
             }

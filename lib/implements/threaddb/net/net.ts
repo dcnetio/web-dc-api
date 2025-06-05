@@ -104,7 +104,7 @@ export class Network implements Net {
   async getClient(peerId: PeerId):Promise<Client>{
     let cachedFlag = true;
     const cacheAddr = this.cachePeers[peerId.toString()]; 
-    let peerAddr: TMultiaddr | undefined = cacheAddr;
+    let peerAddr: TMultiaddr | null = cacheAddr;
     if (!cacheAddr) {
       cachedFlag = false;
       peerAddr = await this.dcChain.getDcNodeWebrtcDirectAddr(peerId.toString());
@@ -113,10 +113,14 @@ export class Network implements Net {
     if (!peerAddr) {
       throw new Error("peerAddr is null");
     } 
+    if (!this.context.publicKey){
+      throw new Error("publicKey is null");
+    }
+
     const addr = multiaddr(peerAddr);
     const client = new Client(this.libp2p,this.bstore,addr, dc_protocol);
     //获取token
-    const token = await client.GetToken(this.context.publicKey.string(),(payload: Uint8Array):Promise<Uint8Array> => {
+    const token = await client.GetToken(this.context.appInfo.appId||"", this.context.publicKey.string(),(payload: Uint8Array):Promise<Uint8Array> => {
       return this.sign(payload);
     });
     if (!token) {
@@ -128,7 +132,7 @@ export class Network implements Net {
         } 
         const addr = multiaddr(peerAddr);
         const client = new Client(this.libp2p,this.bstore,addr, dc_protocol);
-        const token = await client.GetToken(this.context.publicKey.string(),(payload: Uint8Array) => {
+        const token = await client.GetToken(this.context.appInfo.appId||"",this.context.publicKey.string(),(payload: Uint8Array) => {
           return this.sign(payload);
         });
         if (token) {
@@ -203,7 +207,7 @@ export class Network implements Net {
  */
 async addThread(
   addr: ThreadMuliaddr,
-  options: { token?: ThreadToken; logKey?: Ed25519PrivKey | Ed25519PubKey; threadKey?: ThreadKey } = {}
+  options: { token?: ThreadToken | undefined; logKey?: Ed25519PrivKey | Ed25519PubKey| undefined; threadKey?: ThreadKey| undefined } = {}
 ): Promise<ThreadInfo> {
   try {
     // 从多地址提取threaddb ID
@@ -212,7 +216,6 @@ async addThread(
       throw new Error("Invalid thread address");
     }
     const id = ThreadID.fromString(idStr);
-
     // 验证身份
     let identity = await this.validate(id, options.token);
     if (identity) {
@@ -258,7 +261,6 @@ async addThread(
       const logInfo = await this.createLog(id, options.logKey, identity);
       threadInfo.logs.push(logInfo);
     }
-
     // 如果不是从自己添加，则连接并获取日志
     if (!addFromSelf) {
       // 从对等点更新日志
@@ -1317,7 +1319,7 @@ async getRecord( id: ThreadID, rid: CID): Promise<IRecord> {
  * @param tid 线程ID
  * @returns 日志数组和线程信息
  */
-async getPbLogs(tid: ThreadID): Promise<[net_pb.pb.ILog[], ThreadInfo]> {
+async getPbLogs(tid: ThreadID): Promise<[net_pb.pb.ILog[], IThreadInfo]> {
   try {
     // 从存储中获取线程信息
     const info = await this.logstore.getThread(tid);
