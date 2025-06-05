@@ -164,22 +164,16 @@ export class KeyValueDB {
 export class KeyValueManager {
   private dc: DcUtil;
   private connectedDc: DCConnectInfo = {};
-  private accountBackupDc: DCConnectInfo = {};
-  private dcNodeClient: HeliaLibp2p;
   private chainUtil: ChainUtil;
   private context: DCContext;
   constructor(
     dc: DcUtil,
     connectedDc: DCConnectInfo,
-    accountBackupDc: DCConnectInfo,
-    dcNodeClient: HeliaLibp2p,
     chainUtil: ChainUtil,
     context: DCContext
   ) {
     this.dc = dc;
     this.connectedDc = connectedDc;
-    this.accountBackupDc = accountBackupDc;
-    this.dcNodeClient = dcNodeClient;
     this.chainUtil = chainUtil;
     this.context = context;
   }
