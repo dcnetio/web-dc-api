@@ -118,20 +118,20 @@ export class AIProxyManager {
         configTheme = "keyvalue_" + configTheme;
     }
   
-    let client = this.accountBackUpDc.client || null;
-    if (configAuthor != this.context.publicKey.string()) {//查询他人主题评论
-      const authorPublicKey: Ed25519PubKey = Ed25519PubKey.edPubkeyFromStr(configAuthor);
-      client = await this.dc.connectToUserDcPeer(authorPublicKey.raw);
-      if (!client) {
+    let client = this.accountBackUpDc?.client || null;
+    if (!client){
+        client = await this.dc.connectToUserDcPeer(this.context.publicKey.raw);
+    }
+    if (!client) {
         return [null, Errors.ErrNoDcPeerConnected];
-      }
+    }
       //获取token
-      await client.GetToken(
+    await client.GetToken(
           this.context.appInfo.appId || "",
           this.context.publicKey.string(),
           this.context.sign
         );
-    }
+    
 
     if (client === null) {
       return [null, Errors.ErrNoDcPeerConnected];
@@ -231,13 +231,9 @@ export class AIProxyManager {
     const userPubkey = this.context.getPublicKey();
     let userPubkeyStr = userPubkey.string();
 
-    let client = this.accountBackUpDc.client || null;
-    if (configAuthor != this.context.publicKey.string()) {//查询他人主题评论
-      const authorPublicKey: Ed25519PubKey = Ed25519PubKey.edPubkeyFromStr(configAuthor);
-      client = await this.dc.connectToUserDcPeer(authorPublicKey.raw);
-      if (!client) {
-        return [null, Errors.ErrAccountPublicKeyIsNull];
-      }
+    let client = this.accountBackUpDc?.client || null;
+    if (!client){
+        client = await this.dc.connectToUserDcPeer(this.context.publicKey.raw);
     }
     if (client === null) {
       return [null, new Error("ErrConnectToAccountPeersFail")];

@@ -1,4 +1,3 @@
-import type { Multiaddr } from "@multiformats/multiaddr";
 import { KeyValueClient } from "./client";
 import {
   DCConnectInfo,
@@ -273,16 +272,11 @@ export class KeyValueManager {
     const userPubkey = this.context.getPublicKey();
     let userPubkeyStr = userPubkey.string();
 
-    let client = this.connectedDc.client || null;
-    if (themeAuthor != this.context.publicKey.string()) {
-      //查询他人主题评论
-      const authorPublicKey: Ed25519PubKey =
-        Ed25519PubKey.edPubkeyFromStr(themeAuthor);
-      client = await this.dc.connectToUserDcPeer(authorPublicKey.raw);
-      if (!client) {
-        return [null, Errors.ErrNoDcPeerConnected];
-      }
+    let client = this.connectedDc?.client || null;
+    if (!client){
+        client = await this.dc.connectToUserDcPeer(this.context.publicKey.raw);
     }
+      
     if (client === null) {
       return [null, new Error("ErrConnectToAccountPeersFail")];
     }
@@ -462,16 +456,11 @@ export class KeyValueManager {
     }
     const userPubkey = this.context.getPublicKey();
     let userPubkeyStr = userPubkey.string();
-    let client = this.connectedDc.client || null;
-    if (themeAuthor != this.context.publicKey.string()) {
-      //查询他人主题评论
-      const authorPublicKey: Ed25519PubKey =
-        Ed25519PubKey.edPubkeyFromStr(themeAuthor);
-      client = await this.dc.connectToUserDcPeer(authorPublicKey.raw);
-      if (!client) {
-        return [null, Errors.ErrNoDcPeerConnected];
-      }
+    let client = this.connectedDc?.client || null;
+    if (!client){
+        client = await this.dc.connectToUserDcPeer(this.context.publicKey.raw);
     }
+     
     if (client === null) {
       return [null, new Error("ErrConnectToAccountPeersFail")];
     }

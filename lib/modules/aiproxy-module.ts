@@ -62,6 +62,8 @@ export class AIProxyModule implements DCModule {
         context
       );
       this.initialized = true;
+     
+        
       return true;
     } catch (error) {
       logger.error("AI代理模块初始化失败:", error);
@@ -155,7 +157,7 @@ async GetUserOwnAIProxyAuth(
         if (this.aiCallConfig == null && (!appId || !themeAuthor || !configTheme || !serviceName)) {
             throw new Error("AI调用配置未设置");
         }
-        return this.aiProxyManager.DoAIProxyCall(appId || this.aiCallConfig!.appId, themeAuthor|| this.aiCallConfig!.themeAuthor, configTheme || this.aiCallConfig!.configTheme, serviceName|| this.aiCallConfig!.serviceName, reqBody, forceRefresh, onStreamResponse, headers|| this.aiCallConfig!.headers, path|| this.aiCallConfig!.path, model|| this.aiCallConfig!.model);
+        return this.aiProxyManager.DoAIProxyCall(appId || this.aiCallConfig!.appId, themeAuthor|| this.aiCallConfig!.themeAuthor, configTheme || this.aiCallConfig!.configTheme, serviceName|| this.aiCallConfig!.serviceName, reqBody, forceRefresh, onStreamResponse, headers|| this.aiCallConfig?.headers, path|| this.aiCallConfig?.path, model|| this.aiCallConfig?.model);
     }
 
 
