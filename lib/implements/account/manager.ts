@@ -252,15 +252,15 @@ export class AccountManager {
       }
 
       // 确定使用的密钥
-      let selfPubkey: Ed25519PubKey, selfPrivkey: Ed25519PrivKey;
-      if (!this.context.publicKey || !this.context.privKey) {
+      let selfPubkey: Ed25519PubKey | null = null, 
+        selfPrivkey: Ed25519PrivKey | null = null;
+      if (!this.context.publicKey) {
         // 生成
         const keymanager = new KeyManager();
         selfPrivkey = await keymanager.getEd25519KeyFromMnemonic(mnemonic, "");
         selfPubkey = selfPrivkey.publicKey;
       } else {
         selfPubkey = this.context.publicKey;
-        selfPrivkey = this.context.privKey;
       }
 
       // 用自身公钥加密账号
@@ -374,7 +374,12 @@ export class AccountManager {
       preSign.set(serverPidBytes, offset);
 
       // 签名
-      const signature = selfPrivkey.sign(preSign);
+      let signature: Uint8Array;
+      if(selfPrivkey != null){
+        signature = selfPrivkey.sign(preSign);
+      }else {
+        signature = await this.context.sign(preSign);
+      }
       if (!signature) {
         return [null, NFTBindStatus.SignError];
       }

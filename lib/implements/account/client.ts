@@ -69,9 +69,9 @@ export class AccountClient {
     const messageBytes = dcnet.pb.AccountDealRequest.encode(message).finish();
     if(!this.client.token){
       // try to get token
-      let selfPubkey: Ed25519PubKey, 
-      selfPrivkey: Ed25519PrivKey;
-      if (!context.publicKey || !context.privKey) {
+      let selfPubkey: Ed25519PubKey | null = null,
+        selfPrivkey: Ed25519PrivKey | null = null;
+      if (!context.publicKey ) {
         // 生成
         const keymanager = new KeyManager();
         selfPrivkey = await keymanager.getEd25519KeyFromMnemonic(
@@ -81,13 +81,16 @@ export class AccountClient {
         selfPubkey = selfPrivkey.publicKey;
       } else {
         selfPubkey = context.publicKey;
-        selfPrivkey = context.privKey;
       }
       const token = await this.client.GetToken(
         context.appInfo.appId || "",
         selfPubkey.string(),
         async (payload: Uint8Array): Promise<Uint8Array> => {
-          return selfPrivkey.sign(payload);
+          if (selfPrivkey) {
+            return selfPrivkey.sign(payload);
+          }else {
+            return await context.sign(payload);
+          }
         }
       );
       if (!token) {
