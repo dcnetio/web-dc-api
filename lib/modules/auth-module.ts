@@ -7,9 +7,6 @@ import { CommonClient } from "../common/commonclient";
 import { Client } from "../common/dcapi";
 import { createLogger } from "../util/logger";
 import {
-  loadPublicKey,
-  loadTokenWithPeerId,
-  savePublicKey,
   sleep,
 } from "../util/utils";
 import { Ed25519PrivKey, Ed25519PubKey } from "../common/dc-key/ed25519";
@@ -77,7 +74,7 @@ export class AuthModule implements DCModule, IAuthOperations {
       const data = await this.walletManager.openConnect();
       const publicKey = new Ed25519PubKey(data.appAccount);
       this.context.publicKey = publicKey;
-      savePublicKey(publicKey.string());
+      console.log("99999999999999accountLogin publicKey", publicKey);
       console.log("accountLogin data", data);
       // 获取token
       const token = await this.context.connectedDc?.client.GetToken(
@@ -91,8 +88,8 @@ export class AuthModule implements DCModule, IAuthOperations {
       if (!token) {
         throw new Error("GetToken error");
       }
-      // todo 临时注释存在token， 获取用户备用节点
-      // await this.getAccountBackupDc();
+      // 存在token， 获取用户备用节点
+      await this.getAccountBackupDc();
       return data;
 
     } catch (error) {

@@ -178,26 +178,6 @@ async function loadKeyPair(key:  string) {
   return null;
 }
 
-async function savePublicKey(publicKey: string) {
-  localStorage.setItem(
-    "ed25519_publicKey",
-    publicKey
-  );
-}
-async function loadPublicKey(): Promise<string | null> {
-  const publicKey = localStorage.getItem("ed25519_publicKey");
-  if (publicKey) {
-    return publicKey;
-  }
-  return null;
-}
-async function saveTokenWithPeerId(publicKeyString: string, peerId: string, token: string) {
-  localStorage.setItem("token_" + publicKeyString + "_" + peerId, token);
-}
-async function loadTokenWithPeerId(publicKeyString: string, peerId: string): Promise<string | null> {
-  return localStorage.getItem("token_" + publicKeyString + "_" + peerId);
-}
-
 // 同域名跨浏览器锁获取并执行操作,mode  "exclusive" | "shared";
 async function withWebLock(
   lockName: string,
@@ -272,9 +252,5 @@ export {
   loadKeyPair,
   parseUint32,
   hexToAscii,
-  savePublicKey,
-  loadPublicKey,
-  saveTokenWithPeerId,
-  loadTokenWithPeerId,
   jsonStringify
 };
