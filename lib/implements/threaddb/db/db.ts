@@ -229,7 +229,7 @@ export class DB implements App,IDB {
       throw new Error(`Failed to connect app: ${err instanceof Error ? err.message : String(err)}`);
     }
 
-	
+
  // 处理集合配置
     if (args.collections && args.collections.length > 0) {
       for (const collectionConfig of args.collections) {
@@ -313,11 +313,43 @@ async getDBInfo(options?:  ManagedOptions): Promise<IDBInfo> {
     // Add custom indexes  
     for (const index of config.indexes || []) {  
       await collection.addIndex(index);  
-    }
-    
-    this.collections.set(config.name, collection);  
+    } 
+    //保存集合配置到数据存储
+    this.saveCollection(collection);
     return collection;  
   }  
+
+async saveCollection(c: Collection): Promise<void> {
+  console.debug(`saving collection ${c.name} in ${this.name}`);
+  
+  try {
+    // Save schema
+    await this.datastore.put(
+      DBPrefix.dsSchemas.child(new Key(c.name)), 
+      c.getSchema()
+    );
+    
+    // Save write validator if exists
+    if (c.rawWriteValidator) {
+      await this.datastore.put(
+        DBPrefix.dsValidators.child(new Key(c.name)), 
+        new TextEncoder().encode(c.rawWriteValidator)
+      );
+    }
+    
+    // Save read filter if exists
+    if (c.rawReadFilter) {
+      await this.datastore.put(
+        DBPrefix.dsFilters.child(new Key(c.name)), 
+        new TextEncoder().encode(c.rawReadFilter)
+      );
+    }
+    // Add collection to local map
+    this.collections.set(c.name, c);
+  } catch (err) {
+    throw new Error(`Failed to save collection ${c.name}: ${err instanceof Error ? err.message : String(err)}`);
+  }
+}
 
   async reCreateCollections(): Promise<void> {  
     try {  

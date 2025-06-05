@@ -1257,7 +1257,6 @@ async newDB(
             signature: signature,
         };  
         const threadInfo = await dbClient.createThread(threadID.toString(), opts);  
-
          const collections = collectionInfos.map(info => ({  
             name: info.name,  
             schema: info.schema,  

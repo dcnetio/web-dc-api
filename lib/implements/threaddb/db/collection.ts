@@ -265,8 +265,8 @@ export class Collection implements ICollection {
     public readonly name: string,
     public schema: AnySchema,
     public db: IDB,
-    private rawWriteValidator?: string,
-    private rawReadFilter?: string
+    public rawWriteValidator?: string,
+    public rawReadFilter?: string
   ) {
     // Initialize schema validator
     this.schemaValidator = new Ajv({ allErrors: true });
