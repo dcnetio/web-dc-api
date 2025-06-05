@@ -29,9 +29,14 @@ export class WalletManager {
   }
 
   async init():  Promise<boolean> {
+    console.log("========init walletManager", appOrigin, walletOrigin);
     if(appOrigin.indexOf(walletOrigin) === -1) {
       return new Promise((resolve, reject) => {
         // html添加iframe标签，id是dcWalletIframe
+        // // 判断已经存在iframe,存在则删除
+        // if (document.getElementById(this.iframeId)) {
+        //   document.body.removeChild(document.getElementById(this.iframeId)!);
+        // }
         const iframe = document.createElement("iframe");
         iframe.id = this.iframeId;
         iframe.src = `${walletUrl}/iframe?parentOrigin=${appOrigin}`;
