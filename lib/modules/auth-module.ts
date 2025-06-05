@@ -14,7 +14,7 @@ import { Errors } from "../common/error";
 import { dc_protocol } from "../common/define";
 import { Multiaddr } from "@multiformats/multiaddr";
 import { WalletManager } from "../implements/wallet/manager";
-import { AccountInfo, EIP712SignReqMessage, NFTBindStatus, SignReqMessage, SignResponseMessage, User } from "../common/types/types";
+import { Account, EIP712SignReqMessage, NFTBindStatus, SignReqMessage, SignResponseMessage, User } from "../common/types/types";
 import { IAuthOperations } from "../interfaces/auth-interface";
 import { DCContext } from "../../lib/interfaces/DCContext";
 
@@ -63,7 +63,7 @@ export class AuthModule implements DCModule, IAuthOperations {
    * 账户登录
    * @returns 是否登录成功
    */
-  async accountLoginWithWallet(): Promise<AccountInfo | null> {
+  async accountLoginWithWallet(): Promise<Account | null> {
     this.assertInitialized();
 
     if (!this.context.connectedDc?.client) {
