@@ -46,6 +46,7 @@ export class FileModule implements DCModule, IFileOperations {
       
       // 注册 Service Worker
       try {
+        //todo remove commnet
         await registerServiceWorker(this, this.swUrl || '');
         logger.info('Service Worker 已注册');
       } catch (err) {
