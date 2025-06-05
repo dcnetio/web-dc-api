@@ -2,7 +2,7 @@
 import { walletOrigin, walletUrl, walletWindowName } from "../../common/define";
 import { DCContext } from "../../../lib/interfaces/DCContext";
 import { Ed25519PubKey } from "../../common/dc-key/ed25519";
-import type { AccountInfo, EIP712SignReqMessage, SendMessage, SignReqMessage, SignResponseMessage } from "lib/common/types/types";
+import type { Account, EIP712SignReqMessage, SendMessage, SignReqMessage, SignResponseMessage } from "lib/common/types/types";
 
 
 const appOrigin = typeof window !== "undefined" ? window.location.origin : "";//"http://localhost:3002"
@@ -94,7 +94,7 @@ export class WalletManager {
 
 
 
-  async openConnect(): Promise<AccountInfo> {
+  async openConnect(): Promise<Account> {
     return new Promise((resolve, reject) => {
       const urlWithOrigin = walletUrl + "?origin=" + appOrigin;
       this.walletWindow = window.open(urlWithOrigin, walletWindowName);

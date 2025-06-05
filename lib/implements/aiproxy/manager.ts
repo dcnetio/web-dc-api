@@ -19,6 +19,7 @@ import { dcnet } from "../../proto/dcnet_proto";
 import { bytesToHex } from "@noble/curves/abstract/utils";
 import { KeyValueClient } from "../keyvalue/client";
 import { SymmetricKey } from "../threaddb/common/key";
+import { Libp2p } from "@libp2p/interface";
 
 // 错误定义
 export class AIProxyError extends Error {
@@ -48,13 +49,13 @@ export const Errors = {
 export class AIProxyManager {
   private dc: DcUtil;
   private accountBackUpDc: DCConnectInfo = {};
-  private dcNodeClient: HeliaLibp2p;
+  private dcNodeClient: HeliaLibp2p<Libp2p>;
   private chainUtil: ChainUtil;
   private context: DCContext;
   constructor(
     dc: DcUtil,
     accountBackUpDc: DCConnectInfo,
-    dcNodeClient: HeliaLibp2p,
+    dcNodeClient: HeliaLibp2p<Libp2p>,
     chainUtil: ChainUtil,
     context: DCContext
   ) {

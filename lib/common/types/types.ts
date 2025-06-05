@@ -156,7 +156,7 @@ export interface ModelConfig {
 }
 
 
-export  interface AccountInfo{
+export  interface Account{
       nftAccount:string, // NFT账号
       appAccount:Uint8Array, // 应用专用账号公钥 
       ethAccount:string, // 以太坊兼容链上账号

@@ -8,15 +8,16 @@ import { toString as uint8ArrayToString } from "uint8arrays/to-string";
 import { FileManager } from "../file/manager";
 import { Errors } from "../../common/error";
 import { DCContext } from "../../../lib/interfaces/DCContext";
+import { Libp2p } from "@libp2p/interface";
 
 export class CommentClient {
   client: Client;
-  dcNodeClient: HeliaLibp2p;
+  dcNodeClient: HeliaLibp2p<Libp2p>;
   context:DCContext
 
   constructor(
     dcClient: Client,
-    dcNodeClient: HeliaLibp2p,
+    dcNodeClient: HeliaLibp2p<Libp2p>,
     context:DCContext
   ) {
     this.client = dcClient;
@@ -515,6 +516,77 @@ export class CommentClient {
         console.log("DeleteSelfComment reply", reply);
         const decoded = dcnet.pb.DeleteSelfCommentReply.decode(reply);
         console.log("DeleteSelfComment decoded", decoded);
+        return decoded.flag;
+      }
+      console.error("DeleteSelfComment error:", error);
+      throw error;
+    }
+  }
+
+  async deleteCommentToObj(
+    appId: string,
+    theme: string,
+    themeAuthor: string,
+    blockheight: number,
+    userPubkey: string,
+    commentCid: string,
+    commentBlockHeight: number,
+    signature: Uint8Array
+  ): Promise<number> {
+    const message = new dcnet.pb.DeleteCommentToObjRequest({});
+    message.theme = new TextEncoder().encode(theme);
+    message.appId = new TextEncoder().encode(appId);
+    message.themeAuthor = new TextEncoder().encode(themeAuthor);
+    message.blockheight = blockheight;
+    message.userPubkey = new TextEncoder().encode(userPubkey);
+    message.commentCid = new TextEncoder().encode(commentCid);
+    message.commentBlockheight = commentBlockHeight;
+    message.signature = signature;
+    const messageBytes =
+      dcnet.pb.DeleteCommentToObjRequest.encode(message).finish();
+    try {
+      const grpcClient = new Libp2pGrpcClient(
+        this.client.p2pNode,
+        this.client.peerAddr,
+        this.client.token,
+        this.client.protocol
+      );
+      const reply = await grpcClient.unaryCall(
+        "/dcnet.pb.Service/DeleteCommentToObj",
+        messageBytes,
+        30000
+      );
+      console.log("DeleteCommentToObj reply", reply);
+      const decoded = dcnet.pb.DeleteCommentToObjReply.decode(reply);
+      console.log("DeleteCommentToObj decoded", decoded);
+      return decoded.flag;
+    } catch (error: any) {
+      if (error.message.indexOf(Errors.INVALID_TOKEN.message) != -1) {
+        // try to get token
+        const token = await this.client.GetToken(
+          appId || "",
+          userPubkey,
+          (payload: Uint8Array): Promise<Uint8Array> => {
+            return this.context.sign(payload);
+          }
+        );
+        if (!token) {
+          throw new Error(Errors.INVALID_TOKEN.message);
+        }
+        const grpcClient = new Libp2pGrpcClient(
+          this.client.p2pNode,
+          this.client.peerAddr,
+          this.client.token,
+          this.client.protocol
+        );
+        const reply = await grpcClient.unaryCall(
+          "/dcnet.pb.Service/DeleteCommentToObj",
+          messageBytes,
+          30000
+        );
+        console.log("DeleteCommentToObj reply", reply);
+        const decoded = dcnet.pb.DeleteCommentToObjReply.decode(reply);
+        console.log("DeleteCommentToObj decoded", decoded);
         return decoded.flag;
       }
       console.error("DeleteSelfComment error:", error);
