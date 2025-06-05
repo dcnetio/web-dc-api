@@ -60,7 +60,7 @@ export class CommentManager {
     context: DCContext,
   ) {
     this.dc = context.dcutil;
-    this.connectedDc = context.AccountBackupDc;
+    this.connectedDc = context.connectedDc;
     this.accountBackupDc = context.AccountBackupDc;
     this.dcNodeClient = context.dcNodeClient;
     this.chainUtil = context.dcChain;
