@@ -8,15 +8,16 @@ import { toString as uint8ArrayToString } from "uint8arrays/to-string";
 import { FileManager } from "../file/manager";
 import { Errors } from "../../common/error";
 import { DCContext } from "../../../lib/interfaces/DCContext";
+import { Libp2p } from "@libp2p/interface";
 
 export class CommentClient {
   client: Client;
-  dcNodeClient: HeliaLibp2p;
+  dcNodeClient: HeliaLibp2p<Libp2p>;
   context:DCContext
 
   constructor(
     dcClient: Client,
-    dcNodeClient: HeliaLibp2p,
+    dcNodeClient: HeliaLibp2p<Libp2p>,
     context:DCContext
   ) {
     this.client = dcClient;
