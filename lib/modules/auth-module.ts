@@ -283,7 +283,7 @@ export class AuthModule implements DCModule, IAuthOperations {
   /**
    * 获取用户备用节点
    */
-  private async getAccountBackupDc(): Promise<void> {
+  public async getAccountBackupDc(): Promise<void> {
     // 存在token， 获取用户备用节点
     const accountManager = new AccountManager(this.context);
 
