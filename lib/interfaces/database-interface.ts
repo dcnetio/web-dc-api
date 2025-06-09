@@ -135,11 +135,11 @@ export interface IDatabaseOperations {
    * 格式举例:(condition表示and条件组合, ors表示或条件组合, sort表示排序, seek表示分页)
    * 格式1: `{"condition":"age=80 and name='John'"}`,"sort":{"fieldPath":"age","desc":true}}`
    * 格式2: `{"ors":[{"condition":"age = 21 and name = 'foo'"}]}`
-   * 格式3: `{"condition":"age > 21 ","ors":[{"condition":"age = 21 and name = 'foo'"}],"sort":{"fieldPath":"age","desc":true},"seek":"01fyc691gh671nf0s8qpt0ych8"}`
+   * 格式3: `{"condition":"age > 21 ","ors":[{"condition":"age = 21 and name = 'foo'"}],"sort":{"fieldPath":"age","desc":true},skip:10,"seek":"01fyc691gh671nf0s8qpt0ych8"}`
    * @returns JSON字符串表示的查询结果
    * @throws 查询失败时抛出错误
    */
-  find(threadId: string, collectionName: string, queryString: string): Promise<string>;
+  find(threadId: string, collectionName: string, queryString?: string): Promise<string>;
   
   /**
    * 通过ID查找实例

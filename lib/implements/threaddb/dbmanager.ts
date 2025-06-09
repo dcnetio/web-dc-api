@@ -1674,8 +1674,12 @@ async has(threadId: string, collectionName: string, instanceID: string): Promise
  * @returns Promise resolving to a JSON string with found instances
  * @throws Error if query fails
  */
-async find(threadId: string, collectionName: string, queryString: string): Promise<string> {
+async find(threadId: string, collectionName: string, queryString?: string): Promise<string> {
     try {
+      if (!queryString) {
+          queryString = "{}";
+        }
+
         // 解析查询字符串
         const query = parseJsonToQuery(queryString);
         // 解码线程ID

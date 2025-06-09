@@ -242,9 +242,7 @@ export class DC implements DCContext {
             if (!userInfo) {
               return [null,new Error("用户信息不存在")];
             }
-      }catch (error : any) {
-        return [null,error];
-      }
+     
       if (userInfo && userInfo.dbConfig) {// 如果存在dbConfig，说明已经设置了应用数据库,进行解密 
         try{
           const dbConfig = await this.auth.decryptWithWallet(userInfo.dbConfigRaw);
@@ -317,6 +315,11 @@ export class DC implements DCContext {
       }else {
         // 获取DB失败
         console.error('获取DB失败', error);
+        return  [null,error];
+      }
+
+      } catch (error:any) {
+        console.error('初始化用户DB失败', error);
         return  [null,error];
       }
     }

@@ -415,7 +415,7 @@ async has(threadId: string, collectionName: string, instanceID: string): Promise
  * @returns Promise resolving to a JSON string with found instances
  * @throws Error if query fails
  */
-async find(threadId: string, collectionName: string, queryString: string): Promise<string> {  
+async find(threadId: string, collectionName: string, queryString?: string): Promise<string> {  
     this.assertInitialized();
     await this.initDBManager();
     
