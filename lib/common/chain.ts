@@ -285,7 +285,6 @@ export class ChainUtil {
     if (addrParts.length < 2) {
       return null;
     }
-    console.log("nodeAddr", addrParts[1]);
     const addr = multiaddr(addrParts[1]);
     return addr;
   };
