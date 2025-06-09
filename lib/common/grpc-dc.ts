@@ -44,7 +44,7 @@ export class DCGrpcClient {
           signatureDataSource.setData(messageBytes);
         } else if (decodedPayload.token) {
           //获取到token
-          console.log("GetToken success:", decodedPayload.token);
+          console.log("GetToken success");
           token = decodedPayload.token;
           signatureDataSource.close(); //关闭数据源
         }
@@ -55,7 +55,6 @@ export class DCGrpcClient {
         return signatureDataSource.getDataSource();
       };
       const onEndCallback = async () => {
-        console.log("onEndCallback");
         signatureDataSource.close();
       }
       const onErrorCallback = async (err: unknown) => {

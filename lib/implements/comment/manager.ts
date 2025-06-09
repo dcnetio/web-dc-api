@@ -631,7 +631,6 @@ async addUserOffChainOpTimes(
         "",
         cidNeedConnect.NOT_NEED
       );
-      console.log("getThemeComments fileContent:", fileContent);
       if (!fileContent) {
         return [[], null];
       }

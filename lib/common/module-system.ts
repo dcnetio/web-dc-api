@@ -73,7 +73,6 @@ export class ModuleSystem {
     }
 
     this.modules.set(module.moduleName, module);
-    logger.info(`模块 ${module.moduleName} 已注册`);
     return true;
   }
 
@@ -110,7 +109,6 @@ export class ModuleSystem {
     for (const moduleName of initOrder) {
       const module = this.modules.get(moduleName);
       if (module) {
-        logger.info(`初始化核心模块: ${moduleName}`);
         try {
           const success = await module.initialize(this.context);
           if (!success) {

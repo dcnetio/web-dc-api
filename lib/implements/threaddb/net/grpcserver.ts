@@ -34,13 +34,11 @@ export class DCGrpcServer {
             
           };
             http2Parser.onSettings = async () => {
-                console.log('Settings received')
                 const ackSettingFrame = Http2Frame.createSettingsAckFrame()
                 writer.write(ackSettingFrame)
             };
             http2Parser.onHeaders = (headers,header) => {
                 const plainHeaders = hpack.decodeHeaderFields(headers)
-                console.log('Received headers:', plainHeaders);
                 method = plainHeaders.get(':path')
             }
 
