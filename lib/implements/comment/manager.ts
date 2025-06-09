@@ -618,6 +618,9 @@ async addUserOffChainOpTimes(
         aesKey ? aesKey.toString() : "",
         vaccount,
       );
+      if (!res) {
+        return [[], null];
+      }
       const fileManager = new FileManager(
         this.dc,
         this.connectedDc,
@@ -853,6 +856,22 @@ async addUserOffChainOpTimes(
       if(this.connectedDc.client.token == ""){
         await this.connectedDc.client.GetToken(appId, this.context.publicKey.string(),this.context.sign);
       }
+      let client = this.accountBackupDc.client;
+      if (userPubkey != this.context.publicKey.string()) {//查询他人主题评论
+        const userPublicKey: Ed25519PubKey = Ed25519PubKey.edPubkeyFromStr(userPubkey);
+        const connectedClient = await this.dc.connectToUserDcPeer(userPublicKey.raw);
+        if (!connectedClient) {
+          return [null, Errors.ErrNoPeerIdIsNull];
+        }
+        client = connectedClient;
+      }
+      if (!client) {
+        return [null, new Error("ErrConnectToAccountPeersFail")];
+      }
+       if(client.token == ""){
+        await client.GetToken(appId, this.context.publicKey.string(),this.context.sign);
+      }
+
       const aesKey = SymmetricKey.new();// 生成aeskey文件加密密码
       const commentClient = new CommentClient(
         this.connectedDc.client,
@@ -869,6 +888,9 @@ async addUserOffChainOpTimes(
         seekKey || '',
         aesKey ? aesKey.toString()  : ''
       );
+      if (!res) {
+        return [[], null];
+      }
       const fileManager = new FileManager(
         this.dc,
         this.connectedDc,

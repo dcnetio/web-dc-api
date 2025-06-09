@@ -293,7 +293,6 @@ export class WalletManager {
   };
 
   private async listenFromWallet(event: MessageEvent): Promise<void> {
-    console.log('=========listenFromWallet', event.data)
     // if (event.origin !== "todo来源") return; // 可选：对源进行验证
     try {
       const message = event.data;

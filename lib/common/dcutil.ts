@@ -485,7 +485,6 @@ export class DcUtil {
             const fetchRequest = oidfetch.pb.FetchRequest.decode(parsedMessage.payload)
             
             const resCid =  new TextDecoder().decode(fetchRequest.cid)
-            console.log("-------------------------------resCid",resCid)
             //获取resCid对应的block
             const cid = CID.parse(resCid);  
 
