@@ -710,10 +710,7 @@ export class CommentClient {
         messageBytes,
         30000
       );
-      console.log("GetThemeComments reply", reply);
       const decoded = dcnet.pb.GetThemeCommentsReply.decode(reply);
-      console.log("GetThemeComments decoded", decoded);
-      console.log("GetThemeComments decoded.toJSON()", decoded.toJSON());
       const commentsCid = decoded.commentsCid
         ? uint8ArrayToString(decoded.commentsCid)
         : "";
@@ -722,6 +719,7 @@ export class CommentClient {
       if (error.message.indexOf(Errors.INVALID_TOKEN.message) != -1) {
         // try to get token
         const token = await this.client.GetToken(
+          appId || "",
           this.context.getPublicKey().string(),
           (payload: Uint8Array): Promise<Uint8Array> => {
             return this.context.sign(payload);
@@ -741,10 +739,7 @@ export class CommentClient {
           messageBytes,
           30000
         );
-        console.log("GetThemeComments reply", reply);
         const decoded = dcnet.pb.GetThemeCommentsReply.decode(reply);
-        console.log("GetThemeComments decoded", decoded);
-        console.log("GetThemeComments decoded.toJSON()", decoded.toJSON());
         const commentsCid = decoded.commentsCid
           ? uint8ArrayToString(decoded.commentsCid)
           : "";

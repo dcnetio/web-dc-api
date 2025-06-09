@@ -92,7 +92,6 @@ export class DcUtil {
         const nodeAddr = await _this.dcChain.getDcNodeWebrtcDirectAddr(
           peerListJson[i]
         );
-        console.log("nodeAddr", nodeAddr);
         if (!nodeAddr) {
           console.error("no nodeAddr return");
           num++;
@@ -107,8 +106,6 @@ export class DcUtil {
             const resCon = await _this.dcNodeClient?.libp2p.dial(nodeAddr, {
               signal: AbortSignal.timeout(dial_timeout)
             });
-            console.log("nodeAddr try return");
-            console.log(resCon);
             if (resCon) {
               reslove(nodeAddr);
             } else {
@@ -213,7 +210,6 @@ export class DcUtil {
         }
         const addrParts = peers[i].split(",");
         const nodeAddr = multiaddr(addrParts[1]);
-        console.log("nodeAddr", nodeAddr);
 
         try {
           if (_this.dcNodeClient?.libp2p) {
@@ -311,10 +307,6 @@ export class DcUtil {
         listen: ["/webrtc-direct", "/p2p-circuit", "/webrtc"],
       },
     });
-    console.log("libp2p getProtocols", libp2p.getProtocols());
-    console.log("libp2p peerId", libp2p.peerId.toString());
-    console.log("libp2p 服务列表:", Object.keys(libp2p.services));
-    console.log("libp2p 已连接节点列表:", Object.keys(libp2p.getPeers()));
 
     const dcNodeClient: HeliaLibp2p<Libp2p> = await createHelia({
       blockBrokers: [

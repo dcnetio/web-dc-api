@@ -24,7 +24,6 @@ export async function registerServiceWorker(fileOps?: IFileOperations, swUrl: st
       : '/sw.js';
       
       const registration = await navigator.serviceWorker.register(swPath);
-      logger.info('ServiceWorker 注册成功:', registration.scope);
       
       // 设置消息监听器处理IPFS资源请求
       navigator.serviceWorker.addEventListener('message', async (event) => {

@@ -634,7 +634,6 @@ async addUserOffChainOpTimes(
         "",
         cidNeedConnect.NOT_NEED
       );
-      console.log("getThemeComments fileContent:", fileContent);
       if (!fileContent) {
         return [[], null];
       }
@@ -938,7 +937,6 @@ async addUserOffChainOpTimes(
         const content = dcnet.pb.AddThemeObjRequest.decode(
           fileContentUint8Array
         );
-        console.log("content:", content);
         allContent.push({
           theme: uint8ArrayToString(content.theme),
           appId: uint8ArrayToString(content.appId),
@@ -982,8 +980,6 @@ async addUserOffChainOpTimes(
         const plainContent = await aesKey.decrypt(lineContent);
         const content =
           dcnet.pb.PublishCommentToThemeRequest.decode(plainContent);
-        console.log("content:", content);
-
         
         allContent.push({
           theme: uint8ArrayToString(content.theme),

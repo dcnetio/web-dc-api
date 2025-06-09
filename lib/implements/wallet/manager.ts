@@ -185,7 +185,6 @@ export class WalletManager {
       };
       this.sendMessageToIframe(message, 60000)
         .then((response) => {
-          console.log("sign response", response);
           if(!response || !response.data || !response.data.data) {
             console.error("sign response is null");
             reject(new WalletError("sign response is null"));
@@ -198,7 +197,6 @@ export class WalletManager {
             reject(new WalletError("sign messageData is null"));
             return;
           }
-          console.log("sign success", messageData);
           resolve(messageData);
         })
         .catch((error) => {
