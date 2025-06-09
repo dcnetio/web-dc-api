@@ -57,7 +57,7 @@ export class DBClient {
       );
       const tid = await grpcClient.requestThreadID();
       return tid;
-    } catch (err) {
+    } catch (err:any) {
       console.error("getHostID error:", err);
       throw err;
     }
@@ -78,7 +78,7 @@ export class DBClient {
           );
       const threadInfo = await grpcClient.createThread(tid, opts);
       return tid;
-    } catch (err) {
+    } catch (err:any) {
       console.error("createThread error:", err);
       throw err;
     }
@@ -117,7 +117,7 @@ export class DBClient {
             BrowserType.ThreadDB,
             rec.cid().toString(),
           );
-        } catch (err) {
+        } catch (err:any) {
           throw new Error(`Error pushing record: ${err instanceof Error ? err.message : String(err)}`);
         }
       }
@@ -152,7 +152,7 @@ async exchangeEdges(threadIds: ThreadID[]): Promise<void> {
           headsEdge: headsEdge,
           addressEdge: addrEdge
         });
-      } catch (err) {
+      } catch (err:any) {
         if (err.message !== "No address edge" && 
             err.message !== "No heads edge") {
           console.error(`Getting local edges for ${tid} failed:`, err);
@@ -202,7 +202,7 @@ async exchangeEdges(threadIds: ThreadID[]): Promise<void> {
           const localEdges = await this.localEdges(tid);
           addrEdgeLocal = localEdges.addrEdge;
           headsEdgeLocal = localEdges.headsEdge;
-        } catch (err) {
+        } catch (err:any) {
           // 允许本地边缘为空
           if (err.message !== "No address edge" && 
               err.message !== "No heads edge") {
@@ -225,7 +225,7 @@ async exchangeEdges(threadIds: ThreadID[]): Promise<void> {
           console.debug(`Record update for thread ${tid} scheduled`);
         }
       }
-    } catch (err) {
+    } catch (err:any) {
       // 处理特殊错误码
       if (err.code === 'UNIMPLEMENTED') {
         console.debug(`Peer doesn't support edge exchange, falling back to direct record pulling`);
@@ -242,7 +242,7 @@ async exchangeEdges(threadIds: ThreadID[]): Promise<void> {
     } finally {
       clearTimeout(timeoutId);
     }
-  } catch (err) {
+  } catch (err:any) {
     throw new Error(`Exchange edges failed: ${err instanceof Error ? err.message : String(err)}`);
   }
 }
@@ -262,7 +262,7 @@ private async localEdges(tid: ThreadID): Promise<{ addrEdge: number, headsEdge: 
   try {
     // 尝试获取地址边缘值
     addrEdge = await this.logstore.addrBook.addrsEdge(tid);
-  } catch (err) {
+  } catch (err:any) {
     // 处理threaddb 未找到错误
     if (err.message.includes("Thread not found")) {
       throw new Error("No address edge");
@@ -274,7 +274,7 @@ private async localEdges(tid: ThreadID): Promise<{ addrEdge: number, headsEdge: 
   try {
     // 尝试获取头部边缘值
     headsEdge = await this.logstore.headBook.headsEdge(tid);
-  } catch (err) {
+  } catch (err:any) {
     // 处理threaddb 未找到错误
     if (err.message.includes("Thread not found")) {
       throw new Error("No heads edge");
@@ -324,11 +324,12 @@ private async scheduleUpdateRecords(tid: ThreadID): Promise<void> {
       
       // 创建日志条目
       const logs = Object.entries(offsets).map(([logId, offset]) => {
+        const offsetId  = offset?.id || undefined;
         const pbLog: net_pb.pb.GetRecordsRequest.Body.ILogEntry = {
           logID: PeerIDConverter.toBytes(logId),
           limit: limit,
           counter: offset.counter,
-          offset: CidConverter.toBytes(offset.id)
+          offset: offsetId?CidConverter.toBytes(offsetId):null
         }
         return pbLog;
      });
@@ -344,7 +345,7 @@ private async scheduleUpdateRecords(tid: ThreadID): Promise<void> {
       const req = new net_pb.pb.GetRecordsRequest();
       req.body = body;
       return { req, serviceKey };
-    } catch (err) {
+    } catch (err:any) {
       console.error("buildGetRecordsRequest error:", err);
       throw err;
     }
@@ -385,7 +386,7 @@ async getLogs(tid: ThreadID): Promise<IThreadLogInfo[]> {
       reply.logs.map(async (l) => await logFromProto(l))
     );
     return logs;
-  } catch (err) {
+  } catch (err:any) {
     console.warn(`Get logs from ${this.client.peerAddr} failed: ${err instanceof Error ? err.message : String(err)}`);
     throw err;
   }

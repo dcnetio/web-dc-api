@@ -152,10 +152,10 @@ export interface ITxn{
   }
 export interface IDB {
   datastore: TxnDatastoreExtended; 
-  connector: Connector; // 
-   dispatcher: Dispatcher;   
+  connector: Connector|null; // 
+   dispatcher: Dispatcher | null;   
    eventcodec: EventCodec; 
-  localEventsBus: LocalEventsBus;
+  localEventsBus: LocalEventsBus | null;
   collections: Map<string, ICollection> ;
   readTxn(collection: ICollection, fn: (txn: ITxn) => Promise<void> | void, token?: ThreadToken): Promise<void>;
   writeTxn(collection: ICollection, fn: (txn: ITxn) => Promise<void> | void, token?: ThreadToken): Promise<void>;

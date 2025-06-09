@@ -346,3 +346,4 @@ export interface AIChatMessage {
 export interface AIChatMessageRequest {
   chatMessages: AIChatMessage[];
 }
+

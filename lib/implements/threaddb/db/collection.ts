@@ -1127,7 +1127,7 @@ export class Txn implements ITxn{
    * Check if instances exist
    */
   async has(...ids: InstanceID[]): Promise<boolean> {
-    const validationResult = await this.collection.db.connector.validate(this.token);
+    const validationResult = await this.collection.db.connector?.validate(this.token);
     if (validationResult) {
       throw validationResult;
     }
@@ -1167,7 +1167,7 @@ export class Txn implements ITxn{
    * Find instance by ID
    */
   async findByID(id: InstanceID): Promise<Object> {
-    const validationResult = await this.collection.db.connector.validate(this.token);
+    const validationResult = await this.collection.db.connector?.validate(this.token);
     if (validationResult) {
       throw validationResult;
     }
@@ -1208,7 +1208,7 @@ export class Txn implements ITxn{
     async find(q?: Query): Promise<Object[]> {
       try {
         // 验证令牌
-        const validationError = await this.collection.db.connector.validate(this.token);
+        const validationError = await this.collection.db.connector?.validate(this.token);
         if (validationError) {
           throw validationError;
         }
@@ -1329,7 +1329,7 @@ export class Txn implements ITxn{
             
             // 提取最终结果
             const results = values.map(v => v.marshaledValue);
-            return results;
+            return results as Object[];
             
           } finally {
             // 清理迭代器资源
@@ -1339,7 +1339,7 @@ export class Txn implements ITxn{
           }
         } finally {
           // 确保丢弃事务
-          await txn.discard();
+           txn.discard();
         }
       } catch (err) {
         throw new Error(`Find operation failed: ${err instanceof Error ? err.message : String(err)}`);
@@ -1461,8 +1461,8 @@ async modifiedSince(time: number): Promise<InstanceID[]> {
     }
     
     try {
-      await this.collection.db.connector.createNetRecord(node, this.token);
-      await this.collection.db.dispatcher.dispatch(events);
+      await this.collection.db.connector?.createNetRecord(node, this.token);
+      await this.collection.db.dispatcher?.dispatch(events);
       this.committed = true;
     } catch (err) {
       throw new Error(`Commit failed: ${err instanceof Error ? err.message : String(err)}`);

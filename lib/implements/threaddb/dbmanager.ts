@@ -12,7 +12,7 @@ import type { Connection }  from '@libp2p/interface'
 import { keys } from "@libp2p/crypto";
 import { SymmetricKey, Key as ThreadKey } from './common/key';
 import { extractPeerIdFromMultiaddr } from "../../common/dc-key/keyManager";
-import {ThreadMuliaddr} from './core/core'
+import {IDBInfo, ThreadMuliaddr} from './core/core'
 
 import {StoreunitInfo} from '../../common/chain';
 import { PrefixTransform,TransformedDatastore} from './common/transformed-datastore' 
@@ -1402,8 +1402,8 @@ async getDB(id: ThreadID, opts?: ManagedOptions): Promise<ThreadDb> {
 }
 
 
-async getDBInfo(id: ThreadID, opts?: ManagedOptions): Promise<[string, Error|null]> {
-   let infoStr = "";
+async getDBInfo(id: ThreadID, opts?: ManagedOptions): Promise<[IDBInfo|null, Error|null]> {
+   let dbInfo: IDBInfo|null = null;
     try {
         const db = this.dbs.get(id.toString());
         if (!db) {
@@ -1413,13 +1413,11 @@ async getDBInfo(id: ThreadID, opts?: ManagedOptions): Promise<[string, Error|nul
         if (!dbInfo) {
             throw new Error(`No info available for db ${id}`);
         }
-        // Return the database info as a string
-        infoStr = JSON.stringify(dbInfo);
     }catch (err) {
         console.error(`Error getting DB info for ${id}:`, err);
-        return ['', err as Error];
+        return [null, err as Error];
     }  
-    return [infoStr,null];
+    return [dbInfo,null];
 }
 
 
@@ -1452,7 +1450,7 @@ async deleteDB( id: ThreadID, deleteThreadFlag: boolean, opts?: ManagedOptions):
     if (deleteThreadFlag) {
         console.debug(`manager: deleting thread ${id} from net`);
         try {
-            await this.network.deleteThread(id, { token: opts?.token, apiToken: db.connector.token });
+            await this.network.deleteThread(id, { token: opts?.token, apiToken: db.connector?.token });
             console.debug(`manager: deleted thread ${id} from net`);
         } catch (err) {
             throw err;

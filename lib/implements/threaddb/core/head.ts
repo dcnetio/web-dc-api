@@ -42,7 +42,7 @@ export async function getCIDUndef(): Promise<CID> {
  */  
 export function serializeHead(head: Head): string {  
     return JSON.stringify({  
-      id: head.id.toString(),  // 转换 CID 为字符串  
+      id: head.id?.toString(),  // 转换 CID 为字符串  
       counter: head.counter,  
     });  
   }  
@@ -71,7 +71,7 @@ export interface HeadBookRecord  {
 export function serializeHeadBookRecord(record: HeadBookRecord): string {  
     return JSON.stringify({  
       heads: record.heads.map(head => ({  
-        id: head.id.toString(), // 转换 CID 为字符串  
+        id: head.id?.toString(), // 转换 CID 为字符串  
         counter: head.counter  
       }))  
     });  

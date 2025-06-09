@@ -15,7 +15,7 @@ import { dagCbor } from "@helia/dag-cbor";
 import { DB as ThreadDb } from '../implements/threaddb/db/db';
 import { Network } from "../implements/threaddb/net/net";
 import { createContext, DBManager } from "../implements/threaddb/dbmanager";
-import { ICollectionConfig, ManagedOptions } from "../implements/threaddb/core/core";
+import { ICollectionConfig, IDBInfo, ManagedOptions } from "../implements/threaddb/core/core";
 import ThreadID from "@textile/threads-id";
 
 const logger = createLogger('DatabaseModule');
@@ -54,6 +54,8 @@ export class DatabaseModule implements DCModule, IDatabaseOperations {
     // 在这里可以添加关闭数据库连接等清理工作
     this.initialized = false;
   }
+
+
   
   /**
    * 初始化数据库管理器
@@ -267,12 +269,12 @@ async close(): Promise<void> {
  * @param id threaddbID
  * @returns 数据库信息字符串,或错误
  */ 
-async getDBInfo(id: string): Promise<[string, Error|null]> {
+async getDBInfo(id: string): Promise<[IDBInfo|null, Error|null]> {
     this.assertInitialized();
     await this.initDBManager();
     
     if (!this.context.dbManager) {
-      return ["", new Error("数据库管理器未初始化")];
+      return [null, new Error("数据库管理器未初始化")];
     } 
     const tid = ThreadID.fromString(id);
     return await this.context.dbManager.getDBInfo(tid);

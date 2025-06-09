@@ -1,11 +1,13 @@
 import ThreadID from "@textile/threads-id";
-import { ICollectionConfig } from "../implements/threaddb/core/core";
+import { ICollectionConfig, IDBInfo } from "../implements/threaddb/core/core";
 
 /**
  * 数据库操作接口,这个数据库主要由threadid确保唯一,servicekey,readkey多重加密来确保数据安全,其中readkey永远不离开用户,servicekey会在DC云端的TEE环境中参与数据备份
  * 提供基于ThreadDB的分布式数据库管理功能
  */
 export interface IDatabaseOperations {
+
+  
   /**
    * 初始化数据库管理器
    * 创建数据库操作所需的组件和服务
@@ -71,7 +73,7 @@ export interface IDatabaseOperations {
  * @returns 数据库信息字符串
  * @throws 获取失败时抛出错误
  */ 
- getDBInfo(id: string): Promise<[string, Error|null]>  ;
+ getDBInfo(id: string): Promise<[IDBInfo|null, Error|null]>  ;
 
   /**
    * 关闭数据库管理器

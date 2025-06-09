@@ -143,7 +143,7 @@ export class Connector {
       this.threadId, 
       body, 
       {
-        threadToken: token,
+        ...(token !== undefined ? { threadToken: token } : {}),
         apiToken: this.token
       }
     );
@@ -156,7 +156,7 @@ export class Connector {
     try{
       await this.net.validate( this.threadId, token);
       return 
-    }catch(err){
+    }catch(err:any){
       return err
     }
   }

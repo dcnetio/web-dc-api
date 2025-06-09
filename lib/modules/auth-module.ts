@@ -504,6 +504,9 @@ export class AuthModule implements DCModule, IAuthOperations {
     this.assertInitialized();
 
     const pubkeyRaw = this.context.getPubkeyRaw();
+    if (!pubkeyRaw) {
+      throw new Error("用户未登录!");
+    }
     return this.context.dcChain.refreshUserInfo(pubkeyRaw);
   }
 

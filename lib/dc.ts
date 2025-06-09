@@ -3,7 +3,7 @@
 
 import { type Multiaddr } from "@multiformats/multiaddr";
 import { ChainUtil } from "./common/chain";
-import type { DCConnectInfo, APPInfo } from "./common/types/types";
+import type { DCConnectInfo, APPInfo, User } from "./common/types/types";
 import { DcUtil } from "./common/dcutil";
 import { type HeliaLibp2p } from "helia";
 import { Libp2p } from "@libp2p/interface";
@@ -26,6 +26,7 @@ import {
   UtilModule
 } from "./modules";
 import { Client } from "./common/dcapi";
+import { ICollectionConfig, IDBInfo } from "./implements/threaddb/core/core";
 
 const logger = createLogger('DC');
 
@@ -225,7 +226,157 @@ export class DC implements DCContext {
   setAppInfo(appInfo: APPInfo): void {
     this.appInfo = appInfo;
   }
+
+
+
+     /**
+     * 获取当前用户的去中心数据库信息,如果用户数据库不存在,则会自动创建
+     * @param collections 集合配置数组，定义数据库中的集合结构
+     * @returns 当前用户的数据库信息
+     */
+    async initUserDB(dbName: string,collections:ICollectionConfig[]): Promise<[IDBInfo|null,Error | null]> { 
+      let userInfo: User | null = null;
+      try {
+            this.assertInitialized();
+            userInfo = await this.auth.refreshUserInfo();
+            if (!userInfo) {
+              return [null,new Error("用户信息不存在")];
+            }
+      }catch (error : any) {
+        return [null,error];
+      }
+      if (userInfo && userInfo.dbConfig) {// 如果存在dbConfig，说明已经设置了应用数据库,进行解密 
+        try{
+          const dbConfig = await this.auth.decryptWithWallet(userInfo.dbConfigRaw);
+          const threadDBInfo =  new TextDecoder().decode(dbConfig);
+          const threadDBInfos = threadDBInfo ? threadDBInfo.split('|') : [];
+          if (threadDBInfos && threadDBInfos.length >= 3) {
+              const threadid = threadDBInfos[0];
+              const rk = threadDBInfos[1];
+              const sk = threadDBInfos[2];
+              const fid =  threadDBInfos[3] || ''; //预加载记录文件ID
+              const preCount = threadDBInfos[4] || 0; //预加载记录条数
+              //判断本地是否存在数据库
+              const [dbinfo,error] = await this.db.getDBInfo(threadid);
+              if (dbinfo != null && !error) {          
+                this.db.refreshDBFromDC(threadid);
+                return [dbinfo,null];
+              }else{//本地数据库不存在,从DC同步
+                   await this.db.syncDbFromDC(
+                    threadid,
+                    dbName,
+                    "",
+                    rk,
+                    sk,
+                    true,
+                    collections,
+                  );
+                  const [dbinfo,error] = await this.db.getDBInfo(threadid);
+                  if (dbinfo != null && !error) {
+                    return [dbinfo,null] ; //返回dbinfo;
+                  }else {
+                    // 获取DB失败
+                    return [null,error];
+                  }
+                }
+              }
+        }catch (error:any) {
+          console.error('解密dbConfig失败', error);
+          return  [null,error];
+        }
+        
+      }
+      //数据库不存在，创建应用数据库
+      const rk =  this.util.createSymmetricKey();
+      const sk =  this.util.createSymmetricKey();
+      // 初始化DB数据库结构
+      const threadId = await this.db.newDB(
+        dbName,
+        rk.toString(),
+        sk.toString(),
+        collections,
+      );
+      if (threadId !== '') {//数据库创建成功
+        // 设置用户默认DB
+        const setUserDefaultDBRes = await this._setUserDefaultDB(
+          this,
+          threadId,
+          rk.toString(),
+          sk.toString(),
+        );
+        if (!setUserDefaultDBRes) {
+          // 设置用户默认DB失败
+          console.error('设置用户去中心DB失败');
+          return  [null,new Error('设置用户去中心DB失败')];
+        }
+        
+      }
+      const [dbinfo,error] = await this.db.getDBInfo(threadId);
+      if (dbinfo != null && !error) {
+        return [dbinfo,null] ; //返回dbinfo;
+      }else {
+        // 获取DB失败
+        console.error('获取DB失败', error);
+        return  [null,error];
+      }
+    }
   
+
+
+// 设置用户DB
+ async _setUserDefaultDB(
+  dc: DC,
+  DBthreadid: string,
+  rk: string,
+  sk: string,
+  remark?: string,
+): Promise<boolean> {
+    // 加到用户信息上
+    try {
+      await dc.auth.setUserDefaultDB(
+        DBthreadid,
+        rk,
+        sk,
+        remark || '',
+      );
+    } catch (error) {
+      console.error('设置用户默认DB失败', error);
+      return false; 
+    }
+  // 循环获取用户信息，是否存在db,true成功
+  const res = await this._checkSetUserDefaultDB(dc);
+  return res;
+};
+
+
+
+// 判断是否设置用户默认DB
+async _checkSetUserDefaultDB (dc: DC): Promise<boolean>  {
+  return new Promise(async resolve => {
+    let intervalNum = 0; // 定时判断是否绑定成功
+    // 初始化定时器
+    let interval = setInterval(async () => {
+      intervalNum++;
+      // 获取用户信息，判断空间有效期是否延长
+      const getUserInfoRes = await dc.auth.refreshUserInfo();
+      // console.log('---------getUserInfoRes ', getUserInfoRes.userInfo);
+      if (getUserInfoRes && getUserInfoRes.dbConfig) {
+        // 绑定成功停止定时任务
+        interval ? clearInterval(interval) : '';
+        intervalNum = 0;
+        resolve(true);
+      } else if (intervalNum > 20) {
+        // 超时停止定时任务
+        interval ? clearInterval(interval) : '';
+        intervalNum = 0;
+        resolve(false);
+      }
+    }, 1000);
+  });
+};
+
+
+
   /**
    * 关闭并清理资源
    */
@@ -429,6 +580,6 @@ export class DC implements DCContext {
    * @returns 工具模块实例
    */
   get util() {
-    return  this.getModule<AIProxyModule>(CoreModuleName.UTIL);
+    return  this.getModule<UtilModule>(CoreModuleName.UTIL);
   }
 }

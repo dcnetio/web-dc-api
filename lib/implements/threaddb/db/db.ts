@@ -179,12 +179,12 @@ class CollectionExistsError extends Error {
 
 export class DB implements App,IDB {  
   private name: string;  
-  public connector: Connector; // 
+  public connector: Connector | null = null; // 
   public datastore: TxnDatastoreExtended; 
-  public dispatcher: Dispatcher;   
+  public dispatcher: Dispatcher | null = null;   
   public eventcodec: EventCodec; 
   public collections: Map<string, Collection> = new Map();
-  public localEventsBus: LocalEventsBus;
+  public localEventsBus: LocalEventsBus | null = null;
   private webLock: string;
 
   constructor(datastore: TxnDatastoreExtended, net: Net, id: string, opts: NewOptions) {  
@@ -192,6 +192,7 @@ export class DB implements App,IDB {
     this.name = opts.name || 'unnamed';  
     this.eventcodec = opts.eventCodec || new JsonPatcher(); 
     this.webLock = "webLock_db_" + id;
+ 
   }  
 
   // 新建 DB 实例  
@@ -253,16 +254,16 @@ async getDBInfo(options?:  ManagedOptions): Promise<IDBInfo> {
   console.debug(`getting db info in ${this.name}`);
   
   try {
-    const threadInfo = await this.connector.net.getThread(
-      this.connector.threadId,
+    const threadInfo = await this.connector?.net.getThread(
+      this.connector?.threadId,
       { token: options?.token }
     );
     
     return {
-      id: this.connector.threadId.toString(),
+      id: this.connector? this.connector.threadId.toString(): "",
       name: this.name,
-      addrs: threadInfo.addrs.map((addr: ThreadMuliaddr) => addr.toString()),
-      key: threadInfo.key?.toString(),
+      addrs: threadInfo?threadInfo.addrs.map((addr: ThreadMuliaddr) => addr.toString()): [],
+      key: threadInfo?threadInfo.key?.toString(): "",
     };
   } catch (err) {
     throw new Error(`Failed to get DB info: ${err instanceof Error ? err.message : String(err)}`);
@@ -482,7 +483,7 @@ defaultIndexFunc(): (collection: string, key: Key, txn: any, oldData?: Uint8Arra
  */
 async notifyTxnEvents(node: IPLDNode, token: ThreadToken): Promise<void> {
   try {
-    await this.localEventsBus.send({
+    await this.localEventsBus?.send({
       node: node,
       token: token
     });
@@ -521,8 +522,11 @@ async notifyTxnEvents(node: IPLDNode, token: ThreadToken): Promise<void> {
   async handleNetRecord(rec: IThreadRecord, key: ThreadKey): Promise<Error | undefined> {  
     let event: any;
     try {  
+      if (!this.connector){
+        return new Error("no connector");
+      }
       // 从记录中解码事件  
-      event = await threadEvent.EventFromRecord(this.connector.net.bstore, rec.value());  
+      event = await threadEvent.EventFromRecord(this.connector?.net.bstore, rec.value());  
     } catch (err) {  
       // 如果解码失败，尝试从块中获取事件  
       try {
@@ -534,7 +538,7 @@ async notifyTxnEvents(node: IPLDNode, token: ThreadToken): Promise<void> {
     }  
     try {  
       // 获取事件的主体  
-      const body = await event.getBody( this.connector.net, key.read());  
+      const body = await event.getBody( this.connector?.net, key.read());  
 
       // 从字节数据中解码事件  
       const events = await this.eventcodec.eventsFromBytes(body.rawData());  
@@ -553,9 +557,13 @@ async notifyTxnEvents(node: IPLDNode, token: ThreadToken): Promise<void> {
     key: ThreadKey
   ): Promise<BigInt> {
     let event :IThreadEvent;
+     if (!this.connector){
+        throw new Error("no connector");
+      }
     try {
+      
       // 从记录中解码事件
-      event = await threadEvent.EventFromRecord(this.connector.net.bstore, rec.value());
+      event = await threadEvent.EventFromRecord(this.connector?.net.bstore, rec.value());
     } catch (err) {
       // 如果解码失败，尝试从块中获取事件
       try {
@@ -569,10 +577,10 @@ async notifyTxnEvents(node: IPLDNode, token: ThreadToken): Promise<void> {
     let body:IPLDNode;
     try {
       // 获取事件的主体
-      body = await event.getBody( this.connector.net.bstore, key.read());
+      body = await event.getBody( this.connector?.net.bstore, key.read());
     } catch (err) {
       throw new Error(
-        `Error when getting body of event on thread ${this.connector.threadId}/${rec.logID()}: ${err instanceof Error ? err.message : String(err)}`
+        `Error when getting body of event on thread ${this.connector?.threadId}/${rec.logID()}: ${err instanceof Error ? err.message : String(err)}`
       );
     }
 
@@ -593,12 +601,14 @@ async notifyTxnEvents(node: IPLDNode, token: ThreadToken): Promise<void> {
   private async getBlockWithRetry(rec: IRecord): Promise<any> {
     let backoff = getBlockInitialTimeout;
     let lastError: Error | null = null;
-    
+    if (!this.connector) {
+      throw new Error("no connector");
+    }
     // 重试循环
     for (let i = 1; i <= getBlockRetries; i++) {
       try {
         // 尝试获取块
-        const block = await rec.getBlock(this.connector.net.bstore);
+        const block = await rec.getBlock(this.connector?.net.bstore);
         return block; // 成功则立即返回
       } catch (err) {
         lastError = err as Error;

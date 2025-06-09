@@ -7,7 +7,6 @@ import { createLogger } from '../util/logger';
 const logger = createLogger("UtilModule");
 export class UtilModule implements IUtilOperations {
     readonly moduleName = CoreModuleName.UTIL;
-    private context: DCContext;
     private initialized: boolean = false;
      
       /**
@@ -16,7 +15,6 @@ export class UtilModule implements IUtilOperations {
        * @returns 是否初始化成功
        */
      async initialize(context: DCContext): Promise<boolean> {
-        this.context = context;
         this.initialized = true;
           return true;
 

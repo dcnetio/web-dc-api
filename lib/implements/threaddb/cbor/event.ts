@@ -176,7 +176,7 @@ export async function RemoveEvent(
 export class Event implements NetEvent {
   private _node: Node;
   private _obj: EventObj;
-  private _header?: EventHeader ;
+  private _header?: EventHeader  ;
   private _body?: Node;
   
   constructor(
@@ -187,9 +187,14 @@ export class Event implements NetEvent {
   ) {
     this._node = node;
     this._obj = obj;
-    this._header = header;
-    this._body = body;
+    if (header) {
+      this._header = header;
+    }
+    if (body) {
+      this._body = body;
+    }
   }
+  
   
    cid(): CID {
     return this._node.cid();
