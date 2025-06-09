@@ -315,3 +315,34 @@ export type ResponseMessage<T> = {
     type: string,
     data: T,
 }
+
+export interface IAICallConfig {
+  appId: string ;
+  themeAuthor: string ;
+  theme: string ;
+  service: string ;
+  headers?: Record<string, string> ;
+  path?: string ;
+  model?: string ;
+}
+
+export interface AIMessageMediaSource {
+  url?: string;
+  type?: string;
+  name?: string;
+}
+
+export interface AIMessageContent {
+  type: string;
+  text?: string;
+  source?: AIMessageMediaSource;
+}
+
+export interface AIChatMessage {
+  role: string;
+  content: AIMessageContent[];
+}
+
+export interface AIChatMessageRequest {
+  chatMessages: AIChatMessage[];
+}

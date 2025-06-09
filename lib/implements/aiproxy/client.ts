@@ -147,13 +147,12 @@ export class AIProxyClient {
         const decoded = dcnet.pb.GetUserOwnAIProxyAuthReply.decode(reply);
         console.log("GetUserOwnAIProxyAuth decoded", decoded);
         if (decoded.flag != 0) {
-          throw new Error(Errors.INVALID_TOKEN.message+" flag:"+decoded.flag);
+          return ["", new Error(Errors.INVALID_TOKEN.message+" flag:"+decoded.flag)];
         }
         const authInfo = new TextDecoder().decode(decoded.authInfo);
         return [authInfo, null];
       }
-      console.error("GetUserOwnAIProxyAuth error:", error);
-      throw error;
+      return ["", error instanceof Error ? error : new Error(String(error))];
     }
   }
 

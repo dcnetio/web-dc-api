@@ -9,33 +9,9 @@ import { AIProxyManager } from "../implements/aiproxy/manager";
 import { AIProxyUserPermission } from "../common/constants";
 const logger = createLogger('KeyValueModule');
 
-export class AICallConfig {
-  appId: string ;
-  themeAuthor: string ;
-  configTheme: string ;
-  serviceName: string ;
-  headers: string ;
-  path: string ;
-  model: string ;
+import { IAICallConfig } from "../common/types/types";
+import { json } from "lib/implements/threaddb/pb/proto-custom-types";
 
-  constructor(
-    appId: string,
-    themeAuthor: string,
-    configTheme: string,
-    serviceName: string,
-    headers: string,
-    path: string,
-    model: string
-  ) {
-    this.appId = appId;
-    this.themeAuthor = themeAuthor;
-    this.configTheme = configTheme;
-    this.serviceName = serviceName;
-    this.headers = headers;
-    this.path = path;
-    this.model = model;
-  }
-}
 
 /**
  * AI代理模块
@@ -45,7 +21,7 @@ export class AIProxyModule implements DCModule {
   readonly moduleName = CoreModuleName.AIPROXY;
   private aiProxyManager!: AIProxyManager;
   private initialized: boolean = false;
-  private aiCallConfig: AICallConfig | null = null;
+  private aiCallConfig: IAICallConfig | null = null;
   
   /**
    * 初始化AI代理模块
@@ -149,7 +125,7 @@ async GetUserOwnAIProxyAuth(
     themeAuthor?: string,
     configTheme?: string,
     serviceName?: string,
-    headers?: string,
+    headers?: Record<string, string>,
     path?: string,
     model?: string): Promise< number>
     {
@@ -157,7 +133,37 @@ async GetUserOwnAIProxyAuth(
         if (this.aiCallConfig == null && (!appId || !themeAuthor || !configTheme || !serviceName)) {
             throw new Error("AI调用配置未设置");
         }
-        return this.aiProxyManager.DoAIProxyCall(appId || this.aiCallConfig!.appId, themeAuthor|| this.aiCallConfig!.themeAuthor, configTheme || this.aiCallConfig!.configTheme, serviceName|| this.aiCallConfig!.serviceName, reqBody, forceRefresh, onStreamResponse, headers|| this.aiCallConfig?.headers, path|| this.aiCallConfig?.path, model|| this.aiCallConfig?.model);
+        let headersStr = "";
+        if (headers) {
+            headersStr = JSON.stringify(headers);
+        }else if (this.aiCallConfig?.headers) {
+            headersStr = JSON.stringify(this.aiCallConfig.headers);
+        }
+        if (!configTheme) {
+            configTheme = this.aiCallConfig?.theme;
+        }
+        if (!configTheme) {
+            throw new Error("配置主题不能为空");
+        }
+        if (!appId) {
+            appId = this.aiCallConfig?.appId;
+        }
+        if (!appId) {
+            throw new Error("应用ID不能为空");
+        }
+        if (!themeAuthor) {
+            themeAuthor = this.aiCallConfig?.themeAuthor;
+        }
+        if (!themeAuthor) {
+            throw new Error("主题作者公钥不能为空");
+        }
+        if (!serviceName) {
+            serviceName = this.aiCallConfig?.service;
+        }
+        if (!serviceName) {
+            throw new Error("服务名称不能为空");
+        }
+        return this.aiProxyManager.DoAIProxyCall(appId , themeAuthor, configTheme, serviceName, reqBody, forceRefresh, onStreamResponse, headersStr, path|| this.aiCallConfig?.path, model|| this.aiCallConfig?.model);
     }
 
 
@@ -173,7 +179,7 @@ async GetUserOwnAIProxyAuth(
    * @returns Promise<void>
    * */
   SetAICallConfig(
-    callConfig:AICallConfig
+    callConfig:IAICallConfig
   ) {
     this.assertInitialized();
     this.aiCallConfig = callConfig

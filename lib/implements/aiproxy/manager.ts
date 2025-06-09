@@ -575,8 +575,8 @@ export class AIProxyManager {
             ...serviceNameValue,
             ...pathValue,
             ...reqBodyValue,
-            ...modelValue,
             ...forceRefreshValue,
+            ...modelValue,
             ...headersValue
         ]);
         if (!this.accountBackUpDc.client) {

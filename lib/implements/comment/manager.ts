@@ -941,7 +941,7 @@ async addUserOffChainOpTimes(
     let allContent: Array<ThemeComment> = [];
 
     if (!this.context.getPublicKey()) {
-      return;
+      return [];
     }
     // readLine 循环
     while (true) {
