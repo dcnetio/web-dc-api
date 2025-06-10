@@ -274,7 +274,7 @@ export class DC implements DCContext {
                     return [dbinfo,null] ; //返回dbinfo;
                   }else {
                     // 获取DB失败
-                    return [null,error];
+                    return [null,error?error:new Error('获取DB失败')];
                   }
                 }
               }

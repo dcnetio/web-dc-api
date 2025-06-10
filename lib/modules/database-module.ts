@@ -277,7 +277,8 @@ async getDBInfo(id: string): Promise<[IDBInfo|null, Error|null]> {
       return [null, new Error("数据库管理器未初始化")];
     } 
     const tid = ThreadID.fromString(id);
-    return await this.context.dbManager.getDBInfo(tid);
+    const [dbInfo, err] = await this.context.dbManager.getDBInfo(tid);
+    return  [dbInfo, err];
   }
 
 /**

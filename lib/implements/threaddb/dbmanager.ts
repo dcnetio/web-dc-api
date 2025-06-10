@@ -1409,8 +1409,8 @@ async getDBInfo(id: ThreadID, opts?: ManagedOptions): Promise<[IDBInfo|null, Err
         if (!db) {
             throw Errors.ErrDBNotFound;
         }
-        const dbInfo = await db.getDBInfo(opts);
-        if (!dbInfo) {
+        dbInfo = await db.getDBInfo(opts);
+        if (!dbInfo || dbInfo === null) {
             throw new Error(`No info available for db ${id}`);
         }
     }catch (err) {

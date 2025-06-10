@@ -258,13 +258,13 @@ async getDBInfo(options?:  ManagedOptions): Promise<IDBInfo> {
       this.connector?.threadId,
       { token: options?.token }
     );
-    
-    return {
+    const dbInfo: IDBInfo = {
       id: this.connector? this.connector.threadId.toString(): "",
       name: this.name,
       addrs: threadInfo?threadInfo.addrs.map((addr: ThreadMuliaddr) => addr.toString()): [],
       key: threadInfo?threadInfo.key?.toString(): "",
-    };
+    }
+    return dbInfo;
   } catch (err) {
     throw new Error(`Failed to get DB info: ${err instanceof Error ? err.message : String(err)}`);
   }
