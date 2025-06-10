@@ -288,7 +288,6 @@ async getDBInfo(options?:  ManagedOptions): Promise<IDBInfo> {
         this.name = new TextDecoder().decode(nameBuffer);  
       }  
     } catch (error) {  
-      console.error(`Error loading name: ${error instanceof Error ? error.message : String(error)}`);  
     }  
   }  
 
@@ -625,7 +624,6 @@ async readTxn(
   fn: (txn: ITxn) => Promise<void> | void, 
   token?: ThreadToken
 ): Promise<void> {
-  console.debug(`starting read txn in ${this.name}`);
   
   // 创建事务选项
   const args = { token: undefined } as any;
@@ -637,7 +635,6 @@ async readTxn(
   try {
     // 执行事务函数
     await fn(txn);
-    console.debug(`ending read txn in ${this.name}`);
   } finally {
     // 确保事务被丢弃
     txn.discard();
@@ -654,7 +651,6 @@ async writeTxn(
 ): Promise<void> {
   // 将写入操作添加到队列
   this.writeQueue = this.writeQueue.then(async () => {
-    console.debug(`starting write txn in ${this.name}`);
     // 创建可写事务
     const txn = new Txn(collection, token, false);
     try {
@@ -663,7 +659,6 @@ async writeTxn(
       
       // 提交事务
       await txn.commit();
-      console.debug(`ending write txn in ${this.name}`);
     } finally {
       // 确保事务被丢弃
       txn.discard();
@@ -671,7 +666,7 @@ async writeTxn(
   });
   
   // 等待当前事务完成
-  return this.writeQueue;
+  return await this.writeQueue;
 }
 
 

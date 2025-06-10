@@ -117,15 +117,16 @@ export class DcUtil {
           }
         } catch (error) {
           if (error && typeof error === "object" && "message" in error) {
-            console.error("dial nodeAddr error,error:%s", (error as any).message);
             num++;
             if (num >= len) {
+
+              console.error("dial nodeAddr error,error:%s", (error as any).message);
               reject((error as any).message);
             }
           } else {
-            console.error("dial nodeAddr error,error:", error);
             num++;
             if (num >= len) {
+            console.error("dial nodeAddr error,error:", error);
               reject(error);
             }
           }

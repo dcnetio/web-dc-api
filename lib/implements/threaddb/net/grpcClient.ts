@@ -155,12 +155,11 @@ export class DBGrpcClient {
                 messageBytes,
                 30000
             );
-        } catch (err) {
+        } catch (err:any) {
           if (err.message.includes("log has binded to thread")) {
             return 
           }
-            console.error("AddLogToThread error:", err);  
-            throw err;
+          throw err;
         }
     }
 
@@ -219,7 +218,7 @@ export class DBGrpcClient {
                 let addr = multiaddr(processedBytes);
                 const threadMultiaddr = new ThreadMuliaddr(addr, threadID);
                 addrs.push(threadMultiaddr);
-              } catch (addrErr) {
+              } catch (addrErr:any) {
                 console.warn(`Skipping invalid multiaddr: ${addrErr.message}`);
                 // Continue with other addresses
               }
@@ -276,7 +275,7 @@ export class DBGrpcClient {
         }
       }
 
-  async getThreadKeys(sPubkey: Ed25519PubKey, args: { threadKey: ThreadKey, logKey?: PrivateKey | PublicKey }): Promise<dcnet_proto.pb.Keys> {
+  async getThreadKeys(sPubkey: Ed25519PubKey, args: { threadKey: ThreadKey, logKey?: PrivateKey | PublicKey | undefined }): Promise<dcnet_proto.pb.Keys> {
     try {
         const threadKeyEncrypt = await sPubkey.encrypt(args.threadKey.toBytes());
         let logKeyEncrpt: Uint8Array;
@@ -380,7 +379,7 @@ export class DBGrpcClient {
           30000, // 30秒超时
         );
 
-      } catch (err) {
+      } catch (err:any) {
         if (err.message == Errors.ErrLogNotFound.message) {
           try {
             const timeout = setTimeout(() => {

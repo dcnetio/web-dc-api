@@ -130,7 +130,6 @@ export class ChainUtil {
   async getUserInfoWithNftHex(nftHexAccount: string): Promise<User> {
     const walletAccount =
       await this.dcchainapi?.query.dcNode.nftToWalletAccount(nftHexAccount);
-    console.log("=========walletAccount", walletAccount);
     if (!walletAccount || !walletAccount.toString()) {
       throw new Error("walletAccount is null");
     }
@@ -200,16 +199,12 @@ export class ChainUtil {
   // 获取所有文件存储节点
   getObjNodes = async (cid: string): Promise<string[] | undefined> => {
     const fileInfo = (await this.dcchainapi?.query.dcNode.files(cid)) || null;
-    console.log("new first 1");
     const fileInfoJSON = fileInfo?.toJSON();
-
-    console.log("fileInfoJSON", fileInfoJSON);
     if (
       !fileInfoJSON ||
       typeof fileInfoJSON !== "object" ||
       (fileInfoJSON as { peers: string[] }).peers.length == 0
     ) {
-      console.error("no peers found for file: ", cid);
       return;
     }
     const peers = (fileInfoJSON as { peers: string[] }).peers || [];
@@ -309,7 +304,6 @@ export class ChainUtil {
           const peerJson = Buffer.from(peer.slice(2), "hex").toString(
             "utf8"
           );
-          console.log("peerJson", peerJson);
           peers = peers.concat(peerJson);
         }
       }
@@ -318,25 +312,25 @@ export class ChainUtil {
     return peers;
   };
 
-  objectState =  async (cid: string): Promise<StoreunitInfo | null> =>{
+  objectState =  async (cid: string): Promise<[StoreunitInfo | null, Error|null]> =>{
       if (!this.dcchainapi) {  
-          throw new Error('Blockchain not connected');  
+          return [null, new Error("dcchainapi is not initialized")];
       }  
 
       const fileInfo = await this.dcchainapi.query.dcNode.files(cid);  
       
       if (!fileInfo || fileInfo.isEmpty) {  
-          return null;  
+          return [null, new Error(`File with CID ${cid} not found`)];  
       }  
 
       const data = fileInfo.toJSON();  
 
       if (!data) {  
-          return null;  
+          return [null, new Error(`File with CID ${cid} not found`)];  
       }  
     // 构造返回数据  
     if (typeof data === "object" && data !== null && !Array.isArray(data)) {
-      return {  
+      return [{  
         size: Number((data as any)['fileSize'] || 0),  
         utype: Number((data as any)['fileType'] || 0),  
         peers: new Set(
@@ -378,9 +372,9 @@ export class ChainUtil {
               })
             : []
         ),   
-      };    
+      }, null];    
     }
-    return null;
+    return [null, new Error(`File with CID ${cid} not found`)];
   }
 
     ifEnoughUserSpace = async (

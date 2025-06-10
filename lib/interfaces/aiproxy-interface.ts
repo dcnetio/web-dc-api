@@ -103,6 +103,7 @@ export interface IAIProxyOperations {
    * @returns 调用状态码
    */
   DoAIProxyCall(
+    context: { signal?: AbortSignal },
     reqBody: string,
     forceRefresh: boolean,
     onStreamResponse: OnStreamResponseType,

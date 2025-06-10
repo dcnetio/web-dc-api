@@ -900,8 +900,8 @@ async listDBs(): Promise<Map<ThreadID, ThreadDb>> {
     
 async ifSyncDBToDCSuccess(tId: string): Promise<boolean> {  
     try {  
-        const storeUnit = await this.chainUtil.objectState(tId);  
-        if (!storeUnit) return false;  
+        const [storeUnit,err] = await this.chainUtil.objectState(tId);  
+        if (!storeUnit || err) return false;  
 
         return new Promise((resolve) => {  
             const timeout = setTimeout(() => resolve(false), PullTimeout);  
@@ -955,7 +955,10 @@ async ifDbInitSuccess(tid: ThreadID): Promise<boolean> {
     try {  
         const logKey = await this.getLogKey(tid);  
         const lid =  peerIdFromPrivateKey(logKey); 
-        const threadInfo =  await this.chainUtil.objectState(tid.toString());  
+        const [threadInfo,err] =  await this.chainUtil.objectState(tid.toString());  
+        if (!threadInfo || err) {
+            return false;  
+        }
         const exist = threadInfo?threadInfo?.logs.has(lid.toString()):false; 
        return exist;
     } catch {  
@@ -1132,8 +1135,8 @@ async  addLogToThread(ctx: Context, id: ThreadID, lid: PeerId): Promise<void> {
  }
  const abortController = new AbortController();  
  const signal = ctx?.signal || abortController.signal; 
- const storeUnit = await this.chainUtil.objectState(id.toString());  
-  if (storeUnit) {  
+ const [storeUnit,err] = await this.chainUtil.objectState(id.toString());  
+  if (storeUnit && !err) {
     const userPubkey = this.context.getPublicKey(); 
     let findFlag = false;  
     for (const user of storeUnit.users) {  

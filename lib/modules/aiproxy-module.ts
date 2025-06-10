@@ -7,6 +7,7 @@ import { createLogger } from "../util/logger";
 import { AIProxyConfig, OnStreamResponseType, ProxyCallConfig, UserProxyCallConfig } from "../common/types/types";
 import { AIProxyManager } from "../implements/aiproxy/manager";
 import { AIProxyUserPermission } from "../common/constants";
+
 const logger = createLogger('KeyValueModule');
 
 import { IAICallConfig } from "../common/types/types";
@@ -118,6 +119,7 @@ async GetUserOwnAIProxyAuth(
 
   //AI相关代理的调用,包括代理与AI的通信或者与MCPServer的通信
  async DoAIProxyCall( 
+    context: { signal?: AbortSignal },
     reqBody: string,
     forceRefresh: boolean,
     onStreamResponse: OnStreamResponseType,
@@ -127,7 +129,7 @@ async GetUserOwnAIProxyAuth(
     serviceName?: string,
     headers?: Record<string, string>,
     path?: string,
-    model?: string): Promise< number>
+    model?: string): Promise<number>
     {
         this.assertInitialized();
         if (this.aiCallConfig == null && (!appId || !themeAuthor || !configTheme || !serviceName)) {
@@ -163,7 +165,7 @@ async GetUserOwnAIProxyAuth(
         if (!serviceName) {
             throw new Error("服务名称不能为空");
         }
-        return this.aiProxyManager.DoAIProxyCall(appId , themeAuthor, configTheme, serviceName, reqBody, forceRefresh, onStreamResponse, headersStr, path|| this.aiCallConfig?.path, model|| this.aiCallConfig?.model);
+        return this.aiProxyManager.DoAIProxyCall(context,appId , themeAuthor, configTheme, serviceName, reqBody, forceRefresh, onStreamResponse, headersStr, path|| this.aiCallConfig?.path, model|| this.aiCallConfig?.model);
     }
 
 

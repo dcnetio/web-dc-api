@@ -76,7 +76,6 @@ export async function CreateEvent(
   
   // 包装事件对象为 CBOR 节点
   const node = await cbornode.wrapObject(obj);
-  console.log("-------------------nodecid",node.cid().toString());
   // 添加到 DAG
   if (bstore) {
     await bstore.put(node.cid(), node.data());

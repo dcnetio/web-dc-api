@@ -6,7 +6,7 @@ import { base58btc } from "multiformats/bases/base58";
 import { toString as uint8ArrayToString } from "uint8arrays/to-string";
 import { Errors } from "../../common/error";
 import { DCContext } from "../../../lib/interfaces/DCContext";
-import { OnStreamResponseType } from "../../common/types/types";
+import {  OnStreamResponseType } from "../../common/types/types";
 import { error } from "ajv/dist/vocabularies/applicator/dependencies";
 
 export class AIProxyClient {
@@ -158,6 +158,7 @@ export class AIProxyClient {
 
 
   async  DoAIProxyCall( 
+    context: { signal?: AbortSignal },
     appId: string,
     themeAuthor: string,
     configThem: string,
@@ -197,12 +198,12 @@ export class AIProxyClient {
           };
     const onEndCallback = async () => {
         if (onStreamResponse) {
-            onStreamResponse(3,"","");
+            onStreamResponse(4,"","");
         }
     }
     const onErrorCallback = async (error: unknown) => {
         if (onStreamResponse) {
-            onStreamResponse(4, "", error instanceof Error ? error.message : String(error));
+            onStreamResponse(5, "", error instanceof Error ? error.message : String(error));
         }
     }
     try {
@@ -214,7 +215,8 @@ export class AIProxyClient {
         onDataCallback,
         undefined, // dataSourceCallback not needed for server-streaming
         onEndCallback,
-        onErrorCallback
+        onErrorCallback,
+        context
       );
       return 0;
     } catch (error) {

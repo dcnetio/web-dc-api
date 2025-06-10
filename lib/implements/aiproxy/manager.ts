@@ -1,5 +1,5 @@
 import type { Multiaddr } from "@multiformats/multiaddr";
-import { AIProxyConfig, DCConnectInfo, OnStreamResponseType, ProxyCallConfig, ThemeComment, UserProxyCallConfig } from "../../common/types/types";
+import {  AIProxyConfig, DCConnectInfo, OnStreamResponseType, ProxyCallConfig, ThemeComment, UserProxyCallConfig } from "../../common/types/types";
 import { AIProxyUserPermission, cidNeedConnect, OpenFlag } from "../../common/constants";
 import { CommentManager } from "../comment/manager";
 import { HeliaLibp2p } from "helia";
@@ -539,6 +539,7 @@ export class AIProxyManager {
     
   //AI相关代理的调用,包括代理与AI的通信或者与MCPServer的通信
  async DoAIProxyCall( 
+    context: { signal?: AbortSignal },
     appId: string,
     themeAuthor: string,
     configThem: string,
@@ -599,6 +600,7 @@ export class AIProxyManager {
             this.context
         );
         let res = await proxyClient.DoAIProxyCall(
+            context,
             appId,
             themeAuthor,
             configThem,
