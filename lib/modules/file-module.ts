@@ -202,6 +202,29 @@ export class FileModule implements DCModule, IFileOperations {
       throw new Error(`添加文件夹失败: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
+
+  /**
+   * Creates a custom FileList object from file paths and contents
+   * @param filesMap - Map of file paths to content (string or Uint8Array)
+   * @param rootFolderName - Optional root folder name (defaults to "upload")
+   * @returns A FileList-like object that can be used with addFolder
+   */
+  createCustomFileList(
+    filesMap:
+      | Map<string, string | Uint8Array | ArrayBuffer>
+      | Record<string, string | Uint8Array | ArrayBuffer>,
+    rootFolderName: string = "upload"
+  ): [FileList | null, Error | null] {
+    if(!this.initialized) {
+      return [null, new Error("文件模块未初始化")];
+    }
+    // filesMap 判断
+    if (!filesMap || filesMap.size === 0) {
+      return [null, new Error("文件夹不能为空")];
+    }
+    const fileList = this.fileManager.createCustomFileList(filesMap, rootFolderName);
+    return [fileList, null];
+  }
   
   /**
    * 断言模块已初始化

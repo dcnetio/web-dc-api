@@ -545,7 +545,7 @@ export class FileManager {
    * @param rootFolderName - Optional root folder name (defaults to "upload")
    * @returns A FileList-like object that can be used with addFolder
    */
-  static createCustomFileList(
+   createCustomFileList(
     filesMap:
       | Map<string, string | Uint8Array | ArrayBuffer>
       | Record<string, string | Uint8Array | ArrayBuffer>,
@@ -573,12 +573,22 @@ export class FileManager {
       }
 
       // Create File object with webkitRelativePath
-      const file = new File([fileContent], path.split("/").pop() || "unnamed", {
-        type: "application/octet-stream",
-      }) as File & { webkitRelativePath: string };
+      // const file = new File([fileContent], path.split("/").pop() || "unnamed", {
+      //   type: "application/octet-stream",
+      // }) as File & { webkitRelativePath: string };
+      const file = Object.defineProperty(
+        new File([fileContent], path.split("/").pop() || "unnamed", {
+          type: "application/octet-stream",
+        }),
+        "webkitRelativePath", 
+        {
+          value: fullPath,
+          writable: false
+        }
+      );
 
       // Set webkitRelativePath property
-      file.webkitRelativePath = fullPath;
+      // file.webkitRelativePath = fullPath;
 
       files.push(file);
     });
