@@ -71,14 +71,14 @@ export class DcUtil {
     this.connectLength = 5;
   }
   // 连接到所有文件存储节点
-  _connectToObjNodes = async (cid: string): Promise<Multiaddr | null> => {
+  _connectToObjNodes = async (cid: string): Promise<[Multiaddr | null,string[] | null]> => {
     const peers = await this.dcChain.getObjNodes(cid);
     if (!peers) {
       console.error("peers is null");
-      return null;
+      return [null,null];
     }
     const res = await this._connectPeers(peers);
-    return res;
+    return [res, peers];
   };
 
   _connectPeers = (peerListJson: string[]): Promise<Multiaddr> => {
