@@ -402,8 +402,9 @@ async preloadDBFromDC(
     // If direct connection failed, connect through object nodes
     if (!connectedFlag) {
       try {
-        const connectedAddr = await this.dc._connectToObjNodes(tID.toString());
-        if (!connectedAddr) {
+        const [connectedAddr, peers] = await this.dc?._connectToObjNodes(tID.toString());
+        if (!connectedAddr && peers) {
+          // 有peers但是没有connectedAddr
           throw Errors.ErrNoThreadOnDc;
         }
         
@@ -1008,7 +1009,7 @@ async syncDBFromDC(
             dbMultiAddr = connectedConn.remoteAddr;
            
         }else{//从区块链中获取节点信息,再连接
-            const connectedAddr = await this.dc._connectToObjNodes(threadid);
+            const [connectedAddr, peers] = await this.dc._connectToObjNodes(threadid);
             if (!connectedAddr) {
                 throw new Error("connect to obj nodes failed");
             }
