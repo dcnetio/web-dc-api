@@ -302,8 +302,8 @@ export class FileManager {
       if (resError) {
         return [null, resError];
       }
-      if (resStatus !== UploadStatus.UPLOADING) {
-        //不是上传中，不需要操作
+      if (resStatus === UploadStatus.ERROR || resStatus === UploadStatus.ABNORMAL) {
+        //上传失败，不需要操作
         return [null, Errors.ErrNoNeedUpload];
       }
 
@@ -520,8 +520,8 @@ export class FileManager {
         updateTransmitCount(UploadStatus.ERROR, 0, 0);
         return [null, resError];
       }
-      if (resStatus !== UploadStatus.UPLOADING) {
-        //不是上传中，不需要操作
+      if (resStatus === UploadStatus.ERROR || resStatus === UploadStatus.ABNORMAL) {
+        //上传失败的时候，不需要操作
         return [null, Errors.ErrNoNeedUpload];
       }
       //创建文件主动上报流
