@@ -198,12 +198,12 @@ export class AIProxyClient {
           };
     const onEndCallback = async () => {
         if (onStreamResponse) {
-            onStreamResponse(4,"","");
+            onStreamResponse(3,"","");
         }
     }
     const onErrorCallback = async (error: unknown) => {
         if (onStreamResponse) {
-            onStreamResponse(5, "", error instanceof Error ? error.message : String(error));
+            onStreamResponse(6, "", error instanceof Error ? error.message : String(error));
         }
     }
     try {

@@ -118,6 +118,7 @@ export interface UserProxyCallConfig  {
 
 
 export interface AIProxyConfig {
+  service: string; // 服务名称
   isAIModel: number;    // 0: AI模型 1: MCPServer
   apiType: number;      // 当type 为0时起作用,表示模型的接口类型,如0:anthropic,1:openai 2:ollama 3:googleai 4:azureopenai
   authorization: string;

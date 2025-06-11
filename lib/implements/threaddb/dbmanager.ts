@@ -1491,10 +1491,10 @@ private async deleteThreadNamespace(id: ThreadID): Promise<void> {
      * @throws Error if creation fails
      */
 async  create(threadId: string, collectionName: string, jsonInstance: string): Promise<string> {
-    // 检查实例大小
-    if (jsonInstance.length > 100 * 1024) { // 100 KB
-    throw new Error("instance too big");
-    }
+    // // 检查实例大小
+    // if (jsonInstance.length > 100 * 1024) { // 100 KB
+    // throw new Error("instance too big");
+    // }
     try {
     // 解码threaddbID
     const tID = ThreadID.fromString(threadId);

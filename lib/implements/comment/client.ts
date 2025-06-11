@@ -232,6 +232,73 @@ export class CommentClient {
     }
   }
 
+
+
+
+  async deleteThemeObj(
+    appId: string,
+    theme: string,
+    blockheight: number,
+    userPubkey: string,
+    signature: Uint8Array
+  ): Promise<number> {
+    const message = new dcnet.pb.DeleteThemeObjRequest({});
+    message.theme = new TextEncoder().encode(theme);
+    message.appId = new TextEncoder().encode(appId);
+    message.blockheight = blockheight;
+    message.userPubkey = new TextEncoder().encode(userPubkey);
+    message.signature = signature;
+    const messageBytes = dcnet.pb.DeleteThemeObjRequest.encode(message).finish();
+    try {
+      const grpcClient = new Libp2pGrpcClient(
+        this.client.p2pNode,
+        this.client.peerAddr,
+        this.client.token,
+        this.client.protocol
+      );
+      const reply = await grpcClient.unaryCall(
+        "/dcnet.pb.Service/DeleteThemeObj",
+        messageBytes,
+        30000
+      );
+      console.log("DeleteThemeObj reply", reply);
+      const decoded = dcnet.pb.DeleteThemeObjReply.decode(reply);
+      console.log("DeleteThemeObj decoded", decoded);
+      return decoded.flag;
+    } catch (error: any) {
+      if (error.message.indexOf(Errors.INVALID_TOKEN.message) != -1) {
+        // try to get token
+        const token = await this.client.GetToken(
+          appId || "",
+          userPubkey,
+          (payload: Uint8Array): Promise<Uint8Array> => {
+            return this.context.sign(payload);
+          }
+        );
+        if (!token) {
+          throw new Error(Errors.INVALID_TOKEN.message);
+        }
+        const grpcClient = new Libp2pGrpcClient(
+          this.client.p2pNode,
+          this.client.peerAddr,
+          this.client.token,
+          this.client.protocol
+        );
+        const reply = await grpcClient.unaryCall(
+          "/dcnet.pb.Service/DeleteThemeObj",
+          messageBytes,
+          30000
+        );
+        console.log("DeleteThemeObj reply", reply);
+        const decoded = dcnet.pb.DeleteThemeObjReply.decode(reply);
+        console.log("DeleteThemeObj decoded", decoded);
+        return decoded.flag;
+      }
+      console.error("DeleteThemeObj error:", error);
+      throw error;
+    }
+  }
+
   async addThemeSpace(
     appId: string,
     theme: string,

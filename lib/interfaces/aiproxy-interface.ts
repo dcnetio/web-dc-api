@@ -16,6 +16,18 @@ export interface IAIProxyOperations {
     appId: string,
     configTheme: string
   ): Promise<[number, Error | null]>;
+
+
+   /**
+   * 删除AI调用的Proxy配置
+   * @param appId 应用ID
+   * @param configTheme 配置主题
+   * @returns [状态码, 错误信息]
+   */
+  deleteProxyConfig(
+    appId: string,
+    configTheme: string
+  ): Promise<[number, Error | null]>;
   
   /**
    * 配置AI代理的访问配置

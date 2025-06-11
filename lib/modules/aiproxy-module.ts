@@ -65,6 +65,15 @@ export class AIProxyModule implements DCModule {
     return this.aiProxyManager.createProxyConfig(appId, configTheme);
   }
 
+  async deleteProxyConfig(
+    appId: string,
+    configTheme: string, 
+  ): Promise<[number | null, Error | null]> {
+    this.assertInitialized();
+    return this.aiProxyManager.deleteProxyConfig(appId, configTheme);
+  }
+  
+
 
    //配置AI代理的访问配置,如果key的值设置为空,则表示删除该key的配置
 configAIProxy(

@@ -40,6 +40,7 @@ export const Errors = {
   ErrNoFileChose: new CommentError("no file choose"),
   ErrNoPeerIdIsNull: new CommentError("peerId is null"),
   ErrAddThemeObj: new CommentError("add theme obj error"),
+  ErrDeleteThemeObj: new CommentError("delete theme obj error"),
   ErrPublishCommentToTheme: new CommentError("publish comment error"),
   // 评论空间没有配置
   ErrCommentSpaceNotConfig: new CommentError("comment space not config"),
@@ -191,6 +192,82 @@ export class CommentManager {
       return [null, Errors.ErrAddThemeObj]
     } catch (err) {
       console.error("addThemeObj error:", err);
+      throw err;
+    }
+  }
+
+
+
+  async deleteThemeObj(
+    appId: string,
+    theme: string
+  ): Promise<[number | null, Error | null]> {
+    try {
+      if (!this.accountBackupDc?.client) {
+        return [null, Errors.ErrNoDcPeerConnected];
+      }
+      if (!this.context.publicKey) {
+        return [null, Errors.ErrPublicKeyIsNull];
+      }
+      if(this.accountBackupDc.client.token == ""){
+        await this.accountBackupDc.client.GetToken(appId, this.context.publicKey.string(),this.context.sign);
+      }
+      const blockHeight = (await this.chainUtil.getBlockHeight()) || 0;
+      const hValue: Uint8Array = uint32ToLittleEndianBytes(
+        blockHeight ? blockHeight : 0
+      );
+
+      const themeValue: Uint8Array = new TextEncoder().encode(theme);
+      const appIdValue: Uint8Array = new TextEncoder().encode(appId);
+      const preSign = new Uint8Array([
+        ...themeValue,
+        ...appIdValue,
+        ...hValue,
+      ]);
+      const signature = await  this.context.sign(preSign);
+      const userPubkey = this.context.getPublicKey();
+      const commentClient = new CommentClient(
+        this.accountBackupDc.client,
+        this.dcNodeClient,
+        this.context
+      );
+      let res = await commentClient.deleteThemeObj(
+        appId,
+        theme,
+        blockHeight || 0,
+        userPubkey.string(),
+        signature,
+      );
+      // res 0:成功 1:评论空间没有配置 2:评论空间不足 3:评论数据同步中
+      if(res === 0){
+        return [res, null];
+      }
+      if(res === 1){
+        // 评论空间没有配置 
+        return [null, Errors.ErrCommentSpaceNotConfig];
+      }
+      if(res === 2){
+        // 添加空间
+        await this.addUserOffChainSpace();
+        // 继续调用
+        res = await commentClient.deleteThemeObj(
+          appId,
+          theme,
+          blockHeight || 0,
+          userPubkey.string(),
+          signature,
+        );
+        if(res === 0){
+          return [res, null];
+        }
+      }
+      if(res === 3){
+        // 评论数据同步中
+        return [null, Errors.ErrCommentDataSync];
+      }
+      return [null, Errors.ErrDeleteThemeObj]
+    } catch (err) {
+      console.error("deleteThemeObj error:", err);
       throw err;
     }
   }

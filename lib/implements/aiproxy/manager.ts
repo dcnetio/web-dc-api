@@ -99,6 +99,36 @@ export class AIProxyManager {
 
 
 
+  // 删除AI调用的Proxy配置
+  async deleteProxyConfig(
+    appId: string,
+    configTheme: string, 
+  ): Promise<[number | null, Error | null]> {
+    // Default group to "DCAPP" if empty
+    if (appId === "") {
+      appId = "DCAPP";
+    }
+
+    const space = 100 << 20;
+    // Theme must start with "keyvalue_"
+    if (!configTheme.startsWith("keyvalue_")) {
+        configTheme = "keyvalue_" + configTheme;
+    }
+  
+    try {
+      const commentManager = new CommentManager(this.context);
+      const res = await commentManager.deleteThemeObj(
+        appId,
+        configTheme
+      );
+      return res;
+    } catch (error) {
+      return [null, error as Error];
+    }
+  }
+
+
+
   //配置AI代理的访问配置,如果key的值设置为空,则表示删除该key的配置
   async configAIProxy(
     appId: string,
@@ -473,6 +503,7 @@ export class AIProxyManager {
           const value = contentStr.substring(parts[0].length + 1);
           const content = JSON.parse(value);
           allContent.push({
+            service: parts[0],
             blockheight: content.blockheight,
             isAIModel: content.isAIModel,
             apiType: content.apiType,
@@ -542,7 +573,7 @@ export class AIProxyManager {
     context: { signal?: AbortSignal },
     appId: string,
     themeAuthor: string,
-    configThem: string,
+    configTheme: string,
     serviceName: string,
     reqBody: string,
     forceRefresh: boolean,
