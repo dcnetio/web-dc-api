@@ -928,8 +928,9 @@ async countDirectoryBlocks(rootCID: CID): Promise<number> {
   // flag 是否需要连接节点，0-获取，1-不获取
   getFileFromDc = async (cid: string, decryptKey: string, flag?: number) : Promise<Uint8Array | null> => {
     if (flag !== cidNeedConnect.NOT_NEED) {
-      const res = await this.dc?._connectToObjNodes(cid);
-      if (!res) {
+      const [multiAddrs, peers] = await this.dc?._connectToObjNodes(cid);
+      if (!multiAddrs && peers) {
+        // 有peers但是没有multiaddrs
         return null;
       }
     }
@@ -1030,8 +1031,9 @@ async countDirectoryBlocks(rootCID: CID): Promise<number> {
   ): Promise<SeekableFileStream | null> {
     // 连接到节点
     if (flag !== cidNeedConnect.NOT_NEED) {
-      const res = await this.dc?._connectToObjNodes(cid);
-      if (!res) {
+      const [multiAddrs, peers] = await this.dc?._connectToObjNodes(cid);
+      if (!multiAddrs && peers) {
+        // 有peers但是没有multiaddrs
         return null;
       }
     }
