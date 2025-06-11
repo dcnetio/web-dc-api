@@ -199,12 +199,6 @@ export class DC implements DCContext {
           // 在这里设置初始化标志，确保后续模块方法可以正常访问
           this.initialized = true;
           
-          // todo临时测试，指定私钥 -- start
-          const privateKey = Ed25519PrivKey.fromString('a572e69c99603ab728494f23363dff78d775214d84a6881b633767e7be1d0228de683b70333f1ddded37a80ffd10dbb7ae20e08e14dd201cc48a6da36567a9a1') 
-          this.publicKey = privateKey.publicKey;
-          // 存在token， 获取用户备用节点
-          await this.auth.getAccountBackupDc();
-          // todo临时测试，指定私钥 -- end
           // 定时维系token
           this.auth.startDcPeerTokenKeepValidTask();
           
