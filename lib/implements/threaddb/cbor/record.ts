@@ -73,7 +73,7 @@ export async function CreateRecord(
   }
   
   // 使用私钥签名
-  const sig =  config.key.sign(payload);
+  const sig =  await config.key.sign(payload);
   
   // 创建记录对象
   const obj: RecordObj = {

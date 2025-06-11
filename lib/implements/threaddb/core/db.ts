@@ -131,8 +131,8 @@ export interface ITxn{
     getSchema(): Uint8Array;
     getWriteValidator(): Uint8Array;
     getReadFilter(): Uint8Array;
-    readTxn(fn: (txn: ITxn) => Promise<void> | void, token?: ThreadToken): Promise<void> ;
-    writeTxn(fn: (txn: ITxn) => Promise<void> | void, token?: ThreadToken): Promise<void>
+    readTxn(fn: (txn: ITxn) => Promise<void> , token?: ThreadToken): Promise<void> ;
+    writeTxn(fn: (txn: ITxn) => Promise<void> , token?: ThreadToken): Promise<void>
     findByID(id: InstanceID, token?: ThreadToken): Promise<Object> ;
     create(v: Uint8Array, token?: ThreadToken): Promise<InstanceID> ;
     createMany(vs: Uint8Array[], token?: ThreadToken): Promise<InstanceID[]> ;
@@ -157,8 +157,8 @@ export interface IDB {
    eventcodec: EventCodec; 
   localEventsBus: LocalEventsBus | null;
   collections: Map<string, ICollection> ;
-  readTxn(collection: ICollection, fn: (txn: ITxn) => Promise<void> | void, token?: ThreadToken): Promise<void>;
-  writeTxn(collection: ICollection, fn: (txn: ITxn) => Promise<void> | void, token?: ThreadToken): Promise<void>;
+  readTxn(collection: ICollection, fn: (txn: ITxn) => Promise<void> , token?: ThreadToken): Promise<void>;
+  writeTxn(collection: ICollection, fn: (txn: ITxn) => Promise<void> , token?: ThreadToken): Promise<void>;
   notifyTxnEvents(node: IPLDNode, token?: ThreadToken): Promise<void>;
 }
 

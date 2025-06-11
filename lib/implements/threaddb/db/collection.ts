@@ -344,14 +344,14 @@ export class Collection implements ICollection {
   /**
    * Create a read transaction
    */
-  async readTxn(fn: (txn: ITxn) => Promise<void> | void, token?: ThreadToken): Promise<void> {
+  async readTxn(fn: (txn: ITxn) => Promise<void> , token?: ThreadToken): Promise<void> {
     return this.db.readTxn(this, fn, token);
   }
 
   /**
    * Create a write transaction
    */
-  async writeTxn(fn: (txn: ITxn) => Promise<void> | void, token?: ThreadToken): Promise<void> {
+  async writeTxn(fn: (txn: ITxn) => Promise<void> , token?: ThreadToken): Promise<void> {
     return this.db.writeTxn(this, fn, token);
   }
 
