@@ -1025,10 +1025,8 @@ export class Txn implements ITxn{
    */
   async save(...updated: Uint8Array[]): Promise<void> {
     try {
-      const identity = await this.token?.pubKey();
-	  if (!identity) {
-		throw new Error('Identity not found');
-	  }
+      const identity = await this.token?.pubKey() || null;
+	  
       const actions = await this.createSaveActions(identity, ...updated);
       
       this.actions.push(...actions);
@@ -1040,7 +1038,7 @@ export class Txn implements ITxn{
   /**
    * Helper to create save actions
    */
-  private async createSaveActions(identity: PubKey, ...updated: Uint8Array[]): Promise<Action[]> {
+  private async createSaveActions(identity: PubKey|null, ...updated: Uint8Array[]): Promise<Action[]> {
     const actions: Action[] = [];
     
     for (let i = 0; i < updated.length; i++) {
@@ -1079,7 +1077,7 @@ export class Txn implements ITxn{
       }
       
       // Apply read filter if needed
-      if (previous.length > 0) {
+      if (previous.length > 0 && identity !== null) {
         const filtered = await this.collection.filterRead(identity, previous);
         previous = filtered || previous;
       }

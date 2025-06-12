@@ -33,7 +33,7 @@ export class AIProxyModule implements DCModule {
     try {
       this.aiProxyManager = new AIProxyManager(
         context.dcutil,
-        context.AccountBackupDc,
+        context.connectedDc, //todo context.AccountBackupDc,
         context.dcNodeClient as any, // Type assertion to bypass service map differences
         context.dcChain,
         context

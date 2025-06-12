@@ -1558,10 +1558,10 @@ async delete(threadId: string, collectionName: string, instanceID: string): Prom
  * @throws Error if update fails
  */
 async save(threadId: string, collectionName: string, instance: string): Promise<void> {
-    // 检查实例大小
-    if (instance.length > 100 * 1024) { // 100 KB
-        throw new Error("instance too big");
-    }
+    // // 检查实例大小
+    // if (instance.length > 100 * 1024) { // 100 KB
+    //     throw new Error("instance too big");
+    // }
     
     try {
         // 解码线程ID
