@@ -21,12 +21,12 @@ export class AIProxyClient {
   async GetAIProxyConfig(
     appId: string,
     themeAuthor: string,
-    configThem: string,
+    configTheme: string,
   ): Promise<[proxyConfigCid: string,aesKey: string, error: Error | null]> {
     const message = new dcnet.pb.GetAIProxyConfigRequest({});
     message.appId = new TextEncoder().encode(appId);
     message.themeAuthor = new TextEncoder().encode(themeAuthor);
-    message.theme = new TextEncoder().encode(configThem);
+    message.theme = new TextEncoder().encode(configTheme);
     
     const messageBytes = dcnet.pb.GetAIProxyConfigRequest.encode(message).finish();
     const grpcClient = new Libp2pGrpcClient(
@@ -93,12 +93,12 @@ export class AIProxyClient {
   async GetUserOwnAIProxyAuth(
     appId: string,
     themeAuthor: string,
-    configThem: string,
+    configTheme: string,
   ): Promise<[authInfo: string, error: Error | null]> {
     const message = new dcnet.pb.GetUserOwnAIProxyAuthRequest({});
     message.appId = new TextEncoder().encode(appId);
     message.themeAuthor = new TextEncoder().encode(themeAuthor);
-    message.theme = new TextEncoder().encode(configThem);
+    message.theme = new TextEncoder().encode(configTheme);
     const messageBytes = dcnet.pb.GetUserOwnAIProxyAuthRequest.encode(message).finish();
     const grpcClient = new Libp2pGrpcClient(
       this.client.p2pNode,
@@ -161,7 +161,7 @@ export class AIProxyClient {
     context: { signal?: AbortSignal },
     appId: string,
     themeAuthor: string,
-    configThem: string,
+    configTheme: string,
     serviceName: string,
     path: string,
     headers: string,
@@ -174,7 +174,7 @@ export class AIProxyClient {
     const message = new dcnet.pb.DoAIProxyCallRequest({});
     message.appId = new TextEncoder().encode(appId);
     message.themeAuthor = new TextEncoder().encode(themeAuthor);
-    message.theme = new TextEncoder().encode(configThem);
+    message.theme = new TextEncoder().encode(configTheme);
     message.configKey = new TextEncoder().encode(serviceName);
     message.path = new TextEncoder().encode(path);
     message.headers = new TextEncoder().encode(headers);

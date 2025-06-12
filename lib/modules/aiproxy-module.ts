@@ -108,21 +108,21 @@ vaccount?: string
   async GetAIProxyConfig(
     appId: string,
     themeAuthor: string,
-    configThem: string,
+    configTheme: string,
     vaccount?: string
   ): Promise<[UserProxyCallConfig[] | null,AIProxyConfig[] | null, Error | null]> {
     this.assertInitialized();
-    return this.aiProxyManager.GetAIProxyConfig(appId, themeAuthor, configThem, vaccount);
+    return this.aiProxyManager.GetAIProxyConfig(appId, themeAuthor, configTheme, vaccount);
   }
 
 
 async GetUserOwnAIProxyAuth(
     appId: string,
     themeAuthor: string,
-    configThem: string,
+    configTheme: string,
     ): Promise<[authConfig: ProxyCallConfig | null, error: Error | null]> {
     this.assertInitialized();
-    return this.aiProxyManager.GetUserOwnAIProxyAuth(appId, themeAuthor, configThem);
+    return this.aiProxyManager.GetUserOwnAIProxyAuth(appId, themeAuthor, configTheme);
 }
 
 
