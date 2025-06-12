@@ -1484,7 +1484,7 @@ async createRecord(
     
     // 推送记录到节点
     if (this.server) {
-      await this.pushRecord(id, lg.id, tr.value(), lg.head.counter + 1);
+       this.pushRecord(id, lg.id, tr.value(), lg.head.counter + 1);
     }
     
     return tr;

@@ -726,54 +726,49 @@ export class DB implements App, IDB {
   // 使用队列确保写入操作按顺序执行
   private writeQueue = Promise.resolve();
 
-  async writeTxn(
-    collection: Collection,
-    fn: (txn: ITxn) => Promise<void>,
-    token?: ThreadToken
-  ): Promise<void> {
-    // 创建当前操作的Promise
-    const currentOperation = this.writeQueue.then(
-      // 成功处理器
-      async () => {
-        // 创建可写事务
+async writeTxn(
+  collection: Collection,
+  fn: (txn: ITxn) => Promise<void>,
+  token?: ThreadToken
+): Promise<void> {
+  // Save the current promise chain
+  const previousOperation = this.writeQueue;
+  
+  // Create a new promise for this operation
+  const currentOperation = new Promise<void>((resolve, reject) => {
+    // Wait for previous operations to complete (or fail)
+    previousOperation
+      .catch(() => {
+        // Ignore previous errors - just ensure we wait for previous operations
+      })
+      .finally(async () => {
+        // After previous operations are done (success or failure), run this operation
         const txn = new Txn(collection, token, false);
         try {
-          // 执行事务函数
+          // Execute transaction function
           await fn(txn);
-
-          // 提交事务
+          
+          // Commit transaction
           await txn.commit();
+          resolve();
+        } catch (err) {
+          // Properly propagate the error
+          reject(err);
         } finally {
-          // 确保事务被丢弃
+          // Always discard the transaction
           txn.discard();
         }
-      },
-      // 错误处理器 - 处理前面操作的错误，让当前操作仍能执行
-      async (err) => {
-        // 记录前一个操作的错误，但不让它影响当前操作
-        console.error("Previous transaction in queue failed:", err);
+      });
+  });
 
-        // 继续执行当前事务
-        const txn = new Txn(collection, token, false);
-        try {
-          await fn(txn);
-          await txn.commit();
-        } finally {
-          txn.discard();
-        }
-      }
-    );
+  // Update the queue with our operation
+  this.writeQueue = currentOperation.catch(() => {
+    // Swallow errors in the queue chain but log them
+    // This ensures future operations will still execute
+    return Promise.resolve();
+  });
 
-    // 更新队列，添加错误处理以防止错误传播
-    this.writeQueue = currentOperation.catch((err) => {
-      // 将错误记录下来，但返回一个resolved promise
-      // 这样可以让队列继续处理下一个操作
-      console.error("Transaction failed:", err);
-      // 返回一个resolved promise，以"修复"队列
-      return Promise.resolve();
-    });
-
-    // 等待当前操作完成，并让错误正常传播给调用者
-    return await currentOperation;
-  }
+  // Return the current operation, allowing errors to propagate to the caller
+  return currentOperation;
+}
 }

@@ -33,7 +33,7 @@ export class AIProxyModule implements DCModule {
     try {
       this.aiProxyManager = new AIProxyManager(
         context.dcutil,
-        context.AccountBackupDc,
+        context.connectedDc, //todo context.AccountBackupDc,
         context.dcNodeClient as any, // Type assertion to bypass service map differences
         context.dcChain,
         context
@@ -108,21 +108,21 @@ vaccount?: string
   async GetAIProxyConfig(
     appId: string,
     themeAuthor: string,
-    configThem: string,
+    configTheme: string,
     vaccount?: string
   ): Promise<[UserProxyCallConfig[] | null,AIProxyConfig[] | null, Error | null]> {
     this.assertInitialized();
-    return this.aiProxyManager.GetAIProxyConfig(appId, themeAuthor, configThem, vaccount);
+    return this.aiProxyManager.GetAIProxyConfig(appId, themeAuthor, configTheme, vaccount);
   }
 
 
 async GetUserOwnAIProxyAuth(
     appId: string,
     themeAuthor: string,
-    configThem: string,
+    configTheme: string,
     ): Promise<[authConfig: ProxyCallConfig | null, error: Error | null]> {
     this.assertInitialized();
-    return this.aiProxyManager.GetUserOwnAIProxyAuth(appId, themeAuthor, configThem);
+    return this.aiProxyManager.GetUserOwnAIProxyAuth(appId, themeAuthor, configTheme);
 }
 
 

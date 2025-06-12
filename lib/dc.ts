@@ -225,13 +225,12 @@ export class DC implements DCContext {
      /**
      * 获取当前用户的去中心数据库信息,如果用户数据库不存在,则会自动创建
      * @param collections 集合配置数组，定义数据库中的集合结构
-     * @param dbName 数据库名称
      * @param reset 是否重置数据库，默认为false,如果为true，则会重置数据库,原来的数据会丢失,应该只在开发调试时使用
      * @returns 当前用户的数据库信息
      */
-    async initUserDB(dbName: string,collections:ICollectionConfig[],reset?:boolean ): Promise<[IDBInfo|null,Error | null]> { 
+    async initUserDB(collections:ICollectionConfig[],reset?:boolean ): Promise<[IDBInfo|null,Error | null]> { 
+      const dbName = "user_threaddb";
       let userInfo: User | null = null;
-    
       try {
             this.assertInitialized();
             userInfo = await this.auth.refreshUserInfo();

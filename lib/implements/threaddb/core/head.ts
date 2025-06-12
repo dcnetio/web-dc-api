@@ -54,7 +54,6 @@ export function serializeHead(head: Head): string {
    */  
   export function deserializeHead(json: string): Head {  
     const data = JSON.parse(json);  
-    
     return {  
       id: CID.parse(data.id), // 从字符串恢复 CID 对象  
       counter: data.counter,  
