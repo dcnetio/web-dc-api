@@ -6,10 +6,12 @@ export { registerServiceWorker, isServiceWorkerActive, updateServiceWorker } fro
 export * from './common/types/types';
 export * from './interfaces';
 export * from './common/define';
+export {ThemePermission} from './common/constants';
 
 // 导出模块系统
 export { ModuleSystem, CoreModuleName } from './common/module-system';
 export type { DCModule } from './common/module-system';
+ 
 
 // 导出核心模块
 export * from './modules';

@@ -370,14 +370,14 @@ export class AIProxyManager {
   async GetAIProxyConfig(
     appId: string,
     themeAuthor: string,
-    configThem: string,
+    configTheme: string,
     vaccount?: string
   ): Promise<[UserProxyCallConfig[] | null,AIProxyConfig[] | null, Error | null]> {
     if(!this.context.publicKey) {
       return [null,null, Errors.ErrAccountPublicKeyIsNull];
     }
-    if (!configThem.startsWith("keyvalue_")) {
-        configThem = "keyvalue_" + configThem;
+    if (!configTheme.startsWith("keyvalue_")) {
+        configTheme = "keyvalue_" + configTheme;
     }
    
     const userPubkey = this.context.getPublicKey();
@@ -410,7 +410,7 @@ export class AIProxyManager {
         const [proxyConfigCid, aesKey, error] = await aiProxyClient.GetAIProxyConfig(
           appId,
           themeAuthor,
-          configThem
+          configTheme
         )
         if (error) {
           return [null,null, error];
@@ -501,19 +501,23 @@ export class AIProxyManager {
             continue; // 如果格式不正确，跳过
           }
           const value = contentStr.substring(parts[0].length + 1);
-          const content = JSON.parse(value);
-          allContent.push({
-            service: parts[0],
-            blockheight: content.blockheight,
-            isAIModel: content.isAIModel,
-            apiType: content.apiType,
-            authorization: content.authorization,
-            endpoint: content.endpoint,
-            organization: content.organization,
-            apiVersion: content.apiVersion,
-            modelConfig: content.modelConfig,
-            remark: content.remark,
-          } as AIProxyConfig);
+          try {
+            const content = JSON.parse(value);
+            allContent.push({
+              service: parts[0],
+              blockheight: content.blockheight,
+              isAIModel: content.isAIModel,
+              apiType: content.apiType,
+              authorization: content.authorization,
+              endpoint: content.endpoint,
+              organization: content.organization,
+              apiVersion: content.apiVersion,
+              modelConfig: content.modelConfig,
+              remark: content.remark,
+            } as AIProxyConfig);
+          } catch (error) {
+            console.error("解析内容错误:", error);
+          }
         }
       }
       return [allAuth, allContent] as [Array<UserProxyCallConfig>, Array<AIProxyConfig>];   
@@ -523,13 +527,13 @@ export class AIProxyManager {
   async GetUserOwnAIProxyAuth(
     appId: string,
     themeAuthor: string,
-    configThem: string,
+    configTheme: string,
   ): Promise<[authConfig: ProxyCallConfig | null, error: Error | null]> {
     if(!this.context.publicKey) {
         return [null, new Error("ErrConnectToAccountPeersFail")];
     }
-    if( !configThem.startsWith("keyvalue_")) {
-        configThem = "keyvalue_" + configThem;
+    if( !configTheme.startsWith("keyvalue_")) {
+        configTheme = "keyvalue_" + configTheme;
     }
     
      let client = this.accountBackUpDc.client || null;
@@ -559,13 +563,17 @@ export class AIProxyManager {
     const [authInfo, error] = await aiProxyClient.GetUserOwnAIProxyAuth(
       appId,
       themeAuthor,
-      configThem
+      configTheme
     );
     if (error) {
       return [null, error];
     }
-    const authConfig = JSON.parse(authInfo);
-    return [authConfig, error];
+    try {
+      const authConfig = JSON.parse(authInfo);
+      return [authConfig, error];
+    }catch (error:any) {
+      return [null, error];
+    }
   }
     
   //AI相关代理的调用,包括代理与AI的通信或者与MCPServer的通信
@@ -582,8 +590,8 @@ export class AIProxyManager {
     path?: string,
     model?: string): Promise< number>
     {
-       if( !configThem.startsWith("keyvalue_")) {
-            configThem = "keyvalue_" + configThem;
+       if( !configTheme.startsWith("keyvalue_")) {
+            configTheme = "keyvalue_" + configTheme;
         }
         const blockHeight = (await this.chainUtil.getBlockHeight()) || 0;
         const hValue: Uint8Array = uint32ToLittleEndianBytes(
@@ -592,7 +600,7 @@ export class AIProxyManager {
         const forceRefreshFlag = forceRefresh ? 1 : 0;
         const forceRefreshValue: Uint8Array = uint32ToLittleEndianBytes(forceRefreshFlag);
         const themeAuthorValue: Uint8Array = new TextEncoder().encode(themeAuthor);
-        const themeValue: Uint8Array = new TextEncoder().encode(configThem);
+        const themeValue: Uint8Array = new TextEncoder().encode(configTheme);
         const appIdValue: Uint8Array = new TextEncoder().encode(appId);
         const serviceNameValue: Uint8Array = new TextEncoder().encode(serviceName);
         const pathValue: Uint8Array = new TextEncoder().encode(path);
@@ -634,7 +642,7 @@ export class AIProxyManager {
             context,
             appId,
             themeAuthor,
-            configThem,
+            configTheme,
             serviceName,
             path || "",
             headers || "",

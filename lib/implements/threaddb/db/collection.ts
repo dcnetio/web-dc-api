@@ -1455,12 +1455,13 @@ async modifiedSince(time: number): Promise<InstanceID[]> {
    * Commit the transaction
    */
   async commit(): Promise<void> {
-    const { events, node } = await this.createEvents(this.actions);
-    if (!node) {
-      return;
-    }
+   
     
     try {
+      const { events, node } = await this.createEvents(this.actions);
+      if (!node) {
+        return;
+      }
       await this.collection.db.connector?.createNetRecord(node, this.token);
       await this.collection.db.dispatcher?.dispatch(events);
       this.committed = true;
