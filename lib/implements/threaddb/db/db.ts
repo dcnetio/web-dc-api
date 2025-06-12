@@ -305,9 +305,8 @@ export class DB implements App, IDB {
 
   async saveName(prevName: string): Promise<void> {
     if (this.name === prevName) return;
-    if (!this.name.match(/^[a-zA-Z0-9]+$/)) {
+    if (!this.name.match(/^[a-zA-Z0-9_-]+$/)) {
       // 根据需求定义规则
-
       throw new Error("Invalid name");
     }
     await this.datastore.put(
