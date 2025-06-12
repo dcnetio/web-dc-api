@@ -76,8 +76,8 @@ export class DC implements DCContext {
     this.swUrl = options.swUrl || "";
     this.dcChain = new ChainUtil();
     this.dcutil = new DcUtil(this.dcChain);
-    // //todo remove 
-      this.dcutil.defaultPeerId= "12D3KooWEGzh4AcbJrfZMfQb63wncBUpscMEEyiMemSWzEnjVCPf";
+    // //todo 发布注释 remove 
+      // this.dcutil.defaultPeerId= "12D3KooWEGzh4AcbJrfZMfQb63wncBUpscMEEyiMemSWzEnjVCPf";
     // //todo remove end
     this.appInfo = options.appInfo || {} as APPInfo;
     
