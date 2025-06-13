@@ -63,7 +63,7 @@ export class ChainUtil {
     if (!isUser(userInfo)) {
       throw new Error("walletAccountStorage is not user");
     }
-    if (userInfo?.parentAccount !== account.toString()) {
+    if (userInfo?.parentAccount !== account) {
       const parentWalletAccountStorage =
         await this.dcchainapi?.query.dcNode.walletAccountStorage(
           userInfo?.parentAccount
