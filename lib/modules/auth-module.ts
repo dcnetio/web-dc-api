@@ -77,6 +77,20 @@ export class AuthModule implements DCModule, IAuthOperations {
       this.context.publicKey = publicKey;
       console.log("99999999999999accountLogin publicKey", publicKey);
       console.log("accountLogin data", data);
+      // 获取token
+      const token = await this.context.connectedDc?.client.GetToken(
+        this.context.appInfo.appId || "",
+        publicKey.string(),
+        (payload: Uint8Array): Promise<Uint8Array> => {
+          return this.signWithWallet(payload);
+        }
+      );
+
+      if (!token) {
+        throw new Error("GetToken error");
+      }
+      // 存在token， 获取用户备用节点
+      await this.getAccountBackupDc();
       // 给用户添加用户评论空间
       const userInfo = await this.getUserInfoWithAccount('0x' + publicKey.toString());
       if(userInfo == null) {
@@ -97,20 +111,6 @@ export class AuthModule implements DCModule, IAuthOperations {
           }
         }
       }
-      // 获取token
-      const token = await this.context.connectedDc?.client.GetToken(
-        this.context.appInfo.appId || "",
-        publicKey.string(),
-        (payload: Uint8Array): Promise<Uint8Array> => {
-          return this.signWithWallet(payload);
-        }
-      );
-
-      if (!token) {
-        throw new Error("GetToken error");
-      }
-      // 存在token， 获取用户备用节点
-      await this.getAccountBackupDc();
       return data;
 
     } catch (error) {
