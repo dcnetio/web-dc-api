@@ -1,4 +1,4 @@
-import { dcnet } from "lib/proto/dcnet_proto";
+import { dcnet } from "../../lib/proto/dcnet_proto";
 
 /**
  * 消息操作接口
