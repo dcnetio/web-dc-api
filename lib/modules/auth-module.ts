@@ -11,12 +11,13 @@ import {
 } from "../util/utils";
 import { Ed25519PrivKey, Ed25519PubKey } from "../common/dc-key/ed25519";
 import { Errors } from "../common/error";
-import { dc_protocol } from "../common/define";
+import { dc_protocol, OffChainOpTimes, OffChainOpTimesLimit, OffChainSpaceLimit } from "../common/define";
 import { Multiaddr } from "@multiformats/multiaddr";
 import { WalletManager } from "../implements/wallet/manager";
 import { Account, EIP712SignReqMessage, NFTBindStatus, SignReqMessage, SignResponseMessage, User } from "../common/types/types";
 import { IAuthOperations } from "../interfaces/auth-interface";
 import { DCContext } from "../../lib/interfaces/DCContext";
+import { CommentManager } from "lib/implements/comment/manager";
 
 const logger = createLogger("AuthModule");
 
@@ -76,6 +77,26 @@ export class AuthModule implements DCModule, IAuthOperations {
       this.context.publicKey = publicKey;
       console.log("99999999999999accountLogin publicKey", publicKey);
       console.log("accountLogin data", data);
+      // 给用户添加用户评论空间
+      const userInfo = await this.getUserInfoWithAccount('0x' + publicKey.toString());
+      if(userInfo == null) {
+        throw Errors.USER_NOT_BIND_TO_PEER;
+      }
+      if(userInfo.offchainSpace < OffChainSpaceLimit || userInfo.offchainOptimes < OffChainOpTimesLimit) {
+        const commentManager = new CommentManager(this.context);
+        if(userInfo.offchainSpace < OffChainSpaceLimit) {
+          const [addOffChainBool, addOffChainError] = await commentManager.addUserOffChainSpace();
+          if (addOffChainError || !addOffChainBool) {
+            throw addOffChainError || new Error("addUserOffChainSpace error");
+          }
+        }
+        if(userInfo.offchainOptimes < OffChainOpTimesLimit) {
+          const [addOffChainOpTimesBool, addOffChainOpTimesError] = await commentManager.addUserOffChainOpTimes(OffChainOpTimes);
+          if (addOffChainOpTimesError || !addOffChainOpTimesBool) {
+            throw addOffChainOpTimesError || new Error("addUserOffChainSpace error");
+          }
+        }
+      }
       // 获取token
       const token = await this.context.connectedDc?.client.GetToken(
         this.context.appInfo.appId || "",
