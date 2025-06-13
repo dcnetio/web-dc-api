@@ -180,7 +180,18 @@ export class AIProxyManager {
         content = `${key}`;
     }else{
         serviceConfig.blockheight = blockHeight;
-        const value = JSON.stringify(serviceConfig)
+        const goSupportService = {
+            Blockheight: blockHeight,
+            IsAIModel: serviceConfig.isAIModel || 0,
+            ApiType: serviceConfig.apiType || "",
+            Authorization: serviceConfig.authorization || "",
+            Endpoint: serviceConfig.endpoint || "",
+            Organization: serviceConfig.organization || "",
+            ApiVersion: serviceConfig.apiVersion || "",
+            ModelConfig: serviceConfig.modelConfig || {},
+            Remark: serviceConfig.remark || ""
+        };
+        const value = JSON.stringify(goSupportService)
         content = `${key}:${value}`;   
     }
     const contentUint8 = new TextEncoder().encode(content);
@@ -505,15 +516,15 @@ export class AIProxyManager {
             const content = JSON.parse(value);
             allContent.push({
               service: parts[0],
-              blockheight: content.blockheight,
-              isAIModel: content.isAIModel,
-              apiType: content.apiType,
-              authorization: content.authorization,
-              endpoint: content.endpoint,
-              organization: content.organization,
-              apiVersion: content.apiVersion,
-              modelConfig: content.modelConfig,
-              remark: content.remark,
+              blockheight: content.Blockheight,
+              isAIModel: content.IsAIModel,
+              apiType: content.ApiType,
+              authorization: content.Authorization,
+              endpoint: content.Endpoint,
+              organization: content.Organization,
+              apiVersion: content.ApiVersion,
+              modelConfig: content.ModelConfig,
+              remark: content.Remark,
             } as AIProxyConfig);
           } catch (error) {
             console.error("解析内容错误:", error);
