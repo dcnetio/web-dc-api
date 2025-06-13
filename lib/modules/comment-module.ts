@@ -65,7 +65,9 @@ export class CommentModule implements DCModule, ICommentOperations {
     }
   }
 
-
+/**
+ * 添加用户链下操作次数
+ */
 async addUserOffChainOpTimes(
   times: number,
   vaccount?: string
