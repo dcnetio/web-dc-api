@@ -259,6 +259,10 @@ export class DC implements DCContext {
               const [dbinfo,error] = await this.db.getDBInfo(threadid);
               if (dbinfo != null && !error) {          
                 this.db.refreshDBFromDC(threadid);
+                //3秒后将本地数据库同步到DC
+                setTimeout(() => {
+                  this.db.syncDBToDC(threadid);
+                }, 5000);
                 return [dbinfo,null];
               }else{//本地数据库不存在,从DC同步
                    await this.db.syncDbFromDC(
