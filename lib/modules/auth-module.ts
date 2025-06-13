@@ -17,7 +17,7 @@ import { WalletManager } from "../implements/wallet/manager";
 import { Account, EIP712SignReqMessage, NFTBindStatus, SignReqMessage, SignResponseMessage, User } from "../common/types/types";
 import { IAuthOperations } from "../interfaces/auth-interface";
 import { DCContext } from "../../lib/interfaces/DCContext";
-import { CommentManager } from "lib/implements/comment/manager";
+import { CommentManager } from "../../lib/implements/comment/manager";
 
 const logger = createLogger("AuthModule");
 

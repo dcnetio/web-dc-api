@@ -49,7 +49,7 @@ import {
 } from '../pb/proto-custom-types' 
 import * as buffer from "buffer/";
 import { AsyncMutex } from '../common/AsyncMutex';
-import { DCContext } from 'lib/interfaces';
+import { DCContext } from '../../../interfaces';
 const { Buffer } = buffer;
 
 

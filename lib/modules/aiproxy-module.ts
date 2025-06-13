@@ -11,7 +11,6 @@ import { AIProxyUserPermission } from "../common/constants";
 const logger = createLogger('KeyValueModule');
 
 import { IAICallConfig } from "../common/types/types";
-import { json } from "lib/implements/threaddb/pb/proto-custom-types";
 
 
 /**

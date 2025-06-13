@@ -6,7 +6,7 @@ import { DCContext } from "../../lib/interfaces/DCContext";
 import { DCModule, CoreModuleName } from "../common/module-system";
 import { MessageManager } from "../implements/message/manager";
 import { createLogger } from "../util/logger";
-import { dcnet } from "lib/proto/dcnet_proto";
+import { dcnet } from "../../lib/proto/dcnet_proto";
 
 const logger = createLogger('MessageModule');
 
