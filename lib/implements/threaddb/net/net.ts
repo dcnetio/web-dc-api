@@ -1484,7 +1484,7 @@ async createRecord(
     
     // 推送记录到节点
     if (this.server) {
-       this.pushRecord(id, lg.id, tr.value(), lg.head.counter + 1);
+      await this.pushRecord(id, lg.id, tr.value(), lg.head.counter + 1);
     }
     
     return tr;
@@ -1591,13 +1591,18 @@ async pushRecord(tid: ThreadID, lid: PeerId, rec: IRecord, counter: number): Pro
       if (!p || p.toString() === "") {
         continue;
       }
-      const client  = await this.getClient(p);
-      if (!client) {
-        continue
+      try {
+         const client  = await this.getClient(p);
+          if (!client) {
+            continue
+          }
+         const dbClient = new DBClient(client, this.dc,this,this.logstore);
+          // 启动异步推送（不等待完成）
+         dbClient.pushRecordToPeer(tid, lid, rec, counter);
+      }catch (err) {
+        continue; // 继续处理其他对等点
       }
-     const dbClient = new DBClient(client, this.dc,this,this.logstore);
-      // 启动异步推送（不等待完成）
-      dbClient.pushRecordToPeer(tid, lid, rec, counter);
+     
     }
   } catch (err) {
     throw new Error(`Failed to push record: ${err instanceof Error ? err.message : String(err)}`);
