@@ -164,11 +164,11 @@ export class CommentManager {
       if(res === 0){
         return [res, null];
       }
-      if(res === 1){
-        // 评论空间没有配置 
-        return [null, Errors.ErrCommentSpaceNotConfig];
-      }
-      if(res === 2){
+      // if(res === 1){
+      //   // 评论空间没有配置 
+      //   return [null, Errors.ErrCommentSpaceNotConfig];
+      // }
+      if(res == 1 || res === 2){
         // 添加空间
         await this.addUserOffChainSpace();
         // 继续调用
@@ -242,11 +242,11 @@ export class CommentManager {
       if(res === 0){
         return [res, null];
       }
-      if(res === 1){
-        // 评论空间没有配置 
-        return [null, Errors.ErrCommentSpaceNotConfig];
-      }
-      if(res === 2){
+      // if(res === 1){
+      //   // 评论空间没有配置 
+      //   return [null, Errors.ErrCommentSpaceNotConfig];
+      // }
+      if(res == 1 || res === 2){
         // 添加空间
         await this.addUserOffChainSpace();
         // 继续调用
@@ -456,11 +456,11 @@ async addUserOffChainOpTimes(
         const commentKey = `${commentBlockHeight}/${commentCidBase32}`
         return [commentKey, null];
       }
-      if(res === 1){
-        // 评论空间没有配置 
-        return [null, Errors.ErrCommentSpaceNotConfig];
-      }
-      if(res === 2){
+      // if(res === 1){
+      //   // 评论空间没有配置 
+      //   return [null, Errors.ErrCommentSpaceNotConfig];
+      // }
+      if(res == 1 || res === 2){
         // 添加空间
         await this.addUserOffChainSpace();
         // 继续调用
