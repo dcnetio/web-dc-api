@@ -3,7 +3,7 @@
   "version": "0.0.18",
   "description": "web相关的dcapi",
   "type": "module",
-  "browser": "dist/index.umd.js",
+  "browser": "dist/dc.min.js",
   "main": "./dist/index.cjs.js",
   "module": "./dist/index.esm.js",
   "types": "./dist/index.d.ts",
