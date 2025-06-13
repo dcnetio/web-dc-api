@@ -10,7 +10,7 @@ export const walletOrigin = _walletOrigin;
 export const  walletUrl = _walletOrigin + _baseUrl; // 钱包地址后面统一改成origin+version
 export const walletWindowName = "walletWindow"; // 窗口名称
 export const dc_protocol = "/dc/thread/0.0.1";
-export const dial_timeout = 2000;
+export const dial_timeout = 1000;
 export const keyExpire = 60 * 60 * 24; // setcachekey 过期时间默认一天
 export enum Direction {  
   Forward = 0,  
