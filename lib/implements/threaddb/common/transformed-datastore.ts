@@ -298,3 +298,5 @@ export {
   PrefixTransform,  
 }
 
+// Add a default export
+export default TransformedDatastore;
