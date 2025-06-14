@@ -1512,7 +1512,7 @@ async  create(threadId: string, collectionName: string, jsonInstance: string): P
     // 创建实例
     const instanceID = await collection.create(Buffer.from(jsonInstance));
     // 返回实例ID
-    return instanceID.toString();
+    return instanceID ?instanceID.toString():"";
     } catch (err) {
     console.error(`Failed to create instance: ${err instanceof Error ? err.message : String(err)}`);
     throw err;

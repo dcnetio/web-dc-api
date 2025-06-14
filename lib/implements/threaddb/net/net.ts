@@ -1444,8 +1444,11 @@ async createRecord(
   options: { token?: ThreadToken, apiToken?: Token } = {}
 ): Promise<IThreadRecord> {
   try {
+    if (this.context.publicKey === undefined) {
+      throw new Error("No identity provided for creating record");
+    }
     // 验证身份,用节点的pubkey
-    const identity = Ed25519PubKey.formEd25519PublicKey(this.libp2p.peerId.publicKey as Ed25519PublicKey);
+    const identity = this.context.publicKey; 
     // 获取并验证连接器
     const [con, ok] = this.getConnectorProtected(id, options.apiToken);
     
@@ -1484,7 +1487,7 @@ async createRecord(
     
     // 推送记录到节点
     if (this.server) {
-      await this.pushRecord(id, lg.id, tr.value(), lg.head.counter + 1);
+       this.pushRecord(id, lg.id, tr.value(), lg.head.counter + 1);
     }
     
     return tr;
