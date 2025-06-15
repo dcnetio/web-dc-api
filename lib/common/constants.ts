@@ -52,3 +52,4 @@ export enum ThemePermission {
   /** 查询权限,系统可以查询数据,用户只能查询自己的授权数据 */
   QUERY
 }
+

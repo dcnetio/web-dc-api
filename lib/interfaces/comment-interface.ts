@@ -9,7 +9,7 @@ export interface ICommentOperations {
   /**
    * 为指定主题开通评论功能
    * @param theme 主题/对象标识符
-   * @param openFlag 开放标志 0-公开 1-私密
+   * @param openFlag 开放标志 0-公开 1-私密 2-鉴权
    * @param commentSpace 可选，评论空间上限大小(字节)，默认50MB
    * @returns 操作结果  0:成功 1:评论空间没有配置 2:评论空间不足 3:评论数据同步中
    */
@@ -56,8 +56,8 @@ export interface ICommentOperations {
     themeAuthor: string,
     commentType: number,
     comment: string,
-    refercommentkey?: string,
-    openFlag?: number
+    openFlag?: number,
+    refercommentkey?: string
   ): Promise<[string | null, Error | null]>;
   
   /**

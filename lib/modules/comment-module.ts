@@ -151,8 +151,8 @@ async addUserOffChainOpTimes(
     themeAuthor: string,
     commentType: number,
     comment: string,
-    refercommentkey?: string,
-    openFlag?: number
+    openFlag?: number,
+    refercommentkey?: string
   ): Promise<[string | null, Error | null]> {
     this.assertInitialized();
     
