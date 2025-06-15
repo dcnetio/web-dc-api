@@ -63,6 +63,12 @@ export interface KeyTransform {
   
   
   // 组合接口  
+export function createTransformedDatastore(
+  child: TxnDatastoreExtended,
+  transform: KeyTransform
+): TransformedDatastore {
+  return new TransformedDatastore(child, transform);
+}
 
 
 class TransformedDatastore extends BaseDatastore {  

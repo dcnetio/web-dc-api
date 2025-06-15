@@ -15,7 +15,7 @@ import { extractPeerIdFromMultiaddr } from "../../common/dc-key/keyManager";
 import {IDBInfo, ThreadMuliaddr} from './core/core'
 
 import {StoreunitInfo} from '../../common/chain';
-import { PrefixTransform,TransformedDatastore} from './common/transformed-datastore' 
+import { createTransformedDatastore, PrefixTransform,TransformedDatastore} from './common/transformed-datastore' 
 import {NewOptions,ICollectionConfig,ManagedOptions,ThreadInfo,Context} from './core/core';
 import {TxnDatastoreExtended,pullThreadBackgroundTimeout,PullTimeout} from './core/db';
 import type { DCConnectInfo } from "../../common/types/types";
@@ -873,8 +873,8 @@ async  wrapDB(
      // 创建前缀转换器并包装数据存储  
   const prefix = dsManagerBaseKey.child(new Key(id.toString())).toString();  
   const transform = new PrefixTransform(prefix);  
-  const wrappedStore = new TransformedDatastore(store, transform); 
-  
+  //const wrappedStore = new TransformedDatastore(store, transform); 
+  const wrappedStore =  createTransformedDatastore(store, transform);
     // 创建新的选项对象  
     const opts: NewOptions = {  
       name: name,  
