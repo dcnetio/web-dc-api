@@ -42,6 +42,7 @@ export class DC implements DCContext {
   dcNodeClient!: HeliaLibp2p<Libp2p>;
   dcutil: DcUtil;
   publicKey: Ed25519PubKey | undefined;
+  dbThreadId: string = ""; // 当前用户的去中心化数据库ID
   
   // 连接相关
   public connectedDc: DCConnectInfo = {};
@@ -310,8 +311,10 @@ export class DC implements DCContext {
       }
       const [dbinfo,error] = await this.db.getDBInfo(threadId);
       if (dbinfo != null && !error) {
+        this.dbThreadId = dbinfo.id;
         return [dbinfo,null] ; //返回dbinfo;
       }else {
+        this.dbThreadId = "";
         // 获取DB失败
         console.error('获取DB失败', error);
         return  [null,error];

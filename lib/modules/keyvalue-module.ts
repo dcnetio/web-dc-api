@@ -86,7 +86,7 @@ export class KeyValueModule implements DCModule, IKeyValueOperations {
     appId: string,
     theme: string,
     themeAuthor: string
-  ): Promise<KeyValueDB> {
+  ): Promise<[KeyValueDB, Error | null]> {
     this.assertInitialized();
     try {
       const kvdb = await this.keyValueManager.getKeyValueDB(
@@ -94,10 +94,7 @@ export class KeyValueModule implements DCModule, IKeyValueOperations {
         theme,
         themeAuthor
       );
-      if(kvdb[1]) {
-        throw kvdb[1];
-      }
-      return kvdb[0];
+      return kvdb;
     } catch (error) {
       logger.error(`获取存储主题 ${theme} 失败:`, error);
       throw error;
