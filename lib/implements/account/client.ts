@@ -67,35 +67,27 @@ export class AccountClient {
     message.peerid = buildedReq.peerid;
     message.signature = buildedReq.signature;
     const messageBytes = dcnet.pb.AccountDealRequest.encode(message).finish();
-    if(!this.client.token){
-      // try to get token
-      let selfPubkey: Ed25519PubKey | null = null,
-        selfPrivkey: Ed25519PrivKey | null = null;
-      if (!context.publicKey ) {
-        // 生成
-        const keymanager = new KeyManager();
-        selfPrivkey = await keymanager.getEd25519KeyFromMnemonic(
-          mnemonic,
-          ''
-        );
-        selfPubkey = selfPrivkey.publicKey;
-      } else {
-        selfPubkey = context.publicKey;
-      }
-      const token = await this.client.GetToken(
-        context.appInfo.appId || "",
-        selfPubkey.string(),
-        async (payload: Uint8Array): Promise<Uint8Array> => {
-          if (selfPrivkey) {
-            return selfPrivkey.sign(payload);
-          }else {
-            return await context.sign(payload);
-          }
+    // try to get token
+    // 生成
+    const keymanager = new KeyManager();
+    const selfPrivkey = await keymanager.getEd25519KeyFromMnemonic(
+      mnemonic,
+      ''
+    );
+    const selfPubkey = selfPrivkey.publicKey;
+    const token = await this.client.GetToken(
+      context.appInfo.appId || "",
+      selfPubkey.string(),
+      async (payload: Uint8Array): Promise<Uint8Array> => {
+        if (selfPrivkey) {
+          return selfPrivkey.sign(payload);
+        }else {
+          return await context.sign(payload);
         }
-      );
-      if (!token) {
-        throw new Error(Errors.INVALID_TOKEN.message);
       }
+    );
+    if (!token) {
+      throw new Error(Errors.INVALID_TOKEN.message);
     }
 
     const grpcClient = new Libp2pGrpcClient(

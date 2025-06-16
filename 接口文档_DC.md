@@ -1476,7 +1476,7 @@ console.log('用户已删除');
 
 ```typescript
 // 获取要更新的用户
-const userJson = await dc.database.findByID(
+const userJson = await dc.db.findByID(
   'bafk3epa4rnnhworywhk6hsi7wafwgdt3fkgvpf62wqlriwpwqjwjuqbf4',
   'users',
   'bafybeihykld5rmrxzs7odlrjil6ntnoaqbkbq2dhzhsajomnsvgcbiewvu'
@@ -1593,7 +1593,7 @@ if (exists) {
 const query1 = {
   condition: "age = 28"
 };
-const results1 = await dc.database.find(
+const results1 = await dc.db.find(
   'bafk3epa4rnnhworywhk6hsi7wafwgdt3fkgvpf62wqlriwpwqjwjuqbf4',
   'users',
   JSON.stringify(query1)
@@ -1604,7 +1604,7 @@ console.log('28岁的用户:', JSON.parse(results1));
 const query2 = {
   condition: "age > 25 and name = 'John Doe'"
 };
-const results2 = await dc.database.find(
+const results2 = await dc.db.find(
   'bafk3epa4rnnhworywhk6hsi7wafwgdt3fkgvpf62wqlriwpwqjwjuqbf4',
   'users',
   JSON.stringify(query2)
@@ -1618,7 +1618,7 @@ const query3 = {
     { condition: "name = 'Jane Smith'" }
   ]
 };
-const results3 = await dc.database.find(
+const results3 = await dc.db.find(
   'bafk3epa4rnnhworywhk6hsi7wafwgdt3fkgvpf62wqlriwpwqjwjuqbf4',
   'users',
   JSON.stringify(query3)
@@ -1637,7 +1637,7 @@ const query4 = {
   },
   seek: "01fyc691gh671nf0s8qpt0ych8"  // 分页标记
 };
-const results4 = await dc.database.find(
+const results4 = await dc.db.find(
   'bafk3epa4rnnhworywhk6hsi7wafwgdt3fkgvpf62wqlriwpwqjwjuqbf4',
   'users',
   JSON.stringify(query4)
@@ -1663,7 +1663,7 @@ console.log('复杂查询结果:', JSON.parse(results4));
 
 ```typescript
 // 通过ID查找用户
-const userJson = await dc.database.findByID(
+const userJson = await dc.db.findByID(
   'bafk3epa4rnnhworywhk6hsi7wafwgdt3fkgvpf62wqlriwpwqjwjuqbf4',  // threadID
   'users',  // 集合名称
   'bafybeihykld5rmrxzs7odlrjil6ntnoaqbkbq2dhzhsajomnsvgcbiewvu'  // 实例ID
@@ -1709,7 +1709,7 @@ console.log('最近24小时内修改的用户ID:', modifiedIds);
 // 如果有修改的用户，获取他们的详细信息
 if (modifiedIds.length > 0) {
   // 获取第一个修改用户的详细信息
-  const userJson = await dc.database.findByID(
+  const userJson = await dc.db.findByID(
     'bafk3epa4rnnhworywhk6hsi7wafwgdt3fkgvpf62wqlriwpwqjwjuqbf4',
     'users',
     modifiedIds[0]
@@ -1807,7 +1807,7 @@ async function taskManagerExample() {
       }
     };
     
-    const highPriorityTasks = await dc.database.find(
+    const highPriorityTasks = await dc.db.find(
       threadId,
       'tasks',
       JSON.stringify(highPriorityQuery)
@@ -1816,7 +1816,7 @@ async function taskManagerExample() {
     console.log('高优先级任务:', JSON.parse(highPriorityTasks));
     
     // 6. 更新任务状态
-    const taskToUpdate = JSON.parse(await dc.database.findByID(
+    const taskToUpdate = JSON.parse(await dc.db.findByID(
       threadId,
       'tasks',
       task1Id
