@@ -258,6 +258,7 @@ export class DC implements DCContext {
                 setTimeout(() => {
                   this.db.syncDBToDC(threadid);
                 }, 5000);
+                this.dbThreadId = dbinfo.id;
                 return [dbinfo,null];
               }else{//本地数据库不存在,从DC同步
                    await this.db.syncDbFromDC(
@@ -271,6 +272,7 @@ export class DC implements DCContext {
                   );
                   const [dbinfo,error] = await this.db.getDBInfo(threadid);
                   if (dbinfo != null && !error) {
+                     this.dbThreadId = dbinfo.id;
                     return [dbinfo,null] ; //返回dbinfo;
                   }else {
                     // 获取DB失败
