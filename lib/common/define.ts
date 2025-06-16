@@ -1,5 +1,5 @@
 
-let _baseUrl = '/v0_0_3'
+let _baseUrl = '/v0_0_4';
 let _walletOrigin = 'https://wallet.dcnetio.com'
 // todo 发布需要注释
 // if (process.env.NODE_ENV === 'development') {
