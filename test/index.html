@@ -32,12 +32,40 @@
       }
     }
 
+    // 对话列表
+    const aiChatListSchema = {
+      type: 'object',
+      properties: {
+        _id: { type: 'string' },
+        title: { type: 'string' },
+        create_time: { type: 'number' },
+        modify_time: { type: 'number' }
+      },
+      required: ["_id"],
+      additionalProperties: false,
+    };
+    const aiChatListCollection =  {
+      name: 'ai_chat_list',
+      schema: aiChatListSchema,
+    }
+    // 数据库表结构信息
+    const dbCollections = [
+      // 对话列表
+      aiChatListCollection,
+    ];
     const accountLoginWithWallet = async () => {
       if(dc && dc.auth) {
         const res = await dc.auth.accountLoginWithWallet();
         console.log('accountLoginWithWallet res', res);
       }
     }
+
+    const initDB = async () => {
+      if(dc && dc.db) {
+          const res = await dc.initUserDB(dbCollections,false);
+          console.log('initUserDB res', res);
+      }
+    };
 
     let fileCID = '';
     const uploadFile = async () => {
@@ -99,6 +127,9 @@
   <br>
   <br>
   <button onclick="accountLoginWithWallet()">accountLoginWithWallet</button>
+  <br>
+  <br>
+  <button onclick="initDB()">initDB</button>
   <br>
   <br>
   <input type="file" id="fileInput" @change="uploadFile" />
