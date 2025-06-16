@@ -13,10 +13,9 @@ export interface IKeyValueOperations {
    * @param theme 库主题名称
    * @param space 分配的存储空间大小（字节）
    * @param type 存储主题类型 1:鉴权主题(读写都需要鉴权) 2:公共主题(默认所有用户可读,写需要鉴权)
-   * @returns 创建的keyvalue数据库
-   * @throws 当用户空间不足或创建失败时抛出错误
+   * @returns 创建的keyvalue数据库实例和可能的错误信息
    */
-  createStore(appId: string,theme: string, space: number, type: KeyValueStoreType): Promise<KeyValueDB | null>;
+  createStore(appId: string,theme: string, space: number, type: KeyValueStoreType): Promise<[KeyValueDB|null, Error | null]>;
 
   /**
    * 获取指定主题的keyvalue数据库
@@ -25,7 +24,7 @@ export interface IKeyValueOperations {
    * @param themeAuthor 数据库创建者的公钥
    * @returns keyvalue数据库实例
    */
-  getStore(appId: string, theme: string, themeAuthor: string): Promise<[KeyValueDB, Error | null]> ;
+  getStore(appId: string, theme: string, themeAuthor: string): Promise<[KeyValueDB|null, Error | null]> ;
 
   /**
    * 配置主题的授权信息

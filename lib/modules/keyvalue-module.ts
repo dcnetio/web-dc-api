@@ -61,23 +61,23 @@ export class KeyValueModule implements DCModule, IKeyValueOperations {
     theme: string,
     space: number,
     type: KeyValueStoreType
-  ): Promise<KeyValueDB | null> {
-    this.assertInitialized();
+  ): Promise<[KeyValueDB|null, Error | null]> {
+   const err = this.assertInitialized();
+    if (err) {
+      return [null, err];
+    }
     
     try {
-      const kvdb = await this.keyValueManager.createStore(
+      const [kvdb,err] = await this.keyValueManager.createStore(
         appId,
         theme,
         space,
         type
       );
-      if(kvdb[1]) {
-        throw kvdb[1];
-      }
-      return kvdb[0];
+      return [kvdb,err];
     } catch (error) {
       logger.error(`创建存储主题 ${theme} 失败:`, error);
-      throw error;
+      return [null, error instanceof Error ? error : new Error(String(error))];
     }
   }
 
@@ -86,18 +86,21 @@ export class KeyValueModule implements DCModule, IKeyValueOperations {
     appId: string,
     theme: string,
     themeAuthor: string
-  ): Promise<[KeyValueDB, Error | null]> {
-    this.assertInitialized();
+  ): Promise<[KeyValueDB|null, Error | null]> {
+    const err = this.assertInitialized();
+    if (err) {
+      return [null, err];
+    }
     try {
-      const kvdb = await this.keyValueManager.getKeyValueDB(
+      const [kvdb,err] = await this.keyValueManager.getKeyValueDB(
         appId,
         theme,
         themeAuthor
       );
-      return kvdb;
+      return [kvdb,err];
     } catch (error) {
       logger.error(`获取存储主题 ${theme} 失败:`, error);
-      throw error;
+      return [null, error instanceof Error ? error : new Error(String(error))];
     }
   }
   
@@ -110,28 +113,34 @@ export class KeyValueModule implements DCModule, IKeyValueOperations {
     remark: string,
     vaccount?: string
   ): Promise<[number | null, Error | null]> {
-    this.assertInitialized();
+    const err = this.assertInitialized();
+    if (err) {
+      return [null, err];
+    }
     
     try {
        const res = await kvdb.configAuth(authPubkey, permission, remark, vaccount);
       return res;
     } catch (error) {
       logger.error(`配置权限失败:`, error);
-      throw error;
+      return [null, error instanceof Error ? error : new Error(String(error))];
     }
   }
    async getAuthList(
     kvdb: KeyValueDB,
     vaccount?: string
   ): Promise<[ThemeAuthInfo[]|null,ThemeComment[] | null, Error | null]> {
-    this.assertInitialized();
+    const err = this.assertInitialized();
+    if (err) {
+      return [null, null,err];
+    }
     
     try {
       const res = await kvdb.getAuthList(vaccount);
       return res;
     } catch (error) {
       logger.error(`获取权限列表失败:`, error);
-      throw error;
+      return [null, null, error instanceof Error ? error : new Error(String(error))];
     }
   }
   
@@ -143,14 +152,17 @@ export class KeyValueModule implements DCModule, IKeyValueOperations {
     indexs: string, //索引列表,格式为key1:value1$$$key2:value2
     vaccount?: string
   ): Promise<[boolean | null, Error | null]> {
-    this.assertInitialized();
+     const err = this.assertInitialized();
+    if (err) {
+      return [null, err];
+    }
     
     try {
       const res = await kvdb.set(key, value, indexs, vaccount);
       return res;
     } catch (error) {
       logger.error(`设置set-value失败:`, error);
-      throw error;
+      return [null, error instanceof Error ? error : new Error(String(error))];
     }
   }
 
@@ -161,14 +173,17 @@ export class KeyValueModule implements DCModule, IKeyValueOperations {
     writerPubkey?: string,
     vaccount?: string
   ): Promise<[string | null, Error | null]> {
-    this.assertInitialized();
+     const err = this.assertInitialized();
+    if (err) {
+      return [null, err];
+    }
     
     try {
       const res = await kvdb.get(key, writerPubkey, vaccount);
       return res;
     } catch (error) {
       logger.error(`获取key-value失败:`, error);
-      throw error;
+      return [null, error instanceof Error ? error : new Error(String(error))];
     }
   }
 
@@ -191,14 +206,17 @@ export class KeyValueModule implements DCModule, IKeyValueOperations {
     offset: number,
     vaccount?: string
   ): Promise<[string | null, Error | null]> {
-    this.assertInitialized();
+     const err = this.assertInitialized();
+    if (err) {
+      return [null, err];
+    }
     
     try {
       const res = await kvdb.getWithIndex(indexkey_dckv, key, limit,seekKey, offset,  vaccount);
       return res;
     } catch (error) {
       logger.error(`getValues失败:`, error);
-      throw error;
+      return [null, error instanceof Error ? error : new Error(String(error))];
     }
   }
   
@@ -208,14 +226,17 @@ export class KeyValueModule implements DCModule, IKeyValueOperations {
     writerPubkey: string = "",
     vaccount: string = ""
   ): Promise<[string | null, Error | null]> {
-    this.assertInitialized();
+    const err = this.assertInitialized();
+    if (err) {
+      return [null, err];
+    }
 
     try {
       const res = await kvdb.getBatch(writerPubkey, keys, vaccount);
       return res;
     } catch (error) {
       logger.error(`getBatch失败:`, error);
-      throw error;
+      return [null, error instanceof Error ? error : new Error(String(error))];
     }
   }
 
@@ -228,24 +249,21 @@ export class KeyValueModule implements DCModule, IKeyValueOperations {
     offset: number,
     vaccount?: string
   ): Promise<[string | null, Error | null]> {
-    this.assertInitialized();
-    
-    try {
-      const res = await kvdb.getWithIndex(indexKey, indexValue, limit,seekKey, offset,  vaccount);
-      return res;
-    } catch (error) {
-      logger.error(`getWithIndex失败:`, error);
-      throw error;
+    const err = this.assertInitialized();
+    if (err) {
+      return [null, err];
     }
+    const res = await kvdb.getWithIndex(indexKey, indexValue, limit,seekKey, offset,  vaccount);
+    return res;
   }
   
 
   /**
    * 断言模块已初始化
    */
-  private assertInitialized(): void {
+  private assertInitialized(): Error | void {
     if (!this.initialized) {
-      throw new Error("键值存储模块未初始化");
+      return Error("键值存储模块未初始化");
     }
   }
 }
