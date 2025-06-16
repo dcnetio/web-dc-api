@@ -252,16 +252,10 @@ export class AccountManager {
       }
 
       // 确定使用的密钥
-      let selfPubkey: Ed25519PubKey | null = null, 
-        selfPrivkey: Ed25519PrivKey | null = null;
-      if (!this.context.publicKey) {
-        // 生成
-        const keymanager = new KeyManager();
-        selfPrivkey = await keymanager.getEd25519KeyFromMnemonic(mnemonic, "");
-        selfPubkey = selfPrivkey.publicKey;
-      } else {
-        selfPubkey = this.context.publicKey;
-      }
+      // 生成
+      const keymanager = new KeyManager();
+      const selfPrivkey = await keymanager.getEd25519KeyFromMnemonic(mnemonic, "");
+      const selfPubkey = selfPrivkey.publicKey;
 
       // 用自身公钥加密账号
       const accountEncrypt = await selfPubkey.encrypt(
