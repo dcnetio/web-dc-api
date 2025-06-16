@@ -25,7 +25,7 @@ export interface IKeyValueOperations {
    * @param themeAuthor 数据库创建者的公钥
    * @returns keyvalue数据库实例
    */
-  getStore(appId: string, theme: string, themeAuthor: string): Promise<KeyValueDB>;
+  getStore(appId: string, theme: string, themeAuthor: string): Promise<[KeyValueDB, Error | null]> ;
 
   /**
    * 配置主题的授权信息
