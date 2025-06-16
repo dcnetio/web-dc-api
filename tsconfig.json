@@ -7,7 +7,8 @@
     "strictNullChecks": true,
     "exactOptionalPropertyTypes": true,
     "baseUrl": ".",  // 这很重要，确保相对路径正确
-    "target": "es2015",  
+    "target": "ES2015",  
+    "useDefineForClassFields": true,
     "module": "ESNext",  
     "moduleResolution": "Bundler",  // Bundler ： TypeScript 4.7+ 新选项，专为现代打包工具优化  
     "moduleDetection": "force",     // 强制将所有文件视为模块  
