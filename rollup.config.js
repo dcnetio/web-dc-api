@@ -92,10 +92,7 @@ export default [
         transformMixedEsModules: true,
       }),
       json(),
-      typescript({
-        ...tsconfig,
-        target: 'es5' // 确保更广泛的浏览器兼容性
-      })
+      typescript(tsconfig)
     ]
   },
   
@@ -129,49 +126,8 @@ export default [
         transformMixedEsModules: true,
       }),
       json(),
-      typescript({
-        ...tsconfig,
-        target: 'es5' // 确保更广泛的浏览器兼容性
-      }),
+      typescript(tsconfig),
       terser() // 添加压缩
     ]
   }
-
-  // //ed25519
-  // {
-  //   input: 'lib/common/dc-key/ed25519.ts', // 直接指定特定文件为入口
-  //   output: [
-  //     {
-  //       file: 'dist/dc-key/ed25519.esm.js',
-  //       format: 'esm',
-  //       exports: 'named'
-  //     },
-  //     {
-  //       file: 'dist/dc-key/ed25519.cjs.js',
-  //       format: 'cjs', 
-  //       exports: 'named'
-  //     }
-  //   ],
-  //   external,
-  //   plugins: [
-  //     resolve({
-  //       preferBuiltins: false,
-  //       browser: true
-  //     }),
-  //     commonjs({
-  //       transformMixedEsModules: true
-  //     }),
-  //     json(),
-  //     typescript(tsconfig)
-  //   ]
-  // },
-  // // 类型声明配置
-  // {
-  //   input: 'dist/dc-key/ed25519.d.ts',
-  //   output: [{ 
-  //     file: 'dist/dc-key/ed25519.d.ts', 
-  //     format: 'es' 
-  //   }],
-  //   plugins: [dts()]
-  // }
 ];
