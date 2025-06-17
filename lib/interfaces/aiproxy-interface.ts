@@ -1,4 +1,4 @@
-import { AIProxyConfig, OnStreamResponseType, ProxyCallConfig, UserProxyCallConfig } from "../common/types/types";
+import { AIProxyConfig, IAICallConfig, OnStreamResponseType, ProxyCallConfig, UserProxyCallConfig } from "../common/types/types";
 import { AIProxyUserPermission } from "../common/constants";
 
 /**
@@ -15,7 +15,7 @@ export interface IAIProxyOperations {
   createProxyConfig(
     appId: string,
     configTheme: string
-  ): Promise<[number, Error | null]>;
+  ): Promise<[number | null, Error | null]>;
 
 
    /**
@@ -27,7 +27,7 @@ export interface IAIProxyOperations {
   deleteProxyConfig(
     appId: string,
     configTheme: string
-  ): Promise<[number, Error | null]>;
+  ): Promise<[number | null, Error | null]>;
   
   /**
    * 配置AI代理的访问配置
@@ -47,7 +47,7 @@ export interface IAIProxyOperations {
     serviceName: string,
     serviceConfig?: AIProxyConfig,
     vaccount?: string
-  ): Promise<[boolean, Error | null]>;
+  ): Promise<[boolean | null, Error | null]>;
   
   /**
    * 配置用户的访问权限
@@ -68,7 +68,7 @@ export interface IAIProxyOperations {
     permission: AIProxyUserPermission,
     authConfig: ProxyCallConfig,
     vaccount?: string
-  ): Promise<[number, Error | null]>;
+  ): Promise<[number | null, Error | null]>;
   
   /**
    * 获取AI代理的所有配置
@@ -97,7 +97,7 @@ export interface IAIProxyOperations {
     appId: string,
     themeAuthor: string,
     configTheme: string
-  ): Promise<[ProxyCallConfig, Error | null]>;
+  ): Promise<[ProxyCallConfig | null, Error | null]>;
   
   /**
    * 执行AI代理调用
@@ -123,10 +123,10 @@ export interface IAIProxyOperations {
     themeAuthor?: string,
     configTheme?: string,
     serviceName?: string,
-    headers?: string,
+    headers?: Record<string, string>,
     path?: string,
     model?: string
-  ): Promise<number>;
+  ): Promise<[number | null, Error | null]>;
 
   /**
    * 设置AI调用的配置
@@ -140,12 +140,6 @@ export interface IAIProxyOperations {
    * @returns Promise<void>
    * */
   SetAICallConfig(
-    appId: string,
-    themeAuthor: string,
-    configTheme: string,
-    serviceName: string,
-    headers?: string,
-    path?: string,
-    model?: string
-  ): Promise<void>;
+    callConfig:IAICallConfig
+  ): Promise<Error | null>;
 }

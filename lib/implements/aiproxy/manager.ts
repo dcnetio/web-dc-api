@@ -642,9 +642,6 @@ export class AIProxyManager {
             onStreamResponse
         );
        return res;
-    } catch (err:any) {
-        throw err;
-    }
-
+      }
 }
 
