@@ -12,7 +12,7 @@ export interface IAuthOperations {
    * 账户登录通过钱包
    * @returns 是否登录成功
    */
-  accountLoginWithWallet(): Promise<Account | null>;
+  accountLoginWithWallet(): Promise<[Account | null, Error | null]>;
 
   /**
    * 账户登录
@@ -21,14 +21,14 @@ export interface IAuthOperations {
    * @param safecode 安全码,默认000000
    * @returns 是否登录成功
    */
-  accountLogin(nftAccount: string, password: string, safecode: string): Promise<{mnemonic: string | null;}>;
-  
+  accountLogin(nftAccount: string, password: string, safecode: string): Promise<[string, Error | null]>;
+
   /**
    * 签名数据
    * @param payload 要签名的数据
    * @returns 签名结果
    */
-  sign(payload: Uint8Array): Promise<Uint8Array>;
+  sign(payload: Uint8Array): Promise<[Uint8Array | null, Error | null]>;
   
 
   /**
@@ -36,7 +36,7 @@ export interface IAuthOperations {
    * @param payload 要解密的数据
    * @returns 解密结果
    */
-  decryptWithWallet(payload: Uint8Array): Promise<Uint8Array> ;
+  decryptWithWallet(payload: Uint8Array): Promise<[Uint8Array | null, Error | null]>;
 
   /**
    * 将公钥绑定NFT账号
@@ -46,8 +46,8 @@ export interface IAuthOperations {
    * @param mnemonic 助记词,将安全存储在DC云端
    * @returns [状态码, 错误信息]
    */
-  bindNFTAccount(account: string, password: string, seccode: string, mnemonic: string): Promise<[NFTBindStatus, Error | null]>;
-  
+  bindNFTAccount(account: string, password: string, seccode: string, mnemonic: string): Promise<[NFTBindStatus | null, Error | null]>;
+
   /**
    * 创建APP访问账号,返回APP专用私钥
    * @param appId 应用ID
@@ -55,21 +55,21 @@ export interface IAuthOperations {
    * @returns [私钥字符串, 错误]
    */
   generateAppAccount(appId: string, mnemonic: string): Promise<[string | null, Error | null]>;
-  
+
   /**
    * 检查NFT账号是否成功绑定到当前用户的公钥
    * @param nftAccount NFT账号
    * @param pubKeyStr 公钥字符串
    * @returns 是否成功绑定
    */
-  isNftAccountBindSuccess(nftAccount: string, pubKeyStr: string): Promise<boolean>;
-  
+  isNftAccountBindSuccess(nftAccount: string, pubKeyStr: string): Promise<[boolean | null, Error | null]>;
+
   /**
    * 检查NFT账号是否已经被公钥绑定
    * @param nftAccount NFT账号
    * @returns 是否被其他账号绑定
    */
-  isNftAccountBinded(nftAccount: string): Promise<boolean>;
+  isNftAccountBinded(nftAccount: string): Promise<[boolean | null, Error | null]>;
   
  /**
    * 获取用户信息
@@ -84,37 +84,27 @@ export interface IAuthOperations {
    * @param pubkeyAccount 账户名
    * @returns 用户信息
    */
-  getUserInfoWithAccount(pubkeyAccount: string): Promise<User>;
+  getUserInfoWithAccount(pubkeyAccount: string): Promise<[User | null, Error | null]>;
   
   /**
    * 开启定时验证token线程
    */
-  startDcPeerTokenKeepValidTask(): void;
+  startDcPeerTokenKeepValidTask(): Promise<[boolean, Error | null]>;
+
+
   
-  /**
-   * 停止token验证任务
-   */
-  stopTokenKeepValidTask(): void;
-  
-  /**
-   * 获取或刷新指定连接信息的Token,token直接存储在连接信息中,不用返回
-   * @param connectInfo 连接信息
-   */
-  getTokenWithDCConnectInfo(connectInfo: DCConnectInfo): Promise<void>;
-  
- 
   /**
    * 检查用户空间是否足够
    * @param needSize 需要的空间大小
    * @returns 空间信息
    */
-  ifEnoughUserSpace(needSize?: number): Promise<boolean>;
+  ifEnoughUserSpace(needSize?: number): Promise<[boolean | null, Error | null]>;
   
   /**
    * 刷新用户信息
    * @returns 用户信息
    */
-  refreshUserInfo(): Promise<User>;
+  refreshUserInfo(): Promise<[User | null, Error | null]>;
 
   /**
    * 获取用户默认数据库
@@ -124,5 +114,5 @@ export interface IAuthOperations {
    * @param remark 备注信息
    * @returns 用户默认数据库信息
    */
-  setUserDefaultDB(threadId: string, rk: string,sk: string,remark: string,vaccount?: string): Promise<void>;
+  setUserDefaultDB(threadId: string, rk: string,sk: string,remark: string,vaccount?: string): Promise< Error | null>;
 }

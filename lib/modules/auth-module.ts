@@ -6,15 +6,25 @@ import { AccountManager } from "../implements/account/manager";
 import { CommonClient } from "../common/commonclient";
 import { Client } from "../common/dcapi";
 import { createLogger } from "../util/logger";
-import {
-  sleep,
-} from "../util/utils";
+import { sleep } from "../util/utils";
 import { Ed25519PrivKey, Ed25519PubKey } from "../common/dc-key/ed25519";
 import { Errors } from "../common/error";
-import { dc_protocol, OffChainOpTimes, OffChainOpTimesLimit, OffChainSpaceLimit } from "../common/define";
+import {
+  dc_protocol,
+  OffChainOpTimes,
+  OffChainOpTimesLimit,
+  OffChainSpaceLimit,
+} from "../common/define";
 import { Multiaddr } from "@multiformats/multiaddr";
 import { WalletManager } from "../implements/wallet/manager";
-import { Account, EIP712SignReqMessage, NFTBindStatus, SignReqMessage, SignResponseMessage, User } from "../common/types/types";
+import {
+  Account,
+  EIP712SignReqMessage,
+  NFTBindStatus,
+  SignReqMessage,
+  SignResponseMessage,
+  User,
+} from "../common/types/types";
 import { IAuthOperations } from "../interfaces/auth-interface";
 import { DCContext } from "../../lib/interfaces/DCContext";
 import { CommentManager } from "../../lib/implements/comment/manager";
@@ -64,7 +74,7 @@ export class AuthModule implements DCModule, IAuthOperations {
    * 账户登录
    * @returns 是否登录成功
    */
-  async accountLoginWithWallet(): Promise<Account | null> {
+  async accountLoginWithWalletCall(): Promise<Account | null> {
     this.assertInitialized();
 
     if (!this.context.connectedDc?.client) {
@@ -92,92 +102,124 @@ export class AuthModule implements DCModule, IAuthOperations {
       // 存在token， 获取用户备用节点
       await this.getAccountBackupDc();
       // 给用户添加用户评论空间
-      const userInfo = await this.getUserInfoWithAccount('0x' + publicKey.toString());
-      if(userInfo == null) {
+      const [userInfo, err] = await this.getUserInfoWithAccount(
+        "0x" + publicKey.toString()
+      );
+      if (err) {
+        throw err;
+      }
+      if (userInfo == null) {
         throw Errors.USER_NOT_BIND_TO_PEER;
       }
-      if(userInfo.offchainSpace < OffChainSpaceLimit || userInfo.offchainOptimes < OffChainOpTimesLimit) {
+      if (
+        userInfo.offchainSpace < OffChainSpaceLimit ||
+        userInfo.offchainOptimes < OffChainOpTimesLimit
+      ) {
         const commentManager = new CommentManager(this.context);
-        if(userInfo.offchainSpace < OffChainSpaceLimit) {
-          const [addOffChainBool, addOffChainError] = await commentManager.addUserOffChainSpace();
+        if (userInfo.offchainSpace < OffChainSpaceLimit) {
+          const [addOffChainBool, addOffChainError] =
+            await commentManager.addUserOffChainSpace();
           if (addOffChainError || !addOffChainBool) {
             throw addOffChainError || new Error("addUserOffChainSpace error");
           }
         }
-        if(userInfo.offchainOptimes < OffChainOpTimesLimit) {
-          const [addOffChainOpTimesBool, addOffChainOpTimesError] = await commentManager.addUserOffChainOpTimes(OffChainOpTimes);
+        if (userInfo.offchainOptimes < OffChainOpTimesLimit) {
+          const [addOffChainOpTimesBool, addOffChainOpTimesError] =
+            await commentManager.addUserOffChainOpTimes(OffChainOpTimes);
           if (addOffChainOpTimesError || !addOffChainOpTimesBool) {
-            throw addOffChainOpTimesError || new Error("addUserOffChainSpace error");
+            throw (
+              addOffChainOpTimesError || new Error("addUserOffChainSpace error")
+            );
           }
         }
       }
       return data;
-
     } catch (error) {
       console.error("accountLogin error", error);
       return null;
-    };
+    }
   }
 
   /**
-   * 账户登录(钱包登录)
+   * 账户登录(钱包登录)不抛出异常
+   * @returns [账户信息, 错误信息]
+   */
+  async accountLoginWithWallet(): Promise<
+    [Account | null, Error | null]
+  > {
+    try {
+      const account = await this.accountLoginWithWalletCall();
+      return [account, null];
+    } catch (error) {
+      return [null, error as Error];
+    }
+  }
+
+  /**
+   * 账户登录(钱包登录)不抛出异常
    * @param nftAccount NFT账户
    * @param password 密码
    * @param safecode 安全码
-   * @returns 是否登录成功
+   * @returns [是否登录成功, 错误信息]
    */
   async accountLogin(
     nftAccount: string,
     password: string,
     safecode: string
-  ): Promise<{
-    mnemonic: string | null;
-  }> {
-    this.assertInitialized();
+  ): Promise<[string, Error | null]> {
+    try {
+      this.assertInitialized();
 
-    if (!this.context.connectedDc?.client) {
-      throw new Error("dcClient is null");
-    }
-    //连接account所在的节点,并获取client
-    let client = this.context.connectedDc?.client || null;
-    const walletAccount = await this.context.dcChain?.getUserWalletAccount(nftAccount);
-    if(!walletAccount) {
-      throw new Error("getUserWalletAccount error");
-    }
-    const userPubkey: Ed25519PubKey = Ed25519PubKey.edPubkeyFromStr(walletAccount);
-    const connectedClient = await this.context.dcutil.connectToUserDcPeer(userPubkey.raw);
-    if (!connectedClient) {
-      throw new Error("connect to user dc peer failed");
-    }
-    client = connectedClient;
-    this.context.AccountBackupDc.client = client;
-    const commonClient = new CommonClient(client);
-    const mnemonic = await commonClient.accountLogin(
-      nftAccount,
-      password,
-      safecode
-    );
-    console.log("=================accountLogin success");
-
-    if (mnemonic) {
-      if(this.context.appInfo?.appId){
-        const accountManager = new AccountManager(this.context);
-        const res = await accountManager.generateAppAccount(this.context.appInfo?.appId, mnemonic);
-        console.log("=================generateAppAccount success");
-        if (res[0] === null) {
-          throw res[1] || new Error("generateAppAccount error");
-        }
-        // 获取私钥
-        const privKey = Ed25519PrivKey.unmarshalString(res[0]);
-        console.log("=================获取私钥 success");
+      if (!this.context.connectedDc?.client) {
+        throw new Error("dcClient is null");
       }
-      return {
-        mnemonic,
-      };
+      //连接account所在的节点,并获取client
+      let client = this.context.connectedDc?.client || null;
+      const walletAccount = await this.context.dcChain?.getUserWalletAccount(
+        nftAccount
+      );
+      if (!walletAccount) {
+        throw new Error("getUserWalletAccount error");
+      }
+      const userPubkey: Ed25519PubKey =
+        Ed25519PubKey.edPubkeyFromStr(walletAccount);
+      const connectedClient = await this.context.dcutil.connectToUserDcPeer(
+        userPubkey.raw
+      );
+      if (!connectedClient) {
+        throw new Error("connect to user dc peer failed");
+      }
+      client = connectedClient;
+      this.context.AccountBackupDc.client = client;
+      const commonClient = new CommonClient(client);
+      const mnemonic = await commonClient.accountLogin(
+        nftAccount,
+        password,
+        safecode
+      );
+      console.log("=================accountLogin success");
+
+      if (mnemonic) {
+        if (this.context.appInfo?.appId) {
+          const accountManager = new AccountManager(this.context);
+          const res = await accountManager.generateAppAccount(
+            this.context.appInfo?.appId,
+            mnemonic
+          );
+          console.log("=================generateAppAccount success");
+          if (res[0] === null) {
+            throw res[1] || new Error("generateAppAccount error");
+          }
+          // 获取私钥
+          const privKey = Ed25519PrivKey.unmarshalString(res[0]);
+          console.log("=================获取私钥 success");
+        }
+        return [mnemonic, null];
+      }
+      return ["", new Error("accountLogin failed")];
+    } catch (error) {
+      return ["", error as Error];
     }
-    return {
-      mnemonic: '',
-    };
   }
 
   async signWithWallet(payload: Uint8Array): Promise<Uint8Array> {
@@ -189,21 +231,32 @@ export class AuthModule implements DCModule, IAuthOperations {
     }
   }
 
-   async sign(payload: Uint8Array): Promise<Uint8Array> {
-    return  this.signWithWallet(payload);
-  }
-
-
-   async decryptWithWallet(payload: Uint8Array): Promise<Uint8Array> {
-     if (!this.walletManager) {
-      throw new Error("walletManager is null");
-    } else {
-      const signature = await this.walletManager.decrypt(payload);
-      return signature;
+  async sign(payload: Uint8Array): Promise<[Uint8Array | null, Error | null]> {
+    try {
+      const signature = await this.signWithWallet(payload);
+      return [signature, null];
+    } catch (error) {
+      return [null, error as Error];
     }
   }
 
-  async signMessageWithWallet(data: SignReqMessage): Promise<SignResponseMessage | null> {
+  async decryptWithWallet(
+    payload: Uint8Array
+  ): Promise<[Uint8Array | null, Error | null]> {
+    try {
+      if (!this.walletManager) {
+        throw new Error("walletManager is null");
+      }
+      const signature = await this.walletManager.decrypt(payload);
+      return [signature, null];
+    } catch (error) {
+      return [null, error as Error];
+    }
+  }
+
+  async signMessageWithWallet(
+    data: SignReqMessage
+  ): Promise<SignResponseMessage | null> {
     if (!this.walletManager) {
       throw new Error("walletManager is null");
     } else {
@@ -212,7 +265,9 @@ export class AuthModule implements DCModule, IAuthOperations {
     }
   }
 
-  async signEIP712MessageWithWallet(data: EIP712SignReqMessage): Promise<SignResponseMessage | null> {
+  async signEIP712MessageWithWallet(
+    data: EIP712SignReqMessage
+  ): Promise<SignResponseMessage | null> {
     if (!this.walletManager) {
       throw new Error("walletManager is null");
     } else {
@@ -232,14 +287,14 @@ export class AuthModule implements DCModule, IAuthOperations {
     password: string,
     seccode: string,
     mnemonic: string
-  ): Promise<[NFTBindStatus, Error | null]> {
-    this.assertInitialized();
-
-    if (!this.context.connectedDc?.client) {
-      throw new Error("dcClient is null");
-    }
-
+  ): Promise<[NFTBindStatus | null, Error | null]> {
     try {
+      this.assertInitialized();
+
+      if (!this.context.connectedDc?.client) {
+        throw new Error("dcClient is null");
+      }
+
       const accountManager = new AccountManager(this.context);
       const res = await accountManager.bindNFTAccount(
         account,
@@ -247,9 +302,9 @@ export class AuthModule implements DCModule, IAuthOperations {
         seccode,
         mnemonic
       );
-      return res;
+      return [res[0], null];
     } catch (error) {
-      return [NFTBindStatus.Error, error as Error];
+      return [null, error as Error];
     }
   }
 
@@ -264,10 +319,19 @@ export class AuthModule implements DCModule, IAuthOperations {
     appId: string,
     mnemonic: string
   ): Promise<[string | null, Error | null]> {
-    this.assertInitialized();
-    const accountManager = new AccountManager(this.context);
-    return await accountManager.generateAppAccount(appId, mnemonic);
+    try {
+      this.assertInitialized();
+      const accountManager = new AccountManager(this.context);
+      const [pubKeyStr, err] = await accountManager.generateAppAccount(appId, mnemonic);
+      if(err !== null) {
+        return [null, err];
+      }
+      return [pubKeyStr, null];
+    } catch (error) {
+      return [null, error as Error];
+    }
   }
+
 
   /**
    * 检查NFT账号是否成功绑定到用户的公钥
@@ -275,11 +339,21 @@ export class AuthModule implements DCModule, IAuthOperations {
    * @param pubKeyStr 公钥字符串
    * @returns 是否成功绑定
    */
-  async isNftAccountBindSuccess(nftAccount: string, pubKeyStr: string): Promise<boolean> {
-    this.assertInitialized();
-    const accountManager = new AccountManager(this.context);
-    const res = await accountManager.isNftAccountBindSuccess(nftAccount, pubKeyStr);
-    return res;
+  async isNftAccountBindSuccess(
+    nftAccount: string,
+    pubKeyStr: string
+  ): Promise<[boolean | null, Error | null]> {
+    try {
+      this.assertInitialized();
+      const accountManager = new AccountManager(this.context);
+      const res = await accountManager.isNftAccountBindSuccess(
+        nftAccount,
+        pubKeyStr
+      );
+      return [res, null];
+    } catch (error) {
+      return [null, error as Error];
+    }
   }
 
   /**
@@ -287,18 +361,28 @@ export class AuthModule implements DCModule, IAuthOperations {
    * @param nftAccount NFT账号
    * @returns 是否被其他账号绑定
    */
-  async isNftAccountBinded(nftAccount: string): Promise<boolean> {
-    this.assertInitialized();
-    const accountManager = new AccountManager(this.context);
-    const res = await accountManager.isNftAccountBinded(nftAccount);
-    return res;
+  async isNftAccountBinded(nftAccount: string): Promise<[boolean | null, Error | null]> {
+    try {
+      this.assertInitialized();
+      const accountManager = new AccountManager(this.context);
+      const res = await accountManager.isNftAccountBinded(nftAccount);
+      return [res, null];
+    } catch (error) {
+      return [null, error as Error];
+    }
   }
 
-  // 获取用户钱包信息
-  async getUserInfoWithAccount(account: string): Promise<User> {
-    this.assertInitialized();
-    const res = await this.context.dcChain.getUserInfoWithAccount(account);
-    return res;
+  // 获取用户钱包信息，不抛出异常
+  async getUserInfoWithAccount(
+    account: string
+  ): Promise<[User | null, Error | null]> {
+    try {
+      this.assertInitialized();
+      const res = await this.context.dcChain.getUserInfoWithAccount(account);
+      return [res, null];
+    } catch (error) {
+      return [null, error as Error];
+    }
   }
 
   /**
@@ -337,45 +421,52 @@ export class AuthModule implements DCModule, IAuthOperations {
   }
 
   /**
-   * 开启定时验证 token 线程
+   * 开启定时验证 token 线程,不抛出异常
    */
-  startDcPeerTokenKeepValidTask(): void {
-    this.assertInitialized();
+  async startDcPeerTokenKeepValidTask(): Promise<
+    [boolean, Error | null]
+  > {
+    try {
+      this.assertInitialized();
 
-    // 如果已经有定时任务在跑，直接返回
-    if (this.tokenTask) {
-      return;
-    }
-    this.tokenTask = true;
-
-    // 60秒一次心跳维持连接
-    const period = 60000;
-    let count = 0;
-
-    // 启动ticker
-    (async () => {
-      while (this.tokenTask) {
-        count++;
-        logger.info(`Token验证任务: 执行次数 ${count}`);
-        await this.getTokenWithDCConnectInfo(this.context.connectedDc);
-        await this.getTokenWithDCConnectInfo(this.context.AccountBackupDc);
-        await sleep(period);
+      // 如果已经有定时任务在跑，直接返回
+      if (this.tokenTask) {
+        return [true, null];
       }
-    })();
+      this.tokenTask = true;
+
+      // 60秒一次心跳维持连接
+      const period = 60000;
+      let count = 0;
+
+      // 启动ticker
+      (async () => {
+        while (this.tokenTask) {
+          count++;
+          logger.info(`Token验证任务: 执行次数 ${count}`);
+          await this.getTokenWithDCConnectInfo(this.context.connectedDc);
+          await this.getTokenWithDCConnectInfo(this.context.AccountBackupDc);
+          await sleep(period);
+        }
+      })();
+      return [true, null];
+    } catch (error) {
+      return [false, error as Error];
+    }
   }
 
   /**
-   * 停止token验证任务
+   * 停止token验证任务,不抛出异常
    */
-  stopTokenKeepValidTask(): void {
-    this.tokenTask = false;
+  private stopTokenKeepValidTask(): void {
+      this.tokenTask = false;
   }
 
   /**
    * 获取或刷新指定连接信息的Token
    * @param connectInfo 连接信息
    */
-  async getTokenWithDCConnectInfo(connectInfo: any): Promise<void> {
+  private async getTokenWithDCConnectInfo(connectInfo: any): Promise<void> {
     this.assertInitialized();
 
     try {
@@ -415,7 +506,7 @@ export class AuthModule implements DCModule, IAuthOperations {
       }
       logger.info("获取新Token");
       await connectInfo.client?.GetToken(
-        this.context.appInfo.appId || '',
+        this.context.appInfo.appId || "",
         this.context.publicKey.string(),
         this.context.sign
       );
@@ -434,7 +525,7 @@ export class AuthModule implements DCModule, IAuthOperations {
         }
         logger.info("刷新Token");
         await connectInfo.client?.refreshToken(
-          this.context.appInfo.appId || '',
+          this.context.appInfo.appId || "",
           this.context.publicKey.string(),
           this.context.sign
         );
@@ -475,7 +566,7 @@ export class AuthModule implements DCModule, IAuthOperations {
           }
           logger.info("获取新Token");
           await connectInfo.client?.GetToken(
-            this.context.appInfo.appId || '',
+            this.context.appInfo.appId || "",
             this.context.publicKey.string(),
             this.context.sign
           );
@@ -489,60 +580,89 @@ export class AuthModule implements DCModule, IAuthOperations {
       }
     }
   }
-
   /**
    * 获取用户信息
    * @param nftAccount NFT账户
    * @returns 用户信息
    */
-  async getUserInfoWithNft(nftAccount: string): Promise<[User | null, Error | null]> {
-    this.assertInitialized();
+  async getUserInfoWithNft(
+    nftAccount: string
+  ): Promise<[User | null, Error | null]> {
+    try {
+      this.assertInitialized();
 
-    const accountManager = new AccountManager(this.context);
+      const accountManager = new AccountManager(this.context);
 
-    const userInfo = await accountManager.getUserInfoWithNft(nftAccount);
-    logger.info("获取用户信息成功:", userInfo);
-    return userInfo;
-  }
-
-  /**
-   * 检查用户空间是否足够
-   * @param needSize 需要的空间大小
-   * @returns 空间信息
-   */
-  async ifEnoughUserSpace(needSize?: number): Promise<boolean> {
-    this.assertInitialized();
-
-    const pubkeyRaw = this.context.getPubkeyRaw();
-    return this.context.dcChain.ifEnoughUserSpace(pubkeyRaw, needSize);
-  }
-
-  /**
-   * 刷新用户信息
-   * @returns 用户信息
-   */
-  async refreshUserInfo(): Promise<User> {
-    this.assertInitialized();
-
-    const pubkeyRaw = this.context.getPubkeyRaw();
-    if (!pubkeyRaw) {
-      throw new Error("用户未登录!");
+      const res = await accountManager.getUserInfoWithNft(nftAccount);
+      logger.info("获取用户信息成功:", res);
+      return res;
+    } catch (error) {
+      return [null, error as Error];
     }
-    return this.context.dcChain.refreshUserInfo(pubkeyRaw);
   }
 
   /**
-   * 获取用户默认数据库
+   * 检查用户空间是否足够,不抛出异常
+   * @param needSize 需要的空间大小
+   * @returns [是否足够, 错误信息]
+   */
+  async ifEnoughUserSpace(
+    needSize?: number
+  ): Promise<[boolean | null, Error | null]> {
+    try {
+      this.assertInitialized();
+
+      const pubkeyRaw = this.context.getPubkeyRaw();
+      const res = await this.context.dcChain.ifEnoughUserSpace(pubkeyRaw, needSize);
+      return [res, null];
+    } catch (error) {
+      return [null, error as Error];
+    }
+  }
+
+  /**
+   * 刷新用户信息,不抛出异常
+   * @returns [用户信息, 错误信息]
+   */
+  async refreshUserInfo(): Promise<[User | null, Error | null]> {
+    try {
+      this.assertInitialized();
+
+      const pubkeyRaw = this.context.getPubkeyRaw();
+      if (!pubkeyRaw) {
+        throw new Error("用户未登录!");
+      }
+      const res = await this.context.dcChain.refreshUserInfo(pubkeyRaw);
+      return [res, null];
+    } catch (error) {
+      return [null, error as Error];
+    }
+  }
+
+
+  /**
+   * 获取用户默认数据库,不抛出异常
    * @param threadId 数据库ID
    * @param rk 读取密钥,主要用来加解密真正的数据,注意对数据记录进行加密和解密
    * @param sk 服务密钥,主要用来处理传输过程加解密,主要对数据链表头进行加密和解密
    * @param remark 备注信息
-   * @returns 用户默认数据库信息
+   * @returns [用户默认数据库信息, 错误信息]
    */
-  async setUserDefaultDB(threadId: string, rk: string,sk: string,remark: string,vaccount?: string): Promise<void> {
-    this.assertInitialized();
-     const accountManager = new AccountManager(this.context);
-    return accountManager.setUserDefaultDB(threadId,rk,sk,remark,vaccount);
+  async setUserDefaultDB(
+    threadId: string,
+    rk: string,
+    sk: string,
+    remark: string,
+    vaccount?: string
+  ): Promise<Error | null> {
+    try {
+      this.assertInitialized();
+      const accountManager = new AccountManager(this.context);
+      await accountManager.setUserDefaultDB(threadId, rk, sk, remark, vaccount);
+      return null;
+    } catch (error) {
+      return error as Error;
+    }
   }
 
   /**

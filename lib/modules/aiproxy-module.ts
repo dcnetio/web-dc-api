@@ -11,13 +11,14 @@ import { AIProxyUserPermission } from "../common/constants";
 const logger = createLogger('KeyValueModule');
 
 import { IAICallConfig } from "../common/types/types";
+import { IAIProxyOperations } from "lib/interfaces/aiproxy-interface";
 
 
 /**
  * AI代理模块
  * 提供AI代理的配置和调用
  */
-export class AIProxyModule implements DCModule {
+export class AIProxyModule implements DCModule ,IAIProxyOperations{
   readonly moduleName = CoreModuleName.AIPROXY;
   private aiProxyManager!: AIProxyManager;
   private initialized: boolean = false;
@@ -138,8 +139,11 @@ async GetUserOwnAIProxyAuth(
     serviceName?: string,
     headers?: Record<string, string>,
     path?: string,
-    model?: string): Promise<number>
+    model?: string): Promise<[number | null, Error | null]>
     {
+      try{
+
+      
         this.assertInitialized();
         if (this.aiCallConfig == null && (!appId || !themeAuthor || !configTheme || !serviceName)) {
             throw new Error("AI调用配置未设置");
@@ -174,7 +178,12 @@ async GetUserOwnAIProxyAuth(
         if (!serviceName) {
             throw new Error("服务名称不能为空");
         }
-        return this.aiProxyManager.DoAIProxyCall(context,appId , themeAuthor, configTheme, serviceName, reqBody, forceRefresh, onStreamResponse, headersStr, path|| this.aiCallConfig?.path, model|| this.aiCallConfig?.model);
+        const res = await this.aiProxyManager.DoAIProxyCall(context,appId , themeAuthor, configTheme, serviceName, reqBody, forceRefresh, onStreamResponse, headersStr, path|| this.aiCallConfig?.path, model|| this.aiCallConfig?.model);
+        return [res, null];
+      } catch (error) {
+        logger.error("AI代理调用失败:", error);
+        return [null, error instanceof Error ? error : new Error(String(error))];
+      }
     }
 
 
@@ -189,11 +198,18 @@ async GetUserOwnAIProxyAuth(
    * @param model 模型名称(可选)
    * @returns Promise<void>
    * */
-  SetAICallConfig(
+  async SetAICallConfig(
     callConfig:IAICallConfig
-  ) {
-    this.assertInitialized();
+  ): Promise<Error | null> {
+    try{
+      this.assertInitialized();
     this.aiCallConfig = callConfig
+    return null
+    } catch (error) {
+      logger.error("设置AI调用配置失败:", error);
+      return error as Error;
+    }
+   
   }
 
   /**

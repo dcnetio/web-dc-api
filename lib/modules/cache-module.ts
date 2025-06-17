@@ -52,21 +52,20 @@ export class CacheModule implements DCModule, ICacheOperations {
    * @param key 缓存键
    * @returns 缓存值
    */
-  async getCacheValue(key: string): Promise<string | null> {
-    this.assertInitialized();
-    
+  async getCacheValue(key: string): Promise<[string | null, Error | null]>{
     try {
+       this.assertInitialized();
       const res = await this.themeManager.getCacheValue(key);
       if (res[0]) {
         logger.info(`获取缓存键 ${key} 成功`);
-        return res[0];
+        return [res[0], null];
       }
       
       logger.info(`缓存键 ${key} 不存在`);
-      return null;
+      return [null, null];
     } catch (error) {
       logger.error(`获取缓存键 ${key} 失败:`, error);
-      throw error;
+      return [null, error instanceof Error ? error : new Error(String(error))];
     }
   }
   
@@ -77,9 +76,8 @@ export class CacheModule implements DCModule, ICacheOperations {
    * @returns 设置结果
    */
   async setCacheKey(value: string, expire?: number): Promise<[string | null, Error | null]> {
-    this.assertInitialized();
-    
     try {
+       this.assertInitialized();
       const expireNumber = expire ? expire : keyExpire; // 默认一天
       const res = await this.themeManager.setCacheKey(value, expireNumber);
       
@@ -87,7 +85,7 @@ export class CacheModule implements DCModule, ICacheOperations {
       return res;
     } catch (error) {
       logger.error(`设置缓存值失败:`, error);
-      throw error;
+      return [null, error instanceof Error ? error : new Error(String(error))];
     }
   }
   

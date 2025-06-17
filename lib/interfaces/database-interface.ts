@@ -11,9 +11,9 @@ export interface IDatabaseOperations {
   /**
    * 初始化数据库管理器
    * 创建数据库操作所需的组件和服务
-   * @throws 初始化失败时抛出错误
+   * @returns 错误信息
    */
-  initDBManager(): Promise<void>;
+  initDBManager(): Promise<Error| null>;
   
   /**
    * 创建新数据库
@@ -21,15 +21,14 @@ export interface IDatabaseOperations {
    * @param b32Rk base32编码的读取密钥
    * @param b32Sk base32编码的服务密钥
    * @param jsonCollections 集合配置数组，定义数据库中的集合结构
-   * @returns 创建的线程ID
-   * @throws 创建失败时抛出错误
+   * @returns 创建的线程ID和错误信息
    */
   newDB(
     name: string,
     b32Rk: string,
     b32Sk: string,
     jsonCollections: ICollectionConfig[]
-  ): Promise<string>;
+  ): Promise<[string| null, Error | null]>;
   
   /**
    * 从分布式网络同步数据库
@@ -40,7 +39,7 @@ export interface IDatabaseOperations {
    * @param b32Sk base32编码的服务密钥  
    * @param block 是否阻塞等待同步完成
    * @param collectionInfos 集合配置数组，定义数据库中的集合结构
-   * @throws 同步失败时抛出错误
+   * @returns 错误信息或null表示成功
    */
   syncDbFromDC(
     threadid: string,  
@@ -50,7 +49,7 @@ export interface IDatabaseOperations {
     b32Sk: string,  
     block: boolean,  
     collectionInfos: ICollectionConfig[]  
-  ): Promise<void>;
+  ): Promise<Error| null>;
   
   /**
    * 刷新数据库，从分布式网络获取最新数据
@@ -70,8 +69,7 @@ export interface IDatabaseOperations {
 /**
  * 获取数据库信息
  * @param id threaddbID
- * @returns 数据库信息字符串
- * @throws 获取失败时抛出错误
+ * @returns 数据库信息字符串,或错误
  */ 
  getDBInfo(id: string): Promise<[IDBInfo|null, Error|null]>  ;
 
@@ -79,17 +77,16 @@ export interface IDatabaseOperations {
    * 关闭数据库管理器
    * @throws 关闭失败时抛出错误
    */
-  close(): Promise<void>;
+  close(): Promise<Error | null>;
   
   /**
    * 在集合中创建新对象实例
    * @param threadId 线程ID
    * @param collectionName 集合名称
    * @param jsonInstance JSON字符串表示的实例对象
-   * @returns 创建的实例ID
-   * @throws 创建失败时抛出错误
+   * @returns 创建的实例ID,或错误
    */
-  create(threadId: string, collectionName: string, jsonInstance: string): Promise<string>;
+  create(threadId: string, collectionName: string, jsonInstance: string): Promise<[string| null, Error | null]>;
   
   /**
    * 通过ID删除实例
@@ -98,7 +95,7 @@ export interface IDatabaseOperations {
    * @param instanceID 要删除的实例ID
    * @throws 删除失败时抛出错误
    */
-  delete(threadId: string, collectionName: string, instanceID: string): Promise<void>;
+  delete(threadId: string, collectionName: string, instanceID: string): Promise<Error | null>;
   
   /**
    * 更新已存在的实例
@@ -107,7 +104,7 @@ export interface IDatabaseOperations {
    * @param instance JSON字符串表示的实例对象
    * @throws 更新失败时抛出错误
    */
-  save(threadId: string, collectionName: string, instance: string): Promise<void>;
+  save(threadId: string, collectionName: string, instance: string): Promise<Error | null>;
   
   /**
    * 批量删除多个实例
@@ -116,7 +113,7 @@ export interface IDatabaseOperations {
    * @param instanceIDs 逗号分隔或JSON数组表示的实例ID列表
    * @throws 删除失败时抛出错误
    */
-  deleteMany(threadId: string, collectionName: string, instanceIDs: string): Promise<void>;
+  deleteMany(threadId: string, collectionName: string, instanceIDs: string): Promise<Error | null>;
   
   /**
    * 检查指定实例是否存在
@@ -139,7 +136,7 @@ export interface IDatabaseOperations {
    * @returns JSON字符串表示的查询结果
    * @throws 查询失败时抛出错误
    */
-  find(threadId: string, collectionName: string, queryString?: string): Promise<string>;
+  find(threadId: string, collectionName: string, queryString?: string): Promise<[string | null, Error | null]>;
   
   /**
    * 通过ID查找实例
@@ -149,7 +146,7 @@ export interface IDatabaseOperations {
    * @returns JSON字符串表示的实例
    * @throws 查询失败时抛出错误
    */
-  findByID(threadId: string, collectionName: string, instanceID: string): Promise<string>;
+  findByID(threadId: string, collectionName: string, instanceID: string): Promise<[string | null, Error | null]>;
   
   /**
    * 获取在指定时间后被修改的实例ID列表
@@ -159,5 +156,5 @@ export interface IDatabaseOperations {
    * @returns JSON字符串表示的实例ID列表
    * @throws 查询失败时抛出错误
    */
-  modifiedSince(threadId: string, collectionName: string, time: number): Promise<string>;
+  modifiedSince(threadId: string, collectionName: string, time: number): Promise<[string | null, Error | null]>;
 }

@@ -9,7 +9,7 @@ export interface ICacheOperations {
    * @returns 缓存值，如果键不存在则返回null
    * @throws 当操作失败时抛出错误
    */
-  getCacheValue(key: string): Promise<string | null>;
+  getCacheValue(key: string): Promise<[string | null, Error | null]>;
   
   /**
    * 设置缓存值
