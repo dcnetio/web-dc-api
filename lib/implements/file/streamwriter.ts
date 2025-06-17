@@ -261,7 +261,12 @@ export class StreamWriter {
       if (this.abortController.signal.aborted) break  
       await this.monitorBackpressure()  
       const task = this.writeQueue.shift()!  
-      await task()  
+      try {  
+        await task()  
+      } catch (err) {  
+        continue // 继续处理下一个任务
+      }
+     
     }  
 
     this.isProcessingQueue = false  

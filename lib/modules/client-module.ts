@@ -44,10 +44,21 @@ export class ClientModule implements DCModule, IClientOperations {
   }
 
   async getHostID(): Promise<[{ peerID: string; reqAddr: string } | null, Error | null]> {
-    this.assertInitialized();
-    return this.clientManager.getHostID();
+    try {
+      this.assertInitialized();
+      const res = await this.clientManager.getHostID();
+      if (res[0]) {
+        logger.info(`获取hostID成功: ${res[0].peerID}, 公网地址: ${res[0].reqAddr}`);
+      } else {
+        logger.error("获取hostID失败:", res[1]);
+      }
+      return res;
+    } catch (error) {
+      logger.error("获取hostID时发生错误:", error);
+      return [null, error as Error];
+    }
   }
-  
+ 
   
   /**
    * 断言模块已初始化

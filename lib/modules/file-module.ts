@@ -168,17 +168,17 @@ export class FileModule implements DCModule, IFileOperations {
     enkey: string,
     onUpdateTransmitSize: (status: number, size: number) => void
   ): Promise<[string | null, Error | null]> {
-    this.assertInitialized();
+   
     try {
+       this.assertInitialized();
       if (!file) {
         throw new Error("文件不能为空");
       }
       const res = await this.fileManager.addFile(file, enkey, onUpdateTransmitSize);
       return res;
     } catch (error) {
-
       logger.error(`添加文件失败: ${file?.name}`, error);
-      throw new Error(`添加文件失败: ${error instanceof Error ? error.message : String(error)}`);
+      return [null, new Error(`添加文件失败: ${error instanceof Error ? error.message : String(error)}`)];
     }
   }
 
@@ -190,8 +190,9 @@ export class FileModule implements DCModule, IFileOperations {
     enkey: string,
     onUpdateTransmitCount: (status: number, total: number, process: number) => void
   ): Promise<[string | null, Error | null]> {
-    this.assertInitialized();
+   
     try {
+       this.assertInitialized();
       if (!files || files.length === 0) {
         throw new Error("文件夹不能为空");
       }
@@ -199,7 +200,7 @@ export class FileModule implements DCModule, IFileOperations {
       return res;
     } catch (error) {
       logger.error(`添加文件夹失败`, error);
-      throw new Error(`添加文件夹失败: ${error instanceof Error ? error.message : String(error)}`);
+      return [null, new Error(`添加文件夹失败: ${error instanceof Error ? error.message : String(error)}`)];
     }
   }
 
@@ -215,15 +216,20 @@ export class FileModule implements DCModule, IFileOperations {
       | Record<string, string | Uint8Array | ArrayBuffer>,
     rootFolderName: string = "upload"
   ): [FileList | null, Error | null] {
-    if(!this.initialized) {
-      return [null, new Error("文件模块未初始化")];
-    }
-    // filesMap 判断
+    try {
+      this.assertInitialized();
+       // filesMap 判断
     if (!filesMap || filesMap.size === 0) {
       return [null, new Error("文件夹不能为空")];
     }
     const fileList = this.fileManager.createCustomFileList(filesMap, rootFolderName);
     return [fileList, null];
+    } catch (error) {
+      logger.error("创建自定义文件列表失败:", error);
+      return [null, new Error("文件模块未初始化")];
+    }
+   
+   
   }
   
   /**

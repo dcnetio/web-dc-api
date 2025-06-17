@@ -109,7 +109,6 @@ export class AIProxyManager {
       appId = "DCAPP";
     }
 
-    const space = 100 << 20;
     // Theme must start with "keyvalue_"
     if (!configTheme.startsWith("keyvalue_")) {
         configTheme = "keyvalue_" + configTheme;
@@ -380,8 +379,8 @@ export class AIProxyManager {
         configTheme = "keyvalue_" + configTheme;
     }
    
-    const userPubkey = this.context.getPublicKey();
-    let userPubkeyStr = userPubkey.string();
+
+ 
 
     let client = this.accountBackUpDc.client || null;
        if (themeAuthor != this.context.publicKey.string()) {//查询他人主题评论

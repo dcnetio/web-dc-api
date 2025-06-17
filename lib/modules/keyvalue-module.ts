@@ -253,8 +253,13 @@ export class KeyValueModule implements DCModule, IKeyValueOperations {
     if (err) {
       return [null, err];
     }
-    const res = await kvdb.getWithIndex(indexKey, indexValue, limit,seekKey, offset,  vaccount);
+    try {
+      const res = await kvdb.getWithIndex(indexKey, indexValue, limit,seekKey, offset,  vaccount);
     return res;
+    } catch (error) {
+      logger.error(`getWithIndex失败:`, error);
+      return [null, error instanceof Error ? error : new Error(String(error))];
+    }
   }
   
 

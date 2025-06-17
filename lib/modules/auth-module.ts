@@ -120,6 +120,18 @@ export class AuthModule implements DCModule, IAuthOperations {
   }
 
   /**
+   * 账户登录(钱包登录)不抛出异常
+   * @returns [账户信息, 错误信息]
+   */
+  async accountLoginWithWalletNoThrow(): Promise<[Account | null, Error | null]> {
+    try {
+      return [await this.accountLoginWithWallet(), null];
+    } catch (error) {
+      return [null, error as Error];
+    }
+  }
+
+  /**
    * 账户登录(钱包登录)
    * @param nftAccount NFT账户
    * @param password 密码
@@ -180,6 +192,26 @@ export class AuthModule implements DCModule, IAuthOperations {
     };
   }
 
+  /**
+   * 账户登录(钱包登录)不抛出异常
+   * @param nftAccount NFT账户
+   * @param password 密码
+   * @param safecode 安全码
+   * @returns [是否登录成功, 错误信息]
+   */
+  async accountLoginWithNoThrow(
+    nftAccount: string,
+    password: string,
+    safecode: string
+  ): Promise<[boolean, Error | null]> {
+    try {
+      await this.accountLogin(nftAccount, password, safecode);
+      return [true, null];
+    } catch (error) {
+      return [false, error as Error];
+    }
+  }
+
   async signWithWallet(payload: Uint8Array): Promise<Uint8Array> {
     if (!this.walletManager) {
       throw new Error("walletManager is null");
@@ -193,6 +225,15 @@ export class AuthModule implements DCModule, IAuthOperations {
     return  this.signWithWallet(payload);
   }
 
+  async signWithNoThrow(payload: Uint8Array): Promise<[Uint8Array | null, Error | null]> {
+    try {
+      const signature = await this.signWithWallet(payload);
+      return [signature, null];
+    } catch (error) {
+      return [null, error as Error];
+    }
+  }
+
 
    async decryptWithWallet(payload: Uint8Array): Promise<Uint8Array> {
      if (!this.walletManager) {
@@ -200,6 +241,14 @@ export class AuthModule implements DCModule, IAuthOperations {
     } else {
       const signature = await this.walletManager.decrypt(payload);
       return signature;
+    }
+  }
+  async decryptWithWalletNoThrow(payload: Uint8Array): Promise<[Uint8Array | null, Error | null]> {
+    try {
+      const decryptedData = await this.decryptWithWallet(payload);
+      return [decryptedData, null];
+    } catch (error) {
+      return [null, error as Error];
     }
   }
 
@@ -252,6 +301,27 @@ export class AuthModule implements DCModule, IAuthOperations {
       return [NFTBindStatus.Error, error as Error];
     }
   }
+  /**
+   * 将私钥绑定NFT账号(NFT账号+密码+安全码)不抛出异常
+   * @param account NFT账号
+   * @param password 密码
+   * @param seccode 安全码
+   * @returns [状态码, 错误信息]
+   */
+  async bindNFTAccountWithNoThrow(
+    account: string,
+    password: string,
+    seccode: string,
+    mnemonic: string
+  ): Promise<[NFTBindStatus | null, Error | null]> {
+    try {
+      const res = await this.bindNFTAccount(account, password, seccode, mnemonic);
+      return [res[0], null];
+    } catch (error) {
+      return [null, error as Error];
+    }
+  }
+  
 
   /**
    * 创建子账号，只有带有助记词的用户才能创建子账号
@@ -270,6 +340,25 @@ export class AuthModule implements DCModule, IAuthOperations {
   }
 
   /**
+   * 创建子账号，只有带有助记词的用户才能创建子账号
+   * 子账号创建后，用助记词登陆子账号App，与调用登陆了主账号的App进行授权登陆，是同一个用户
+   *
+   * @param appId 应用ID
+   * @returns [私钥字符串, 错误]
+   */
+  async generateAppAccountWithNoThrow(
+    appId: string,
+    mnemonic: string
+  ): Promise<[string | null, Error | null]> {
+    try {
+      const res = await this.generateAppAccount(appId, mnemonic);
+      return [res[0], null];
+    } catch (error) {
+      return [null, error as Error];
+    }
+  }
+
+  /**
    * 检查NFT账号是否成功绑定到用户的公钥
    * @param nftAccount NFT账号
    * @param pubKeyStr 公钥字符串
@@ -280,6 +369,20 @@ export class AuthModule implements DCModule, IAuthOperations {
     const accountManager = new AccountManager(this.context);
     const res = await accountManager.isNftAccountBindSuccess(nftAccount, pubKeyStr);
     return res;
+  }
+  /**
+   * 检查NFT账号是否成功绑定到用户的公钥,不抛出异常
+   * @param nftAccount NFT账号
+   * @param pubKeyStr 公钥字符串
+   * @returns [是否成功绑定, 错误信息]
+   */
+  async isNftAccountBindSuccessWithNoThrow(nftAccount: string, pubKeyStr: string): Promise<[boolean | null, Error | null]> {
+    try {
+      const res = await this.isNftAccountBindSuccess(nftAccount, pubKeyStr);
+      return [res, null];
+    } catch (error) {
+      return [null, error as Error];
+    }
   }
 
   /**
@@ -294,11 +397,35 @@ export class AuthModule implements DCModule, IAuthOperations {
     return res;
   }
 
+  /**
+   * 检查NFT账号是否已经被绑定,不抛出异常
+   * @param nftAccount NFT账号
+   * @returns [是否被其他账号绑定, 错误信息]
+   */
+  async isNftAccountBindedWithNoThrow(nftAccount: string): Promise<[boolean | null, Error | null]> {
+    try {
+      const res = await this.isNftAccountBinded(nftAccount);
+      return [res, null];
+    } catch (error) {
+      return [null, error as Error];
+    }
+  }
+
   // 获取用户钱包信息
   async getUserInfoWithAccount(account: string): Promise<User> {
     this.assertInitialized();
     const res = await this.context.dcChain.getUserInfoWithAccount(account);
     return res;
+  }
+
+  // 获取用户钱包信息，不抛出异常
+  async getUserInfoWithAccountWithNoThrow(account: string): Promise<[User | null, Error | null]> {
+    try {
+      const res = await this.getUserInfoWithAccount(account);
+      return [res, null];
+    } catch (error) {
+      return [null, error as Error];
+    }
   }
 
   /**
@@ -363,12 +490,36 @@ export class AuthModule implements DCModule, IAuthOperations {
       }
     })();
   }
+ 
+  /**
+   * 开启定时验证 token 线程,不抛出异常
+   */
+  async startDcPeerTokenKeepValidTaskWithNoThrow(): Promise<[boolean, Error | null]> {
+    try {
+      this.startDcPeerTokenKeepValidTask();
+      return [true, null];
+    } catch (error) {
+      return [false, error as Error];
+    }
+  }
+  
 
   /**
    * 停止token验证任务
    */
   stopTokenKeepValidTask(): void {
     this.tokenTask = false;
+  }
+  /**
+   * 停止token验证任务,不抛出异常
+   */
+  async stopTokenKeepValidTaskWithNoThrow(): Promise<[boolean, Error | null]> {
+    try {
+      this.stopTokenKeepValidTask();
+      return [true, null];
+    } catch (error) {
+      return [false, error as Error];
+    }
   }
 
   /**
@@ -490,6 +641,15 @@ export class AuthModule implements DCModule, IAuthOperations {
     }
   }
 
+  async getTokenWithDCConnectInfoWithNoThrow(connectInfo: any): Promise<[boolean, Error | null]> {
+    try {
+      await this.getTokenWithDCConnectInfo(connectInfo);
+      return [true, null];
+    } catch (error) {
+      return [false, error as Error];
+    }
+  }
+
   /**
    * 获取用户信息
    * @param nftAccount NFT账户
@@ -504,6 +664,19 @@ export class AuthModule implements DCModule, IAuthOperations {
     logger.info("获取用户信息成功:", userInfo);
     return userInfo;
   }
+  /**
+   * 获取用户信息,不抛出异常
+   * @param nftAccount NFT账户
+   * @returns [用户信息, 错误信息]
+   */
+  async getUserInfoWithNftWithNoThrow(nftAccount: string): Promise<[User | null, Error | null]> {
+    try {
+      const res = await this.getUserInfoWithNft(nftAccount);
+      return [res[0], null];
+    } catch (error) {
+      return [null, error as Error];
+    }
+  }
 
   /**
    * 检查用户空间是否足够
@@ -515,6 +688,19 @@ export class AuthModule implements DCModule, IAuthOperations {
 
     const pubkeyRaw = this.context.getPubkeyRaw();
     return this.context.dcChain.ifEnoughUserSpace(pubkeyRaw, needSize);
+  }
+  /**
+   * 检查用户空间是否足够,不抛出异常
+   * @param needSize 需要的空间大小
+   * @returns [是否足够, 错误信息]
+   */
+  async ifEnoughUserSpaceWithNoThrow(needSize?: number): Promise<[boolean | null, Error | null]> {
+    try {
+      const res = await this.ifEnoughUserSpace(needSize);
+      return [res, null];
+    } catch (error) {
+      return [null, error as Error];
+    }
   }
 
   /**
@@ -530,6 +716,18 @@ export class AuthModule implements DCModule, IAuthOperations {
     }
     return this.context.dcChain.refreshUserInfo(pubkeyRaw);
   }
+  /**
+   * 刷新用户信息,不抛出异常
+   * @returns [用户信息, 错误信息]
+   */
+  async refreshUserInfoWithNoThrow(): Promise<[User | null, Error | null]> {
+    try {
+      const res = await this.refreshUserInfo();
+      return [res, null];
+    } catch (error) {
+      return [null, error as Error];
+    }
+  }
 
   /**
    * 获取用户默认数据库
@@ -543,6 +741,23 @@ export class AuthModule implements DCModule, IAuthOperations {
     this.assertInitialized();
      const accountManager = new AccountManager(this.context);
     return accountManager.setUserDefaultDB(threadId,rk,sk,remark,vaccount);
+  }
+
+  /**
+   * 获取用户默认数据库,不抛出异常
+   * @param threadId 数据库ID
+   * @param rk 读取密钥,主要用来加解密真正的数据,注意对数据记录进行加密和解密
+   * @param sk 服务密钥,主要用来处理传输过程加解密,主要对数据链表头进行加密和解密
+   * @param remark 备注信息
+   * @returns [用户默认数据库信息, 错误信息]
+   */
+  async setUserDefaultDBWithNoThrow(threadId: string, rk: string, sk: string, remark: string, vaccount?: string): Promise< Error | null> {
+    try {
+      await this.setUserDefaultDB(threadId, rk, sk, remark, vaccount);
+      return null;
+    } catch (error) {
+      return error as Error;
+    }
   }
 
   /**

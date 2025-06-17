@@ -56,9 +56,10 @@ export class MessageModule implements DCModule, IMessageOperations {
    * @returns 发送结果
    */
   async sendMsgToUserBox(receiver: string, msg: string): Promise<[number | null, Error | null]> {
-    this.assertInitialized();
+   
     
     try {
+       this.assertInitialized();
       const res = await this.messageManager.sendMsgToUserBox(
         this.context.appInfo?.appId || "",
         receiver,
@@ -69,7 +70,7 @@ export class MessageModule implements DCModule, IMessageOperations {
       return res;
     } catch (error) {
       logger.error(`发送消息到用户 ${receiver} 失败:`, error);
-      throw error;
+      return [null, error as Error];
     }
   }
   
@@ -79,9 +80,10 @@ export class MessageModule implements DCModule, IMessageOperations {
    * @returns 消息列表
    */
   async getMsgFromUserBox(limit?: number): Promise<[dcnet.pb.IUserMsg[] | null, Error | null]> {
-    this.assertInitialized();
+  
     
     try {
+      this.assertInitialized();
       const res = await this.messageManager.getMsgFromUserBox(
         this.context.appInfo?.appId || "",
         limit
@@ -91,7 +93,7 @@ export class MessageModule implements DCModule, IMessageOperations {
       return res;
     } catch (error) {
       logger.error("获取用户消息失败:", error);
-      throw error;
+      return [null, error as Error];
     }
   }
   
