@@ -19,7 +19,12 @@ export const Errors = {
 
   // user not bind to this peer
   USER_NOT_BIND_TO_PEER: new AppError('USER_NOT_BIND_TO_PEER', 'user not bind to this peer'),
-
+  
+  NO_USER_INFO: new AppError("NO_USER_INFO", "no user info found"),
+  NO_DC_PEER_CONNECTED: new AppError("NO_DC_PEER_CONNECTED", "no dc peer connected"),
+  FAIL_TO_GET_BLOCKHEIGHT: new AppError("FAIL_TO_GET_BLOCKHEIGHT", "fail to get blockheight"),
+  FAIL_TO_GET_TOKEN: new AppError("FAIL_TO_GET_TOKEN", "fail to get token"),
+  NO_CHAIN_UTIL: new AppError("NO_CHAIN_UTIL", "no chain util found"),
   // // User management errors
   // USER_BINDED: new AppError('USER_BINDED', 'user has binded an account'),
   // ACCOUNT_BINDED: new AppError('ACCOUNT_BINDED', 'account has been Binded with other user'),

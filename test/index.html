@@ -62,7 +62,7 @@
 
     const initDB = async () => {
       if(dc && dc.db) {
-          const res = await dc.initUserDB(dbCollections,false);
+          const res = await dc.initUserDB(dbCollections,true);
           console.log('initUserDB res', res);
       }
     };

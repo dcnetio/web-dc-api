@@ -348,3 +348,10 @@ export interface AIChatMessageRequest {
   chatMessages: AIChatMessage[];
 }
 
+export interface IAppInfo {
+  appId: string;
+  domain: string;
+  owner: string;
+  rewarder: string;
+}
+

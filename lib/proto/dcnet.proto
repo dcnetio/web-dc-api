@@ -1286,6 +1286,21 @@ message GetUserOffChainUsedInfoReply{
 
 
 
+message SetAppInfoRequest {
+    bytes  appId = 1; //要设置的应用id
+    bytes  ownerAccount = 2; //要设置的应用的所有者账号,如果不是应用所有者,表示转让
+    bytes  rewardAccount =3;//奖励发放账号
+    bytes  domain = 4; //应用的域名,多个域名以逗号分隔
+    uint32 blockheight = 5;//设置时的区块高度
+    bytes  peerid = 6; //允许发起上链请求的peerid
+    bytes signature = 7;//sign(appId+ownerAccount+rewardAccount+domain+blockheight+peerid)
+}
+
+message SetAppInfoReply {
+}
+
+
+
 // Service is the peer-to-peer network API for thread orchestration.
 service Service {
     //AddThread to a peer
@@ -1508,4 +1523,8 @@ service Service {
 
    //申请扣除用户的AI代理的操作次数
    rpc DeductUserAIProxyOpTimes(DeductUserAIProxyOpTimesRequest) returns (DeductUserAIProxyOpTimesReply) {}
+
+   /*************************应用设置相关接口*************************/
+   rpc SetAppInfo(SetAppInfoRequest) returns (SetAppInfoReply) {} //设置应用基本信息,发布应用或者更新发布信息时调用
 }
+

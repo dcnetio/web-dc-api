@@ -19697,6 +19697,230 @@ export namespace dcnet {
             public static getTypeUrl(typeUrlPrefix?: string): string;
         }
 
+        /** Properties of a SetAppInfoRequest. */
+        interface ISetAppInfoRequest {
+
+            /** SetAppInfoRequest appId */
+            appId?: (Uint8Array|null);
+
+            /** SetAppInfoRequest ownerAccount */
+            ownerAccount?: (Uint8Array|null);
+
+            /** SetAppInfoRequest rewardAccount */
+            rewardAccount?: (Uint8Array|null);
+
+            /** SetAppInfoRequest domain */
+            domain?: (Uint8Array|null);
+
+            /** SetAppInfoRequest blockheight */
+            blockheight?: (number|null);
+
+            /** SetAppInfoRequest peerid */
+            peerid?: (Uint8Array|null);
+
+            /** SetAppInfoRequest signature */
+            signature?: (Uint8Array|null);
+        }
+
+        /** Represents a SetAppInfoRequest. */
+        class SetAppInfoRequest implements ISetAppInfoRequest {
+
+            /**
+             * Constructs a new SetAppInfoRequest.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: dcnet.pb.ISetAppInfoRequest);
+
+            /** SetAppInfoRequest appId. */
+            public appId: Uint8Array;
+
+            /** SetAppInfoRequest ownerAccount. */
+            public ownerAccount: Uint8Array;
+
+            /** SetAppInfoRequest rewardAccount. */
+            public rewardAccount: Uint8Array;
+
+            /** SetAppInfoRequest domain. */
+            public domain: Uint8Array;
+
+            /** SetAppInfoRequest blockheight. */
+            public blockheight: number;
+
+            /** SetAppInfoRequest peerid. */
+            public peerid: Uint8Array;
+
+            /** SetAppInfoRequest signature. */
+            public signature: Uint8Array;
+
+            /**
+             * Creates a new SetAppInfoRequest instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns SetAppInfoRequest instance
+             */
+            public static create(properties?: dcnet.pb.ISetAppInfoRequest): dcnet.pb.SetAppInfoRequest;
+
+            /**
+             * Encodes the specified SetAppInfoRequest message. Does not implicitly {@link dcnet.pb.SetAppInfoRequest.verify|verify} messages.
+             * @param message SetAppInfoRequest message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: dcnet.pb.ISetAppInfoRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified SetAppInfoRequest message, length delimited. Does not implicitly {@link dcnet.pb.SetAppInfoRequest.verify|verify} messages.
+             * @param message SetAppInfoRequest message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: dcnet.pb.ISetAppInfoRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes a SetAppInfoRequest message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns SetAppInfoRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): dcnet.pb.SetAppInfoRequest;
+
+            /**
+             * Decodes a SetAppInfoRequest message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns SetAppInfoRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): dcnet.pb.SetAppInfoRequest;
+
+            /**
+             * Verifies a SetAppInfoRequest message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates a SetAppInfoRequest message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns SetAppInfoRequest
+             */
+            public static fromObject(object: { [k: string]: any }): dcnet.pb.SetAppInfoRequest;
+
+            /**
+             * Creates a plain object from a SetAppInfoRequest message. Also converts values to other types if specified.
+             * @param message SetAppInfoRequest
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: dcnet.pb.SetAppInfoRequest, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this SetAppInfoRequest to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for SetAppInfoRequest
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** Properties of a SetAppInfoReply. */
+        interface ISetAppInfoReply {
+        }
+
+        /** Represents a SetAppInfoReply. */
+        class SetAppInfoReply implements ISetAppInfoReply {
+
+            /**
+             * Constructs a new SetAppInfoReply.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: dcnet.pb.ISetAppInfoReply);
+
+            /**
+             * Creates a new SetAppInfoReply instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns SetAppInfoReply instance
+             */
+            public static create(properties?: dcnet.pb.ISetAppInfoReply): dcnet.pb.SetAppInfoReply;
+
+            /**
+             * Encodes the specified SetAppInfoReply message. Does not implicitly {@link dcnet.pb.SetAppInfoReply.verify|verify} messages.
+             * @param message SetAppInfoReply message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: dcnet.pb.ISetAppInfoReply, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified SetAppInfoReply message, length delimited. Does not implicitly {@link dcnet.pb.SetAppInfoReply.verify|verify} messages.
+             * @param message SetAppInfoReply message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: dcnet.pb.ISetAppInfoReply, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes a SetAppInfoReply message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns SetAppInfoReply
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): dcnet.pb.SetAppInfoReply;
+
+            /**
+             * Decodes a SetAppInfoReply message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns SetAppInfoReply
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): dcnet.pb.SetAppInfoReply;
+
+            /**
+             * Verifies a SetAppInfoReply message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates a SetAppInfoReply message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns SetAppInfoReply
+             */
+            public static fromObject(object: { [k: string]: any }): dcnet.pb.SetAppInfoReply;
+
+            /**
+             * Creates a plain object from a SetAppInfoReply message. Also converts values to other types if specified.
+             * @param message SetAppInfoReply
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: dcnet.pb.SetAppInfoReply, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this SetAppInfoReply to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for SetAppInfoReply
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
         /** Represents a Service */
         class Service extends $protobuf.rpc.Service {
 
@@ -20976,6 +21200,20 @@ export namespace dcnet {
              * @returns Promise
              */
             public deductUserAIProxyOpTimes(request: dcnet.pb.IDeductUserAIProxyOpTimesRequest): Promise<dcnet.pb.DeductUserAIProxyOpTimesReply>;
+
+            /**
+             * 应用设置相关接口************************
+             * @param request SetAppInfoRequest message or plain object
+             * @param callback Node-style callback called with the error, if any, and SetAppInfoReply
+             */
+            public setAppInfo(request: dcnet.pb.ISetAppInfoRequest, callback: dcnet.pb.Service.SetAppInfoCallback): void;
+
+            /**
+             * 应用设置相关接口************************
+             * @param request SetAppInfoRequest message or plain object
+             * @returns Promise
+             */
+            public setAppInfo(request: dcnet.pb.ISetAppInfoRequest): Promise<dcnet.pb.SetAppInfoReply>;
         }
 
         namespace Service {
@@ -21609,6 +21847,13 @@ export namespace dcnet {
              * @param [response] DeductUserAIProxyOpTimesReply
              */
             type DeductUserAIProxyOpTimesCallback = (error: (Error|null), response?: dcnet.pb.DeductUserAIProxyOpTimesReply) => void;
+
+            /**
+             * Callback as used by {@link dcnet.pb.Service#setAppInfo}.
+             * @param error Error, if any
+             * @param [response] SetAppInfoReply
+             */
+            type SetAppInfoCallback = (error: (Error|null), response?: dcnet.pb.SetAppInfoReply) => void;
         }
     }
 }
