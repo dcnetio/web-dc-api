@@ -421,7 +421,9 @@ export class ChainUtil {
 
   // 获取应用信息
   getAPPInfo = async (appId: string): Promise<IAppInfo> => {
-    const appInfoStr = await this.dcchainapi?.query.dcNode.appsInfo(appId);
+    const appIdBytes = new TextEncoder().encode(appId);
+    const appIdHex = "0x" + Buffer.from(appIdBytes).toString("hex");
+    const appInfoStr = await this.dcchainapi?.query.dcNode.appsInfo(appIdHex);
     if (!appInfoStr || appInfoStr.isEmpty) {
       throw new Error(`App info for ${appId} not found`);
     }
@@ -429,13 +431,16 @@ export class ChainUtil {
     if (!appJsonInfo || typeof appJsonInfo !== "object") {
       throw new Error(`App info for ${appId} is not valid`);
     }
-    const owner = new Ed25519PubKey(appJsonInfo?.owner_account);
-    const rewarder = "0x" + Buffer.from(appJsonInfo?.rewarded_stash).toString("hex");
-    const domain =  new TextDecoder().decode( appJsonInfo?.domain );
+    //将 ownerAccount 转换为 Ed25519PubKey
+    const ownerBytes = hexToBytes(appJsonInfo?.ownerAccount.slice(2));
+    const owner = new Ed25519PubKey(ownerBytes);
+    const rewarder = appJsonInfo?.rewardedStash;
+    const domainBytes = hexToBytes(appJsonInfo?.domain.slice(2));
+    const domain =  new TextDecoder().decode( domainBytes );
     const appInfo :IAppInfo = {
       appId: appId,
       domain: domain,
-      owner: owner.toString(),
+      owner: owner.string(),
       rewarder: rewarder,
     }
     return appInfo ;

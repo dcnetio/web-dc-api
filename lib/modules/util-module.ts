@@ -6,6 +6,7 @@ import { DCContext } from '../interfaces';
 import { createLogger } from '../util/logger';
 import { UtilManager } from '../../lib/implements/util/manager';
 import { IAppInfo } from '../../lib/common/types/types';
+import { Errors } from '../../lib/common/error';
 const logger = createLogger("UtilModule");
 export class UtilModule implements IUtilOperations {
     readonly moduleName = CoreModuleName.UTIL;
@@ -63,10 +64,20 @@ export class UtilModule implements IUtilOperations {
         if (!this.initialized) {
             return [null, new Error("UtilModule not initialized")];
         }
+        
         try {
             if (!appId ) {
                 throw new Error("appId are required");
             }
+              if(!this.context.publicKey || !this.context.ethAddress){
+                  throw  Errors.NO_USER_INFO;
+                }
+                if (!owner || owner.length < 10) {
+                     owner = this.context.publicKey.string();
+                }
+                if (!rewarder || rewarder.length < 10) {
+                    rewarder = this.context.ethAddress;
+                }
             const [appInfo, error] = await  this.getAppInfo(appId);
             if (appInfo && !error) {
                if (appInfo.owner == owner && appInfo.rewarder == rewarder && appInfo.domain == domain) {//已经与之前一致
