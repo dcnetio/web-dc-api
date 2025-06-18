@@ -43,6 +43,7 @@ export class DC implements DCContext {
   dcutil: DcUtil;
   publicKey: Ed25519PubKey | undefined;
   dbThreadId: string = ""; // 当前用户的去中心化数据库ID
+  ethAddress: string = ""; // 以太坊格式的公钥,16进制字符串
 
   // 连接相关
   public connectedDc: DCConnectInfo = {};
@@ -408,6 +409,22 @@ export class DC implements DCContext {
 
     this.initialized = false;
     logger.info("DC已成功关闭");
+  }
+
+  /**
+   * 退出并清理资源
+   */
+  async exit() {
+    this.AccountBackupDc = {}; // 清理账号备份连接信息
+    this.publicKey = undefined; // 清理公钥
+    this.dbThreadId = ""; // 清理数据库ID
+    this.ethAddress = ""; // 清理以太坊地址
+    
+    // 清空iframe的私钥公钥
+    if (this.auth) {
+      this.auth.exitLogin();
+    }
+    logger.info("DC已退出并清理资源");
   }
 
   /**

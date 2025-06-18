@@ -154,6 +154,10 @@ export class AuthModule implements DCModule, IAuthOperations {
     }
   }
 
+  exitLogin (): void {
+      this.walletManager.exitLogin();
+  }
+
   /**
    * 账户登录(钱包登录)不抛出异常
    * @param nftAccount NFT账户
