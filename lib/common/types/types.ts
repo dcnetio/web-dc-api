@@ -309,7 +309,7 @@ export function isEIP712SignReqMessage(obj: any): obj is EIP712SignReqMessage {
 
 export  type SendMessage<T> = {
     type: string,
-    data: T
+    data?: T
 }
 
 export type ResponseMessage<T> = {
