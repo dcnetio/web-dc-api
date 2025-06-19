@@ -1,10 +1,10 @@
 
-let _baseUrl = '/v0_0_4';
-let _walletOrigin = 'https://wallet.dcnetio.com'
+let _baseUrl = '';
+let _walletOrigin = 'http://localhost:3000'
 // todo 发布需要注释
-if (typeof process !== 'undefined' && process.env && process.env.NODE_ENV === 'development') {
-  _baseUrl =''
-  _walletOrigin = 'http://localhost:3000'
+if (typeof process !== 'undefined' && process.env && process.env.NODE_ENV === 'production') {
+  _baseUrl ='/v0_0_5'
+  _walletOrigin = 'https://wallet.dcnetio.com'
 }
 export const walletOrigin = _walletOrigin;
 export const  walletUrl = _walletOrigin + _baseUrl; // 钱包地址后面统一改成origin+version
