@@ -3,6 +3,7 @@ import commonjs from '@rollup/plugin-commonjs';
 import typescript from '@rollup/plugin-typescript';
 import json from '@rollup/plugin-json';
 import terser from '@rollup/plugin-terser';
+import babel from '@rollup/plugin-babel';
 
 import dts from 'rollup-plugin-dts';
 import pkg from './package.json' assert { type: 'json' };
@@ -17,6 +18,25 @@ const external = [
   ...Object.keys(pkg.dependencies || {}),
   ...Object.keys(pkg.peerDependencies || {})
 ];
+
+const plugins = [
+      json(),
+      typescript(tsconfig),
+      babel({
+        babelHelpers: 'bundled',
+        presets: [
+          ['@babel/preset-env', {
+            // 指定目标浏览器
+            targets: ">0.25%, not dead, not IE 11",
+            // 按需引入 polyfill
+            useBuiltIns: 'usage',
+            corejs: 3
+          }]
+        ],
+        // 确保处理 .ts 文件
+        extensions: ['.js', '.ts']
+      })
+    ];
 
 // 全局变量名
 const GLOBAL_NAME = 'WebDcApi';
@@ -46,8 +66,7 @@ export default [
       commonjs({
         transformMixedEsModules: true
       }),
-      json(),
-      typescript(tsconfig)
+      ...plugins,
     ]
   },
   
@@ -91,8 +110,7 @@ export default [
       commonjs({
         transformMixedEsModules: true,
       }),
-      json(),
-      typescript(tsconfig)
+      ...plugins,
     ]
   },
   
@@ -125,8 +143,7 @@ export default [
       commonjs({
         transformMixedEsModules: true,
       }),
-      json(),
-      typescript(tsconfig),
+      ...plugins,
       terser() // 添加压缩
     ]
   }

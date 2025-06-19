@@ -45,7 +45,6 @@
     "@multiformats/multiaddr": "^12.4.0",
     "@noble/curves": "^1.6.0",
     "@polkadot/api": "11.0.3",
-    "@rollup/plugin-terser": "^0.4.4",
     "@scure/bip32": "^1.5.0",
     "@scure/bip39": "^1.4.0",
     "@stablelib/random": "^2.0.0",
@@ -82,11 +81,16 @@
     "lib": "lib"
   },
   "devDependencies": {
-    "@rollup/plugin-commonjs": "^28.0.3",
+    "@babel/core": "^7.27.4",
+    "@babel/preset-env": "^7.27.2",
+    "@rollup/plugin-babel": "^6.0.4",
+    "@rollup/plugin-commonjs": "^28.0.6",
     "@rollup/plugin-json": "^6.1.0",
     "@rollup/plugin-node-resolve": "^16.0.1",
+    "@rollup/plugin-terser": "^0.4.4",
     "@rollup/plugin-typescript": "^12.1.2",
     "@types/jsbn": "^1.2.33",
+    "core-js": "^3.43.0",
     "nodemon": "^3.1.9",
     "rollup-plugin-dts": "^6.2.1",
     "typescript": "^5.8.3"
