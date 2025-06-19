@@ -26,7 +26,7 @@ import {IPLDNode} from '../core/core';
 import {ThreadRecord,TimestampedRecord,PeerRecords,netPullingLimit} from './define';
 import {CID} from 'multiformats/cid';
 import {getHeadUndef} from '../core/head';
-import {GetRecord,CreateRecord, logToProto, logFromProto} from '../cbor/record';
+import {GetRecord,CreateRecord, logToProto, logFromProto, CreateRecordConfig} from '../cbor/record';
 import {IThreadEvent} from '../core/event';
 import {DBGrpcClient} from './grpcClient';
 import { DBClient } from '../dbclient';
@@ -50,6 +50,7 @@ import {
 import * as buffer from "buffer/";
 import { AsyncMutex } from '../common/AsyncMutex';
 import { DCContext } from '../../../interfaces';
+import { p } from 'lib/common/blowfish/const';
 const { Buffer } = buffer;
 
 
@@ -179,12 +180,11 @@ export class Network implements Net {
    * 创建threaddb  
    */  
   async createThread(id: ThreadID, options: { token: ThreadToken; logKey?: Ed25519PrivKey|Ed25519PubKey, threadKey?: ThreadKey }): Promise<ThreadInfo> {  
+   if (!this.context.publicKey) {  
+      throw new Error("Identity creation failed.");
+    } 
     const identity = this.context.publicKey;  
-    if (identity) {  
-      console.debug("Creating thread with identity:", this.context.publicKey.toString());  
-    } else {  
-      throw new Error("Identity creation failed.");  
-    }  
+   
 
     await this.ensureUniqueLog(id, options.logKey, identity);  
     const threadKey = options.threadKey || this.generateRandomKey();  
@@ -244,7 +244,7 @@ async addThread(
     if (addFromSelf) {
       try {
         await this.logstore.getThread(id);
-      } catch (err) {
+      } catch (err: any) {
         if (err.message === "Thread not found") {
           throw new Error(`Cannot retrieve thread from self: ${err.message}`);
         }
@@ -646,7 +646,7 @@ async ensureUniqueLog(id: ThreadID, key?: Ed25519PrivKey | Ed25519PubKey, identi
       addrs: [addr],  
       managed: true, 
       head: head
-    };  
+    } as IThreadLogInfo;  
 
     // 将日志添加到threaddb存储  
     await this.logstore.addLog(id, logInfo);  
@@ -895,7 +895,7 @@ async getRecordsWithDbClient(
             event = await EventFromNode(block as Node) as Event;
           }
           
-          const dbody = await event.getBody( this.bstore, readKey);
+          const dbody = await event.getBody( this.bstore, readKey?readKey: undefined);
           
           identity =  await KeyConverter.publicFromBytes<Ed25519PubKey>(record.value().pubKey());
           
@@ -903,8 +903,8 @@ async getRecordsWithDbClient(
             await connector!.validateNetRecordBody(dbody, identity);
           } catch (err) {
             // If validation fails, clean up blocks
-            const header = await event.getHeader( this.bstore,null );
-            const body = await event.getBody(this.bstore, null);
+            const header = await event.getHeader( this.bstore );
+            const body = await event.getBody(this.bstore);
             this.bstore.deleteMany([event.cid(), header.cid(), body.cid()]);
             throw err;
           }
@@ -1024,21 +1024,7 @@ async getRecordsWithDbClient(
       // Store internal blocks
       await this.addMany([event, header, body]);
       tRecords.push(newRecord(r, tid, lid) as ThreadRecord);
-    }
-  
-   if (tRecords.length == 2) {
-    console.log("head ID2:", head.id.toString());
-      console.log("record cid:",tRecords[tRecords.length-1].value().cid().toString(),"record prevID:",tRecords[tRecords.length-1].value().prevID()?.toString());
-      console.log("record cid11:",tRecords[tRecords.length-2].value().cid().toString(),"record prevID:",tRecords[tRecords.length-2].value().prevID()?.toString());
-    }
-    if (tRecords.length == 4) {
-      console.log("head ID4:", head.id.toString());
-      console.log("record cid:",tRecords[tRecords.length-1].value().cid().toString(),"record prevID:",tRecords[tRecords.length-1].value().prevID()?.toString());
-      console.log("record cid11:",tRecords[tRecords.length-2].value().cid().toString(),"record prevID:",tRecords[tRecords.length-2].value().prevID()?.toString());
-      console.log("record cid22:",tRecords[tRecords.length-3].value().cid().toString(),"record prevID:",tRecords[tRecords.length-3].value().prevID()?.toString());
-      console.log("record cid33:",tRecords[tRecords.length-4].value().cid().toString(),"record prevID:",tRecords[tRecords.length-4].value().prevID()?.toString());
-    }
-    
+    }  
     return [tRecords, head];
   }
 
@@ -1252,7 +1238,7 @@ async getRecord( id: ThreadID, rid: CID): Promise<IRecord> {
           logID: PeerIDConverter.toBytes(logId),
           limit: limit,
           counter: offset.counter,
-          offset: CidConverter.toBytes(offset.id)
+          offset: offset.id?CidConverter.toBytes(offset.id):new Uint8Array() 
         }
         return pbLog;
      });
@@ -1523,7 +1509,7 @@ async getOrCreateLog(id: ThreadID, identity: PublicKey): Promise<IThreadLogInfo>
   }
   
   // 创建新日志，如果不存在
-  return this.createLog(id, null, identity);
+  return this.createLog(id, undefined, identity);
 }
 
 /**
@@ -1535,11 +1521,17 @@ async newRecord(id: ThreadID, lg: IThreadLogInfo, body: IPLDNode, identity: Publ
   if (!serviceKey) {
     throw new Error("No service key for thread");
   }
+  if (!this.context.publicKey) {
+    throw new Error("No identity provided for creating record");
+  }
   const heads = await this.logstore.headBook.heads(id, lg.id)
   // 创建事件
   const sk = SymmetricKey.fromSymKey(serviceKey);
   const readKey = await this.logstore.keyBook.readKey(id);
   const rk = readKey ? SymmetricKey.fromSymKey(readKey) : null;
+  if (!rk) {
+    throw new Error("No read key for thread");
+  }
   const event = await CreateEvent(
     this.bstore,
     body as Node,
@@ -1547,7 +1539,7 @@ async newRecord(id: ThreadID, lg: IThreadLogInfo, body: IPLDNode, identity: Publ
   );
   // 将事件保存到存储
   await this.bstore.put(event.cid(), event.data());
-  let prev:CID;
+  let prev:CID|undefined = undefined;
   if (heads && heads.length > 0 ){
     prev = heads[0].id;
   }
@@ -1559,7 +1551,9 @@ async newRecord(id: ThreadID, lg: IThreadLogInfo, body: IPLDNode, identity: Publ
     key: lg.privKey as Ed25519PrivKey,
     pubKey: this.context.publicKey,
     serviceKey: sk
-  })
+  } as CreateRecordConfig)
+
+  
   return rec
 }
 

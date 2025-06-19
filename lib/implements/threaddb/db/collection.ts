@@ -722,7 +722,9 @@ async saveIndexes(): Promise<void> {
 async indexAdd(txn: any, key: Key, data: Uint8Array): Promise<void> {
   for (const [path, index] of this.indexes.entries()) {
     try {
-      await this.indexUpdate(path, index, txn, key, data, false);
+     
+      const decoded = dagCBOR.decode<Uint8Array>(data);
+      await this.indexUpdate(path, index, txn, key, decoded, false);
     } catch (err) {
       throw err;
     }
@@ -748,7 +750,7 @@ async indexDelete(txn: any, key: Key, originalData: Uint8Array): Promise<void> {
  */
 async indexUpdate(field: string, index: Index, txn: any, key: Key, input: Uint8Array, deleteOp: boolean): Promise<void> {
   try {
-    const valueKey = await getIndexValue(field, input);
+    const valueKey =  getIndexValue(field, input);
     
     const indexKey = indexPrefix.child(this.baseKey()).child(new Key(field)).child(new Key(valueKey.toString().substring(1)));
     let data: Uint8Array | null = null;
@@ -795,8 +797,7 @@ async indexUpdate(field: string, index: Index, txn: any, key: Key, input: Uint8A
  * 返回对输入的字段搜索结果
  */
 function getIndexValue(field: string, input: Uint8Array): Key {
-  const decoded = dagCBOR.decode<Uint8Array>(input);
-  const jsonObj = JSON.parse(new TextDecoder().decode(decoded));
+  const jsonObj = JSON.parse(new TextDecoder().decode(input));
   const value = traverseFieldPathMap(jsonObj, field);
   
   if (value === undefined) {

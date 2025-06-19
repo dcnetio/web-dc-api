@@ -6,11 +6,13 @@ import { Multiaddr, multiaddr } from "@multiformats/multiaddr";
 import { ApiPromise, WsProvider } from "@polkadot/api";
 
 import { isUser, sha256,hexToAscii } from "../util/utils";
-import { User } from "./types/types";
+import { IAppInfo, User } from "./types/types";
 
 import { hexToBytes } from "@noble/curves/abstract/utils";
 import { base32 } from "multiformats/bases/base32";
 import * as buffer from "buffer/";
+import { Ed25519PubKey } from "./dc-key/ed25519";
+import { UnibaseDecoder } from "multiformats";
 const { Buffer } = buffer;
 
 export interface StoreunitInfo {  
@@ -414,5 +416,34 @@ export class ChainUtil {
       const userInfo = await this.getUserInfoWithAccount(hexAccount);
       return userInfo;
     };
+
+
+
+  // 获取应用信息
+  getAPPInfo = async (appId: string): Promise<IAppInfo> => {
+    const appIdBytes = new TextEncoder().encode(appId);
+    const appIdHex = "0x" + Buffer.from(appIdBytes).toString("hex");
+    const appInfoStr = await this.dcchainapi?.query.dcNode.appsInfo(appIdHex);
+    if (!appInfoStr || appInfoStr.isEmpty) {
+      throw new Error(`App info for ${appId} not found`);
+    }
+    const appJsonInfo = appInfoStr.toJSON() as any;
+    if (!appJsonInfo || typeof appJsonInfo !== "object") {
+      throw new Error(`App info for ${appId} is not valid`);
+    }
+    //将 ownerAccount 转换为 Ed25519PubKey
+    const ownerBytes = hexToBytes(appJsonInfo?.ownerAccount.slice(2));
+    const owner = new Ed25519PubKey(ownerBytes);
+    const rewarder = appJsonInfo?.rewardedStash;
+    const domainBytes = hexToBytes(appJsonInfo?.domain.slice(2));
+    const domain =  new TextDecoder().decode( domainBytes );
+    const appInfo :IAppInfo = {
+      appId: appId,
+      domain: domain,
+      owner: owner.string(),
+      rewarder: rewarder,
+    }
+    return appInfo ;
+  };
 
 }

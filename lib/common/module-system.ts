@@ -103,6 +103,7 @@ export class ModuleSystem {
       CoreModuleName.CLIENT, // 客户端模块
       CoreModuleName.CACHE, // 缓存模块
       CoreModuleName.AIPROXY, // AIProxy模块
+      CoreModuleName.UTIL, // 工具模块
     ];
 
     // 先初始化核心模块

@@ -130,6 +130,37 @@ export class WalletManager {
     });
   };
 
+
+  // 退出登录 清除iframe中的私钥和公钥
+  exitLogin = (): Promise<boolean>  => {
+    return new Promise((resolve, reject) => {
+      // 每100ms发送一次消息,直到钱包加载完成
+      const message = {
+        type: "exit",
+      };
+      this.sendMessageToIframe(message, 60000)
+        .then((response) => {
+          if(!response || !response.data || !response.data.data) {
+            console.error("exitLogin response is null");
+            reject(new WalletError("exitLogin response is null"));
+            return;
+          }
+          const data = response.data?.data;
+          const messageData = data.message;
+          if(data.success === false) {
+            console.error("exitLogin error", message);
+            reject(new WalletError("exitLogin messageData is null"));
+            return;
+          }
+          resolve(messageData);
+        })
+        .catch((error) => {
+          console.error("exitLogin error", error);
+          reject(error);
+        });
+    });
+  };
+
 /**
  * 用私钥解密数据
  * @param payload 需要解密的数据

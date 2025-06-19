@@ -309,7 +309,7 @@ export function isEIP712SignReqMessage(obj: any): obj is EIP712SignReqMessage {
 
 export  type SendMessage<T> = {
     type: string,
-    data: T
+    data?: T
 }
 
 export type ResponseMessage<T> = {
@@ -346,5 +346,12 @@ export interface AIChatMessage {
 
 export interface AIChatMessageRequest {
   chatMessages: AIChatMessage[];
+}
+
+export interface IAppInfo {
+  appId: string;
+  domain: string;
+  owner: string;
+  rewarder: string;
 }
 

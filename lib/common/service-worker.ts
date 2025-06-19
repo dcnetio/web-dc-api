@@ -17,6 +17,10 @@ export async function registerServiceWorker(fileOps?: IFileOperations, swUrl: st
       // const registration = await navigator.serviceWorker.register(
       //   new URL('/sw.js', import.meta.url).href
       // );
+      if (window.location.protocol != 'https:' && window.location.hostname != 'localhost') {
+        logger.error('ServiceWorker 仅支持https协议');
+        return null;
+      }
       
       // 路径在函数内部解析，不在模块顶层
       const swPath = typeof window !== 'undefined' 

@@ -85,8 +85,7 @@ export class AuthModule implements DCModule, IAuthOperations {
       const data = await this.walletManager.openConnect();
       const publicKey = new Ed25519PubKey(data.appAccount);
       this.context.publicKey = publicKey;
-      console.log("99999999999999accountLogin publicKey", publicKey);
-      console.log("accountLogin data", data);
+      this.context.ethAddress = data.ethAccount;
       // 获取token
       const token = await this.context.connectedDc?.client.GetToken(
         this.context.appInfo.appId || "",
@@ -153,6 +152,10 @@ export class AuthModule implements DCModule, IAuthOperations {
     } catch (error) {
       return [null, error as Error];
     }
+  }
+
+  exitLogin (): void {
+      this.walletManager.exitLogin();
   }
 
   /**

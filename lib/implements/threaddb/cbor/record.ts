@@ -19,6 +19,7 @@ import { KeyConverter, PeerIDConverter } from '../pb/proto-custom-types';
 import { decode } from 'multiformats/hashes/digest';
 import { peerIdFromMultihash } from '@libp2p/peer-id';
 import {multiaddr} from "@multiformats/multiaddr";
+import { Head } from '../core/head';
 // 记录的节点结构
 interface RecordObj {
   block: CID;
@@ -28,7 +29,7 @@ interface RecordObj {
 }
 
 // 创建记录的配置
-interface CreateRecordConfig {
+export interface CreateRecordConfig {
   block: IPLDNode;
   prev?: CID;
   key: PrivKey;
@@ -189,7 +190,7 @@ export async function RemoveRecord(
     addrs: addrs,
     head: lg.head?.id ? lg.head.id.bytes : undefined,
     counter: lg.head?.counter 
-  };
+  } as net_pb.pb.ILog;
   return log;
 }
 
@@ -233,7 +234,7 @@ export async function logFromProto(protoLog: net_pb.pb.ILog): Promise<IThreadLog
     head: {
       id: head,
       counter
-    }
+    } as Head
   };
 }
 
@@ -319,7 +320,9 @@ export class Record implements IRecord {
   constructor(node: Node, obj: RecordObj, block?: IPLDNode) {
     this._node = node;
     this._obj = obj;
-    this._block = block;
+    if (block) {
+      this._block = block;
+    }
   }
   
   cid(): CID {
@@ -387,5 +390,6 @@ data(): Uint8Array {
     if (!ok) {
       return new Error("签名无效");
     }
+    return
   }
 }
