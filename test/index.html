@@ -60,12 +60,40 @@
       }
     }
 
+    let threadId = '';
     const initDB = async () => {
       if(dc && dc.db) {
           const res = await dc.initUserDB(dbCollections,true);
           console.log('initUserDB res', res);
+          threadId = res[0].id;
+          console.log('initUserDB threadId', threadId);
       }
     };
+
+    const insertDB = async () => {
+      if (!dc) {
+        console.error("dc not init");
+        return;
+      }
+      const instance = {
+        title: "person",
+        create_time: Date.now(),
+        modify_time: Date.now(),
+      };
+      const jsonInstance = JSON.stringify(instance); // jsonInstance
+      const res = await dc.db.create(threadId, "ai_chat_list", jsonInstance);
+      console.log("==========db create return", res);
+    }
+
+    const findDB = async () => {
+      if (!dc) {
+        console.error("dc not init");
+        return;
+      }
+      const condition = `{}`
+      const res = await dc.dbManager.find(threadId, "ai_chat_list", condition);
+      console.log("==========db find return", res);
+    }
 
     let fileCID = '';
     const uploadFile = async () => {
@@ -130,6 +158,12 @@
   <br>
   <br>
   <button onclick="initDB()">initDB</button>
+  <br>
+  <br>
+  <button onclick="insertDB()">insertDB</button>
+  <br>
+  <br>
+  <button onclick="findDB()">findDB</button>
   <br>
   <br>
   <input type="file" id="fileInput" @change="uploadFile" />
