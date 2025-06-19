@@ -1,6 +1,16 @@
 // index.ts
 // 导出主要类和功能
-
+// 在您库的入口文件开头添加
+if (typeof Promise !== 'undefined' && !Promise.withResolvers) {
+  Promise.withResolvers = function() {
+    let resolve, reject;
+    const promise = new Promise((res, rej) => {
+      resolve = res;
+      reject = rej;
+    });
+    return { promise, resolve, reject };
+  };
+}
 export { DC } from './dc';
 export { registerServiceWorker, isServiceWorkerActive, updateServiceWorker } from './common/service-worker';
 export * from './common/types/types';
