@@ -256,9 +256,9 @@ export class DC implements DCContext {
           const threadDBInfo = new TextDecoder().decode(dbConfig);
           const threadDBInfos = threadDBInfo ? threadDBInfo.split("|") : [];
           if (threadDBInfos && threadDBInfos.length >= 3) {
-            const threadid = threadDBInfos[0];
-            const rk = threadDBInfos[1];
-            const sk = threadDBInfos[2];
+            const threadid = threadDBInfos[0] || "";
+            const rk = threadDBInfos[1] || "";
+            const sk = threadDBInfos[2] || "";
             const fid = threadDBInfos[3] || ""; //预加载记录文件ID
             const preCount = threadDBInfos[4] || 0; //预加载记录条数
             //判断本地是否存在数据库
