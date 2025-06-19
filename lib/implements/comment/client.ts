@@ -760,9 +760,9 @@ export class CommentClient {
     message.limit = limit;
     message.seekKey = new TextEncoder().encode(seekKey);
     message.aesKey = new TextEncoder().encode(aesKey);
-    // if(vaccount){ // todo 没有vaccount
-    //   message.vaccount = new TextEncoder().encode(vaccount);
-    // }
+    if(vaccount){
+      message.vaccount = new TextEncoder().encode(vaccount);
+    }
     const messageBytes =
       dcnet.pb.GetThemeCommentsRequest.encode(message).finish();
     try {
