@@ -4,6 +4,8 @@ import typescript from '@rollup/plugin-typescript';
 import json from '@rollup/plugin-json';
 import terser from '@rollup/plugin-terser';
 import babel from '@rollup/plugin-babel';
+import replace from '@rollup/plugin-replace';
+
 
 import dts from 'rollup-plugin-dts';
 import pkg from './package.json' assert { type: 'json' };
@@ -20,6 +22,10 @@ const external = [
 ];
 
 const plugins = [
+      // 替换 __DEV__ 变量
+      replace({
+        'process.env.NODE_ENV': 'production'
+      }),
       json(),
       typescript(tsconfig),
       babel({
