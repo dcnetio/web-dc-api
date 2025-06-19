@@ -20,8 +20,8 @@ class IDBDatastoreAdapter implements TxnDatastoreExtended {
       options?: AbortOptions  
     ): AsyncIterable<Key> {  
       const { filters = [], prefix } = query;  
-  
-      for await (const { key } of this.store.query({ prefix })) {  
+      const q = { prefix } as Query;
+      for await (const { key } of this.store.query(q)) {  
         let match = true;  
         
         // 应用所有过滤器  

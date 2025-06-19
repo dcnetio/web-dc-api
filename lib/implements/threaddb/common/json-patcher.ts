@@ -105,11 +105,15 @@ export class JsonPatcher implements EventCodec {
       timestamp: timestamp,
       iD: action.instanceID,  
       collectionName: action.collectionName || 'default',  
-      patch: {  
+      patch: action.current ?{  
         type: action.type,  
         instanceID: action.instanceID,  
         jSONPatch: action.current  
-      }  
+      }  : {  
+        type: action.type,  
+        instanceID: action.instanceID,
+        jSONPatch: new Uint8Array()
+      }
     }));  
   }  
 
@@ -118,10 +122,10 @@ export class JsonPatcher implements EventCodec {
       return [];  
     }
     return patches.map(p => ({  
-      collection:  p.collectionName,  
+      collection:  p.collectionName || 'default',  
       instanceID: p.iD || p.patch.instanceID,  
       timestamp: p.timestamp,  
-      payload:  p.patch.jSONPatch,  
+      payload:  p.patch.jSONPatch ? p.patch.jSONPatch : new Uint8Array(),  
       marshal: async () => this.marshalPatchEvent(p)  
     }));  
   }  
@@ -135,7 +139,7 @@ export class JsonPatcher implements EventCodec {
       op: {  
         type: event.patch.type,  
         id: event.patch.instanceID,  
-        patch:  event.patch.jSONPatch  
+        patch:  event.patch.jSONPatch ? event.patch.jSONPatch : new Uint8Array() 
       }
     });  
   }  
