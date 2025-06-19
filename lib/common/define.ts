@@ -1,7 +1,8 @@
 
 let _baseUrl = '/v0_0_4';
 let _walletOrigin = 'https://wallet.dcnetio.com'
-if (typeof process !== 'undefined' && process.env && process.env.NODE_ENV === 'development') {
+// todo 发布需要注释
+if (typeof process !== 'undefined' && process.env && process.env['NODE_ENV'] === 'development') {
   _baseUrl =''
   _walletOrigin = 'http://localhost:3000'
 }
