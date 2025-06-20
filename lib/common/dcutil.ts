@@ -271,9 +271,9 @@ export class DcUtil {
       },
 
       connectionManager: {
-        maxParallelDials: 100,
-        maxConnections: 100,
-        inboundConnectionThreshold: 100,
+        maxParallelDials: 30,
+        maxConnections: 30,
+        inboundConnectionThreshold: 30,
       },
 
       streamMuxers: [
@@ -281,17 +281,17 @@ export class DcUtil {
           maxStreamWindowSize: 256 * 1024, // 流窗口大小
           maxMessageSize: 16 * 1024, // 消息分片阈值
           keepAliveInterval: 15_000, // 保活检测间隔 (ms)
-          maxInboundStreams: 100,
-          maxOutboundStreams: 100,
+          maxInboundStreams: 30,
+          maxOutboundStreams: 50,
           initialStreamWindowSize: 256 * 1024,
           enableKeepAlive: false,
         }),
       ],
       services: {
-        dht: kadDHT({
-          // 启用 DHT 加强节点发现
-          clientMode: true,
-        }),
+        // dht: kadDHT({
+        //   // 启用 DHT 加强节点发现
+        //   clientMode: true,
+        // }),
         autoNAT: autoNAT(),
         dcutr: dcutr(),
         identify: identify(),
