@@ -421,6 +421,9 @@ export class ChainUtil {
 
   // 获取应用信息
   getAPPInfo = async (appId: string): Promise<IAppInfo> => {
+    if (!this.dcchainapi || !this.dcchainapi.isReady) {
+      throw new Error("dcchainapi is not initialized");
+    }
     const appIdBytes = new TextEncoder().encode(appId);
     const appIdHex = "0x" + Buffer.from(appIdBytes).toString("hex");
     const appInfoStr = await this.dcchainapi?.query.dcNode.appsInfo(appIdHex);
@@ -437,11 +440,14 @@ export class ChainUtil {
     const rewarder = appJsonInfo?.rewardedStash;
     const domainBytes = hexToBytes(appJsonInfo?.domain.slice(2));
     const domain =  new TextDecoder().decode( domainBytes );
+    const fidBytes = hexToBytes(appJsonInfo?.fid.slice(2));
+    const fid = new TextDecoder().decode(fidBytes).toString();
     const appInfo :IAppInfo = {
       appId: appId,
       domain: domain,
       owner: owner.string(),
       rewarder: rewarder,
+      fid: fid,
     }
     return appInfo ;
   };

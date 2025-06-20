@@ -19718,6 +19718,9 @@ export namespace dcnet {
             /** SetAppInfoRequest peerid */
             peerid?: (Uint8Array|null);
 
+            /** SetAppInfoRequest fid */
+            fid?: (Uint8Array|null);
+
             /** SetAppInfoRequest signature */
             signature?: (Uint8Array|null);
         }
@@ -19748,6 +19751,9 @@ export namespace dcnet {
 
             /** SetAppInfoRequest peerid. */
             public peerid: Uint8Array;
+
+            /** SetAppInfoRequest fid. */
+            public fid: Uint8Array;
 
             /** SetAppInfoRequest signature. */
             public signature: Uint8Array;

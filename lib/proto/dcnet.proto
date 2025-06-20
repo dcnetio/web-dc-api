@@ -1293,7 +1293,8 @@ message SetAppInfoRequest {
     bytes  domain = 4; //应用的域名,多个域名以逗号分隔
     uint32 blockheight = 5;//设置时的区块高度
     bytes  peerid = 6; //允许发起上链请求的peerid
-    bytes signature = 7;//sign(appId+ownerAccount+rewardAccount+domain+blockheight+peerid)
+    bytes  fid = 7; //appId 对应的文件cid
+    bytes signature = 8;//sign(appId+ownerAccount+rewardAccount+domain+blockheight+fid+peerid)
 }
 
 message SetAppInfoReply {

@@ -60,7 +60,7 @@ export class UtilModule implements IUtilOperations {
          * @param owner 
          * @param rewarder 
          */
-    async setAppInfo(appId: string,domain:string,owner?: string,rewarder?: string): Promise<[boolean|null, Error | null]> {
+    async setAppInfo(appId: string,fid:string="",domain:string,owner?: string,rewarder?: string): Promise<[boolean|null, Error | null]> {
         if (!this.initialized) {
             return [null, new Error("UtilModule not initialized")];
         }
@@ -80,7 +80,7 @@ export class UtilModule implements IUtilOperations {
                 }
             const [appInfo, error] = await  this.getAppInfo(appId);
             if (appInfo && !error) {
-               if (appInfo.owner == owner && appInfo.rewarder == rewarder && appInfo.domain == domain) {//已经与之前一致
+               if (appInfo.owner == owner && appInfo.rewarder == rewarder && appInfo.domain == domain && appInfo.fid == fid) {//已经与之前一致
                     return [true, null];
                 }
             }
@@ -88,7 +88,8 @@ export class UtilModule implements IUtilOperations {
                 appId,
                 domain,
                 owner,
-                rewarder
+                rewarder,
+                fid
             );
             // 假设保存成功
             return [true, null];
