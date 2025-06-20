@@ -1282,8 +1282,8 @@ export class Txn implements ITxn{
             
             // 如果需要排序且不是按ID排序
             if (q.sort.fieldPath && q.sort.fieldPath !== idFieldName) {
-              let wrongField = false;
-              let cantCompare = false;
+             // let wrongField = false;
+            //  let cantCompare = false;
               
               // 对结果进行排序
               values.sort((a, b) => {
@@ -1293,7 +1293,7 @@ export class Txn implements ITxn{
                 
                 // 处理缺少值的情况
                 if (fieldA === undefined || fieldB === undefined) {
-                  wrongField = true;
+               //   wrongField = true;
                   
                   // 使null值排在最前或最后
                   if (fieldA === undefined && fieldB === undefined) return 0;
@@ -1311,19 +1311,19 @@ export class Txn implements ITxn{
                   
                   return result;
                 } catch (err) {
-                  cantCompare = true;
+               //   cantCompare = true;
                   return 0;
                 }
               });
               
-              // 处理排序错误
-              if (wrongField) {
-                throw ErrInvalidSortingField;
-              }
+              // // 处理排序错误
+              // if (wrongField) {
+              //   throw ErrInvalidSortingField;
+              // }
               
-              if (cantCompare) {
-                throw new Error("Can't compare while sorting");
-              }
+              // if (cantCompare) {
+              //   throw new Error("Can't compare while sorting");
+              // }
             }
             
             // 提取最终结果
