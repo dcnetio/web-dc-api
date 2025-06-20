@@ -2,10 +2,10 @@
 let _baseUrl = '';
 let _walletOrigin = 'http://localhost:3000'
 // todo 发布需要注释
-if (typeof process !== 'undefined' && process.env && process.env.NODE_ENV === 'production') {
-  _baseUrl ='/v0_0_6'
-  _walletOrigin = 'https://wallet.dcnetio.com'
-}
+// if (typeof process !== 'undefined' && process.env && process.env.NODE_ENV === 'production') {
+//   _baseUrl ='/v0_0_6'
+//   _walletOrigin = 'https://wallet.dcnetio.com'
+// }
 export const walletOrigin = _walletOrigin;
 export const  walletUrl = _walletOrigin + _baseUrl; // 钱包地址后面统一改成origin+version
 export const walletWindowName = "walletWindow"; // 窗口名称
