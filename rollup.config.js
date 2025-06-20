@@ -23,9 +23,9 @@ const external = [
 
 const plugins = [
       // 替换 __DEV__ 变量
-      replace({
-        'process.env.NODE_ENV': 'production'
-      }),
+      // replace({
+      //   'process.env.NODE_ENV': 'production'
+      // }),
       json(),
       typescript(tsconfig),
       babel({
