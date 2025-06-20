@@ -353,5 +353,6 @@ export interface IAppInfo {
   domain: string;
   owner: string;
   rewarder: string;
+  fid: string;
 }
 

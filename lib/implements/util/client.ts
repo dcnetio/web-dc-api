@@ -24,7 +24,7 @@ export class UtilClient {
  * @param remark 备注信息
  * @returns Promise resolving when operation completes
  */
-async setAppInfo(appId: Uint8Array,owner: Uint8Array,rewarder: Uint8Array,domain: Uint8Array,blockHeight: number,peerId: string,signature: Uint8Array): Promise<void> { 
+async setAppInfo(appId: Uint8Array,owner: Uint8Array,rewarder: Uint8Array,domain: Uint8Array,blockHeight: number,peerId: string,fid:string,signature: Uint8Array): Promise<void> { 
   if (this.client.p2pNode == null) {
       throw new Error("p2pNode is null");
   }
@@ -45,6 +45,7 @@ async setAppInfo(appId: Uint8Array,owner: Uint8Array,rewarder: Uint8Array,domain
     message.domain = domain;
     message.blockheight = blockHeight;
     message.peerid = new TextEncoder().encode(peerId);
+    message.fid = new TextEncoder().encode(fid);
     message.signature = signature;
     
     

@@ -43,8 +43,9 @@ export class UtilManager {
   async setAppInfo(
     appId: string,
     domain: string,
-    owner?: string,
-    rewarder?: string
+    owner: string,
+    rewarder: string,
+    fid: string = "",
   ): Promise<void> {
 
     if(!this.context.publicKey || !this.context.ethAddress){
@@ -94,7 +95,8 @@ export class UtilManager {
           ownerAccount.length +
           rewardAccount.length +
           hvalue.length +
-          serverPidBytes.length
+          serverPidBytes.length+
+          fid.length
       );            
     let offset = 0;
     preSign.set(appIdBytes, offset);
@@ -108,6 +110,8 @@ export class UtilManager {
     preSign.set(hvalue, offset);
     offset += hvalue.length;
     preSign.set(serverPidBytes, offset);
+    offset += serverPidBytes.length;
+    preSign.set(new TextEncoder().encode(fid), offset);
     // 使用私钥签名
     const signature = await this.context.sign(preSign);
 
@@ -118,6 +122,7 @@ export class UtilManager {
       domainBytes,
       blockHeight,
       serverPidStr,
+      fid,
       signature
     );
     return;
