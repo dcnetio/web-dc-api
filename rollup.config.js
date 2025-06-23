@@ -4,7 +4,7 @@ import typescript from '@rollup/plugin-typescript';
 import json from '@rollup/plugin-json';
 import terser from '@rollup/plugin-terser';
 import babel from '@rollup/plugin-babel';
-// import replace from '@rollup/plugin-replace';
+import replace from '@rollup/plugin-replace';
 
 
 import dts from 'rollup-plugin-dts';
