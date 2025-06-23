@@ -137,13 +137,15 @@ export class DC implements DCContext {
 
   /**
    * 初始化DC实例
+   * backStep 0-注册模块成功，1-链节点连接成功，2-节点连接成功，3-初始化模块成功，
    * @returns 是否成功初始化
    */
-  init = async (): Promise<boolean> => {
+  init = async (backStep?: (step: number) => Promise<void>): Promise<boolean> => {
     if (this.initialized) {
       logger.warn("DC已经初始化，跳过重复初始化");
       return true;
     }
+    backStep && (await backStep(0));
 
     let createChain = false;
     try {
@@ -162,6 +164,7 @@ export class DC implements DCContext {
         }
       }
 
+      backStep && (await backStep(1));
       // 链节点已连接
       logger.info("链节点连接成功");
 
@@ -189,6 +192,7 @@ export class DC implements DCContext {
           this.connectedDc.nodeAddr = nodeAddr; // 当前地址
           this.connectedDc.client = await this.newDcClient(nodeAddr);
 
+          backStep && (await backStep(2));
           // 初始化所有模块
           const modulesInitialized = await this.moduleSystem.initializeAll();
           if (!modulesInitialized) {
@@ -197,6 +201,7 @@ export class DC implements DCContext {
           }
           // 在这里设置初始化标志，确保后续模块方法可以正常访问
           this.initialized = true;
+          backStep && (await backStep(3));
 
           // 定时维系token
           this.auth.startDcPeerTokenKeepValidTask();

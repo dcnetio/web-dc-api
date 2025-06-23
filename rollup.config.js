@@ -20,12 +20,13 @@ const external = [
   ...Object.keys(pkg.dependencies || {}),
   ...Object.keys(pkg.peerDependencies || {})
 ];
-
+console.log('NODE_ENV:', process.env.NODE_ENV);
 const plugins = [
       // 替换 __DEV__ 变量
-      // replace({
-      //   'process.env.NODE_ENV': 'production'
-      // }),
+      replace({
+        __IS_PROD__: true,
+        preventAssignment: true
+      }),
       json(),
       typescript(tsconfig),
       babel({
