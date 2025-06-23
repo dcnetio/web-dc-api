@@ -205,6 +205,7 @@ export class AuthModule implements DCModule, IAuthOperations {
       if (mnemonic) {
         if (this.context.appInfo?.appId) {
           const accountManager = new AccountManager(this.context);
+         
           const res = await accountManager.generateAppAccount(
             this.context.appInfo?.appId,
             mnemonic
