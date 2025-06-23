@@ -1,10 +1,24 @@
 
+// 只考虑浏览器环境
+declare const __IS_PROD__: boolean | undefined;
+
+let isProd = false;
+
+// 打包后用 __IS_PROD__，源码直用时用 window.IS_PROD
+if (typeof __IS_PROD__ !== 'undefined') {
+  isProd = __IS_PROD__;
+} else if (typeof window !== 'undefined' && typeof (window as any).IS_PROD !== 'undefined') {
+  isProd = (window as any).IS_PROD;
+}
+
 let _baseUrl = '';
-let _walletOrigin = 'http://localhost:3000'
-// todo 发布需要注释
-if (typeof process !== 'undefined' && process.env && process.env.NODE_ENV === 'production') {
+let _walletOrigin = ''
+if (isProd) {
   _baseUrl ='/v0_0_8'
   _walletOrigin = 'https://wallet.dcnetio.com'
+} else {
+  _baseUrl = ''
+  _walletOrigin = 'http://localhost:3000'
 }
 export const walletOrigin = _walletOrigin;
 export const  walletUrl = _walletOrigin + _baseUrl; // 钱包地址后面统一改成origin+version
