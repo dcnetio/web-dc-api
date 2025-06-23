@@ -438,10 +438,18 @@ export class ChainUtil {
     const ownerBytes = hexToBytes(appJsonInfo?.ownerAccount.slice(2));
     const owner = new Ed25519PubKey(ownerBytes);
     const rewarder = appJsonInfo?.rewardedStash;
-    const domainBytes = hexToBytes(appJsonInfo?.domain.slice(2));
-    const domain =  new TextDecoder().decode( domainBytes );
-    const fidBytes = hexToBytes(appJsonInfo?.fid.slice(2));
-    const fid = new TextDecoder().decode(fidBytes).toString();
+    
+    let domain =  ""
+     if (appJsonInfo?.domain && appJsonInfo?.domain.length > 0) {
+        const domainBytes = hexToBytes(appJsonInfo?.domain.slice(2));
+        domain = new TextDecoder().decode(domainBytes).toString();
+    }
+    
+    let  fid =  "";
+     if (appJsonInfo?.fid && appJsonInfo?.fid.length > 0) {
+      const fidBytes = hexToBytes(appJsonInfo?.fid.slice(2));
+      fid = new TextDecoder().decode(fidBytes).toString();
+    }
     const appInfo :IAppInfo = {
       appId: appId,
       domain: domain,
