@@ -44,9 +44,10 @@ const plugins = [
         extensions: ['.js', '.ts']
       }),
       terser({
-        mangle: {
-          toplevel: true, // 混淆顶层变量和函数名
-        },
+        // 暂时去掉混淆
+        // mangle: {
+        //   toplevel: true, // 混淆顶层变量和函数名
+        // },
         compress: {
           drop_console: true, // 移除console
           drop_debugger: true // 移除debugger
