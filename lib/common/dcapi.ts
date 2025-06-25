@@ -78,7 +78,6 @@ export class Client {
         );
         await grpcClient.ValidToken();
       } catch (err) {
-        console.error("GetToken error:", err);
         throw err;
       }
     }
