@@ -81,106 +81,6 @@ export class CollectionEvent<T = any> implements Event<T> {
   }
 }
 
-// export class DefaultEventCodec implements EventCodec {
-//   async reduce(
-//     events: Event[],
-//     store: TxnDatastoreExtended,
-//     baseKey: Key,
-//     indexFn: IndexFunc
-//   ): Promise<ReduceAction[]> {
-//     const reduceActions: ReduceAction[] = [];
-
-//     for (const event of events) {
-//       const key = baseKey.child(new Key(`/${event.collection}/${event.instanceID}`));
-
-//       // 使用事务处理数据变更
-//       const txn = await store.newTransactionExtended(false);
-//       const oldData = await txn.get(key);
-//       const newData = event.payload ? new TextEncoder().encode(jsonStringify(event.payload)) : undefined;
-//         // 应用索引更新
-//       await indexFn(event.collection, key, txn, oldData, newData);
-//         // 保存数据
-//         if (newData) {
-//           await txn.put(key, newData);
-//         } else {
-//           await txn.delete(key);
-//         }
-//       await txn.commit();
-//       reduceActions.push({
-//         type: this.getCoreActionType(event),
-//         collection: event.collection,
-//         instanceID: event.instanceID
-//       });
-//     }
-//     return reduceActions;
-//   }
-
-// /**
-//  * Creates a list of events from a given list of actions and returns
-//  * the events along with their serialized representation.
-//  *
-//  * For each action, constructs an event with its payload and adds it
-//  * to the list of events. The entire collection of events is then
-//  * serialized into a Uint8Array using JSON encoding.
-//  *
-//  * @param actions - The actions to convert into events.
-//  * @returns A promise that resolves to a tuple containing the list of
-//  * events and their serialized Uint8Array representation.
-//  */
-
-//   async create(actions: Action[]): Promise<[Event[], Uint8Array]> {
-//     const events: Event[] = [];
-
-//     for (const action of actions) {
-//       const payload = this.buildEventPayload(action);
-//       const event = new CollectionEvent(
-//         action.instanceID,
-//         action.collectionName,
-//         payload
-//       );
-//       events.push(event);
-//     }
-
-//     // 序列化整个事件集合
-//     const nodeData = new TextEncoder().encode(JSON.stringify(events));
-//     return [events, nodeData];
-//   }
-
-//   private getCoreActionType(event: Event): CoreActionType {
-//     // 根据payload内容判断操作类型
-//     if (!event.payload) return CoreActionType.Delete;
-//     if ('previous' in event.payload) return CoreActionType.Save;
-//     return CoreActionType.Create;
-//   }
-
-//   private buildEventPayload(action: Action): any {
-//     switch (action.type) {
-//       case CoreActionType.Create:
-//         return {
-//           created: action.current ? JSON.parse(new TextDecoder().decode(action.current)) : null
-//         };
-//       case CoreActionType.Save:
-//         return {
-//           previous: action.previous ? JSON.parse(new TextDecoder().decode(action.previous)) : null,
-//           current: action.current ? JSON.parse(new TextDecoder().decode(action.current)) : null
-//         };
-//       case CoreActionType.Delete:
-//         return {
-//           deleted: action.previous ? JSON.parse(new TextDecoder().decode(action.previous)) : null
-//         };
-//     }
-//   }
-
-//   async eventsFromBytes(data: Uint8Array): Promise<Event[]> {
-//     const decoded = JSON.parse(new TextDecoder().decode(data));
-//     return decoded.map((d: any) => new CollectionEvent(
-//       d.i,
-//       d.c,
-//       d.p
-//     ));
-//   }
-// }
-
 class CollectionExistsError extends Error {
   name: string;
   constructor(name: string) {
@@ -330,8 +230,14 @@ export class DB implements App, IDB {
     }
   }
 
-  async newCollection(config: ICollectionConfig): Promise<Collection> {
-    if (this.collections.has(config.name)) {
+  async upgradeCollections(configs: ICollectionConfig[]): Promise<void> {
+    for (const config of configs) {
+      await this.newCollection(config,true);
+    }
+  }
+
+  async newCollection(config: ICollectionConfig,forceUpdate:boolean=false): Promise<Collection> {
+    if (this.collections.has(config.name) && !forceUpdate) {
       throw new CollectionExistsError(config.name);
     }
     const collection = new Collection(config.name, config.schema, this);

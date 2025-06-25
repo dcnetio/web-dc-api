@@ -247,6 +247,26 @@ export class DatabaseModule implements DCModule, IDatabaseOperations {
   }  
 
 
+  /**
+   * 升级集合结构
+   * @param threadId 线程ID
+   * @param collections 集合配置列表
+   * @returns 错误信息或null
+   */
+  async upgradeCollections(threadId: string, collections: ICollectionConfig[]): Promise<Error | null> {
+    try {
+      this.assertInitialized();
+    await this.initDBManager();
+    
+    if (!this.context.dbManager) {
+      throw new Error("数据库管理器未初始化");
+    }
+      await this.context.dbManager.upgradeCollections(threadId, collections);
+      return null;
+    } catch (error) {
+      return error as Error;
+    }
+  }
 
   /**
    * 关闭数据库管理器

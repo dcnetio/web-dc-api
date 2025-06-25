@@ -1329,6 +1329,22 @@ async syncDBToDC(threadId:string): Promise<Error | null> {
 }  
 
 
+async upgradeCollections(threadId: string, configs: ICollectionConfig[]): Promise<Error | null> {
+    try {
+        const tId = await this.decodeThreadId(threadId);
+        const db = this.dbs.get(tId.toString());
+        if (!db) {
+            return Errors.ErrDBNotFound;
+        }
+        await db.upgradeCollections(configs);
+        return null;
+    } catch (error) {
+        return error as Error;
+    }
+}
+
+
+
 
 private async decodeThreadId(threadid: string): Promise<ThreadID> {  
     if (!threadid) {  
@@ -1800,8 +1816,6 @@ async modifiedSince(threadId: string, collectionName: string, time: number): Pro
         throw err;
     }
 }
-
-
 
 
 }
