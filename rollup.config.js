@@ -42,6 +42,19 @@ const plugins = [
         ],
         // 确保处理 .ts 文件
         extensions: ['.js', '.ts']
+      }),
+      terser({
+        // 暂时去掉混淆
+        // mangle: {
+        //   toplevel: true, // 混淆顶层变量和函数名
+        // },
+        compress: {
+          drop_console: true, // 移除console
+          drop_debugger: true // 移除debugger
+        },
+        format: {
+          comments: false // 移除注释
+        }
       })
     ];
 
@@ -88,38 +101,38 @@ export default [
     external
   },
   
-  // 新增的浏览器UMD构建
-  {
-    input: 'lib/index.ts',
-    output: {
-      file: 'dist/dc.js', // 未压缩版本
-      format: 'umd',
-      name: GLOBAL_NAME,
-      sourcemap: true,
-      exports: 'named',
-      // 确保所有导出都正确挂载到全局对象
-      intro: `var global = typeof window !== 'undefined' ? window : this;`,
-      globals: {
-        // 明确告诉 Rollup 本地包的全局变量名
-        'grpc-libp2p-client': 'GrpcLibp2pClient'
-      }
-    },
-    // 注意：浏览器版本应该包含所有依赖（除非是全局可用的）
-    // external: [], // 不设置external，以便捆绑所有依赖
-    external: ['grpc-libp2p-client'], // 设为外部依赖
-    plugins: [
-      resolve({
-        browser: true,
-        preferBuiltins: false,
-        // 包括node_modules和上级目录
-        paths: ['node_modules', '../']
-      }),
-      commonjs({
-        transformMixedEsModules: true,
-      }),
-      ...plugins,
-    ]
-  },
+  // // 新增的浏览器UMD构建
+  // {
+  //   input: 'lib/index.ts',
+  //   output: {
+  //     file: 'dist/dc.js', // 未压缩版本
+  //     format: 'umd',
+  //     name: GLOBAL_NAME,
+  //     sourcemap: true,
+  //     exports: 'named',
+  //     // 确保所有导出都正确挂载到全局对象
+  //     intro: `var global = typeof window !== 'undefined' ? window : this;`,
+  //     globals: {
+  //       // 明确告诉 Rollup 本地包的全局变量名
+  //       'grpc-libp2p-client': 'GrpcLibp2pClient'
+  //     }
+  //   },
+  //   // 注意：浏览器版本应该包含所有依赖（除非是全局可用的）
+  //   // external: [], // 不设置external，以便捆绑所有依赖
+  //   external: ['grpc-libp2p-client'], // 设为外部依赖
+  //   plugins: [
+  //     resolve({
+  //       browser: true,
+  //       preferBuiltins: false,
+  //       // 包括node_modules和上级目录
+  //       paths: ['node_modules', '../']
+  //     }),
+  //     commonjs({
+  //       transformMixedEsModules: true,
+  //     }),
+  //     ...plugins,
+  //   ]
+  // },
   
   // 压缩版本
   {
@@ -151,7 +164,6 @@ export default [
         transformMixedEsModules: true,
       }),
       ...plugins,
-      terser() // 添加压缩
     ]
   }
 ];
