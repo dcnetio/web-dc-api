@@ -71,7 +71,7 @@ export class DsHeadBook implements HeadBook {
             await txn.put(key, recordBytes);
             await this.invalidateEdge(txn, tid);
             await txn.commit();
-        } catch (err) {
+        } catch (err: any) {
             txn.discard();
             throw new Error(`Error when setting heads: ${err.message}`);
         }
@@ -84,10 +84,10 @@ export class DsHeadBook implements HeadBook {
             if (!data) return [];
             const hr = deserializeHeadBookRecord(new TextDecoder().decode(data));
             return hr.heads.map(h => ({
-                id: h.id,
+                ...(h.id ? { id:h.id }: {}),
                 counter: h.counter,
             }));
-        } catch (err) {
+        } catch (err: any) {
             if (err.code === 'ERR_NOT_FOUND') return [];
             throw new Error(`Error when getting current heads from log ${key}: ${err.message}`);
         }
@@ -100,7 +100,7 @@ export class DsHeadBook implements HeadBook {
             await txn.delete(key);
             await this.invalidateEdge(txn, tid);
             await txn.commit();
-        } catch (err) {
+        } catch (err: any) {
             txn.discard();
             throw new Error(`Error when clearing heads: ${err.message}`);
         }
@@ -112,7 +112,7 @@ export class DsHeadBook implements HeadBook {
             const result = await fn(txn);
             await txn.commit();
             return result;
-        } catch (err) {
+        } catch (err: any) {
             txn.discard();
             throw err;
         }
@@ -123,17 +123,17 @@ export class DsHeadBook implements HeadBook {
             const data = await txn.get(key);
             if (!data) return null;
             return deserializeHeadBookRecord(new TextDecoder().decode(data));
-        } catch (err) {
+        } catch (err: any) {
             if (err.code === 'ERR_NOT_FOUND') return null;
             throw err;
         }
     }
 
     private mergeHeads(existing: HeadBookRecord, newHeads: Head[]): Head[] {
-        const seen = new Set(existing.heads.map(h => h.id.toString()));
+        const seen = new Set(existing.heads.map(h => h.id?.toString()));
         return [
             ...existing.heads,
-            ...newHeads.filter(h => !seen.has(h.id.toString()))
+            ...newHeads.filter(h => !seen.has(h.id?.toString()))
         ];
     }
 
@@ -149,7 +149,7 @@ export class DsHeadBook implements HeadBook {
         for (let attempt = 1; attempt <= retries; attempt++) {
             try {
                 return await this.calculateEdge(tid, key);
-            } catch (err) {
+            } catch (err: any)  {
                 if (err.code !== 'TX_CONFLICT') throw err;
                 await this.randomDelay(attempt);
             }
@@ -165,7 +165,7 @@ export class DsHeadBook implements HeadBook {
                     data = Buffer.alloc(8);
                 }
                 return Buffer.from(data).readUInt32BE(0);
-            } catch (err) {
+            } catch (err: any)  {
                 if (err.code !== 'ERR_NOT_FOUND') throw err;
             }
 
@@ -189,7 +189,7 @@ export class DsHeadBook implements HeadBook {
         for await (const entry of results) {
             const record = deserializeHeadBookRecord(new TextDecoder().decode(entry.value));
             heads.push(...record.heads.map(h => ({
-                id: h.id,
+                ...(h.id ? { id: h.id } : {}),
                 counter: h.counter
             })));
         }
@@ -232,7 +232,7 @@ export class DsHeadBook implements HeadBook {
 
         for (const tid in dump.data) {
             for (const lid in dump.data[tid]) {
-                await this.setHeads(tid as unknown as ThreadID, lid as unknown as PeerId, dump.data[tid][lid]);
+                await this.setHeads(tid as unknown as ThreadID, lid as unknown as PeerId, dump.data[tid][lid]!);
             }
         }
     }
@@ -261,8 +261,8 @@ export class DsHeadBook implements HeadBook {
             throw new Error(`bad headbook key detected: ${entry.key}`);
         }
 
-        const ts = kns[kns.length - 2];
-        const ls = kns[kns.length - 1];
+        const ts = kns[kns.length - 2]!;
+        const ls = kns[kns.length - 1]!;
         const tid = ts;
         const lid = ls;
 
@@ -270,7 +270,7 @@ export class DsHeadBook implements HeadBook {
         if (withHeads) {
             const hr = deserializeHeadBookRecord(new TextDecoder().decode(entry.value));
             heads = hr.heads.map(h => ({
-                id: h.id,
+                ...(h.id ? { id: h.id } : {}),
                 counter: h.counter
             }));
         }

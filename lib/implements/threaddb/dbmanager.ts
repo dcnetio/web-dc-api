@@ -117,7 +117,7 @@ export class DBManager {
               if (parts.length < 3) {
                 continue;
               }
-              const id = ThreadID.fromString(parts[2]);
+              const id = ThreadID.fromString(parts[2]||"");
               // Check if already loaded
               if (loaded.has(id.toString())) {
                 continue;
@@ -215,7 +215,7 @@ export class DBManager {
         throw new Error('thread protocol not found in multiaddr')  
       }  
       
-      const idstr = parts[index + 1]  
+      const idstr = parts[index + 1]  || ""
       return ThreadID.fromString(idstr)  
     } catch (err:any) {  
      
@@ -637,8 +637,12 @@ async exportDBToFile(
   [logs, threadInfo] = await this.network.getPbLogs(id);
   
   // Build log state string
-  for (let i = 0; i < logs.length; i++) {
-    const logBytes = net_pb.pb.Log.encode(logs[i]).finish();
+  for (let i = 0; logs &&i < logs.length; i++) {
+    if (!logs[i]) {
+      continue; // Skip undefined logs
+    }
+    const log = logs[i] as net_pb.pb.ILog;
+    const logBytes = net_pb.pb.Log.encode(log).finish();
     const mbaseLog = multibase.encode('base64', logBytes);
     
     if (i === 0) {
@@ -770,7 +774,7 @@ async importDBStateFromReader(
       }
       
       const key = kv[0];
-      const mValue = kv[1];
+      const mValue = kv[1] || '';
       
       // 使用multibase解码值
       let encValue: Uint8Array;
@@ -794,7 +798,7 @@ async importDBStateFromReader(
       }
       
       // 创建数据存储键
-      const setKey = new Key(key);
+      const setKey = new Key(key||"");
       
       // 检查键是否已存在
       try {
@@ -817,13 +821,13 @@ async importDBStateFromReader(
       }
       
       // 从键中提取集合名称（倒数第二个部分）
-      const parts = key.split('/');
-      if (parts.length < 2) {
+      const parts = key?.split('/');
+      if (!parts ||parts.length < 2) {
          txn.discard();
         throw new Error('无效的键格式: 未找到集合名称');
       }
       
-      const collection = parts[parts.length - 2];
+      const collection = parts[parts.length - 2]||"";
       
       // 应用索引
       try {

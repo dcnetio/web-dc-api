@@ -76,7 +76,7 @@ export class Node {
     let cur: any = this._obj;
     
     for (let i = 0; i < path.length; i++) {
-      const val = path[i];
+      const val = path[i]!;
       
       if (typeof cur === 'object' && cur !== null) {
         if (Array.isArray(cur)) {

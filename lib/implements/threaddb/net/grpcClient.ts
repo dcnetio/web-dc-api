@@ -194,7 +194,7 @@ export class DBGrpcClient {
                 return {  
                   id,  
                   pubKey,  
-                  privKey,  
+                  ...(privKey ? { privKey } : {}),  
                   addrs,  
                   managed: true,
                   head: {  
@@ -409,9 +409,6 @@ export class DBGrpcClient {
           } catch (logErr) {
             throw new Error(`Error pushing missing log: ${logErr instanceof Error ? logErr.message : String(logErr)}`);
           }
-        
-
-          throw new Error(`Error pushing record: ${err instanceof Error ? err.message : String(err)}`);
         }
       }
     }

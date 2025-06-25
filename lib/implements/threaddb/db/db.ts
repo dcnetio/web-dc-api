@@ -682,7 +682,7 @@ export class DB implements App, IDB {
     if (events.length === 0) {
       throw new Error("No events found in record");
     }
-    return events[0].timestamp;
+    return events[0]!.timestamp;
   }
 
   private async getBlockWithRetry(rec: IRecord): Promise<any> {
