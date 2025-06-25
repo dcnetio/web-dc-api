@@ -40,8 +40,8 @@ export class Cipher {
             throw new Error('Invalid buffer size');  
         }  
 
-        let l = (src[0] << 24) | (src[1] << 16) | (src[2] << 8) | src[3];  
-        let r = (src[4] << 24) | (src[5] << 16) | (src[6] << 8) | src[7];  
+        let l = (src[0]! << 24) | (src[1]! << 16) | (src[2]! << 8) | src[3]!;  
+        let r = (src[4]! << 24) | (src[5]! << 16) | (src[6]! << 8) | src[7]!;  
 
         [l, r] = encryptBlock(l >>> 0, r >>> 0, this);  
 
@@ -61,8 +61,8 @@ export class Cipher {
             throw new Error('Invalid buffer size');  
         }  
 
-        let l = (src[0] << 24) | (src[1] << 16) | (src[2] << 8) | src[3];  
-        let r = (src[4] << 24) | (src[5] << 16) | (src[6] << 8) | src[7];  
+        let l = (src[0]! << 24) | (src[1]! << 16) | (src[2]! << 8) | src[3]!;  
+        let r = (src[4]! << 24) | (src[5]! << 16) | (src[6]! << 8) | src[7]!;  
 
         [l, r] = decryptBlock(l >>> 0, r >>> 0, this);  
 
