@@ -40,6 +40,7 @@ export const DBPrefix = {
     dsIndexes: dsPrefix.child(new Key("index")),
     dsValidators: dsPrefix.child(new Key("validator")),
     dsFilters: dsPrefix.child(new Key("filter")),
+    dsVerno: dsPrefix.child(new Key("verno")),
 }
 export const idFieldName = "_id";
 export const modFieldName = "_mod";

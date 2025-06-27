@@ -224,6 +224,24 @@ export class DB implements App, IDB {
     } catch (error) {}
   }
 
+  async saveVerno(verno: number): Promise<void> {
+    await this.datastore.put(
+      DBPrefix.dsVerno,
+      new TextEncoder().encode(verno.toString())
+    );
+  }
+
+  async loadVerno(): Promise<number> {
+    try {
+      const vernoBuffer = await this.datastore.get(DBPrefix.dsVerno);
+      if (vernoBuffer) {
+        return parseInt(new TextDecoder().decode(vernoBuffer));
+      }
+    } catch (error) {}
+    return 0;
+  }
+
+
   private async initCollections(configs: ICollectionConfig[]): Promise<void> {
     for (const config of configs) {
       await this.newCollection(config);

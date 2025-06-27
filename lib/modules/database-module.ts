@@ -247,6 +247,8 @@ export class DatabaseModule implements DCModule, IDatabaseOperations {
   }  
 
 
+
+
   /**
    * 升级集合结构
    * @param threadId 线程ID
