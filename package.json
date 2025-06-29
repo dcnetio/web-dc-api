@@ -96,6 +96,7 @@
     "core-js": "^3.43.0",
     "nodemon": "^3.1.9",
     "rollup-plugin-dts": "^6.2.1",
-    "typescript": "^5.8.3"
+    "typescript": "^5.8.3",
+    "webpack-bundle-analyzer": "^4.10.2"
   }
 }

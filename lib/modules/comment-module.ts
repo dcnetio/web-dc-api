@@ -111,6 +111,28 @@ async addUserOffChainOpTimes(
       return [null, error as Error];
     }
   }
+
+  async isThemeExist(
+    appId: string,
+    theme: string,
+    themeAuthor: string,
+  ): Promise<[boolean | null, Error | null]> {
+    try {
+      this.assertInitialized();
+      const res =  await this.commentManager.isThemeExist(
+        appId,
+        theme,
+        themeAuthor
+      );
+      return res;
+    } catch (error) {
+      logger.error(`判断主题 ${theme} 是否存在失败:`, error);
+      return [null, error as Error];
+    }
+  }
+
+
+
   
   /**
    * 为开通评论的对象增加评论空间

@@ -802,6 +802,16 @@ message DeleteCommentToObjReply{
 }
 
 
+message IsThemeExistRequest{
+    bytes theme = 1; //主题CID
+    bytes appId = 2; //应用标志
+    bytes themeAuthor = 3;//发布评论对象的作者pubkey
+}
+
+message IsThemeExistReply{
+    uint32 flag = 1; //0:存在 1:不存在
+}
+
 
 
 
@@ -1226,6 +1236,38 @@ message DoAIProxyCallReply{
         bytes err =3; //返回的错误信息
     
 }
+
+
+message CreateAIProxyCallTaskRequest {
+    bytes theme = 1; //状态汇聚对象CID
+    bytes appId = 2; //应用标志
+    bytes themeAuthor = 3;//发布状态汇聚对象的的pubkey
+    uint32 blockheight = 4; //发起请求时的blockheight
+    bytes configKey = 5;// 配置名称
+    bytes path = 6;//请求路径
+    bytes reqBody = 7;//请求数据,当为模型调用时json格式如下:[{Role: "user",Content: [{ Type: "text", Text: "你好" }]},{Role: "assistant",Content: [{  "Type": "image","Source": {"Type": "base64","MediaType": "image/jpeg","Data": "iV..."}]}]
+    bytes continueReqs = 8; //在一次请求技术后,继续发起的请求列表,格式如下:[[{Role: "user",Content: [{ Type: "text", Text: "你好" }]},{Role: "system",Content: [{  "Type": "text","Text": "继续输出"}]}]],如果是模型调用,则是模型的继续请求,如果是mcp tool调用,则是mcp tool的继续请求
+    bytes modelConfig = 9; //模型调用时起作用{"provider": "anthropic", "model": "claude-3-opus-20240229","temperature": 0.7,"maxTokens": 1000, "topP": 0.9,"topK": 40,"stopSequences": ["Human:", "Assistant:"],"systemPrompt": "你是一个专业的图片分析助手...","applySystemPrompt": true,"stream": false,tools: [{"name": "image_analysis","description": "分析图片内容并给出建议","parameters": {"type": "object","properties": {"image_url": {"type": "string","description": "图片的url地址"}}}}]}
+    uint32 forceRefresh = 10; //强制刷新AI配置, 0:不刷新 1:刷新,如果为1,则扣除10倍的链下操作次数
+    bytes  headers = 11; //请求头,当调用为mcp tool调用时,需要传入请求头
+    bytes  signature = 12;
+}
+
+message CreateAIProxyCallTaskReply{
+        uint32 flag = 1; //0:成功 1:权限不足 2:获取失败 3:关闭连接 4:还有未完成的任务 
+        bytes taskId = 2; //返回的任务ID,当flag为4时,返回未完成的任务ID
+}
+
+
+message GetAIProxyCallTaskResultRequest {
+    bytes taskId = 1; //任务ID
+}
+
+message GetAIProxyCallTaskResultReply{
+        uint32 flag = 1; //0:成功 1:权限不足 2:获取失败 3:关闭连接 5:任务不存在 6:任务未完成
+        bytes content = 2; //返回的消息
+        bytes err =3; //返回的错误信息
+}
    
 
 message ArchiveDeviceStatusRequest{
@@ -1430,6 +1472,9 @@ service Service {
      //用户删除已开通评论对象下的用户发表的某条评论（请求发往发表主题所在节点）//ok
     rpc DeleteCommentToObj(DeleteCommentToObjRequest) returns (DeleteCommentToObjReply){}
 
+    //检查指定主题对象是否存在
+    rpc IsThemeExist(IsThemeExistRequest) returns (IsThemeExistReply) {} 
+
 
     //获取已开通评论的对象列表//ok
     rpc GetThemeObj(GetThemeObjRequest) returns (GetThemeObjReply){}
@@ -1515,6 +1560,13 @@ service Service {
 
      //AI相关代理的调用,包括代理与AI的通信或者与MCPServer的通信
     rpc DoAIProxyCall(DoAIProxyCallRequest) returns (stream DoAIProxyCallReply) {}
+
+    //创建AI模型的调用任务,返回任务ID,任务ID可以用于后续获取任务结果
+    rpc CreateAIProxyCallTask(CreateAIProxyCallTaskRequest) returns (CreateAIProxyCallTaskReply) {}
+
+    //获取AI模型的调用任务结果
+    rpc GetAIProxyCallTaskResult(GetAIProxyCallTaskResultRequest) returns (GetAIProxyCallTaskResultReply) {}
+
 
     //GetUserOwnAIProxyConfig
     rpc GetUserOwnAIProxyAuth(GetUserOwnAIProxyAuthRequest) returns (GetUserOwnAIProxyAuthReply) {}
