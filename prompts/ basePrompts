@@ -33,70 +33,168 @@ DC平台是去中心化云服务套件，让开发者专注前端实现。应用
    - **message**：用于消息通知，用户可以调用sendMsgToUserBox方法发送消息给其他用户，然后其他用户可以通过getMsgFromUserBox方法获取消息
    - **util**：提供一些通用的工具方法，如createSymmetricKey用于创建对称加密密钥，createThreadKey用于创建ThreadDB密钥等
 
-## API模块详解
+## API模块使用详解
+
+
+### 1、预制组件 
+ 在任何应用创建过程中,都必须先创建DCAPI初始化组件,并命名为"dcapi.ts",放在项目根目录下,组件的内容如下:
+
+\`\`\`javascript
+let dc = null;
+let dcLoadFlag  = 0; // 0: 未加载，1: 正在加载，2: 已加载
+// 加载 API 的函数
+export async function initDC(appId: string,appName: string,appVersion: string,appKey: string, appVersion: string) {
+  return new Promise((resolve, reject) => {
+    if (dcLoadFlag == 2) {
+      resolve(dc);
+      return;
+    }
+    if (dcLoadFlag == 1) {
+      const checkInterval = setInterval(() => {
+        if (dcLoadFlag == 2) {
+          clearInterval(checkInterval);
+          resolve(dc);
+        } else if (dcLoadFlag == 0) { //
+          clearInterval(checkInterval);
+          resolve(null);
+        }
+      }, 100);
+      return;
+    }
+    dcLoadFlag = 1; // 设置为正在加载
+    const grpc_script = document.createElement('script');
+    grpc_script.src = "https://dcapi.oss-rg-china-mainland.aliyuncs.com/grpc-0.0.10.min.js";
+    grpc_script.async = true;
+    grpc_script.onerror = () => {
+      dcLoadFlag = 0; // 重置加载状态
+      reject(new Error('Failed to load  grpc-libp2p-client'));
+    };
+    document.head.appendChild(grpc_script);
+    const dcapi_script = document.createElement('script');
+    dcapi_script.src = 'https://dcapi.oss-rg-china-mainland.aliyuncs.com/dc-0.0.38.min.js';
+    dcapi_script.async = true;
+    dcapi_script.onload = async () => {
+        const dcConfig = {
+        wssUrl: "wss://dcchain.baybird.cn",
+        backWssUrl: "wss://dcchain.baybird.cn",
+        appInfo: {
+            appId: appId,
+            appName: appName,
+            appVersion: appVersion,
+        },
+        };
+        dc = new window.WebDcApi.DC(dcConfig);
+        if (!dc ) {
+            console.error('生成DC实例失败,请检查配置信息,dcConfig:', dcConfig);
+            dcLoadFlag = 0; // 重置加载标志
+            resolve(null);
+        } else {
+            try {
+                const successFlag = await dc.init();
+                if (!successFlag) {
+                    console.error('初始化DC实例失败');
+                    dcLoadFlag = 0; // 重置加载标志
+                    resolve(null);
+                    return;
+                }
+                console.log('DC实例初始化成功,appId:', dc.appInfo.appId, 'appName:', dc.appInfo.appName, 'appVersion:', dc.appInfo.appVersion);
+                dcLoadFlag = 2;
+                resolve(dc);
+            } catch (error) {
+                console.error('初始化DC实例时出错:', error);
+                dcLoadFlag = 0; // 重置加载标志
+                resolve(null);
+                return;
+            }
+        }
+    };
+    dcapi_script.onerror = () => {
+      dcLoadFlag = 0; 
+      reject(new Error('Failed to load DC API'));
+    };
+    document.head.appendChild(dcapi_script);
+  });
+}
+
+// 获取加载状态,0: 未加载，1: 正在加载，2: 已加载
+export function getLoadStatus() {
+  return dcLoadFlag;
+}
+
+// 获取 API 实例的助手函数
+export function getDc() {
+  return dc;
+}
+\`\`\`
 
 ### 初始化流程
 
+// 在页面加载完成或者应用的入口文件中,调用initDC函数进行初始化,示例代码如下：
 \`\`\`javascript
-// 引入必要库
-import { DC } from 'web-dc-api';
-
-// 创建并配置DC实例
-const dc = new DC({
-  wssUrl: 'wss://chain.baybird.cn',
-  backWssUrl: 'wss://dc.baybird.cn',
-  appInfo: {
-    appId: '$$$appId$$$', //应用ID,用用户明确指定的appid替换掉$$$appId$$$,否则自动生成
-    appName: '$$$appName$$$', // 应用名称,用用户明确指定的appname替换掉$$$appName$$$,否则自动生成
-    appVersion: '$$$appVersion$$$' // 应用版本,用用户明确指定的appversion替换掉$$$appVersion$$$,否则自动生成
-  }
-});
-// 初始化客户端,这个过程需要脚长时间,界面应该提示用户等待
-const flag = await dc.init();  // flag为true表示初始化成功，flag为false表示初始化失败
-if (flag){
-    await dc.initUserDB(collections); // 当登录成功后,就需要初始化用户数据库,collections为数据库集合定义
+import { initDC, getLoadStatus,getDc } from '/dcapi';
+const dc = await initDC('应用ID', '应用名称', '应用版本', '应用密钥');
+if (!dc) {
+  console.error('DC API 初始化失败');
+} else {
+  console.log('DC API 实例已准备就绪');
 }
-// 初始化成功后,可以使用dc对象调用各个模块的API
+//接下来可以使用dc对象调用DC API的各个模块方法,使用前需要像下面一样进行判断,如果没准备好就不进行调用
+const dc = getDc();
+if(!dc) {
+    console.error('DC API 实例未准备就绪');
+    return;
+}
+//已准备好,可以进行正常调用,如进行登录操作
+const [accountInfo, loginError] = await dc.auth.accountLoginWithWallet();
 \`\`\`
+
+下面所有功能模块的使用示例,都假设dc对象已经准备好,并通过getDc函数获取到了dc对象。
 
 ### 1. 认证模块 (auth)
 
 \`\`\`javascript
-// 用户账户接口结构
-interface Account {
-  nftAccount: string;     // 用户登录账号
-  appAccount: Uint8Array; // 应用专用公钥数据,不使用,登录成功后请使用dc.publicKey.string()来获取应用专用账号公钥
-  ethAccount: string;     // 以太坊兼容区块链账号
-  chainId: string;        // 区块链ID (固定为176: DCCHAIN)
-  chainName: string;      // 区块链名称 (固定为"DCCHAIN")
-}
 
-// 使用DCWallet登录（推荐）
+// 当应用需要用户登录时，直接调用accountLoginWithWallet完成登录
 const [accountInfo, loginError] = await dc.auth.accountLoginWithWallet();
+// 打印用户登录账号
+console.log('用户已登录账号:', accountInfo.nftAccount);
 
-// 获取用户公钥
-const publicKeyHex = dc.publicKey.toString();      // 十六进制字符串格式
-const publicKeyBase32 = dc.publicKey.string();     // Protobuf base32编码,所有需要作为参数传递的公钥都使用这个格式
+// 登录成功后获取用户公钥,代表用户身份
+const publicKeyStr = dc.publicKey.string();     // Protobuf base32编码,所有需要作为参数传递的公钥都使用这个格式
+// 一旦登录成功，应该调用 dc.initUserDB(collections) 初始化用户数据库,以便后续数据存储和操作,详细请参考用户数据库 (db)模块的使用
 \`\`\`
 
 ### 2. 文件模块 (file)
 
+文件和文件夹上传下载功能,上传文件时可以指定加密密钥
+
 \`\`\`javascript
-// 上传文件并跟踪进度,进度回调参数:process表示状态: 0=成功,1=加密中,2=上传中,3=出错,4=异常，size表示以上传的字节数
+// 上传文件并跟踪进度,进度回调参数:status表示状态: 0=成功,1=加密中,2=上传中,3=出错,4=异常，size表示以上传的字节数
 const [cid, error] = await dc.file.addFile(
   fileObject,
-  '加密密钥',                                     // 可选
-  (progress, size) => console.log(\`\${progress}% 已上传, \${size} 字节\`)
+  '加密密钥',                                     // 不加密时直接传空字符串
+  (status, size) => console.log(\`上传状态:\${status} 已上传, \${size} 字节\`)
 );
-
 // 通过CID下载文件
 const [fileContent, error] = await dc.file.getFile('file-cid', '解密密钥');
 
 // 大文件创建流,由前端控制下载并显示下载进度
 const [stream, error] = await dc.file.createFileStream('file-cid', '解密密钥');
+
+// 上传文件夹,进度回调参数:status表示状态: 0=成功,1=加密中,2=上传中,3=出错,4=异常，total表示总文件数，process表示已上传的文件数
+const folderInput = document.getElementById('folderInput') as HTMLInputElement;
+const files = folderInput.files;
+const res = await dc.file.addFolder(
+    files, // 文件列表
+    "blgxhdql744v247fn53adtdjdji5dp7msui5tc24uzvjtxlr4edyq",  // 加密密钥,不加密时直接传空字符串
+    (status: number, total: number, process: number) => console.log(\`上传状态: \${status}, 总文件数: \${total}, 进度: \${process} 已上传,\`)
+);
+folderCID = res[0];
 \`\`\`
 
 ### 3. 用户数据库 (db)
+
+主要用于用户自身数据的存储和操作,需要在认证后进行初始化,帮助用户跨设备同步和管理数据
 
 \`\`\`javascript
 // 数据库信息接口
@@ -125,35 +223,41 @@ const collections = [
   }
 ];
 
-// 认证后初始化用户数据库
+// 用户登录成功后,必须调用以下方法初始化用户数据库
 const [dbInfo, dbError] = await dc.initUserDB(collections);
-//初始化成功后,可以使用dc.dbThreadId对象调用数据库库模块的API
+if (dbError) {
+  console.error('用户数据库初始化失败:', dbError);
+} else {//初始化成功后,可以使用"dc.dbThreadId" 作为用户数据库的ID,来调用数据库模块的各个API
+  console.log('用户数据库初始化成功,数据库ID: ', dc.dbThreadId);
+}
+
 
 // 数据操作
-// 创建记录,记录ID(_id)不能传入,插入成功后会返回记录ID
+// 创建记录,instanceId为返回的记录ID
 const [instanceId, error] = await dc.db.create(
-  dc.dbThreadId,
+  dc.dbThreadId, // 数据库ID,数据库初始化成功后,自动赋值
   '集合名称',
-  JSON.stringify({ name: '项目名称', create_time: Date.now() })
+  JSON.stringify({ name: '项目名称', create_time: Date.now() }) //记录ID(_id)不能传入,插入成功后会返回记录ID
 );
 
 // 查询记录（带排序）
 const query = {
   sort: { fieldPath: "create_time", desc: true }
 };
+// results为返回JSON字符串，使用前调用JSON.parse(results)解析
 const [results, error] = await dc.db.find(
   dc.dbThreadId,
   '集合名称',
   JSON.stringify(query)
-); // 返回JSON字符串，使用前需解析
+); // 
+const jsonResults = JSON.parse(results); // 解析JSON字符串
 
-// 更新记录,特别注意：更新时记录里必须包含记录ID(_id),不能传入_mod字段,如果存在需要剔除后再传入
+// 更新记录
 const err = await dc.db.save(
   dc.dbThreadId,
   '集合名称',
-  JSON.stringify({ _id: instanceId, name: '更新后名称', create_time: Date.now() })
+  JSON.stringify({ _id: instanceId, name: '更新后名称', create_time: Date.now() }) //记录ID(_id)必须传入
 );
-
 
 // 删除记录
 const err = await dc.db.delete(dc.dbThreadId, '集合名称', instanceId);
@@ -161,31 +265,33 @@ const err = await dc.db.delete(dc.dbThreadId, '集合名称', instanceId);
 
 ### 4. keyValue DB存储
 
+主要用于多用户共享数据和公共数据的存储与访问,支持索引查询和权限控制,适合需要跨用户共享数据的场景。需要特别注意的是,如果实际业务实现设计中需要创建公共主题给该应用的所有用户访问时,需要先获取应用初始主题作者公钥,进行判断,只有应用初始主题作者公钥才能创建初始化用的公共主题。
+
 \`\`\`javascript
 
 let kvdb = null;
 let error = null;
-// 如果实际业务实现设计中需要创建公共主题给该应用的所有用户访问时,需要先获取应用初始主题作者公钥,进行判断,只有应用初始主题作者公钥才能创建初始化用的公共主题
-if (dc.publicKey.string() === '应用初始主题作者公钥') {
-  // 先尝试获取现有存储
-  [kvdb, error] = await dc.keyValue.getStore(
-    dc.appInfo.appId,
-    '存储名称',
-    '应用初始主题作者公钥') {
-  );
 
-  // 不存在则创建
-  if (!kvdb) {
-    [kvdb, error] = await dc.keyValue.createStore(
-      dc.appInfo.appId,
-      '存储名称_pub', //当访问类型为2时,存储名称必须以"_pub"结尾,表示读开放,写鉴权,不是2时不要加"_pub"
-      50 * 1024 * 1024, // 50MB
-      2 // 访问类型：存储类型 (1: 鉴权主题-读写都需要鉴权, 2: 公共主题-默认所有用户可读,写需要鉴权)
-    );
-  }
+[kvdb, error] = await dc.keyValue.getStore(
+    dc.appInfo.appId, // 应用ID
+    '公共主题名称', // 
+    '应用初始主题作者公钥');
+if (!kvdb) {// 不存在则尝试创建
+    if (dc.publicKey.string() === '应用初始主题作者公钥') { //确保只有"应用初始主题作者公钥"才能创建初始化用的公共主题
+        [kvdb, error] = await dc.keyValue.createStore(
+        dc.appInfo.appId,
+        '公共主题名称_pub', //当访问类型为2时,存储名称必须以"_pub"结尾,表示读开放,写鉴权; 不是2时不要加"_pub"
+        50 * 1024 * 1024, // 50MB
+        2 // 访问类型：存储类型 (1: 鉴权主题-读写都需要鉴权, 2: 公共主题-默认所有用户可读,写需要鉴权)
+        );
+    } else {
+        console.error('公共存储主题不存在,请联系管理员进行创建!');
+        return;
+    }
 }
 
-// 用户访问授权
+
+// 给指定用户配置访问授权
 const [auth, error] = await dc.keyValue.configAuth(
     kvdb,
     '授权公钥', //如果给所有用户访问权限，这里填"all"

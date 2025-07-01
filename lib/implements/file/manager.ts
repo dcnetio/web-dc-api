@@ -947,7 +947,7 @@ async getFolderFileListWithContent(
   cid: string, 
   decryptKey: string, 
   flag?: number,
-  recursive: boolean = false
+  recursive: boolean = true
 ): Promise<[Array<{Name: string; Type: number; Size: number; Hash: string; Path: string, Content?: Uint8Array}> | null, Error | null]> {
  const [fileList, err] = await this.getFolderFileList(cid, flag, recursive);
  if (err || !fileList) return [null, err];
