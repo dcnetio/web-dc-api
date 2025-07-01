@@ -54,6 +54,7 @@ export class DC implements DCContext {
   public appInfo: APPInfo;
   public dbManager: any;
   public swUrl: string = "";
+  public swInited: boolean = false;
 
   // 模块系统
   private moduleSystem: ModuleSystem;
