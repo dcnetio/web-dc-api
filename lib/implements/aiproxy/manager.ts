@@ -425,7 +425,8 @@ export class AIProxyManager {
         const fileContent = await fileManager.getFileFromDc(
             cid,
             "",
-            cidNeedConnect.NOT_NEED
+            cidNeedConnect.NOT_NEED,
+            false
             );
         if (!fileContent) {
         return [[],[], null];

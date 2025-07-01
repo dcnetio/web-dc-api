@@ -50,8 +50,8 @@ export class ThemeManager{
       console.log("dcClient is null");
       return [null, Errors.ErrNoDcPeerConnected];
     }
-    const peerid = pkeys[0];
-    const cacheKey = pkeys[1];
+    const peerid = pkeys[0]!;
+    const cacheKey = pkeys[1]!;
     try {
       let nodeAddr: Multiaddr | undefined;
       if (this.connectedDc.nodeAddr) {

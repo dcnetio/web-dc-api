@@ -48,6 +48,7 @@ export const Errors = {
   ErrCommentDataSync: new CommentError("comment data sync"),
   // publickey is null
   ErrPublicKeyIsNull: new CommentError("publickey is null"),
+  ErrCommentKeyInvalid: new CommentError("comment key invalid"),
 };
 
 export class CommentManager {
@@ -547,9 +548,14 @@ async addUserOffChainOpTimes(
       if(this.accountBackupDc.client.token == ""){
         await this.accountBackupDc.client.GetToken(appId, this.context.publicKey.string(),this.context.sign);
       }
+      const parts = commentKey.split("/");
+      if (parts.length < 2) {
+        return [null, Errors.ErrCommentKeyInvalid];
+        
+      }
       const blockHeight = (await this.chainUtil.getBlockHeight()) || 0;
-      const commentCid = commentKey.split("/")[1];
-      const commentBlockHeight = commentKey.split("/")[0];
+      const commentCid = parts[1]!;
+      const commentBlockHeight = parts[0]!;
       // commentBlockHeight 转32位无符号整数
       const commentBlockHeightUint32 = parseUint32(commentBlockHeight);
       const hValue: Uint8Array = uint32ToLittleEndianBytes(
@@ -673,7 +679,8 @@ async addUserOffChainOpTimes(
       const fileContent = await fileManager.getFileFromDc(
         cid,
         "",
-        cidNeedConnect.NOT_NEED
+        cidNeedConnect.NOT_NEED,
+        false
       );
       if (!fileContent) {
         return [[], null];
@@ -750,7 +757,8 @@ async addUserOffChainOpTimes(
       const fileContent = await fileManager.getFileFromDc(
         cid,
         "",
-        cidNeedConnect.NOT_NEED
+        cidNeedConnect.NOT_NEED,
+        false
       );
       if (!fileContent) {
         return [[], null];
@@ -926,15 +934,15 @@ async addUserOffChainOpTimes(
             break;
           }
           for (let i = 0; i < resList.length; i++) {
-              originAuthList.push(resList[i]);
-              const content = resList[i].comment
+              originAuthList.push(resList[i]!);
+              const content = resList[i]!.comment
               const parts = content.split(":");
               if (parts.length < 2) {
                 continue;
               }
-              const authPubkey = parts[0];
-              const permission = parseInt(parts[1]);
-              const remark = content.substring(parts[0].length + 2);
+              const authPubkey = parts[0]!;
+              const permission = parseInt(parts[1]!);
+              const remark = content.substring(parts[0]!.length + 2);
               authList.push({
               pubkey: authPubkey,
               permission: permission,
@@ -944,8 +952,8 @@ async addUserOffChainOpTimes(
           if (resList.length < 1000) {
             break;
           }
-          seekKey = `${resList[resList.length - 1].blockheight}/${
-            resList[resList.length - 1].commentCid
+          seekKey = `${resList[resList.length - 1]!.blockheight}/${
+            resList[resList.length - 1]!.commentCid
           }`;
         }
       } catch (error: any) {
@@ -1019,7 +1027,8 @@ async addUserOffChainOpTimes(
       const fileContent = await fileManager.getFileFromDc(
         cid,
         "",
-        cidNeedConnect.NOT_NEED
+        cidNeedConnect.NOT_NEED,
+        false
       );
       console.log("getUserComments fileContent:", fileContent);
       if (!fileContent) {
