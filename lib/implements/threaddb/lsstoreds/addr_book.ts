@@ -166,7 +166,7 @@ async addrs(t: ThreadID, logId: PeerId): Promise<Multiaddr[]> {
     try {  
         const record = await this.loadRecord(t, logId.toString(), true,true)  
         release = await record.lock.acquire()  
-        const addrs = multiaddr[record.data.addrs.length]
+        const addrs: Multiaddr[] = []
         for (const entry of record.data.addrs) {  
             addrs.push(multiaddr(entry.addr))
         }
@@ -184,7 +184,7 @@ async clearAddrs(t: ThreadID, logId: PeerId): Promise<void> {
     try {
         await this.ds.delete(key);
         await this.invalidateEdge(t);
-    } catch (err) {
+    } catch (err:any) {
         throw new Error(`Failed to clear addresses for log ${logId.toString()}: ${err.message}`);
     }
 }
@@ -197,7 +197,7 @@ async logsWithAddrs(t: ThreadID): Promise<PeerId[]> {
             return result.name();
         });
         return ids;
-    } catch (err) {
+    } catch (err : any) {
         throw new Error(`Error while retrieving logs with addresses: ${err.message}`);
     }
 }
@@ -208,7 +208,7 @@ async threadsFromAddrs(): Promise<ThreadID[]> {
             return result.parent().name();
         });
         return ids;
-    } catch (err) {
+    } catch (err:any) {
         throw new Error(`Error while retrieving thread from addresses: ${err.message}`);
     }
 }
@@ -218,7 +218,7 @@ async addrsEdge(t: ThreadID): Promise<number> {
     try {
         const value = await this.ds.get(key);
         return Number(new DataView(value.buffer).getBigUint64(0));
-    } catch (err) {
+    } catch (err: any) {
         if (err.code !== 'ERR_NOT_FOUND') {
             throw err;
         }
@@ -277,7 +277,7 @@ async addrsEdge(t: ThreadID): Promise<number> {
             return addrsRecord
         }   
         return addrsRecord 
-    } catch (err) {  
+    } catch (err:any) {  
       if (err.code === 'ERR_NOT_FOUND') {  
         const peerIdBytes = new TextEncoder().encode(p)
         return {  
@@ -329,11 +329,11 @@ private async traverse(withAddrs: boolean): Promise<{ [key: string]: { [key: str
     let result = this.ds.query({ prefix: DsAddrBook.logBookBase.toString()});
     for await (const entry of result) {
         const { tid, pid, record } = this.decodeAddrEntry(entry, withAddrs);
-
-        if (!data[tid.toString()]) {
-            data[tid.toString()] = {};
+        const tidStr = tid.toString();
+        if (!data[tidStr]) {
+            data[tidStr] = {};
         }
-        data[tid.toString()][pid.toString()] = record!;
+        data[tidStr][pid.toString()] = record!;
     }
     return data;
 }
@@ -349,15 +349,15 @@ private async traverse(withAddrs: boolean): Promise<{ [key: string]: { [key: str
         const ts = kns[kns.length - 2];
         const ls = kns[kns.length - 1];
 
-        const tid = ThreadID.fromString(ts);
-        const pid = peerIdFromString(ls);
+        const tid = ThreadID.fromString(ts!);
+        const pid = peerIdFromString(ls!);
 
-        let record: pb.AddrBookRecord | undefined;
         if (withAddrs) {
-            record = pb.AddrBookRecord.deserialize(entry.value);
+            const record = pb.AddrBookRecord.deserialize(entry.value);
+            return { tid, pid, record };
         }
 
-        return { tid, pid, record };
+        return { tid, pid };
     }
 
       

@@ -73,6 +73,15 @@ export interface IDatabaseOperations {
  */ 
  getDBInfo(id: string): Promise<[IDBInfo|null, Error|null]>  ;
 
+
+  /**
+   * 升级集合结构
+   * @param threadId 线程ID
+   * @param collections 集合配置列表
+   * @returns 错误信息或null
+   */
+  upgradeCollections(threadId: string, collections: ICollectionConfig[]): Promise<Error | null> ;
+
   /**
    * 关闭数据库管理器
    * @throws 关闭失败时抛出错误

@@ -97,10 +97,10 @@ export class ChainUtil {
     }
      //peers 进行统一处理
       for (let i = 0; i < userInfo.peers.length; i++) {
-        userInfo.peers[i] = hexToAscii(userInfo.peers[i]);
+        userInfo.peers[i] = hexToAscii(userInfo.peers[i]!);
       }
       for (let i = 0; i < userInfo.requestPeers.length; i++) {
-        userInfo.requestPeers[i] = hexToAscii(userInfo.requestPeers[i]);
+        userInfo.requestPeers[i] = hexToAscii(userInfo.requestPeers[i]!);
       }
       if (userInfo.dbConfig.length <= 2) {
         userInfo.dbConfig = ""; // 如果 dbConfig 为空，则设置为 ""
@@ -156,14 +156,14 @@ export class ChainUtil {
   
   // 按字节计算XOR距离
   for (let i = 0; i < minLen; i++) {
-    result[i] = key1[i] ^ key2[i];
+    result[i] = key1[i]! ^ key2[i]!;
   }
   
   // 将结果转换为BigInt用于比较
   // 首先转换为十六进制字符串以处理大数值
   let hexString = '0x';
   for (let i = 0; i < result.length; i++) {
-    hexString += result[i].toString(16).padStart(2, '0');
+    hexString += result[i]!.toString(16).padStart(2, '0');
   }
   
   // 如果结果为空（全零），返回0n

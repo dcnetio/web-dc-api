@@ -233,6 +233,7 @@ export class DC implements DCContext {
    */
   async initUserDB(
     collections: ICollectionConfig[],
+    verno?: number, //版本编码,当版本编码变化时，需要重构表结构
     reset?: boolean
   ): Promise<[IDBInfo | null, Error | null]> {
     const dbName = "user_threaddb";

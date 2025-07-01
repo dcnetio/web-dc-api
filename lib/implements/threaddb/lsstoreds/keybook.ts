@@ -202,6 +202,9 @@ class DsKeyBook implements KeyBook {
 
   private processPublicKeyEntry(namespaces: string[], value: Uint8Array, dump: DumpKeyBook) {  
     const [tid, lid] = namespaces.slice(2, 4)    
+  if (!tid || !lid) {  
+      throw new Error(`Invalid namespaces for public key: ${namespaces.join('/')}`)  
+    }
     const pk = publicKeyFromRaw(value)  
     if (!dump.data.public[tid]) {  
       dump.data.public[tid] = {}  
@@ -212,6 +215,9 @@ class DsKeyBook implements KeyBook {
 
   private processPrivateKeyEntry(namespaces: string[], value: Uint8Array, dump: DumpKeyBook) {  
     const [tid, lid] = namespaces.slice(2, 4)    
+  if (!tid || !lid) {  
+      throw new Error(`Invalid namespaces for private key: ${namespaces.join('/')}`)  
+    }
     const privk = privateKeyFromRaw(value)  
     if (!dump.data.private[tid]) {  
       dump.data.private[tid] = {}  
@@ -221,11 +227,14 @@ class DsKeyBook implements KeyBook {
 
   private processReadKeyEntry(namespaces: string[], value: Uint8Array, dump: DumpKeyBook) {  
     const [tid] = namespaces.slice(2, 3)    
-    dump.data.read[tid] = Buffer.from(value)  
+    dump.data.read[tid!] = Buffer.from(value)  
   } 
 
   private processServiceKeyEntry(namespaces: string[], value: Uint8Array, dump: DumpKeyBook) {  
-    const [tid] = namespaces.slice(2, 3)    
+    const [tid] = namespaces.slice(2, 3)   
+  if (!tid) {  
+      throw new Error(`Invalid namespaces for service key: ${namespaces.join('/')}`)  
+    } 
     dump.data.service[tid] = Buffer.from(value)  
   } 
 
@@ -246,25 +255,37 @@ async restoreKeys(dump: DumpKeyBook): Promise<void> {
     for (const tid in dump.data.public) {
         for (const lid in dump.data.public[tid]) {
             const pubKey = dump.data.public[tid][lid];
-            await this.addPubKey(ThreadID.fromString(tid), await peerIdFromPublicKey(pubKey), pubKey);
+            if (!pubKey) {
+                continue
+            }
+            await this.addPubKey(ThreadID.fromString(tid),  peerIdFromPublicKey(pubKey), pubKey);
         }
     }
 
     for (const tid in dump.data.private) {
         for (const lid in dump.data.private[tid]) {
             const privKey = dump.data.private[tid][lid];
-            await this.addPrivKey(ThreadID.fromString(tid), await peerIdFromPrivateKey(privKey), privKey);
+            if (!privKey) {
+                continue
+            }
+            await this.addPrivKey(ThreadID.fromString(tid),  peerIdFromPrivateKey(privKey), privKey);
         }
     }
 
     for (const tid in dump.data.read) {
         const rk = dump.data.read[tid];
+        if (!rk) {
+            continue
+        }
         const key = await symKeyFromBytes(rk);
         await this.addReadKey(ThreadID.fromString(tid), key);
     }
 
     for (const tid in dump.data.service) {
         const sk = dump.data.service[tid];
+        if (!sk) {
+            continue
+        }
         const key = await symKeyFromBytes(sk);
         await this.addServiceKey(ThreadID.fromString(tid), key);
     }

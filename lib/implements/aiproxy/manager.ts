@@ -475,9 +475,18 @@ export class AIProxyManager {
           if (contentStr.startsWith("$$auth$$:")) { //授权信息
             try {
               const authContent = contentStr.split("$$auth$$:")[1];
+              if (!authContent ) {
+                console.error("无效的授权信息格式:", contentStr);
+                continue; // 如果格式不正确，跳过
+              }
+              const parts = authContent.split(":");
+              if (parts.length < 2) {
+                console.error("无效的授权信息格式:", authContent);
+                continue; // 如果格式不正确，跳过
+              }
               //解析出userpubkey
-              const userPubkey = authContent.split(":")[0];
-              const permission = authContent.split(":")[1];
+              const userPubkey = parts[0] || "";
+              const permission = parts[1] || "";
               const authContentStr = authContent.substring(
                 userPubkey.length + permission.length + 2 // +2 for the colon and the next colon
               );
@@ -499,7 +508,8 @@ export class AIProxyManager {
             console.error("无效的内容格式:", contentStr);
             continue; // 如果格式不正确，跳过
           }
-          const value = contentStr.substring(parts[0].length + 1);
+
+          const value = contentStr.substring((parts[0]||"").length + 1);
           try {
             const content = JSON.parse(value);
             allContent.push(content as AIProxyConfig);

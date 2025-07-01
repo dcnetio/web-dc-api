@@ -96,7 +96,6 @@ export class DCGrpcClient {
       dcnet.pb.ValidTokenReply.decode(responseData);
       return true;
     } catch (err) {
-      console.error("ValidToken error:", err);
       throw err;
     }
   }

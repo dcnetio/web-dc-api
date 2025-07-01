@@ -32,7 +32,7 @@ export async function registerServiceWorker(fileOps?: IFileOperations, swUrl: st
       // 设置消息监听器处理IPFS资源请求
       navigator.serviceWorker.addEventListener('message', async (event) => {
         if (event.data && event.data.type === 'ipfs-fetch') {
-           await handleIpfsRequest(event.data, event.ports[0], fileOps);
+           await handleIpfsRequest(event.data, event.ports[0]!, fileOps);
         }
       });
       
@@ -62,14 +62,14 @@ async function handleIpfsRequest(
   try {
     // 从路径提取IPFS路径和解密密钥
     const pathParts = pathname.split('/');
-    let ipfsPath = pathParts[3]; // <ipfs-hash>[_<key>]
+    let ipfsPath = pathParts[3]!; // <ipfs-hash>[_<key>]
     
     // 提取加密密钥（如果有）
     let decryptKey = '';
     const keyParts = ipfsPath.split('_');
     if (keyParts.length > 1) {
-      ipfsPath = keyParts[0];
-      decryptKey = keyParts[1];
+      ipfsPath = keyParts[0]!;
+      decryptKey = keyParts[1]!;
     }
     
     let fileData: Uint8Array | null = null;
@@ -86,7 +86,7 @@ async function handleIpfsRequest(
           if (fileStream) {
             const match = range.match(/bytes=(\d+)-(\d+)?/);
             if (match) {
-              start = parseInt(match[1]);
+              start = parseInt(match[1]!);
               end = match[2] ? parseInt(match[2]) : start + DEFAULT_CHUNK_SIZE-1;
               if (end >= fileSize) {
                 // 如果请求的结束范围超过文件大小，则调整为文件大小

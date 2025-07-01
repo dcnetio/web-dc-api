@@ -272,6 +272,45 @@ export class CommentManager {
     }
   }
 
+  async isThemeExist(
+    appId: string,
+    theme: string,
+    themeAuthor: string,
+  ): Promise<[boolean | null, Error | null]> {
+    try {
+       if (!this.connectedDc?.client) {
+        return [null, Errors.ErrNoDcPeerConnected];
+      }
+      if (!this.context.publicKey) {
+        return [null, Errors.ErrPublicKeyIsNull];
+      }
+      let client = this.connectedDc.client;
+      if (themeAuthor != this.context.publicKey.string()) {//查询他人主题评论
+        const authorPublicKey: Ed25519PubKey = Ed25519PubKey.edPubkeyFromStr(themeAuthor);
+        const connectedClient = await this.dc.connectToUserDcPeer(authorPublicKey.raw);
+        if (!connectedClient) {
+          return [null, Errors.ErrNoPeerIdIsNull];
+        }
+        client = connectedClient;
+      }
+       if(client.token == ""){
+        await client.GetToken(appId, this.context.publicKey.string(),this.context.sign);
+      }
+      const aesKey = SymmetricKey.new();// 生成aeskey文件加密密码
+       const commentClient = new CommentClient(
+        client,
+        this.dcNodeClient,
+        this.context
+      );
+      const res = await commentClient.isThemeExist(appId, theme, themeAuthor);
+      return [res, null];
+    } catch (err) {
+      return [null, err as Error];
+    }
+  }
+
+
+
 async addUserOffChainOpTimes(
   times: number,
   vaccount: string = "",
@@ -334,6 +373,8 @@ async addUserOffChainOpTimes(
     return [false, err as Error];
   }
 }
+
+
 
   async addThemeSpace(
     appId: string,

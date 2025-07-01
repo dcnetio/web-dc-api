@@ -97,8 +97,8 @@ import { Query,Criterion,Operation,Value as DbValue } from "./query";
           continue;
         }
         
-        const value = parseValue(parsed[2]);
-        const queryCriterion = new Criterion(parsed[0], getDbQueryOperation(parsed[1]), value);
+        const value = parseValue(parsed[2]!);
+        const queryCriterion = new Criterion(parsed[0]!, getDbQueryOperation(parsed[1]!), value);
         ands.push(queryCriterion);
       } catch (err) {
         // 忽略解析错误的条件

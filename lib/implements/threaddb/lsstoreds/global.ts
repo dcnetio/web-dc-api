@@ -109,7 +109,7 @@ function binaryUvarint(data: Uint8Array): [number, number] {
     let x = 0;
     let s = 0;
     for (let i = 0; i < data.length; i++) {
-        const b = data[i];
+        const b = data[i]!;
         if (b < 0x80) {
             if (i > 9 || (i === 9 && b > 1)) {
                 return [0, -(i + 1)]; // overflow

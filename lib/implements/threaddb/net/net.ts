@@ -105,7 +105,7 @@ export class Network implements Net {
   async getClient(peerId: PeerId):Promise<Client>{
     let cachedFlag = true;
     const cacheAddr = this.cachePeers[peerId.toString()]; 
-    let peerAddr: TMultiaddr | null = cacheAddr;
+    let peerAddr: TMultiaddr | null = cacheAddr || null;
     if (!cacheAddr) {
       cachedFlag = false;
       peerAddr = await this.dcChain.getDcNodeWebrtcDirectAddr(peerId.toString());
@@ -502,7 +502,7 @@ async ensureUniqueLog(id: ThreadID, key?: Ed25519PrivKey | Ed25519PubKey, identi
           let indexCounter = rs.counter - rs.records.length + 1;
           
           for (let i = 0; i < rs.records.length; i++) {
-            const r = rs.records[i];
+            const r = rs.records[i]!;
             
             // Get blocks for validation
             const block = await r.getBlock( this.bstore);
@@ -583,7 +583,7 @@ async ensureUniqueLog(id: ThreadID, key?: Ed25519PrivKey | Ed25519PubKey, identi
               counter: rs.counter
             };
             
-            const lastRecord = rs.records[rs.records.length - 1];
+            const lastRecord = rs.records[rs.records.length - 1]!;
             offsets[lidStr] = {
               id: lastRecord.cid(),
               counter: rs.counter
@@ -855,7 +855,7 @@ async getRecordsWithDbClient(
         updatedHead = current;
         
         for (let i = 0; i < chain.length; i++) {
-          if (chain[i].value().cid().equals(current.id)) {
+          if (chain[i]!.value().cid().equals(current.id)) {
             chain.splice(0, i + 1);
             headReached = true;
             break;
@@ -961,7 +961,7 @@ async getRecordsWithDbClient(
     const head = await this.currentHead(tid, lid);
     
     // Check if the last record was already loaded and processed
-    const last = recs[recs.length - 1];
+    const last = recs[recs.length - 1]!;
     
     // If we don't have the counter, check if record exists
     if (counter === undefined) {
@@ -977,7 +977,7 @@ async getRecordsWithDbClient(
     let complete = false;
     // Check which records we already have
     for (let i = recs.length - 1; i >= 0; i--) {
-      const next = recs[i];
+      const next = recs[i]!;
       if ( next.cid.toString() == "" || next.cid().equals(head.id)) {
         complete = true;
         break;
@@ -988,7 +988,7 @@ async getRecordsWithDbClient(
 
     // Bridge the gap between the last provided record and current head
     if (!complete && chain.length > 0) {
-      let c = chain[chain.length - 1].prevID();
+      let c = chain[chain.length - 1]!.prevID();
       while (c && !(last.cid().toString() == "")) {
         if (c.equals(head.id)) {
           break;
@@ -1007,7 +1007,7 @@ async getRecordsWithDbClient(
     const tRecords: ThreadRecord[] = [];
     
     for (let i = chain.length - 1; i >= 0; i--) {
-      const r = chain[i];
+      const r = chain[i]!;
       
       // Get and cache blocks
       const block = await r.getBlock(this.bstore);
@@ -1083,7 +1083,7 @@ async getRecord( id: ThreadID, rid: CID): Promise<IRecord> {
     const heads = await this.logstore.headBook.heads(tid, lid);
     
     if (heads.length > 0) {
-      return heads[0];
+      return heads[0]!;
     } else {
       return await getHeadUndef();
     }
@@ -1337,7 +1337,7 @@ async preLoadLogs(tid: ThreadID, logs: net_pb.pb.Log[]): Promise<void> {
     
     // 遍历并转换每个日志
     for (let i = 0; i < logs.length; i++) {
-      lgs.push(await logFromProto(logs[i]));
+      lgs.push(await logFromProto(logs[i]!));
     }
     // 调用创建外部日志的方法
     await this.createExternalLogsIfNotExistForPreload(tid, lgs);
@@ -1541,7 +1541,7 @@ async newRecord(id: ThreadID, lg: IThreadLogInfo, body: IPLDNode, identity: Publ
   await this.bstore.put(event.cid(), event.data());
   let prev:CID|undefined = undefined;
   if (heads && heads.length > 0 ){
-    prev = heads[0].id;
+    prev = heads[0]!.id;
   }
   const rec = await CreateRecord(
     this.bstore,

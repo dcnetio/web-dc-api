@@ -105,6 +105,7 @@ async pubKey(): Promise<Ed25519PubKey|undefined > {
       }
     }
   }
+  return
 }
 
 
@@ -147,7 +148,7 @@ export function withContext<T>(ctx: ThreadContext, fn: () => T): T {
 }  
 
 export function currentContext(): ThreadContext {  
-  return contextStack[contextStack.length - 1]  
+  return contextStack[contextStack.length - 1]!  
 }  
 
 // ==================== 凭证处理 ====================  

@@ -38,6 +38,9 @@ export class Client {
       if (!peerAddr) {
         peerAddr = this.peerAddr;
       }
+      if (!pubkey || pubkey.length == 0) {
+        throw new Error("pubkey is empty");
+      }
       const grpcClient = new DCGrpcClient(
         this.p2pNode,
         peerAddr,
@@ -78,7 +81,6 @@ export class Client {
         );
         await grpcClient.ValidToken();
       } catch (err) {
-        console.error("GetToken error:", err);
         throw err;
       }
     }

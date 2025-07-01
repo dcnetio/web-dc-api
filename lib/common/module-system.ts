@@ -154,7 +154,7 @@ export class ModuleSystem {
     // 逆序关闭模块
     const modules = Array.from(this.modules.entries());
     for (let i = modules.length - 1; i >= 0; i--) {
-      const [name, module] = modules[i];
+      const [name, module] = modules[i]!;
       try {
         logger.info(`关闭模块: ${name}`);
         await module.shutdown();

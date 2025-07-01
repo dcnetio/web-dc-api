@@ -128,9 +128,9 @@ async  seedFromMnemonic(mnemonic: string, password: string): Promise<Uint8Array>
 
         // 2. 对前32字节进行clamping（与Go实现一致）  
         const h0 = h.slice(0, 32)  
-        h0[0] &= 248  
-        h0[31] &= 127  
-        h0[31] |= 64  
+        h0[0]! &= 248  
+        h0[31]! &= 127  
+        h0[31]! |= 64  
 
         // 3. 生成公钥  
         const publicKey = ed25519.getPublicKey(seed)  
