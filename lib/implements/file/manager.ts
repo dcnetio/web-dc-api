@@ -939,17 +939,15 @@ async countDirectoryBlocks(rootCID: CID): Promise<number> {
  * 获取文件夹下的所有文件,包括内容（支持多级目录递归）
  * @param cid 根目录的CID
  * @param decryptKey 解密密钥
- * @param flag 是否需要连接节点
  * @param recursive 是否递归获取子目录，默认false（保持向后兼容）
  * @returns 文件列表：[{Name:文件或目录名，Type：0-文件 1-目录，Size：大小，Hash：文件或目录cid，Path：完整路径}]
  */
 async getFolderFileListWithContent(
   cid: string, 
   decryptKey: string, 
-  flag?: number,
   recursive: boolean = true
 ): Promise<[Array<{Name: string; Type: number; Size: number; Hash: string; Path: string, Content?: Uint8Array}> | null, Error | null]> {
- const [fileList, err] = await this.getFolderFileList(cid, flag, recursive);
+ const [fileList, err] = await this.getFolderFileList(cid, cidNeedConnect.NEED, recursive);
  if (err || !fileList) return [null, err];
  for (let i = 0; i < fileList.length; i++) {
    const file = fileList[i];
