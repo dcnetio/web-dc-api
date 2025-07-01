@@ -17,6 +17,8 @@ export interface DCContext {
   dcNodeClient: HeliaLibp2p<Libp2p>;
   dcChain: ChainUtil;
   dcutil: DcUtil;
+
+  swInited: boolean;
   
   // 连接信息
   connectedDc: DCConnectInfo;
