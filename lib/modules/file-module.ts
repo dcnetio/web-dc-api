@@ -211,6 +211,42 @@ export class FileModule implements DCModule, IFileOperations {
     }
   }
 
+
+/**
+ * 获取文件夹下的所有文件,包括内容（支持多级目录递归）
+ * @param cid 根目录的CID
+ * @param decryptKey 解密密钥
+ * @param recursive 是否递归获取子目录，默认false（保持向后兼容）
+ * @returns 文件列表：[{Name:文件或目录名，Type：0-文件 1-目录，Size：大小，Hash：文件或目录cid，Path：完整路径}]
+ */
+async getFolderFileListWithContent(
+  cid: string, 
+  decryptKey: string, 
+  recursive: boolean = true
+): Promise<[Array<{Name: string; Type: number; Size: number; Hash: string; Path: string, Content?: Uint8Array}> | null, Error | null]> {
+ const [fileList, err] = await this.fileManager.getFolderFileListWithContent(cid, decryptKey, recursive);
+ return [fileList, err];
+}
+
+/**
+ * 获取文件夹下的文件列表（支持多级目录递归）
+ * @param cid 根目录的CID
+ * @param flag 是否需要连接节点
+ * @param recursive 是否递归获取子目录，默认false（保持向后兼容）
+ * @returns 返回JSON格式的文件列表：[{Name:文件或目录名，Type：0-文件 1-目录，Size：大小，Hash：文件或目录cid，Path：完整路径}]
+ */
+async getFolderFileList(
+  cid: string, 
+  flag?: number,
+  recursive: boolean = true
+): Promise<[Array<{Name: string; Type: number; Size: number; Hash: string; Path: string, Content?: Uint8Array}> | null, Error | null]> {
+ const [fileList, err] = await this.fileManager.getFolderFileList(cid, flag, recursive);
+ return [fileList, err];
+}
+
+
+
+
   /**
    * Creates a custom FileList object from file paths and contents
    * @param filesMap - Map of file paths to content (string or Uint8Array)
