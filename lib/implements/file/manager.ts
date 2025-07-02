@@ -265,11 +265,11 @@ export class FileManager {
       const filesize = stats.unixfs?.fileSize();
       console.log(
         "=========stats",
-        stats.localDagSize,
-        stats.localFileSize,
-        stats.fileSize,
-        stats.dagSize,
-        filesize
+        Number(stats.localFileSize),
+        Number(stats.localFileSize),
+        Number(stats.fileSize),
+        Number(stats.dagSize),
+        Number(filesize)
       );
       const dagFileSize = Number(stats.localDagSize);
       const fileClient = new FileClient(
