@@ -262,14 +262,14 @@ export class FileManager {
       console.log("=========resCid", resCid);
 
       const stats = await fs.stat(cid);
-      const filesize = stats.unixfs?.fileSize();
+      const filesize = stats.unixfs?.fileSize() || 0;
       console.log(
         "=========stats",
-        Number(stats.localFileSize),
-        Number(stats.localFileSize),
-        Number(stats.fileSize),
-        Number(stats.dagSize),
-        Number(filesize)
+        stats.localFileSize.toString(),
+        stats.localFileSize.toString(),
+        stats.fileSize.toString(),
+        stats.dagSize.toString(),
+        filesize.toString(),
       );
       const dagFileSize = Number(stats.localDagSize);
       const fileClient = new FileClient(
