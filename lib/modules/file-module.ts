@@ -22,7 +22,6 @@ export class FileModule implements DCModule, IFileOperations {
   private fileCacheManager!: FileCacheManager;
   private initialized: boolean = false;
   private swUrl: string;
-  private 
   
   constructor(url: string) {
     this.swUrl = url;
