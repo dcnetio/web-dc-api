@@ -245,7 +245,23 @@ export class KeyValueManager {
     appId: string,
     theme: string,
     ThemeAuthor: string
-  ): Promise<[KeyValueDB, Error | null]> {
+  ): Promise<[KeyValueDB | null, Error | null]> {
+      const commentManager = new CommentManager(this.context);
+    // Ensure theme starts with "keyvalue_"
+    if (!theme.startsWith("keyvalue_")) {
+      theme = "keyvalue_" + theme;
+    }
+    //先判断主题是否存在,不存在就报错
+    const [flag,err] =  await commentManager.isThemeExist(appId, theme, ThemeAuthor);
+    if(err){
+      return [null, err];
+    }
+    if (!flag) {
+      return [
+        null,
+        new Error(`Theme ${theme} does not exist for appId ${appId}`),
+      ];  
+    }
     const keyValueDB = new KeyValueDB(appId, theme, ThemeAuthor, this);
     return [keyValueDB, null];
   }

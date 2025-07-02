@@ -20,8 +20,11 @@ class LevelDatastoreAdapter implements TxnDatastoreExtended {
       options?: AbortOptions  
     ): AsyncIterable<Key> {  
       const { filters = [], prefix } = query;  
-  
-      for await (const { key } of this.store.query({ prefix })) {  
+      const queryOptions: Query = {};
+        if (prefix !== undefined) {
+          queryOptions.prefix = prefix;
+        }
+      for await (const { key } of this.store.query(queryOptions)) {  
         let match = true;  
         
         // 应用所有过滤器  
@@ -53,8 +56,11 @@ class LevelDatastoreAdapter implements TxnDatastoreExtended {
     q: QueryExt  
   ): AsyncIterable<QueryResult> {  
     const { prefix, filters = [] } = q;  
-
-    for await (const entry of this.store.query({ prefix })) {  
+ const queryOptions: Query = {};
+        if (prefix !== undefined) {
+          queryOptions.prefix = prefix;
+        }
+    for await (const entry of this.store.query(queryOptions)) {  
       let match = true;  
       
       // 应用所有过滤器  
@@ -149,6 +155,7 @@ class LevelDatastoreAdapter implements TxnDatastoreExtended {
     
     readOnly: boolean  
   ): Promise<Transaction> {  
+    const store = this.store;
     // 由于 LevelDatastore 不支持原生事务，我们创建一个简单的包装器  
     const txn: Transaction = {  
       put: async ( key: Key, value: Uint8Array): Promise<Key> => {  
@@ -172,7 +179,7 @@ class LevelDatastoreAdapter implements TxnDatastoreExtended {
       },  
 
       query: async function*( q: Query): AsyncIterable<QueryResult> {  
-        for await (const entry of this.store.query(q)) {  
+        for await (const entry of store.query(q)) {  
           yield {  
             key: entry.key.toString(),  
             value: entry.value,  
@@ -183,7 +190,11 @@ class LevelDatastoreAdapter implements TxnDatastoreExtended {
 
       queryExtended: async function*( q: QueryExt): AsyncIterable<QueryResult> {  
         const { prefix, filters = [] } = q;  
-        for await (const entry of this.store.query({ prefix })) {  
+        const queryOptions: Query = {};
+        if (prefix !== undefined) {
+          queryOptions.prefix = prefix;
+        }
+        for await (const entry of store.query(queryOptions)) {  
           let match = true;  
           for (const filter of filters) {  
             if (!filter(entry)) {  

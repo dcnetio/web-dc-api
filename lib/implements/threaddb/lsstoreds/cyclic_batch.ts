@@ -37,7 +37,7 @@ import { Datastore,Batch ,Key} from 'interface-datastore';
         await this.currentBatch.commit();  
         this.pendingOps = 0;  
         this.currentBatch =  this.ds.batch();
-      } catch (err) {  
+      } catch (err:any) {  
         throw new Error(`Batch operation failed: ${err.message}`);  
       }  
     }  

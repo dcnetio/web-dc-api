@@ -178,6 +178,8 @@ class IDBDatastoreAdapter implements TxnDatastoreExtended {
     
     readOnly: boolean  
   ): Promise<Transaction> {  
+    // 保存当前实例的引用
+    const store = this.store;
     // 由于 LevelDatastore 不支持原生事务，我们创建一个简单的包装器  
     const txn: Transaction = {  
       put: async ( key: Key, value: Uint8Array): Promise<Key> => {  
@@ -201,7 +203,7 @@ class IDBDatastoreAdapter implements TxnDatastoreExtended {
       },  
 
       query: async function*( q: Query): AsyncIterable<QueryResult> {  
-        for await (const entry of this.store.query(q)) {  
+        for await (const entry of store.query(q)) {  
           yield {  
             key: entry.key.toString(),  
             value: entry.value,  
@@ -212,7 +214,11 @@ class IDBDatastoreAdapter implements TxnDatastoreExtended {
 
       queryExtended: async function*( q: QueryExt): AsyncIterable<QueryResult> {  
         const { prefix, filters = [] } = q;  
-        for await (const entry of this.store.query({ prefix })) {  
+        const queryOptions: Query = {};
+        if (prefix !== undefined) {
+          queryOptions.prefix = prefix;
+        }
+        for await (const entry of store.query(queryOptions)) {  
           let match = true;  
           for (const filter of filters) {  
             if (!filter(entry)) {  

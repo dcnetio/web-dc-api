@@ -89,6 +89,9 @@ export class DcUtil {
       let num = 0;
 
       async function dialNodeAddr(i: number) {
+        if (!peerListJson[i]) {
+          return;
+        }
         const nodeAddr = await _this.dcChain.getDcNodeWebrtcDirectAddr(
           peerListJson[i]
         );
@@ -340,14 +343,14 @@ export class DcUtil {
     }
   };
   _getNodeAddr = async (peerId: string): Promise<Multiaddr | undefined> => {
-    let nodeAddr = await this.dcChain.getDcNodeWebrtcDirectAddr(peerId);
+    let nodeAddr = await this.dcChain.getDcNodeWebrtcDirectAddr(peerId) || undefined;
     if (!nodeAddr) {
       console.error("no node address found for peer: ", peerId);
       return;
     }
     if (isName(nodeAddr)) {
       const addrs = await nodeAddr.resolve();
-      nodeAddr = addrs[0];
+      nodeAddr = addrs[0] ;
     }
     return nodeAddr;
   };
@@ -416,7 +419,7 @@ export class DcUtil {
     const res: string[] = [];
     for (let i = 0; i < num; i++) {
       const randomIndex = Math.floor(Math.random() * len);
-      res.push(nodeList[randomIndex]);
+      res.push(nodeList[randomIndex]!);
     }
     return res;
   };
@@ -553,13 +556,13 @@ export class DcUtil {
     }  
 
     // 第 1 字节: 消息类型  
-    const type = data[0];  
+    const type = data[0]!;  
 
     // 第 2 和 3 字节: 版本号（大端序）  
-    const version = (data[1] << 8) | data[2]; // 手动处理大端序  
+    const version = (data[1]! << 8) | data[2]!; // 手动处理大端序  
 
     // 第 4 至 7 字节: payload 长度（大端序）  
-    const payloadLength = (data[3] << 24) | (data[4] << 16) | (data[5] << 8) | data[6];  
+    const payloadLength = (data[3]! << 24) | (data[4]! << 16) | (data[5]! << 8) | data[6]!;  
 
     // 验证数据完整性  
     if (data.length < 7 + payloadLength) {   

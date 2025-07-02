@@ -377,7 +377,7 @@ export class Collection implements ICollection {
     await this.writeTxn(async (txn) => {
       const ids = await txn.create(v);
       if (ids.length > 0) {
-        id = ids[0];
+        id = ids[0] as InstanceID;
       }
     }, token);
     
@@ -516,7 +516,7 @@ export class Collection implements ICollection {
         let msg = '';
         for (let i = 0; i < validate.errors.length; i++) {
           const e = validate.errors[i];
-          msg += `${e.schemaPath}: ${e.message}`;
+          msg += `${e?.schemaPath}: ${e?.message}`;
           if (i !== validate.errors.length - 1) {
             msg += '; ';
           }
@@ -821,7 +821,7 @@ class KeyList {
     
     let i = this.binarySearch(bytes);
     
-    if (i < this.keys.length && this.bytesEqual(this.keys[i], bytes)) {
+    if (i < this.keys.length && this.bytesEqual(this.keys[i]!, bytes)) {
       return; // 已添加
     }
     
@@ -836,7 +836,7 @@ class KeyList {
     
     let i = this.binarySearch(bytes);
     
-    if (i < this.keys.length && this.bytesEqual(this.keys[i], bytes)) {
+    if (i < this.keys.length && this.keys[i] && this.bytesEqual(this.keys[i], bytes)) {
       this.keys.splice(i, 1);
     }
   }
@@ -847,7 +847,7 @@ class KeyList {
   in(key: Key): boolean {
     const bytes = key.uint8Array();
     const i = this.binarySearch(bytes);
-    return i < this.keys.length && this.bytesEqual(this.keys[i], bytes);
+    return i < this.keys.length && this.keys[i] !== undefined && this.bytesEqual(this.keys[i], bytes);
   }
   
   /**
@@ -880,7 +880,8 @@ class KeyList {
     
     while (low <= high) {
       const mid = Math.floor((low + high) / 2);
-      const cmp = this.bytesCompare(this.keys[mid], bytes);
+      // Add non-null assertion operator (!) to tell TypeScript this is always defined
+      const cmp = this.bytesCompare(this.keys[mid]!, bytes);
       
       if (cmp < 0) {
         low = mid + 1;
@@ -902,7 +903,7 @@ class KeyList {
     
     for (let i = 0; i < len; i++) {
       if (a[i] !== b[i]) {
-        return a[i] < b[i] ? -1 : 1;
+        return a[i]! < b[i]! ? -1 : 1;
       }
     }
     
@@ -954,7 +955,7 @@ export class Txn implements ITxn{
       }
       
       // Copy the data to avoid modifying the input
-      const updated = newInstances[i].slice(0);
+      const updated = newInstances[i]!.slice(0);
       
       // Try to get instance ID, set one if missing
       let id = await getInstanceID(updated);
@@ -1048,7 +1049,7 @@ export class Txn implements ITxn{
       }
       
       // Copy the data to avoid modifying the input
-      const next = updated[i].slice(0);
+      const next = updated[i]!.slice(0);
       
       // Validate schema
       this.collection.validInstance(next);
@@ -1105,7 +1106,7 @@ export class Txn implements ITxn{
         throw ErrReadonlyTx;
       }
       
-      const key = this.collection.baseKey().child(new Key(ids[i]));
+      const key = this.collection.baseKey().child(new Key(ids[i]!));
       const exists = await this.collection.db.datastore.has(key);
       
       if (!exists) {
@@ -1116,7 +1117,7 @@ export class Txn implements ITxn{
       // Add action
       this.actions.push({
         type: CoreActionType.Delete,
-        instanceID: ids[i],
+        instanceID: ids[i]!,
         collectionName: this.collection.name
       });
     }
@@ -1135,7 +1136,7 @@ export class Txn implements ITxn{
 	
     
     for (let i = 0; i < ids.length; i++) {
-      const key = this.collection.baseKey().child(new Key(ids[i]));
+      const key = this.collection.baseKey().child(new Key(ids[i]!));
       const exists = await this.collection.db.datastore.has(key);
       
       if (exists) {
@@ -1752,7 +1753,7 @@ class Iterator {
       return {
         result: {
           entry: {
-            key: key.toString(),
+            key: key!.toString(),
             value: value
           },
           error: null

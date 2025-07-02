@@ -78,7 +78,7 @@ export class JsonPatcher implements EventCodec {
         await this.processEvent(event, baseKey, txn, indexFunc);  
         actions.push({  
           type: event.patch.type,  
-          collection: event.collectionName,  
+          collection: event.collectionName|| 'default',  
           instanceID: event.iD  
         });  
       }  
@@ -161,7 +161,7 @@ export class JsonPatcher implements EventCodec {
       patch: {  
         type: data.op.type,  
         instanceID: data.op.id,  
-        jSONPatch: data.op.patch ? encode(data.op.patch) : undefined  
+        jSONPatch: data.op.patch ? encode(data.op.patch) : new Uint8Array()  
       }  
     };  
   }  
@@ -172,7 +172,7 @@ export class JsonPatcher implements EventCodec {
     txn: Transaction,  
     indexFunc: IndexFunc  
   ): Promise<void> {  
-    const recordKey = baseKey.child(new Key(event.collectionName)).child(new Key(event.iD));  
+    const recordKey = baseKey.child(new Key(event.collectionName || 'default')).child(new Key(event.iD));  
 
     const oldData = await txn.get(recordKey).catch(() => undefined);  
     const newData = event.patch.type === CoreActionType.Delete  
@@ -180,7 +180,7 @@ export class JsonPatcher implements EventCodec {
       : event.patch.jSONPatch;  
 
     await indexFunc(  
-      event.collectionName,  
+      event.collectionName|| 'default',  
       recordKey,  
       txn ,  
       oldData,  

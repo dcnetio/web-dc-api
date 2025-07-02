@@ -24,7 +24,7 @@ export class DCGrpcServer {
           const hpack = new HPACK()
           //生成number的streamId
           let method = "";
-          const writer =  new StreamWriter(stream.sink) 
+          const writer =  new StreamWriter(stream.sink) as any;
           const http2Parser = new HTTP2Parser(writer)
           http2Parser.onData = async (payload, frameHeader) => {
             const requestData = payload.subarray(5) // 去除帧头部分
@@ -54,11 +54,14 @@ export class DCGrpcServer {
     }
   
     _parseFrameHeader(buffer: Uint8Array) {
-        const length = (buffer[0] << 16) | (buffer[1] << 8) | buffer[2];
+        if (buffer.length < 9) {
+          throw new Error("Invalid frame header length");
+        }
+        const length = (buffer[0]! << 16) | (buffer[1]! << 8) | buffer[2]!;
         const type = buffer[3];
         const flags = buffer[4];
         const streamId =
-          (buffer[5] << 24) | (buffer[6] << 16) | (buffer[7] << 8) | buffer[8];
+          (buffer[5]! << 24) | (buffer[6]! << 16) | (buffer[7]! << 8) | buffer[8]!;
     
         return {
           length,

@@ -184,8 +184,8 @@ export class Criterion {
 
   constructor(fieldPath: string, operation?:Operation,value?:Value) {
     this.fieldPath = fieldPath;
-    this.operation = operation;
-    this.value = value;
+    this.operation = operation!;
+    this.value = value!;
   }
 
   /**

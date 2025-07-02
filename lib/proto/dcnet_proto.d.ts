@@ -12694,6 +12694,212 @@ export namespace dcnet {
             public static getTypeUrl(typeUrlPrefix?: string): string;
         }
 
+        /** Properties of an IsThemeExistRequest. */
+        interface IIsThemeExistRequest {
+
+            /** IsThemeExistRequest theme */
+            theme?: (Uint8Array|null);
+
+            /** IsThemeExistRequest appId */
+            appId?: (Uint8Array|null);
+
+            /** IsThemeExistRequest themeAuthor */
+            themeAuthor?: (Uint8Array|null);
+        }
+
+        /** Represents an IsThemeExistRequest. */
+        class IsThemeExistRequest implements IIsThemeExistRequest {
+
+            /**
+             * Constructs a new IsThemeExistRequest.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: dcnet.pb.IIsThemeExistRequest);
+
+            /** IsThemeExistRequest theme. */
+            public theme: Uint8Array;
+
+            /** IsThemeExistRequest appId. */
+            public appId: Uint8Array;
+
+            /** IsThemeExistRequest themeAuthor. */
+            public themeAuthor: Uint8Array;
+
+            /**
+             * Creates a new IsThemeExistRequest instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns IsThemeExistRequest instance
+             */
+            public static create(properties?: dcnet.pb.IIsThemeExistRequest): dcnet.pb.IsThemeExistRequest;
+
+            /**
+             * Encodes the specified IsThemeExistRequest message. Does not implicitly {@link dcnet.pb.IsThemeExistRequest.verify|verify} messages.
+             * @param message IsThemeExistRequest message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: dcnet.pb.IIsThemeExistRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified IsThemeExistRequest message, length delimited. Does not implicitly {@link dcnet.pb.IsThemeExistRequest.verify|verify} messages.
+             * @param message IsThemeExistRequest message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: dcnet.pb.IIsThemeExistRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes an IsThemeExistRequest message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns IsThemeExistRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): dcnet.pb.IsThemeExistRequest;
+
+            /**
+             * Decodes an IsThemeExistRequest message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns IsThemeExistRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): dcnet.pb.IsThemeExistRequest;
+
+            /**
+             * Verifies an IsThemeExistRequest message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates an IsThemeExistRequest message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns IsThemeExistRequest
+             */
+            public static fromObject(object: { [k: string]: any }): dcnet.pb.IsThemeExistRequest;
+
+            /**
+             * Creates a plain object from an IsThemeExistRequest message. Also converts values to other types if specified.
+             * @param message IsThemeExistRequest
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: dcnet.pb.IsThemeExistRequest, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this IsThemeExistRequest to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for IsThemeExistRequest
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** Properties of an IsThemeExistReply. */
+        interface IIsThemeExistReply {
+
+            /** IsThemeExistReply flag */
+            flag?: (number|null);
+        }
+
+        /** Represents an IsThemeExistReply. */
+        class IsThemeExistReply implements IIsThemeExistReply {
+
+            /**
+             * Constructs a new IsThemeExistReply.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: dcnet.pb.IIsThemeExistReply);
+
+            /** IsThemeExistReply flag. */
+            public flag: number;
+
+            /**
+             * Creates a new IsThemeExistReply instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns IsThemeExistReply instance
+             */
+            public static create(properties?: dcnet.pb.IIsThemeExistReply): dcnet.pb.IsThemeExistReply;
+
+            /**
+             * Encodes the specified IsThemeExistReply message. Does not implicitly {@link dcnet.pb.IsThemeExistReply.verify|verify} messages.
+             * @param message IsThemeExistReply message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: dcnet.pb.IIsThemeExistReply, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified IsThemeExistReply message, length delimited. Does not implicitly {@link dcnet.pb.IsThemeExistReply.verify|verify} messages.
+             * @param message IsThemeExistReply message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: dcnet.pb.IIsThemeExistReply, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes an IsThemeExistReply message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns IsThemeExistReply
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): dcnet.pb.IsThemeExistReply;
+
+            /**
+             * Decodes an IsThemeExistReply message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns IsThemeExistReply
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): dcnet.pb.IsThemeExistReply;
+
+            /**
+             * Verifies an IsThemeExistReply message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates an IsThemeExistReply message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns IsThemeExistReply
+             */
+            public static fromObject(object: { [k: string]: any }): dcnet.pb.IsThemeExistReply;
+
+            /**
+             * Creates a plain object from an IsThemeExistReply message. Also converts values to other types if specified.
+             * @param message IsThemeExistReply
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: dcnet.pb.IsThemeExistReply, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this IsThemeExistReply to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for IsThemeExistReply
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
         /** Properties of a GetThemeObjRequest. */
         interface IGetThemeObjRequest {
 
@@ -18807,6 +19013,478 @@ export namespace dcnet {
             public static getTypeUrl(typeUrlPrefix?: string): string;
         }
 
+        /** Properties of a CreateAIProxyCallTaskRequest. */
+        interface ICreateAIProxyCallTaskRequest {
+
+            /** CreateAIProxyCallTaskRequest theme */
+            theme?: (Uint8Array|null);
+
+            /** CreateAIProxyCallTaskRequest appId */
+            appId?: (Uint8Array|null);
+
+            /** CreateAIProxyCallTaskRequest themeAuthor */
+            themeAuthor?: (Uint8Array|null);
+
+            /** CreateAIProxyCallTaskRequest blockheight */
+            blockheight?: (number|null);
+
+            /** CreateAIProxyCallTaskRequest configKey */
+            configKey?: (Uint8Array|null);
+
+            /** CreateAIProxyCallTaskRequest path */
+            path?: (Uint8Array|null);
+
+            /** CreateAIProxyCallTaskRequest reqBody */
+            reqBody?: (Uint8Array|null);
+
+            /** CreateAIProxyCallTaskRequest continueReqs */
+            continueReqs?: (Uint8Array|null);
+
+            /** CreateAIProxyCallTaskRequest modelConfig */
+            modelConfig?: (Uint8Array|null);
+
+            /** CreateAIProxyCallTaskRequest forceRefresh */
+            forceRefresh?: (number|null);
+
+            /** CreateAIProxyCallTaskRequest headers */
+            headers?: (Uint8Array|null);
+
+            /** CreateAIProxyCallTaskRequest signature */
+            signature?: (Uint8Array|null);
+        }
+
+        /** Represents a CreateAIProxyCallTaskRequest. */
+        class CreateAIProxyCallTaskRequest implements ICreateAIProxyCallTaskRequest {
+
+            /**
+             * Constructs a new CreateAIProxyCallTaskRequest.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: dcnet.pb.ICreateAIProxyCallTaskRequest);
+
+            /** CreateAIProxyCallTaskRequest theme. */
+            public theme: Uint8Array;
+
+            /** CreateAIProxyCallTaskRequest appId. */
+            public appId: Uint8Array;
+
+            /** CreateAIProxyCallTaskRequest themeAuthor. */
+            public themeAuthor: Uint8Array;
+
+            /** CreateAIProxyCallTaskRequest blockheight. */
+            public blockheight: number;
+
+            /** CreateAIProxyCallTaskRequest configKey. */
+            public configKey: Uint8Array;
+
+            /** CreateAIProxyCallTaskRequest path. */
+            public path: Uint8Array;
+
+            /** CreateAIProxyCallTaskRequest reqBody. */
+            public reqBody: Uint8Array;
+
+            /** CreateAIProxyCallTaskRequest continueReqs. */
+            public continueReqs: Uint8Array;
+
+            /** CreateAIProxyCallTaskRequest modelConfig. */
+            public modelConfig: Uint8Array;
+
+            /** CreateAIProxyCallTaskRequest forceRefresh. */
+            public forceRefresh: number;
+
+            /** CreateAIProxyCallTaskRequest headers. */
+            public headers: Uint8Array;
+
+            /** CreateAIProxyCallTaskRequest signature. */
+            public signature: Uint8Array;
+
+            /**
+             * Creates a new CreateAIProxyCallTaskRequest instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns CreateAIProxyCallTaskRequest instance
+             */
+            public static create(properties?: dcnet.pb.ICreateAIProxyCallTaskRequest): dcnet.pb.CreateAIProxyCallTaskRequest;
+
+            /**
+             * Encodes the specified CreateAIProxyCallTaskRequest message. Does not implicitly {@link dcnet.pb.CreateAIProxyCallTaskRequest.verify|verify} messages.
+             * @param message CreateAIProxyCallTaskRequest message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: dcnet.pb.ICreateAIProxyCallTaskRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified CreateAIProxyCallTaskRequest message, length delimited. Does not implicitly {@link dcnet.pb.CreateAIProxyCallTaskRequest.verify|verify} messages.
+             * @param message CreateAIProxyCallTaskRequest message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: dcnet.pb.ICreateAIProxyCallTaskRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes a CreateAIProxyCallTaskRequest message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns CreateAIProxyCallTaskRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): dcnet.pb.CreateAIProxyCallTaskRequest;
+
+            /**
+             * Decodes a CreateAIProxyCallTaskRequest message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns CreateAIProxyCallTaskRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): dcnet.pb.CreateAIProxyCallTaskRequest;
+
+            /**
+             * Verifies a CreateAIProxyCallTaskRequest message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates a CreateAIProxyCallTaskRequest message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns CreateAIProxyCallTaskRequest
+             */
+            public static fromObject(object: { [k: string]: any }): dcnet.pb.CreateAIProxyCallTaskRequest;
+
+            /**
+             * Creates a plain object from a CreateAIProxyCallTaskRequest message. Also converts values to other types if specified.
+             * @param message CreateAIProxyCallTaskRequest
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: dcnet.pb.CreateAIProxyCallTaskRequest, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this CreateAIProxyCallTaskRequest to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for CreateAIProxyCallTaskRequest
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** Properties of a CreateAIProxyCallTaskReply. */
+        interface ICreateAIProxyCallTaskReply {
+
+            /** CreateAIProxyCallTaskReply flag */
+            flag?: (number|null);
+
+            /** CreateAIProxyCallTaskReply taskId */
+            taskId?: (Uint8Array|null);
+        }
+
+        /** Represents a CreateAIProxyCallTaskReply. */
+        class CreateAIProxyCallTaskReply implements ICreateAIProxyCallTaskReply {
+
+            /**
+             * Constructs a new CreateAIProxyCallTaskReply.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: dcnet.pb.ICreateAIProxyCallTaskReply);
+
+            /** CreateAIProxyCallTaskReply flag. */
+            public flag: number;
+
+            /** CreateAIProxyCallTaskReply taskId. */
+            public taskId: Uint8Array;
+
+            /**
+             * Creates a new CreateAIProxyCallTaskReply instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns CreateAIProxyCallTaskReply instance
+             */
+            public static create(properties?: dcnet.pb.ICreateAIProxyCallTaskReply): dcnet.pb.CreateAIProxyCallTaskReply;
+
+            /**
+             * Encodes the specified CreateAIProxyCallTaskReply message. Does not implicitly {@link dcnet.pb.CreateAIProxyCallTaskReply.verify|verify} messages.
+             * @param message CreateAIProxyCallTaskReply message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: dcnet.pb.ICreateAIProxyCallTaskReply, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified CreateAIProxyCallTaskReply message, length delimited. Does not implicitly {@link dcnet.pb.CreateAIProxyCallTaskReply.verify|verify} messages.
+             * @param message CreateAIProxyCallTaskReply message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: dcnet.pb.ICreateAIProxyCallTaskReply, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes a CreateAIProxyCallTaskReply message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns CreateAIProxyCallTaskReply
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): dcnet.pb.CreateAIProxyCallTaskReply;
+
+            /**
+             * Decodes a CreateAIProxyCallTaskReply message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns CreateAIProxyCallTaskReply
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): dcnet.pb.CreateAIProxyCallTaskReply;
+
+            /**
+             * Verifies a CreateAIProxyCallTaskReply message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates a CreateAIProxyCallTaskReply message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns CreateAIProxyCallTaskReply
+             */
+            public static fromObject(object: { [k: string]: any }): dcnet.pb.CreateAIProxyCallTaskReply;
+
+            /**
+             * Creates a plain object from a CreateAIProxyCallTaskReply message. Also converts values to other types if specified.
+             * @param message CreateAIProxyCallTaskReply
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: dcnet.pb.CreateAIProxyCallTaskReply, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this CreateAIProxyCallTaskReply to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for CreateAIProxyCallTaskReply
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** Properties of a GetAIProxyCallTaskResultRequest. */
+        interface IGetAIProxyCallTaskResultRequest {
+
+            /** GetAIProxyCallTaskResultRequest taskId */
+            taskId?: (Uint8Array|null);
+        }
+
+        /** Represents a GetAIProxyCallTaskResultRequest. */
+        class GetAIProxyCallTaskResultRequest implements IGetAIProxyCallTaskResultRequest {
+
+            /**
+             * Constructs a new GetAIProxyCallTaskResultRequest.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: dcnet.pb.IGetAIProxyCallTaskResultRequest);
+
+            /** GetAIProxyCallTaskResultRequest taskId. */
+            public taskId: Uint8Array;
+
+            /**
+             * Creates a new GetAIProxyCallTaskResultRequest instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns GetAIProxyCallTaskResultRequest instance
+             */
+            public static create(properties?: dcnet.pb.IGetAIProxyCallTaskResultRequest): dcnet.pb.GetAIProxyCallTaskResultRequest;
+
+            /**
+             * Encodes the specified GetAIProxyCallTaskResultRequest message. Does not implicitly {@link dcnet.pb.GetAIProxyCallTaskResultRequest.verify|verify} messages.
+             * @param message GetAIProxyCallTaskResultRequest message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: dcnet.pb.IGetAIProxyCallTaskResultRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified GetAIProxyCallTaskResultRequest message, length delimited. Does not implicitly {@link dcnet.pb.GetAIProxyCallTaskResultRequest.verify|verify} messages.
+             * @param message GetAIProxyCallTaskResultRequest message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: dcnet.pb.IGetAIProxyCallTaskResultRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes a GetAIProxyCallTaskResultRequest message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns GetAIProxyCallTaskResultRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): dcnet.pb.GetAIProxyCallTaskResultRequest;
+
+            /**
+             * Decodes a GetAIProxyCallTaskResultRequest message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns GetAIProxyCallTaskResultRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): dcnet.pb.GetAIProxyCallTaskResultRequest;
+
+            /**
+             * Verifies a GetAIProxyCallTaskResultRequest message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates a GetAIProxyCallTaskResultRequest message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns GetAIProxyCallTaskResultRequest
+             */
+            public static fromObject(object: { [k: string]: any }): dcnet.pb.GetAIProxyCallTaskResultRequest;
+
+            /**
+             * Creates a plain object from a GetAIProxyCallTaskResultRequest message. Also converts values to other types if specified.
+             * @param message GetAIProxyCallTaskResultRequest
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: dcnet.pb.GetAIProxyCallTaskResultRequest, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this GetAIProxyCallTaskResultRequest to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for GetAIProxyCallTaskResultRequest
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** Properties of a GetAIProxyCallTaskResultReply. */
+        interface IGetAIProxyCallTaskResultReply {
+
+            /** GetAIProxyCallTaskResultReply flag */
+            flag?: (number|null);
+
+            /** GetAIProxyCallTaskResultReply content */
+            content?: (Uint8Array|null);
+
+            /** GetAIProxyCallTaskResultReply err */
+            err?: (Uint8Array|null);
+        }
+
+        /** Represents a GetAIProxyCallTaskResultReply. */
+        class GetAIProxyCallTaskResultReply implements IGetAIProxyCallTaskResultReply {
+
+            /**
+             * Constructs a new GetAIProxyCallTaskResultReply.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: dcnet.pb.IGetAIProxyCallTaskResultReply);
+
+            /** GetAIProxyCallTaskResultReply flag. */
+            public flag: number;
+
+            /** GetAIProxyCallTaskResultReply content. */
+            public content: Uint8Array;
+
+            /** GetAIProxyCallTaskResultReply err. */
+            public err: Uint8Array;
+
+            /**
+             * Creates a new GetAIProxyCallTaskResultReply instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns GetAIProxyCallTaskResultReply instance
+             */
+            public static create(properties?: dcnet.pb.IGetAIProxyCallTaskResultReply): dcnet.pb.GetAIProxyCallTaskResultReply;
+
+            /**
+             * Encodes the specified GetAIProxyCallTaskResultReply message. Does not implicitly {@link dcnet.pb.GetAIProxyCallTaskResultReply.verify|verify} messages.
+             * @param message GetAIProxyCallTaskResultReply message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: dcnet.pb.IGetAIProxyCallTaskResultReply, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified GetAIProxyCallTaskResultReply message, length delimited. Does not implicitly {@link dcnet.pb.GetAIProxyCallTaskResultReply.verify|verify} messages.
+             * @param message GetAIProxyCallTaskResultReply message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: dcnet.pb.IGetAIProxyCallTaskResultReply, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes a GetAIProxyCallTaskResultReply message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns GetAIProxyCallTaskResultReply
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): dcnet.pb.GetAIProxyCallTaskResultReply;
+
+            /**
+             * Decodes a GetAIProxyCallTaskResultReply message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns GetAIProxyCallTaskResultReply
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): dcnet.pb.GetAIProxyCallTaskResultReply;
+
+            /**
+             * Verifies a GetAIProxyCallTaskResultReply message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates a GetAIProxyCallTaskResultReply message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns GetAIProxyCallTaskResultReply
+             */
+            public static fromObject(object: { [k: string]: any }): dcnet.pb.GetAIProxyCallTaskResultReply;
+
+            /**
+             * Creates a plain object from a GetAIProxyCallTaskResultReply message. Also converts values to other types if specified.
+             * @param message GetAIProxyCallTaskResultReply
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: dcnet.pb.GetAIProxyCallTaskResultReply, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this GetAIProxyCallTaskResultReply to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for GetAIProxyCallTaskResultReply
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
         /** Properties of an ArchiveDeviceStatusRequest. */
         interface IArchiveDeviceStatusRequest {
 
@@ -20774,6 +21452,20 @@ export namespace dcnet {
             public deleteCommentToObj(request: dcnet.pb.IDeleteCommentToObjRequest): Promise<dcnet.pb.DeleteCommentToObjReply>;
 
             /**
+             * Calls IsThemeExist.
+             * @param request IsThemeExistRequest message or plain object
+             * @param callback Node-style callback called with the error, if any, and IsThemeExistReply
+             */
+            public isThemeExist(request: dcnet.pb.IIsThemeExistRequest, callback: dcnet.pb.Service.IsThemeExistCallback): void;
+
+            /**
+             * Calls IsThemeExist.
+             * @param request IsThemeExistRequest message or plain object
+             * @returns Promise
+             */
+            public isThemeExist(request: dcnet.pb.IIsThemeExistRequest): Promise<dcnet.pb.IsThemeExistReply>;
+
+            /**
              * Calls GetThemeObj.
              * @param request GetThemeObjRequest message or plain object
              * @param callback Node-style callback called with the error, if any, and GetThemeObjReply
@@ -21164,6 +21856,34 @@ export namespace dcnet {
              * @returns Promise
              */
             public doAIProxyCall(request: dcnet.pb.IDoAIProxyCallRequest): Promise<dcnet.pb.DoAIProxyCallReply>;
+
+            /**
+             * Calls CreateAIProxyCallTask.
+             * @param request CreateAIProxyCallTaskRequest message or plain object
+             * @param callback Node-style callback called with the error, if any, and CreateAIProxyCallTaskReply
+             */
+            public createAIProxyCallTask(request: dcnet.pb.ICreateAIProxyCallTaskRequest, callback: dcnet.pb.Service.CreateAIProxyCallTaskCallback): void;
+
+            /**
+             * Calls CreateAIProxyCallTask.
+             * @param request CreateAIProxyCallTaskRequest message or plain object
+             * @returns Promise
+             */
+            public createAIProxyCallTask(request: dcnet.pb.ICreateAIProxyCallTaskRequest): Promise<dcnet.pb.CreateAIProxyCallTaskReply>;
+
+            /**
+             * Calls GetAIProxyCallTaskResult.
+             * @param request GetAIProxyCallTaskResultRequest message or plain object
+             * @param callback Node-style callback called with the error, if any, and GetAIProxyCallTaskResultReply
+             */
+            public getAIProxyCallTaskResult(request: dcnet.pb.IGetAIProxyCallTaskResultRequest, callback: dcnet.pb.Service.GetAIProxyCallTaskResultCallback): void;
+
+            /**
+             * Calls GetAIProxyCallTaskResult.
+             * @param request GetAIProxyCallTaskResultRequest message or plain object
+             * @returns Promise
+             */
+            public getAIProxyCallTaskResult(request: dcnet.pb.IGetAIProxyCallTaskResultRequest): Promise<dcnet.pb.GetAIProxyCallTaskResultReply>;
 
             /**
              * Calls GetUserOwnAIProxyAuth.
@@ -21638,6 +22358,13 @@ export namespace dcnet {
             type DeleteCommentToObjCallback = (error: (Error|null), response?: dcnet.pb.DeleteCommentToObjReply) => void;
 
             /**
+             * Callback as used by {@link dcnet.pb.Service#isThemeExist}.
+             * @param error Error, if any
+             * @param [response] IsThemeExistReply
+             */
+            type IsThemeExistCallback = (error: (Error|null), response?: dcnet.pb.IsThemeExistReply) => void;
+
+            /**
              * Callback as used by {@link dcnet.pb.Service#getThemeObj}.
              * @param error Error, if any
              * @param [response] GetThemeObjReply
@@ -21832,6 +22559,20 @@ export namespace dcnet {
              * @param [response] DoAIProxyCallReply
              */
             type DoAIProxyCallCallback = (error: (Error|null), response?: dcnet.pb.DoAIProxyCallReply) => void;
+
+            /**
+             * Callback as used by {@link dcnet.pb.Service#createAIProxyCallTask}.
+             * @param error Error, if any
+             * @param [response] CreateAIProxyCallTaskReply
+             */
+            type CreateAIProxyCallTaskCallback = (error: (Error|null), response?: dcnet.pb.CreateAIProxyCallTaskReply) => void;
+
+            /**
+             * Callback as used by {@link dcnet.pb.Service#getAIProxyCallTaskResult}.
+             * @param error Error, if any
+             * @param [response] GetAIProxyCallTaskResultReply
+             */
+            type GetAIProxyCallTaskResultCallback = (error: (Error|null), response?: dcnet.pb.GetAIProxyCallTaskResultReply) => void;
 
             /**
              * Callback as used by {@link dcnet.pb.Service#getUserOwnAIProxyAuth}.

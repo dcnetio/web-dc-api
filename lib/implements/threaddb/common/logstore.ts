@@ -181,9 +181,9 @@ class Logstore implements ILogstore {
         return {
             id: lid,
             pubKey: pk,
-            privKey: sk?sk:undefined,
+            ...(sk ? { privKey: sk } : {}),
             addrs,
-            head: heads.length > 0 ? heads[0] : undefined,
+            ...(heads.length > 0 ? { head: heads[0] } : {}),
             managed: managed || false
         };
     }

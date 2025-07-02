@@ -594,25 +594,34 @@ export class FileManager {
     });
 
     // Create a FileList-like object
-    const fileList = {
+    const fileListObj: Record<string, any> = {
       length: files.length,
       item(index: number): File {
-        return files[index];
+        if (index < 0 || index >= files.length) {
+          return null as any; // Return null for out-of-bounds index
+        }
+        return files[index]!;
       },
       [Symbol.iterator](): Iterator<File> {
         let index = 0;
         return {
           next(): IteratorResult<File> {
             if (index < files.length) {
-              return { value: files[index++], done: false };
+              return { value: files[index++]!, done: false };
             } else {
               return { value: null as any, done: true };
             }
           },
         };
       },
-      ...files,
-    } as unknown as FileList;
+    };
+    
+    // Add files with their indices as keys
+    files.forEach((file, index) => {
+      fileListObj[index] = file;
+    });
+    
+    const fileList = fileListObj as unknown as FileList;
 
     return fileList;
   }
@@ -625,7 +634,7 @@ export class FileManager {
     >();
     const writer = writable.getWriter();
     const fileReader = new FileReader();
-    const chunkSize = 1024 * 1024; // 1MB chunks
+    const chunkSize = 3 <<20; // 3MB chunks
     let offset = 0;
     const processFile = async () => {
       try {
@@ -703,7 +712,7 @@ async countDirectoryBlocks(rootCID: CID): Promise<number> {
   private extractRootFolderName(files: FileList): string {
     if (files.length === 0) return "root";
 
-    const path = files[0].webkitRelativePath || files[0].name;
+    const path = files[0]!.webkitRelativePath || files[0]!.name;
     const parts = path.split("/");
 
     return parts[0] || "root";
@@ -726,7 +735,7 @@ async countDirectoryBlocks(rootCID: CID): Promise<number> {
   private calculateFolderSize(files: FileList): number {
     let totalSize = 0;
     for (let i = 0; i < files.length; i++) {
-      totalSize += files[i].size;
+      totalSize += files[i]!.size;
     }
     return totalSize;
   }
@@ -900,14 +909,14 @@ async countDirectoryBlocks(rootCID: CID): Promise<number> {
     }
 
     // 第 1 字节: 消息类型
-    const type = data[0];
+    const type = data[0]!;
 
     // 第 2 和 3 字节: 版本号（大端序）
-    const version = (data[1] << 8) | data[2]; // 手动处理大端序
+    const version = (data[1]! << 8) | data[2]!; // 手动处理大端序
 
     // 第 4 至 7 字节: payload 长度（大端序）
     const payloadLength =
-      (data[3] << 24) | (data[4] << 16) | (data[5] << 8) | data[6];
+      (data[3]! << 24) | (data[4]! << 16) | (data[5]! << 8) | data[6]!;
 
     // 验证数据完整性
     if (data.length < 7 + payloadLength) {
@@ -924,9 +933,116 @@ async countDirectoryBlocks(rootCID: CID): Promise<number> {
     };
   }
 
+
+
+/**
+ * 获取文件夹下的所有文件,包括内容（支持多级目录递归）
+ * @param cid 根目录的CID
+ * @param decryptKey 解密密钥
+ * @param recursive 是否递归获取子目录，默认false（保持向后兼容）
+ * @returns 文件列表：[{Name:文件或目录名，Type：0-文件 1-目录，Size：大小，Hash：文件或目录cid，Path：完整路径}]
+ */
+async getFolderFileListWithContent(
+  cid: string, 
+  decryptKey: string, 
+  recursive: boolean = true
+): Promise<[Array<{Name: string; Type: number; Size: number; Hash: string; Path: string, Content?: Uint8Array}> | null, Error | null]> {
+ const [fileList, err] = await this.getFolderFileList(cid, cidNeedConnect.NEED, recursive);
+ if (err || !fileList) return [null, err];
+ for (let i = 0; i < fileList.length; i++) {
+   const file = fileList[i];
+   if (file?.Type === 0) {
+    if (file?.Name  == "dc_ownuser") {
+      continue;
+    }
+     const content = await this.getFileFromDc(file.Hash, decryptKey,cidNeedConnect.NOT_NEED,true); //和目录同节点,无需连接
+     if (!content) {
+       return [null, Errors.ErrNoFileChose];
+     }
+     file.Content = content;
+   }
+ }
+  return [fileList, null];
+}
+
+
+
+/**
+ * 获取文件夹下的文件列表（支持多级目录递归）
+ * @param cid 根目录的CID
+ * @param flag 是否需要连接节点
+ * @param recursive 是否递归获取子目录，默认false（保持向后兼容）
+ * @returns 返回JSON格式的文件列表：[{Name:文件或目录名，Type：0-文件 1-目录，Size：大小，Hash：文件或目录cid，Path：完整路径}]
+ */
+async getFolderFileList(
+  cid: string, 
+  flag?: number,
+  recursive: boolean = false
+): Promise<[Array<{Name: string; Type: number; Size: number; Hash: string; Path: string, Content?: Uint8Array}> | null, Error | null]> {
+  try { 
+    const id = CID.parse(cid);
+    if (flag !== cidNeedConnect.NOT_NEED) {
+      const [multiAddrs, peers] = await this.dc?._connectToObjNodes(cid);
+      if (!multiAddrs && peers) {
+        // 有peers但是没有multiaddrs
+        return [null, Errors.ErrNoDcPeerConnected];
+      }
+    }
+    
+    const fs = unixfs(this.dcNodeClient);
+    const fileNodes: Array<{
+      Name: string;
+      Type: number;
+      Size: number;
+      Hash: string;
+      Path: string;
+      Content?: Uint8Array; // 可选内容字段，用于存储文件内容
+    }> = [];
+    
+    // 递归获取目录内容的内部函数
+    const traverseDirectory = async (dirCid: CID, currentPath: string = '') => {
+      // 遍历当前目录内容
+      for await (const entry of fs.ls(dirCid)) {
+        const { name, cid, type } = entry;
+        
+        // 构建完整路径
+        const fullPath = currentPath ? `${currentPath}/${name}` : name;
+        
+        // 获取文件/目录的统计信息
+        const stats = await fs.stat(cid);
+        
+        // 构造文件信息对象
+        const fileInfo = {
+          Name: name,
+          Type: type === 'directory' ? 1 : 0, // 0-文件 1-目录
+          Size: type === 'directory' ? 0 : Number(stats.fileSize || 0),
+          Hash: cid.toString(),
+          Path: fullPath
+        };
+        
+        fileNodes.push(fileInfo);
+        
+        // 如果是目录且需要递归，则继续遍历子目录
+        if (type === 'directory' && recursive) {
+          await traverseDirectory(cid, fullPath);
+        }
+      }
+    };
+    
+    // 开始遍历
+    await traverseDirectory(id);
+    return [fileNodes, null];
+  } catch (error) {
+    console.error('获取文件夹列表失败:', error);
+    return [null, error instanceof Error ? error : new Error(String(error))];
+  }
+}
+
+
+
   // 从dc网络获取指定文件
-  // flag 是否需要连接节点，0-获取，1-不获取
-  getFileFromDc = async (cid: string, decryptKey: string, flag?: number) : Promise<Uint8Array | null> => {
+  // flag 是否需要连接节点，0-需要，1-不需要
+  getFileFromDc = async (cid: string, decryptKey: string, flag?: number,folderFlag?:boolean) : Promise<Uint8Array | null> => {
     if (flag !== cidNeedConnect.NOT_NEED) {
       const [multiAddrs, peers] = await this.dc?._connectToObjNodes(cid);
       if (!multiAddrs && peers) {
@@ -948,7 +1064,7 @@ async countDirectoryBlocks(rootCID: CID): Promise<number> {
     let readCount = 0;
     try {
       for (;;) {
-        if (!headDealed) {
+        if (!headDealed && !folderFlag) {
           const headBuf = await toBuffer(fs.cat(CID.parse(cid), catOptions));
           readCount += headBuf.length;
           if (headBuf.length > 0) {
@@ -1083,15 +1199,15 @@ async countDirectoryBlocks(rootCID: CID): Promise<number> {
   readUint64BE(buffer: Uint8Array, offset: number): number {
     // JavaScript中Number可以安全表示的最大整数是2^53-1
     const high =
-      buffer[offset] * 2 ** 24 +
-      buffer[offset + 1] * 2 ** 16 +
-      buffer[offset + 2] * 2 ** 8 +
-      buffer[offset + 3];
+      buffer[offset]! * 2 ** 24 +
+      buffer[offset + 1]! * 2 ** 16 +
+      buffer[offset + 2]! * 2 ** 8 +
+      buffer[offset + 3]!;
     const low =
-      buffer[offset + 4] * 2 ** 24 +
-      buffer[offset + 5] * 2 ** 16 +
-      buffer[offset + 6] * 2 ** 8 +
-      buffer[offset + 7];
+      buffer[offset + 4]! * 2 ** 24 +
+      buffer[offset + 5]! * 2 ** 16 +
+      buffer[offset + 6]! * 2 ** 8 +
+      buffer[offset + 7]!;
 
     return high * 2 ** 32 + low;
   }

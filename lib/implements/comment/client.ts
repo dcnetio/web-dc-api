@@ -661,6 +661,44 @@ export class CommentClient {
     }
   }
 
+  //判断主题是否存在
+  async isThemeExist(
+    appId: string,
+    theme: string,
+    themeAuthor: string
+  ): Promise<boolean> {
+    const message = new dcnet.pb.IsThemeExistRequest({});
+    message.appId = new TextEncoder().encode(appId);
+    message.theme = new TextEncoder().encode(theme);
+    message.themeAuthor = new TextEncoder().encode(themeAuthor);
+    const messageBytes = dcnet.pb.IsThemeExistRequest.encode(message).finish(); 
+
+    try {
+      const grpcClient = new Libp2pGrpcClient(
+        this.client.p2pNode,
+        this.client.peerAddr,
+        this.client.token,
+        this.client.protocol
+      );
+      const reply = await grpcClient.unaryCall(
+        "/dcnet.pb.Service/IsThemeExist",
+        messageBytes,
+        30000
+      );
+      console.log("IsThemeExist reply", reply);
+      const decoded = dcnet.pb.IsThemeExistReply.decode(reply);
+      console.log("IsThemeExist decoded", decoded);
+      if (decoded.flag) {
+        return true;
+      }
+      return false;
+    } catch (error: any) {
+      console.error("IsThemeExist error:", error);
+      throw error;  
+    }
+  }
+
+
   async getThemeObj(
     appId: string,
     themeAuthor: string,
