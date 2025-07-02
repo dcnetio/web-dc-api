@@ -1004,7 +1004,9 @@ async getFolderFileList(
       // 遍历当前目录内容
       for await (const entry of fs.ls(dirCid)) {
         const { name, cid, type } = entry;
-        
+        if (name === '.' || name === '..' || name === 'dc_ownuser') {
+          continue; // 跳过当前目录和上级目录
+        }
         // 构建完整路径
         const fullPath = currentPath ? `${currentPath}/${name}` : name;
         
