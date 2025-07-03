@@ -176,10 +176,28 @@ export  interface Account{
 // 		Stream:        true,
 // 	}
 
+// 定义AI流式响应状态枚举
+export enum AIStreamResponseFlag {
+  /** 流式响应进行中 */
+  STREAMING = 0,
+  /** 权限不足 */
+  PERMISSION_DENIED = 1,
+  /** 获取失败 */
+  FETCH_FAILED = 2,
+  /** 关闭连接 */
+  CONNECTION_CLOSED = 3,
+  /** Token数超限，需要继续请求 */
+  TOKEN_LIMIT_EXCEEDED = 4,
+  /** 卡住了 */
+  STREAM_HANG = 5,
+  /** 其他错误 */
+  OTHER_ERROR = 6
+}
+
 // 调用AIProxy的流式回调函数
 // flag: 0表示开始接收数据, 1:权限不足 2:获取失败 3:关闭连接 4: 其他错误
 // content: 接收到的数据
-export type OnStreamResponseType = (flag: number, content: string,err: string) => void; 
+export type OnStreamResponseType = (flag: AIStreamResponseFlag, content: string,err: string) => void; 
 
 export enum NFTBindStatus {
   Success = 0,
