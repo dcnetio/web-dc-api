@@ -266,7 +266,7 @@ export class AIProxyClient {
     clearTimeoutTimer();
     
     if (onStreamResponse) {
-      onStreamResponse(3, "", "");
+      onStreamResponse(AIStreamResponseFlag.CONNECTION_CLOSED, "", "");
     }
   };
 
