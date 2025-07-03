@@ -977,7 +977,7 @@ async getFolderFileListWithContent(
 async getFolderFileList(
   cid: string, 
   flag?: number,
-  recursive: boolean = false
+  recursive: boolean = true
 ): Promise<[Array<{Name: string; Type: number; Size: number; Hash: string; Path: string, Content?: Uint8Array}> | null, Error | null]> {
   try { 
     const id = CID.parse(cid);

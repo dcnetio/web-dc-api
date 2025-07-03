@@ -1,16 +1,40 @@
-const BasePrompt = `
-如果过程中涉及软件设计与实现，请以下软件设计与实现原则与DCAPI接口文档进行结合,并在实现过程中遵循
-软件设计与实现原则:
-1、应用开设计与开发必须是以去中心为前提,无需后端开发;
-2、软件设计与开发遵循MVC模式,将数据存取和消息通信的操作都放到单独模块完成;
-3、数据存取和消息通信模块通过调用与去中心云服务平台DC的API实现去中心化数据存取与点对点消息通信等功能;
-4、所有去中心化功能不涉及区块链直接交互,全部通过DC API实现;
-5、为数据存取和消息通信模块开发功能模拟器,模拟数据存取和消息通信的功能,便于前端开发与调试;
-6、设置全局开关变量: MOCKFLAG,如果MOCKFLAG为true,则使用模拟器的功能,否则使用DC API实现的功能;
-7、应用的前端界面与数据存取和消息通信模块通过事件驱动的方式进行交互,前端界面只负责展示数据和用户交互;
+export const beforeCodePrompt = `
+根据前面交互确认的需求,请帮我构建一个完整的React项目,项目工程实现要求与应用实现要求如下，
+
+1. 使用React 18和ReactDOM 18（版本号^18.2.0）。
+2. 依赖：react: ^18.2.0, react-dom: ^18.2.0。
+3. 帮我构建一个React项目，使用TypeScript作为主要语言。
+4. 使用Vite作为构建工具。
+5. 使用Tailwind CSS作为样式框架。
+6. 使用ESLint和Prettier进行代码质量检查和格式化。
+7. 使用Vitest作为测试框架。
+8. 使用React Router进行路由管理。
+9. 入口文件为src/index.js。
+10.生成package.json文件，包含所有依赖和脚本。
+11. 生成Vite配置文件（vite.config.js）。
+12. 生成Tailwind CSS配置文件（tailwind.config.js）
+13.所有生成的文件都需要先输出文件名和路径，然后再输出文件内容。格式如下:
+    <<-文件路径->>
+    \`\`\`文件内容\`\`\`
+    例如:
+    <<src/index.js>>
+    \`\`\`javascript
+    import React from 'react';
+    \`\`\`
+14、当任务处理完成后，在最后输出一条消息“[<-本次任务已完成->]”;
+15、应用开设计与开发必须是以去中心为前提,无需后端开发;
+16、软件设计与开发遵循MVC模式,将数据存取和消息通信的操作都放到单独模块完成;
+17、为了测试方便,编写模拟的数据存取和消息通信的操作模块功能实现与真实的数据存取和消息通信的操作模块功能一一对应;
+18、数据存取和消息通信模块通过调用与去中心云服务平台DC的API实现去中心化数据存取与点对点消息通信等功能;
+19、所有去中心化功能不涉及区块链直接交互,全部通过DC API实现;
+20、应用的前端界面与数据存取和消息通信模块通过事件驱动的方式进行交互,前端界面只负责展示数据和用户交互;
+21、应用的所有功能都不能涉及加密货币的相关功能;
+23、编写所有功能的单元测试用例,并提供测试开始和测试结束的接口,供测试框架调用,在测试框架中调用模拟的数据存取和消息通信的操作模块进行自动化执行测试用例;
+24、提供集成测试用例,并提供测试开始和测试结束的接口,供测试框架调用,在测试框架中调用真实的数据存取和消息通信的操作模块进行自动化执行集成测试用例;
+25、所有的测试用例都需要有明确的测试目的和预期结果,并在测试框架中进行验证,并可以单独执行测试用例;
+26、涉及数据存取和消息通信的操作的功能参照"DCAPI 接口文档"进行编写:
 
 DCAPI 接口文档
-
 
 # 基于DC平台开发指南
 
@@ -22,7 +46,8 @@ DC平台是去中心化云服务套件，让开发者专注前端实现。应用
 ## 开发概述
 
 1. **支持的应用类型**：Web应用，使用JavaScript/TypeScript
-2. **用户认证**：基于DCWallet的登录系统,即调用accountLoginWithWallet登录即可
+2、**兼容性要求**：实现响应式设计，必须同时支持浏览器、移动设备、桌面和平板的布局与交互
+3. **用户认证**：基于DCWallet的登录系统,即调用accountLoginWithWallet登录即可
 4. **数据存储策略**：
    - **ThreadDB**: 适合个人数据需要需跨终端同步时使用
    - **keyValue DB**: 是一个NoSQL键值存储，适合共享数据和公共数据,适合单次设置和获取数据，支持索引查询批量数据,支持权限控制
@@ -37,13 +62,32 @@ DC平台是去中心化云服务套件，让开发者专注前端实现。应用
 
 
 ### 1、预制组件 
- 在任何应用创建过程中,都必须先创建DCAPI初始化组件,并命名为"dcapi.ts",放在项目根目录下,组件的内容如下:
+ 在任何应用创建过程中,都必须先创建初始化的数据对象和DCAPI初始化组件和,并分别命名为"dcapp.json"和"dcapi.ts",放在项目根目录下,组件的内容如下:
+ //dcapp.json
+\`\`\`json
+{
+    "appId": "应用ID", //根据生成时输入的应用ID进行填充
+    "appName": "应用名称", //根据生成时输入的应用名称进行填充
+    "appDesc": "应用描述", //根据生成时输入的应用描述进行填充
+    "version": "应用版本", //根据生成时输入的应用版本进行填充
+    "wssUrl": "wss://dcchain.baybird.cn", //固定不变
+    "backWssUrl": "wss://chain.baybird.cn",//固定不变
+    "appThemeAuthor": "", //用于创建公共主题,生成过程中不要填充,后续以预览方式进行初始化时会自动填充
+    "scriptSrc": {
+        "grpc_script": "https://dcapi.oss-rg-china-mainland.aliyuncs.com/grpc-0.0.10.min.js", //固定不变
+        "dcapi_script": "https://dcapi.oss-rg-china-mainland.aliyuncs.com/dc-0.0.38.min.js" //固定不变
+    },
+}
+\`\`\`
 
+//dcapi.ts
 \`\`\`javascript
+import appConfig from './dcapp.json';
+export const AppConfig = appConfig;
 let dc = null;
 let dcLoadFlag  = 0; // 0: 未加载，1: 正在加载，2: 已加载
 // 加载 API 的函数
-export async function initDC(appId: string,appName: string,appVersion: string,appKey: string, appVersion: string) {
+export async function initDC() {
   return new Promise((resolve, reject) => {
     if (dcLoadFlag == 2) {
       resolve(dc);
@@ -63,7 +107,7 @@ export async function initDC(appId: string,appName: string,appVersion: string,ap
     }
     dcLoadFlag = 1; // 设置为正在加载
     const grpc_script = document.createElement('script');
-    grpc_script.src = "https://dcapi.oss-rg-china-mainland.aliyuncs.com/grpc-0.0.10.min.js";
+    grpc_script.src = AppConfig.scriptSrc.grpc_script;
     grpc_script.async = true;
     grpc_script.onerror = () => {
       dcLoadFlag = 0; // 重置加载状态
@@ -71,16 +115,16 @@ export async function initDC(appId: string,appName: string,appVersion: string,ap
     };
     document.head.appendChild(grpc_script);
     const dcapi_script = document.createElement('script');
-    dcapi_script.src = 'https://dcapi.oss-rg-china-mainland.aliyuncs.com/dc-0.0.38.min.js';
+    dcapi_script.src = AppConfig.scriptSrc.dcapi_script;
     dcapi_script.async = true;
     dcapi_script.onload = async () => {
         const dcConfig = {
-        wssUrl: "wss://dcchain.baybird.cn",
-        backWssUrl: "wss://dcchain.baybird.cn",
+        wssUrl: AppConfig.wssUrl,
+        backWssUrl: AppConfig.backWssUrl,
         appInfo: {
-            appId: appId,
-            appName: appName,
-            appVersion: appVersion,
+            appId: AppConfig.appId,
+            appName: AppConfig.appName,
+            appVersion: AppConfig.version,
         },
         };
         dc = new window.WebDcApi.DC(dcConfig);
@@ -131,8 +175,9 @@ export function getDc() {
 
 // 在页面加载完成或者应用的入口文件中,调用initDC函数进行初始化,示例代码如下：
 \`\`\`javascript
-import { initDC, getLoadStatus,getDc } from '/dcapi';
-const dc = await initDC('应用ID', '应用名称', '应用版本', '应用密钥');
+import { initDC, getLoadStatus,getDc,AppConfig } from '/dcapi';
+import { AppConfig } from '/dcapi';
+const dc = await initDC();
 if (!dc) {
   console.error('DC API 初始化失败');
 } else {
@@ -190,6 +235,14 @@ const res = await dc.file.addFolder(
     (status: number, total: number, process: number) => console.log(\`上传状态: \${status}, 总文件数: \${total}, 进度: \${process} 已上传,\`)
 );
 folderCID = res[0];
+
+// 获取文件夹文件列表,不返回具体文件内容,每个文件内容可以将Hash作为cid传入getFile获取,格式为JSON对象:Array<{Name: string; Type: number; Size: number; Hash: string; Path: string}> type=0文件 type=1文件夹
+const [fileList, error] = await dc.file.getFolderFileList(
+    'folder-cid', // 文件夹CID
+     false, // 是否重新寻址
+     true // 是否递归获取所有子文件夹的文件列表
+      );
+
 \`\`\`
 
 ### 3. 用户数据库 (db)
@@ -268,16 +321,16 @@ const err = await dc.db.delete(dc.dbThreadId, '集合名称', instanceId);
 主要用于多用户共享数据和公共数据的存储与访问,支持索引查询和权限控制,适合需要跨用户共享数据的场景。需要特别注意的是,如果实际业务实现设计中需要创建公共主题给该应用的所有用户访问时,需要先获取应用初始主题作者公钥,进行判断,只有应用初始主题作者公钥才能创建初始化用的公共主题。
 
 \`\`\`javascript
-
+import { AppConfig } from '/dcapi';
 let kvdb = null;
 let error = null;
 
 [kvdb, error] = await dc.keyValue.getStore(
     dc.appInfo.appId, // 应用ID
     '公共主题名称', // 
-    '应用初始主题作者公钥');
+    AppConfig.appThemeAuthor); //,如果是公共主题，需要传入应用初始主题作者公钥
 if (!kvdb) {// 不存在则尝试创建
-    if (dc.publicKey.string() === '应用初始主题作者公钥') { //确保只有"应用初始主题作者公钥"才能创建初始化用的公共主题
+    if (dc.publicKey.string() === AppConfig.appThemeAuthor) { //确保只有应用初始主题作者公钥才能创建初始化用的公共主题
         [kvdb, error] = await dc.keyValue.createStore(
         dc.appInfo.appId,
         '公共主题名称_pub', //当访问类型为2时,存储名称必须以"_pub"结尾,表示读开放,写鉴权; 不是2时不要加"_pub"
@@ -323,9 +376,12 @@ const jsonResults = JSON.parse(results); // 解析JSON字符串
 
 ### 5. 评论系统 (comment)
 
+
+
 \`\`\`javascript
+import { AppConfig } from '/dcapi';
 // 与keyValue DB一样,如果实际业务实现设计中需要创建公共主题给该应用的所有用户访问时,需要先获取应用初始主题作者公钥,进行判断,只有应用初始主题作者公钥才能创建初始化用的公共主题
-if (dc.publicKey.string() === '应用初始主题作者公钥') {
+if (dc.publicKey.string() === AppConfig.appThemeAuthor) {
   try {
     const [status, err] = await dc.comment.addThemeObj(
       '主题ID',
@@ -340,7 +396,7 @@ if (dc.publicKey.string() === '应用初始主题作者公钥') {
 // 发布评论
 const [commentId, commentError] = await dc.comment.publishCommentToTheme(
   '主题ID',
-  '应用初始主题作者公钥') {,
+  AppConfig.appThemeAuthor) {,
   0, // 评论类你是一位专业的全栈软件工程师，请结合以下DC平台规范和API文档，根据前面的需求完成应用开发。
 型：0=普通, 1=点赞, 2=推荐, 3=踩
   '评论内容',
@@ -351,7 +407,7 @@ const [commentId, commentError] = await dc.comment.publishCommentToTheme(
 // 用户授权（仅主题作者可操作）
 const [status, error] = await dc.comment.configAuth(
   '主题ID',
-  '应用初始主题作者公钥') {,
+  AppConfig.appThemeAuthor) {,
   '用户公钥',//这里可以时all,表示所有用户
   3, // 权限级别：0=无, 1=申请, 2=读, 3=写, 4=管理员, 5=仅写
   '授权备注'
@@ -360,7 +416,7 @@ const [status, error] = await dc.comment.configAuth(
 // 获取评论,返回结果为JSON字符串
 const [comments, commentsError] = await dc.comment.getThemeComments(
   '主题ID',
-  '应用初始主题作者公钥') {,
+  AppConfig.appThemeAuthor) {,
   0, // 起始高度
   0, // 方向（0 = 最新优先）
   0, // 偏移量
@@ -579,5 +635,4 @@ if (error) {
 // 如需中断调用
 // controller.abort();
 \`\`\`
-
-`;
+ `
