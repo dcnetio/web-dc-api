@@ -194,7 +194,6 @@ export class AIProxyClient {
   );
 
   // 添加超时检测相关变量
-  let lastDataTime = Date.now();
   let hasStartedReceiving = false;
   let timeoutTimer: NodeJS.Timeout | null = null;
   let isCompleted = false;
@@ -224,11 +223,20 @@ export class AIProxyClient {
     }, 30000); // 30秒超时
   };
 
+  // 检查是否已经被中止
+  const checkAborted = () => {
+    if (context.signal?.aborted) {
+      isAborted = true;
+      clearTimeoutTimer();
+      return true;
+    }
+    return false;
+  };
+
   const onDataCallback = async (payload: Uint8Array) => {
-    if (isAborted || isCompleted) return;
+    if (isAborted || isCompleted || checkAborted()) return;
     
     // 更新最后接收数据的时间
-    lastDataTime = Date.now();
     hasStartedReceiving = true;
     
     // 重置超时定时器
@@ -252,7 +260,7 @@ export class AIProxyClient {
   };
 
   const onEndCallback = async () => {
-    if (isAborted) return;
+    if (isAborted || checkAborted()) return;
     
     isCompleted = true;
     clearTimeoutTimer();
@@ -263,7 +271,7 @@ export class AIProxyClient {
   };
 
   const onErrorCallback = async (error: unknown) => {
-    if (isAborted) return;
+    if (isAborted || checkAborted()) return;
     
     isCompleted = true;
     clearTimeoutTimer();
@@ -273,19 +281,36 @@ export class AIProxyClient {
     }
   };
 
-  // 监听外部中止信号
+  // 监听外部中止信号 - 这不会拦截信号，只是添加监听器
+  let abortListener: (() => void) | null = null;
   if (context.signal) {
-    context.signal.addEventListener('abort', () => {
+    // 先检查是否已经被中止
+    if (context.signal.aborted) {
+      isAborted = true;
+      clearTimeoutTimer();
+      console.log('DoAIProxyCall 调用前已被中止');
+      return AIStreamResponseFlag.STREAM_HANG;
+    }
+    
+    abortListener = () => {
       isAborted = true;
       clearTimeoutTimer();
       console.log('DoAIProxyCall 被外部中止');
-    });
+      
+      // 通知调用者已被中止
+      if (onStreamResponse) {
+        onStreamResponse(AIStreamResponseFlag.STREAM_HANG, "", "调用被用户中止");
+      }
+    };
+    
+    context.signal.addEventListener('abort', abortListener);
   }
 
   try {
     // 开始调用前设置初始超时定时器（用于检测是否开始接收数据）
     setTimeoutTimer();
     
+    // 将完整的 context 传递给 grpcClient.Call，让它自己处理中止信号
     await grpcClient.Call(
       "/dcnet.pb.Service/DoAIProxyCall",
       messageBytes,
@@ -295,23 +320,35 @@ export class AIProxyClient {
       undefined, // dataSourceCallback not needed for server-streaming
       onEndCallback,
       onErrorCallback,
-      context
+      context  // 完整传递 context，包括 signal
     );
     
     return 0;
   } catch (error) {
     isCompleted = true;
     clearTimeoutTimer();
+    
     console.error("DoAIProxyCall error:", error);
+    
     // 如果是超时导致的错误，返回特定的错误码
     if (isAborted) {
-      return 7; // 返回超时错误码
+      return AIStreamResponseFlag.STREAM_HANG;
+    }
+    
+    // 检查是否是中止导致的错误
+    if (context.signal?.aborted) {
+      return AIStreamResponseFlag.STREAM_HANG;
     }
     
     throw error;
   } finally {
     // 确保定时器被清理
     clearTimeoutTimer();
+    
+    // 清理事件监听器
+    if (abortListener && context.signal) {
+      context.signal.removeEventListener('abort', abortListener);
+    }
   }
 }
 }
