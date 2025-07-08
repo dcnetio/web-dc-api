@@ -180,18 +180,22 @@ export  interface Account{
 export enum AIStreamResponseFlag {
   /** 流式响应进行中 */
   STREAMING = 0,
+  /** 推理信息流式响应进行中 */
+  STREAMING_REASON = 1,
   /** 权限不足 */
-  PERMISSION_DENIED = 1,
+  PERMISSION_DENIED = 2,
   /** 获取失败 */
-  FETCH_FAILED = 2,
+  FETCH_FAILED = 3,
   /** 关闭连接 */
-  CONNECTION_CLOSED = 3,
+  CONNECTION_CLOSED = 4,
   /** Token数超限，需要继续请求 */
-  TOKEN_LIMIT_EXCEEDED = 4,
+  TOKEN_LIMIT_EXCEEDED = 5,
+  TOOLCALL = 6,
   /** 卡住了 */
-  STREAM_HANG = 5,
+  STREAM_HANG = 88,
   /** 其他错误 */
-  OTHER_ERROR = 6
+  OTHER_ERROR = 99,
+
 }
 
 // 调用AIProxy的流式回调函数
