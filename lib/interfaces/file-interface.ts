@@ -34,7 +34,7 @@ export interface IFileOperations {
    * @param decryptKey 解密密钥
    * @returns 文件的字节数组，失败则返回undefined
    */
-  getFile(cid: string, decryptKey: string): Promise<Uint8Array | null>;
+  getFile(cid: string, decryptKey: string): Promise<[Uint8Array | null, Error | null]>;
 
   /**
    * 创建文件可读流

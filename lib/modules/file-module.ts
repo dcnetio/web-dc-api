@@ -133,14 +133,14 @@ export class FileModule implements DCModule, IFileOperations {
   /**
    * 获取文件内容
    */
-  async getFile(cid: string, decryptKey: string): Promise<Uint8Array | null> {
+  async getFile(cid: string, decryptKey: string): Promise<[Uint8Array | null, Error | null]> {
     this.assertInitialized();
     try {
       const fileContent = await this.fileManager.getFileFromDc(cid, decryptKey);
-      return fileContent;
+      return [fileContent, null];
     } catch (error) {
       logger.error(`获取文件失败: ${cid}`, error);
-      throw new Error(`获取文件失败: ${error instanceof Error ? error.message : String(error)}`);
+      throw [null, new Error(`获取文件失败: ${error instanceof Error ? error.message : String(error)}`)];
     }
   }
   
