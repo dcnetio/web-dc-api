@@ -63,7 +63,7 @@ export interface IFileOperations {
   /**
    * 添加文件夹到存储
    * @param files 要上传的文件夹下的文件列表
-   * @param enkey 加密密钥
+   * @param enkey 加密密钥,base32的symmetric key
    * @param onUpdateTransmitCount 传输进度回调函数
    * @returns 添加结果
    */

@@ -9,12 +9,12 @@ export const pureApi = `
 
 // 当应用需要用户登录时，直接调用accountLoginWithWallet完成登录
 const [accountInfo, loginError] = await dc.auth.accountLoginWithWallet();
-// 打印用户登录账号
-console.log('用户已登录账号:', accountInfo.nftAccount);
+// 登录成功后,可以通过 accountInfo.nftAccount 获取当前登录的账号名
 
-// 登录成功后获取用户公钥,代表用户身份
-const publicKeyStr = dc.publicKey.string();     // Protobuf base32编码,所有需要作为参数传递的公钥都使用这个格式
-// 一旦登录成功，应该调用 dc.initUserDB(collections) 初始化用户数据库,以便后续数据存储和操作,详细请参考用户数据库 (db)模块的使用
+// 登录成功后通过下列方式获取用户公钥
+const publicKeyStr = dc.publicKey.string();     
+// 登录成功后，调用 dc.initUserDB(collections) 初始化用户数据库,详细请参考用户数据库 (db)模块的使用
+
 \`\`\`
 
 ### 2. 文件模块 (file)
@@ -24,14 +24,15 @@ const publicKeyStr = dc.publicKey.string();     // Protobuf base32编码,所有�
 \`\`\`javascript
 // 上传文件并跟踪进度,进度回调参数:status表示状态: 0=成功,1=加密中,2=上传中,3=出错,4=异常，size表示以上传的字节数
 const [cid, error] = await dc.file.addFile(
-  fileObject,
+  file, //File对象或Blob对象
   '加密密钥',                                     // 不加密时直接传空字符串
   (status, size) => console.log(\`上传状态:\${status} 已上传, \${size} 字节\`)
 );
-// 通过CID下载文件
+
+// 通过CID等待下载完整文件再返回
 const [fileContent, error] = await dc.file.getFile('file-cid', '解密密钥');
 
-// 大文件创建流,由前端控制下载并显示下载进度
+// 通过流式下载文件,可以显示下载进度
 const [stream, error] = await dc.file.createFileStream('file-cid', '解密密钥');
 
 // 上传文件夹,进度回调参数:status表示状态: 0=成功,1=加密中,2=上传中,3=出错,4=异常，total表示总文件数，process表示已上传的文件数
@@ -39,12 +40,12 @@ const folderInput = document.getElementById('folderInput') as HTMLInputElement;
 const files = folderInput.files;
 const res = await dc.file.addFolder(
     files, // 文件列表
-    "blgxhdql744v247fn53adtdjdji5dp7msui5tc24uzvjtxlr4edyq",  // 加密密钥,不加密时直接传空字符串
+    "加密密钥",  // 传入对32字节长度密钥进行base32加密后的字符串,不加密时直接传空字符串
     (status: number, total: number, process: number) => console.log(\`上传状态: \${status}, 总文件数: \${total}, 进度: \${process} 已上传,\`)
 );
 folderCID = res[0];
 
-// 获取文件夹文件列表,不返回具体文件内容,每个文件内容可以将Hash作为cid传入getFile获取,格式为JSON对象:Array<{Name: string; Type: number; Size: number; Hash: string; Path: string}> type=0文件 type=1文件夹
+// 获取文件夹文件列表,返回的fileList格式为JSON对象:Array<{Name: string; Type: number; Size: number; Hash: string; Path: string}> type=0文件 type=1文件夹,每个文件内容可以将Hash字段的值作为cid通过 dc.file.getFile 获取,
 const [fileList, error] = await dc.file.getFolderFileList(
     'folder-cid', // 文件夹CID
      false, // 是否重新寻址
@@ -75,6 +76,7 @@ const collections = [
       properties: {
         _id: { type: 'string' }, //所有集合都必须有这个字段,系统会自动生成
         name: { type: 'string' },
+        age: { type: 'number' }, 
         create_time: { type: 'number' }
         _mod: { type: 'number' } //所有集合都必须有这个字段,
       },
@@ -92,13 +94,12 @@ if (dbError) {
   console.log('用户数据库初始化成功,数据库ID: ', dc.dbThreadId);
 }
 
-
 // 数据操作
 // 创建记录,instanceId为返回的记录ID
 const [instanceId, error] = await dc.db.create(
-  dc.dbThreadId, // 数据库ID,数据库初始化成功后,自动赋值
+  dc.dbThreadId, // 数据库ID
   '集合名称',
-  JSON.stringify({ name: '项目名称', create_time: Date.now() }) //记录ID(_id)不能传入,插入成功后会返回记录ID
+  JSON.stringify({ name: '名称',age: 20, create_time: Date.now() }) //记录ID(_id)不能传入,插入成功后会返回记录ID
 );
 
 // 查询记录（带排序）
@@ -113,6 +114,63 @@ const [results, error] = await dc.db.find(
 ); // 
 const jsonResults = JSON.parse(results); // 解析JSON字符串
 
+//更多查询示例
+// 示例1: 简单查询 - 查找年龄为28的用户
+const query1 = {
+  condition: "age = 28"
+};
+const results1 = await dc.db.find(
+  'bafk3epa4rnnhworywhk6hsi7wafwgdt3fkgvpf62wqlriwpwqjwjuqbf4',
+  'users',
+  JSON.stringify(query1)
+);
+console.log('28岁的用户:', JSON.parse(results1));
+
+// 示例2: 组合条件查询 - 查找年龄大于25且名字为John的用户
+const query2 = {
+  condition: "age > 25 and name = 'John Doe'"
+};
+const results2 = await dc.db.find(
+  'bafk3epa4rnnhworywhk6hsi7wafwgdt3fkgvpf62wqlriwpwqjwjuqbf4',
+  'users',
+  JSON.stringify(query2)
+);
+console.log('年龄大于25的John:', JSON.parse(results2));
+
+// 示例3: 使用OR条件查询 - 查找年龄为21或名字为Jane的用户
+const query3 = {
+  ors: [
+    { condition: "age = 21" },
+    { condition: "name = 'Jane Smith'" }
+  ]
+};
+const results3 = await dc.db.find(
+  'bafk3epa4rnnhworywhk6hsi7wafwgdt3fkgvpf62wqlriwpwqjwjuqbf4',
+  'users',
+  JSON.stringify(query3)
+);
+console.log('21岁或名为Jane的用户:', JSON.parse(results3));
+
+// 示例4: 带排序和分页的复杂查询
+const query4 = {
+  condition: "age > 20",
+  ors: [
+    { condition: "name = 'John Doe'" }
+  ],
+  sort: {
+    fieldPath: "age",
+    desc: true  // 从大到小排序
+  },
+  seek: "01fyc691gh671nf0s8qpt0ych8"  // 分页标记
+};
+const results4 = await dc.db.find(
+  'bafk3epa4rnnhworywhk6hsi7wafwgdt3fkgvpf62wqlriwpwqjwjuqbf4',
+  'users',
+  JSON.stringify(query4)
+);
+console.log('复杂查询结果:', JSON.parse(results4));
+
+
 // 更新记录
 const err = await dc.db.save(
   dc.dbThreadId,
@@ -126,7 +184,9 @@ const err = await dc.db.delete(dc.dbThreadId, '集合名称', instanceId);
 
 ### 4. keyValue DB存储
 
-主要用于多用户共享数据和公共数据的存储与访问,支持索引查询和权限控制,适合需要跨用户共享数据的场景。需要特别注意的是,如果实际业务实现设计中需要创建公共主题给该应用的所有用户访问时,需要先获取应用初始主题作者公钥,进行判断,只有应用初始主题作者公钥才能创建初始化用的公共主题。
+是一个key-value数据库，可以根据业务需要自定义value的结构，来达到类似nosql数据库的效果，可以通过配置授权，控制不同用户的访问权限;
+与db数据库只针对个人数据的管理,"keyValue DB存储"适合需要对用户数据进行统一管理或者将数据发布给所有用户的场景;
+需要特别注意的是,如果实际业务实现设计中需要创建公共主题给该应用的所有用户访问时,需要先获取应用初始主题作者公钥,进行判断,只有应用初始主题作者公钥才能创建初始化用的公共主题。
 
 \`\`\`javascript
 import { AppConfig } from '/dcapi';
@@ -136,7 +196,7 @@ let error = null;
 [kvdb, error] = await dc.keyValue.getStore(
     dc.appInfo.appId, // 应用ID
     '公共主题名称', // 
-    AppConfig.appThemeAuthor); //,如果是公共主题，需要传入应用初始主题作者公钥
+    AppConfig.appThemeAuthor); //,如果是公共主题的keyvalue数据库，需要传入应用初始主题作者公钥
 if (!kvdb) {// 不存在则尝试创建
     if (dc.publicKey.string() === AppConfig.appThemeAuthor) { //确保只有应用初始主题作者公钥才能创建初始化用的公共主题
         [kvdb, error] = await dc.keyValue.createStore(
@@ -163,11 +223,11 @@ const [auth, error] = await dc.keyValue.configAuth(
 const [setSuccess, setError] = await dc.keyValue.set(
   kvdb,
   '键名',
-  JSON.stringify({ 属性: '值' }),
-  'index:value$$$index2:value2' // 索引字符串格式,多个索引用$$$分隔,其中index和index2分别表示不同索引名，value和value2分别表示对应的索引值
+  '值',// 值应该是JSON字符串,根据业务需要进行自定义处理
+  'index:value$$$index2:value2' // 索引字符串格式,多个索引用$$$分隔,其中index和index2分别表示不同索引名，value和value2分别表示新设置的keyvalue记录对应的索引值
 );
 
-// 通过键获取值
+// 通过键来获取值
 const [value, getError] = await dc.keyValue.get(kvdb, '键名');
 
 // 通过索引查询,所有满足索引的键值对,返回结果为JSON字符串
@@ -182,8 +242,13 @@ const [results, indexError] = await dc.keyValue.getWithIndex(
 const jsonResults = JSON.parse(results); // 解析JSON字符串
 \`\`\`
 
+
 ### 5. 评论系统 (comment)
 
+评论系统用于用户之间的互动和讨论,支持主题创建、评论发布、授权管理等功能。
+与"keyValue DB存储"可以对某一个key进行设置来达到数据共享目相比,"评论系统 (comment)"的所有评论都是按顺序保存的，可以根据时间线获取数据， 更适合微博、论坛等社交应用场景;
+"评论系统 (comment)"也可以通过配置授权，控制不同用户的访问权限;
+应用可以根据业务需要,对"评论系统 (comment)"中发布的评论的内容进行自定义处理,如可以在评论内容中定义一个ID来唯一标识评论,后续每次针对这个ID的评论内容调整,都可以理解为这个评论的状态更新;
 
 
 \`\`\`javascript
@@ -237,7 +302,7 @@ const jsonComments = JSON.parse(comments); // 解析JSON字符串
 ### 6. 消息系统 (message)
 
 \`\`\`javascript
-// 发送消息给其他用户,接收者公钥使用Protobuf base32编码格式
+// 发送消息给其他用户,接收者公钥使用dc.publicKey.string()返回的值
 const [status, sendError] = await dc.message.sendMsgToUserBox(
   '接收者公钥',
   '你好，这是测试消息'
