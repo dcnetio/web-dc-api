@@ -69,12 +69,12 @@ export default [
       {
         file: pkg.module, // ESM格式
         format: 'esm',
-        sourcemap: true
+        sourcemap: false
       },
       {
         file: pkg.main, // CJS格式
         format: 'cjs',
-        sourcemap: true
+        sourcemap: false
       }
     ],
     external,
@@ -141,7 +141,7 @@ export default [
       file: 'dist/dc.min.js', // 未压缩版本
       format: 'umd',
       name: GLOBAL_NAME,
-      sourcemap: true,
+      sourcemap: false,
       exports: 'named',
       // 确保所有导出都正确挂载到全局对象
       intro: `var global = typeof window !== 'undefined' ? window : this;`,
