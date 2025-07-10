@@ -504,17 +504,22 @@ export class AuthModule implements DCModule, IAuthOperations {
 
     // 判断 token 是否为空
     if (!connectInfo.client?.token) {
-      // 直接获取token
-      if (!this.context.publicKey) {
+      try { 
+        // 直接获取token
+        if (!this.context.publicKey) {
+          return;
+        }
+        logger.info("获取新Token");
+        await connectInfo.client?.GetToken(
+          this.context.appInfo.appId || "",
+          this.context.publicKey.string(),
+          this.context.sign
+        );
+        return;
+      } catch (error) {
+        logger.error("获取token失败", error);
         return;
       }
-      logger.info("获取新Token");
-      await connectInfo.client?.GetToken(
-        this.context.appInfo.appId || "",
-        this.context.publicKey.string(),
-        this.context.sign
-      );
-      return;
     }
 
     // 调用 ValidToken
