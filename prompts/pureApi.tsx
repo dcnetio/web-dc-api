@@ -18,9 +18,9 @@ const publicKeyStr = dc.publicKey.string(); // 获取用户公钥
 文件和文件夹上传下载功能,上传文件时可以指定加密密钥
 
 \`\`\`javascript
-// 上传文件并跟踪进度,进度回调参数:status表示状态: 0=成功,1=加密中,2=上传中,3=出错,4=异常，size表示以上传的字节数
+// 上传文件并跟踪进度,进度回调参数:status表示状态: 0=成功,1=加密中,2=上传中,3=出错,4=异常，size表示已上传的字节数
 const [cid, error] = await dc.file.addFile(
-  file, //File对象或Blob对象
+  file, //File对象
   '加密密钥',                                     // 不加密时直接传空字符串
   (status, size) => console.log(\`上传状态:\${status} 已上传, \${size} 字节\`)
 );
@@ -57,7 +57,7 @@ const [fileList, error] = await dc.file.getFolderFileList(
 \`\`\`javascript
 
 
-// ========第一步：定义数据结构==========
+// =====第一步：定义数据结构=====
 // 定义数据集合（类似表结构）
 const collections = [
   {
@@ -78,24 +78,24 @@ const collections = [
 ];
 
 
-// =======第二步：初始化数据库========
+// =====第二步：初始化数据库=====
 // 初始化用户数据库
 
-// 用户登录后初始化个人数据库
+// 用户登录成功后,必须进行初始化个人数据库
 const [dbInfo, dbError] = await dc.initUserDB(collections);
 
 if (dbError) {
-  console.error('数据库初始化失败:', dbError);
+  console.error('初始化失败:', dbError);
   return;
 }
-console.log('数据库初始化成功，ID:', dc.dbThreadId);
+console.log('初始化成功，ID:', dc.dbThreadId);
 
 
-// =======第三步：操作数据库========
+// =====第三步：操作数据库=====
 // 创建记录
 const noteData = {
-  title: '我的第一条笔记',
-  content: '这是笔记内容',
+  title: '第一条笔记',
+  content: '笔记内容',
   create_time: Date.now()
 };
 
@@ -137,7 +137,7 @@ await dc.db.save(
 // 删除记录
 await dc.db.delete(dc.dbThreadId, 'user_notes', recordId);
 
-//===========第四步：查询举例========
+//=====第四步：查询举例=====
 
 // 简单条件查询
 const simpleQuery = {
@@ -160,7 +160,7 @@ const [queryResults, queryError] = await dc.db.find(
   JSON.stringify(complexQuery)
 );
 
-//===========第五步：实际应用========
+//=====第五步：实际应用=====
 
 // 创建用户设置管理
 const saveUserSettings = async (settings) => {
@@ -227,9 +227,8 @@ keyValue DB是一个键值对存储系统，类似于Redis或MongoDB等NoSQL数�
 \`\`\`javascript
 import { AppConfig } from '/dcapi';
 
-// ================================
-// 第一步：获取或创建数据存储空间
-// ================================
+
+//=====第一步：获取或创建数据存储空间=====
 
 let kvdb = null;
 let error = null;
@@ -263,9 +262,7 @@ if (!kvdb) {
     }
 }
 
-// ================================
-// 第二步：配置用户访问权限
-// ================================
+//=====第二步：配置用户访问权限=====
 
 // 授权所有用户具有写入权限
 const [authResult, authError] = await dc.keyValue.configAuth(
@@ -278,9 +275,9 @@ const [authResult, authError] = await dc.keyValue.configAuth(
 // 权限级别说明：
 // 0: 无权限    1: 申请权限    2: 只读    3: 读写    4: 管理员    5: 只写
 
-// ================================
-// 第三步：存储数据（支持索引查询）
-// ================================
+
+// =====第三步：存储数据（支持索引查询）=====
+
 
 // 存储应用设置，并设置索引便于查询
 const appSettings = {
@@ -314,9 +311,8 @@ await dc.keyValue.set(
     'type:userprefs$$$userId:user123$$$notifications:true'
 );
 
-// ================================
-// 第四步：读取数据
-// ================================
+
+//=====第四步：读取数据=====
 
 // 方式1：通过键名直接获取
 const [settingsValue, getError] = await dc.keyValue.get(kvdb, 'app_settings');
@@ -340,9 +336,8 @@ if (searchResults) {
     console.log('所有用户偏好设置:', userPrefsList);
 }
 
-// ================================
-// 实际应用场景示例
-// ================================
+
+//=====实际应用场景示例=====
 
 // 场景1：存储商品信息
 const product = {
@@ -404,9 +399,8 @@ console.log('电子产品列表:', productList);
 \`\`\`javascript
 import { AppConfig } from '/dcapi';
 
-// ================================
-// 第一步：创建评论主题（仅应用管理员可操作）
-// ================================
+
+//=====第一步：创建评论主题（仅应用管理员可操作）=====
 // 检查权限：只有应用管理员才能创建公共评论主题
 if (dc.publicKey.string() === AppConfig.appThemeAuthor) {
   try {
@@ -427,25 +421,20 @@ if (dc.publicKey.string() === AppConfig.appThemeAuthor) {
   console.log('权限不足：只有应用管理员可以创建公共评论主题');
 }
 
-// ================================
-// 第二步：配置用户访问权限
-// ================================
+
+//=====第二步：配置用户访问权限=====
 
 // 授权所有用户具有评论权限
 const [authStatus, authError] = await dc.comment.configAuth(
   'news_comments',           // 主题ID
   AppConfig.appThemeAuthor,  // 主题作者公钥
   'all',                     // 'all'表示所有用户，也可以填具体用户公钥
-  3,                         // 权限级别：3=可读可写（能发表和查看评论）
+  3,                         // 权限级别：与keyValue DB的权限级别定义一致
   '允许所有用户参与评论讨论'   // 授权说明
 );
 
-// 权限级别说明：
-// 0: 无权限    1: 申请权限    2: 只读    3: 读写    4: 管理员    5: 只写
 
-// ================================
-// 第三步：发布评论
-// ================================
+//=====第三步：发布评论=====
 
 // 发布普通评论
 const newsContent = {
@@ -458,7 +447,7 @@ const [commentId, commentError] = await dc.comment.publishCommentToTheme(
   'news_comments',                    // 主题ID
   AppConfig.appThemeAuthor,           // 主题作者公钥
   0,                                  // 评论类型：0=普通评论, 1=点赞, 2=推荐, 3=踩
-  JSON.stringify(newsContent),        // 评论内容（JSON格式）
+  JSON.stringify(newsContent),        // 评论内容
   1,                                  // 可见性：0=仅作者可见, 1=公开
   ''                                  // 引用其他评论（空表示不引用）
 );
@@ -478,12 +467,10 @@ const [likeId, likeError] = await dc.comment.publishCommentToTheme(
     userId: dc.publicKey.string()
   }),
   1,
-  \`1000/${commentId}\`                 // 引用刚才的评论
+  \`1000/${commentId}\`                 // 引用刚才的评论,格式: 原评论发布时的区块高度/评论ID
 );
 
-// ================================
-// 第四步：获取评论列表
-// ================================
+//=====第四步：获取评论列表=====
 
 // 获取最新的评论列表
 const [comments, commentsError] = await dc.comment.getThemeComments(
@@ -492,7 +479,7 @@ const [comments, commentsError] = await dc.comment.getThemeComments(
   0,                         // 起始高度（0表示从最新开始）
   0,                         // 方向：0=最新优先, 1=最旧优先
   0,                         // 偏移量（分页用）
-  20                         // 限制数量（最多获取20条）
+  20                         // 获取数量限制
 );
 
 if (comments && !commentsError) {
@@ -509,9 +496,7 @@ if (comments && !commentsError) {
   console.error('获取评论失败:', commentsError);
 }
 
-// ================================
-// 实际应用场景示例
-// ================================
+//=====实际应用场景示例=====
 
 // 场景1：新闻评论系统
 const publishNewsComment = async (newsId, commentText) => {
@@ -588,9 +573,7 @@ await publishProductReview('prod_001', 5, '商品质量很棒，物流也很快�
 使用示例：
 
 \`\`\`javascript
-// ================================
-// 发送私信给其他用户
-// ================================
+// =====发送私信给其他用户=====
 
 // 发送简单文本消息
 const [status, sendError] = await dc.message.sendMsgToUserBox(
@@ -618,9 +601,7 @@ const [status2, sendError2] = await dc.message.sendMsgToUserBox(
   JSON.stringify(messageData)
 );
 
-// ================================
-// 获取收件箱消息
-// ================================
+//=====获取收件箱消息=====
 
 // 获取最新的消息列表
 const [messages, getError] = await dc.message.getMsgFromUserBox(20); // 获取最新20条消息
@@ -640,9 +621,7 @@ if (messages && !getError) {
   console.error('获取消息失败:', getError);
 }
 
-// ================================
-// 实际应用场景示例
-// ================================
+//=====实际应用场景示例=====
 
 // 场景1：发送系统通知
 const sendSystemNotification = async (userPublicKey, title, content) => {
@@ -735,11 +714,11 @@ const [status, error] = await dc.aiproxy.createProxyConfig(
 // 配置AI模型参数
 const modelConfig = {
     Model:         "tngtech/deepseek-r1t-chimera:free",// 模型名称
-    Temperature:   0.7,// 温度参数
-    MaxTokens:     10000,// 最大输出token 数量
-    TopP:          0.9, // Top-P 采样参数
-    TopK:          40,// Top-K 采样参数
-    StopSequences: []string{},// 停止序列数组
+    Temperature:   0.7,
+    MaxTokens:     10000,
+    TopP:          0.9, 
+    TopK:          40,
+    StopSequences: []string{},
     SystemPrompt:  "你是一个软件开发专家.",// 系统提示
     Stream:        true, // 是否启用流模式
     Tools:         []ToolDefinition{},// 可选的工具定义数组
@@ -750,22 +729,22 @@ const modelConfig = {
 const serviceConfig =  {
   service: 'ai代理服务', // 服务名称
   isAIModel: 0,    // 0: AI模型 1: MCPServer
-  apiType: 0,      // 当type 为0时起作用,表示模型的接口类型,如0:anthropic,1:openai 2:ollama 3:googleai 4:azureopenai
+  apiType: 0,      // 模型接口类型
   authorization: "Bearer your-api-key", // 授权信息
   endpoint: "https://api.openai.com/v1", // API端点
-  organization: "your-organization", // 组织名称或ID (fixed spelling from 'Orgnization')
+  organization: "your-organization", // 组织名称或ID 
   apiVersion: "v1",   // api版本号
   modelConfig: modelConfig, // 模型配置
   remark: ""
 }
 
-//配置AI服务,所有敏感信息都存在DC云服务节点的TEE环境中
+//配置AI服务
 const [success, error] = await dc.aiproxy.configAIProxy(
   dc.appInfo.appId,
   dc.publicKey.string(),  // 配置作者公钥
-  'default',              // 配置主题
-  'openai-gpt',          // 服务名称
-  serviceConfig          // 服务配置
+  'default',              // 主题
+  'openai-gpt',          // 名称
+  serviceConfig          
 );
 
 if (success) {
@@ -786,30 +765,30 @@ const authConfig = {
 
 const authConfig: ProxyCallConfig = {
     No: 1,
-    Tlim: 1000, // 总访问次数限制
-    Dlim: 100, // 日访问次数限制
-    Wlim: 500, // 周访问次数限制
-    Mlim: 2000, // 月访问次数限制
-    Ylim: 10000, // 年访问次数限制
+    Tlim: 1000, // 总次数限制
+    Dlim: 100, // 日限制
+    Wlim: 500, // 周限制
+    Mlim: 2000, // 月限制
+    Ylim: 10000, // 年限制
     Exp: 12345678 // 过期区块高度
 };
 
 const [status, error] = await dc.aiproxy.configAuth(
   dc.appInfo.appId,
   dc.publicKey.string(),      // 配置作者公钥
-  'default',                  // 配置主题
-  '用户公钥',                 // 被授权用户的公钥（base32格式）,配置all表示所有用户
+  'default',                  // 主题
+  '用户',                 // 被授权的公钥,all表示所有用户
   3,                          // 权限级别：3=写入权限
   authConfig                  // 授权配置
 );
 
 if (status) {
-  console.log('用户权限配置成功');
+  console.log('配置成功');
 }
 \`\`\`
 
 
-\\设置默认调用配置,在进行AI请求调用前调用
+\\默认调用配置,在AI请求调用前调用
 
 \`\`\`javascript
 // 设置AI调用的默认参数
@@ -822,7 +801,7 @@ const defaultConfig = {
 const error = await dc.aiproxy.SetAICallConfig(defaultConfig);
 
 if (!error) {
-  console.log('默认配置设置成功');
+  console.log('设置成功');
 }
 \`\`\`
 
@@ -830,7 +809,7 @@ if (!error) {
  \\执行AI调用
 
 \`\`\`javascript
-// 准备AI调用请求
+
 const requestBody = JSON.stringify({
   chatMessages: [
     {
@@ -845,11 +824,11 @@ const requestBody = JSON.stringify({
   ]
 });
 
-// 创建取消信号（用于中断长时间调用）
+
 const controller = new AbortController();
 const context = { signal: controller.signal };
 
-// 流式响应处理函数
+// 流式响应处理
 // flag: 0表示开始接收数据, 1:权限不足 2:获取失败 3:关闭连接 4: 其他错误   content: 接收到的数据
 const handleStreamResponse = (flag, content, error) => {
   if (error) {
@@ -858,11 +837,11 @@ const handleStreamResponse = (flag, content, error) => {
   }
 
   if (flag === 3) {
-    console.log('AI响应完成');
+    console.log('响应完成');
     return;
   }
   if (flag === 1) {
-    console.error('权限不足，无法访问AI服务');
+    console.error('权限不足');
     return;
   }
   if (flag === 2) {
@@ -870,7 +849,7 @@ const handleStreamResponse = (flag, content, error) => {
     return;
   }
   if (flag === 4) {
-    console.error('发生错误:', content);
+    console.error('错误:', content);
     return;
   }
   document.getElementById('ai-response').innerHTML += content;

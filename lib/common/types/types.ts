@@ -123,7 +123,7 @@ export interface AIProxyConfig {
   apiType: number;      // 当type 为0时起作用,表示模型的接口类型,如0:anthropic,1:openai 2:ollama 3:googleai 4:azureopenai
   authorization: string;
   endpoint: string;
-  organization: string; // 组织名称或ID (fixed spelling from 'Orgnization')
+  organization: string; // 组织名称或ID 
   apiVersion: string;   // api版本号
   modelConfig: ModelConfig; // 模型配置
   remark: string;
