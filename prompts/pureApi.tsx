@@ -713,15 +713,15 @@ const [status, error] = await dc.aiproxy.createProxyConfig(
 
 // 配置AI模型参数
 const modelConfig = {
-    Model:         "tngtech/deepseek-r1t-chimera:free",// 模型名称
+    Model:         "deepseek-r1",// 模型名称
     Temperature:   0.7,
     MaxTokens:     10000,
     TopP:          0.9, 
     TopK:          40,
     StopSequences: []string{},
-    SystemPrompt:  "你是一个软件开发专家.",// 系统提示
-    Stream:        true, // 是否启用流模式
-    Tools:         []ToolDefinition{},// 可选的工具定义数组
+    SystemPrompt:  "你是一个软件开发专家.",
+    Stream:        true, // 启用流模式
+    Tools:         []ToolDefinition{},// 工具定义数组
     Remark:        "这是一个AI代理配置"
 }
 
@@ -873,11 +873,8 @@ const [_, error] = await dc.aiproxy.DoAIProxyCall(
 );
 
 if (error) {
-  console.error('AI调用失败', error);
+  console.error('调用失败', error);
 }
-
-// 如需中断调用
-// controller.abort();
 \`\`\`
 
 ## 模块选择指南
@@ -886,6 +883,6 @@ if (error) {
 - **评论系统**: 时间线社交互动，评论回复，点赞功能
 - **消息系统**: 点对点私密通信，系统通知
 - **文件模块**: 加密文件存储，支持文件夹管理
-- **AI代理**: 安全的AI服务调用，支持多种AI模型
+- **AI代理**: 应用中需要调用AI模型或者MCPServer时，使用AI代理模块进行配置和调用
 
 `;
