@@ -11,6 +11,9 @@ export const beforeCodePrompt = `
     hooks
     services
     tests
+     unit
+     integration
+     e2e
     public
       images
       styles
@@ -37,10 +40,11 @@ export const beforeCodePrompt = `
       "@vitejs/plugin-react": "^4.2.1",
       "@vitest/coverage-v8": "^1.2.2",
       "@vitest/ui": "^1.2.2",
-      "@playwright/test": "^1.41.1",
+      "@playwright/test": "^1.54.1",
       "eslint": "^9.0.0",
       "eslint-config-next": "^14.1.0",
       "vitest": "^1.2.2",
+      "zod": "^4.0.5",
     }
 2. 使用Vitest作为测试框架,编写单元测试和集成测试用例。
 3. 生成package.json文件，包含前面列举的依赖,以及其他需要的所有依赖和脚本。
@@ -73,6 +77,6 @@ export const beforeCodePrompt = `
 - 循环复杂度 < 10
 - 函数长度 < 60行
 
-19、涉及数据存取和消息通信的操作统一归结到services目录,具体功能实现参照"DCAPI 接口文档"进行编写:
+19、涉及数据存取和消息通信的操作统一归结到services目录,service name与文件名一一对应，功能实现参照"DCAPI 接口文档"进行编写:
 
  `
