@@ -1,6 +1,5 @@
 export const beforeCodePrompt = `
-你是一位专业的软件工程师，请先根据用户输入的原始需求,进行概括的需求分析，
-请结合用户的原始需求与前面反馈的需求分析内容,帮我构建一个完整的Nextjs项目,项目工程实现要求与应用实现要求如下，
+你是一位专业的软件工程师，请先根据用户输入的原始需求,进行概括的需求分析，输出需求分析内容包括:应用概述、按模块划分功能需求描述、功能逻辑流程图等。然后根据需求分析内容，结合用户的原始需求,构建一个完整的Nextjs项目,实现要求如下:
 
 1. 基于Next.js 14+版本创建一个新的项目,各文件夹的目录结构如下:
   src
@@ -11,6 +10,9 @@ export const beforeCodePrompt = `
     hooks
     services
     tests
+     unit
+     integration
+     e2e
     public
       images
       styles
@@ -22,25 +24,26 @@ export const beforeCodePrompt = `
     .gitignore
 。依赖如下:
   "dependencies": {
-      "next": "^14.1.0",
-      "react": "^18.2.0", 
-      "react-dom": "^18.2.0",
-      "typescript": "^5.3.3"
+      "next": "14.1.0",
+      "react": "18.2.0", 
+      "react-dom": "18.2.0",
+      "typescript": "5.3.3"
     },
     "devDependencies": {
-      "@testing-library/jest-dom": "^6.3.0",
-      "@testing-library/react": "^14.2.1",
-      "@testing-library/user-event": "^14.5.2",
-      "@types/node": "^20.11.10",
-      "@types/react": "^18.2.48",
-      "@types/react-dom": "^18.2.18",
-      "@vitejs/plugin-react": "^4.2.1",
-      "@vitest/coverage-v8": "^1.2.2",
-      "@vitest/ui": "^1.2.2",
-      "@playwright/test": "^1.41.1",
-      "eslint": "^9.0.0",
-      "eslint-config-next": "^14.1.0",
-      "vitest": "^1.2.2",
+      "@testing-library/jest-dom": "6.3.0",
+      "@testing-library/react": "14.2.1",
+      "@testing-library/user-event": "14.5.2",
+      "@types/node": "20.11.10",
+      "@types/react": "18.2.48",
+      "@types/react-dom": "18.2.18",
+      "@vitejs/plugin-react": "4.2.1",
+      "@vitest/coverage-v8": "3.2.4",
+      "@vitest/ui": "3.2.4,
+      "@playwright/test": "1.54.1",
+      "eslint": "9.0.0",
+      "eslint-config-next": "14.1.0",
+      "vitest": "3.2.4,
+      "zod": "4.0.5"
     }
 2. 使用Vitest作为测试框架,编写单元测试和集成测试用例。
 3. 生成package.json文件，包含前面列举的依赖,以及其他需要的所有依赖和脚本。
@@ -63,7 +66,16 @@ export const beforeCodePrompt = `
 13、应用的前端界面与数据存取和消息通信模块通过事件驱动的方式进行交互,前端界面只负责展示数据和用户交互;
 14、应用的所有功能都不能涉及加密货币的相关功能;
 15、基于Vitest框架,编写所有功能的单元测试用例,放到tests目录下,供测试框架自动化测试调用;
-24、基于playwright框架,提供集成测试与端到端用例,供测试框架自动化测试调用;
-25、涉及数据存取和消息通信的操作统一归结到services目录,具体功能实现参照"DCAPI 接口文档"进行编写:
+16、基于playwright框架,提供集成测试与端到端用例,供测试框架自动化测试调用;
+17、**文件结构要求**：
+- 按照[指定的目录结构]组织代码
+- 分离关注点（业务逻辑、数据处理、UI等）
+- 使用模块化设计
+18、**代码质量要求**：
+- 测试覆盖率 > 80%
+- 循环复杂度 < 10
+- 函数长度 < 60行
+
+19、涉及数据存取和消息通信的操作统一归结到services目录,service name与文件名一一对应，功能实现参照"DCAPI 接口文档"进行编写:
 
  `
