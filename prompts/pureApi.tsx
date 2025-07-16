@@ -349,9 +349,9 @@ const product = {
 
 await dc.keyValue.set(
     kvdb,
-    \`product_${product.id}\`,
+    'product_' + product.id,
     JSON.stringify(product),
-    \`category:${product.category}$$$price:${product.price}$$$type:product\`
+    'category:' + product.category + '$$$price:' + product.price + '$$$type:product' // 索引：分类=电子产品，价格=5999，类型=商品
 );
 
 // 场景2：查询特定分类的商品
@@ -467,7 +467,7 @@ const [likeId, likeError] = await dc.comment.publishCommentToTheme(
     userId: dc.publicKey.string()
   }),
   1,
-  \`1000/${commentId}\`                 // 引用刚才的评论,格式: 原评论发布时的区块高度/评论ID
+  '1000/'+commentId               // 引用刚才的评论,格式: 原评论发布时的区块高度/评论ID
 );
 
 //=====第四步：获取评论列表=====
@@ -489,8 +489,8 @@ if (comments && !commentsError) {
   // 处理评论数据
   commentList.forEach(comment => {
     const content = JSON.parse(comment.content);
-    console.log(\`用户评论: ${content.userComment}\`);
-    console.log(\`发布时间: ${new Date(comment.timestamp).toLocaleString()}\`);
+    console.log('用户评论: '+ content.userComment);
+    console.log('发布时间: '+ new Date(comment.timestamp).toLocaleString()});
   });
 } else {
   console.error('获取评论失败:', commentsError);
@@ -611,11 +611,7 @@ if (messages && !getError) {
   
   // 处理消息列表
   messages.forEach((message, index) => {
-    console.log(\`消息 ${index + 1}:\`);
-    console.log(\`发送者: ${message.sender}\`);
-    console.log(\`内容: ${message.content}\`);
-    console.log(\`时间: ${new Date(message.timestamp).toLocaleString()}\`);
-    console.log('---');
+    console.log('消息 ' + (index + 1) + ': 发送者=' + message.sender + ', 内容=' + message.content + ', 时间=' + new Date(message.timestamp).toLocaleString());
   });
 } else {
   console.error('获取消息失败:', getError);

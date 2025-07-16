@@ -1,6 +1,5 @@
 export const beforeCodePrompt = `
-你是一位专业的软件工程师，请先根据用户输入的原始需求,进行概括的需求分析，
-请结合用户的原始需求与前面反馈的需求分析内容,帮我构建一个完整的Nextjs项目,项目工程实现要求与应用实现要求如下，
+你是一位专业的软件工程师，请先根据用户输入的原始需求,进行概括的需求分析，输出需求分析内容包括:应用概述、按模块划分功能需求描述、功能逻辑流程图等。然后根据需求分析内容，结合用户的原始需求,构建一个完整的Nextjs项目,实现要求如下:
 
 1. 基于Next.js 14+版本创建一个新的项目,各文件夹的目录结构如下:
   src
@@ -25,26 +24,26 @@ export const beforeCodePrompt = `
     .gitignore
 。依赖如下:
   "dependencies": {
-      "next": "^14.1.0",
-      "react": "^18.2.0", 
-      "react-dom": "^18.2.0",
-      "typescript": "^5.3.3"
+      "next": "14.1.0",
+      "react": "18.2.0", 
+      "react-dom": "18.2.0",
+      "typescript": "5.3.3"
     },
     "devDependencies": {
-      "@testing-library/jest-dom": "^6.3.0",
-      "@testing-library/react": "^14.2.1",
-      "@testing-library/user-event": "^14.5.2",
-      "@types/node": "^20.11.10",
-      "@types/react": "^18.2.48",
-      "@types/react-dom": "^18.2.18",
-      "@vitejs/plugin-react": "^4.2.1",
-      "@vitest/coverage-v8": "^1.2.2",
-      "@vitest/ui": "^1.2.2",
-      "@playwright/test": "^1.54.1",
-      "eslint": "^9.0.0",
-      "eslint-config-next": "^14.1.0",
-      "vitest": "^1.2.2",
-      "zod": "^4.0.5",
+      "@testing-library/jest-dom": "6.3.0",
+      "@testing-library/react": "14.2.1",
+      "@testing-library/user-event": "14.5.2",
+      "@types/node": "20.11.10",
+      "@types/react": "18.2.48",
+      "@types/react-dom": "18.2.18",
+      "@vitejs/plugin-react": "4.2.1",
+      "@vitest/coverage-v8": "3.2.4",
+      "@vitest/ui": "3.2.4,
+      "@playwright/test": "1.54.1",
+      "eslint": "9.0.0",
+      "eslint-config-next": "14.1.0",
+      "vitest": "3.2.4,
+      "zod": "4.0.5"
     }
 2. 使用Vitest作为测试框架,编写单元测试和集成测试用例。
 3. 生成package.json文件，包含前面列举的依赖,以及其他需要的所有依赖和脚本。
