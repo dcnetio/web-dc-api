@@ -2,26 +2,26 @@ export const beforeCodePrompt = `
 你是一位专业的软件工程师，请先根据用户输入的原始需求,进行概括的需求分析，输出需求分析内容包括:应用概述、按模块划分功能需求描述、功能逻辑流程图等。然后根据需求分析内容，结合用户的原始需求,构建一个完整的Nextjs项目,实现要求如下:
 
 1. 基于Next.js 14+版本创建一个新的项目,各文件夹的目录结构如下:
-  src
-    pages
-    components
-    styles
-    utils
-    hooks
-    services
-    tests
-     unit
-     integration
-     e2e
-    public
-      images
-      styles
-    types
-    config
-    package.json
-    tsconfig.json
-    .eslintrc.json
-    .gitignore
+  src/
+    ├── pages
+    ├── components
+    ├── styles
+    ├── utils
+    ├── hooks
+    ├── services
+    ├── __tests__
+    │   ├── unit
+    │   ├── integration
+    │   └── e2e
+    ├── public
+    │    ├── images
+    │    └── styles
+    ├── types
+    ├── config
+    ├── package.json
+    ├── tsconfig.json
+    ├── .eslintrc.json
+    └── .gitignore
 。依赖如下:
   "dependencies": {
       "next": "14.1.0",
@@ -36,16 +36,16 @@ export const beforeCodePrompt = `
       "@types/node": "20.11.10",
       "@types/react": "18.2.48",
       "@types/react-dom": "18.2.18",
-      "@vitejs/plugin-react": "4.2.1",
-      "@vitest/coverage-v8": "3.2.4",
-      "@vitest/ui": "3.2.4,
       "@playwright/test": "1.54.1",
       "eslint": "9.0.0",
       "eslint-config-next": "14.1.0",
-      "vitest": "3.2.4,
-      "zod": "4.0.5"
+      "zod": "4.0.5",
+      "jest": "29.7.0",     // Jest 核心
+      "ts-jest": "29.1.1",  // TypeScript 支持
+      "typescript": "5.0.4", // TypeScript 编译器
+      "@types/jest": "29.5.5" // Jest 类型定义
     }
-2. 使用Vitest作为测试框架,编写单元测试和集成测试用例。
+2. 使用Jest作为单元测试框架,编写单元测试用例,基于playwright编写集成测试用例。
 3. 生成package.json文件，包含前面列举的依赖,以及其他需要的所有依赖和脚本。
 4. 根据需要生成Vite配置文件（vite.config.js）。
 5. 生成Tailwind CSS配置文件（tailwind.config.js）
@@ -65,7 +65,7 @@ export const beforeCodePrompt = `
 12、所有去中心化功能不涉及区块链直接交互,全部通过DC API实现;
 13、应用的前端界面与数据存取和消息通信模块通过事件驱动的方式进行交互,前端界面只负责展示数据和用户交互;
 14、应用的所有功能都不能涉及加密货币的相关功能;
-15、基于Vitest框架,编写所有功能的单元测试用例,放到tests目录下,供测试框架自动化测试调用;
+15、基于Jest框架,编写所有功能的单元测试用例,放到__tests__目录下,供测试框架自动化测试调用;
 16、基于playwright框架,提供集成测试与端到端用例,供测试框架自动化测试调用;
 17、**文件结构要求**：
 - 按照[指定的目录结构]组织代码
