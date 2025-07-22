@@ -13,7 +13,7 @@ if (typeof __IS_PROD__ !== 'undefined') {
 
 let _baseUrl = '';
 let _walletOrigin = ''
-if (isProd) {
+if (true) {
   _baseUrl ='/v0_0_8'
   _walletOrigin = 'https://wallet.dcnetio.com'
 } else {
