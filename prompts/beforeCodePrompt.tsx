@@ -2,7 +2,7 @@ export const beforeCodePrompt = `
 你是一位专业的软件工程师，请先根据用户输入的原始需求,进行概括的需求分析，输出需求分析内容包括:应用概述、按模块划分功能需求描述、功能逻辑流程图等。然后根据需求分析内容，结合用户的原始需求,构建一个完整的Nextjs项目,实现要求如下:
 
 1. 基于Next.js 14+版本创建一个新的项目,各文件夹的目录结构如下:
-  src/
+    /
     ├── pages
     ├── components
     ├── styles
@@ -20,30 +20,37 @@ export const beforeCodePrompt = `
     ├── config
     ├── package.json
     ├── tsconfig.json
-    ├── .eslintrc.json
-    └── .gitignore
+    └──  .eslintrc.json
 。依赖如下:
   "dependencies": {
-      "next": "14.1.0",
-      "react": "18.2.0", 
+     "next": "14.1.0",
+      "react": "18.2.0",
       "react-dom": "18.2.0",
-      "typescript": "5.3.3"
+      "typescript": "5.3.3",
+      "web-dc-api": "0.0.40"
     },
     "devDependencies": {
-      "@testing-library/jest-dom": "6.3.0",
-      "@testing-library/react": "14.2.1",
-      "@testing-library/user-event": "14.5.2",
-      "@types/node": "20.11.10",
-      "@types/react": "18.2.48",
-      "@types/react-dom": "18.2.18",
-      "@playwright/test": "1.54.1",
-      "eslint": "9.0.0",
-      "eslint-config-next": "14.1.0",
-      "zod": "4.0.5",
-      "jest": "29.7.0",     // Jest 核心
-      "ts-jest": "29.1.1",  // TypeScript 支持
-      "typescript": "5.0.4", // TypeScript 编译器
-      "@types/jest": "29.5.5" // Jest 类型定义
+       "@testing-library/jest-dom": "6.6.2",
+        "@testing-library/user-event": "14.5.2",
+        "@testing-library/react": "14.2.1",  
+        "@types/node": "20.11.10",
+        "jsdom": "25.0.1",
+        "eslint-config-next": "14.1.0",
+        "eslint": "9.0.0",
+        "vinxi": "0.5.3",
+        "jest": "29.7.0",     
+        "ts-jest": "29.1.1",  
+        "jest-environment-jsdom": "29.7.0",  
+         "@types/react": "18.2.25",  
+        "@types/react-dom": "18.2.25",  
+        "@types/jest": "29.5.5", 
+        "babel-jest": "29.7.0",
+        "@babel/core": "7.23.3",
+        "@babel/preset-env": "7.23.3",
+        "@babel/preset-typescript": "7.23.3",
+        "@babel/preset-react": "7.23.3",
+        "identity-obj-proxy": "3.0.0",
+        "esbuild-wasm": "0.25.4"
     }
 2. 使用Jest作为单元测试框架,编写单元测试用例,基于playwright编写集成测试用例。
 3. 生成package.json文件，包含前面列举的依赖,以及其他需要的所有依赖和脚本。
