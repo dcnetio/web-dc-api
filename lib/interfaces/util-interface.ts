@@ -1,4 +1,4 @@
-import { IAppInfo } from 'lib/common/types/types';
+import { IAppInfo } from '../../lib/common/types/types';
 import { SymmetricKey, Key as ThreadKey } from '../implements/threaddb/common/key';
 
 

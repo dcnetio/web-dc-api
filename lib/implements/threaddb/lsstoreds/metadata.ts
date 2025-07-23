@@ -46,10 +46,10 @@ export class DsThreadMetadata implements IThreadMetadata {
     try {  
       const value = await this.ds.get(k)  
       return value
-    } catch (err) {  
-      if (err.code === 'ERR_NOT_FOUND') return null  
-      throw new Error(`Error getting metadata: ${err.message}`)  
-    }  
+    } catch (err:any) {
+      if (err.code === 'ERR_NOT_FOUND') return null
+      throw new Error(`Error getting metadata: ${err.message}`)
+    }
   }  
 
 
@@ -57,7 +57,7 @@ export class DsThreadMetadata implements IThreadMetadata {
     const k = this.keyMeta(t, key)   
     try {  
       await this.ds.put(k, val)  
-    } catch (err) {  
+    } catch (err:any) {  
       throw new Error(`Error setting metadata: ${err.message}`)  
     }  
   }  
@@ -73,7 +73,7 @@ export class DsThreadMetadata implements IThreadMetadata {
       const value = await this.ds.get(k)  
       // For Uint8Array we'll handle it in getBytes method
       return this.decodeValue<T>(value)  
-    } catch (err) {  
+    } catch (err:any) {
       if (err.code === 'ERR_NOT_FOUND') return null  
       throw new Error(`Error getting metadata: ${err.message}`)  
     }  
@@ -84,7 +84,7 @@ export class DsThreadMetadata implements IThreadMetadata {
     const value = this.encodeValue(val)  
     try {  
       await this.ds.put(k, value)  
-    } catch (err) {  
+    } catch (err:any) {  
       throw new Error(`Error setting metadata: ${err.message}`)  
     }  
   }  
@@ -112,13 +112,13 @@ export class DsThreadMetadata implements IThreadMetadata {
           throw new Error(`Bad metabook key: ${entry.key}`)  
         }  
         const [,, ts, key] = kns  
-        const tid = this.parseThreadID(ts)  
-        const mk: MetadataKey = { t: tid, k: key }  
+        const tid = this.parseThreadID(ts!)  
+        const mk: MetadataKey = { t: tid, k: key! }  
 
         const value = await this.decodeAnyValue(entry.value)  
         this.storeDecodedValue(dump, mk, value)  
       }  
-    } catch (err) {  
+    } catch (err:any) {  
       throw new Error(`Error dumping metadata: ${err.message}`)
     } 
     return dump  
@@ -152,7 +152,7 @@ export class DsThreadMetadata implements IThreadMetadata {
       for await (const key of results) {  
         await this.ds.delete(key)
       }  
-    } catch (err) {
+    } catch (err:any) {
         throw new Error(`Error clearing keys: ${err.message}`)
     }  
   }  
@@ -161,7 +161,7 @@ export class DsThreadMetadata implements IThreadMetadata {
     try {  
       const decoder = new TextDecoder()  
       return JSON.parse(decoder.decode(buf)) as T  
-    } catch (err) {  
+    } catch (err:any) {  
       throw new Error(`Value decoding failed: ${err.message}`)  
     }  
   }  
@@ -170,7 +170,7 @@ export class DsThreadMetadata implements IThreadMetadata {
     try {  
       const encoder = new TextEncoder()  
       return encoder.encode(JSON.stringify(val))  
-    } catch (err) {  
+    } catch (err:any) {  
       throw new Error(`Value encoding failed: ${err.message}`)  
     }  
   }  
@@ -178,7 +178,7 @@ export class DsThreadMetadata implements IThreadMetadata {
   private parseThreadID(ts: string): ThreadID {  
     try {  
       return ThreadID.fromString(ts)  
-    } catch (err) {  
+    } catch (err:any) {  
       throw new Error(`Invalid thread ID: ${ts}`)  
     }  
   }  
@@ -190,21 +190,22 @@ export class DsThreadMetadata implements IThreadMetadata {
   ) {  
     switch (typeof value) {  
       case 'boolean':  
-        dump.data.bool[mk.t.toString()] = dump.data.bool[mk.t.toString()] || false;
-        dump.data.bool[mk.t.toString()][mk.k] = value;
+        dump.data.bool[mk.t.toString()] = dump.data.bool[mk.t.toString()] || {};  
+        dump.data.bool[mk.t.toString()]![mk.k] = value;
         break  
       case 'number':  
-        dump.data.int64[mk.t.toString()] = dump.data.int64[mk.t.toString()] || 0;
-        dump.data.int64[mk.t.toString()][mk.k] = value;
+        dump.data.int64[mk.t.toString()] = dump.data.int64[mk.t.toString()] || {};
+        dump.data.int64[mk.t.toString()]![mk.k] = value;
         break  
       case 'string':  
-        dump.data.string[mk.t.toString()] = dump.data.string[mk.t.toString()] || '';
-        dump.data.string[mk.t.toString()][mk.k] = value;
+        dump.data.string[mk.t.toString()] = dump.data.string[mk.t.toString()] || {};
+        dump.data.string[mk.t.toString()]![mk.k] = value;
         break  
       default:  
         if (value instanceof Uint8Array) {  
-          dump.data.bytes[mk.t.toString()] = dump.data.bytes[mk.t.toString()];
-          dump.data.bytes[mk.t.toString()][mk.k] = value;
+         // dump.data.bytes[mk.t.toString()] = dump.data.bytes[mk.t.toString()] || '';
+          dump.data.bytes[mk.t.toString()] = dump.data.bytes[mk.t.toString()] || {};
+          dump.data.bytes[mk.t.toString()]![mk.k] = value;
         } else {  
           throw new Error(`Unsupported value type for key: ${mk.k}`)  
         }  

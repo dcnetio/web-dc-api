@@ -5,7 +5,6 @@ let isProd = false;
 const walletOpenType =
   typeof globalThis !== "undefined" ? (globalThis as any).walletOpenType : ""; // 用于判断是否是直接打开;
 
-console.log('==========walletOpenType1111:', globalThis, globalThis?.walletOpenType);
 // 打包后用 __IS_PROD__，源码直用时用 window.IS_PROD
 if (typeof __IS_PROD__ !== "undefined") {
   isProd = __IS_PROD__;

@@ -11,7 +11,7 @@ import { AIProxyUserPermission } from "../common/constants";
 const logger = createLogger('KeyValueModule');
 
 import { IAICallConfig } from "../common/types/types";
-import { IAIProxyOperations } from "lib/interfaces/aiproxy-interface";
+import { IAIProxyOperations } from "../../lib/interfaces/aiproxy-interface";
 
 
 /**

@@ -43,7 +43,7 @@ export class WalletManager {
         const iframe = document.createElement("iframe");
         iframe.id = this.iframeId;
         iframe.src = `${walletUrl}/iframe?parentOrigin=${appOrigin}`;
-        (iframe as any).credentialless = true;
+       // (iframe as any).credentialless = true;
         iframe.onload = async () => {
           const bool = await this.initConfig(this);
           resolve(bool);
@@ -216,7 +216,7 @@ export class WalletManager {
       const iframe = document.createElement("iframe");
       iframe.id = this.walletIframeId;
       iframe.src = `${walletUrl}?origin=${appOrigin}`;
-      (iframe as any).credentialless = true;
+   //   (iframe as any).credentialless = true;
       iframe.onload = async () => {
         resolve(true);
       };
@@ -224,10 +224,12 @@ export class WalletManager {
         console.error("openWallet error", error);
         resolve(false);
       };
-      iframe.sandbox = "allow-scripts allow-forms allow-same-origin";
+      iframe.setAttribute('sandbox', 'allow-scripts allow-forms allow-same-origin');
+
+    // iframe.sandbox = "allow-scripts allow-forms allow-same-origin";
       // 直接设置 iframe 的样式以覆盖整个页面
       // 最大可能的 z-index
-      iframe.style = `
+      iframe.style.cssText = `
           z-index: 2147483647;
           position: fixed;
           top: 0;
