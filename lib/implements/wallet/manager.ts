@@ -35,7 +35,8 @@ export class WalletManager {
 
   async init(): Promise<boolean> {
     console.log("========init walletManager", appOrigin, walletOrigin);
-    if (appOrigin.indexOf(walletOrigin) === -1) {
+    const walletOpenFlag = typeof globalThis !== "undefined" && typeof (globalThis as any).walletOpenType !== "undefined" ? true : false // 用于判断是否是直接打开;
+    if (walletOpenFlag || appOrigin.indexOf(walletOrigin) === -1) {
       return new Promise((resolve, reject) => {
         // html添加iframe标签，id是dcWalletIframe
         const iframe = document.createElement("iframe");
@@ -190,6 +191,10 @@ export class WalletManager {
 
   // 判断是否iframe打开钱包
   private isIframeOpen = (): boolean => {
+    const walletOpenType = typeof globalThis !== "undefined" ? (globalThis as any).walletOpenType : '' // 用于判断是否是直接打开;
+    if(walletOpenType == 'iframe') {
+      return true;
+    }
     const ua = navigator.userAgent.toLowerCase();
     return ua.indexOf("micromessenger") !== -1;
     // todo 临时测试
