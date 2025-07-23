@@ -2,10 +2,6 @@
 declare const __IS_PROD__: boolean | undefined;
 
 let isProd = false;
-const walletOpenType =
-  typeof globalThis !== "undefined" ? (globalThis as any).walletOpenType : ""; // 用于判断是否是直接打开;
-
-console.log('==========walletOpenType1111:', globalThis, globalThis?.walletOpenType);
 // 打包后用 __IS_PROD__，源码直用时用 window.IS_PROD
 if (typeof __IS_PROD__ !== "undefined") {
   isProd = __IS_PROD__;
@@ -19,21 +15,11 @@ if (typeof __IS_PROD__ !== "undefined") {
 let _baseUrl = "";
 let _walletOrigin = "";
 if (isProd) {
-  if (walletOpenType === "iframe") {
-    _baseUrl = "/wallet/v0_0_8";
-    _walletOrigin = "https://nowcode.ai";
-  } else {
     _baseUrl = "/v0_0_8";
     _walletOrigin = "https://wallet.dcnetio.com";
-  }
 } else {
-  if (walletOpenType === "iframe") {
-    _baseUrl = "/wallet";
-    _walletOrigin = "http://localhost:5173";
-  } else {
     _baseUrl = "";
     _walletOrigin = "http://localhost:3000";
-  }
 }
 export const walletOrigin = _walletOrigin;
 export const walletUrl = _walletOrigin + _baseUrl; // 钱包地址后面统一改成origin+version
