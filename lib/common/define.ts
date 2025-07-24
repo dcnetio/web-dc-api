@@ -17,7 +17,6 @@ const walletOpenType =
 const walletOpenOrgin =
   typeof globalThis !== "undefined" ? (globalThis as any).walletOpenOrgin : ""; // 用户传入的打开钱包的源;
 
-console.log('==========walletOpenType1111:', globalThis, globalThis?.walletOpenType);
 
 let _baseUrl = "";
 let _walletOrigin = "";
