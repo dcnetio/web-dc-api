@@ -26,7 +26,7 @@ export interface IFileOperations {
    * 获取缓存统计信息
    * @returns 包含缓存总数和键列表的统计对象
    */
-  getCacheStats(): { total: number; keys: string[] };
+  getCacheStats(): [{ total: number, keys: string[] } | null, Error | null];
 
   /**
    * 获取文件内容
