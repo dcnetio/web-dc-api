@@ -205,7 +205,9 @@ export class DC implements DCContext {
           backStep && (await backStep(3));
 
           // 定时维系token
-          this.auth.startDcPeerTokenKeepValidTask();
+          if(this.auth){
+            this.auth.startDcPeerTokenKeepValidTask();
+          }
 
           return true;
         } catch (error) {
@@ -513,13 +515,17 @@ export class DC implements DCContext {
    * @param moduleName 模块名称
    * @returns 模块实例
    */
-  getModule<T extends DCModule>(moduleName: string): T {
-    this.assertInitialized();
-    const module = this.moduleSystem.getModule<T>(moduleName);
-    if (!module) {
-      throw new Error(`模块 ${moduleName} 不存在或未注册`);
+  getModule<T extends DCModule>(moduleName: string): T | null {
+    try {
+      this.assertInitialized();
+      const module = this.moduleSystem.getModule<T>(moduleName);
+      if (!module) {
+        throw new Error(`模块 ${moduleName} 不存在或未注册`);
+      }
+      return module;
+    } catch (error) {
+      return null;
     }
-    return module;
   }
 
   /**

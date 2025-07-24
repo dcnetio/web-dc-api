@@ -61,16 +61,24 @@ export class AIProxyModule implements DCModule ,IAIProxyOperations{
     appId: string,
     configTheme: string, 
   ): Promise<[number | null, Error | null]> {
-    this.assertInitialized();
-    return this.aiProxyManager.createProxyConfig(appId, configTheme);
+    try {
+      this.assertInitialized();
+      return this.aiProxyManager.createProxyConfig(appId, configTheme);
+    } catch (error) {
+      return Promise.resolve([null, error as Error]);
+    }
   }
 
   async deleteProxyConfig(
     appId: string,
     configTheme: string, 
   ): Promise<[number | null, Error | null]> {
-    this.assertInitialized();
-    return this.aiProxyManager.deleteProxyConfig(appId, configTheme);
+    try {
+      this.assertInitialized();
+      return this.aiProxyManager.deleteProxyConfig(appId, configTheme);
+    } catch (error) {
+      return Promise.resolve([null, error as Error]);
+    }
   }
   
 
@@ -84,8 +92,12 @@ configAIProxy(
     serviceConfig?: AIProxyConfig,
     vaccount?: string
   ): Promise<[boolean | null, Error | null]> {
-    this.assertInitialized();
-    return this.aiProxyManager.configAIProxy(appId, configAuthor, configTheme, serviceName, serviceConfig, vaccount);
+    try {
+      this.assertInitialized();
+      return this.aiProxyManager.configAIProxy(appId, configAuthor, configTheme, serviceName, serviceConfig, vaccount);
+    } catch (error) {
+      return Promise.resolve([null, error as Error]);
+    }
 }
   
 
@@ -99,8 +111,13 @@ permission: AIProxyUserPermission,
 authConfig: ProxyCallConfig,
 vaccount?: string
 ): Promise<[number | null, Error | null]> {
-    this.assertInitialized();
-    return this.aiProxyManager.configAuth(appId, configAuthor, configTheme, authPubkey, permission, authConfig, vaccount);
+    try {
+      this.assertInitialized();
+      return this.aiProxyManager.configAuth(appId, configAuthor, configTheme, authPubkey, permission, authConfig, vaccount);
+
+    } catch (error) {
+      return Promise.resolve([null, error as Error]);
+    }
 }
 
 
@@ -111,8 +128,12 @@ vaccount?: string
     configTheme: string,
     vaccount?: string
   ): Promise<[UserProxyCallConfig[] | null,AIProxyConfig[] | null, Error | null]> {
-    this.assertInitialized();
-    return this.aiProxyManager.GetAIProxyConfig(appId, themeAuthor, configTheme, vaccount);
+    try {
+      this.assertInitialized();
+      return this.aiProxyManager.GetAIProxyConfig(appId, themeAuthor, configTheme, vaccount);
+    } catch (error) {
+      return Promise.resolve([null, null, error as Error]);
+    }
   }
 
 
@@ -121,8 +142,12 @@ async GetUserOwnAIProxyAuth(
     themeAuthor: string,
     configTheme: string,
     ): Promise<[authConfig: ProxyCallConfig | null, error: Error | null]> {
-    this.assertInitialized();
-    return this.aiProxyManager.GetUserOwnAIProxyAuth(appId, themeAuthor, configTheme);
+    try {
+      this.assertInitialized();
+      return this.aiProxyManager.GetUserOwnAIProxyAuth(appId, themeAuthor, configTheme);
+    } catch (error) {
+      return Promise.resolve([null, error as Error]);
+    }
 }
 
 
@@ -202,8 +227,8 @@ async GetUserOwnAIProxyAuth(
   ): Promise<Error | null> {
     try{
       this.assertInitialized();
-    this.aiCallConfig = callConfig
-    return null
+      this.aiCallConfig = callConfig
+      return null
     } catch (error) {
       logger.error("设置AI调用配置失败:", error);
       return error as Error;

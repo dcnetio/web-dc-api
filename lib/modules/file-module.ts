@@ -85,9 +85,9 @@ export class FileModule implements DCModule, IFileOperations {
    * 获取可寻址文件流
    */
   async getSeekableFileStream(ipfsPath: string, decryptKey: string): Promise<SeekableFileStream> {
-    this.assertInitialized();
     
     try {
+      this.assertInitialized();
       // 先查看缓存
       const cachedStream = this.fileCacheManager.getCachedFileStream(ipfsPath, decryptKey);
       if (cachedStream) {
@@ -114,8 +114,8 @@ export class FileModule implements DCModule, IFileOperations {
    * 清理文件缓存
    */
   clearFileCache(pathname?: string): void {
-    this.assertInitialized();
     try {
+      this.assertInitialized();
       this.fileCacheManager.clearFileCache(pathname);
     } catch (error) {
       logger.error(`清理文件缓存失败`, error);
@@ -125,17 +125,22 @@ export class FileModule implements DCModule, IFileOperations {
   /**
    * 获取缓存统计信息
    */
-  getCacheStats(): { total: number, keys: string[] } {
-    this.assertInitialized();
-    return this.fileCacheManager.getCacheStats();
+  getCacheStats(): [{ total: number, keys: string[] } | null, Error | null] {
+    try {
+      this.assertInitialized();
+      const stats = this.fileCacheManager.getCacheStats();
+      return [stats, null];
+    } catch (error) {
+      return [null, error as Error];
+    }
   }
   
   /**
    * 获取文件内容
    */
   async getFile(cid: string, decryptKey: string): Promise<[Uint8Array | null, Error | null]> {
-    this.assertInitialized();
     try {
+      this.assertInitialized();
       const fileContent = await this.fileManager.getFileFromDc(cid, decryptKey);
       return [fileContent, null];
     } catch (error) {
@@ -151,8 +156,8 @@ export class FileModule implements DCModule, IFileOperations {
     cid: string,
     decryptKey: string
   ): Promise<ReadableStream<Uint8Array> | null> {
-    this.assertInitialized();
     try {
+      this.assertInitialized();
       const fileStream = await this.fileManager.createSeekableFileStream(
         cid,
         decryptKey

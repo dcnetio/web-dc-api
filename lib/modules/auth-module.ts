@@ -75,13 +75,13 @@ export class AuthModule implements DCModule, IAuthOperations {
    * @returns 是否登录成功
    */
   async accountLoginWithWalletCall(): Promise<Account | null> {
-    this.assertInitialized();
-
-    if (!this.context.connectedDc?.client) {
-      throw new Error("dcClient is null");
-    }
 
     try {
+      this.assertInitialized();
+
+      if (!this.context.connectedDc?.client) {
+        throw new Error("dcClient is null");
+      }
       const data = await this.walletManager.openConnect();
       const publicKey = new Ed25519PubKey(data.appAccount);
       this.context.publicKey = publicKey;
@@ -471,9 +471,9 @@ export class AuthModule implements DCModule, IAuthOperations {
    * @param connectInfo 连接信息
    */
   private async getTokenWithDCConnectInfo(connectInfo: any): Promise<void> {
-    this.assertInitialized();
 
     try {
+      this.assertInitialized();
       // 判断 client 是否为空
       if (!connectInfo.client) {
         return;
