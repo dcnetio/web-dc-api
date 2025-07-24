@@ -116,6 +116,7 @@ export class ModuleSystem {
             logger.error(`核心模块 ${moduleName} 初始化失败`);
             return false;
           }
+          logger.info(`核心模块 ${moduleName} 初始化成功`);
         } catch (error) {
           logger.error(`核心模块 ${moduleName} 初始化出错:`, error);
           return false;
