@@ -83,7 +83,7 @@ export class FileClient {
             resStatus = UploadStatus.UPLOADING;
             break;
           case uploadRespondStatus.PullFail:
-            resStatus = UploadStatus.ERROR;
+            resStatus = UploadStatus.PULLERROR;
             break;
           case uploadRespondStatus.PullSuccess:
             resStatus = UploadStatus.OK;
@@ -95,13 +95,13 @@ export class FileClient {
             resStatus = UploadStatus.ABNORMAL;
             break;
           case uploadRespondStatus.FaultSize:
-            resStatus = UploadStatus.ERROR;
+            resStatus = UploadStatus.FILESIZEERROR;
             break;
           case uploadRespondStatus.FaultCount:
-            resStatus = UploadStatus.ERROR;
+            resStatus = UploadStatus.FILECOUNTERROR;
             break;
           case uploadRespondStatus.NoUserSpace:
-            resStatus = UploadStatus.ERROR;
+            resStatus = UploadStatus.NOSPACE;
             break;
         }
         if(onUpdateTransmitSize ) {
@@ -194,7 +194,7 @@ async storeFolder(
             resStatus = UploadStatus.UPLOADING;
             break;
           case uploadRespondStatus.PullFail:
-            resStatus = UploadStatus.ERROR;
+            resStatus = UploadStatus.PULLERROR;
             break;
           case uploadRespondStatus.PullSuccess:
             resStatus = UploadStatus.OK;
@@ -206,13 +206,13 @@ async storeFolder(
             resStatus = UploadStatus.ABNORMAL;
             break;
           case uploadRespondStatus.FaultSize:
-            resStatus = UploadStatus.ERROR;
+            resStatus = UploadStatus.FILESIZEERROR;
             break;
           case uploadRespondStatus.FaultCount:
-            resStatus = UploadStatus.ERROR;
+            resStatus = UploadStatus.FILECOUNTERROR;
             break;
           case uploadRespondStatus.NoUserSpace:
-            resStatus = UploadStatus.ERROR;
+            resStatus = UploadStatus.NOSPACE;
             break;
         }
         if (updateTransmitCount !== null) {

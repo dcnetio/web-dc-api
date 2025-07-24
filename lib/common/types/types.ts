@@ -226,6 +226,10 @@ export enum UploadStatus {
   UPLOADING=2, // 上传中
   ERROR=3,
   ABNORMAL=4,
+  PULLERROR=5,
+  FILESIZEERROR=6, // 文件大小错误
+  FILECOUNTERROR=7, // 文件总数错误
+  NOSPACE=8, // 存储空间不足
 };
 
 export type ConnectReqMessage = {
