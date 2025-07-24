@@ -114,8 +114,9 @@ async function handleIpfsRequest(
           return;
         }
       } else {
+        const [fileContent, error] = await fileOps.getFile(ipfsPath, decryptKey);
+       fileData = fileContent;
         // 普通文件请求
-        fileData = (await fileOps.getFile(ipfsPath, decryptKey)) ?? null;
         fileSize = fileData ? fileData.length : 0;
         // 非范围请求的文件读取完成后，清理缓存
         fileOps.clearFileCache(pathname);

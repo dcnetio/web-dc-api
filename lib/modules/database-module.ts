@@ -148,6 +148,54 @@ export class DatabaseModule implements DCModule, IDatabaseOperations {
       return [null, error instanceof Error ? error : new Error(String(error))];
     }
   }
+
+  async loadVerno(threadId : string): Promise<number> {
+    try {
+       this.assertInitialized();
+    await this.initDBManager();
+    
+    if (!this.context.dbManager) {
+      throw new Error("数据库管理器未初始化");
+    }
+     const tID = ThreadID.fromString(threadId);
+    const db = await this.context.dbManager.getDB(tID);
+    
+    if (!db) {
+      logger.error(`数据库信息为空`);
+      return 0; // 返回默认版本号
+    }
+    const verno = await db.loadVerno();
+    return verno;
+    } catch (error) {
+      logger.error(`加载数据库版本号失败:`, error);
+      return 0;
+    }
+  }
+
+    async saveVerno(threadId: string, verno: number): Promise<number> {
+      try {
+         this.assertInitialized();
+         await this.initDBManager();
+      
+      if (!this.context.dbManager) {
+        throw new Error("数据库管理器未初始化");
+      }
+      const tID = ThreadID.fromString(threadId);
+      const db = await this.context.dbManager.getDB(tID);
+      
+      if (!db) {
+        logger.error(`数据库信息为空`);
+        return -1; // 
+      }
+      await db.saveVerno(verno);
+        return 0;
+      } catch (error) {
+        logger.error(`加载数据库版本号失败:`, error);
+        return -1;
+      }
+    }
+
+
   
   /**
    * 从DC同步数据库
@@ -204,9 +252,9 @@ export class DatabaseModule implements DCModule, IDatabaseOperations {
    * @param threadid 数据库ID
    * @returns 错误信息或null
    */
-  async refreshDBFromDC(threadid: string,  ): Promise<Error | null> {  
-      
-    try {  
+  async refreshDBFromDC(threadid: string, verno?: number): Promise<Error | null> {
+
+    try {
       this.assertInitialized();
     await this.initDBManager();
     

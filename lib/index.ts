@@ -1,10 +1,22 @@
 // index.ts
 // 导出主要类和功能
 // 在您库的入口文件开头添加
+
+declare global {
+  interface PromiseConstructor {
+    withResolvers<T = any>(): {
+      promise: Promise<T>;
+      resolve: (value: T | PromiseLike<T>) => void;
+      reject: (reason?: any) => void;
+    };
+  }
+}
+
 if (typeof Promise !== 'undefined' && !Promise.withResolvers) {
-  Promise.withResolvers = function() {
-    let resolve, reject;
-    const promise = new Promise((res, rej) => {
+  Promise.withResolvers = function<T = any>() {
+    let resolve!: (value: T | PromiseLike<T>) => void;
+    let reject!: (reason?: any) => void;
+    const promise = new Promise<T>((res, rej) => {
       resolve = res;
       reject = rej;
     });

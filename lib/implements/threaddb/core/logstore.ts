@@ -129,9 +129,9 @@ export interface MetadataKey {
 
 export interface DumpMetadata {  
   data: {  
-    int64: Record<string, number>;   
-    bool: Record<string, boolean>;  
-    string: Record<string, string>;  
-    bytes: Record<string, Uint8Array>;  
+    int64: Record<string, Record<string, number>>;   
+    bool: Record<string, Record<string, boolean>>;  
+    string: Record<string, Record<string, string>>;  
+    bytes: Record<string, Record<string, Uint8Array>>;  
   };  
 }

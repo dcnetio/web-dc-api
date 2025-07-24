@@ -35,7 +35,8 @@ export class WalletManager {
 
   async init(): Promise<boolean> {
     console.log("========init walletManager", appOrigin, walletOrigin);
-    if (appOrigin.indexOf(walletOrigin) === -1) {
+    const walletOpenFlag = typeof globalThis !== "undefined" && typeof (globalThis as any).walletOpenType !== "undefined" ? true : false // 用于判断是否是直接打开;
+    if (walletOpenFlag || appOrigin.indexOf(walletOrigin) === -1) {
       return new Promise((resolve, reject) => {
         // html添加iframe标签，id是dcWalletIframe
         const iframe = document.createElement("iframe");
@@ -188,12 +189,16 @@ export class WalletManager {
     });
   };
 
-  // 判断是否是微信窗口
-  private isWechatWindow = (): boolean => {
-    // const ua = navigator.userAgent.toLowerCase();
-    // return ua.indexOf("micromessenger") !== -1;
+  // 判断是否iframe打开钱包
+  private isIframeOpen = (): boolean => {
+    const walletOpenType = typeof globalThis !== "undefined" ? (globalThis as any).walletOpenType : '' // 用于判断是否是直接打开;
+    if(walletOpenType == 'iframe') {
+      return true;
+    }
+    const ua = navigator.userAgent.toLowerCase();
+    return ua.indexOf("micromessenger") !== -1;
     // todo 临时测试
-    return true
+    // return true
   };
 
   // 打开钱包iframe窗口
@@ -218,10 +223,12 @@ export class WalletManager {
         console.error("openWallet error", error);
         resolve(false);
       };
-      iframe.sandbox = "allow-scripts allow-forms allow-same-origin";
+      iframe.setAttribute('sandbox', 'allow-scripts allow-forms allow-same-origin');
+
+    // iframe.sandbox = "allow-scripts allow-forms allow-same-origin";
       // 直接设置 iframe 的样式以覆盖整个页面
       // 最大可能的 z-index
-      iframe.style = `
+      iframe.style.cssText = `
           z-index: 2147483647;
           position: fixed;
           top: 0;
@@ -255,7 +262,7 @@ export class WalletManager {
 
   async openConnect(): Promise<Account> {
     return new Promise(async (resolve, reject) => {
-      if (this.isWechatWindow()) {
+      if (this.isIframeOpen()) {
         // 微信窗口
         const bool = await this.openWalletIframe();
         if (!bool) {
@@ -418,7 +425,7 @@ export class WalletManager {
         reject(new WalletError("未连接钱包"));
         return;
       }
-      if (this.isWechatWindow()) {
+      if (this.isIframeOpen()) {
         // 微信窗口
         const bool = await this.openWalletIframe();
         if (!bool) {
@@ -476,7 +483,7 @@ export class WalletManager {
         reject(new WalletError("未连接钱包"));
         return;
       }
-      if (this.isWechatWindow()) {
+      if (this.isIframeOpen()) {
         // 微信窗口
         const bool = await this.openWalletIframe();
         if (!bool) {
@@ -613,7 +620,7 @@ export class WalletManager {
       // 等待钱包iframe返回,并关闭channel,超时时间timeout
       return new Promise((resolve, reject) => {
         const timer = setTimeout(() => {
-          if (this.isWechatWindow()) {
+          if (this.isIframeOpen()) {
             // 微信窗口
             this.removeWalletIframe();
           }
@@ -622,7 +629,7 @@ export class WalletManager {
         messageChannel.port1.onmessage = (event) => {
           clearTimeout(timer);
           messageChannel.port1.close();
-          if (this.isWechatWindow()) {
+          if (this.isIframeOpen()) {
             // 微信窗口
             this.removeWalletIframe();
           }
@@ -636,7 +643,7 @@ export class WalletManager {
           console.error("sendMessageToIframe postMessage error", error);
           clearTimeout(timer);
           messageChannel.port1.close();
-          if (this.isWechatWindow()) {
+          if (this.isIframeOpen()) {
             // 微信窗口
             this.removeWalletIframe();
           }

@@ -422,7 +422,7 @@ console.log('上传结果:', result);
 **返回:** Promise<Uint8Array | undefined> - 文件字节数组
 
 ```typescript
-const fileContent = await dc.file.getFile('QmFileHash...', 'decryption-key');
+const [fileContent, error] = await dc.file.getFile('QmFileHash...', 'decryption-key');
 if (fileContent) {
   console.log('文件内容字节长度:', fileContent.length);
 }
