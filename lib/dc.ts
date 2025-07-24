@@ -244,6 +244,9 @@ export class DC implements DCContext {
     let userInfo: User | null = null;
     try {
       this.assertInitialized();
+      if(!this.auth) {
+        return [null, new Error("用户模块不存在")];
+      }
       const [user, err] = await this.auth.refreshUserInfo();
       if (err) {
         return [null, err];
@@ -272,6 +275,9 @@ export class DC implements DCContext {
             const fid = threadDBInfos[3] || ""; //预加载记录文件ID
             const preCount = threadDBInfos[4] || 0; //预加载记录条数
             //判断本地是否存在数据库
+            if(!this.db) {
+              return [null, new Error("数据库模块不存在")]
+            }
             const [dbinfo, error] = await this.db.getDBInfo(threadid);
             if (dbinfo != null && !error) {
               //本地数据库存在,检查是否需要表结构升级
@@ -301,7 +307,9 @@ export class DC implements DCContext {
               this.db.refreshDBFromDC(threadid);
               //3秒后将本地数据库同步到DC
               setTimeout(() => {
-                this.db.syncDBToDC(threadid);
+                if(this.db){
+                  this.db.syncDBToDC(threadid);
+                }
               }, 5000);
               this.dbThreadId = dbinfo.id;
               return [dbinfo, null];
@@ -330,6 +338,12 @@ export class DC implements DCContext {
           console.error("解密dbConfig失败", error);
           return [null, error];
         }
+      }
+      if(!this.util) {
+        return [null, new Error("util模块不存在")];
+      }
+      if(!this.db) {
+        return [null, new Error("数据库模块不存在")]
       }
       //数据库不存在，创建应用数据库
       const rk = this.util.createSymmetricKey();
@@ -360,6 +374,9 @@ export class DC implements DCContext {
           return [null, new Error("设置用户去中心DB失败")];
         }
       }
+      if(!this.db) {
+        return [null, new Error("数据库模块不存在")]
+      }
       const [dbinfo, error] = await this.db.getDBInfo(threadId);
       if (dbinfo != null && !error) {
         this.dbThreadId = dbinfo.id;
@@ -386,6 +403,9 @@ export class DC implements DCContext {
   ): Promise<boolean> {
     // 加到用户信息上
     try {
+      if(!dc.auth) {
+        return false;
+      }
       await dc.auth.setUserDefaultDB(DBthreadid, rk, sk, remark || "");
     } catch (error) {
       console.error("设置用户默认DB失败", error);
@@ -403,18 +423,21 @@ export class DC implements DCContext {
       // 初始化定时器
       let interval = setInterval(async () => {
         intervalNum++;
-        // 获取用户信息，判断空间有效期是否延长
-        const [user, err] = await dc.auth.refreshUserInfo();
-        if (!err && user && user.dbConfig) {
-          // 绑定成功停止定时任务
-          interval ? clearInterval(interval) : "";
-          intervalNum = 0;
-          resolve(true);
-        } else if (intervalNum > 20) {
+          if (intervalNum > 20) {
           // 超时停止定时任务
           interval ? clearInterval(interval) : "";
           intervalNum = 0;
           resolve(false);
+        }
+        // 获取用户信息，判断空间有效期是否延长
+        if(dc.auth){
+          const [user, err] = await dc.auth.refreshUserInfo();
+          if (!err && user && user.dbConfig) {
+            // 绑定成功停止定时任务
+            interval ? clearInterval(interval) : "";
+            intervalNum = 0;
+            resolve(true);
+          }
         }
       }, 1000);
     });
@@ -467,6 +490,9 @@ export class DC implements DCContext {
    * @returns 签名结果
    */
   sign = async (payload: Uint8Array): Promise<Uint8Array> => {
+    if (!this.auth) {
+      return new Uint8Array();
+    }
     const signature = this.auth.signWithWallet(payload);
     return signature;
   };
