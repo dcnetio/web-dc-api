@@ -11,12 +11,21 @@ if (typeof __IS_PROD__ !== "undefined") {
 ) {
   isProd = (window as any).IS_PROD;
 }
+const walletOpenType =
+  typeof globalThis !== "undefined" ? (globalThis as any).walletOpenType : ""; // 用于判断是否是直接打开;
+
+const walletOpenOrgin =
+  typeof globalThis !== "undefined" ? (globalThis as any).walletOpenOrgin : ""; // 用户传入的打开钱包的源;
+
 
 let _baseUrl = "";
 let _walletOrigin = "";
 if (isProd) {
-    _baseUrl = "/v0_0_8";
+    _baseUrl = "/v0_0_9";
     _walletOrigin = "https://wallet.dcnetio.com";
+    if(walletOpenType === "iframe") {
+      _walletOrigin = walletOpenOrgin || "https://wallet.dcnetio.com";
+    }
 } else {
     _baseUrl = "";
     _walletOrigin = "http://localhost:3000";
