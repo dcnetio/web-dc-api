@@ -222,6 +222,7 @@ export class DC implements DCContext {
     }
   };
 
+
   setAppInfo(appInfo: APPInfo): void {
     this.appInfo = appInfo;
   }
@@ -271,6 +272,30 @@ export class DC implements DCContext {
             //判断本地是否存在数据库
             const [dbinfo, error] = await this.db.getDBInfo(threadid);
             if (dbinfo != null && !error) {
+              //本地数据库存在,检查是否需要表结构升级
+              if (verno) {
+                //获取本地localVersion
+                const localVersion = await this.db.loadVerno(threadid);
+                if (localVersion != verno) {
+                  //版本号不一致，需要升级表结构
+                 const err = await this.db.upgradeCollections(
+                    threadid,
+                    collections
+                  );
+                  if (err) {
+                    console.error("升级表结构失败", err);
+                    return [null, err];
+                  }
+                  // 更新本地版本号
+                  await this.db.saveVerno(threadid, verno);
+                }
+                // 需要升级表结构
+                await this.db.upgradeCollections(
+                  threadid,
+                  collections
+                );
+              }
+
               this.db.refreshDBFromDC(threadid);
               //3秒后将本地数据库同步到DC
               setTimeout(() => {
