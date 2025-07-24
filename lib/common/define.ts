@@ -22,7 +22,7 @@ console.log('==========walletOpenType1111:', globalThis, globalThis?.walletOpenT
 let _baseUrl = "";
 let _walletOrigin = "";
 if (isProd) {
-    _baseUrl = "/v0_0_8";
+    _baseUrl = "/v0_0_9";
     _walletOrigin = "https://wallet.dcnetio.com";
     if(walletOpenType === "iframe") {
       _walletOrigin = walletOpenOrgin || "https://wallet.dcnetio.com";
