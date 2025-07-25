@@ -289,7 +289,7 @@ export class AIProxyClient {
       isAborted = true;
       clearTimeoutTimer();
       console.log('DoAIProxyCall 调用前已被中止');
-      return AIStreamResponseFlag.STREAM_HANG;
+      return AIStreamResponseFlag.EXTERNAL_EXIT;
     }
     
     abortListener = () => {
@@ -299,7 +299,7 @@ export class AIProxyClient {
       
       // 通知调用者已被中止
       if (onStreamResponse) {
-        onStreamResponse(AIStreamResponseFlag.STREAM_HANG, "", "调用被用户中止");
+        onStreamResponse(AIStreamResponseFlag.EXTERNAL_EXIT, "", "调用被用户中止");
       }
     };
     
@@ -337,7 +337,7 @@ export class AIProxyClient {
     
     // 检查是否是中止导致的错误
     if (context.signal?.aborted) {
-      return AIStreamResponseFlag.STREAM_HANG;
+      return AIStreamResponseFlag.EXTERNAL_EXIT;
     }
     
     throw error;

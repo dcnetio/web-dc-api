@@ -191,6 +191,8 @@ export enum AIStreamResponseFlag {
   /** Token数超限，需要继续请求 */
   TOKEN_LIMIT_EXCEEDED = 5,
   TOOLCALL = 6,
+  // 外部退出
+  EXTERNAL_EXIT = 7,
   /** 卡住了 */
   STREAM_HANG = 88,
   /** 其他错误 */
