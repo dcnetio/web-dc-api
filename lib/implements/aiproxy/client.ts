@@ -220,7 +220,7 @@ export class AIProxyClient {
           onStreamResponse(AIStreamResponseFlag.STREAM_HANG, "", "数据流超时：超过30秒未收到响应数据");
         }
       }
-    }, 30000); // 30秒超时
+    }, 60000); // 60秒超时
   };
 
   // 检查是否已经被中止
