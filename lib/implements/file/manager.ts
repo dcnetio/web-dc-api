@@ -302,7 +302,9 @@ export class FileManager {
       if (resError) {
         return [null, resError];
       }
-      if (resStatus === UploadStatus.ERROR || resStatus === UploadStatus.ABNORMAL) {
+      if (resStatus === UploadStatus.ERROR || resStatus === UploadStatus.ABNORMAL 
+        || resStatus === UploadStatus.NOSPACE || resStatus === UploadStatus.FILECOUNTERROR
+        || resStatus === UploadStatus.FILESIZEERROR || resStatus === UploadStatus.PULLERROR) {
         //上传失败，不需要操作
         return [null, Errors.ErrNoNeedUpload];
       }
@@ -520,7 +522,9 @@ export class FileManager {
         updateTransmitCount(UploadStatus.ERROR, 0, 0);
         return [null, resError];
       }
-      if (resStatus === UploadStatus.ERROR || resStatus === UploadStatus.ABNORMAL) {
+      if (resStatus === UploadStatus.ERROR || resStatus === UploadStatus.ABNORMAL 
+        || resStatus === UploadStatus.NOSPACE || resStatus === UploadStatus.FILECOUNTERROR
+        || resStatus === UploadStatus.FILESIZEERROR || resStatus === UploadStatus.PULLERROR) {
         //上传失败的时候，不需要操作
         return [null, Errors.ErrNoNeedUpload];
       }

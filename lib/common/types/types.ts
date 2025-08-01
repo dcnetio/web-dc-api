@@ -191,6 +191,8 @@ export enum AIStreamResponseFlag {
   /** Token数超限，需要继续请求 */
   TOKEN_LIMIT_EXCEEDED = 5,
   TOOLCALL = 6,
+  // 外部退出
+  EXTERNAL_EXIT = 7,
   /** 卡住了 */
   STREAM_HANG = 88,
   /** 其他错误 */
@@ -226,6 +228,10 @@ export enum UploadStatus {
   UPLOADING=2, // 上传中
   ERROR=3,
   ABNORMAL=4,
+  PULLERROR=5,
+  FILESIZEERROR=6, // 文件大小错误
+  FILECOUNTERROR=7, // 文件总数错误
+  NOSPACE=8, // 存储空间不足
 };
 
 export type ConnectReqMessage = {

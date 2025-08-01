@@ -244,6 +244,11 @@ export class AIProxyClient {
     
     try {
       const decodedPayload = dcnet.pb.DoAIProxyCallReply.decode(payload);
+      if (decodedPayload.flag == AIStreamResponseFlag.CONNECTION_CLOSED) {
+        isCompleted = true; // 如果不是流式响应，标记为完成
+        clearTimeoutTimer();
+         console.log('*********** CONNECTION_CLOSED ***********222');
+      }
       if (onStreamResponse) {
         onStreamResponse(
           decodedPayload.flag,
@@ -260,22 +265,20 @@ export class AIProxyClient {
   };
 
   const onEndCallback = async () => {
-    if (isAborted || checkAborted()) return;
-    
-    isCompleted = true;
-    clearTimeoutTimer();
-    
+     clearTimeoutTimer();
+    if (isAborted || checkAborted() || isCompleted) return;
+    console.log('*********** onEndCallback ***********1111');
+      isCompleted = true;
     if (onStreamResponse) {
       onStreamResponse(AIStreamResponseFlag.CONNECTION_CLOSED, "", "");
     }
   };
 
   const onErrorCallback = async (error: unknown) => {
-    if (isAborted || checkAborted()) return;
-    
-    isCompleted = true;
-    clearTimeoutTimer();
-    
+    if (isAborted || checkAborted() || isCompleted) return;
+    //不要标记完成,和清理定时器,统一由onEndCallback处理
+   // isCompleted = true; // 
+   // clearTimeoutTimer();
     if (onStreamResponse) {
       onStreamResponse(AIStreamResponseFlag.OTHER_ERROR, "", error instanceof Error ? error.message : String(error));
     }
@@ -289,7 +292,7 @@ export class AIProxyClient {
       isAborted = true;
       clearTimeoutTimer();
       console.log('DoAIProxyCall 调用前已被中止');
-      return AIStreamResponseFlag.STREAM_HANG;
+      return AIStreamResponseFlag.EXTERNAL_EXIT;
     }
     
     abortListener = () => {
@@ -299,7 +302,7 @@ export class AIProxyClient {
       
       // 通知调用者已被中止
       if (onStreamResponse) {
-        onStreamResponse(AIStreamResponseFlag.STREAM_HANG, "", "调用被用户中止");
+        onStreamResponse(AIStreamResponseFlag.EXTERNAL_EXIT, "", "调用被用户中止");
       }
     };
     
@@ -337,7 +340,7 @@ export class AIProxyClient {
     
     // 检查是否是中止导致的错误
     if (context.signal?.aborted) {
-      return AIStreamResponseFlag.STREAM_HANG;
+      return AIStreamResponseFlag.EXTERNAL_EXIT;
     }
     
     throw error;
@@ -349,6 +352,7 @@ export class AIProxyClient {
     if (abortListener && context.signal) {
       context.signal.removeEventListener('abort', abortListener);
     }
+    // 无需关闭 gRPC 客户端连接，因为 Libp2pGrpcClient 没有 close 方法
   }
 }
 }
