@@ -13,9 +13,10 @@ if (typeof __IS_PROD__ !== "undefined") {
 }
 const walletOpenType =
   typeof globalThis !== "undefined" ? (globalThis as any).walletOpenType : ""; // 用于判断是否是直接打开;
-
 const walletOpenOrgin =
   typeof globalThis !== "undefined" ? (globalThis as any).walletOpenOrgin : ""; // 用户传入的打开钱包的源;
+const walletOpenVersion =
+  typeof globalThis !== "undefined" ? (globalThis as any).walletOpenVersion : ""; // 钱包版本号;
 
 
 let _baseUrl = "";
@@ -25,6 +26,9 @@ if (isProd) {
     _walletOrigin = "https://wallet.dcnetio.com";
     if(walletOpenType === "iframe") {
       _walletOrigin = walletOpenOrgin || "https://wallet.dcnetio.com";
+    }
+    if(walletOpenVersion) {
+      _baseUrl = walletOpenVersion && walletOpenVersion.startsWith("/") ? walletOpenVersion : "/" + walletOpenVersion;
     }
 } else {
     _baseUrl = "";
