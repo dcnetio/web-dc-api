@@ -3,7 +3,7 @@
 
 import { type Multiaddr } from "@multiformats/multiaddr";
 import { ChainUtil } from "./common/chain";
-import type { DCConnectInfo, APPInfo, User } from "./common/types/types";
+import type { DCConnectInfo, APPInfo, User, AccountInfo } from "./common/types/types";
 import { DcUtil } from "./common/dcutil";
 import { type HeliaLibp2p } from "helia";
 import { Libp2p } from "@libp2p/interface";
@@ -52,6 +52,8 @@ export class DC implements DCContext {
   public Blockheight: number = 0;
   public grpcServer!: DCGrpcServer;
   public appInfo: APPInfo;
+  public shouldReturnUserInfo: boolean = false;
+  public accountInfo: AccountInfo; // 当前登录的账户信息
   public dbManager: any;
   public swUrl: string = "";
   public swInited: boolean = false;
@@ -80,9 +82,10 @@ export class DC implements DCContext {
     this.dcChain = new ChainUtil();
     this.dcutil = new DcUtil(this.dcChain);
     // //todo 发布注释 remove
-       this.dcutil.defaultPeerId= "12D3KooWEGzh4AcbJrfZMfQb63wncBUpscMEEyiMemSWzEnjVCPf";
+      //  this.dcutil.defaultPeerId= "12D3KooWEGzh4AcbJrfZMfQb63wncBUpscMEEyiMemSWzEnjVCPf";
     // //todo remove end
     this.appInfo = options.appInfo || ({} as APPInfo);
+    this.accountInfo = {} as AccountInfo;
 
     // 设置日志级别
     if (options.logLevel !== undefined) {
@@ -227,6 +230,14 @@ export class DC implements DCContext {
 
   setAppInfo(appInfo: APPInfo): void {
     this.appInfo = appInfo;
+  }
+
+  setAccountInfo(accountInfo: AccountInfo): void {
+    this.accountInfo = accountInfo;
+  }
+
+  setShouldReturnUserInfo(shouldReturnUserInfo: boolean): void {
+    this.shouldReturnUserInfo = shouldReturnUserInfo;
   }
 
   /**

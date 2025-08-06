@@ -1,4 +1,4 @@
-import { DCConnectInfo, NFTBindStatus, User, Account } from "../common/types/types";
+import { DCConnectInfo, NFTBindStatus, User, Account, AccountInfo } from "../common/types/types";
 
 
 
@@ -12,7 +12,7 @@ export interface IAuthOperations {
    * 账户登录通过钱包
    * @returns 是否登录成功
    */
-  accountLoginWithWallet(): Promise<[Account | null, Error | null]>;
+  accountLoginWithWallet(accountInfo?: AccountInfo): Promise<[Account | null, Error | null]>;
 
   /**
    * 账户登录

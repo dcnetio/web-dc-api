@@ -3,6 +3,7 @@ import { DCContext } from "../../../lib/interfaces/DCContext";
 import { Ed25519PubKey } from "../../common/dc-key/ed25519";
 import type {
   Account,
+  AccountInfo,
   EIP712SignReqMessage,
   SendMessage,
   SignReqMessage,
@@ -260,7 +261,7 @@ export class WalletManager {
     }
   }
 
-  async openConnect(): Promise<Account> {
+  async openConnect(accountInfo: AccountInfo = {} as AccountInfo): Promise<Account> {
     return new Promise(async (resolve, reject) => {
       if (this.isIframeOpen()) {
         // 微信窗口
@@ -276,12 +277,16 @@ export class WalletManager {
         this.walletWindow = window.open(urlWithOrigin, walletWindowName);
       }
       this.initCommChannel();
+      const shouldReturnUserInfo = typeof globalThis !== "undefined" && typeof (globalThis as any).shouldReturnUserInfo !== "undefined" ? true : false // 用于判断需要返回用户信息;
       // this.waitForWalletLoaded(this.walletWindow, timeout).then((flag) => {
       //   if (flag) {
           const message = {
             type: "connect",
             data: {
               origin: appOrigin,
+              accountInfo: accountInfo || {},
+              shouldReturnUserInfo: shouldReturnUserInfo || false,
+              attach: '', // 附加参数，以后可以用来传递一些参数
             },
           };
           this.sendMessageToIframe(message, 600000)
