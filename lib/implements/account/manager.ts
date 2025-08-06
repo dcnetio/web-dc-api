@@ -413,7 +413,7 @@ export class AccountManager {
       const accountHash = await sha256(accountBytes);
       const nftHexAccount = "0x" + Buffer.from(accountHash).toString("hex");
       const walletAccount =
-        await this.chainUtil.dcchainapi?.query.dcNode.nftToWalletAccount(
+        await (this.chainUtil.dcchainapi?.query as any).dcNode.nftToWalletAccount(
           nftHexAccount
         );
       // 比较公钥
@@ -441,7 +441,7 @@ export class AccountManager {
       const accountHash = await sha256(accountBytes);
       const nftHexAccount = "0x" + Buffer.from(accountHash).toString("hex");
       const walletAccount =
-        await this.chainUtil.dcchainapi?.query.dcNode.nftToWalletAccount(
+        await (this.chainUtil.dcchainapi?.query as any).dcNode.nftToWalletAccount(
           nftHexAccount
         );
       if (!walletAccount.toString()) {
