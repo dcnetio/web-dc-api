@@ -212,6 +212,7 @@ export class DC implements DCContext {
             this.auth.startDcPeerTokenKeepValidTask();
           }
 
+          backStep && (await backStep(4));
           return true;
         } catch (error) {
           logger.error("连接到DC节点失败:", error);
