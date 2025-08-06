@@ -19,6 +19,7 @@ import { Multiaddr } from "@multiformats/multiaddr";
 import { WalletManager } from "../implements/wallet/manager";
 import {
   Account,
+  AccountInfo,
   EIP712SignReqMessage,
   NFTBindStatus,
   SignReqMessage,
@@ -74,7 +75,7 @@ export class AuthModule implements DCModule, IAuthOperations {
    * 账户登录
    * @returns 是否登录成功
    */
-  async accountLoginWithWalletCall(): Promise<Account | null> {
+  async accountLoginWithWalletCall(accountInfo: AccountInfo = {} as AccountInfo): Promise<Account | null> {
 
     try {
       this.assertInitialized();
@@ -82,7 +83,11 @@ export class AuthModule implements DCModule, IAuthOperations {
       if (!this.context.connectedDc?.client) {
         throw new Error("dcClient is null");
       }
-      const data = await this.walletManager.openConnect();
+      const data = await this.walletManager.openConnect(accountInfo);
+      // 如果有返回则保存到context中
+      if(data && data.accountInfo && data.accountInfo.nftAccount) {
+        this.context.accountInfo = data.accountInfo;
+      }
       const publicKey = new Ed25519PubKey(data.appAccount);
       this.context.publicKey = publicKey;
       this.context.ethAddress = data.ethAccount;
@@ -143,11 +148,11 @@ export class AuthModule implements DCModule, IAuthOperations {
    * 账户登录(钱包登录)不抛出异常
    * @returns [账户信息, 错误信息]
    */
-  async accountLoginWithWallet(): Promise<
+  async accountLoginWithWallet(accountInfo?:AccountInfo): Promise<
     [Account | null, Error | null]
   > {
     try {
-      const account = await this.accountLoginWithWalletCall();
+      const account = await this.accountLoginWithWalletCall(accountInfo);
       return [account, null];
     } catch (error) {
       return [null, error as Error];

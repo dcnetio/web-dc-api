@@ -1,6 +1,6 @@
 
 import { Ed25519PrivKey, Ed25519PubKey } from "../common/dc-key/ed25519";
-import type { DCConnectInfo, APPInfo } from "../common/types/types";
+import type { DCConnectInfo, APPInfo, AccountInfo } from "../common/types/types";
 import type { HeliaLibp2p } from "helia";
 import { Libp2p } from "@libp2p/interface";
 import { ChainUtil } from "../common/chain";
@@ -28,6 +28,9 @@ export interface DCContext {
   // 应用信息
   appInfo: APPInfo;
   
+  // 当前登录的账户信息
+  accountInfo: AccountInfo;
+
   // 数据库管理器
   dbManager?: DBManager;
   

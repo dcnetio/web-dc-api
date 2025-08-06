@@ -21,7 +21,7 @@ const walletOpenOrgin =
 let _baseUrl = "";
 let _walletOrigin = "";
 if (isProd) {
-    _baseUrl = "/v0_0_9";
+    _baseUrl = "/v0_0_10";
     _walletOrigin = "https://wallet.dcnetio.com";
     if(walletOpenType === "iframe") {
       _walletOrigin = walletOpenOrgin || "https://wallet.dcnetio.com";

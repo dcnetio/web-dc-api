@@ -33,12 +33,12 @@
     // 添加以下两条防止无限类型递归
     "maxNodeModuleJsDepth": 2,
     "paths": {
-      // "grpc-libp2p-client": [
-      //   "../grpc-libp2p-client/src/index"
-      // ],
-      // "grpc-libp2p-client/*": [
-      //   "../grpc-libp2p-client/src/*"
-      // ], 
+      "grpc-libp2p-client": [
+        "../grpc-libp2p-client/src/index"
+      ],
+      "grpc-libp2p-client/*": [
+        "../grpc-libp2p-client/src/*"
+      ], 
     }
   },  
   "include": ["lib/**/*.ts", "lib/**/*.tsx"],
