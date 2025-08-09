@@ -52,7 +52,7 @@ export class ChainUtil {
   // 获取用户钱包信息
   async getUserInfoWithAccount(account: string): Promise<User> {
     const walletAccountStorage =
-      await this.dcchainapi?.query.dcNode.walletAccountStorage(account);
+      await (this.dcchainapi?.query as any).dcNode.walletAccountStorage(account);
     if (!walletAccountStorage) {
       throw new Error("walletAccountStorage is null");
     }
@@ -67,7 +67,7 @@ export class ChainUtil {
     }
     if (userInfo?.parentAccount !== account) {
       const parentWalletAccountStorage =
-        await this.dcchainapi?.query.dcNode.walletAccountStorage(
+        await (this.dcchainapi?.query as any).dcNode.walletAccountStorage(
           userInfo?.parentAccount
         );
       if (!parentWalletAccountStorage) {
@@ -131,7 +131,7 @@ export class ChainUtil {
   // 获取用户钱包信息
   async getUserInfoWithNftHex(nftHexAccount: string): Promise<User> {
     const walletAccount =
-      await this.dcchainapi?.query.dcNode.nftToWalletAccount(nftHexAccount);
+      await (this.dcchainapi?.query as any).dcNode.nftToWalletAccount(nftHexAccount);
     if (!walletAccount || !walletAccount.toString()) {
       throw new Error("walletAccount is null");
     }
@@ -191,7 +191,7 @@ export class ChainUtil {
     const accountHash = await sha256(accountBytes);
     const nftHexAccount = "0x" + Buffer.from(accountHash).toString("hex");
     const walletAccount =
-      await this.dcchainapi?.query.dcNode.nftToWalletAccount(nftHexAccount);
+      await (this.dcchainapi?.query as any).dcNode.nftToWalletAccount(nftHexAccount);
     if (!walletAccount || !walletAccount.toString()) {
       throw new Error("walletAccount is null");
     }
@@ -200,7 +200,7 @@ export class ChainUtil {
 
   // 获取所有文件存储节点
   getObjNodes = async (cid: string): Promise<string[] | undefined> => {
-    const fileInfo = (await this.dcchainapi?.query.dcNode.files(cid)) || null;
+    const fileInfo = (await (this.dcchainapi?.query as any).dcNode.files(cid)) || null;
     const fileInfoJSON = fileInfo?.toJSON();
     if (
       !fileInfoJSON ||
@@ -226,7 +226,7 @@ export class ChainUtil {
 
   // 链上查询节点信息
   // getDcNodeAddr = async (peerid: string) => {
-  //   const peerInfo = await this.dcchainapi?.query.dcNode.peers(peerid);
+  //   const peerInfo = await (this.dcchainapi?.query as any).dcNode.peers(peerid);
   //   const peerInfoJson = peerInfo?.toJSON();
   //   if (
   //     !peerInfoJson ||
@@ -264,7 +264,7 @@ export class ChainUtil {
   // peerid: 节点的peerid
   // 直接连接节点的地址
   getDcNodeWebrtcDirectAddr = async (peerid: string): Promise<Multiaddr | null> => {
-    const peerInfo = await this.dcchainapi?.query.dcNode.peers(peerid);
+    const peerInfo = await (this.dcchainapi?.query as any).dcNode.peers(peerid);
     const peerInfoJson = peerInfo?.toJSON();
     if (
       !peerInfoJson ||
@@ -288,7 +288,7 @@ export class ChainUtil {
 
   // 链上查询节点列表
   getDcNodeList = async (): Promise<string[]> => {
-    const peerList = await this.dcchainapi?.query.dcNode.onlineNodesAddress();
+    const peerList = await (this.dcchainapi?.query as any).dcNode.onlineNodesAddress();
     const peerListJson = peerList?.toJSON();
     console.log(
       "peerListJson================================================",
@@ -319,7 +319,7 @@ export class ChainUtil {
           return [null, new Error("dcchainapi is not initialized")];
       }  
 
-      const fileInfo = await this.dcchainapi.query.dcNode.files(cid);  
+      const fileInfo = await (this.dcchainapi.query as any).dcNode.files(cid);  
       
       if (!fileInfo || fileInfo.isEmpty) {  
           return [null, new Error(`File with CID ${cid} not found`)];  
@@ -426,7 +426,7 @@ export class ChainUtil {
     }
     const appIdBytes = new TextEncoder().encode(appId);
     const appIdHex = "0x" + Buffer.from(appIdBytes).toString("hex");
-    const appInfoStr = await this.dcchainapi?.query.dcNode.appsInfo(appIdHex);
+    const appInfoStr = await (this.dcchainapi?.query as any).dcNode.appsInfo(appIdHex);
     if (!appInfoStr || appInfoStr.isEmpty) {
       throw new Error(`App info for ${appId} not found`);
     }
