@@ -310,7 +310,25 @@ export class CommentManager {
     }
   }
 
-
+async getUserOffChainUsedInfo(vaccount: string = ""): Promise<[dcnet.pb.GetUserOffChainUsedInfoReply | null, Error | null]> {
+  try {
+    if (!this.accountBackupDc?.client) {
+      return [null, Errors.ErrNoDcPeerConnected];
+    }
+    if(!this.accountBackupDc?.nodeAddr){
+      return [null, Errors.ErrNoDcPeerConnected];
+    }
+    const commentClient = new CommentClient(
+      this.accountBackupDc.client,
+      this.dcNodeClient,
+      this.context
+    );
+    const res = await commentClient.getUserOffChainUsedInfo(vaccount);
+    return [res, null];
+  } catch (err) {
+    return [null, err as Error];
+  }
+}
 
 async addUserOffChainOpTimes(
   times: number,

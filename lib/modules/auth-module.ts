@@ -115,21 +115,26 @@ export class AuthModule implements DCModule, IAuthOperations {
       if (userInfo == null) {
         throw Errors.USER_NOT_BIND_TO_PEER;
       }
-      if (
-        userInfo.offchainSpace < OffChainSpaceLimit ||
-        userInfo.offchainOptimes < OffChainOpTimesLimit
-      ) {
-        const commentManager = new CommentManager(this.context);
-        if (userInfo.offchainSpace < OffChainSpaceLimit) {
-          const [addOffChainBool, addOffChainError] =
-            await commentManager.addUserOffChainSpace();
+      //获取用户已经使用的评论空间和操作次数
+      const commentManager = new CommentManager(this.context);
+      const [offchainUsedInfo,resErr] = await commentManager.getUserOffChainUsedInfo()
+      if (resErr) {
+        throw resErr;
+      }
+      const leftSpace = offchainUsedInfo?userInfo.offchainSpace - Number(offchainUsedInfo.usedspace) :userInfo.offchainSpace;
+      const leftOptimes = offchainUsedInfo?userInfo.offchainOptimes - Number(offchainUsedInfo.usedtimes):userInfo.offchainOptimes;
+      logger.info(
+        `用户线下评论空间剩余: ${leftSpace} / ${userInfo.offchainSpace}, 线下操作次数剩余: ${leftOptimes} / ${userInfo.offchainOptimes}`
+      );
+      if (leftSpace < OffChainSpaceLimit || leftOptimes < OffChainOpTimesLimit) {
+        if (leftSpace < OffChainSpaceLimit) {
+          const [addOffChainBool, addOffChainError] = await commentManager.addUserOffChainSpace();
           if (addOffChainError || !addOffChainBool) {
             throw addOffChainError || new Error("addUserOffChainSpace error");
           }
         }
-        if (userInfo.offchainOptimes < OffChainOpTimesLimit) {
-          const [addOffChainOpTimesBool, addOffChainOpTimesError] =
-            await commentManager.addUserOffChainOpTimes(OffChainOpTimes);
+        if (leftOptimes < OffChainOpTimesLimit) {
+          const [addOffChainOpTimesBool, addOffChainOpTimesError] =await commentManager.addUserOffChainOpTimes(OffChainOpTimes);
           if (addOffChainOpTimesError || !addOffChainOpTimesBool) {
             throw (
               addOffChainOpTimesError || new Error("addUserOffChainSpace error")

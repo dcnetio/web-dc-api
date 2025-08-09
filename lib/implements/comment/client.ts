@@ -94,7 +94,32 @@ export class CommentClient {
   }
 
 
-  
+  async getUserOffChainUsedInfo(
+    vaccount: string = ""
+  ): Promise<dcnet.pb.GetUserOffChainUsedInfoReply> {
+    const message = new dcnet.pb.GetUserOffChainUsedInfoRequest({});
+    message.vaccount = new TextEncoder().encode(vaccount);
+    const messageBytes =
+      dcnet.pb.GetUserOffChainUsedInfoRequest.encode(message).finish();
+    try {
+      const grpcClient = new Libp2pGrpcClient(
+        this.client.p2pNode,
+        this.client.peerAddr,
+        this.client.token,
+        this.client.protocol
+      );
+      const reply = await grpcClient.unaryCall(
+        "/dcnet.pb.Service/GetUserOffChainUsedInfo",
+        messageBytes,
+        30000
+      );
+      const decoded = dcnet.pb.GetUserOffChainUsedInfoReply.decode(reply);
+      return decoded;
+    } catch (error: any) {
+      console.error("GetUserOffChainUsedInfo error:", error);
+      throw error;
+    }
+  }
 
   async addUserOffChainOpTimes(
     pubkey: string,
