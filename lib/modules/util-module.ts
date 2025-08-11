@@ -2,11 +2,12 @@
 import { IUtilOperations } from '../interfaces/util-interface';
 import { SymmetricKey,Key as  ThreadKey } from '../implements/threaddb/common/key';
 import { CoreModuleName } from '../common/module-system';
-import { DCContext } from '../interfaces';
+import { DCContext, IFileOperations } from '../interfaces';
 import { createLogger } from '../util/logger';
 import { UtilManager } from '../../lib/implements/util/manager';
 import { IAppInfo } from '../../lib/common/types/types';
 import { Errors } from '../../lib/common/error';
+import { handleIpfsRequest } from '../common/service-worker';
 const logger = createLogger("UtilModule");
 export class UtilModule implements IUtilOperations {
     readonly moduleName = CoreModuleName.UTIL;
@@ -121,5 +122,27 @@ export class UtilModule implements IUtilOperations {
   async shutdown(): Promise<void> {
     this.initialized = false;
   }
+
+
+   /**
+       * 处理IPFS请求
+       * @param data 请求数据
+       * @param port 消息端口
+       * @param fileOps 文件操作对象
+       */
+  async handleIpfsRequest(
+        data: { id: string, pathname: string, range?: string }, 
+        port: MessagePort, 
+        fileOps?: IFileOperations
+      ): Promise<void>{
+        if (!this.initialized) {
+          return;
+        }
+        try {
+          await handleIpfsRequest(data, port, fileOps);
+        } catch (error) {
+          logger.error("页面处理IPFS请求失败:", error);
+        }
+      }
   
 }

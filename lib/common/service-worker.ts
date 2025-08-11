@@ -68,7 +68,7 @@ export async function registerServiceWorker(fileOps?: IFileOperations, swUrl: st
  * @param port 消息端口
  * @param fileOps 文件操作对象
  */
-async function handleIpfsRequest(
+export async function handleIpfsRequest(
   data: { id: string, pathname: string, range?: string }, 
   port: MessagePort, 
   fileOps?: IFileOperations
