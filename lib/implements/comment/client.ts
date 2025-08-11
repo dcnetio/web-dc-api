@@ -116,9 +116,36 @@ export class CommentClient {
       const decoded = dcnet.pb.GetUserOffChainUsedInfoReply.decode(reply);
       return decoded;
     } catch (error: any) {
-      console.error("GetUserOffChainUsedInfo error:", error);
-      throw error;
-    }
+        if (error.message.indexOf(Errors.INVALID_TOKEN.message) != -1) {
+          // try to get token
+          const token = await this.client.GetToken(
+            this.context.appInfo.appId || "",
+            this.context.getPublicKey().string(),
+            (payload: Uint8Array): Promise<Uint8Array> => {
+              return this.context.sign(payload);
+            }
+          );
+          if (!token) {
+            throw new Error(Errors.INVALID_TOKEN.message);
+          }
+          const grpcClient = new Libp2pGrpcClient(
+            this.client.p2pNode,
+            this.client.peerAddr,
+            this.client.token,
+            this.client.protocol
+          );
+          const reply = await grpcClient.unaryCall(
+            "/dcnet.pb.Service/GetUserOffChainUsedInfo",
+            messageBytes,
+            30000
+          );
+          const decoded = dcnet.pb.GetUserOffChainUsedInfoReply.decode(reply);
+          console.log("GetUserOffChainUsedInfo decoded", decoded);
+          return decoded;
+        }
+        throw error;
+      }
+    
   }
 
   async addUserOffChainOpTimes(
