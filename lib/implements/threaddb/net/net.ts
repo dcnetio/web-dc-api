@@ -484,10 +484,14 @@ async ensureUniqueLog(id: ThreadID, key?: Ed25519PrivKey | Ed25519PubKey, identi
    */
   async pullThread(id: ThreadID): Promise<void> {
     try {
+      let recs: Record<string, PeerRecords> = {};
       const mutex = this.getMutexForThread(id.toString());
       await mutex.acquire();
-      const recs = await this.pullThreadDeal(id);
-      mutex.release();
+      try {
+        recs = await this.pullThreadDeal(id);
+      } finally {
+        mutex.release();
+      }
       
       const [connector, appConnected] =  this.getConnector(id);
       
@@ -1187,8 +1191,8 @@ async getRecord( id: ThreadID, rid: CID): Promise<IRecord> {
               resolve();
             }
             
-            // 暂停一秒钟避免过多并发请求
-            await new Promise(r => setTimeout(r, 1000));
+            // 暂停100ms避免过多并发请求
+            await new Promise(r => setTimeout(r, 100));
           } catch (err) {
             console.error(`Error getting records from peer ${peerId}:`, err);
           }
@@ -1200,13 +1204,18 @@ async getRecord( id: ThreadID, rid: CID): Promise<IRecord> {
       });
       
       // 设置超时
-      const timeoutPromise = new Promise<void>((_, reject) => {
-        setTimeout(() => reject(new Error("Fetch records timeout")), 30000);
+      const timeoutPromise = new Promise<void>((resolve) => {
+        setTimeout(() => {
+          resolve(); // 超时时总是resolve，在外部判断是否有足够的数据
+        }, 30000);
       });
       
       // 等待获取足够的记录或超时
       await Promise.race([fetchPromise, timeoutPromise]);
-      
+       // 检查是否获取到足够的数据
+      if (fetchedPeers === 0) {
+        throw new Error("Fetch records timeout: no peers responded");
+      }
       // 返回收集到的记录
       return recordCollector.list();
     } catch (err) {
