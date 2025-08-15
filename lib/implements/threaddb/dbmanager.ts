@@ -1516,7 +1516,21 @@ async  create(threadId: string, collectionName: string, jsonInstance: string): P
     // if (jsonInstance.length > 100 * 1024) { // 100 KB
     // throw new Error("instance too big");
     // }
+
+     // 判断instance里面是否有_mod字段,存在则删除
+        try {
+            const instanceObj = JSON.parse(jsonInstance);
+            if (instanceObj && typeof instanceObj === 'object' && '_mod' in instanceObj) {
+                delete instanceObj._mod;
+                jsonInstance = JSON.stringify(instanceObj);
+            }
+        } catch (err) {
+            // JSON解析失败，保持原字符串不变
+            console.warn('Failed to parse instance JSON, keeping original:', err);
+            throw new Error("Invalid instance JSON format");
+        }
     try {
+
     // 解码threaddbID
     const tID = ThreadID.fromString(threadId);
   
@@ -1587,7 +1601,20 @@ async save(threadId: string, collectionName: string, instance: string): Promise<
         // 解码线程ID
         const tID = ThreadID.fromString(threadId);
         
-     
+        // 判断instance里面是否有_mod字段,存在则删除
+        try {
+            const instanceObj = JSON.parse(instance);
+            if (instanceObj && typeof instanceObj === 'object' && '_mod' in instanceObj) {
+                delete instanceObj._mod;
+                instance = JSON.stringify(instanceObj);
+            }
+        } catch (err) {
+            // JSON解析失败，保持原字符串不变
+            console.warn('Failed to parse instance JSON, keeping original:', err);
+            throw new Error("Invalid instance JSON format");
+        }
+
+
         
         // 获取线程数据库
         const threadDB = await this.getDB(tID);

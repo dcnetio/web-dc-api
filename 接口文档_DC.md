@@ -317,7 +317,7 @@ export interface User {
   dbUpdateNumber: number; //用户个体库信息更新区块高度
   encNftAccount: string; //用户绑定的账号加密后字符串（用户公钥加密后的值，用户私钥可以解密）
   expireNumber: number; //订阅过期区块高度
-  loginNumber: number; //登录次数
+  loginNumber: number; //最近登录躯壳高度
   nftUpdateNumber: number; //用户nft账号更新区块高度
   offchainOptimes: number; //链下允许总调用次数,当前会一直累加
   offchainSpace: number; //链下允许总调用空间，当前会一直累加

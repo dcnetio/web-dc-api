@@ -484,10 +484,14 @@ async ensureUniqueLog(id: ThreadID, key?: Ed25519PrivKey | Ed25519PubKey, identi
    */
   async pullThread(id: ThreadID): Promise<void> {
     try {
+      let recs: Record<string, PeerRecords> = {};
       const mutex = this.getMutexForThread(id.toString());
       await mutex.acquire();
-      const recs = await this.pullThreadDeal(id);
-      mutex.release();
+      try {
+        recs = await this.pullThreadDeal(id);
+      } finally {
+        mutex.release();
+      }
       
       const [connector, appConnected] =  this.getConnector(id);
       
@@ -1148,66 +1152,113 @@ async getRecord( id: ThreadID, rid: CID): Promise<IRecord> {
       
       // 确定需要获取的对等点数量
       const needFetched = Math.min(2, peers.length);
-      let fetchedPeers = 0;
+      let resolved = false; // 防止重复调用 resolve
+      // 使用对象来保证引用一致性
+      const fetchState = {
+        fetchedPeers: 0
+      };
+      let timeoutId: NodeJS.Timeout | undefined;
+       // 设置超时
+      const timeoutPromise = new Promise<void>((resolve) => {
+        timeoutId = setTimeout(() => {
+          resolve(); // 超时时总是resolve，在外部判断是否有足够的数据
+        }, 30000);
+      });
       
       // 创建一个 Promise 在足够的对等点响应时解析
       const fetchPromise = new Promise<void>((resolve) => {
-        // 当所有查询完成时，解析 Promise
+        // 立即检查是否满足条件
         const checkComplete = () => {
-          if (fetchedPeers >= needFetched) {
+          if (!resolved && fetchState.fetchedPeers >= needFetched) {
+            resolved = true;
             resolve();
           }
         };
         
         // 从每个对等点查询记录
         const fetchPromises = peers.map(async (peerId) => {
+          let timeoutId: NodeJS.Timeout | undefined;
+          // 为每个peer设置独立的超时
+          const peerTimeout = new Promise<never>((_, reject) => {
+            timeoutId = setTimeout(() => reject(new Error(`Peer ${peerId} timeout after 30s`)), 30000);
+          });
+          
           try {
-            //连接到指定peerId,返回一个Client
-            const client = await this.getClient(peerId);
-            if (!client) {
-              return;
-            }
-            const dbClient = new DBClient(client,this.dc,this,this.logstore);
-        
-            // 这里使用一个队列来控制并发，类似于 Go 代码中的 queueGetRecords
-            const records = await dbClient.getRecordsFromPeer( req, serviceKey);
+            // 使用 Promise.race 为每个peer设置超时
+            await Promise.race([
+              (async () => {
+                //连接到指定peerId,返回一个Client
+                const client = await this.getClient(peerId);
+                if (!client) {
+                  return;
+                }
+                const dbClient = new DBClient(client,this.dc,this,this.logstore);
             
-            // 更新收集器
-            Object.entries(records).forEach(([logId, rs]) => {
-              recordCollector.updateHeadCounter(logId, rs.counter);
-              rs.records.forEach(record => {
-                recordCollector.store(logId, record);
-              });
-            });
-            
-            fetchedPeers++;
-            
-            // 如果获取了记录并且达到了所需的对等点数量，则解析 Promise
-            if (Object.keys(records).length > 0 && fetchedPeers >= needFetched) {
-              resolve();
-            }
-            
-            // 暂停一秒钟避免过多并发请求
-            await new Promise(r => setTimeout(r, 1000));
+                // 这里使用一个队列来控制并发，类似于 Go 代码中的 queueGetRecords
+                const records = await dbClient.getRecordsFromPeer( req, serviceKey);
+                
+                // 更新收集器
+                Object.entries(records).forEach(([logId, rs]) => {
+                  recordCollector.updateHeadCounter(logId, rs.counter);
+                  rs.records.forEach(record => {
+                    recordCollector.store(logId, record);
+                  });
+                });
+                
+                fetchState.fetchedPeers++;
+                
+                // 每次成功获取记录后立即检查是否满足条件
+                checkComplete();
+              })(),
+              peerTimeout
+            ]);
           } catch (err) {
             console.error(`Error getting records from peer ${peerId}:`, err);
+            // 错误不影响其他peer的执行
+          } finally {
+            // 清除定时器，防止内存泄漏
+            if (timeoutId) {
+              clearTimeout(timeoutId);
+            }
           }
         });
         
-        // 当所有查询完成或失败时，检查是否需要解析 Promise
-        Promise.all(fetchPromises.map(p => p.catch(e => e)))
-          .then(() => checkComplete());
+        // 使用 Promise.allSettled 替代 Promise.all，避免被单个失败阻塞
+        // 同时设置额外的兜底检查机制
+        Promise.allSettled(fetchPromises).then(() => {
+          if (!resolved) {
+            checkComplete();
+          }
+        });
+        
+        // 添加定期检查机制，防止被某些未知问题阻塞
+        const checkInterval = setInterval(() => {
+          if (resolved) {
+            clearInterval(checkInterval);
+          } else {
+            checkComplete();
+          }
+        }, 5000); // 每5秒检查一次
+        
+        // 确保interval最终被清理
+        setTimeout(() => clearInterval(checkInterval), 35000);
       });
       
-      // 设置超时
-      const timeoutPromise = new Promise<void>((_, reject) => {
-        setTimeout(() => reject(new Error("Fetch records timeout")), 30000);
-      });
+     
       
       // 等待获取足够的记录或超时
       await Promise.race([fetchPromise, timeoutPromise]);
+       // 清除超时定时器
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+      // 检查是否获取到足够的数据
+      if (fetchState.fetchedPeers === 0) {
+        throw new Error("Fetch records timeout: no peers responded");
+      }
       
-      // 返回收集到的记录
+      // 如果有数据就返回（不管是1个还是2个节点）
+      console.log(`获取记录完成: ${fetchState.fetchedPeers}/${needFetched} 个节点响应`);
       return recordCollector.list();
     } catch (err) {
       console.error("getRecords error:", err);
