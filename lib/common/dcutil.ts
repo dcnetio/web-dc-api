@@ -92,7 +92,7 @@ export class DcUtil {
         if (!peerListJson[i]) {
           return;
         }
-        const nodeAddr = await _this.dcChain.getDcNodeWebrtcDirectAddr(
+        const [nodeAddr,_] = await _this.dcChain.getDcNodeWebrtcDirectAddr(
           peerListJson[i]
         );
         if (!nodeAddr) {
@@ -343,16 +343,16 @@ export class DcUtil {
     }
   };
   _getNodeAddr = async (peerId: string): Promise<Multiaddr | undefined> => {
-    let nodeAddr = await this.dcChain.getDcNodeWebrtcDirectAddr(peerId) || undefined;
+    let [nodeAddr, _] = await this.dcChain.getDcNodeWebrtcDirectAddr(peerId);
     if (!nodeAddr) {
       console.error("no node address found for peer: ", peerId);
       return;
     }
     if (isName(nodeAddr)) {
       const addrs = await nodeAddr.resolve();
-      nodeAddr = addrs[0] ;
+      nodeAddr = addrs[0] ? addrs[0] : null;
     }
-    return nodeAddr;
+    return nodeAddr ? nodeAddr : undefined;
   };
 
   getDefaultDcNodeAddr = async (): Promise<Multiaddr | undefined> => {

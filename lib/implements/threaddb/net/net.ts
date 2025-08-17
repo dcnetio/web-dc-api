@@ -38,6 +38,7 @@ import {CreateEvent} from '../cbor/event';
 import {Errors} from '../core/db';
 import {net as net_pb} from "../pb/net_pb";
 import {PermanentAddrTTL} from "../common/logstore";
+import {PeerStatus} from '../../../common/types/types';
 import {   
   PeerIDConverter,  
   MultiaddrConverter,  
@@ -101,50 +102,58 @@ export class Network implements Net {
     return signature;
   }
 
-  async getClient(peerId: PeerId):Promise<Client>{
-    let cachedFlag = true;
-    const cacheAddr = this.cachePeers[peerId.toString()]; 
-    let peerAddr: TMultiaddr | null = cacheAddr || null;
-    if (!cacheAddr) {
-      cachedFlag = false;
-      peerAddr = await this.dcChain.getDcNodeWebrtcDirectAddr(peerId.toString());
-    }
-   
-    if (!peerAddr) {
-      throw new Error("peerAddr is null");
-    } 
-    if (!this.context.publicKey){
-      throw new Error("publicKey is null");
-    }
-
-    const addr = multiaddr(peerAddr);
-    const client = new Client(this.libp2p,this.bstore,addr, dc_protocol);
-    //获取token
-    const token = await client.GetToken(this.context.appInfo.appId||"", this.context.publicKey.string(),(payload: Uint8Array):Promise<Uint8Array> => {
-      return this.sign(payload);
-    });
-    if (!token) {
-      if (cachedFlag) {
-        peerAddr = await this.dcChain.getDcNodeWebrtcDirectAddr(peerId.toString());
-        delete this.cachePeers[peerId.toString()];
-        if (!peerAddr) {
-          throw new Error("peerAddr is null");
-        } 
-        const addr = multiaddr(peerAddr);
-        const client = new Client(this.libp2p,this.bstore,addr, dc_protocol);
-        const token = await client.GetToken(this.context.appInfo.appId||"",this.context.publicKey.string(),(payload: Uint8Array) => {
-          return this.sign(payload);
-        });
-        if (token) {
-          this.cachePeers[peerId.toString()] = peerAddr;
-          return client;
-        }
+  async getClient(peerId: PeerId):Promise<[Client | null, Error | null]>{
+    try{
+      let cachedFlag = true;
+      const cacheAddr = this.cachePeers[peerId.toString()]; 
+      let peerAddr: TMultiaddr | null = cacheAddr || null;
+      let peerStatus: PeerStatus | null = null;
+      if (!cacheAddr) {
+        cachedFlag = false;
+        [peerAddr, peerStatus] = await this.dcChain.getDcNodeWebrtcDirectAddr(peerId.toString());
       }
-      throw new Error("get token is null");
-      
+    
+      if (!peerAddr) {
+        throw new Error("peerAddr is null");
+      } 
+      if (peerStatus !== PeerStatus.PeerStatusOnline) {
+        throw new Error("peerStatus is not online");
+      }
+      if (!this.context.publicKey){
+        throw new Error("publicKey is null");
+      }
+
+      const addr = multiaddr(peerAddr);
+      const client = new Client(this.libp2p,this.bstore,addr, dc_protocol);
+      //获取token
+      const token = await client.GetToken(this.context.appInfo.appId||"", this.context.publicKey.string(),(payload: Uint8Array):Promise<Uint8Array> => {
+        return this.sign(payload);
+      });
+      if (!token) {
+        if (cachedFlag) {
+          [peerAddr,_] = await this.dcChain.getDcNodeWebrtcDirectAddr(peerId.toString());
+          delete this.cachePeers[peerId.toString()];
+          if (!peerAddr) {
+            throw new Error("peerAddr is null");
+          } 
+          const addr = multiaddr(peerAddr);
+          const client = new Client(this.libp2p,this.bstore,addr, dc_protocol);
+          const token = await client.GetToken(this.context.appInfo.appId||"",this.context.publicKey.string(),(payload: Uint8Array) => {
+            return this.sign(payload);
+          });
+          if (token) {
+            this.cachePeers[peerId.toString()] = peerAddr;
+            return [client, null];
+          }
+        }
+        throw new Error("get token is null");
+        
+      }
+      this.cachePeers[peerId.toString()] = peerAddr;
+      return [client, null];
+    }catch(err){
+      return [null,err as Error];
     }
-    this.cachePeers[peerId.toString()] = peerAddr;
-    return client;
   }
 
   
@@ -315,7 +324,7 @@ async getThreadFromPeer(
   options: { token?: ThreadToken } = {}
 ): Promise<ThreadInfo> {
   try {
-    const client = await this.getClient(peerId);
+    const [client, _] = await this.getClient(peerId);
     if (!client) {
       throw new Error("Failed to get client");
     }
@@ -723,7 +732,7 @@ async ensureUniqueLog(id: ThreadID, key?: Ed25519PrivKey | Ed25519PubKey, identi
 
 async updateLogsFromPeer(tid: ThreadID,peerId: PeerId): Promise<void> {
   try {
-    const client = await this.getClient(peerId);
+    const [client,_] = await this.getClient(peerId);
     if (!client) {
       return ;
     }
@@ -808,7 +817,7 @@ async getRecordsFromPeer(
 ): Promise<Record<string, PeerRecords>> {
   try {
 
-    const client = await this.getClient(peerId);
+    const [client,_] = await this.getClient(peerId);
     if (!client) {
       return {};
     }
@@ -1151,16 +1160,16 @@ async getRecord( id: ThreadID, rid: CID): Promise<IRecord> {
       const recordCollector = new RecordCollector();
       
       // 确定需要获取的对等点数量
-      const needFetched = Math.min(2, peers.length);
+      const needFetched = Math.min(1, peers.length);
       let resolved = false; // 防止重复调用 resolve
       // 使用对象来保证引用一致性
       const fetchState = {
         fetchedPeers: 0
       };
-      let timeoutId: NodeJS.Timeout | undefined;
-       // 设置超时
+      let mainTimeoutId: NodeJS.Timeout | undefined;
+       // 设置主超时
       const timeoutPromise = new Promise<void>((resolve) => {
-        timeoutId = setTimeout(() => {
+        mainTimeoutId = setTimeout(() => {
           resolve(); // 超时时总是resolve，在外部判断是否有足够的数据
         }, 30000);
       });
@@ -1188,13 +1197,12 @@ async getRecord( id: ThreadID, rid: CID): Promise<IRecord> {
             await Promise.race([
               (async () => {
                 //连接到指定peerId,返回一个Client
-                const client = await this.getClient(peerId);
+                const [client,_] = await this.getClient(peerId);
                 if (!client) {
                   return;
                 }
                 const dbClient = new DBClient(client,this.dc,this,this.logstore);
             
-                // 这里使用一个队列来控制并发，类似于 Go 代码中的 queueGetRecords
                 const records = await dbClient.getRecordsFromPeer( req, serviceKey);
                 
                 // 更新收集器
@@ -1249,8 +1257,8 @@ async getRecord( id: ThreadID, rid: CID): Promise<IRecord> {
       // 等待获取足够的记录或超时
       await Promise.race([fetchPromise, timeoutPromise]);
        // 清除超时定时器
-      if (timeoutId) {
-        clearTimeout(timeoutId);
+      if (mainTimeoutId) {
+        clearTimeout(mainTimeoutId);
       }
       // 检查是否获取到足够的数据
       if (fetchState.fetchedPeers === 0) {
@@ -1639,7 +1647,7 @@ async pushRecord(tid: ThreadID, lid: PeerId, rec: IRecord, counter: number): Pro
         continue;
       }
       try {
-         const client  = await this.getClient(p);
+         const [client,_]  = await this.getClient(p);
           if (!client) {
             continue
           }
@@ -1700,7 +1708,7 @@ async exchange(tid: ThreadID): Promise<void> {
 private async exchangeWithPeer(pid: PeerId, tid: ThreadID): Promise<void> {
   try {
     // 获取客户端连接
-    const client = await this.getClient(pid);
+    const [client,_] = await this.getClient(pid);
     if (!client) {
       return;
     }

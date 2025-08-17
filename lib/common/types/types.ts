@@ -235,6 +235,16 @@ export enum UploadStatus {
   NOSPACE=8, // 存储空间不足
 };
 
+export enum PeerStatus {
+  PeerStatusOffline = 1,
+	PeerStatusJoining = 2, //Joining the network
+	PeerStatusOnline = 3,
+	PeerStatusStaked = 4,
+	PeerStatusErr = 5,
+	PeerStatusClose = 6,
+	PeerStatusDiscard = 7
+}
+
 export type SignReqMessageData = {
     appUrl: string,
     ethAccount: string,

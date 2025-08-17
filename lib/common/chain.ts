@@ -6,7 +6,7 @@ import { Multiaddr, multiaddr } from "@multiformats/multiaddr";
 import { ApiPromise, WsProvider } from "@polkadot/api";
 
 import { isUser, sha256,hexToAscii } from "../util/utils";
-import { IAppInfo, User } from "./types/types";
+import { IAppInfo, User,PeerStatus } from "./types/types";
 
 import { hexToBytes } from "@noble/curves/abstract/utils";
 import { base32 } from "multiformats/bases/base32";
@@ -263,7 +263,7 @@ export class ChainUtil {
   // 链上查询节点webrtc direct的地址信息,
   // peerid: 节点的peerid
   // 直接连接节点的地址
-  getDcNodeWebrtcDirectAddr = async (peerid: string): Promise<Multiaddr | null> => {
+  getDcNodeWebrtcDirectAddr = async (peerid: string): Promise<[Multiaddr | null, PeerStatus]> => {
     const peerInfo = await (this.dcchainapi?.query as any).dcNode.peers(peerid);
     const peerInfoJson = peerInfo?.toJSON();
     if (
@@ -272,7 +272,7 @@ export class ChainUtil {
       (peerInfoJson as { ipAddress: string }).ipAddress == ""
     ) {
       console.error("no ip address found for peer: ", peerid);
-      return null;
+      return [null, PeerStatus.PeerStatusOffline];
     }
     let nodeAddr = Buffer.from(
       (peerInfoJson as { ipAddress: string }).ipAddress.slice(2),
@@ -280,10 +280,11 @@ export class ChainUtil {
     ).toString("utf8");
     let addrParts = nodeAddr.split(",");
     if (addrParts.length < 2) {
-      return null;
+      return [null, PeerStatus.PeerStatusOffline];
     }
     const addr = multiaddr(addrParts[1]);
-    return addr;
+    const peerStatus = (peerInfoJson as { status: number }).status || PeerStatus.PeerStatusOffline;
+    return [addr, peerStatus];
   };
 
   // 链上查询节点列表
