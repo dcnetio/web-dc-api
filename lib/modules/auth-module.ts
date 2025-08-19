@@ -454,12 +454,17 @@ export class AuthModule implements DCModule, IAuthOperations {
       let count = 0;
 
       // 启动ticker
+      logger.info("开始定时验证Token有效性任务");
       (async () => {
         while (this.tokenTask) {
           count++;
           logger.info(`Token验证任务: 执行次数 ${count}`);
-          await this.getTokenWithDCConnectInfo(this.context.connectedDc);
-          await this.getTokenWithDCConnectInfo(this.context.AccountBackupDc);
+          try {
+            await this.getTokenWithDCConnectInfo(this.context.connectedDc);
+            await this.getTokenWithDCConnectInfo(this.context.AccountBackupDc);
+          } catch (error) {
+            logger.error("Token验证任务执行失败:", error);
+          }
           await sleep(period);
         }
       })();
