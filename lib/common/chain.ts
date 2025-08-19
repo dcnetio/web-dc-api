@@ -215,13 +215,18 @@ export class ChainUtil {
 
   // 获取用户节点列表
   getAccountPeers = async (account: Uint8Array): Promise<string[] | null> => {
-    const hexAccount = "0x" + Buffer.from(account).toString("hex");
-    const userInfo = await this.getUserInfoWithAccount(hexAccount);
-    if (!userInfo || !isUser(userInfo)) {
+    try {
+      const hexAccount = "0x" + Buffer.from(account).toString("hex");
+      const userInfo = await this.getUserInfoWithAccount(hexAccount);
+      if (!userInfo || !isUser(userInfo)) {
+        return null;
+      }
+      const peers = userInfo.peers;
+       return peers;
+    }catch (error) {
+      console.error("getAccountPeers error:", error);
       return null;
     }
-    const peers = userInfo.peers;
-    return peers;
   };
 
   // 链上查询节点信息

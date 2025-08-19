@@ -51,6 +51,7 @@ import {
 import * as buffer from "buffer/";
 import { AsyncMutex } from '../common/AsyncMutex';
 import { DCContext } from '../../../interfaces';
+import { p } from 'lib/common/blowfish/const';
 const { Buffer } = buffer;
 
 
@@ -131,6 +132,7 @@ export class Network implements Net {
       });
       if (!token) {
         if (cachedFlag) {
+          let _:PeerStatus| null = null;
           [peerAddr,_] = await this.dcChain.getDcNodeWebrtcDirectAddr(peerId.toString());
           delete this.cachePeers[peerId.toString()];
           if (!peerAddr) {
@@ -1173,12 +1175,12 @@ async getRecord( id: ThreadID, rid: CID): Promise<IRecord> {
           resolve(); // 超时时总是resolve，在外部判断是否有足够的数据
         }, 30000);
       });
-      
+      let dealedCount  = 0; 
       // 创建一个 Promise 在足够的对等点响应时解析
       const fetchPromise = new Promise<void>((resolve) => {
         // 立即检查是否满足条件
         const checkComplete = () => {
-          if (!resolved && fetchState.fetchedPeers >= needFetched) {
+          if (!resolved && (dealedCount >= peers.length ||  fetchState.fetchedPeers >= needFetched)) {
             resolved = true;
             resolve();
           }
@@ -1186,6 +1188,7 @@ async getRecord( id: ThreadID, rid: CID): Promise<IRecord> {
         
         // 从每个对等点查询记录
         const fetchPromises = peers.map(async (peerId) => {
+          
           let timeoutId: NodeJS.Timeout | undefined;
           // 为每个peer设置独立的超时
           const peerTimeout = new Promise<never>((_, reject) => {
@@ -1228,6 +1231,7 @@ async getRecord( id: ThreadID, rid: CID): Promise<IRecord> {
             if (timeoutId) {
               clearTimeout(timeoutId);
             }
+            dealedCount ++;
           }
         });
         
@@ -1261,7 +1265,7 @@ async getRecord( id: ThreadID, rid: CID): Promise<IRecord> {
         clearTimeout(mainTimeoutId);
       }
       // 检查是否获取到足够的数据
-      if (fetchState.fetchedPeers === 0) {
+      if (fetchState.fetchedPeers === 0 && dealedCount < peers.length) {
         throw new Error("Fetch records timeout: no peers responded");
       }
       
