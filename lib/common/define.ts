@@ -40,9 +40,9 @@ export const walletWindowName = "walletWindow"; // 窗口名称
 export const dc_protocol = "/dc/thread/0.0.1";
 export const dial_timeout = 1000;
 export const keyExpire = 60 * 60 * 24; // setcachekey 过期时间默认一天
-export const OffChainOpTimes = 2000; // 链下操作次数
+export const OffChainOpTimes = 20000; // 链下操作次数
 export const OffChainSpaceLimit = 1024 * 1024 * 10; // 评论空间下限10m
-export const OffChainOpTimesLimit = 100; // 链下操作次数下限
+export const OffChainOpTimesLimit = 1000; // 链下操作次数下限
 export enum Direction {
   Forward = 0,
   Reverse = 1,
