@@ -398,9 +398,6 @@ export class DB implements App, IDB {
 
       // 创建 actions 数组并映射处理结果
       const actions: Action[] = codecActions.map((ca) => {
-        if (ca.type != CoreActionType.Create) {
-         console.log('ca.type', ca.type);
-        }
         // 返回转换后的 Action 对象
         return {
           collectionName: ca.collection,
