@@ -52,7 +52,7 @@ export class Client {
       return token;
     } catch (err) {
       console.error("GetToken error:", err);
-      throw err;
+      return "";
     }
   }
 
