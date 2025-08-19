@@ -17,7 +17,7 @@ const tsconfig = {
 
 // 外部依赖（这些将不会被打包进最终文件）
 const external = [
-  ...Object.keys(pkg.dependencies || {}),
+  ...Object.keys(pkg.devDependencies || {}),
   ...Object.keys(pkg.peerDependencies || {})
 ];
 console.log('NODE_ENV:', process.env.NODE_ENV);
@@ -54,8 +54,8 @@ const plugins = [
         },
         format: {
           comments: false // 移除注释
-        }
-      })
+        },
+      }),
     ];
 
 // 全局变量名
