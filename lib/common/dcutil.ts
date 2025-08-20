@@ -287,7 +287,7 @@ export class DcUtil {
           maxInboundStreams: 30,
           maxOutboundStreams: 50,
           initialStreamWindowSize: 256 * 1024,
-          enableKeepAlive: false,
+          enableKeepAlive: true,
         }),
       ],
       services: {

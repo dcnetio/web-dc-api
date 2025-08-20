@@ -1266,144 +1266,85 @@ export class Network implements Net {
    * 从指定对等点获取记录
    */
   async getRecords(
-    peers: PeerId[],
-    tid: ThreadID,
-    offsets: Record<string, { id?: CID; counter: number }>,
+    peers: PeerId[], 
+    tid: ThreadID, 
+    offsets: Record<string, { id?: CID, counter: number }>,
     limit: number
   ): Promise<Record<string, PeerRecords>> {
     try {
       // 构建请求
-      const { req, serviceKey } = await this.buildGetRecordsRequest(
-        tid,
-        offsets,
-        limit
-      );
-
+      const { req, serviceKey } = await this.buildGetRecordsRequest(tid, offsets, limit);
+      
       // 创建记录收集器
       const recordCollector = new RecordCollector();
-
+      
       // 确定需要获取的对等点数量
       const needFetched = Math.min(2, peers.length);
-      let resolved = false; // 防止重复调用 resolve
-      // 使用对象来保证引用一致性
-      const fetchState = {
-        fetchedPeers: 0,
-      };
-      let mainTimeoutId: NodeJS.Timeout | undefined;
-      // 设置主超时
-      const timeoutPromise = new Promise<void>((resolve) => {
-        mainTimeoutId = setTimeout(() => {
-          resolve(); // 超时时总是resolve，在外部判断是否有足够的数据
-        }, 30000);
-      });
-      let dealedCount = 0;
-
+      let fetchedPeers = 0;
+      
       // 创建一个 Promise 在足够的对等点响应时解析
       const fetchPromise = new Promise<void>((resolve) => {
-        // 立即检查是否满足条件
+        // 当所有查询完成时，解析 Promise
         const checkComplete = () => {
-          if (
-            !resolved &&
-            (dealedCount >= peers.length ||
-              fetchState.fetchedPeers >= needFetched)
-          ) {
-            resolved = true;
+          if (fetchedPeers >= needFetched) {
             resolve();
           }
         };
-
-        const processPeersWithInterval = async () => {
-          // 使用map创建Promise数组，避免闭包问题
-          const promises = peers.map(async (peerId, index) => {
-            return new Promise<void>(async (peerResolve) => {
-              // 等待启动延迟 (index * 100ms)
-              await new Promise((resolve) => setTimeout(resolve, index * 100));
-
-              let timeoutId: NodeJS.Timeout | undefined;
-              // 为每个peer设置独立的超时
-              const peerTimeout = new Promise<never>((_, reject) => {
-                timeoutId = setTimeout(
-                  () => reject(new Error(`Peer ${peerId} timeout after 30s`)),
-                  30000
-                );
+        
+        // 从每个对等点查询记录
+        const fetchPromises = peers.map(async (peerId) => {
+          try {
+            //连接到指定peerId,返回一个Client
+            const client = await this.getClient(peerId);
+            if (!client) {
+              return;
+            }
+            const dbClient = new DBClient(client,this.dc,this,this.logstore);
+        
+            // 这里使用一个队列来控制并发，类似于 Go 代码中的 queueGetRecords
+            const records = await dbClient.getRecordsFromPeer( req, serviceKey);
+            
+            // 更新收集器
+            Object.entries(records).forEach(([logId, rs]) => {
+              recordCollector.updateHeadCounter(logId, rs.counter);
+              rs.records.forEach(record => {
+                recordCollector.store(logId, record);
               });
-
-              try {
-                // 使用 Promise.race 为每个peer设置超时
-                await Promise.race([
-                  (async () => {
-                    //连接到指定peerId,返回一个Client
-                    const [client, _] = await this.getClient(peerId);
-                    if (!client) {
-                      return;
-                    }
-                    const dbClient = new DBClient(
-                      client,
-                      this.dc,
-                      this,
-                      this.logstore
-                    );
-
-                    const records = await dbClient.getRecordsFromPeer(
-                      req,
-                      serviceKey
-                    );
-
-                    // 批量更新收集器 - 现在是线程安全的
-                    for (const [logId, rs] of Object.entries(records)) {
-                      await recordCollector.batchUpdate(logId, rs);
-                    }
-
-                    fetchState.fetchedPeers++;
-                    console.log(
-                      `成功从节点 ${peerId} 获取记录，当前已获取: ${fetchState.fetchedPeers}/${needFetched}`
-                    );
-                  })(),
-                  peerTimeout,
-                ]);
-              } catch (err) {
-                console.error(
-                  `Error getting records from peer ${peerId}:`,
-                  err
-                );
-                // 错误不影响其他peer的执行
-              } finally {
-                // 清除定时器，防止内存泄漏
-                if (timeoutId) {
-                  clearTimeout(timeoutId);
-                }
-                dealedCount++;
-                // 每个节点处理完后检查是否满足条件
-                checkComplete();
-                peerResolve();
-              }
             });
-          });
-
-          // 等待所有节点处理完成
-          await Promise.allSettled(promises);
-          // 最终检查
-          checkComplete();
-        };
-
-        // 开始处理
-        processPeersWithInterval();
+            
+            fetchedPeers++;
+            
+            // 如果获取了记录并且达到了所需的对等点数量，则解析 Promise
+            if (Object.keys(records).length > 0 && fetchedPeers >= needFetched) {
+              resolve();
+            }
+            
+            // 暂停100ms避免过多并发请求
+            await new Promise(r => setTimeout(r, 100));
+          } catch (err) {
+            console.error(`Error getting records from peer ${peerId}:`, err);
+          }
+        });
+        
+        // 当所有查询完成或失败时，检查是否需要解析 Promise
+        Promise.all(fetchPromises.map(p => p.catch(e => e)))
+          .then(() => checkComplete());
       });
+      
+      // 设置超时
+      const timeoutPromise = new Promise<void>((resolve) => {
+        setTimeout(() => {
+          resolve(); // 超时时总是resolve，在外部判断是否有足够的数据
+        }, 30000);
+      });
+      
       // 等待获取足够的记录或超时
       await Promise.race([fetchPromise, timeoutPromise]);
-      // 清除超时定时器
-      if (mainTimeoutId) {
-        clearTimeout(mainTimeoutId);
-      }
-      // 检查是否获取到足够的数据
-      if (fetchState.fetchedPeers === 0 && dealedCount < peers.length) {
+       // 检查是否获取到足够的数据
+      if (fetchedPeers === 0) {
         throw new Error("Fetch records timeout: no peers responded");
       }
-
-      // 如果有数据就返回（不管是1个还是2个节点）
-      console.log(
-        `获取记录完成: ${fetchState.fetchedPeers}/${needFetched} 个节点响应`
-      );
+      // 返回收集到的记录
       return recordCollector.list();
     } catch (err) {
       console.error("getRecords error:", err);
