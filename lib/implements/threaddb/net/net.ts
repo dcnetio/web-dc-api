@@ -1295,7 +1295,7 @@ export class Network implements Net {
         const fetchPromises = peers.map(async (peerId) => {
           try {
             //连接到指定peerId,返回一个Client
-            const client = await this.getClient(peerId);
+            const [client,_] = await this.getClient(peerId);
             if (!client) {
               return;
             }
