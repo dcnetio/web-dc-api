@@ -143,7 +143,7 @@ export class Network implements Net {
       let cachedFlag = true;
       const cacheAddr = this.cachePeers[peerId.toString()];
       let peerAddr: TMultiaddr | null = cacheAddr || null;
-      let peerStatus: PeerStatus | null = null;
+      let peerStatus: PeerStatus | null = PeerStatus.PeerStatusOnline;
       if (!cacheAddr) {
         cachedFlag = false;
         [peerAddr, peerStatus] = await this.dcChain.getDcNodeWebrtcDirectAddr(
@@ -592,6 +592,57 @@ export class Network implements Net {
         const lid = peerIdFromString(lidStr);
         const rs = rec as PeerRecords;
         if (appConnected) {
+           // 使用并发控制，但不分批 - 避免慢任务拖累整批
+          const maxConcurrency = 10;
+          let activePromises: Promise<void>[] = [];
+          let processedCount = 0;
+
+          const processRecord = async (r: any, index: number): Promise<void> => {
+            try {
+              const block = await r.getBlock(this.bstore);
+              const event =
+                block instanceof Event
+                  ? block
+                  : await EventFromNode(block as Node);
+
+              const header = await event.getHeader(this.bstore);
+              const body = await event.getBody(this.bstore);
+              
+
+            // Store internal blocks locally
+            await this.addMany([event, header, body]);
+              
+            } catch (err) {
+              console.error(`预加载记录 ${index + 1} 失败:`, err);
+              // 继续处理其他记录
+            }
+          };
+
+          // 处理所有记录，但控制并发数
+          for (let i = 0; i < rs.records.length; i++) {
+            const r = rs.records[i]!;
+            // 创建处理Promise
+            const promise = processRecord(r, i).finally(() => {
+              processedCount++;
+              // 从活跃Promise列表中移除
+              const index = activePromises.indexOf(promise);
+              if (index > -1) {
+                activePromises.splice(index, 1);
+              }
+            });
+            
+            activePromises.push(promise);
+            
+            // 当达到最大并发数时，等待最快完成的一个
+            if (activePromises.length >= maxConcurrency) {
+              await Promise.race(activePromises);
+            }
+          }
+          // 等待所有剩余的Promise完成
+          await Promise.all(activePromises);
+          
+          console.log(`所有 ${rs.records.length} 条记录预加载完成`);
+          //开始正式处理,前面数据已经拉取到本地,这时处理速度很快
           let indexCounter = rs.counter - rs.records.length + 1;
 
           for (let i = 0; i < rs.records.length; i++) {
@@ -632,10 +683,12 @@ export class Network implements Net {
         return 0;
       });
       let i = 0;
+
       // Process each record in order
       for (const r of tRecords) {
         await this.putRecords(id, r.logid, [r.record], r.counter);
       }
+
     } catch (err) {
       throw err;
     }
@@ -676,7 +729,6 @@ export class Network implements Net {
           netPullingLimit
         );
         let continueFlag = false;
-
         for (const [lidStr, rs] of Object.entries(recs)) {
           if (rs.records.length > 0) {
             const existing = pulledRecs[lidStr] || { records: [], counter: 0 };
@@ -703,7 +755,6 @@ export class Network implements Net {
           break;
         }
       }
-
       return pulledRecs;
     } catch (err) {
       throw err;
@@ -1104,13 +1155,12 @@ export class Network implements Net {
     } else if (counter <= head.counter) {
       return [[], head];
     }
-
     let chain: IRecord[] = [];
     let complete = false;
     // Check which records we already have
     for (let i = recs.length - 1; i >= 0; i--) {
       const next = recs[i]!;
-      if (next.cid.toString() == "" || next.cid().equals(head.id)) {
+      if (next.cid().toString() == "" || next.cid().equals(head.id)) {
         complete = true;
         break;
       }
@@ -1119,6 +1169,7 @@ export class Network implements Net {
 
     // Bridge the gap between the last provided record and current head
     if (!complete && chain.length > 0) {
+
       let c = chain[chain.length - 1]!.prevID();
       while (c && !(last.cid().toString() == "")) {
         if (c.equals(head.id)) {
@@ -1295,8 +1346,9 @@ export class Network implements Net {
         const fetchPromises = peers.map(async (peerId) => {
           try {
             //连接到指定peerId,返回一个Client
-            const [client,_] = await this.getClient(peerId);
+            const [client,err] = await this.getClient(peerId);
             if (!client) {
+              console.error(`Error getting records from peer ${peerId},no client,errinfo:`, err);
               return;
             }
             const dbClient = new DBClient(client,this.dc,this,this.logstore);
@@ -1318,9 +1370,6 @@ export class Network implements Net {
             if (Object.keys(records).length > 0 && fetchedPeers >= needFetched) {
               resolve();
             }
-            
-            // 暂停100ms避免过多并发请求
-            await new Promise(r => setTimeout(r, 100));
           } catch (err) {
             console.error(`Error getting records from peer ${peerId}:`, err);
           }
@@ -1335,7 +1384,7 @@ export class Network implements Net {
       const timeoutPromise = new Promise<void>((resolve) => {
         setTimeout(() => {
           resolve(); // 超时时总是resolve，在外部判断是否有足够的数据
-        }, 30000);
+        }, 60000);
       });
       
       // 等待获取足够的记录或超时

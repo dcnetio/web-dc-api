@@ -225,7 +225,7 @@ export class DatabaseModule implements DCModule, IDatabaseOperations {
       throw new Error("数据库管理器未初始化");
     }
     
-      const ctx = createContext(30000);
+      const ctx = createContext(60000);
       await this.context.dbManager.syncDBFromDC(
         ctx,
         threadid,
