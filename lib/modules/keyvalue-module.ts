@@ -7,6 +7,7 @@ import { DCModule, CoreModuleName } from "../common/module-system";
 import { KeyValueManager, KeyValueStoreType, KeyValueDB } from "../implements/keyvalue/manager";
 import { createLogger } from "../util/logger";
 import { ThemeAuthInfo, ThemeComment } from "../common/types/types";
+import { Direction } from "../common/define";
 const logger = createLogger('KeyValueModule');
 const indexkey_dckv = "indexkey_dckv"; //索引键名，keyvalue设置过程中key本身的索引键
 /**
@@ -203,6 +204,7 @@ export class KeyValueModule implements DCModule, IKeyValueOperations {
     key: string,
     limit: number,
     seekKey:string, 
+    direction: Direction = Direction.Forward,
     offset: number,
     vaccount?: string
   ): Promise<[string | null, Error | null]> {
@@ -212,7 +214,7 @@ export class KeyValueModule implements DCModule, IKeyValueOperations {
     }
     
     try {
-      const res = await kvdb.getWithIndex(indexkey_dckv, key, limit,seekKey, offset,  vaccount);
+      const res = await kvdb.getWithIndex(indexkey_dckv, key, limit,seekKey,direction, offset,  vaccount);
       return res;
     } catch (error) {
       logger.error(`getValues失败:`, error);
@@ -247,6 +249,7 @@ export class KeyValueModule implements DCModule, IKeyValueOperations {
     limit: number,
     seekKey:string, 
     offset: number,
+    direction: Direction = Direction.Forward,
     vaccount?: string
   ): Promise<[string | null, Error | null]> {
     const err = this.assertInitialized();
@@ -254,7 +257,7 @@ export class KeyValueModule implements DCModule, IKeyValueOperations {
       return [null, err];
     }
     try {
-      const res = await kvdb.getWithIndex(indexKey, indexValue, limit,seekKey, offset,  vaccount);
+      const res = await kvdb.getWithIndex(indexKey, indexValue, limit,seekKey, direction,offset,  vaccount);
     return res;
     } catch (error) {
       logger.error(`getWithIndex失败:`, error);
