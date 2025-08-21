@@ -6,6 +6,7 @@ import { base58btc } from "multiformats/bases/base58";
 import { toString as uint8ArrayToString } from "uint8arrays/to-string";
 import { Errors } from "../../common/error";
 import { DCContext } from "../../../lib/interfaces/DCContext";
+import { Direction } from "lib";
 
 export class KeyValueClient {
   client: Client;
@@ -303,6 +304,7 @@ export class KeyValueClient {
     indexKey:string,
     indexValue:string,
     seekKey:string, 
+    direction: Direction = Direction.Forward,
     offset: number,
     limit: number,
     vaccount?: string
@@ -314,6 +316,7 @@ export class KeyValueClient {
     message.indexKey = new TextEncoder().encode(indexKey);
     message.indexValue = new TextEncoder().encode(indexValue);
     message.seekKey = new TextEncoder().encode(seekKey);
+     message.direction = direction;
     message.offset = offset;
     message.limit = limit;
     if(vaccount){

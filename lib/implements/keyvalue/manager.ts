@@ -113,6 +113,7 @@ export class KeyValueDB {
     indexValue: string,
     limit: number = 1000,
     seekKey: string = "",
+    direction: Direction = Direction.Forward,
     offset: number = 0,
     vaccount: string = ""
   ): Promise<[string | null, Error | null]> {
@@ -123,6 +124,7 @@ export class KeyValueDB {
       indexKey,
       indexValue,
       seekKey,
+      direction,
       offset,
       limit,
       vaccount
@@ -427,15 +429,15 @@ export class KeyValueManager {
           break;
         }
         for (let i = 0; i < resList.length; i++) {
-          originAuthList.push(resList[i]);
-          const content = resList[i].comment;
+          originAuthList.push(resList[i]!);
+          const content = resList[i]!.comment;
           const parts = content.split(":");
           if (parts.length < 2) {
             continue;
           }
-          const authPubkey = parts[0];
-          const permission = parseInt(parts[1]);
-          const remark = content.substring(parts[0].length + 2);
+          const authPubkey = parts[0]!;
+          const permission = parseInt(parts[1]!);
+          const remark = content.substring(parts[0]!.length + 2);
           authList.push({
             pubkey: authPubkey,
             permission: permission,
@@ -445,8 +447,8 @@ export class KeyValueManager {
         if (resList.length < 1000) {
           break;
         }
-        seekKey = `${resList[resList.length - 1].blockheight}/${
-          resList[resList.length - 1].commentCid
+        seekKey = `${resList[resList.length - 1]!.blockheight}/${
+          resList[resList.length - 1]!.commentCid
         }`;
       }
     } catch (error: any) {
@@ -670,6 +672,7 @@ export class KeyValueManager {
     indexKey: string,
     indexValue: string,
     seekKey: string,
+    direction: Direction = Direction.Forward,
     offset: number,
     limit: number,
     vaccount?: string
@@ -712,6 +715,7 @@ export class KeyValueManager {
         indexKey,
         indexValue,
         seekKey,
+        direction,
         offset,
         limit,
         vaccount

@@ -1,3 +1,4 @@
+import { Direction } from "lib";
 import { ThemePermission } from "../common/constants";
 import { ThemeAuthInfo, ThemeComment } from "../common/types/types";
 import { KeyValueStoreType, KeyValueDB } from "../implements/keyvalue/manager";
@@ -93,6 +94,7 @@ export interface IKeyValueOperations {
    * @param key 键名
    * @param limit 返回结果数量限制
    * @param seekKey 查询起始键,用于分页查询
+   * @param direction 查询方向
    * @param offset 结果偏移量
    * @param vaccount 可选的虚拟账户
    * @returns [值列表生成的json字符串, 错误信息]
@@ -102,6 +104,7 @@ export interface IKeyValueOperations {
     key: string,
     limit: number,
     seekKey:string, 
+    direction: Direction,
     offset: number,
     vaccount?: string
   ): Promise<[string | null, Error | null]>;
@@ -129,6 +132,7 @@ export interface IKeyValueOperations {
    * @param indexValue 索引值
    * @param seekKey 查询起始键
    * @param offset 结果偏移量
+   * @param direction 查询方向 (Forward/Backward)
    * @param limit 返回结果数量限制
    * @param vaccount 可选的虚拟账户
    * @returns [JSON格式查询结果, 错误信息]
@@ -140,6 +144,7 @@ export interface IKeyValueOperations {
     limit: number,
     seekKey: string,
     offset: number,
+    direction: Direction,
     vaccount?: string
   ): Promise<[string | null, Error | null]>;
 }
