@@ -7,7 +7,7 @@ import { DCModule, CoreModuleName } from "../common/module-system";
 import { KeyValueManager, KeyValueStoreType, KeyValueDB } from "../implements/keyvalue/manager";
 import { createLogger } from "../util/logger";
 import { ThemeAuthInfo, ThemeComment } from "../common/types/types";
-import { Direction } from "lib";
+import { Direction } from "../common/define";
 const logger = createLogger('KeyValueModule');
 const indexkey_dckv = "indexkey_dckv"; //索引键名，keyvalue设置过程中key本身的索引键
 /**

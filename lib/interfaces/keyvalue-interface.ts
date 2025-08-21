@@ -1,4 +1,4 @@
-import { Direction } from "lib";
+import { Direction } from "../common/define";
 import { ThemePermission } from "../common/constants";
 import { ThemeAuthInfo, ThemeComment } from "../common/types/types";
 import { KeyValueStoreType, KeyValueDB } from "../implements/keyvalue/manager";

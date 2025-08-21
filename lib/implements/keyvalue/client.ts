@@ -6,7 +6,7 @@ import { base58btc } from "multiformats/bases/base58";
 import { toString as uint8ArrayToString } from "uint8arrays/to-string";
 import { Errors } from "../../common/error";
 import { DCContext } from "../../../lib/interfaces/DCContext";
-import { Direction } from "lib";
+import { Direction } from "../../common/define";
 
 export class KeyValueClient {
   client: Client;
