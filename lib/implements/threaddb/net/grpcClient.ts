@@ -178,10 +178,10 @@ export class DBGrpcClient {
                 if (!lg.ID || !lg.pubKey) {  
                   throw new Error('Missing required fields in LogInfo: id or pubKey');  
                 }  
-             //   const id =  PeerIDConverter.fromBytes(lg.ID);
-             //logid 解析更新
-               const multihash = decode(lg.ID);
-              const id = peerIdFromMultihash(multihash);
+               const id =  PeerIDConverter.fromBytes(lg.ID);
+            //  //logid 解析更新
+            //    const multihash = decode(lg.ID);
+            //   const id = peerIdFromMultihash(multihash);
                 const pubKey =  Ed25519PubKey.publicKeyFromProto(lg.pubKey);
                 let privKey : Ed25519PrivKey | undefined = undefined;
                 if (lg.privKey?.length == 64) {
@@ -336,9 +336,9 @@ export class DBGrpcClient {
       for (const logInfo of response.logs || []) {
         if (!logInfo.logID) continue;
         
-        //const logId = PeerIDConverter.fromBytes(logInfo.logID).toString();
-        const multihash = decode(logInfo.logID);
-        const logId = peerIdFromMultihash(multihash).toString();
+        const logId = PeerIDConverter.fromBytes(logInfo.logID).toString();
+        // const multihash = decode(logInfo.logID);
+        // const logId = peerIdFromMultihash(multihash).toString();
         const rawRecords = logInfo.records || [];
         
         // 并行转换所有记录
