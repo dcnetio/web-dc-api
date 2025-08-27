@@ -1345,13 +1345,16 @@ export class Network implements Net {
             const dbClient = new DBClient(client,this.dc,this,this.logstore);
             const records = await dbClient.getRecordsFromPeer( req, serviceKey);
             
-            // 更新收集器
-            Object.entries(records).forEach(([logId, rs]) => {
-              recordCollector.updateHeadCounter(logId, rs.counter);
-              rs.records.forEach(record => {
-                recordCollector.store(logId, record);
-              });
-            });
+            // // 更新收集器
+            // Object.entries(records).forEach(([logId, rs]) => {
+            //    recordCollector.updateHeadCounter(logId, rs.counter);
+            //   rs.records.forEach(record => {
+            //     recordCollector.store(logId, record);
+            //   });
+            // });
+            for (const [logId, rs] of Object.entries(records)) {
+              await recordCollector.batchUpdate(logId, rs);
+            }
             clearTimeout(timeout);
             break;
           } catch (err) {
@@ -1904,7 +1907,7 @@ class RecordCollector {
         this.counters.set(logId, counter);
       }
     } finally {
-      this.mutex.release();
+       this.mutex.release();
     }
   }
 
@@ -1940,7 +1943,7 @@ class RecordCollector {
         this.records.set(logId, logRecords);
       }
 
-      rs.records.forEach(record => {
+       rs.records.forEach(record => {
         const key = record.cid().toString();
         logRecords!.set(key, record);
       });

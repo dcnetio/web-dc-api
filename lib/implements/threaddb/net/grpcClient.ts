@@ -25,6 +25,8 @@ import {ThreadMuliaddr} from "../core/core";
 import * as varint from 'uint8-varint'
 import { protocols } from "@multiformats/multiaddr";
 import { SymmetricKey } from '../common/key';
+import { decode } from 'multiformats/hashes/digest';
+import { peerIdFromMultihash } from '@libp2p/peer-id';
 import {   
   PeerIDConverter,   
   CidConverter,
@@ -176,7 +178,10 @@ export class DBGrpcClient {
                 if (!lg.ID || !lg.pubKey) {  
                   throw new Error('Missing required fields in LogInfo: id or pubKey');  
                 }  
-                const id =  PeerIDConverter.fromBytes(lg.ID);
+             //   const id =  PeerIDConverter.fromBytes(lg.ID);
+             //logid 解析更新
+               const multihash = decode(lg.ID);
+              const id = peerIdFromMultihash(multihash);
                 const pubKey =  Ed25519PubKey.publicKeyFromProto(lg.pubKey);
                 let privKey : Ed25519PrivKey | undefined = undefined;
                 if (lg.privKey?.length == 64) {
@@ -329,26 +334,28 @@ export class DBGrpcClient {
       const result: Record<string, PeerRecords> = {};
       
       for (const logInfo of response.logs || []) {
-      if (!logInfo.logID) continue;
-      
-      const logId = PeerIDConverter.fromBytes(logInfo.logID).toString();
-      const rawRecords = logInfo.records || [];
-      
-      // 并行转换所有记录
-      const recordPromises = rawRecords.map(async (rec) => {
-        return await RecordFromProto(rec as net_pb.pb.Log.Record, serviceKey);
-      });
-      
-      // 等待所有记录转换完成
-      const unsortedRecords = await Promise.all(recordPromises);
-      
-      // 根据链表结构排序记录
-      const sortedRecords = this.sortRecordsChain(unsortedRecords);
-      
-      result[logId] = {
-        records: sortedRecords,
-        counter: logInfo.log?.counter as number || 0
-      };
+        if (!logInfo.logID) continue;
+        
+        //const logId = PeerIDConverter.fromBytes(logInfo.logID).toString();
+        const multihash = decode(logInfo.logID);
+        const logId = peerIdFromMultihash(multihash).toString();
+        const rawRecords = logInfo.records || [];
+        
+        // 并行转换所有记录
+        const recordPromises = rawRecords.map(async (rec) => {
+          return await RecordFromProto(rec as net_pb.pb.Log.Record, serviceKey);
+        });
+        
+        // 等待所有记录转换完成
+        const unsortedRecords = await Promise.all(recordPromises);
+        
+        // 根据链表结构排序记录
+        const sortedRecords = this.sortRecordsChain(unsortedRecords);
+        
+        result[logId] = {
+          records: sortedRecords,
+          counter: logInfo.log?.counter as number || 0
+        };
     }
       
       return result;
