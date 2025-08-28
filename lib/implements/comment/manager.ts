@@ -285,8 +285,8 @@ export class CommentManager {
       if (!this.context.publicKey) {
         return [null, Errors.ErrPublicKeyIsNull];
       }
-      let client = this.connectedDc.client;
-      if (themeAuthor != this.context.publicKey.string()) {//查询他人主题评论
+      let client = this.accountBackupDc.client;
+      if (!client || themeAuthor != this.context.publicKey.string()) {//查询他人主题评论
         const authorPublicKey: Ed25519PubKey = Ed25519PubKey.edPubkeyFromStr(themeAuthor);
         const connectedClient = await this.dc.connectToUserDcPeer(authorPublicKey.raw);
         if (!connectedClient) {
@@ -659,8 +659,9 @@ async addUserOffChainOpTimes(
       if (!this.context.publicKey) {
         return [null, Errors.ErrPublicKeyIsNull];
       }
-      let client = this.connectedDc.client;
-      if (themeAuthor != this.context.publicKey.string()) {//查询他人主题评论
+    
+      let client = this.accountBackupDc.client;
+      if (!client || themeAuthor != this.context.publicKey.string()) {//查询他人主题评论
         const authorPublicKey: Ed25519PubKey = Ed25519PubKey.edPubkeyFromStr(themeAuthor);
         const connectedClient = await this.dc.connectToUserDcPeer(authorPublicKey.raw);
         if (!connectedClient) {
@@ -731,8 +732,8 @@ async addUserOffChainOpTimes(
       if (!this.context.publicKey) {
         return [null, Errors.ErrPublicKeyIsNull];
       }
-      let client = this.connectedDc.client;
-      if (themeAuthor != this.context.publicKey.string()) {//查询他人主题评论
+      let client = this.accountBackupDc.client;
+      if (!client || themeAuthor != this.context.publicKey.string()) {//查询他人主题评论
         const authorPublicKey: Ed25519PubKey = Ed25519PubKey.edPubkeyFromStr(themeAuthor);
         const connectedClient = await this.dc.connectToUserDcPeer(authorPublicKey.raw);
         if (!connectedClient) {
