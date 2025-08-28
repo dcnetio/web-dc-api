@@ -1328,72 +1328,39 @@ export class Network implements Net {
       
       // 创建记录收集器
       const recordCollector = new RecordCollector();
-      
-      // 确定需要获取的对等点数量
-      const needFetched = Math.min(2, peers.length);
-      let fetchedPeers = 0;
-      
-      // 创建一个 Promise 在足够的对等点响应时解析
-      const fetchPromise = new Promise<void>((resolve) => {
-        // 当所有查询完成时，解析 Promise
-        const checkComplete = () => {
-          if (fetchedPeers >= needFetched) {
-            resolve();
-          }
-        };
-        
-        // 从每个对等点查询记录
-        const fetchPromises = peers.map(async (peerId) => {
-          try {
+      //遍历节点,按顺序处理
+      for (const peerId of peers) {
+         try {
+             // 设置超时
+             const timeout = setTimeout(() => {
+               throw new Error(`Timeout getting records from peer ${peerId}`);
+             }, 60000);
+
             //连接到指定peerId,返回一个Client
             const [client,err] = await this.getClient(peerId);
             if (!client) {
-              console.error(`Error getting records from peer ${peerId},no client,errinfo:`, err);
-              return;
+              clearTimeout(timeout);
+              throw new Error(`Error getting records from peer ${peerId},no client,errinfo: ${err}`);
             }
             const dbClient = new DBClient(client,this.dc,this,this.logstore);
-        
-            // 这里使用一个队列来控制并发，类似于 Go 代码中的 queueGetRecords
             const records = await dbClient.getRecordsFromPeer( req, serviceKey);
             
-            // 更新收集器
-            Object.entries(records).forEach(([logId, rs]) => {
-              recordCollector.updateHeadCounter(logId, rs.counter);
-              rs.records.forEach(record => {
-                recordCollector.store(logId, record);
-              });
-            });
-            
-            fetchedPeers++;
-            
-            // 如果获取了记录并且达到了所需的对等点数量，则解析 Promise
-            if (Object.keys(records).length > 0 && fetchedPeers >= needFetched) {
-              resolve();
+            // // 更新收集器
+            // Object.entries(records).forEach(([logId, rs]) => {
+            //    recordCollector.updateHeadCounter(logId, rs.counter);
+            //   rs.records.forEach(record => {
+            //     recordCollector.store(logId, record);
+            //   });
+            // });
+            for (const [logId, rs] of Object.entries(records)) {
+              await recordCollector.batchUpdate(logId, rs);
             }
+            clearTimeout(timeout);
+            break;
           } catch (err) {
-            console.error(`Error getting records from peer ${peerId}:`, err);
+            continue;
           }
-        });
-        
-        // 当所有查询完成或失败时，检查是否需要解析 Promise
-        Promise.all(fetchPromises.map(p => p.catch(e => e)))
-          .then(() => checkComplete());
-      });
-      
-      // 设置超时
-      const timeoutPromise = new Promise<void>((resolve) => {
-        setTimeout(() => {
-          resolve(); // 超时时总是resolve，在外部判断是否有足够的数据
-        }, 60000);
-      });
-      
-      // 等待获取足够的记录或超时
-      await Promise.race([fetchPromise, timeoutPromise]);
-       // 检查是否获取到足够的数据
-      if (fetchedPeers === 0) {
-        throw new Error("Fetch records timeout: no peers responded");
       }
-      // 返回收集到的记录
       return recordCollector.list();
     } catch (err) {
       console.error("getRecords error:", err);
@@ -1940,7 +1907,7 @@ class RecordCollector {
         this.counters.set(logId, counter);
       }
     } finally {
-      this.mutex.release();
+       this.mutex.release();
     }
   }
 
@@ -1976,7 +1943,7 @@ class RecordCollector {
         this.records.set(logId, logRecords);
       }
 
-      rs.records.forEach(record => {
+       rs.records.forEach(record => {
         const key = record.cid().toString();
         logRecords!.set(key, record);
       });

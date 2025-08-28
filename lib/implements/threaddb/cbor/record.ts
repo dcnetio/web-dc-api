@@ -204,11 +204,11 @@ export async function logFromProto(protoLog: net_pb.pb.ILog): Promise<IThreadLog
   if (!protoLog.ID || !protoLog.pubKey) {
     throw new Error('Missing required fields in Log: ID or pubKey');
   }
-  const multihash = decode(protoLog.ID);
-  const id = peerIdFromMultihash(multihash);
+  // const multihash = decode(protoLog.ID);
+  // const id = peerIdFromMultihash(multihash);
   // 解析日志ID
-  //const id =  PeerIDConverter.fromBytes(logId);
-  
+  const id =  PeerIDConverter.fromBytes(protoLog.ID);
+
   // 解析公钥
   const pubKey = await KeyConverter.publicFromBytes(protoLog.pubKey);
   

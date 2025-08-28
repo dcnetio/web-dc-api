@@ -25,6 +25,8 @@ import {ThreadMuliaddr} from "../core/core";
 import * as varint from 'uint8-varint'
 import { protocols } from "@multiformats/multiaddr";
 import { SymmetricKey } from '../common/key';
+import { decode } from 'multiformats/hashes/digest';
+import { peerIdFromMultihash } from '@libp2p/peer-id';
 import {   
   PeerIDConverter,   
   CidConverter,
@@ -176,7 +178,10 @@ export class DBGrpcClient {
                 if (!lg.ID || !lg.pubKey) {  
                   throw new Error('Missing required fields in LogInfo: id or pubKey');  
                 }  
-                const id =  PeerIDConverter.fromBytes(lg.ID);
+               const id =  PeerIDConverter.fromBytes(lg.ID);
+            //  //logid 解析更新
+            //    const multihash = decode(lg.ID);
+            //   const id = peerIdFromMultihash(multihash);
                 const pubKey =  Ed25519PubKey.publicKeyFromProto(lg.pubKey);
                 let privKey : Ed25519PrivKey | undefined = undefined;
                 if (lg.privKey?.length == 64) {
@@ -331,19 +336,27 @@ export class DBGrpcClient {
       for (const logInfo of response.logs || []) {
         if (!logInfo.logID) continue;
         
-        const logId =  PeerIDConverter.fromBytes(logInfo.logID).toString();
-        //peerIdFromString(new TextDecoder().decode(logInfo.logID)).toString();
-        const records:IRecord[] = [];
+        const logId = PeerIDConverter.fromBytes(logInfo.logID).toString();
+        // const multihash = decode(logInfo.logID);
+        // const logId = peerIdFromMultihash(multihash).toString();
+        const rawRecords = logInfo.records || [];
         
-        for (const rec of logInfo.records || []) {
-          records.push(await RecordFromProto(rec as net_pb.pb.Log.Record, serviceKey));
-        }
+        // 并行转换所有记录
+        const recordPromises = rawRecords.map(async (rec) => {
+          return await RecordFromProto(rec as net_pb.pb.Log.Record, serviceKey);
+        });
+        
+        // 等待所有记录转换完成
+        const unsortedRecords = await Promise.all(recordPromises);
+        
+        // 根据链表结构排序记录
+        const sortedRecords = this.sortRecordsChain(unsortedRecords);
         
         result[logId] = {
-          records,
+          records: sortedRecords,
           counter: logInfo.log?.counter as number || 0
         };
-      }
+    }
       
       return result;
     } catch (err) {
@@ -353,7 +366,85 @@ export class DBGrpcClient {
   }
 
 
-   
+   /**
+ * 根据链表结构排序记录
+ * 确保第二个记录的 prevID() 等于第一个记录的 blockID()，以此类推
+ */
+private sortRecordsChain(records: IRecord[]): IRecord[] {
+  if (records.length <= 1) {
+    return records;
+  }
+
+  const sorted: IRecord[] = [];
+  const recordMap = new Map<string, IRecord>();
+  let headRecord: IRecord | null = null;
+
+  // 建立 blockID 到记录的映射
+  for (const record of records) {
+    const blockId = record.blockID().toString();
+    recordMap.set(blockId, record);
+  }
+
+  // 找到链表头部（没有前驱的记录）
+  for (const record of records) {
+    const prevId = record.prevID();
+    if (!prevId || !recordMap.has(prevId.toString())) {
+      // 这是头部记录（没有前驱或前驱不在当前记录集合中）
+      headRecord = record;
+      break;
+    }
+  }
+
+  if (!headRecord) {
+    // 如果找不到明确的头部，尝试找到最早的记录
+    console.warn('No clear head record found, using first record as head');
+    headRecord = records[0]? records[0] : null;
+  }
+
+  // 从头部开始构建有序链表
+  let currentRecord = headRecord;
+  const processed = new Set<string>();
+
+  while (currentRecord && !processed.has(currentRecord.blockID().toString())) {
+    sorted.push(currentRecord);
+    processed.add(currentRecord.blockID().toString());
+
+    // 查找下一个记录（prevID 指向当前记录的 blockID）
+    const currentBlockId = currentRecord.blockID().toString();
+    let nextRecord: IRecord | null = null;
+
+    for (const record of records) {
+      if (processed.has(record.blockID().toString())) {
+        continue; // 已处理过
+      }
+      
+      const prevId = record.prevID();
+      if (prevId && prevId.toString() === currentBlockId) {
+        nextRecord = record;
+        break;
+      }
+    }
+
+    currentRecord = nextRecord;
+  }
+
+  // 检查是否所有记录都被处理了
+  if (sorted.length !== records.length) {
+    console.warn(
+      `Chain sorting incomplete: sorted ${sorted.length}/${records.length} records. ` +
+      'Some records may not form a continuous chain.'
+    );
+    
+    // 将未处理的记录追加到末尾
+    for (const record of records) {
+      if (!processed.has(record.blockID().toString())) {
+        sorted.push(record);
+      }
+    }
+  }
+
+  return sorted;
+}
    
   async pushRecordToPeer(
       tid: ThreadID, 
