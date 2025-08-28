@@ -24,7 +24,8 @@ let _walletOrigin = "";
 if (true) {
     _baseUrl = "/v0_0_11";
     _walletOrigin = "https://wallet.dcnetio.com";
-    if(walletOpenType === "iframe") {
+    
+    if(walletOpenOrgin) {
       _walletOrigin = walletOpenOrgin || "https://wallet.dcnetio.com";
     }
     if(walletOpenVersion) {
