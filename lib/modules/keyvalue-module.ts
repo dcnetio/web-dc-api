@@ -28,7 +28,7 @@ export class KeyValueModule implements DCModule, IKeyValueOperations {
     try {
       this.keyValueManager = new KeyValueManager(
         context.dcutil,
-        context.connectedDc,
+        context.AccountBackupDc, //这里必须使用用户的账号备份连接
         context.dcChain,
         context
       );
