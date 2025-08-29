@@ -43,7 +43,7 @@ export class WalletManager {
         const iframe = document.createElement("iframe");
         iframe.id = this.iframeId;
         iframe.src = `${walletUrl}/iframe?parentOrigin=${appOrigin}`;
-        // (iframe as any).credentialless = true;// 去掉可以加快加载
+        (iframe as any).credentialless = true;// 去掉可以加快加载
         iframe.onload = async () => {
           const bool = await this.initConfig(this);
           resolve(bool);
@@ -216,7 +216,7 @@ export class WalletManager {
       const iframe = document.createElement("iframe");
       iframe.id = this.walletIframeId;
       iframe.src = `${walletUrl}?origin=${appOrigin}`;
-      // (iframe as any).credentialless = true; // 去掉可以加快加载
+      (iframe as any).credentialless = true; // 去掉可以加快加载
       iframe.onload = async () => {
         resolve(true);
       };
