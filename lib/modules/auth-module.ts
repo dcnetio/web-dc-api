@@ -105,6 +105,17 @@ export class AuthModule implements DCModule, IAuthOperations {
       }
       // 存在token， 获取用户备用节点
       await this.getAccountBackupDc();
+      if (this.context.AccountBackupDc?.client) {//备份节点存在,获取备份节点连接的token
+         // 获取账号备用节点token
+         await this.context.AccountBackupDc?.client.GetToken(
+          this.context.appInfo.appId || "",
+          publicKey.string(),
+          (payload: Uint8Array): Promise<Uint8Array> => {
+            return this.signWithWallet(payload);
+          }
+        );
+     }
+      
       // 给用户添加用户评论空间
       const [userInfo, err] = await this.getUserInfoWithAccount(
         "0x" + publicKey.toString()
