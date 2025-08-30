@@ -48,19 +48,16 @@ export const Errors = {
 
 export class AIProxyManager {
   private dc: DcUtil;
-  private accountBackUpDc: DCConnectInfo = {};
   private dcNodeClient: HeliaLibp2p<Libp2p>;
   private chainUtil: ChainUtil;
   private context: DCContext;
   constructor(
     dc: DcUtil,
-    accountBackUpDc: DCConnectInfo,
     dcNodeClient: HeliaLibp2p<Libp2p>,
     chainUtil: ChainUtil,
     context: DCContext
   ) {
     this.dc = dc;
-    this.accountBackUpDc = accountBackUpDc;
     this.dcNodeClient = dcNodeClient;
     this.chainUtil = chainUtil;
     this.context = context;
@@ -147,7 +144,7 @@ export class AIProxyManager {
         configTheme = "keyvalue_" + configTheme;
     }
   
-    let client = this.accountBackUpDc?.client || null;
+    let client = this.context.AccountBackupDc?.client || null;
     if (!client){
         client = await this.dc.connectToUserDcPeer(this.context.publicKey.raw);
     }
@@ -260,7 +257,7 @@ export class AIProxyManager {
     const userPubkey = this.context.getPublicKey();
     let userPubkeyStr = userPubkey.string();
 
-    let client = this.accountBackUpDc?.client || null;
+    let client = this.context.AccountBackupDc?.client || null;
     if (!client){
         client = await this.dc.connectToUserDcPeer(this.context.publicKey.raw);
     }
@@ -382,7 +379,7 @@ export class AIProxyManager {
 
  
 
-    let client = this.accountBackUpDc.client || null;
+    let client = this.context.AccountBackupDc.client || null;
        if (themeAuthor != this.context.publicKey.string()) {//查询他人主题评论
          const authorPublicKey: Ed25519PubKey = Ed25519PubKey.edPubkeyFromStr(themeAuthor);
          client = await this.dc.connectToUserDcPeer(authorPublicKey.raw);
@@ -416,7 +413,7 @@ export class AIProxyManager {
         }
         const fileManager = new FileManager(
             this.dc,
-            this.accountBackUpDc,
+            this.context.AccountBackupDc,
             this.chainUtil,
             this.dcNodeClient,
             this.context
@@ -535,7 +532,7 @@ export class AIProxyManager {
         configTheme = "keyvalue_" + configTheme;
     }
     
-     let client = this.accountBackUpDc.client || null;
+     let client = this.context.AccountBackupDc?.client || null;
        if (themeAuthor != this.context.publicKey.string()) {//查询他人主题评论
          const authorPublicKey: Ed25519PubKey = Ed25519PubKey.edPubkeyFromStr(themeAuthor);
          client = await this.dc.connectToUserDcPeer(authorPublicKey.raw);
@@ -618,15 +615,15 @@ export class AIProxyManager {
             ...modelValue,
             ...headersValue
         ]);
-        if (!this.accountBackUpDc.client) {
+        if (!this.context.AccountBackupDc.client) {
           throw new Error("ErrConnectToAccountPeersFail");
         }
         if(!this.context.publicKey){
             throw new Error("ErrConnectToAccountPeersFail");
         }
 
-        if (this.accountBackUpDc.client.token == "") {
-          await this.accountBackUpDc.client.GetToken(
+        if (this.context.AccountBackupDc.client.token == "") {
+          await this.context.AccountBackupDc.client.GetToken(
               this.context.appInfo.appId || "",
               this.context.publicKey.string(),
               this.context.sign
@@ -634,7 +631,7 @@ export class AIProxyManager {
         }
         const signature = await  this.context.sign(preSign);
         const proxyClient = new AIProxyClient(
-            this.accountBackUpDc.client,
+            this.context.AccountBackupDc.client,
             this.context
         );
         let res = await proxyClient.DoAIProxyCall(

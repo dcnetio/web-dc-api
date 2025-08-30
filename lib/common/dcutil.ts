@@ -81,7 +81,13 @@ export class DcUtil {
     return [res, peers];
   };
 
-  _connectPeers = (peerListJson: string[]): Promise<Multiaddr> => {
+
+  connectToPeer = async (peerAddr: string): Promise<Multiaddr> => {
+    return await this._connectPeers([peerAddr]);
+   
+  };
+
+  _connectPeers =  (peerListJson: string[]): Promise<Multiaddr> => {
     return new Promise((reslove, reject) => {
       const _this = this;
       const len = peerListJson.length;
@@ -473,7 +479,7 @@ export class DcUtil {
             type: Http2_Type.ACK,  
             version: 1,  
             payload: initReplyBytes,  
-          })
+          }) as any
           await writer.write(messageData)
           handshakeFlag = true
         }else{
@@ -493,7 +499,7 @@ export class DcUtil {
                 type: Http2_Type.ACK,  
                 version: 1,  
                 payload: fetchReplyBytes,  
-              })
+              }) as any
               await writer.write(messageData)
               mParts.length = 0
             } catch (error) {  

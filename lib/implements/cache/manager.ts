@@ -1,43 +1,41 @@
 import type { Multiaddr } from "@multiformats/multiaddr";
 import { DCConnectInfo } from "../../common/types/types";
-import { ThemeClient } from "./client";
+import { CacheClient } from "./client";
 import { DcUtil } from "../../common/dcutil";
 import { ChainUtil } from "../../common/chain";
 import { sha256, uint32ToLittleEndianBytes } from "../../util/utils";
 import { DCContext } from "../../../lib/interfaces/DCContext";
 
 // 错误定义
-export class ThemeError extends Error {
+export class CacheError extends Error {
   constructor(message: string) {
     super(message);
-    this.name = "ThemeError";
+    this.name = "CacheError";
   }
 }
 export const Errors = {
-  ErrNoDcPeerConnected: new ThemeError("no dc peer connected"),
-  ErrKeyNotValid: new ThemeError("key not valid"),
+  ErrNoDcPeerConnected: new CacheError("no dc peer connected"),
+  ErrKeyNotValid: new CacheError("key not valid"),
   // nodeAddr is null
-  ErrNodeAddrIsNull: new ThemeError("nodeAddr is null"),
+  ErrNodeAddrIsNull: new CacheError("nodeAddr is null"),
   // chainUtil is null
-  ErrChainUtilIsNull: new ThemeError("chainUtil is null"),
+  ErrChainUtilIsNull: new CacheError("chainUtil is null"),
   // account privatekey sign is null
-  ErrAccountPrivateSignIsNull: new ThemeError("account privatekey sign is null"),
+  ErrAccountPrivateSignIsNull: new CacheError("account privatekey sign is null"),
 };
 
-export class ThemeManager{
+export class CacheManager{
   dc: DcUtil;
   chainUtil: ChainUtil | undefined;
-  connectedDc: DCConnectInfo = {};
   context : DCContext | undefined;
   constructor(connectedDc: DCConnectInfo, dc: DcUtil, chainUtil?: ChainUtil, context?: DCContext) {
-    this.connectedDc = connectedDc;
     this.dc = dc;
     this.chainUtil = chainUtil;
     this.context = context;
   }
 
   async getCacheValue(key: string, peerAddr?: Multiaddr): Promise<[string | null, Error | null]> {
-    if (!this.connectedDc?.client) {
+    if (!this.context?.connectedDc?.client) {
       return [null, Errors.ErrNoDcPeerConnected];
     }
     //解析出peerid与cachekey
@@ -46,7 +44,7 @@ export class ThemeManager{
       console.log("key format error!");
       return [null, Errors.ErrKeyNotValid];
     }
-    if (!this.connectedDc.client) {
+    if (!this.context?.connectedDc.client) {
       console.log("dcClient is null");
       return [null, Errors.ErrNoDcPeerConnected];
     }
@@ -54,11 +52,11 @@ export class ThemeManager{
     const cacheKey = pkeys[1]!;
     try {
       let nodeAddr: Multiaddr | undefined;
-      if (this.connectedDc.nodeAddr) {
-        const connectedPeerId = this.connectedDc.nodeAddr.getPeerId() || "";
+      if (this.context?.connectedDc.nodeAddr) {
+        const connectedPeerId = this.context.connectedDc.nodeAddr.getPeerId() || "";
         if (connectedPeerId && connectedPeerId === peerid) {
           // 同一个节点
-          nodeAddr = this.connectedDc.nodeAddr;
+          nodeAddr = this.context.connectedDc.nodeAddr;
         } else {
           // 不是同一个节点
           nodeAddr = await this.dc?._getNodeAddr(peerid);
@@ -71,8 +69,8 @@ export class ThemeManager{
         return [null, Errors.ErrNodeAddrIsNull];
       }
 
-      const themeClient = new ThemeClient(this.connectedDc.client, peerAddr);
-      const reply = await themeClient.getCacheValue(nodeAddr, cacheKey);
+      const cacheClient = new CacheClient(this.context!,this.dc,this.context.connectedDc.client);
+      const reply = await cacheClient.getCacheValue(nodeAddr, cacheKey);
       console.log("GetCacheValueReply reply:", reply);
       return [reply, null];
     } catch (err) {
@@ -83,7 +81,7 @@ export class ThemeManager{
 
   // 设置缓存值
   setCacheKey = async (value: string, expire: number, peerAddr?: Multiaddr) : Promise<[string | null, Error | null]> => {
-    if (!this.connectedDc.client) {
+    if (!this.context?.AccountBackupDc.client) {
       return [null, Errors.ErrNoDcPeerConnected];
     }
     if (!this.chainUtil) {
@@ -116,8 +114,8 @@ export class ThemeManager{
     preSign.set(hashValue, preSignPart1.length);
 
     const signature = await  this.context.sign(preSign);
-    const themeClient = new ThemeClient(this.connectedDc.client, peerAddr);
-    const setCacheValueReply = await themeClient.setCacheKey(
+    const cacheClient = new CacheClient(this.context,this.dc,this.context?.AccountBackupDc.client);
+    const setCacheValueReply = await cacheClient.setCacheKey(
       value,
       blockHeight ? blockHeight : 0,
       expire,

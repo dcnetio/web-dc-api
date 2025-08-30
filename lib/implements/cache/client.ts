@@ -1,18 +1,24 @@
 import type { Multiaddr } from "@multiformats/multiaddr";
-import type { Client } from "../../common/dcapi";
+import { Client } from "../../common/dcapi";
 import { dcnet } from "../../proto/dcnet_proto";
 import { Libp2pGrpcClient } from "grpc-libp2p-client";
 import { toString as uint8ArrayToString } from "uint8arrays/to-string";
+import { DcUtil } from "lib/common/dcutil";
+import { DCContext } from "lib/interfaces";
 
 
 
 
-export class ThemeClient {
+export class CacheClient {
   client: Client;
+  context: DCContext;
+  dc: DcUtil;
 
 
-  constructor(dcClient: Client, peerAddr?: Multiaddr) {
+  constructor(context: DCContext,dc: DcUtil,dcClient: Client) {
     this.client = dcClient;
+    this.context = context;
+    this.dc = dc;
   }
 
   async getCacheValue(peerAddr: Multiaddr, key: string): Promise<string> {
@@ -22,6 +28,10 @@ export class ThemeClient {
       }
       if (!peerAddr) {
         peerAddr = this.client.peerAddr;
+      }else if (!peerAddr.equals(this.client.peerAddr)) {
+        await this.dc.connectToPeer(peerAddr.toString());
+        this.client =  new Client(this.client.p2pNode,this.client.blockstore, peerAddr, this.client.protocol);
+        await this.client.GetToken(this.context.appInfo.appId, this.context.publicKey!.string(), this.context.sign, peerAddr);
       }
       const message = new dcnet.pb.GetCacheValueRequest({});
       message.key = new TextEncoder().encode(key);

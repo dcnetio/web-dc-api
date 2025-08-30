@@ -4,7 +4,7 @@
 import {  ICacheOperations } from "../interfaces/cache-interface";
 import { DCContext } from "../../lib/interfaces/DCContext";
 import { DCModule, CoreModuleName } from "../common/module-system";
-import { ThemeManager } from "../implements/cache/manager";
+import { CacheManager } from "../implements/cache/manager";
 import { keyExpire } from "../common/define";
 import { createLogger } from "../util/logger";
 
@@ -16,7 +16,7 @@ const logger = createLogger('CacheModule');
  */
 export class CacheModule implements DCModule, ICacheOperations {
   readonly moduleName = CoreModuleName.CACHE;
-  private themeManager!: ThemeManager;
+  private cacheManager!: CacheManager;
   private initialized: boolean = false;
   
   /**
@@ -26,8 +26,8 @@ export class CacheModule implements DCModule, ICacheOperations {
    */
   async initialize(context: DCContext): Promise<boolean> {
     try {
-      this.themeManager = new ThemeManager(
-        context.connectedDc,
+      this.cacheManager = new CacheManager(
+        context.AccountBackupDc,
         context.dcutil,
         context.dcChain,
         context
@@ -55,7 +55,7 @@ export class CacheModule implements DCModule, ICacheOperations {
   async getCacheValue(key: string): Promise<[string | null, Error | null]>{
     try {
        this.assertInitialized();
-      const res = await this.themeManager.getCacheValue(key);
+      const res = await this.cacheManager.getCacheValue(key);
       if (res[0]) {
         logger.info(`获取缓存键 ${key} 成功`);
         return [res[0], null];
@@ -79,7 +79,7 @@ export class CacheModule implements DCModule, ICacheOperations {
     try {
        this.assertInitialized();
       const expireNumber = expire ? expire : keyExpire; // 默认一天
-      const res = await this.themeManager.setCacheKey(value, expireNumber);
+      const res = await this.cacheManager.setCacheKey(value, expireNumber);
       
       logger.info(`设置缓存值成功，过期时间: ${expireNumber}秒`);
       return res;

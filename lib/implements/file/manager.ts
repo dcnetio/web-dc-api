@@ -93,7 +93,7 @@ export class FileManager {
   ): Promise<Uint8Array> {
     if (isFirstChunk) {
       // 计算 pubkey 的 hash
-      const pubkeyHash = await crypto.subtle.digest("SHA-256", pubkeyBytes);
+      const pubkeyHash = await crypto.subtle.digest("SHA-256", pubkeyBytes as any);
       const pubkeyHashArray = new Uint8Array(pubkeyHash);
 
       // 创建文件头
@@ -144,7 +144,7 @@ export class FileManager {
 
         // 加密处理
         if (symKey) {
-          content = await symKey.encrypt(content);
+          content = await symKey.encrypt(content) as any;
         }
 
         // 文件头处理（仅在第一个分块添加）
@@ -154,7 +154,7 @@ export class FileManager {
             file.size,
             content,
             true // isFirstChunk
-          );
+          ) as any;
         }
 
         offset += chunkSize;
@@ -394,7 +394,7 @@ export class FileManager {
       let pubkeyBytes = this.context.getPubkeyRaw();
 
       // Create hash of public key for owner file
-      const pubkeyHash = await crypto.subtle.digest("SHA-256", pubkeyBytes);
+      const pubkeyHash = await crypto.subtle.digest("SHA-256", pubkeyBytes as any);
       const ownerFileContent = new Uint8Array(pubkeyHash);
 
       // Create folder structure using MFS (memory file system)
@@ -448,10 +448,10 @@ export class FileManager {
 
       // Create signature payload
       let preSign = new TextEncoder().encode(finalCid);
-      preSign = mergeUInt8Arrays(preSign, sizeValue);
-      preSign = mergeUInt8Arrays(preSign, heightValue);
-      preSign = mergeUInt8Arrays(preSign, typeValue);
-      preSign = mergeUInt8Arrays(preSign, serverPidBytes);
+      preSign = mergeUInt8Arrays(preSign, sizeValue) as any;
+      preSign = mergeUInt8Arrays(preSign, heightValue) as any;
+      preSign = mergeUInt8Arrays(preSign, typeValue) as any;
+      preSign = mergeUInt8Arrays(preSign, serverPidBytes) as any;
 
       // Sign the data
       const signature = await this.context.sign(preSign);
@@ -573,7 +573,7 @@ export class FileManager {
       if (typeof content === "string") {
         fileContent = new Blob([content], { type: "text/plain" });
       } else {
-        fileContent = new Blob([content]);
+        fileContent = new Blob([content as any]);
       }
 
       // Create File object with webkitRelativePath
@@ -1074,7 +1074,7 @@ async getFolderFileList(
           const headBuf = await toBuffer(fs.cat(CID.parse(cid), catOptions));
           readCount += headBuf.length;
           if (headBuf.length > 0) {
-            waitBuffer = mergeUInt8Arrays(waitBuffer, headBuf);
+            waitBuffer = mergeUInt8Arrays(waitBuffer, headBuf) as any;
             if (waitBuffer.length < 32) {
               catOptions.offset = waitBuffer.length;
               catOptions.length = 32 - waitBuffer.length;
@@ -1096,9 +1096,9 @@ async getFolderFileList(
             if (waitBuffer.length > 0) {
               if (decryptKey != "") {
                 const decrypted = await decryptContent(waitBuffer, decryptKey);
-                fileContent = mergeUInt8Arrays(fileContent, decrypted);
+                fileContent = mergeUInt8Arrays(fileContent, decrypted) as any;
               } else {
-                fileContent = mergeUInt8Arrays(fileContent, waitBuffer);
+                fileContent = mergeUInt8Arrays(fileContent, waitBuffer) as any;
               }
             }
             break;
@@ -1112,25 +1112,25 @@ async getFolderFileList(
           readCount += buf.length;
         }
         if (buf.length > 0) {
-          waitBuffer = mergeUInt8Arrays(waitBuffer, buf);
+          waitBuffer = mergeUInt8Arrays(waitBuffer, buf) as any;
           while (waitBuffer.length >= encryptextLen) {
             const encryptBuffer = waitBuffer.subarray(0, encryptextLen);
             waitBuffer = waitBuffer.subarray(encryptextLen, waitBuffer.length);
             if (decryptKey == "") {
-              fileContent = mergeUInt8Arrays(fileContent, encryptBuffer);
+              fileContent = mergeUInt8Arrays(fileContent, encryptBuffer) as any;
               continue;
             }
             //解密
             const decrypted = await decryptContent(encryptBuffer, decryptKey);
-            fileContent = mergeUInt8Arrays(fileContent, decrypted);
+            fileContent = mergeUInt8Arrays(fileContent, decrypted) as any;
           }
         } else {
           if (waitBuffer.length > 0) {
             if (decryptKey != "") {
               const decrypted = await decryptContent(waitBuffer, decryptKey);
-              fileContent = mergeUInt8Arrays(fileContent, decrypted);
+              fileContent = mergeUInt8Arrays(fileContent, decrypted) as any;
             } else {
-              fileContent = mergeUInt8Arrays(fileContent, waitBuffer);
+              fileContent = mergeUInt8Arrays(fileContent, waitBuffer) as any;
             }
           }
           break;
