@@ -164,17 +164,14 @@ export class KeyValueDB {
 
 export class KeyValueManager {
   private dc: DcUtil;
-  private connectedDc: DCConnectInfo = {};
   private chainUtil: ChainUtil;
   private context: DCContext;
   constructor(
     dc: DcUtil,
-    connectedDc: DCConnectInfo,
     chainUtil: ChainUtil,
     context: DCContext
   ) {
     this.dc = dc;
-    this.connectedDc = connectedDc;
     this.chainUtil = chainUtil;
     this.context = context;
   }
@@ -290,7 +287,7 @@ export class KeyValueManager {
     const userPubkey = this.context.getPublicKey();
     let userPubkeyStr = userPubkey.string();
 
-    let client = this.connectedDc?.client || null;
+    let client = this.context.AccountBackupDc?.client || null;
     if (!client){
         client = await this.dc.connectToUserDcPeer(this.context.publicKey.raw);
     }
@@ -474,7 +471,7 @@ export class KeyValueManager {
     }
     const userPubkey = this.context.getPublicKey();
     let userPubkeyStr = userPubkey.string();
-    let client = this.connectedDc?.client || null;
+    let client = this.context.AccountBackupDc?.client || null;
     if (!client){
         client = await this.dc.connectToUserDcPeer(this.context.publicKey.raw);
     }
@@ -561,7 +558,7 @@ export class KeyValueManager {
     if (!theme.startsWith("keyvalue_")) {
       theme = "keyvalue_" + theme;
     }
-    let client = this.connectedDc.client || null;
+    let client = this.context.AccountBackupDc.client || null;
     if (themeAuthor != this.context.publicKey.string()) {
       //查询他人主题评论
       const authorPublicKey: Ed25519PubKey =
@@ -620,7 +617,7 @@ export class KeyValueManager {
     if (!theme.startsWith("keyvalue_")) {
       theme = "keyvalue_" + theme;
     }
-    let client = this.connectedDc.client || null;
+    let client = this.context.AccountBackupDc.client || null;
     if (themeAuthor != this.context.publicKey.string()) {
       //查询他人主题评论
       const authorPublicKey: Ed25519PubKey =
@@ -683,7 +680,7 @@ export class KeyValueManager {
     if (!theme.startsWith("keyvalue_")) {
       theme = "keyvalue_" + theme;
     }
-    let client = this.connectedDc.client || null;
+    let client = this.context.AccountBackupDc.client || null;
     if (themeAuthor != this.context.publicKey.string()) {
       //查询他人主题评论
       const authorPublicKey: Ed25519PubKey =

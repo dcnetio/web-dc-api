@@ -29,7 +29,6 @@ export class MessageModule implements DCModule, IMessageOperations {
     try {
       this.context = context;
       this.messageManager = new MessageManager(
-        context.AccountBackupDc,
         context.dcutil,
         context.dcChain,
         context

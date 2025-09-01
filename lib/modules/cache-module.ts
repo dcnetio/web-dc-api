@@ -27,7 +27,6 @@ export class CacheModule implements DCModule, ICacheOperations {
   async initialize(context: DCContext): Promise<boolean> {
     try {
       this.cacheManager = new CacheManager(
-        context.AccountBackupDc,
         context.dcutil,
         context.dcChain,
         context

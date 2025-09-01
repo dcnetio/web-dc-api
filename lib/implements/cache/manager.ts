@@ -28,7 +28,7 @@ export class CacheManager{
   dc: DcUtil;
   chainUtil: ChainUtil | undefined;
   context : DCContext | undefined;
-  constructor(connectedDc: DCConnectInfo, dc: DcUtil, chainUtil?: ChainUtil, context?: DCContext) {
+  constructor( dc: DcUtil, chainUtil?: ChainUtil, context?: DCContext) {
     this.dc = dc;
     this.chainUtil = chainUtil;
     this.context = context;

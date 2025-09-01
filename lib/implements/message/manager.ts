@@ -25,17 +25,14 @@ export const Errors = {
 };
 
 export class MessageManager {
-  private accountBackupDc: DCConnectInfo = {};
   private context: DCContext;
   private chainUtil: ChainUtil;
   private dc: DcUtil;
   constructor(
-    accountBackupDc: DCConnectInfo,
     dc: DcUtil,
     chainUtil: ChainUtil,
     context: DCContext
   ) {
-    this.accountBackupDc = accountBackupDc;
     this.dc = dc;
     this.chainUtil = chainUtil;
     this.context = context;
@@ -47,7 +44,7 @@ export class MessageManager {
     msg: string
   ): Promise<[number | null, Error | null]> => {
     try {
-      if (!this.accountBackupDc.client) {
+      if (!this.context.AccountBackupDc.client) {
         return [null, Errors.ErrNoAccountPeerConnected];
       }
       const receiverPubkey: Ed25519PubKey = Ed25519PubKey.edPubkeyFromStr(receiver)
@@ -75,7 +72,7 @@ export class MessageManager {
       receiverClient.token = token;
   
       const messageClient = new MessageClient(
-        this.accountBackupDc.client,
+        this.context.AccountBackupDc.client,
         this.context,
         receiverClient,
       );
@@ -93,7 +90,7 @@ export class MessageManager {
     limit: number = 100
   ): Promise<[dcnet.pb.IUserMsg[] | null, Error | null]> => {
     try {
-      if (!this.accountBackupDc.client) {
+      if (!this.context.AccountBackupDc.client) {
         return [null, Errors.ErrNoAccountPeerConnected];
       }
       const publicKey = await this.context.getPublicKey();
@@ -139,7 +136,7 @@ export class MessageManager {
                 maxKey,
                 limit
               );
-              const list = res && res.msgs ? res.msgs : [];
+              const list = res && res["msgs"]? res["msgs"] : [];
               console.log('messageClient.getMsgFromUserBox list', list)
               list.map((item: dcnet.pb.IUserMsg) => {
                 if(item && item.messageId) {

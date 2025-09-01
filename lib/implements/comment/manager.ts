@@ -54,7 +54,6 @@ export const Errors = {
 export class CommentManager {
   dc: DcUtil;
   connectedDc: DCConnectInfo = {};
-  accountBackupDc: DCConnectInfo = {};
   dcNodeClient: HeliaLibp2p<Libp2p>;
   chainUtil: ChainUtil;
   context:DCContext
@@ -63,7 +62,6 @@ export class CommentManager {
   ) {
     this.dc = context.dcutil;
     this.connectedDc = context.connectedDc;
-    this.accountBackupDc = context.AccountBackupDc;
     this.dcNodeClient = context.dcNodeClient;
     this.chainUtil = context.dcChain;
     this.context = context;
@@ -72,13 +70,13 @@ export class CommentManager {
   // 配置或增加用户自身的评论空间 0:成功  1:失败
   async addUserOffChainSpace(): Promise<[boolean | null, Error | null]> {
     try {
-      if (!this.accountBackupDc?.client) {
+      if (!this.context.AccountBackupDc?.client) {
         return [null, Errors.ErrNoDcPeerConnected];
       }
-      if (!this.accountBackupDc?.nodeAddr) {
+      if (!this.context.AccountBackupDc?.nodeAddr) {
         return [null, Errors.ErrNodeAddrIsNull];
       }
-      const peerAddr = this.accountBackupDc.nodeAddr;
+      const peerAddr = this.context.AccountBackupDc.nodeAddr;
       const peerId = await extractPeerIdFromMultiaddr(peerAddr);
 
       const blockHeight = (await this.chainUtil.getBlockHeight()) || 0;
@@ -96,7 +94,7 @@ export class CommentManager {
 
       console.log("AddUserOffChainSpace peerId", peerId);
       const commentClient = new CommentClient(
-        this.accountBackupDc.client,
+        this.context.AccountBackupDc.client,
         this.dcNodeClient,
         this.context
       );
@@ -120,14 +118,14 @@ export class CommentManager {
     commentSpace: number,
   ): Promise<[number | null, Error | null]> {
     try {
-      if (!this.accountBackupDc?.client) {
+      if (!this.context.AccountBackupDc?.client) {
         return [null, Errors.ErrNoDcPeerConnected];
       }
       if (!this.context.publicKey) {
         return [null, Errors.ErrPublicKeyIsNull];
       }
-      if(this.accountBackupDc.client.token == ""){
-        await this.accountBackupDc.client.GetToken(appId, this.context.publicKey.string(),this.context.sign);
+      if(this.context.AccountBackupDc.client.token == ""){
+        await this.context.AccountBackupDc.client.GetToken(appId, this.context.publicKey.string(),this.context.sign);
       }
       const blockHeight = (await this.chainUtil.getBlockHeight()) || 0;
       const hValue: Uint8Array = uint32ToLittleEndianBytes(
@@ -148,7 +146,7 @@ export class CommentManager {
       const signature = await  this.context.sign(preSign);
       const userPubkey = this.context.getPublicKey();
       const commentClient = new CommentClient(
-        this.accountBackupDc.client,
+        this.context.AccountBackupDc.client,
         this.dcNodeClient,
         this.context
       );
@@ -204,14 +202,14 @@ export class CommentManager {
     theme: string
   ): Promise<[number | null, Error | null]> {
     try {
-      if (!this.accountBackupDc?.client) {
+      if (!this.context.AccountBackupDc?.client) {
         return [null, Errors.ErrNoDcPeerConnected];
       }
       if (!this.context.publicKey) {
         return [null, Errors.ErrPublicKeyIsNull];
       }
-      if(this.accountBackupDc.client.token == ""){
-        await this.accountBackupDc.client.GetToken(appId, this.context.publicKey.string(),this.context.sign);
+      if(this.context.AccountBackupDc.client.token == ""){
+        await this.context.AccountBackupDc.client.GetToken(appId, this.context.publicKey.string(),this.context.sign);
       }
       const blockHeight = (await this.chainUtil.getBlockHeight()) || 0;
       const hValue: Uint8Array = uint32ToLittleEndianBytes(
@@ -228,7 +226,7 @@ export class CommentManager {
       const signature = await  this.context.sign(preSign);
       const userPubkey = this.context.getPublicKey();
       const commentClient = new CommentClient(
-        this.accountBackupDc.client,
+        this.context.AccountBackupDc.client,
         this.dcNodeClient,
         this.context
       );
@@ -285,7 +283,7 @@ export class CommentManager {
       if (!this.context.publicKey) {
         return [null, Errors.ErrPublicKeyIsNull];
       }
-      let client = this.accountBackupDc.client;
+      let client = this.context.AccountBackupDc.client;
       if (!client ||themeAuthor != this.context.publicKey.string()) {//查询他人主题评论
         const authorPublicKey: Ed25519PubKey = Ed25519PubKey.edPubkeyFromStr(themeAuthor);
         const connectedClient = await this.dc.connectToUserDcPeer(authorPublicKey.raw);
@@ -312,14 +310,14 @@ export class CommentManager {
 
 async getUserOffChainUsedInfo(vaccount: string = ""): Promise<[dcnet.pb.GetUserOffChainUsedInfoReply | null, Error | null]> {
   try {
-    if (!this.accountBackupDc?.client) {
+    if (!this.context.AccountBackupDc?.client) {
       return [null, Errors.ErrNoDcPeerConnected];
     }
-    if(!this.accountBackupDc?.nodeAddr){
+    if(!this.context.AccountBackupDc?.nodeAddr){
       return [null, Errors.ErrNoDcPeerConnected];
     }
     const commentClient = new CommentClient(
-      this.accountBackupDc.client,
+      this.context.AccountBackupDc.client,
       this.dcNodeClient,
       this.context
     );
@@ -336,10 +334,10 @@ async addUserOffChainOpTimes(
 ): Promise<[boolean | null, Error | null]> {
   try {
     // 检查连接
-    if (!this.accountBackupDc?.client) {
+    if (!this.context.AccountBackupDc?.client) {
       return [null, Errors.ErrNoDcPeerConnected];
     }
-    if(!this.accountBackupDc?.nodeAddr){
+    if(!this.context.AccountBackupDc?.nodeAddr){
       return [null, Errors.ErrNoDcPeerConnected];
     }
 
@@ -347,8 +345,8 @@ async addUserOffChainOpTimes(
     if (!this.context.publicKey) {
       return [null, Errors.ErrPublicKeyIsNull];
     }
-    if(this.accountBackupDc.client.token == ""){
-      await this.accountBackupDc.client.GetToken(
+    if(this.context.AccountBackupDc.client.token == ""){
+      await this.context.AccountBackupDc.client.GetToken(
         this.context.appInfo.appId || "",
         this.context.publicKey.string(),
         this.context.sign);
@@ -361,7 +359,7 @@ async addUserOffChainOpTimes(
     // 准备签名数据
     const hValue = uint32ToLittleEndianBytes(blockHeight);
     const tValue = uint32ToLittleEndianBytes(times);
-    const peerId = this.accountBackupDc?.nodeAddr.getPeerId() || "";
+    const peerId = this.context.AccountBackupDc?.nodeAddr.getPeerId() || "";
     const peerIdBytes = new TextEncoder().encode(peerId);
     const preSign = new Uint8Array([
       ...peerIdBytes,
@@ -374,7 +372,7 @@ async addUserOffChainOpTimes(
     const userPubkey = this.context.getPublicKey();
 
     const client = new CommentClient(
-        this.accountBackupDc.client,
+        this.context.AccountBackupDc.client,
         this.dcNodeClient,
         this.context
       );
@@ -401,14 +399,14 @@ async addUserOffChainOpTimes(
     addSpace: number,
   ): Promise<[number | null, Error | null]> {
     try {
-      if (!this.accountBackupDc?.client) {
+      if (!this.context.AccountBackupDc?.client) {
         return [null, Errors.ErrNoDcPeerConnected];
       }
       if (!this.context.publicKey) {
         return [null, Errors.ErrPublicKeyIsNull];
       }
-      if(this.accountBackupDc.client.token == ""){
-        await this.accountBackupDc.client.GetToken(appId, this.context.publicKey.string(),this.context.sign);
+      if(this.context.AccountBackupDc.client.token == ""){
+        await this.context.AccountBackupDc.client.GetToken(appId, this.context.publicKey.string(),this.context.sign);
       }
       const blockHeight = (await this.chainUtil.getBlockHeight()) || 0;
       const hValue: Uint8Array = uint32ToLittleEndianBytes(
@@ -427,7 +425,7 @@ async addUserOffChainOpTimes(
       const signature = await  this.context.sign(preSign);
       const userPubkey = this.context.getPublicKey();
       const commentClient = new CommentClient(
-        this.accountBackupDc.client,
+        this.context.AccountBackupDc.client,
         this.dcNodeClient,
         this.context
       );
@@ -456,14 +454,14 @@ async addUserOffChainOpTimes(
     openFlag?: number
   ): Promise<[string | null, Error | null]> {
     try {
-      if (!this.accountBackupDc?.client) {
+      if (!this.context.AccountBackupDc?.client) {
         return [null, Errors.ErrNoDcPeerConnected];
       }
       if (!this.context.publicKey) {
         return [null, Errors.ErrPublicKeyIsNull];
       }
-      if(this.accountBackupDc.client.token == ""){
-        await this.accountBackupDc.client.GetToken(appId, this.context.publicKey.string(),this.context.sign);
+      if(this.context.AccountBackupDc.client.token == ""){
+        await this.context.AccountBackupDc.client.GetToken(appId, this.context.publicKey.string(),this.context.sign);
       }
       const blockHeight = (await this.chainUtil.getBlockHeight()) || 0;
       const hValue: Uint8Array = uint32ToLittleEndianBytes(
@@ -492,7 +490,7 @@ async addUserOffChainOpTimes(
       const signature = await  this.context.sign(preSign);
       const userPubkey = this.context.getPublicKey();
       const commentClient = new CommentClient(
-        this.accountBackupDc.client,
+        this.context.AccountBackupDc.client,
         this.dcNodeClient,
         this.context
       );
@@ -557,14 +555,14 @@ async addUserOffChainOpTimes(
     commentKey: string,
   ): Promise<[number | null, Error | null]> {
     try {
-      if (!this.accountBackupDc?.client) {
+      if (!this.context.AccountBackupDc?.client) {
         return [null, Errors.ErrNoDcPeerConnected];
       }
       if (!this.context.publicKey) {
         return [null, Errors.ErrPublicKeyIsNull];
       }
-      if(this.accountBackupDc.client.token == ""){
-        await this.accountBackupDc.client.GetToken(appId, this.context.publicKey.string(),this.context.sign);
+      if(this.context.AccountBackupDc.client.token == ""){
+        await this.context.AccountBackupDc.client.GetToken(appId, this.context.publicKey.string(),this.context.sign);
       }
       const parts = commentKey.split("/");
       if (parts.length < 2) {
@@ -593,7 +591,7 @@ async addUserOffChainOpTimes(
       const signature = await  this.context.sign(preSign);
       const userPubkey = this.context.getPublicKey();
       const commentClient = new CommentClient(
-        this.accountBackupDc.client,
+        this.context.AccountBackupDc.client,
         this.dcNodeClient,
         this.context
       );
@@ -659,7 +657,7 @@ async addUserOffChainOpTimes(
       if (!this.context.publicKey) {
         return [null, Errors.ErrPublicKeyIsNull];
       }
-      let client = this.accountBackupDc.client;
+      let client = this.context.AccountBackupDc.client;
       if (!client || themeAuthor != this.context.publicKey.string()) {//查询他人主题评论
         const authorPublicKey: Ed25519PubKey = Ed25519PubKey.edPubkeyFromStr(themeAuthor);
         const connectedClient = await this.dc.connectToUserDcPeer(authorPublicKey.raw);
@@ -731,7 +729,7 @@ async addUserOffChainOpTimes(
       if (!this.context.publicKey) {
         return [null, Errors.ErrPublicKeyIsNull];
       }
-      let client = this.accountBackupDc.client;
+      let client = this.context.AccountBackupDc.client;
       if (!client || themeAuthor != this.context.publicKey.string()) {//查询他人主题评论
         const authorPublicKey: Ed25519PubKey = Ed25519PubKey.edPubkeyFromStr(themeAuthor);
         const connectedClient = await this.dc.connectToUserDcPeer(authorPublicKey.raw);
@@ -812,7 +810,7 @@ async addUserOffChainOpTimes(
       const userPubkey = this.context.publicKey;
       let userPubkeyStr = userPubkey.string();
   
-      let client = this.accountBackupDc.client;
+      let client = this.context.AccountBackupDc.client;
       if (themeAuthor != userPubkeyStr) {//查询他人主题评论
         const authorPublicKey: Ed25519PubKey = Ed25519PubKey.edPubkeyFromStr(themeAuthor);
         const connectedClient = await this.dc.connectToUserDcPeer(authorPublicKey.raw);
@@ -999,7 +997,7 @@ async addUserOffChainOpTimes(
       if(this.connectedDc.client.token == ""){
         await this.connectedDc.client.GetToken(appId, this.context.publicKey.string(),this.context.sign);
       }
-      let client = this.accountBackupDc.client;
+      let client = this.context.AccountBackupDc.client;
       if (userPubkey != this.context.publicKey.string()) {//查询他人主题评论
         const userPublicKey: Ed25519PubKey = Ed25519PubKey.edPubkeyFromStr(userPubkey);
         const connectedClient = await this.dc.connectToUserDcPeer(userPublicKey.raw);
