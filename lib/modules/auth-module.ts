@@ -169,6 +169,7 @@ export class AuthModule implements DCModule, IAuthOperations {
   > {
     try {
       const account = await this.accountLoginWithWalletCall(accountInfo);
+      this.context.userInfo = account;
       return [account, null];
     } catch (error) {
       return [null, error as Error];
@@ -238,6 +239,13 @@ export class AuthModule implements DCModule, IAuthOperations {
           // 获取私钥
           const privKey = Ed25519PrivKey.unmarshalString(res[0]);
           console.log("=================获取私钥 success");
+        }
+        this.context.userInfo = {
+          nftAccount, // NFT账号
+          appAccount:userPubkey.raw, // 应用专用账号公钥 
+          ethAccount:'', // 以太坊兼容链上账号
+          chainId:'', // 区块链ID
+          chainName:'', // 区块链名称
         }
         return [mnemonic, null];
       }
