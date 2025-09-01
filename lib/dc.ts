@@ -3,7 +3,7 @@
 
 import { type Multiaddr } from "@multiformats/multiaddr";
 import { ChainUtil } from "./common/chain";
-import type { DCConnectInfo, APPInfo, User, AccountInfo } from "./common/types/types";
+import type { DCConnectInfo, APPInfo, User, AccountInfo, Account } from "./common/types/types";
 import { DcUtil } from "./common/dcutil";
 import { type HeliaLibp2p } from "helia";
 import { Libp2p } from "@libp2p/interface";
@@ -44,6 +44,13 @@ export class DC implements DCContext {
   publicKey: Ed25519PubKey | undefined;
   dbThreadId: string = ""; // 当前用户的去中心化数据库ID
   ethAddress: string = ""; // 以太坊格式的公钥,16进制字符串
+  userInfo: Account = {
+    nftAccount: "",
+    appAccount: new Uint8Array(),
+    ethAccount: "",
+    chainId: "",
+    chainName: ""
+  }
 
   // 连接相关
   public connectedDc: DCConnectInfo = {};
@@ -290,7 +297,7 @@ export class DC implements DCContext {
             if(!this.db) {
               return [null, new Error("数据库模块不存在")]
             }
-            const [dbinfo, error] = await this.db.getDBInfo(threadid);
+            const [dbinfo, error] =  await this.db.getDBInfo(threadid);
             if (dbinfo != null && !error) {
               //本地数据库存在,检查是否需要表结构升级
               if (verno) {
@@ -325,7 +332,7 @@ export class DC implements DCContext {
               }, 5000);
               this.dbThreadId = dbinfo.id;
               return [dbinfo, null];
-            } else {
+            } else if (threadid != ""){
               //本地数据库不存在,从DC同步
               await this.db.syncDbFromDC(
                 threadid,
