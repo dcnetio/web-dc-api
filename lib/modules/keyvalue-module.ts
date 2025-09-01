@@ -8,6 +8,7 @@ import { KeyValueManager, KeyValueStoreType, KeyValueDB } from "../implements/ke
 import { createLogger } from "../util/logger";
 import { ThemeAuthInfo, ThemeComment } from "../common/types/types";
 import { Direction } from "../common/define";
+import { ThemePermission } from "../common/constants";
 const logger = createLogger('KeyValueModule');
 const indexkey_dckv = "indexkey_dckv"; //索引键名，keyvalue设置过程中key本身的索引键
 /**
@@ -109,7 +110,7 @@ export class KeyValueModule implements DCModule, IKeyValueOperations {
    async configAuth(
     kvdb: KeyValueDB,
     authPubkey: string,
-    permission: number,
+    permission: ThemePermission,
     remark: string,
     vaccount?: string
   ): Promise<[number | null, Error | null]> {
@@ -233,7 +234,7 @@ export class KeyValueModule implements DCModule, IKeyValueOperations {
     }
 
     try {
-      const res = await kvdb.getBatch(writerPubkey, keys, vaccount);
+      const res = await kvdb.getBatch(keys, writerPubkey, vaccount);
       return res;
     } catch (error) {
       logger.error(`getBatch失败:`, error);
