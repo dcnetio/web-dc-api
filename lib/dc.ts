@@ -61,6 +61,7 @@ export class DC implements DCContext {
   public appInfo: APPInfo;
   public shouldReturnUserInfo: boolean = false;
   public accountInfo: AccountInfo; // 当前登录的账户信息
+  public userInfo: Account | null = null;
   public dbManager: any;
   public swUrl: string = "";
   public swInited: boolean = false;
