@@ -740,7 +740,7 @@ export class CommentClient {
       console.log("IsThemeExist reply", reply);
       const decoded = dcnet.pb.IsThemeExistReply.decode(reply);
       console.log("IsThemeExist decoded", decoded);
-      if (decoded.flag) {
+      if (decoded.flag == 0) {
         return true;
       }
       return false;
