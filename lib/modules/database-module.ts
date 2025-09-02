@@ -349,6 +349,9 @@ async close(): Promise<Error | null> {
  */ 
 async getDBInfo(id: string): Promise<[IDBInfo|null, Error|null]> {
   try{
+    if (!id || id.length == 0) {
+        return [null, new Error("数据库ID不能为空")];
+    }
 
     this.assertInitialized();
     await this.initDBManager();

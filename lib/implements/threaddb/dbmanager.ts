@@ -769,7 +769,7 @@ async importDBStateFromReader(
       // 解析键值对
       const kv = line.split('|');
       if (kv.length !== 2) {
-        await txn.discard();
+         txn.discard();
         throw new Error('无效的记录格式');
       }
       
