@@ -10,11 +10,19 @@ import dts from 'rollup-plugin-dts';
 import pkg from './package.json' assert { type: 'json' };
 
 // 外部依赖（这些将不会被打包进最终文件）
-const external = [
+const allExternals = [
   ...Object.keys(pkg.dependencies || {}),
   ...Object.keys(pkg.devDependencies || {}),
   ...Object.keys(pkg.peerDependencies || {})
 ];
+// 例外 - 这些依赖必须被打包
+const internalDependencies = [
+  'buffer', // 必须打包buffer以解决Buffer.from错误
+  // 其他...
+];
+
+// 最终外部依赖列表
+const external = allExternals.filter(dep => !internalDependencies.includes(dep));
 
 console.log('NODE_ENV:', process.env.NODE_ENV);
 
