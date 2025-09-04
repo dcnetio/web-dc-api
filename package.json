@@ -1,24 +1,27 @@
+
 {
   "name": "web-dc-api",
   "version": "0.0.59",
   "description": "web相关的dcapi",
   "type": "module",
   "browser": "dist/dc.min.js",
-  "main": "dist/index.cjs.js",
-  "module": "dist/index.esm.js",
-  "types": "dist/index.d.ts",
+  "main": "dist/cjs/index.js",
+  "module": "dist/esm/index.js",
+  "types": "dist/types/index.d.ts",
   "exports": {
     ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.esm.js",
-      "require": "./dist/index.cjs.js"
+      "types": "./dist/types/index.d.ts",
+      "import": "./dist/esm/index.js",
+      "require": "./dist/cjs/index.js",
+      "browser": "./dist/dc.min.js"
     },
     "./dc-key/ed25519": {
-      "types": "./dist/dc-key/ed25519.d.ts",
-      "import": "./dist/dc-key/ed25519.esm.js",
-      "require": "./dist/dc-key/ed25519.cjs.js"
+      "types": "./dist/types/dc-key/ed25519.d.ts",
+      "import": "./dist/esm/dc-key/ed25519.js",
+      "require": "./dist/cjs/dc-key/ed25519.js"
     }
   },
+  "sideEffects": false,
   "files": [
     "dist",
     "lib"
@@ -31,7 +34,7 @@
   },
   "author": "",
   "license": "ISC",
-  "keywords": [],
+  "keywords": {},
   "dependencies": {
     "grpc-libp2p-client": "^0.0.10",
     "@helia/block-brokers": "4.1.0",

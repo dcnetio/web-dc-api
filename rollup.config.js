@@ -1,3 +1,4 @@
+
 import resolve from '@rollup/plugin-node-resolve';
 import commonjs from '@rollup/plugin-commonjs';
 import typescript from '@rollup/plugin-typescript';
@@ -5,78 +6,84 @@ import json from '@rollup/plugin-json';
 import terser from '@rollup/plugin-terser';
 import babel from '@rollup/plugin-babel';
 import replace from '@rollup/plugin-replace';
-
-
 import dts from 'rollup-plugin-dts';
 import pkg from './package.json' assert { type: 'json' };
 
-const tsconfig = {
-  tsconfig: './tsconfig.json',
-  declaration: false
-};
-
 // 外部依赖（这些将不会被打包进最终文件）
 const external = [
+  ...Object.keys(pkg.dependencies || {}),
   ...Object.keys(pkg.devDependencies || {}),
   ...Object.keys(pkg.peerDependencies || {})
 ];
+
 console.log('NODE_ENV:', process.env.NODE_ENV);
-const plugins = [
-      // 替换 __DEV__ 变量
-      replace({
-        __IS_PROD__: true,
-        preventAssignment: true
-      }),
-      json(),
-      typescript(tsconfig),
-      babel({
-        babelHelpers: 'bundled',
-        presets: [
-          ['@babel/preset-env', {
-            // 指定目标浏览器
-            targets: ">0.25%, not dead, not IE 11",
-            // 按需引入 polyfill
-            useBuiltIns: 'usage',
-            corejs: 3
-          }]
-        ],
-        // 确保处理 .ts 文件
-        extensions: ['.js', '.ts']
-      }),
-      terser({
-        // 暂时去掉混淆
-        // mangle: {
-        //   toplevel: true, // 混淆顶层变量和函数名
-        // },
-        compress: {
-          drop_console: true, // 移除console
-          drop_debugger: true // 移除debugger
-        },
-        format: {
-          comments: false // 移除注释
-        },
-      }),
-    ];
+
+const basePlugins = [
+  // 替换 __DEV__ 变量
+  replace({
+    __IS_PROD__: true,
+    preventAssignment: true
+  }),
+  json()
+];
+
+const productionPlugins = [
+  babel({
+    babelHelpers: 'bundled',
+    presets: [
+      ['@babel/preset-env', {
+        // 指定目标浏览器
+        targets: ">0.25%, not dead, not IE 11",
+        // 按需引入 polyfill
+        useBuiltIns: 'usage',
+        corejs: 3
+      }]
+    ],
+    // 确保处理 .ts 文件
+    extensions: ['.js', '.ts']
+  })
+];
+
+const minifyPlugin = terser({
+  compress: {
+    drop_console: true,
+    drop_debugger: true
+  },
+  format: {
+    comments: false
+  },
+});
 
 // 全局变量名
 const GLOBAL_NAME = 'WebDcApi';
 
+// 为每个构建配置对应的TypeScript选项
+const getTsConfig = (outDir) => ({
+  tsconfig: './tsconfig.json',
+  declaration: false,
+  outDir,        // 指定输出目录匹配Rollup
+  rootDir: 'lib' // 确保TypeScript知道源代码根目录
+});
+
 export default [
-  // 原有的ESM和CJS构建
+  // ESM构建 - 使用代码拆分
   {
-    input: 'lib/index.ts',
-    output: [
-      {
-        file: pkg.module, // ESM格式
-        format: 'esm',
-        sourcemap: false
-      },
-      {
-        file: pkg.main, // CJS格式
-        format: 'cjs',
-        sourcemap: false
-      }
-    ],
+    input: {
+      index: 'lib/index.ts',
+      // 添加额外的入口点 - 根据你的实际模块结构调整
+      // 例如，如果你有API模块、工具模块等，可以分别添加
+      // api: 'lib/api/index.ts',
+      // utils: 'lib/utils/index.ts',
+    },
+    output: {
+      dir: 'dist/esm',
+      format: 'esm',
+      preserveModules: true, // 保留模块结构
+      preserveModulesRoot: 'lib',
+      entryFileNames: '[name].js',
+      chunkFileNames: 'chunks/[name]-[hash].js',
+      sourcemap: false
+    },
     external,
     plugins: [
       resolve({
@@ -86,7 +93,40 @@ export default [
       commonjs({
         transformMixedEsModules: true
       }),
-      ...plugins,
+      typescript(getTsConfig('dist/esm')), // 匹配Rollup输出目录
+      ...basePlugins,
+      ...productionPlugins
+    ]
+  },
+  
+  // CJS构建 - 使用代码拆分
+  {
+    input: {
+      index: 'lib/index.ts',
+      // 根据你的模块结构添加更多入口点
+    },
+    output: {
+      dir: 'dist/cjs',
+      format: 'cjs',
+      preserveModules: true,
+      preserveModulesRoot: 'lib',
+      entryFileNames: '[name].js',
+      chunkFileNames: 'chunks/[name]-[hash].js',
+      exports: 'named',
+      sourcemap: false
+    },
+    external,
+    plugins: [
+      resolve({
+        preferBuiltins: false,
+        browser: true
+      }),
+      commonjs({
+        transformMixedEsModules: true
+      }),
+      typescript(getTsConfig('dist/cjs')), // 匹配Rollup输出目录
+      ...basePlugins,
+      ...productionPlugins
     ]
   },
   
@@ -94,76 +134,100 @@ export default [
   {
     input: 'lib/index.ts',
     output: {
-      file: pkg.types,
-      format: 'es'
+      dir: 'dist/types',
+      format: 'es',
+      preserveModules: true,
+      preserveModulesRoot: 'lib'
     },
     plugins: [dts()],
     external
   },
   
-  // // 新增的浏览器UMD构建
+  // // UMD构建 - 分块版本
   // {
   //   input: 'lib/index.ts',
   //   output: {
-  //     file: 'dist/dc.js', // 未压缩版本
+  //     dir: 'dist/umd',
   //     format: 'umd',
   //     name: GLOBAL_NAME,
-  //     sourcemap: true,
+  //     sourcemap: false,
   //     exports: 'named',
+  //     // 拆分成多个文件
+  //     entryFileNames: '[name].js',
+  //     chunkFileNames: 'chunks/[name]-[hash].js',
   //     // 确保所有导出都正确挂载到全局对象
   //     intro: `var global = typeof window !== 'undefined' ? window : this;`,
   //     globals: {
-  //       // 明确告诉 Rollup 本地包的全局变量名
   //       'grpc-libp2p-client': 'GrpcLibp2pClient'
   //     }
   //   },
-  //   // 注意：浏览器版本应该包含所有依赖（除非是全局可用的）
-  //   // external: [], // 不设置external，以便捆绑所有依赖
-  //   external: ['grpc-libp2p-client'], // 设为外部依赖
+  //   external: ['grpc-libp2p-client'],
+  //   manualChunks: function(id) {
+  //     // 根据模块路径拆分chunks
+  //     if (id.includes('node_modules')) {
+  //       // 将node_modules依赖分组
+  //       const packageName = id.match(/node_modules\/(@[^/]+\/[^/]+|[^/]+)/)?.[1];
+  //       return packageName ? `vendor-${packageName.replace('@', '')}` : 'vendor-other';
+  //     }
+      
+  //     // 根据你的项目结构拆分自己的代码
+  //     // 例如，如果lib文件夹下有api、utils等子目录
+  //     if (id.includes('/lib/api/')) {
+  //       return 'api';
+  //     }
+  //     if (id.includes('/lib/utils/')) {
+  //       return 'utils';
+  //     }
+      
+  //     // 其他模块可以根据实际情况添加更多条件
+  //   },
   //   plugins: [
   //     resolve({
   //       browser: true,
   //       preferBuiltins: false,
-  //       // 包括node_modules和上级目录
   //       paths: ['node_modules', '../']
   //     }),
   //     commonjs({
   //       transformMixedEsModules: true,
   //     }),
-  //     ...plugins,
+  //     typescript(getTsConfig('dist/umd')), // 匹配Rollup输出目录
+  //     ...basePlugins,
+  //     ...productionPlugins,
+  //     minifyPlugin
   //   ]
   // },
   
-  // 压缩版本
+  // 单一UMD文件 (兼容旧版本引用)
   {
     input: 'lib/index.ts',
     output: {
-      file: 'dist/dc.min.js', // 未压缩版本
+      file: 'dist/dc.min.js',
       format: 'umd',
       name: GLOBAL_NAME,
       sourcemap: false,
       exports: 'named',
-      // 确保所有导出都正确挂载到全局对象
       intro: `var global = typeof window !== 'undefined' ? window : this;`,
       globals: {
-        // 明确告诉 Rollup 本地包的全局变量名
         'grpc-libp2p-client': 'GrpcLibp2pClient'
       }
     },
-    // 注意：浏览器版本应该包含所有依赖（除非是全局可用的）
-    // external: [], // 不设置external，以便捆绑所有依赖
-    external: ['grpc-libp2p-client'], // 设为外部依赖
+    external: ['grpc-libp2p-client'],
     plugins: [
       resolve({
         browser: true,
         preferBuiltins: false,
-        // 包括node_modules和上级目录
         paths: ['node_modules', '../']
       }),
       commonjs({
         transformMixedEsModules: true,
       }),
-      ...plugins,
+      typescript({
+        tsconfig: './tsconfig.json',
+        declaration: false
+      }), // 单文件输出不需要指定outDir
+      ...basePlugins,
+      ...productionPlugins,
+      minifyPlugin
     ]
   }
 ];
