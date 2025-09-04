@@ -126,6 +126,7 @@ export async function GetRecord(
   const blockData = await dag.get<Uint8Array>(id);
   const decrypt = await key.decrypt(blockData);
   const decoded =  dagCBOR.decode<RecordObj>(decrypt);
+  decoded.block = id; //使用加密后且cborencode后数据的cid
  // const dblock = await dag.get<Uint8Array>(decoded.block);
   const wrapedRnode = await wrapObject(blockData);
   const record = new Record(wrapedRnode, decoded);
@@ -147,6 +148,7 @@ export async function RecordFromNode(
   const node = await decodeBlock(block, key);
   // 解析记录对象
   const obj = dagCBOR.decode<RecordObj>(node.rawData());
+  obj.block = coded.cid(); //使用加密后且cborencode后数据的cid
  // const wrapedRnode = await  wrapObject(block);
   // 返回Record实例
   return new Record(
@@ -282,7 +284,8 @@ export async function RecordFromProto(
  const recData = await key.decrypt(encryptRec);
  const recObj = dagCBOR.decode<RecordObj>(recData);
  const rnode = await cbornode.decode(rec.recordNode)
- 
+ recObj.block = rnode.cid(); //使用加密后且cborencode后数据的cid
+
   // 解析记录对象
   const eventNode = await cbornode.decode(rec.eventNode);
   const headerNode = await cbornode.decode(rec.headerNode);

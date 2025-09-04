@@ -44,13 +44,7 @@ export class DC implements DCContext {
   publicKey: Ed25519PubKey | undefined;
   dbThreadId: string = ""; // 当前用户的去中心化数据库ID
   ethAddress: string = ""; // 以太坊格式的公钥,16进制字符串
-  userInfo: Account = {
-    nftAccount: "",
-    appAccount: new Uint8Array(),
-    ethAccount: "",
-    chainId: "",
-    chainName: ""
-  }
+
 
   // 连接相关
   public connectedDc: DCConnectInfo = {};
@@ -90,7 +84,7 @@ export class DC implements DCContext {
     this.dcChain = new ChainUtil();
     this.dcutil = new DcUtil(this.dcChain);
     // //todo 发布注释 remove
-     // this.dcutil.defaultPeerId= "12D3KooWEGzh4AcbJrfZMfQb63wncBUpscMEEyiMemSWzEnjVCPf";
+  //    this.dcutil.defaultPeerId= "12D3KooWEGzh4AcbJrfZMfQb63wncBUpscMEEyiMemSWzEnjVCPf";
     // //todo remove end
     this.appInfo = options.appInfo || ({} as APPInfo);
     this.accountInfo = {} as AccountInfo;
