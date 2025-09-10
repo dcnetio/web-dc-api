@@ -202,19 +202,19 @@ export class KeyValueModule implements DCModule, IKeyValueOperations {
   async getValues(
     kvdb: KeyValueDB,
     key: string,
-    limit: number,
-    seekKey:string, 
-    direction: Direction = Direction.Forward,
-    offset: number,
+    options: { limit?: number; seekKey?: string; direction?: Direction; offset?: number } ,
     vaccount?: string
   ): Promise<[string | null, Error | null]> {
      const err = this.assertInitialized();
     if (err) {
       return [null, err];
     }
-    
+    const limit = options.limit? options.limit: 10;
+    const seekKey = options.seekKey? options.seekKey: "";
+    const direction = options.direction? options.direction: Direction.Forward;
+    const offset = options.offset? options.offset: 0;
     try {
-      const res = await kvdb.getWithIndex(indexkey_dckv, key, limit,seekKey,direction, offset,  vaccount);
+      const res = await kvdb.getWithIndex(indexkey_dckv, key, limit, seekKey, direction, offset, vaccount);
       return res;
     } catch (error) {
       logger.error(`getValues失败:`, error);

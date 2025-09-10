@@ -102,10 +102,7 @@ export interface IKeyValueOperations {
   getValues(
     kvdb: KeyValueDB,
     key: string,
-    limit: number,
-    seekKey:string, 
-    direction: Direction,
-    offset: number,
+    options: { limit?: number; seekKey?: string; direction?: Direction; offset?: number } ,
     vaccount?: string
   ): Promise<[string | null, Error | null]>;
 
