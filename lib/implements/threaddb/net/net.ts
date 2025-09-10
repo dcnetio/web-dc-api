@@ -571,13 +571,17 @@ export class Network implements Net {
   /**
    * Pull thread updates from peers
    */
-  async pullThread(id: ThreadID): Promise<void> {
+  async pullThread(id: ThreadID, timeout: number, options: { token?: ThreadToken | undefined; multiPeersFlag?: boolean | undefined;}): Promise<void> {
     try {
       let recs: Record<string, PeerRecords> = {};
       const mutex = this.getMutexForThread(id.toString());
       await mutex.acquire();
       try {
-        recs = await this.pullThreadDeal(id);
+        if (options.multiPeersFlag) {
+          recs = await this.pullThreadDeal(id, options.multiPeersFlag );
+        }else{
+          recs = await this.pullThreadDeal(id, false );
+        }
       } finally {
         mutex.release();
       }
@@ -701,7 +705,7 @@ export class Network implements Net {
   /**
    * Pull thread records from peers
    */
-  async pullThreadDeal(tid: ThreadID): Promise<Record<string, PeerRecords>> {
+  async pullThreadDeal(tid: ThreadID,multiPeersFlag: boolean=false): Promise<Record<string, PeerRecords>> {
     try {
       let [offsets, peers] = await this.threadOffsets(tid);
       try {
@@ -725,7 +729,8 @@ export class Network implements Net {
           peers,
           tid,
           offsets,
-          netPullingLimit
+          netPullingLimit,
+          multiPeersFlag
         );
         let continueFlag = false;
         for (const [lidStr, rs] of Object.entries(recs)) {
@@ -1319,7 +1324,8 @@ export class Network implements Net {
     peers: PeerId[], 
     tid: ThreadID, 
     offsets: Record<string, { id?: CID, counter: number }>,
-    limit: number
+    limit: number,
+    multiPeersFlag: boolean = false
   ): Promise<Record<string, PeerRecords>> {
     try {
       // 构建请求
@@ -1343,23 +1349,18 @@ export class Network implements Net {
             }
             const dbClient = new DBClient(client,this.dc,this,this.logstore);
             const records = await dbClient.getRecordsFromPeer( req, serviceKey);
-            
-            // // 更新收集器
-            // Object.entries(records).forEach(([logId, rs]) => {
-            //    recordCollector.updateHeadCounter(logId, rs.counter);
-            //   rs.records.forEach(record => {
-            //     recordCollector.store(logId, record);
-            //   });
-            // });
             for (const [logId, rs] of Object.entries(records)) {
               await recordCollector.batchUpdate(logId, rs);
             }
             clearTimeout(timeout);
-            break;
+            if(!multiPeersFlag){
+               break;
+            }
           } catch (err) {
             continue;
           }
       }
+      
       return recordCollector.list();
     } catch (err) {
       console.error("getRecords error:", err);

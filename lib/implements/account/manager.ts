@@ -336,7 +336,7 @@ export class AccountManager {
       // 准备签名数据
       const serverPidBytes = new TextEncoder().encode(serverPid.toString());
       const prikeyencryptHash = new Uint8Array(
-        await crypto.subtle.digest("SHA-256", prikeyencrypt)
+        await crypto.subtle.digest("SHA-256", prikeyencrypt as any)
       );
 
       // 区块高度转为小端字节序
