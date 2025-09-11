@@ -163,15 +163,23 @@ export class KeyValueModule implements DCModule, IKeyValueOperations {
     try {
       //进行格式转换
       let strIndexs = "";
-      const indexArray = JSON.parse(indexs);
-      for (const index of indexArray) {
-        let indexValue = "";
-        if( index.type === "number" ){ //
-          indexValue = padPositiveInt30(index.value);
-        }else{
-          indexValue = index.value;
+      try {
+        if (indexs != "") {
+          const indexArray = JSON.parse(indexs);
+          for (const index of indexArray) {
+            let indexValue = "";
+            if( index.type === "number" ){ //
+              indexValue = padPositiveInt30(index.value);
+            }else{
+              indexValue = index.value;
+            }
+            strIndexs += `${index.key}:${indexValue}$$$`;
+          }
+          
+         
         }
-        strIndexs += `${index.key}:${indexValue}$$$`;
+      } catch (error) {
+        logger.error(`设置索引失败:`, error);
       }
       //追加时间戳索引，保证每次写入的唯一性
       const timestamp = Date.now();
