@@ -164,7 +164,7 @@ export class KeyValueModule implements DCModule, IKeyValueOperations {
       //进行格式转换
       let strIndexs = "";
       try {
-        if (indexs != "") {
+        if (indexs && indexs != "") {
           const indexArray = JSON.parse(indexs);
           for (const index of indexArray) {
             let indexValue = "";
@@ -179,7 +179,7 @@ export class KeyValueModule implements DCModule, IKeyValueOperations {
          
         }
       } catch (error) {
-        logger.error(`设置索引失败:`, error);
+        logger.error(`设置索引,解析失败:`, error);
       }
       //追加时间戳索引，保证每次写入的唯一性
       const timestamp = Date.now();
