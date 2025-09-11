@@ -93,7 +93,7 @@ export class KeyValueDB {
       }
       let keyValue ="";
       try{  
-        keyValue = JSON.stringify(jsonValues[0]);
+        keyValue = jsonValues[0][key];
       }catch(err){
         return [null, err instanceof Error ? err : new Error(String(err))];
       }
