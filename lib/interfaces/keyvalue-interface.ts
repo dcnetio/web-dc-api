@@ -60,7 +60,7 @@ export interface IKeyValueOperations {
    * @param kvdb: KeyValueDB,
    * @param key 键名
    * @param value 值内容
-   * @param indexs 索引列表，格式为"indexkey1:value$$$indexkey2:value",设置索引后,后续查询可以通过索引快速定位
+   * @param indexs 索引列表，格式为json字符串:[{key:"indexkey1",type:"string",value:"value"},{key:"indexkey2",type:"number", value:12}],设置索引后,后续查询可以通过索引快速定位
    * @param vaccount 可选的虚拟账户
    * @returns [是否设置成功, 错误信息]
    */
@@ -76,7 +76,7 @@ export interface IKeyValueOperations {
    * 获取指定键的值
    * @param kvdb: KeyValueDB,
    * @param key 键名
-   * @param writerPubkey 写入者的公钥,可选,默认为主题作者
+   * @param writerPubkey 写入者的公钥,如果不指定，则获取所有用户写入的该key的最新值
    * @param vaccount 可选的虚拟账户
    * @returns [值内容, 错误信息]
    */
@@ -89,7 +89,7 @@ export interface IKeyValueOperations {
 
 
  /**
-   * 获取指定键的值列表,包括所有用户写入的值,可以用在类似排名这些需要多人数据汇总的场景,key为场景名称,各个用户写入的值为各自在该场景下的内容
+   * 获取指定键的值列表,按key的字典序排序
    * @param kvdb: KeyValueDB,
    * @param key 键名
    * @param limit 返回结果数量限制
@@ -127,6 +127,7 @@ export interface IKeyValueOperations {
    * @param kvdb: KeyValueDB,
    * @param indexKey 索引键名
    * @param indexValue 索引值
+   * @param type 索引值类型
    * @param seekKey 查询起始键
    * @param offset 结果偏移量
    * @param direction 查询方向 (Forward/Backward)
@@ -138,10 +139,7 @@ export interface IKeyValueOperations {
     kvdb: KeyValueDB,
     indexKey: string,
     indexValue: string,
-    limit: number,
-    seekKey: string,
-    offset: number,
-    direction: Direction,
+    options: { type?:string; limit?: number; seekKey?: string; direction?: Direction; offset?: number } ,
     vaccount?: string
   ): Promise<[string | null, Error | null]>;
 }

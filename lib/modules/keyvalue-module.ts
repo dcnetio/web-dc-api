@@ -9,6 +9,7 @@ import { createLogger } from "../util/logger";
 import { ThemeAuthInfo, ThemeComment } from "../common/types/types";
 import { Direction } from "../common/define";
 import { ThemePermission } from "../common/constants";
+import {padPositiveInt30} from "../util/utils";
 const logger = createLogger('KeyValueModule');
 const indexkey_dckv = "indexkey_dckv"; //索引键名，keyvalue设置过程中key本身的索引键
 /**
@@ -145,12 +146,13 @@ export class KeyValueModule implements DCModule, IKeyValueOperations {
     }
   }
   
+
   
   async set(
     kvdb: KeyValueDB,
     key: string,
     value: string,
-    indexs: string, //索引列表,格式为key1:value1$$$key2:value2
+    indexs: string, //索引列表,格式为json字符串:[{key:"indexkey1",type:"string",value:"value"},{key:"indexkey2",type:"number", value:12}],这里统一转换格式为key1:value1$$$key2:value2
     vaccount?: string
   ): Promise<[boolean | null, Error | null]> {
      const err = this.assertInitialized();
@@ -159,7 +161,23 @@ export class KeyValueModule implements DCModule, IKeyValueOperations {
     }
     
     try {
-      const res = await kvdb.set(key, value, indexs, vaccount);
+      //进行格式转换
+      let strIndexs = "";
+      const indexArray = JSON.parse(indexs);
+      for (const index of indexArray) {
+        let indexValue = "";
+        if( index.type === "number" ){ //
+          indexValue = padPositiveInt30(index.value);
+        }else{
+          indexValue = index.value;
+        }
+        strIndexs += `${index.key}:${indexValue}$$$`;
+      }
+      //追加时间戳索引，保证每次写入的唯一性
+      const timestamp = Date.now();
+      const timestampStr = padPositiveInt30(timestamp);
+      strIndexs += `dc_timestamp_index:${timestampStr}`;
+      const res = await kvdb.set(key, value, strIndexs, vaccount);
       return res;
     } catch (error) {
       logger.error(`设置set-value失败:`, error);
@@ -190,7 +208,7 @@ export class KeyValueModule implements DCModule, IKeyValueOperations {
 
 
    /**
-   * 获取指定键的值列表,包括所有用户写入的值,可以用在类似排名这些需要多人数据汇总的场景,key为场景名称,各个用户写入的值为各自在该场景下的内容
+   * 获取指定键的值列表
    * @param kvdb: KeyValueDB,
    * @param key 键名
    * @param limit 返回结果数量限制
@@ -246,18 +264,23 @@ export class KeyValueModule implements DCModule, IKeyValueOperations {
     kvdb: KeyValueDB,
     indexKey:string,
     indexValue:string,
-    limit: number,
-    seekKey:string, 
-    offset: number,
-    direction: Direction = Direction.Forward,
+    options: {type?:string; limit?: number; seekKey?: string; direction?: Direction; offset?: number } ,
     vaccount?: string
   ): Promise<[string | null, Error | null]> {
     const err = this.assertInitialized();
     if (err) {
       return [null, err];
     }
+    const limit = options.limit? options.limit: 10;
+    const seekKey = options.seekKey? options.seekKey: "";
+    const direction = options.direction? options.direction: Direction.Forward;
+    const offset = options.offset? options.offset: 0;
+    let indexValueStr = "";
+    if( options.type === "number" ){ //
+      indexValueStr = padPositiveInt30(indexValue);
+    }
     try {
-      const res = await kvdb.getWithIndex(indexKey, indexValue, limit,seekKey, direction,offset,  vaccount);
+      const res = await kvdb.getWithIndex(indexKey, indexValueStr, limit,seekKey, direction,offset,  vaccount);
     return res;
     } catch (error) {
       logger.error(`getWithIndex失败:`, error);
