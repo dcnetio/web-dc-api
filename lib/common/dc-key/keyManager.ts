@@ -348,13 +348,13 @@ export async function ed25519PublicKeyToCryptoKey(
         .replace(pemHeader, '')  
         .replace(pemFooter, '')  
         .replace(/\s+/g, '');  
-      keyData = Uint8Array.from(atob(pemContents), c => c.charCodeAt(0));  
+      keyData = Uint8Array.from(atob(pemContents), c => c.charCodeAt(0)) as any;  
     } else {  
       // 处理 Base64/Hex 等编码的 RAW 格式  
-      keyData = Uint8Array.from(atob(publicKey), c => c.charCodeAt(0));  
+      keyData = Uint8Array.from(atob(publicKey), c => c.charCodeAt(0)) as any;  
     }  
   } else {  
-    keyData = publicKey;  
+    keyData = publicKey as any;  
   }  
 
   // 2. 检测密钥格式  
@@ -396,13 +396,13 @@ export async function ed25519PrivateKeyToCryptoKey(
         .replace(pemHeader, '')  
         .replace(pemFooter, '')  
         .replace(/\s+/g, '');  
-      keyData = Uint8Array.from(atob(pemContents), c => c.charCodeAt(0));  
+      keyData = Uint8Array.from(atob(pemContents), c => c.charCodeAt(0)) as any;  
     } else {  
       // 处理 Base64/Hex 编码的 RAW 格式  
-      keyData = Uint8Array.from(atob(privateKey), c => c.charCodeAt(0));  
+      keyData = Uint8Array.from(atob(privateKey), c => c.charCodeAt(0)) as any;  
     }  
   } else {  
-    keyData = privateKey;  
+    keyData = privateKey as any;  
   }  
 
   // 2. 检测密钥格式  

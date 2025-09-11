@@ -13,7 +13,7 @@ const TagBytes = 16;
 
 // SHA-256 哈希计算
 async function sha256(data: Uint8Array): Promise<Uint8Array> {
-  const hashBuffer = await crypto.subtle.digest("SHA-256", data);
+  const hashBuffer = await crypto.subtle.digest("SHA-256", data as any);
   return new Uint8Array(hashBuffer);
 }
 
@@ -232,6 +232,18 @@ function jsonStringify(value: any): string {
   );
 }
 
+
+// 30 位零填充，不做数值运算，避免精度问题
+ function padPositiveInt30(v: string | number): string {
+  let s = String(v).trim();
+  if (!/^\d+$/.test(s)) throw new Error("只接受正整数数字串");
+  // 去掉前导 0（如果要允许 0，把正则改为 /^\d+$/ 并允许 s === '0'）
+  s = s.replace(/^0+/, "") || "0";
+  if (s === "0") return "0".padStart(30, "0"); // 如需排除 0 可去掉这行并在上面报错
+  if (s.length > 30) throw new Error("超过 30 位宽度");
+  return s.padStart(30, "0");
+}
+
 export {
   sha256,
   getRandomBytes,
@@ -252,5 +264,6 @@ export {
   loadKeyPair,
   parseUint32,
   hexToAscii,
-  jsonStringify
+  jsonStringify,
+  padPositiveInt30
 };

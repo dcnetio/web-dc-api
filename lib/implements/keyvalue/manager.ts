@@ -16,6 +16,7 @@ import { Client } from "../../common/dcapi";
 import { CommentType, Direction } from "../../common/define";
 import { DCContext } from "../../../lib/interfaces/DCContext";
 import { AnyExtensionField } from "protobufjs";
+import { isArray } from "util";
 
 //定义Key-Value存储的数据类型
 export enum KeyValueStoreType { //存储主题类型 1:鉴权主题(读写都需要鉴权) 2:公共主题(默认所有用户可读,写需要鉴权)
@@ -75,8 +76,31 @@ export class KeyValueDB {
     writerPubkey?: string,
     vaccount?: string
   ): Promise<[string | null, Error | null]> {
-    if (!writerPubkey) {
-      writerPubkey = this.themeAuthor;
+    if (!writerPubkey) {//没有指定写入者,则获取该key的最新值
+      const [values, err] = await this.getWithIndex("dc_timestamp_index", "",1, "", Direction.Reverse, 0,);
+      if (err) {
+        return [null, err];
+      }
+      if (!values) {
+        return [null, null];
+      }
+      const jsonValues = JSON.parse(values);
+      if (!Array.isArray(jsonValues)) {
+        return [values, null];
+      }
+      if (jsonValues.length == 0) {
+        return [null, null];
+      }
+      let keyValue ="";
+      try{  
+        keyValue = JSON.stringify(jsonValues[0]);
+      }catch(err){
+        return [null, err instanceof Error ? err : new Error(String(err))];
+      }
+      if (!keyValue || keyValue.length == 0) {
+        keyValue = jsonValues[0];
+      }
+      return [keyValue, null];
     }
     return this.manager.getValueWithKey(
       this.appId,

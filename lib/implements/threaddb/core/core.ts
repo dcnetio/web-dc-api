@@ -46,7 +46,7 @@ export interface INet {
   getThread( id: ThreadID, ...opts: any[]): Promise<ThreadInfo>;  
   getThreadFromPeer( id: ThreadID, peer: PeerId, options: { token?: ThreadToken }): Promise<ThreadInfo>;
   deleteThread( id: ThreadID, ...opts: any[]): Promise<void>;  
-  pullThread( id: ThreadID,timeout: number, ...opts: any[]): Promise<void>;  
+  pullThread( id: ThreadID,timeout: number, options: { token?: ThreadToken | undefined; multiPeersFlag?: boolean | undefined;} ): Promise<void>;  
   getPbLogs( id: ThreadID): Promise<[net_pb.pb.ILog[], IThreadInfo]>;  
 }  
 

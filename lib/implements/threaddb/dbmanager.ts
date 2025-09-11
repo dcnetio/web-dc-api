@@ -1308,7 +1308,7 @@ async newDB(
 async refreshDBFromDC(threadId:string): Promise<Error | null> {  
     try {  
         const tId = await this.decodeThreadId(threadId);
-        await this.network.pullThread( tId,600);  
+        await this.network.pullThread( tId,600, { multiPeersFlag: true });  
         return null;  
     } catch (error) {  
         return error as Error;  
