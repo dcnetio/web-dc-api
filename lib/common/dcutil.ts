@@ -439,8 +439,9 @@ export class DcUtil {
     const nodeConn = await libp2p.dial(nodeAddr, {
       signal: AbortSignal.timeout(dial_timeout)
     });
-    //判断是否有现成的stream,如果已经存在就直接使用
+     //判断是否有现成的stream,如果已经存在就直接使用
    const stream = await nodeConn.newStream("/dc/transfer/1.0.0")
+  try{
    const writer =  new StreamWriter(stream.sink) 
    const mParts: Uint8Array[] = [];
     let parsedMessage: { type: number; version: number; payload: Uint8Array } | null = null;
@@ -508,7 +509,13 @@ export class DcUtil {
         }
       }
     }
+  }catch(err){
+    console.error("createTransferStream error:", err);
+    throw err
+  }finally{
     stream.close()
+  }
+
   }
 
 
