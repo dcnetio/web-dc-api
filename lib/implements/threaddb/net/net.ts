@@ -1349,10 +1349,13 @@ export class Network implements Net {
             }
             const dbClient = new DBClient(client,this.dc,this,this.logstore);
             const records = await dbClient.getRecordsFromPeer( req, serviceKey);
+            clearTimeout(timeout);
+            console.log(`开始处理从 ${peerId.toString()} 获取的记录,记录数为:`,Object.keys(records).length);
             for (const [logId, rs] of Object.entries(records)) {
               await recordCollector.batchUpdate(logId, rs);
             }
-            clearTimeout(timeout);
+            console.log(`处理从 ${peerId.toString()} 获取的记录完成,记录数为:`,Object.keys(records).length);
+          
             if(!multiPeersFlag){
                break;
             }
