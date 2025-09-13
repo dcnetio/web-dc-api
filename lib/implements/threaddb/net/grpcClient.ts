@@ -324,7 +324,7 @@ export class DBGrpcClient {
       const responseData = await this.grpcClient.unaryCall(
         "/net.pb.Service/GetRecords",
         messageBytes,
-        30000
+        900000
       );
       
       // 解码响应

@@ -1333,14 +1333,16 @@ export class Network implements Net {
       
       // 创建记录收集器
       const recordCollector = new RecordCollector();
+        // 设置超时
+      let timeout = setTimeout(() => {
+               throw new Error(`Timeout getting records from peer ${peerId}`);
+             }, 60000);
       //遍历节点,按顺序处理
       for (const peerId of peers) {
          try {
-             // 设置超时
-             const timeout = setTimeout(() => {
+           timeout = setTimeout(() => {
                throw new Error(`Timeout getting records from peer ${peerId}`);
-             }, 60000);
-
+             }, 900000);
             //连接到指定peerId,返回一个Client
             const [client,err] = await this.getClient(peerId);
             if (!client) {
@@ -1361,6 +1363,9 @@ export class Network implements Net {
             }
           } catch (err) {
             continue;
+          }finally{
+            // 清除超时
+            clearTimeout(timeout);
           }
       }
       
