@@ -31,11 +31,9 @@ export async function registerServiceWorker(fileOps?: IFileOperations, swUrl: st
       // 设置消息监听器处理IPFS资源请求
       navigator.serviceWorker.addEventListener('message', async (event) => {
         if (event.data && event.data.type === 'ipfs-fetch') {
-           await handleIpfsRequest(event.data, event.ports[0]!, fileOps);
+            handleIpfsRequest(event.data, event.ports[0]!, fileOps);
         }
       });
-     
-      
       return registration;
     } catch (error) {
       logger.error('ServiceWorker 注册失败:', error);
