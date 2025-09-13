@@ -28,30 +28,13 @@ export async function registerServiceWorker(fileOps?: IFileOperations, swUrl: st
       : '/sw.js';
       
       const registration = await navigator.serviceWorker.register(swPath);
-       // 让等待中的 SW 立即成为激活态
-      if (registration.waiting) {
-        registration.waiting.postMessage({ type: 'SKIP_WAITING' });
-      }
-       // 有新 SW 安装后自动接管
-      registration.addEventListener('updatefound', () => {
-        const nw = registration.installing;
-        if (!nw) return;
-        nw.addEventListener('statechange', () => {
-          if (nw.state === 'installed' && navigator.serviceWorker.controller) {
-            nw.postMessage({ type: 'SKIP_WAITING' });
-          }
-        });
-      });
       // 设置消息监听器处理IPFS资源请求
       navigator.serviceWorker.addEventListener('message', async (event) => {
         if (event.data && event.data.type === 'ipfs-fetch') {
            await handleIpfsRequest(event.data, event.ports[0]!, fileOps);
         }
       });
-      // 控制器变化（新 SW 接管）
-      navigator.serviceWorker.addEventListener('controllerchange', () => {
-        location.reload();
-      });
+     
       
       return registration;
     } catch (error) {
