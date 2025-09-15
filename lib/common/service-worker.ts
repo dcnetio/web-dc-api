@@ -37,6 +37,8 @@ export async function registerServiceWorker(fileOps?: IFileOperations, swUrl: st
           logger.warn('SW 未提供 MessagePort');
           return;
         }
+        //里面回一个消息,通知已经收到请求
+        port.postMessage({ success: true, message: 'Request received' ,status: 999 });
         try {
           await handleIpfsRequest(event.data, port, fileOps);
         } catch (e) {
