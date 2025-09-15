@@ -1334,9 +1334,7 @@ export class Network implements Net {
       // 创建记录收集器
       const recordCollector = new RecordCollector();
         // 设置超时
-      let timeout = setTimeout(() => {
-               throw new Error(`Timeout getting records from peer ${peerId}`);
-             }, 60000);
+      let timeout : NodeJS.Timeout | null = null;
       //遍历节点,按顺序处理
       for (const peerId of peers) {
          try {
@@ -1346,12 +1344,12 @@ export class Network implements Net {
             //连接到指定peerId,返回一个Client
             const [client,err] = await this.getClient(peerId);
             if (!client) {
-              clearTimeout(timeout);
               throw new Error(`Error getting records from peer ${peerId},no client,errinfo: ${err}`);
             }
+            console.log(`时间:${new Date().toLocaleString()} ,开始从 ${peerId.toString()} 获取记录...`);
             const dbClient = new DBClient(client,this.dc,this,this.logstore);
             const records = await dbClient.getRecordsFromPeer( req, serviceKey);
-            clearTimeout(timeout);
+            console.log(`时间:${new Date().toLocaleString()} ,从 ${peerId.toString()} 获取记录完成,记录数为:`,Object.keys(records).length);
             console.log(`开始处理从 ${peerId.toString()} 获取的记录,记录数为:`,Object.keys(records).length);
             for (const [logId, rs] of Object.entries(records)) {
               await recordCollector.batchUpdate(logId, rs);
@@ -1365,7 +1363,9 @@ export class Network implements Net {
             continue;
           }finally{
             // 清除超时
-            clearTimeout(timeout);
+            if (timeout) {
+              clearTimeout(timeout);
+            }
           }
       }
       
