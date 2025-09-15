@@ -6,41 +6,55 @@ import { createLogger } from "../util/logger";
 
 const logger = createLogger('ServiceWorker');
 
+
+let swMessageHandler: ((event: MessageEvent) => void) | null = null;
+
 /**
  * 注册 Service Worker 并设置消息监听器
  * @param fileOps 文件操作对象，用于处理IPFS请求
  * @returns Promise<ServiceWorkerRegistration | null>
  */
 export async function registerServiceWorker(fileOps?: IFileOperations, swUrl: string = ''): Promise<ServiceWorkerRegistration | null> {
-  if ('serviceWorker' in navigator) {
-    try {
-      // const registration = await navigator.serviceWorker.register(
-      //   new URL('/sw.js', import.meta.url).href
-      // );
-      if (window.location.protocol != 'https:' && window.location.hostname != 'localhost') {
-        logger.error('ServiceWorker 仅支持https协议');
-        return null;
-      }
-      
-      // 路径在函数内部解析，不在模块顶层
-      const swPath = typeof window !== 'undefined' 
-      ? (new URL(swUrl || '/sw.js', window.location.origin).href)
-      : '/sw.js';
-      
-      const registration = await navigator.serviceWorker.register(swPath);
-      // 设置消息监听器处理IPFS资源请求
-      navigator.serviceWorker.addEventListener('message', async (event) => {
-        if (event.data && event.data.type === 'ipfs-fetch') {
-            handleIpfsRequest(event.data, event.ports[0]!, fileOps);
-        }
-      });
-      return registration;
-    } catch (error) {
-      logger.error('ServiceWorker 注册失败:', error);
+  if (!('serviceWorker' in navigator)) return Promise.reject('Service Worker not supported');
+  if (location.protocol !== 'https:' && location.hostname !== 'localhost') {
+    logger.error('ServiceWorker 仅支持 https 或 localhost');
+    return null;
+  }
+  if (window.location.protocol != 'https:' && window.location.hostname != 'localhost') {
+      logger.error('ServiceWorker 仅支持https协议');
       return null;
     }
-  }
-  return Promise.reject('Service Worker not supported');
+    const swPath = new URL(swUrl || '/sw.js', location.origin).href;
+    const registration = await navigator.serviceWorker.register(swPath);
+    // 只保留一个监听器，避免重复处理同一请求
+    if (swMessageHandler) {
+      navigator.serviceWorker.removeEventListener('message', swMessageHandler);
+    }
+    swMessageHandler = async (event: MessageEvent) => {
+      if (event.data && event.data.type === 'ipfs-fetch') {
+        const port = event.ports?.[0];
+        if (!port) {
+          logger.warn('SW 未提供 MessagePort');
+          return;
+        }
+        try {
+          await handleIpfsRequest(event.data, port, fileOps);
+        } catch (e) {
+          logger.error('handleIpfsRequest 处理异常:', e);
+          port.postMessage({ success: false, error: String(e) });
+        }
+      }
+    };
+    navigator.serviceWorker.addEventListener('message', swMessageHandler);
+    // 确保 SW 已 active
+    await navigator.serviceWorker.ready;
+    // 确保当前页已被控制，否则等待接管
+    if (!navigator.serviceWorker.controller) {
+      await new Promise<void>((resolve) => {
+        navigator.serviceWorker.addEventListener('controllerchange', () => resolve(), { once: true });
+      });
+    }
+    return registration;
 }
 
 /**
