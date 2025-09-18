@@ -915,6 +915,20 @@ message GetThemeAuthListReply{
     bytes authListCid = 2; //获取的授权列表结果集存入ipfs网络中后反馈的cid,客户端再通过 getFile获取，结果集是PublishCommentToThemeRequest的数组 json序列化
 }
 
+
+message GetUserThemeConfigInfoRequest {
+    bytes theme = 1; //主题
+    bytes appId = 2; //应用标志
+    bytes themeAuthor = 3;//发布主题的的作者pubkey
+    bytes UserPubkey = 4;//申请访问配置的用户pubkey
+    bytes Vaccount = 5; //虚拟账号,可选,如果有虚拟账号
+}
+
+message GetUserThemeConfigInfoReply {
+   uint32 flag = 1;//获取结果 0:成功 1:权限不足 2:获取失败
+   bytes authInfo = 2; //获取的配置结果,返回请求用户的授权信息,userpubkey:permission:remark(remark可选,存放应用自定义的任何信息),userpubkey为用户的公钥16进制表示(all为特殊情况)，permission为用户的权限，remark为备注信息,应用自定义
+}
+
 message GetUserCommentsRequest{
     bytes appId = 1; //应用标志
     bytes UserPubkey = 2;//发布评论的用户pubkey
@@ -1483,6 +1497,9 @@ service Service {
     rpc GetThemeComments(GetThemeCommentsRequest) returns (GetThemeCommentsReply){}
 
 
+    //获取用户主题配置的相关信息,包括用户的权限等
+    rpc GetUserThemeConfigInfo(GetUserThemeConfigInfoRequest) returns (GetUserThemeConfigInfoReply) {}
+   
 
      //获取指定已开通对象的权限列表(对GetThemeComments进行包装，增加权限判断)//ok
      rpc GetThemeAuthList(GetThemeAuthListRequest) returns (GetThemeAuthListReply){}
