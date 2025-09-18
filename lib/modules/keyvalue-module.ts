@@ -193,7 +193,14 @@ export class KeyValueModule implements DCModule, IKeyValueOperations {
     }
   }
 
-  
+  /**
+   * 获取指定键的元数据
+   * @param kvdb 
+   * @param key 
+   * @param writerPubkey 
+   * @param vaccount 
+   * @returns  [值, 错误信息],值的格式:  value$$$dckv_extra$$${'timestamp':'%d','opuser':'%s'}
+   */
   async get(
     kvdb: KeyValueDB,
     key: string,
@@ -223,7 +230,7 @@ export class KeyValueModule implements DCModule, IKeyValueOperations {
    * @param seekKey 查询起始键,用于分页查询
    * @param offset 结果偏移量
    * @param vaccount 可选的虚拟账户
-   * @returns [值列表生成的json字符串, 错误信息]
+   * @returns [值列表生成的json字符串, 错误信息] 每个值的格式:  value$$$dckv_extra$$${'timestamp':'%d','opuser':'%s'}
    */
   async getValues(
     kvdb: KeyValueDB,
@@ -248,12 +255,20 @@ export class KeyValueModule implements DCModule, IKeyValueOperations {
     }
   }
   
+  /**
+   * 批量获取指定键的值
+   * @param kvdb KeyValueDB实例
+   * @param keys 逗号分隔的键列表
+   * @param writerPubkey 可选，指定写入者公钥
+   * @param vaccount 可选的虚拟账户
+   * @returns [值的JSON字符串, 错误信息] 每个值的格式:  value$$$dckv_extra$$${'timestamp':'%d','opuser':'%s'}
+   */
   async getBatch(
     kvdb: KeyValueDB,
     keys: string,
     writerPubkey: string = "",
     vaccount: string = ""
-  ): Promise<[string | null, Error | null]> {
+  ): Promise<[string | null, Error | null]> { 
     const err = this.assertInitialized();
     if (err) {
       return [null, err];
@@ -268,6 +283,18 @@ export class KeyValueModule implements DCModule, IKeyValueOperations {
     }
   }
 
+  /**
+   * 获取指定索引的值
+   * @param kvdb KeyValueDB实例
+   * @param indexKey 索引键名
+   * @param indexValue 索引值
+   * @param type 索引值类型
+   * @param seekKey 查询起始键,用于分页查询
+   * @param direction 查询方向
+   * @param offset 结果偏移量
+   * @param vaccount 可选的虚拟账户
+   * @returns [值的JSON字符串, 错误信息] 每个值的格式:  value$$$dckv_extra$$${'timestamp':'%d','opuser':'%s'}
+   */ 
    async getWithIndex(
     kvdb: KeyValueDB,
     indexKey:string,
