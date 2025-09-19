@@ -507,9 +507,24 @@ export class AIProxyManager {
             continue; // 如果格式不正确，跳过
           }
 
-          const value = contentStr.substring((parts[0]||"").length + 1);
+          const valueWithExtra = contentStr.substring((parts[0]||"").length + 1);
           try {
+            //解析出扩展信息(时间戳,用户公钥等)
+            const valueParts = valueWithExtra.split("$$$dckv_extra$$$");
+            const value = valueParts[0] || "{}";
             const content = JSON.parse(value);
+            if (valueParts.length > 1) {
+              const extraStr = valueParts[1] || "{}";
+              const extra = JSON.parse(extraStr);
+              if (extra) {
+                if (extra.timestamp) {
+                  content.timestamp = extra.timestamp;
+                }
+                if (extra.opuser) {
+                  content.userPubkey = extra.opuser;
+                }
+              }
+            }
             allContent.push(content as AIProxyConfig);
           } catch (error) {
             console.error("解析内容错误:", error);

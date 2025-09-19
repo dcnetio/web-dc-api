@@ -128,6 +128,8 @@ export interface AIProxyConfig {
   modelConfig: ModelConfig; // 模型配置
   remark: string;
   blockheight?: number;  // 可以不设置,由sdk自动设置
+  timestamp?: number;    // 设置时间戳,DC节点自动设置
+  userPubkey?: string; // 设置配置用户公钥,DC节点自动设置
 }
 
 // 函数定义结构
