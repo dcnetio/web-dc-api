@@ -8,9 +8,9 @@ type Ctor<T> = new (...args: any[]) => T;
 
 const EXTRA_SEP = "$$$dckv_extra$$$";
 
-function extractRawValue(s: string): string {
+function extractRawValue(s: string): [string, string]  {
   const i = s.indexOf(EXTRA_SEP);
-  return i >= 0 ? s.slice(0, i) : s;
+  return i >= 0 ? [s.slice(0, i), s.slice(i + EXTRA_SEP.length)] : [s, ""];
 }
 
 function safeParseJSON<T>(s: string | null): T | null {
@@ -124,6 +124,9 @@ export class EntityRepository<T extends BaseEntity> {
   async save(entity: T, vaccount?: string): Promise<void> {
     entity.validate();
     const key= (entity as any).getPrimaryKey();
+    //移除dc_timestamp和dc_opuser字段，由dc节点自动维护
+    delete (entity as any).dc_timestamp;
+    delete (entity as any).dc_opuser;
     const value = JSON.stringify(entity.toJSON());
     const indexs = buildIndexPayload(entity, this.entityCtor);
 
@@ -132,14 +135,34 @@ export class EntityRepository<T extends BaseEntity> {
     if (!ok) throw new Error(`${this.entityCtor.name}.save failed`);
   }
 
+
+  async deleteById(id: string, vaccount?: string): Promise<void> {
+    const key = id;
+    const [ok, err] = await this.ops.set(this.db, key, "","", vaccount); // 空值用于标记删除
+    if (err) throw err;
+    if (!ok) throw new Error(`${this.entityCtor.name}.deleteById failed`);
+  }
+
   // 局部更新（按 id 合并字段后保存）
   async update(id: string, patch: Partial<T>, vaccount?: string): Promise<T | null> {
-    const curr = await this.findById(id, undefined, vaccount);
-    if (!curr) return null;
-    Object.assign(curr as any, patch);
-    await this.save(curr, vaccount);
-    return curr;
+    const key = id; 
+     const [curr, err] = await this.ops.getValueSetByCurrentUser(this.db, key, vaccount);
+    if (err || !curr) return null;
+    const [json, extra] = extractRawValue(curr);
+    const obj = safeParseJSON<any>(json);
+    if (!obj) return null;
+    if (extra) {
+        const extraObj = safeParseJSON<any>(extra);
+        if (extraObj) Object.assign(obj, extraObj);
+    }   
+    const inst = new this.entityCtor();
+    Object.assign(inst, obj);
+    Object.assign(inst as any, patch);
+    await this.save(inst, vaccount);
+    return inst;
   }
+
+
 
   // 通过 id 获取
   async findById(id: string, writerPubkey?: string, vaccount?: string): Promise<T | null> {
@@ -147,9 +170,14 @@ export class EntityRepository<T extends BaseEntity> {
     const [raw, err] = await this.ops.get(this.db, key, writerPubkey, vaccount);
     if (err || !raw) return null;
 
-    const json = extractRawValue(raw);
+    const [json, extra] = extractRawValue(raw);
     const obj = safeParseJSON<any>(json);
     if (!obj) return null;
+    if (extra) {
+      const extraObj = safeParseJSON<any>(extra);
+      if (extraObj) Object.assign(obj, extraObj);
+    }   
+    
 
     const inst = new this.entityCtor();
     Object.assign(inst, obj);
@@ -169,10 +197,19 @@ export class EntityRepository<T extends BaseEntity> {
 
     const list = safeParseJSON<string[]>(raw) ?? [];
     const out: T[] = [];
-    for (const item of list) {
-      const v = extractRawValue(String(item));
+    for (let item of list) {
+        //移除 key: 前缀
+      const sepIdx = item.indexOf(":");
+      if (sepIdx >= 0) {
+        item = item.slice(sepIdx + 1);
+      }  
+      const [v,extra]= extractRawValue(String(item));
       const obj = safeParseJSON<any>(v);
       if (!obj) continue;
+      if (extra) {
+         const extraObj = safeParseJSON<any>(extra);
+         if (extraObj) Object.assign(obj, extraObj);
+      }
       const inst = new this.entityCtor();
       Object.assign(inst, obj);
       out.push(inst);
@@ -182,7 +219,23 @@ export class EntityRepository<T extends BaseEntity> {
 
   async findOneByIndex(indexKey: string, indexValue: string, options: Omit<FindIndexOptions, "limit"> = {}): Promise<T | null> {
     const list = await this.findByIndex(indexKey, indexValue, { ...options, limit: 1 });
-    return list[0] ?? null;
+    const value = list[0];
+    if (value) {
+        const [v,extra] = extractRawValue(String(value));
+        if (!v) return null;
+        const obj = safeParseJSON<any>(v);
+        if (!obj) return null;
+        if (extra) {
+            const extraObj = safeParseJSON<any>(extra);
+            if (extraObj) {
+                Object.assign(obj, extraObj);
+            }
+        }
+        const inst = new this.entityCtor();
+        Object.assign(inst, obj);
+        return inst;
+    }
+    return null;
   }
 
   // 按键前缀遍历（用于分页场景）
@@ -198,9 +251,13 @@ export class EntityRepository<T extends BaseEntity> {
     const list = safeParseJSON<string[]>(raw) ?? [];
     const out: T[] = [];
     for (const item of list) {
-      const v = extractRawValue(String(item));
+      const [v,extra] = extractRawValue(String(item));
       const obj = safeParseJSON<any>(v);
       if (!obj) continue;
+      if (extra) {
+        const extraObj = safeParseJSON<any>(extra);
+        if (extraObj) Object.assign(obj, extraObj);
+      }
       const inst = new this.entityCtor();
       Object.assign(inst, obj);
       out.push(inst);

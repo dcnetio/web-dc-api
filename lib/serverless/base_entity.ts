@@ -1,7 +1,16 @@
 // 领域模型基类：不包含任何存储逻辑
 export abstract class BaseEntity {
+  // 默认元字段
+  public dc_timestamp?: number;  // 毫秒时间戳
+  public dc_opuser?: string;    // 操作人
+
+  constructor() {
+    // 时间戳,opuser 留空，主要用于从dc取回数据时填充
+   
+  }
+
   // 可重写以自定义主键策略
-   protected getPrimaryKey(): string {
+  protected getPrimaryKey(): string {
     const anySelf = this as any;
     const id = anySelf.id ?? anySelf.key ?? anySelf.pk;
 
@@ -31,6 +40,19 @@ export abstract class BaseEntity {
 
     // 其它类型统一转字符串（如需自定义请在子类中重写）
     return String(id);
+  }
+
+  // 标记更新时间与操作人
+  touch(opuser?: string, timeMs: number = Date.now()): this {
+    this.dc_timestamp = timeMs;
+    if (opuser !== undefined) this.dc_opuser = opuser;
+    return this;
+  }
+
+  // 设置操作人
+  setOpUser(opuser: string): this {
+    this.dc_opuser = opuser;
+    return this;
   }
 
   // 可选：领域校验（子类覆盖）

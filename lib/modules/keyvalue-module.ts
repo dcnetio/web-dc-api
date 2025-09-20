@@ -20,6 +20,7 @@ export class KeyValueModule implements DCModule, IKeyValueOperations {
   readonly moduleName = CoreModuleName.KEYVALUE;
   private keyValueManager!: KeyValueManager;
   private initialized: boolean = false;
+  private context: DCContext = {} as DCContext;
   
   /**
    * 初始化键值存储模块
@@ -28,6 +29,7 @@ export class KeyValueModule implements DCModule, IKeyValueOperations {
    */
   async initialize(context: DCContext): Promise<boolean> {
     try {
+      this.context = context;
       this.keyValueManager = new KeyValueManager(
         context.dcutil,
         context.dcChain,
@@ -193,13 +195,29 @@ export class KeyValueModule implements DCModule, IKeyValueOperations {
     }
   }
 
+
+ /**
+   * 获取当前用户设置的指定键的元数据
+   * @param kvdb 
+   * @param key 
+   * @param vaccount 
+   * @returns  [值, 错误信息],值的格式:  value$$$dckv_extra$$${'dc_timestamp':'%d','dc_opuser':'%s'}
+   */
+  async getValueSetByCurrentUser(kvdb: KeyValueDB, key: string,vaccount?: string): Promise<[string | null, Error | null]> {
+    if(!this.context.publicKey){
+      return [null, new Error("当前用户公钥未设置")];
+    }
+    return this.get(kvdb,key, this.context.publicKey.string(), vaccount);
+  }
+
+
   /**
    * 获取指定键的元数据
    * @param kvdb 
    * @param key 
    * @param writerPubkey 
    * @param vaccount 
-   * @returns  [值, 错误信息],值的格式:  value$$$dckv_extra$$${'timestamp':'%d','opuser':'%s'}
+   * @returns  [值, 错误信息],值的格式:  value$$$dckv_extra$$${'dc_timestamp':'%d','dc_opuser':'%s'}
    */
   async get(
     kvdb: KeyValueDB,
@@ -230,7 +248,7 @@ export class KeyValueModule implements DCModule, IKeyValueOperations {
    * @param seekKey 查询起始键,用于分页查询
    * @param offset 结果偏移量
    * @param vaccount 可选的虚拟账户
-   * @returns [值列表生成的json字符串, 错误信息] 每个值的格式:  value$$$dckv_extra$$${'timestamp':'%d','opuser':'%s'}
+   * @returns [值列表数组生成的json字符串, 错误信息] 数组的每个元素的格式:  key:value$$$dckv_extra$$${'dc_timestamp':'%d','dc_opuser':'%s'}
    */
   async getValues(
     kvdb: KeyValueDB,
@@ -261,7 +279,7 @@ export class KeyValueModule implements DCModule, IKeyValueOperations {
    * @param keys 逗号分隔的键列表
    * @param writerPubkey 可选，指定写入者公钥
    * @param vaccount 可选的虚拟账户
-   * @returns [值的JSON字符串, 错误信息] 每个值的格式:  value$$$dckv_extra$$${'timestamp':'%d','opuser':'%s'}
+   * @returns [值的数组的JSON字符串, 错误信息] 数组的每个元素的格式:  key:value$$$dckv_extra$$${'dc_timestamp':'%d','dc_opuser':'%s'}
    */
   async getBatch(
     kvdb: KeyValueDB,
@@ -293,7 +311,7 @@ export class KeyValueModule implements DCModule, IKeyValueOperations {
    * @param direction 查询方向
    * @param offset 结果偏移量
    * @param vaccount 可选的虚拟账户
-   * @returns [值的JSON字符串, 错误信息] 每个值的格式:  value$$$dckv_extra$$${'timestamp':'%d','opuser':'%s'}
+   * @returns [值的数组形式的JSON字符串, 错误信息] 数组的每个元素的格式:  key:value$$$dckv_extra$$${'dc_timestamp':'%d','dc_opuser':'%s'}
    */ 
    async getWithIndex(
     kvdb: KeyValueDB,

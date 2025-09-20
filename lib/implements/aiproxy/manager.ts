@@ -517,11 +517,11 @@ export class AIProxyManager {
               const extraStr = valueParts[1] || "{}";
               const extra = JSON.parse(extraStr);
               if (extra) {
-                if (extra.timestamp) {
-                  content.timestamp = extra.timestamp;
+                if (extra.dc_timestamp) {
+                  content.timestamp = extra.dc_timestamp;
                 }
-                if (extra.opuser) {
-                  content.userPubkey = extra.opuser;
+                if (extra.dc_opuser) {
+                  content.userPubkey = extra.dc_opuser;
                 }
               }
             }
