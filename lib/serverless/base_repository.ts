@@ -18,12 +18,7 @@ function safeParseJSON<T>(s: string | null): T | null {
   try { return JSON.parse(s) as T; } catch { return null; }
 }
 
-function buildKeyFromMeta(ctor: Function, id: string): string {
-  const e = metadata.getEntity(ctor);
-  const name = e?.name ?? getEntityName(ctor) ?? ctor.name;
-  const ns = e?.options.namespace ? `${e.options.namespace}:` : "";
-  return `${ns}${name}:${id}`;
-}
+
 
 // 将列声明类型与实际值映射到 KV 可识别的索引类型和值
 function asIndexTypeAndValue(value: unknown, declaredType?: string): { type: string; value: string } {
@@ -128,8 +123,7 @@ export class EntityRepository<T extends BaseEntity> {
   // 保存实体（写入并附带索引）
   async save(entity: T, vaccount?: string): Promise<void> {
     entity.validate();
-    const id = (entity as any).getPrimaryKey();
-    const key = buildKeyFromMeta(this.entityCtor, id);
+    const key= (entity as any).getPrimaryKey();
     const value = JSON.stringify(entity.toJSON());
     const indexs = buildIndexPayload(entity, this.entityCtor);
 
@@ -149,7 +143,7 @@ export class EntityRepository<T extends BaseEntity> {
 
   // 通过 id 获取
   async findById(id: string, writerPubkey?: string, vaccount?: string): Promise<T | null> {
-    const key = buildKeyFromMeta(this.entityCtor, id);
+    const key = id; 
     const [raw, err] = await this.ops.get(this.db, key, writerPubkey, vaccount);
     if (err || !raw) return null;
 

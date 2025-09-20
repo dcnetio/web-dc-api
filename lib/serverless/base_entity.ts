@@ -1,10 +1,35 @@
 // 领域模型基类：不包含任何存储逻辑
 export abstract class BaseEntity {
   // 可重写以自定义主键策略
-  protected getPrimaryKey(): string {
+   protected getPrimaryKey(): string {
     const anySelf = this as any;
     const id = anySelf.id ?? anySelf.key ?? anySelf.pk;
-    if (!id) throw new Error(`${this.constructor.name}: primary key (id/key/pk) is required`);
+
+    // 仅判 null/undefined，为 0 的数字是合法主键
+    if (id === null || id === undefined) {
+      throw new Error(`${this.constructor.name}: primary key (id/key/pk) is required`);
+    }
+
+    if (typeof id === 'string') {
+      const s = id.trim();
+      if (s.length === 0) {
+        throw new Error(`${this.constructor.name}: primary key (string) cannot be empty`);
+      }
+      return s;
+    }
+
+    if (typeof id === 'number') {
+      if (Number.isNaN(id)) {
+        throw new Error(`${this.constructor.name}: primary key (number) cannot be NaN`);
+      }
+      return String(id);
+    }
+
+    if (typeof id === 'bigint') {
+      return id.toString();
+    }
+
+    // 其它类型统一转字符串（如需自定义请在子类中重写）
     return String(id);
   }
 

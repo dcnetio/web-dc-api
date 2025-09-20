@@ -214,7 +214,15 @@ export function Index(nameOrOptions: string | IndexOptions, fields?: IndexOption
       const ctx = maybeContext as StdDecoratorContext;
 
       if (ctx.kind === 'class') {
-        // ...existing code...
+         const ctor = valueOrTarget as Function;
+        const opts: IndexOptions = typeof nameOrOptions === 'string'
+          ? { name: nameOrOptions, fields: fields ?? [] }
+          : nameOrOptions;
+        if (!opts.fields || opts.fields.length === 0) {
+          throw new Error(`@Index on class ${ctx.name?.toString() ?? ctor.name} requires fields`);
+        }
+        metadata.registerIndex(ctor, opts as any);
+        return;
       }
 
       if (ctx.kind === 'field' || ctx.kind === 'accessor') {
