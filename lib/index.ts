@@ -27,6 +27,7 @@ export { DC } from './dc';
 export {BaseEntity} from './serverless/base_entity';
 export { EntityRepository,type FindIndexOptions, type FindValuesOptions,composeCompositeIndexValue} from './serverless/base_repository';
 export * from './serverless/decorator_factory';
+export * from './serverless/browser_schema_extractor';
 export { registerServiceWorker, isServiceWorkerActive, updateServiceWorker } from './common/service-worker';
 export * from './common/types/types';
 export * from './interfaces';
