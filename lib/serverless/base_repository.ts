@@ -1,7 +1,7 @@
 import { Direction } from "../common/define";
 import type { IKeyValueOperations } from "../interfaces/keyvalue-interface";
 import type { KeyValueDB } from "../implements/keyvalue/manager";
-import { metadata, getEntityName } from "./decorator_factory";
+import { metadata } from "./decorator_factory";
 import { BaseEntity } from "./base_entity";
 
 type Ctor<T> = new (...args: any[]) => T;
