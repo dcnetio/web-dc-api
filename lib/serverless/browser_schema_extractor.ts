@@ -23,7 +23,9 @@ export type PrintableSchema = {
   }>;
 };
 
-type Source = { filepath: string; content: string };
+interface FileContentMap {
+  [fileName: string]: string;
+}
 
 function tryParse(code: string) {
   const base = {
@@ -134,10 +136,12 @@ function getDecoratorArgs(dec: t.Decorator): any[] {
   return [];
 }
 
-export function extractSchemasFromSources(sources: Source[]): PrintableSchema[] {
+
+
+export function extractSchemasFromSources(sources: FileContentMap): PrintableSchema[] {
   const result: PrintableSchema[] = [];
   // 临时缓存：文件里可能出现多个类
-  for (const { content } of sources) {
+  for (const [_, content] of Object.entries(sources)) {
     const ast = tryParse(content);
 
     traverse(ast, {
