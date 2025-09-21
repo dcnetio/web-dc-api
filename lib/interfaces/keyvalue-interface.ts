@@ -62,7 +62,7 @@ export interface IKeyValueOperations {
    * @param value 值内容
    * @param indexs 索引列表，格式为json字符串:[{key:"indexkey1",type:"string",value:"value"},{key:"indexkey2",type:"number", value:12}],设置索引后,后续查询可以通过索引快速定位
    * @param vaccount 可选的虚拟账户
-   * @returns [是否设置成功, 错误信息]
+   * @returns [是否设置成功, 时间戳, 错误信息]
    */
   set(
     kvdb: KeyValueDB,
@@ -70,7 +70,7 @@ export interface IKeyValueOperations {
     value: string,
     indexs: string,
     vaccount?: string
-  ): Promise<[boolean | null, Error | null]>;
+  ): Promise<[boolean | null, number | null, Error | null]>;
 
 
 /**

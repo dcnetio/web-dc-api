@@ -11180,6 +11180,9 @@ export namespace dcnet {
 
             /** SetKeyValueReply flag */
             flag?: (number|null);
+
+            /** SetKeyValueReply timestamp */
+            timestamp?: (number|Long|null);
         }
 
         /** Represents a SetKeyValueReply. */
@@ -11193,6 +11196,9 @@ export namespace dcnet {
 
             /** SetKeyValueReply flag. */
             public flag: number;
+
+            /** SetKeyValueReply timestamp. */
+            public timestamp: (number|Long);
 
             /**
              * Creates a new SetKeyValueReply instance using the specified properties.
@@ -14110,6 +14116,230 @@ export namespace dcnet {
 
             /**
              * Gets the default type url for GetThemeAuthListReply
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** Properties of a GetUserThemeConfigInfoRequest. */
+        interface IGetUserThemeConfigInfoRequest {
+
+            /** GetUserThemeConfigInfoRequest theme */
+            theme?: (Uint8Array|null);
+
+            /** GetUserThemeConfigInfoRequest appId */
+            appId?: (Uint8Array|null);
+
+            /** GetUserThemeConfigInfoRequest themeAuthor */
+            themeAuthor?: (Uint8Array|null);
+
+            /** GetUserThemeConfigInfoRequest UserPubkey */
+            UserPubkey?: (Uint8Array|null);
+
+            /** GetUserThemeConfigInfoRequest Vaccount */
+            Vaccount?: (Uint8Array|null);
+        }
+
+        /** Represents a GetUserThemeConfigInfoRequest. */
+        class GetUserThemeConfigInfoRequest implements IGetUserThemeConfigInfoRequest {
+
+            /**
+             * Constructs a new GetUserThemeConfigInfoRequest.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: dcnet.pb.IGetUserThemeConfigInfoRequest);
+
+            /** GetUserThemeConfigInfoRequest theme. */
+            public theme: Uint8Array;
+
+            /** GetUserThemeConfigInfoRequest appId. */
+            public appId: Uint8Array;
+
+            /** GetUserThemeConfigInfoRequest themeAuthor. */
+            public themeAuthor: Uint8Array;
+
+            /** GetUserThemeConfigInfoRequest UserPubkey. */
+            public UserPubkey: Uint8Array;
+
+            /** GetUserThemeConfigInfoRequest Vaccount. */
+            public Vaccount: Uint8Array;
+
+            /**
+             * Creates a new GetUserThemeConfigInfoRequest instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns GetUserThemeConfigInfoRequest instance
+             */
+            public static create(properties?: dcnet.pb.IGetUserThemeConfigInfoRequest): dcnet.pb.GetUserThemeConfigInfoRequest;
+
+            /**
+             * Encodes the specified GetUserThemeConfigInfoRequest message. Does not implicitly {@link dcnet.pb.GetUserThemeConfigInfoRequest.verify|verify} messages.
+             * @param message GetUserThemeConfigInfoRequest message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: dcnet.pb.IGetUserThemeConfigInfoRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified GetUserThemeConfigInfoRequest message, length delimited. Does not implicitly {@link dcnet.pb.GetUserThemeConfigInfoRequest.verify|verify} messages.
+             * @param message GetUserThemeConfigInfoRequest message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: dcnet.pb.IGetUserThemeConfigInfoRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes a GetUserThemeConfigInfoRequest message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns GetUserThemeConfigInfoRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): dcnet.pb.GetUserThemeConfigInfoRequest;
+
+            /**
+             * Decodes a GetUserThemeConfigInfoRequest message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns GetUserThemeConfigInfoRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): dcnet.pb.GetUserThemeConfigInfoRequest;
+
+            /**
+             * Verifies a GetUserThemeConfigInfoRequest message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates a GetUserThemeConfigInfoRequest message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns GetUserThemeConfigInfoRequest
+             */
+            public static fromObject(object: { [k: string]: any }): dcnet.pb.GetUserThemeConfigInfoRequest;
+
+            /**
+             * Creates a plain object from a GetUserThemeConfigInfoRequest message. Also converts values to other types if specified.
+             * @param message GetUserThemeConfigInfoRequest
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: dcnet.pb.GetUserThemeConfigInfoRequest, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this GetUserThemeConfigInfoRequest to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for GetUserThemeConfigInfoRequest
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** Properties of a GetUserThemeConfigInfoReply. */
+        interface IGetUserThemeConfigInfoReply {
+
+            /** GetUserThemeConfigInfoReply flag */
+            flag?: (number|null);
+
+            /** GetUserThemeConfigInfoReply authInfo */
+            authInfo?: (Uint8Array|null);
+        }
+
+        /** Represents a GetUserThemeConfigInfoReply. */
+        class GetUserThemeConfigInfoReply implements IGetUserThemeConfigInfoReply {
+
+            /**
+             * Constructs a new GetUserThemeConfigInfoReply.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: dcnet.pb.IGetUserThemeConfigInfoReply);
+
+            /** GetUserThemeConfigInfoReply flag. */
+            public flag: number;
+
+            /** GetUserThemeConfigInfoReply authInfo. */
+            public authInfo: Uint8Array;
+
+            /**
+             * Creates a new GetUserThemeConfigInfoReply instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns GetUserThemeConfigInfoReply instance
+             */
+            public static create(properties?: dcnet.pb.IGetUserThemeConfigInfoReply): dcnet.pb.GetUserThemeConfigInfoReply;
+
+            /**
+             * Encodes the specified GetUserThemeConfigInfoReply message. Does not implicitly {@link dcnet.pb.GetUserThemeConfigInfoReply.verify|verify} messages.
+             * @param message GetUserThemeConfigInfoReply message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: dcnet.pb.IGetUserThemeConfigInfoReply, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified GetUserThemeConfigInfoReply message, length delimited. Does not implicitly {@link dcnet.pb.GetUserThemeConfigInfoReply.verify|verify} messages.
+             * @param message GetUserThemeConfigInfoReply message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: dcnet.pb.IGetUserThemeConfigInfoReply, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes a GetUserThemeConfigInfoReply message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns GetUserThemeConfigInfoReply
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): dcnet.pb.GetUserThemeConfigInfoReply;
+
+            /**
+             * Decodes a GetUserThemeConfigInfoReply message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns GetUserThemeConfigInfoReply
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): dcnet.pb.GetUserThemeConfigInfoReply;
+
+            /**
+             * Verifies a GetUserThemeConfigInfoReply message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates a GetUserThemeConfigInfoReply message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns GetUserThemeConfigInfoReply
+             */
+            public static fromObject(object: { [k: string]: any }): dcnet.pb.GetUserThemeConfigInfoReply;
+
+            /**
+             * Creates a plain object from a GetUserThemeConfigInfoReply message. Also converts values to other types if specified.
+             * @param message GetUserThemeConfigInfoReply
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: dcnet.pb.GetUserThemeConfigInfoReply, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this GetUserThemeConfigInfoReply to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for GetUserThemeConfigInfoReply
              * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
              * @returns The default type url
              */
@@ -21494,6 +21724,20 @@ export namespace dcnet {
             public getThemeComments(request: dcnet.pb.IGetThemeCommentsRequest): Promise<dcnet.pb.GetThemeCommentsReply>;
 
             /**
+             * Calls GetUserThemeConfigInfo.
+             * @param request GetUserThemeConfigInfoRequest message or plain object
+             * @param callback Node-style callback called with the error, if any, and GetUserThemeConfigInfoReply
+             */
+            public getUserThemeConfigInfo(request: dcnet.pb.IGetUserThemeConfigInfoRequest, callback: dcnet.pb.Service.GetUserThemeConfigInfoCallback): void;
+
+            /**
+             * Calls GetUserThemeConfigInfo.
+             * @param request GetUserThemeConfigInfoRequest message or plain object
+             * @returns Promise
+             */
+            public getUserThemeConfigInfo(request: dcnet.pb.IGetUserThemeConfigInfoRequest): Promise<dcnet.pb.GetUserThemeConfigInfoReply>;
+
+            /**
              * Calls GetThemeAuthList.
              * @param request GetThemeAuthListRequest message or plain object
              * @param callback Node-style callback called with the error, if any, and GetThemeAuthListReply
@@ -22377,6 +22621,13 @@ export namespace dcnet {
              * @param [response] GetThemeCommentsReply
              */
             type GetThemeCommentsCallback = (error: (Error|null), response?: dcnet.pb.GetThemeCommentsReply) => void;
+
+            /**
+             * Callback as used by {@link dcnet.pb.Service#getUserThemeConfigInfo}.
+             * @param error Error, if any
+             * @param [response] GetUserThemeConfigInfoReply
+             */
+            type GetUserThemeConfigInfoCallback = (error: (Error|null), response?: dcnet.pb.GetUserThemeConfigInfoReply) => void;
 
             /**
              * Callback as used by {@link dcnet.pb.Service#getThemeAuthList}.

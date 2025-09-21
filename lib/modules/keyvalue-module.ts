@@ -156,10 +156,10 @@ export class KeyValueModule implements DCModule, IKeyValueOperations {
     value: string,
     indexs: string, //索引列表,格式为json字符串:[{key:"indexkey1",type:"string",value:"value"},{key:"indexkey2",type:"number", value:12}],这里统一转换格式为key1:value1$$$key2:value2
     vaccount?: string
-  ): Promise<[boolean | null, Error | null]> {
+  ): Promise<[boolean | null, number | null, Error | null]> {
      const err = this.assertInitialized();
     if (err) {
-      return [null, err];
+      return [null, null, err];
     }
     
     try {
@@ -191,7 +191,7 @@ export class KeyValueModule implements DCModule, IKeyValueOperations {
       return res;
     } catch (error) {
       logger.error(`设置set-value失败:`, error);
-      return [null, error instanceof Error ? error : new Error(String(error))];
+      return [null,null, error instanceof Error ? error : new Error(String(error))];
     }
   }
 

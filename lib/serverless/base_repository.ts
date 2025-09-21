@@ -121,7 +121,7 @@ export class EntityRepository<T extends BaseEntity> {
   ) {}
 
   // 保存实体（写入并附带索引）
-  async save(entity: T, vaccount?: string): Promise<void> {
+  async save(entity: T, vaccount?: string): Promise<number> {
     entity.validate();
     const key= (entity as any).getPrimaryKey();
     //移除dc_timestamp和dc_opuser字段，由dc节点自动维护
@@ -130,15 +130,17 @@ export class EntityRepository<T extends BaseEntity> {
     const value = JSON.stringify(entity.toJSON());
     const indexs = buildIndexPayload(entity, this.entityCtor);
 
-    const [ok, err] = await this.ops.set(this.db, key, value, indexs, vaccount);
+    const [ok,resTimestamp, err] = await this.ops.set(this.db, key, value, indexs, vaccount);
     if (err) throw err;
     if (!ok) throw new Error(`${this.entityCtor.name}.save failed`);
+    entity.dc_timestamp = resTimestamp ? resTimestamp : 0; // 设置时间戳
+    return entity.dc_timestamp;
   }
 
 
   async deleteById(id: string, vaccount?: string): Promise<void> {
     const key = id;
-    const [ok, err] = await this.ops.set(this.db, key, "","", vaccount); // 空值用于标记删除
+    const [ok,_ ,err] = await this.ops.set(this.db, key, "","", vaccount); // 空值用于标记删除
     if (err) throw err;
     if (!ok) throw new Error(`${this.entityCtor.name}.deleteById failed`);
   }
@@ -158,7 +160,8 @@ export class EntityRepository<T extends BaseEntity> {
     const inst = new this.entityCtor();
     Object.assign(inst, obj);
     Object.assign(inst as any, patch);
-    await this.save(inst, vaccount);
+    const resTimestamp = await this.save(inst, vaccount);
+    inst.dc_timestamp = resTimestamp;
     return inst;
   }
 
