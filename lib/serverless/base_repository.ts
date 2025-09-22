@@ -20,6 +20,35 @@ function safeParseJSON<T>(s: string | null): T | null {
 
 
 
+
+// 兼容 getWithIndex 返回的两种格式（string[] 或 Record<string,string>[]）
+function parseIndexResultValues(raw: string): string[] {
+  const parsed = safeParseJSON<any>(raw);
+  if (!Array.isArray(parsed)) return [];
+  const out: string[] = [];
+  for (const item of parsed) {
+    if (typeof item === "string") {
+      out.push(item);
+    } else if (item && typeof item === "object") {
+      for (const v of Object.values(item)) {
+        if (v != null) out.push(String(v));
+      }
+    }
+  }
+  return out;
+}
+
+function maybeStripKeyPrefix(s: string): string {
+  const t = s.trimStart();
+  const i = t.indexOf(":");
+  if (i > 0 && i < 64 && t[0] !== "{" && t[0] !== "[" && t[0] !== "\"") {
+    return t.slice(i + 1).trim();
+  }
+  return s;
+}
+
+
+
 // 将列声明类型与实际值映射到 KV 可识别的索引类型和值
 function asIndexTypeAndValue(value: unknown, declaredType?: string): { type: string; value: string } {
   const t = declaredType ?? (value instanceof Date ? "date" : typeof value);
@@ -187,6 +216,9 @@ export class EntityRepository<T extends BaseEntity> {
     return inst;
   }
 
+
+  
+
   // 通过索引查询（单字段：indexKey=字段名；复合：indexKey=索引名，indexValue=JSON数组字符串）
   async findByIndex(indexKey: string, indexValue: string, options: FindIndexOptions = {}): Promise<T[]> {
     const [raw, err] = await this.ops.getWithIndex(
@@ -198,20 +230,18 @@ export class EntityRepository<T extends BaseEntity> {
     );
     if (err || !raw) return [];
 
-    const list = safeParseJSON<string[]>(raw) ?? [];
+    const values = parseIndexResultValues(raw);
     const out: T[] = [];
-    for (let item of list) {
-        //移除 key: 前缀
-      const sepIdx = item.indexOf(":");
-      if (sepIdx >= 0) {
-        item = item.slice(sepIdx + 1);
-      }  
-      const [v,extra]= extractRawValue(String(item));
-      const obj = safeParseJSON<any>(v);
+    for (let val of values) {
+      // 兼容老格式 "key:value"；新格式是纯 value，不会命中
+      val = maybeStripKeyPrefix(val);
+
+      const [json, extra] = extractRawValue(val);
+      const obj = safeParseJSON<any>(json);
       if (!obj) continue;
       if (extra) {
-         const extraObj = safeParseJSON<any>(extra);
-         if (extraObj) Object.assign(obj, extraObj);
+        const extraObj = safeParseJSON<any>(extra);
+        if (extraObj) Object.assign(obj, extraObj);
       }
       const inst = new this.entityCtor();
       Object.assign(inst, obj);
@@ -222,23 +252,7 @@ export class EntityRepository<T extends BaseEntity> {
 
   async findOneByIndex(indexKey: string, indexValue: string, options: Omit<FindIndexOptions, "limit"> = {}): Promise<T | null> {
     const list = await this.findByIndex(indexKey, indexValue, { ...options, limit: 1 });
-    const value = list[0];
-    if (value) {
-        const [v,extra] = extractRawValue(String(value));
-        if (!v) return null;
-        const obj = safeParseJSON<any>(v);
-        if (!obj) return null;
-        if (extra) {
-            const extraObj = safeParseJSON<any>(extra);
-            if (extraObj) {
-                Object.assign(obj, extraObj);
-            }
-        }
-        const inst = new this.entityCtor();
-        Object.assign(inst, obj);
-        return inst;
-    }
-    return null;
+    return list[0] ?? null;
   }
 
   // 按键前缀遍历（用于分页场景）
