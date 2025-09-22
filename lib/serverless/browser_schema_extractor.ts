@@ -1,3 +1,4 @@
+import "../polyfills/process-env-browser"; 
 import { parse } from "@babel/parser";
 import traverse from "@babel/traverse";
 import * as t from "@babel/types";
