@@ -158,7 +158,7 @@ async  encrypt(
   const ciphertext = await crypto.subtle.encrypt(  
     algorithm,  
     symKey.key,  
-    plaintext 
+    plaintext as any
   );  
   // 提取认证标签（最后16字节）  
   //const tag = ciphertext.slice(ciphertext.byteLength - 16);  
