@@ -62,7 +62,7 @@ export interface IKeyValueOperations {
    * @param value 值内容
    * @param indexs 索引列表，格式为json字符串:[{key:"indexkey1",type:"string",value:"value"},{key:"indexkey2",type:"number", value:12}],设置索引后,后续查询可以通过索引快速定位
    * @param vaccount 可选的虚拟账户
-   * @returns [是否设置成功, 错误信息]
+   * @returns [是否设置成功, 时间戳, 错误信息]
    */
   set(
     kvdb: KeyValueDB,
@@ -70,7 +70,18 @@ export interface IKeyValueOperations {
     value: string,
     indexs: string,
     vaccount?: string
-  ): Promise<[boolean | null, Error | null]>;
+  ): Promise<[boolean | null, number | null, Error | null]>;
+
+
+/**
+   * 获取当前用户设置的指定键的元数据
+   * @param kvdb 
+   * @param key 
+   * @param vaccount 
+   * @returns  [值, 错误信息],值的格式:  value$$$dckv_extra$$${'dc_timestamp':'%d','dc_opuser':'%s'}
+   */
+   getValueSetByCurrentUser(kvdb: KeyValueDB, key: string,vaccount?: string): Promise<[string | null, Error | null]> ;
+ 
 
   /**
    * 获取指定键的值
@@ -78,7 +89,7 @@ export interface IKeyValueOperations {
    * @param key 键名
    * @param writerPubkey 写入者的公钥,如果不指定，则获取所有用户写入的该key的最新值
    * @param vaccount 可选的虚拟账户
-   * @returns [值内容, 错误信息] 值的格式:  value$$$dckv_extra$$${'timestamp':'%d','opuser':'%s'}
+   * @returns [值内容, 错误信息] 值的格式:  value$$$dckv_extra$$${'dc_timestamp':'%d','dc_opuser':'%s'}
    */
   get(
     kvdb: KeyValueDB,
@@ -97,7 +108,7 @@ export interface IKeyValueOperations {
    * @param direction 查询方向
    * @param offset 结果偏移量
    * @param vaccount 可选的虚拟账户
-   * @returns [值列表生成的json字符串, 错误信息] 每个值的格式:  value$$$dckv_extra$$${'timestamp':'%d','opuser':'%s'}
+   * @returns [值列表数组生成的json字符串, 错误信息] 数组的每个元素的格式:  key:value$$$dckv_extra$$${'dc_timestamp':'%d','dc_opuser':'%s'}
    */
   getValues(
     kvdb: KeyValueDB,
@@ -113,7 +124,7 @@ export interface IKeyValueOperations {
    * @param keys 多个键名，逗号分隔
    * @param writerPubkey 写入者的公钥,可选,默认为主题作者
    * @param vaccount 可选的虚拟账户
-   * @returns [JSON格式值内容, 错误信息] 每个值的格式:  value$$$dckv_extra$$${'timestamp':'%d','opuser':'%s'}
+   * @returns [值列表数组生成的json字符串, 错误信息] 数组的每个元素的格式:  key:value$$$dckv_extra$$${'dc_timestamp':'%d','dc_opuser':'%s'}
    */
   getBatch(
     kvdb: KeyValueDB,
@@ -133,7 +144,7 @@ export interface IKeyValueOperations {
    * @param direction 查询方向 (Forward/Backward)
    * @param limit 返回结果数量限制
    * @param vaccount 可选的虚拟账户
-   * @returns [JSON格式查询结果, 错误信息] 每个值的格式: value$$$dckv_extra$$${'timestamp':'%d','opuser':'%s'}
+   * @returns [值列表数组生成的json字符串, 错误信息] 数组的每个元素的格式:  key:value$$$dckv_extra$$${'dc_timestamp':'%d','dc_opuser':'%s'}
    */
   getWithIndex(
     kvdb: KeyValueDB,

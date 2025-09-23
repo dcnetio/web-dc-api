@@ -33,6 +33,9 @@
   "license": "ISC",
   "keywords": [],
   "dependencies": {
+    "@babel/parser": "^7.28.4",
+    "@babel/traverse": "^7.28.4",
+    "@babel/types": "^7.28.4",
     "@helia/block-brokers": "4.1.0",
     "@helia/dag-cbor": "^4.0.3",
     "@helia/interface": "4.0.1",

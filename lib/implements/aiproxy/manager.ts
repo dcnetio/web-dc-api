@@ -209,7 +209,7 @@ export class AIProxyManager {
     const signature = await this.context.sign(preSign);
     const keyValueClient = new KeyValueClient(client, this.context);
     try {
-      const res = await keyValueClient.setKeyValue(
+      const [resFlag,_] = await keyValueClient.setKeyValue(
         configTheme,
         appId,
         configAuthor,
@@ -223,8 +223,8 @@ export class AIProxyManager {
         vaccount
       );
 
-      if (res !== 0) {
-        return [null, new Error(`configAIProxy fail, resFlag:${res}`)];
+      if (resFlag !== 0) {
+        return [null, new Error(`configAIProxy fail, resFlag:${resFlag}`)];
       }
       return [true, null];
     } catch (error) {
@@ -517,11 +517,11 @@ export class AIProxyManager {
               const extraStr = valueParts[1] || "{}";
               const extra = JSON.parse(extraStr);
               if (extra) {
-                if (extra.timestamp) {
-                  content.timestamp = extra.timestamp;
+                if (extra.dc_timestamp) {
+                  content.timestamp = extra.dc_timestamp;
                 }
-                if (extra.opuser) {
-                  content.userPubkey = extra.opuser;
+                if (extra.dc_opuser) {
+                  content.userPubkey = extra.dc_opuser;
                 }
               }
             }

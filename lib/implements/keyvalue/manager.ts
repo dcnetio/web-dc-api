@@ -58,7 +58,7 @@ export class KeyValueDB {
     value: any,
     indexs: string = "",
     vaccount: string = ""
-  ): Promise<[boolean | null, Error | null]> {
+  ): Promise<[boolean | null,number | null, Error | null]> {
     return this.manager.setKeyValue(
       this.appId,
       this.themeAuthor,
@@ -69,6 +69,8 @@ export class KeyValueDB {
       vaccount
     );
   }
+
+
 
   //获取键值对
   async get(
@@ -486,9 +488,9 @@ export class KeyValueManager {
     value: string,
     indexs: string, //索引列表,格式为key1:value1$$$key2:value2
     vaccount?: string
-  ): Promise<[boolean | null, Error | null]> {
-    if(!this.context.publicKey){
-      return [null, Errors.ErrPublicKeyIsNull];
+  ): Promise<[boolean | null, number | null, Error | null]> {
+    if (!this.context.publicKey) {
+      return [null, null, Errors.ErrPublicKeyIsNull];
     }
     if (!theme.startsWith("keyvalue_")) {
       theme = "keyvalue_" + theme;
@@ -501,11 +503,11 @@ export class KeyValueManager {
     }
      
     if (client === null) {
-      return [null, new Error("ErrConnectToAccountPeersFail")];
+      return [null, null, new Error("ErrConnectToAccountPeersFail")];
     }
 
     if (client.peerAddr === null) {
-      return [null, new Error("ErrConnectToAccountPeersFail")];
+      return [null, null, new Error("ErrConnectToAccountPeersFail")];
     }
     if (client.token == "") {
       await client.GetToken(appId, this.context.publicKey.string(), this.context.sign);
@@ -545,7 +547,7 @@ export class KeyValueManager {
     const signature = await this.context.sign(preSign);
     const keyValueClient = new KeyValueClient(client, this.context);
     try {
-      const res = await keyValueClient.setKeyValue(
+      const [resFlag,resTimestamp] = await keyValueClient.setKeyValue(
         theme,
         appId,
         themeAuthor,
@@ -559,12 +561,12 @@ export class KeyValueManager {
         vaccount
       );
 
-      if (res !== 0) {
-        return [null, new Error(`setKeyValue fail, resFlag:${res}`)];
+      if (resFlag !== 0) {
+        return [null, resTimestamp, new Error(`setKeyValue fail, resFlag:${resFlag}`)];
       }
-      return [true, null];
+      return [true, resTimestamp, null];
     } catch (error: any) {
-      return [null, error];
+      return [null, null, error];
     }
   }
 

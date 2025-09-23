@@ -680,6 +680,7 @@ message PublishCommentToThemeReply{
 
 message SetKeyValueReply{
     uint32 flag =1; //0:成功 1:空间没有配置 2:keyvalue空间不足
+    uint64 timestamp = 2 ; //接收时的时间戳,由接收节点生成,单位为微秒
 }
 
 

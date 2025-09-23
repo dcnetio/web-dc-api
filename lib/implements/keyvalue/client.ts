@@ -101,7 +101,7 @@ export class KeyValueClient {
     type: number,
     signature: Uint8Array,
     vaccount?: string,
-  ): Promise<number> {
+  ): Promise<[number,number]> {
     const message = new dcnet.pb.SetKeyValueRequest({});
     message.appId = new TextEncoder().encode(appId);
     message.themeAuthor = new TextEncoder().encode(themeAuthor);
@@ -132,7 +132,7 @@ export class KeyValueClient {
       console.log("SetKeyValue reply", reply);
       const decoded = dcnet.pb.SetKeyValueReply.decode(reply);
       console.log("SetKeyValue decoded", decoded);
-      return decoded.flag;
+      return [decoded.flag, decoded.timestamp as number];
     } catch (error: any) {
       if (error.message.indexOf(Errors.INVALID_TOKEN.message) != -1) {
         // try to get token
@@ -152,9 +152,9 @@ export class KeyValueClient {
           30000
         );
         console.log("SetKeyValue reply", reply);
-        const decoded = dcnet.pb.GetUserCommentsReply.decode(reply);
+        const decoded = dcnet.pb.SetKeyValueReply.decode(reply);
         console.log("SetKeyValue decoded", decoded);
-        return decoded.flag;
+        return [decoded.flag, decoded.timestamp as number];
       }
       console.error("SetKeyValue error:", error);
       throw error;
