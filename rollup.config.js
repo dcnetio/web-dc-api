@@ -12,7 +12,7 @@ import pkg from './package.json' assert { type: 'json' };
 
 const tsconfig = {
   tsconfig: './tsconfig.json',
-  declaration: false
+  declaration: false,
 };
 
 // 外部依赖（这些将不会被打包进最终文件）
@@ -69,15 +69,16 @@ export default [
       {
         file: pkg.module, // ESM格式
         format: 'esm',
-        sourcemap: false
+        sourcemap: false,
+        inlineDynamicImports: true
       },
       {
         file: pkg.main, // CJS格式
         format: 'cjs',
-        sourcemap: false
+        sourcemap: false,
+        inlineDynamicImports: true
       }
     ],
-    inlineDynamicImports: true,
     external,
     plugins: [
       resolve({
@@ -88,7 +89,8 @@ export default [
         transformMixedEsModules: true
       }),
       ...plugins,
-    ]
+    ],
+    inlineDynamicImports: true
   },
   
   // 类型定义文件
@@ -96,11 +98,11 @@ export default [
     input: 'lib/index.ts',
     output: {
       file: pkg.types,
-      format: 'es'
+      format: 'es',
+      inlineDynamicImports: true
     },
-    inlineDynamicImports: true,
     plugins: [dts()],
-    external
+    external,
   },
   
   // 压缩版本
@@ -117,9 +119,9 @@ export default [
       globals: {
         // 明确告诉 Rollup 本地包的全局变量名
         'grpc-libp2p-client': 'GrpcLibp2pClient'
-      }
+      },
+      inlineDynamicImports: true
     },
-    inlineDynamicImports: true,
     // 注意：浏览器版本应该包含所有依赖（除非是全局可用的）
     // external: [], // 不设置external，以便捆绑所有依赖
     external: ['grpc-libp2p-client'], // 设为外部依赖
@@ -134,6 +136,6 @@ export default [
         transformMixedEsModules: true,
       }),
       ...plugins,
-    ]
+    ],
   }
 ];
