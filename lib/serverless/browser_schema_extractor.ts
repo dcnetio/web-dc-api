@@ -1,3 +1,4 @@
+import "../polyfills/process-env-browser";
 import type { NodePath, Visitor } from "@babel/traverse";
 import type * as T from "@babel/types";
 import { loadBabel } from "./babel-browser";

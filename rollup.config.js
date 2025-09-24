@@ -67,14 +67,18 @@ export default [
     input: 'lib/index.ts',
     output: [
       {
-        file: pkg.module, // ESM格式
+      //  file: pkg.module, // ESM格式
+        dir: 'dist/esm',
         format: 'esm',
-        sourcemap: false
+        sourcemap: false,
+        inlineDynamicImports: true, // ← 加这一行
       },
       {
-        file: pkg.main, // CJS格式
+        // file: pkg.main, // CJS格式
+        dir: 'dist/cjs',
         format: 'cjs',
-        sourcemap: false
+        sourcemap: false,
+        inlineDynamicImports: true, // ← 加这一行
       }
     ],
     external,
@@ -148,7 +152,8 @@ export default [
       globals: {
         // 明确告诉 Rollup 本地包的全局变量名
         'grpc-libp2p-client': 'GrpcLibp2pClient'
-      }
+      },
+     inlineDynamicImports: true, // ← 加这一行
     },
     // 注意：浏览器版本应该包含所有依赖（除非是全局可用的）
     // external: [], // 不设置external，以便捆绑所有依赖
