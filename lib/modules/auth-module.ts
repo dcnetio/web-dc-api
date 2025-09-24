@@ -49,18 +49,24 @@ export class AuthModule implements DCModule, IAuthOperations {
    * @returns 是否初始化成功
    */
   async initialize(context: DCContext): Promise<boolean> {
-    try {
-      this.context = context;
-      const walletManager = new WalletManager(this.context);
-      this.walletManager = walletManager;
-      this.initialized = true;
-      await walletManager.init();
-      return true;
-    } catch (error) {
-      logger.error("认证模块初始化失败:", error);
-      return false;
-    }
-  }
+    this.context = context;
+    // 启动异步初始化任务，不等待其完成
+    (async () => {
+      try {
+        logger.info("真正的认证模块初始化开始");
+        const walletManager = new WalletManager(this.context);
+        this.walletManager = walletManager;
+        await walletManager.init();
+        this.initialized = true;
+        logger.info("真正的认证模块初始化完成");
+      } catch (error) {
+        logger.error("真正的认证模块初始化失败:", error);
+        this.initialized = false;
+      }
+    })();
+    // 立即返回
+    return true;
+}
 
   /**
    * 关闭认证模块
@@ -711,9 +717,13 @@ export class AuthModule implements DCModule, IAuthOperations {
   /**
    * 断言模块已初始化
    */
-  private assertInitialized(): void {
-    if (!this.initialized) {
-      throw new Error("认证模块未初始化");
+ private async assertInitialized(timeoutMs = 30000): Promise<void> {
+  const start = Date.now();
+  while (!this.initialized) {
+    if (Date.now() - start > timeoutMs) {
+      throw new Error("认证模块未初始化（超时）");
     }
+    await new Promise(res => setTimeout(res, 100)); // 每 100ms 检查一次
   }
+}
 }
