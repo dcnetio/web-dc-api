@@ -80,7 +80,6 @@ export class KeyValueModule implements DCModule, IKeyValueOperations {
       );
       return [kvdb,err];
     } catch (error) {
-      logger.error(`创建存储主题 ${theme} 失败:`, error);
       return [null, error instanceof Error ? error : new Error(String(error))];
     }
   }
@@ -103,7 +102,6 @@ export class KeyValueModule implements DCModule, IKeyValueOperations {
       );
       return [kvdb,err];
     } catch (error) {
-      logger.error(`获取存储主题 ${theme} 失败:`, error);
       return [null, error instanceof Error ? error : new Error(String(error))];
     }
   }
@@ -126,7 +124,6 @@ export class KeyValueModule implements DCModule, IKeyValueOperations {
        const res = await kvdb.configAuth(authPubkey, permission, remark, vaccount);
       return res;
     } catch (error) {
-      logger.error(`配置权限失败:`, error);
       return [null, error instanceof Error ? error : new Error(String(error))];
     }
   }
@@ -143,7 +140,6 @@ export class KeyValueModule implements DCModule, IKeyValueOperations {
       const res = await kvdb.getAuthList(vaccount);
       return res;
     } catch (error) {
-      logger.error(`获取权限列表失败:`, error);
       return [null, null, error instanceof Error ? error : new Error(String(error))];
     }
   }
@@ -190,7 +186,6 @@ export class KeyValueModule implements DCModule, IKeyValueOperations {
       const res = await kvdb.set(key, value, strIndexs, vaccount);
       return res;
     } catch (error) {
-      logger.error(`设置set-value失败:`, error);
       return [null,null, error instanceof Error ? error : new Error(String(error))];
     }
   }
@@ -234,7 +229,6 @@ export class KeyValueModule implements DCModule, IKeyValueOperations {
       const res = await kvdb.get(key, writerPubkey, vaccount);
       return res;
     } catch (error) {
-      logger.error(`获取key-value失败:`, error);
       return [null, error instanceof Error ? error : new Error(String(error))];
     }
   }
@@ -268,7 +262,6 @@ export class KeyValueModule implements DCModule, IKeyValueOperations {
       const res = await kvdb.getWithIndex(indexkey_dckv, key, limit, seekKey, direction, offset, vaccount);
       return res;
     } catch (error) {
-      logger.error(`getValues失败:`, error);
       return [null, error instanceof Error ? error : new Error(String(error))];
     }
   }
@@ -296,7 +289,6 @@ export class KeyValueModule implements DCModule, IKeyValueOperations {
       const res = await kvdb.getBatch(keys, writerPubkey, vaccount);
       return res;
     } catch (error) {
-      logger.error(`getBatch失败:`, error);
       return [null, error instanceof Error ? error : new Error(String(error))];
     }
   }
@@ -336,7 +328,6 @@ export class KeyValueModule implements DCModule, IKeyValueOperations {
       const res = await kvdb.getWithIndex(indexKey, indexValueStr, limit,seekKey, direction,offset,  vaccount);
     return res;
     } catch (error) {
-      logger.error(`getWithIndex失败:`, error);
       return [null, error instanceof Error ? error : new Error(String(error))];
     }
   }

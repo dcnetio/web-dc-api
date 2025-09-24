@@ -233,15 +233,35 @@ function jsonStringify(value: any): string {
 }
 
 
-// 30 位零填充，不做数值运算，避免精度问题
- function padPositiveInt30(v: string | number): string {
-  let s = String(v).trim();
-  if (!/^\d+$/.test(s)) throw new Error("只接受正整数数字串");
-  // 去掉前导 0（如果要允许 0，把正则改为 /^\d+$/ 并允许 s === '0'）
-  s = s.replace(/^0+/, "") || "0";
-  if (s === "0") return "0".padStart(30, "0"); // 如需排除 0 可去掉这行并在上面报错
-  if (s.length > 30) throw new Error("超过 30 位宽度");
-  return s.padStart(30, "0");
+
+/**
+ * 将非负数字字符串（可带小数）格式化：
+ * - 仅对整数部分左侧补零至 30 位
+ * - 小数部分（若有）原样保留
+ * - 不进行数值运算，避免精度问题
+ * 例：
+ *  - "123"      -> "000000000000000000000000000123"
+ *  - "123.45"   -> "000000000000000000000000000123.45"
+ *  - "0.5"      -> "000000000000000000000000000000.5"
+ */
+
+function padPositiveInt30(v: string | number): string {
+  const s0 = String(v).trim();
+  // 仅允许非负数字，支持一处小数点（不允许科学计数法/负号）
+  if (!/^\d+(\.\d+)?$/.test(s0)) throw new Error("只接受非负数字（可带小数）");
+
+  // 显式默认，避免 TS 推断 undefined
+  const parts = s0.split(".");
+  let intPart: string = parts[0] ?? "0";
+  let fracPart: string = parts[1] ?? "";
+
+  // 去掉整数部分前导 0
+  intPart = intPart.replace(/^0+/, "") || "0";
+
+  if (intPart.length > 30) throw new Error("整数部分超过 30 位宽度");
+
+  const paddedInt = intPart.padStart(30, "0");
+  return fracPart ? `${paddedInt}.${fracPart}` : paddedInt;
 }
 
 export {

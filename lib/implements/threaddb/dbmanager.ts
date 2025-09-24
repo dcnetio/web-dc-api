@@ -1189,7 +1189,11 @@ async  addLogToThread(ctx: Context, id: ThreadID, lid: PeerId): Promise<void> {
     }
 
     if (count >= maxCount) {
-      await this.addLogToThread(ctx, id, lid);
+      try {
+        await this.addLogToThread(ctx, id, lid);
+      } catch (error) {
+        
+      }
       count = 0;
     } else {
       count++;
