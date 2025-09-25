@@ -67,15 +67,13 @@ export default [
     input: 'lib/index.ts',
     output: [
       {
-      //  file: pkg.module, // ESM格式
-        dir: 'dist/esm',
+        file: pkg.module, // ESM格式
         format: 'esm',
         sourcemap: false,
         inlineDynamicImports: true
       },
       {
-        // file: pkg.main, // CJS格式
-        dir: 'dist/cjs',
+        file: pkg.main, // CJS格式
         format: 'cjs',
         sourcemap: false,
         inlineDynamicImports: true
@@ -92,7 +90,6 @@ export default [
       }),
       ...plugins,
     ],
-    inlineDynamicImports: true
   },
   
   // 类型定义文件
