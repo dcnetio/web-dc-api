@@ -390,7 +390,15 @@ export class EntityRepository<T extends BaseEntity> {
     const list = safeParseJSON<string[]>(raw) ?? [];
     const out: T[] = [];
     for (const item of list) {
-      const [v,extra] = extractRawValue(String(item));
+      let itemValue = String(item);
+      if (typeof item !== "string") {
+        //是{key: value}格式,取出value
+        for (const [_, v] of Object.entries(item)) {
+            itemValue = String(v);
+            break;
+        } 
+      }
+      const [v,extra] = extractRawValue(itemValue);
       const obj = safeParseJSON<any>(v);
       if (!obj) continue;
       if (extra) {

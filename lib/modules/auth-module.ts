@@ -90,6 +90,8 @@ export class AuthModule implements DCModule, IAuthOperations {
         throw new Error("dcClient is null");
       }
       const data = await this.walletManager.openConnect(accountInfo);
+      // 登录成功，清空临时私钥
+      this.context.privateKey = null;
       // 如果有返回则保存到context中
       if(data && data.accountInfo && data.accountInfo.nftAccount) {
         this.context.accountInfo = data.accountInfo;
@@ -231,6 +233,8 @@ export class AuthModule implements DCModule, IAuthOperations {
       console.log("=================accountLogin success");
 
       if (mnemonic) {
+        // 登录成功，清空临时私钥
+        this.context.privateKey = null;
         if (this.context.appInfo?.appId) {
           const accountManager = new AccountManager(this.context);
          
@@ -265,7 +269,12 @@ export class AuthModule implements DCModule, IAuthOperations {
     if (!this.walletManager) {
       throw new Error("walletManager is null");
     } else {
-      const signature = await this.walletManager.sign(payload);
+      if (!this.context.privateKey) {
+        // 登录过
+        const signature = await this.walletManager.sign(payload);
+        return signature;
+      }
+      const signature = this.context.privateKey?.sign(payload) as Uint8Array;
       return signature;
     }
   }
