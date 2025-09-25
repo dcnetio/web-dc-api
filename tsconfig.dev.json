@@ -1,0 +1,13 @@
+{
+    "extends": "./tsconfig.json",
+    "compilerOptions": {
+      "paths": {
+        "grpc-libp2p-client": [
+          "../grpc-libp2p-client/src/index"
+        ],
+        "grpc-libp2p-client/*": [
+          "../grpc-libp2p-client/src/*"
+        ], 
+      }
+    }
+  }
