@@ -41,6 +41,7 @@ export class DC implements DCContext {
   dcChain: ChainUtil;
   dcNodeClient!: HeliaLibp2p<Libp2p>;
   dcutil: DcUtil;
+  privateKey: Ed25519PrivKey | undefined;
   publicKey: Ed25519PubKey | undefined;
   dbThreadId: string = ""; // 当前用户的去中心化数据库ID
   ethAddress: string = ""; // 以太坊格式的公钥,16进制字符串
@@ -208,6 +209,12 @@ export class DC implements DCContext {
           // 在这里设置初始化标志，确保后续模块方法可以正常访问
           this.initialized = true;
           backStep && (await backStep(3));
+
+          // 设置默认私钥
+          const seed = crypto.getRandomValues(new Uint8Array(32))  
+          this.privateKey = Ed25519PrivKey.fromSeed(seed)
+          const pubKey = this.privateKey.publicKey;
+          this.publicKey = pubKey;
 
           // 定时维系token
           if(this.auth){

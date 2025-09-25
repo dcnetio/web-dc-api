@@ -38,6 +38,7 @@ export interface DCContext {
   
   // 身份相关
   publicKey: Ed25519PubKey | undefined;
+  privateKey: Ed25519PrivKey | undefined;
   // 以太坊格式的公钥,16进制字符串
   ethAddress: string | undefined;
 
