@@ -958,7 +958,7 @@ async addUserOffChainOpTimes(
               }
               const authPubkey = parts[0]!;
               const permission = parseInt(parts[1]!);
-              const remark = content.substring(parts[0]!.length + 2);
+              const remark = content.substring(authPubkey.length + parts[1]!.length + 2);
               authList.push({
               pubkey: authPubkey,
               permission: permission,
