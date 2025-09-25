@@ -31,15 +31,7 @@
     "outDir": "dist",            // 编译输出目录  
     "rootDir": "lib",            // 源码目录
     // 添加以下两条防止无限类型递归
-    "maxNodeModuleJsDepth": 2,
-    "paths": {
-      "grpc-libp2p-client": [
-        "../grpc-libp2p-client/src/index"
-      ],
-      "grpc-libp2p-client/*": [
-        "../grpc-libp2p-client/src/*"
-      ], 
-    }
+    "maxNodeModuleJsDepth": 2
   },  
   "include": ["lib/**/*.ts", "lib/**/*.tsx"],
   "exclude": ["node_modules", "dist"]  
