@@ -105,6 +105,8 @@ export class Network implements Net {
   private connectors: Record<string, Connector>;
   private cachePeers: Record<string, TMultiaddr> = {};
   private threadMutexes: Record<string, AsyncMutex> = {};
+  private pushQueue: Array<{ tid: ThreadID; lid: PeerId; rec: IRecord; counter: number }> = [];
+  private pushWorkerStarted = false;
 
   constructor(
     dcUtil: DcUtil,
@@ -1744,6 +1746,72 @@ export class Network implements Net {
     return rec;
   }
 
+
+
+    // 启动队列处理任务（只需调用一次）
+    private startPushWorker() {
+      if (this.pushWorkerStarted) return;
+      this.pushWorkerStarted = true;
+  
+      const processNext = async () => {
+        if (this.pushQueue.length === 0) {
+          setTimeout(processNext, 1000);
+          return;
+        }
+        const item = this.pushQueue.shift();
+        if (!item) {
+          setTimeout(processNext, 1000);
+          return;
+        }
+        try {
+          await this._doPushRecord(item.tid, item.lid, item.rec, item.counter);
+        } catch (err) {
+          // 可选：失败可重试或丢弃
+          console.error("pushRecord failed:", err);
+        }
+        setTimeout(processNext, 0); // 立即处理下一条
+      };
+      processNext();
+    }
+  
+  
+    // 原始推送逻辑，供队列消费
+    private async _doPushRecord(
+      tid: ThreadID,
+      lid: PeerId,
+      rec: IRecord,
+      counter: number
+    ): Promise<void> {
+      try {
+        const addrs: TMultiaddr[] = [];
+        const info = await this.logstore.getThread(tid);
+        for (const l of info.logs) {
+          if (l.addrs && l.addrs.length > 0) {
+            addrs.push(...l.addrs);
+          }
+        }
+        const peers = await this.getPeers(tid);
+        if (!peers) throw new Error(`No peers for thread ${tid}`);
+        for (const p of peers) {
+          if (!p || p.toString() === "") continue;
+          try {
+            const [client, _] = await this.getClient(p);
+            if (!client) continue;
+            const dbClient = new DBClient(client, this.dc, this, this.logstore);
+            await dbClient.pushRecordToPeer(tid, lid, rec, counter);
+          } catch (err) {
+            continue;
+          }
+        }
+      } catch (err) {
+        throw new Error(
+          `Failed to push record: ${
+            err instanceof Error ? err.message : String(err)
+          }`
+        );
+      }
+    }
+
   /**
    * 推送记录到日志地址和threaddb 主题
    * @param tid threaddb ID
@@ -1757,46 +1825,8 @@ export class Network implements Net {
     rec: IRecord,
     counter: number
   ): Promise<void> {
-    try {
-      // 收集已知的写入器地址
-      const addrs: TMultiaddr[] = [];
-      const info = await this.logstore.getThread(tid);
-
-      // 收集所有日志的地址
-      for (const l of info.logs) {
-        if (l.addrs && l.addrs.length > 0) {
-          addrs.push(...l.addrs);
-        }
-      }
-      const peers = await this.getPeers(tid);
-      if (!peers) {
-        throw new Error(`No peers for thread ${tid}`);
-      }
-      // 向每个对等点推送
-      for (const p of peers) {
-        // 跳过无效对等点
-        if (!p || p.toString() === "") {
-          continue;
-        }
-        try {
-          const [client, _] = await this.getClient(p);
-          if (!client) {
-            continue;
-          }
-          const dbClient = new DBClient(client, this.dc, this, this.logstore);
-          // 启动异步推送（不等待完成）
-          dbClient.pushRecordToPeer(tid, lid, rec, counter);
-        } catch (err) {
-          continue; // 继续处理其他对等点
-        }
-      }
-    } catch (err) {
-      throw new Error(
-        `Failed to push record: ${
-          err instanceof Error ? err.message : String(err)
-        }`
-      );
-    }
+    this.pushQueue.push({ tid, lid, rec, counter });
+    this.startPushWorker();
   }
 
   /**

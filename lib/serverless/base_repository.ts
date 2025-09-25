@@ -107,7 +107,7 @@ export type FindIndexOptions = {
   type?: "string" | "number" | "boolean" | "date" | "json" | "binary";
   limit?: number;
   seekKey?: string;
-  direction?: Direction;
+  direction?: Direction; //Direction.Forward(升序) | Direction.Reverse(降序);
   offset?: number;
   vaccount?: string;
 };
@@ -115,10 +115,88 @@ export type FindIndexOptions = {
 export type FindValuesOptions = {
   limit?: number;
   seekKey?: string;
-  direction?: Direction;
+  direction?: Direction;//Direction.Forward(升序) | Direction.Reverse(降序);
   offset?: number;
   vaccount?: string;
 };
+
+type Operator = "=" | ">" | "<" | ">=" | "<=" | "!=";
+
+interface WhereCond {
+  field: string;
+  operator: Operator;
+  value: any;
+}
+
+function toIndexQuery(
+  cond: WhereCond
+): { indexKey: string; indexValue: string; options: FindIndexOptions; fullScan?: boolean } {
+  const { field, operator, value } = cond;
+  let direction: Direction | undefined;
+  let seekKey: string | undefined;
+  let limit: number | undefined;
+
+  switch (operator) {
+    case "=":
+      return {
+        indexKey: field,
+        indexValue: String(value),
+        options: {}
+      };
+    case ">":
+      direction = Direction.Forward;
+      seekKey = String(value);
+      limit = 1000;
+      break;
+    case ">=":
+      direction = Direction.Forward;
+      seekKey = String(value);
+      limit = 1000;
+      break;
+    case "<":
+      direction = Direction.Reverse;
+      seekKey = String(value);
+      limit = 1000;
+      break;
+    case "<=":
+      direction = Direction.Reverse;
+      seekKey = String(value);
+      limit = 1000;
+      break;
+    case "!=":
+      // 需要全量拉取
+      return {
+        indexKey: "",
+        indexValue: "",
+        options: {},
+        fullScan: true
+      };
+    default:
+      throw new Error("不支持的操作符: " + operator);
+  }
+
+  return {
+    indexKey: field,
+    indexValue: "",
+    options: {
+      direction,
+      seekKey,
+      limit
+    }
+  };
+}
+// 支持 "field>=value" 这种字符串解析
+function parseWhereString(whereStr: string): { field: string, operator: Operator, value: any } {
+  // 支持 >=, <=, >, <, =, !=
+  const m = whereStr.match(/^(\w+)\s*(>=|<=|=|>|<|!=)\s*(.+)$/);
+  if (!m) throw new Error("不支持的查询字符串格式: " + whereStr);
+  // 明确断言为 string，保证类型安全
+  const field = m[1] as string;
+  const operator = m[2] as Operator;
+  const value = m[3] as string;
+  return { field, operator, value };
+}
+
 
 function sanitizeGetWithIndexOptions(options: FindIndexOptions): { type?: string; limit?: number; seekKey?: string; direction?: Direction; offset?: number } {
   return {
@@ -195,6 +273,50 @@ export class EntityRepository<T extends BaseEntity> {
   }
 
 
+
+  async query(
+    where: WhereCond | string,
+    options: FindIndexOptions = {}
+  ): Promise<T[]> {
+    let cond: WhereCond;
+    if (typeof where === "string") {
+      cond = parseWhereString(where);
+    } else {
+      cond = where;
+    }
+
+    const { indexKey, indexValue, options: indexOptions, fullScan } = toIndexQuery(cond);
+    const mergedOptions = { ...indexOptions, ...options };
+
+    let list: T[];
+    if (fullScan) {
+      // 全量拉取
+      list = await this.find();
+    } else {
+      list = await this.findByIndex(indexKey, indexValue, mergedOptions);
+    }
+
+    const { field, operator, value } = cond;
+    const filtered = list.filter(obj => {
+      const v = (obj as any)[field];
+      switch (operator) {
+        case "=": return v == value;
+        case "!=": return v != value;
+        case ">": return v > value;
+        case "<": return v < value;
+        case ">=": return v >= value;
+        case "<=": return v <= value;
+        default: return false;
+      }
+    });
+
+    return filtered;
+  }
+
+   // 获取
+  async find( options: FindIndexOptions = {}): Promise<T[]> {
+    return this.getValues("",  options);
+  }
 
   // 通过 id 获取
   async findById(id: string, writerPubkey?: string, vaccount?: string): Promise<T | null> {

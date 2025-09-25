@@ -244,7 +244,7 @@ export class DBManager {
     ): Promise<ThreadDb> {  
         const id =  addr.id;  
         
-        return await this.lock.acquire('dbs', async () => {  
+     //   return await this.lock.acquire('dbs', async () => {  
          
             if (this.dbs.has(id.toString())) {  
           
@@ -283,7 +283,7 @@ export class DBManager {
                 this.pullThreadBackground(id, opts.token);  
             }  
             return db;  
-        });  
+       // });  
     }  
 
     private async pullThreadBackground(id: ThreadID, token?: ThreadToken) {  
@@ -503,11 +503,11 @@ async preloadDBFromReader(
       throw err;
     }
     // 检查数据库是否已存在
-    await this.lock.acquire('dbs', async () => {
+   // await this.lock.acquire('dbs', async () => {
       if (this.dbs.has(id.toString())) {
         throw Errors.ErrDBExists;
       }
-    });
+    //});
     if (opts.name && !isValidName(opts.name)) {
       throw Errors.ErrInvalidName;
     }
@@ -548,9 +548,9 @@ async preloadDBFromReader(
     }
     
     // 添加数据库到管理器
-    await this.lock.acquire('dbs', async () => {
+   // await this.lock.acquire('dbs', async () => {
       this.dbs.set(id.toString(), db);
-    });
+   // });
     
     // 导入数据库状态
     const readKey = key.read();
@@ -737,9 +737,9 @@ async importDBStateFromReader(
   
   // 检查数据库是否存在
   let db: ThreadDb | undefined;
-  await this.lock.acquire('dbs', async () => {
+ // await this.lock.acquire('dbs', async () => {
     db = this.dbs.get(id.toString());
-  });
+ // });
   
   if (!db) {
     throw Errors.ErrDBNotFound;
@@ -892,13 +892,13 @@ async  wrapDB(
 
 async listDBs(): Promise<Map<ThreadID, ThreadDb>> {  
     const dbs = new Map();  
-    await this.lock.acquire('dbs', async () => {  
+ //   await this.lock.acquire('dbs', async () => {  
         for (const [idStr, db] of this.dbs) {  
             const id = ThreadID.fromString(idStr);  
             await this.network.getThread(id);  
             dbs.set(id, db);  
         }  
-    });  
+  //  });  
     return dbs;  
 }  
 
@@ -985,8 +985,8 @@ async syncDBFromDC(
         const tID = await this.decodeThreadId(threadid);  
         const logKey = await this.getLogKey(tID);  
         const lid =  peerIdFromPrivateKey(logKey);
-        await this.dc._connectToObjNodes(threadid);  
-       await this.addLogToThreadStart(ctx,tID, lid);
+        // await this.dc._connectToObjNodes(threadid);  
+        //await this.addLogToThreadStart(ctx,tID, lid);
         const sk = SymmetricKey.fromString(b32Sk);
         const rk = SymmetricKey.fromString(b32Rk);
         const threadKey =  new ThreadKey(sk, rk);  
@@ -1141,7 +1141,7 @@ async  addLogToThread(ctx: Context, id: ThreadID, lid: PeerId): Promise<void> {
  const abortController = new AbortController();  
  const signal = ctx?.signal || abortController.signal; 
  const [storeUnit,err] = await this.chainUtil.objectState(id.toString());  
-  if (storeUnit && !err) {
+ if (storeUnit && !err) {
     const userPubkey = this.context.getPublicKey(); 
     let findFlag = false;  
     for (const user of storeUnit.users) {  
@@ -1168,33 +1168,40 @@ async  addLogToThread(ctx: Context, id: ThreadID, lid: PeerId): Promise<void> {
       }  
   }  
   let count = 0;  
-  const maxCount = 6;  
+  const maxCount = 10;  
   let endFlag = false; 
   try{
         await this.addLogToThread(ctx, id, lid);  
     }catch (error) {//允许报错
     }
-  const ticker = setInterval(async () => {  
-      // 检查是否已被取消  
-      if (signal.aborted) {  
-          clearInterval(ticker);  
-          if (timeoutId) clearTimeout(timeoutId);  
-          return;  
-      }  
+  let stopped = false;
+  const tick = async () => {
+    if (signal.aborted || stopped) {
+      if (timeoutId) clearTimeout(timeoutId);
+      return;
+    }
 
-      if (await this.ifDbInitSuccess(id)) {  
-          clearInterval(ticker);  
-          if (timeoutId) clearTimeout(timeoutId);  
-          endFlag = true
-          return;  
-      }  
-      if (count >= maxCount) {  //每6秒确认
-        await this.addLogToThread(ctx, id, lid);  
-        count = 0;  
-    } else {  
-        count++;  
-    }   
-  }, 1000); // 每秒执行一次  
+    if (await this.ifDbInitSuccess(id)) {
+      if (timeoutId) clearTimeout(timeoutId);
+      endFlag = true;
+      stopped = true;
+      return;
+    }
+
+    if (count >= maxCount) {
+      try {
+        await this.addLogToThread(ctx, id, lid);
+      } catch (error) {
+        
+      }
+      count = 0;
+    } else {
+      count++;
+    }
+
+    setTimeout(tick, 1000); // 递归调度
+  };
+  tick();
   await new Promise<void>((resolve) => {
     // Add a resolving condition to the interval
     const checkFlag = setInterval(() => {
@@ -1387,12 +1394,12 @@ async validateThreadId(threadid: string): Promise<boolean> {
 } 
 
 async close(): Promise<void> {  
-    await this.lock.acquire('dbs', async () => {  
+ //   await this.lock.acquire('dbs', async () => {  
         for (const db of this.dbs.values()) {  
             await db.close();  
         }  
         this.dbs.clear();  
-    });  
+  //  });  
 }  
 
 /**
@@ -1486,10 +1493,10 @@ async deleteDB( id: ThreadID, deleteThreadFlag: boolean, opts?: ManagedOptions):
     } catch (err) {
         throw err;
     }
-    this.lock.acquire('dbs', async () => {
+ //   this.lock.acquire('dbs', async () => {
         this.dbs.delete(id.toString());
         console.debug(`manager: deleted db ${id}`);
-    });
+  //  });
 }
 
 private async deleteThreadNamespace(id: ThreadID): Promise<void> {
