@@ -1055,7 +1055,28 @@ async getFolderFileList(
         // 有peers但是没有multiaddrs
         return null;
       }
+     // 没有peers
+      if (!peers) {
+        try {
+          const timeoutPromise = new Promise((resolve) => setTimeout(resolve, 5000, 'Timeout'));
+          const getPromise = this.getFileFromDcContent(cid, decryptKey,folderFlag);
+          const result = await Promise.race([timeoutPromise, getPromise]);
+          if(result === 'Timeout') {
+            return null;
+          }
+          if(result) {
+            return result as Uint8Array;
+          }
+          return null;
+        } catch (error) {
+          return null;
+        }
+      }
     }
+    return this.getFileFromDcContent(cid, decryptKey,folderFlag);
+  };
+
+  getFileFromDcContent = async (cid: string, decryptKey: string, folderFlag?:boolean): Promise<Uint8Array | null> => {
     const fs = unixfs(this.dcNodeClient);
     let headDealed = false;
     let waitBuffer = new Uint8Array(0);
@@ -1141,8 +1162,7 @@ async getFolderFileList(
       console.error("getFileFromDc error", error);
       return null;
     }
-  };
-
+  }
   /**
    * 创建可随机访问的文件流
    */
