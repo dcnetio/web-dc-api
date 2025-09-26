@@ -319,7 +319,7 @@ export class AIProxyClient {
     await grpcClient.Call(
       "/dcnet.pb.Service/DoAIProxyCall",
       messageBytes,
-      10000,
+      3600 * 1000,
       "server-streaming",
       onDataCallback,
       undefined, // dataSourceCallback not needed for server-streaming
