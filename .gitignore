@@ -120,5 +120,3 @@ dist
 yalc.lock
 
 .vscode
-
-package-lock.json
