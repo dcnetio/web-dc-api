@@ -79,7 +79,7 @@ export class KeyValueDB {
     vaccount?: string
   ): Promise<[string | null, Error | null]> {
     if (!writerPubkey) {//没有指定写入者,则获取该key的最新值
-      const [values, err] = await this.getWithIndex("dc_timestamp_index", "",1, "", Direction.Reverse, 0,);
+      const [values, err] = await this.getWithIndex("indexkey_keyself_" + key, "", 1, "", Direction.Reverse, 0, vaccount);
       if (err) {
         return [null, err];
       }
