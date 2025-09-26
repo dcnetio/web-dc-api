@@ -299,7 +299,9 @@ export class AIProxyClient {
       isAborted = true;
       clearTimeoutTimer();
       console.log('DoAIProxyCall 被外部中止');
-      
+      if (abortListener && context.signal) {//确保只触发一次
+        context.signal.removeEventListener('abort', abortListener);
+      }
       // 通知调用者已被中止
       if (onStreamResponse) {
         onStreamResponse(AIStreamResponseFlag.EXTERNAL_EXIT, "", "调用被用户中止");
@@ -317,7 +319,7 @@ export class AIProxyClient {
     await grpcClient.Call(
       "/dcnet.pb.Service/DoAIProxyCall",
       messageBytes,
-      10000000,
+      10000,
       "server-streaming",
       onDataCallback,
       undefined, // dataSourceCallback not needed for server-streaming
