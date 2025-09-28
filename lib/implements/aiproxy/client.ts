@@ -267,7 +267,6 @@ export class AIProxyClient {
   const onEndCallback = async () => {
      clearTimeoutTimer();
     if (isAborted || checkAborted() || isCompleted) return;
-    console.log('*********** onEndCallback ***********1111');
       isCompleted = true;
     if (onStreamResponse) {
       onStreamResponse(AIStreamResponseFlag.CONNECTION_CLOSED, "", "");
@@ -277,8 +276,6 @@ export class AIProxyClient {
   const onErrorCallback = async (error: unknown) => {
     if (isAborted || checkAborted() || isCompleted) return;
     //不要标记完成,和清理定时器,统一由onEndCallback处理
-   // isCompleted = true; // 
-   // clearTimeoutTimer();
     if (onStreamResponse) {
       onStreamResponse(AIStreamResponseFlag.OTHER_ERROR, "", error instanceof Error ? error.message : String(error));
     }
