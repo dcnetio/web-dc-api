@@ -236,16 +236,16 @@ function jsonStringify(value: any): string {
 
 /**
  * 将非负数字字符串（可带小数）格式化：
- * - 仅对整数部分左侧补零至 30 位
+ * - 仅对整数部分左侧补零至 20 位
  * - 小数部分（若有）原样保留
  * - 不进行数值运算，避免精度问题
  * 例：
- *  - "123"      -> "000000000000000000000000000123"
- *  - "123.45"   -> "000000000000000000000000000123.45"
- *  - "0.5"      -> "000000000000000000000000000000.5"
+ *  - "123"      -> "00000000000000000123"
+ *  - "123.45"   -> "00000000000000000123.45"
+ *  - "0.5"      -> "00000000000000000000.5"
  */
 
-function padPositiveInt30(v: string | number): string {
+function padPositiveInt20(v: string | number): string {
   const s0 = String(v).trim();
   // 仅允许非负数字，支持一处小数点（不允许科学计数法/负号）
   if (!/^\d+(\.\d+)?$/.test(s0)) throw new Error("只接受非负数字（可带小数）");
@@ -258,9 +258,9 @@ function padPositiveInt30(v: string | number): string {
   // 去掉整数部分前导 0
   intPart = intPart.replace(/^0+/, "") || "0";
 
-  if (intPart.length > 30) throw new Error("整数部分超过 30 位宽度");
+  if (intPart.length > 30) throw new Error("整数部分超过 20 位宽度");
 
-  const paddedInt = intPart.padStart(30, "0");
+  const paddedInt = intPart.padStart(20, "0");
   return fracPart ? `${paddedInt}.${fracPart}` : paddedInt;
 }
 
@@ -285,5 +285,5 @@ export {
   parseUint32,
   hexToAscii,
   jsonStringify,
-  padPositiveInt30
+  padPositiveInt20
 };

@@ -39,10 +39,8 @@ export const Errors = {
 export class AccountManager {
   dc: DcUtil;
   chainUtil: ChainUtil | undefined;
-  connectedDc: DCConnectInfo = {};
   context: DCContext;
   constructor(context: DCContext) {
-    this.connectedDc = context.connectedDc;
     this.dc = context.dcutil;
     this.chainUtil = context.dcChain;
     this.context = context;
@@ -50,7 +48,7 @@ export class AccountManager {
 
   // 获取用户备用节点
   getAccountNodeAddr = async (): Promise<[Multiaddr | null, Error | null]> => {
-    if (!this.connectedDc.client) {
+    if (!this.context.connectedDc.client) {
       console.error("dcClient is null");
       return [null, Errors.ErrNoDcPeerConnected];
     }
@@ -78,7 +76,7 @@ export class AccountManager {
   getUserInfoWithNft = async (
     nftAccount: string
   ): Promise<[User | null, Error | null]> => {
-    if (!this.connectedDc.client) {
+    if (!this.context.connectedDc.client) {
       console.error("dcClient is null");
       return [null, Errors.ErrNoDcPeerConnected];
     }
@@ -94,7 +92,7 @@ export class AccountManager {
   bindAccessPeerToUser = async (
     peerAddr: Multiaddr
   ): Promise<[boolean | null, Error | null]> => {
-    if (!this.connectedDc.client) {
+    if (!this.context.connectedDc.client) {
       console.error("dcClient is null");
       return [false, Errors.ErrNoDcPeerConnected];
     }
@@ -113,7 +111,7 @@ export class AccountManager {
     }
     // 绑定节点
     const blockHeight = await this.chainUtil.getBlockHeight();
-    const accountClient = new AccountClient(this.connectedDc.client);
+    const accountClient = new AccountClient(this.context.connectedDc.client);
     const bindResult = await accountClient.bindAccessPeerToUser(
       this.context,
       blockHeight ? blockHeight : 0,
@@ -137,15 +135,15 @@ export class AccountManager {
     mnemonic: string
   ): Promise<[NFTBindStatus, Error | null]> {
     // 检查节点连接
-    if (!this.connectedDc.client) {
+    if (!this.context.connectedDc.client) {
       return [NFTBindStatus.DcPeerNotConnected, Errors.ErrNoDcPeerConnected];
     }
-    if (!this.connectedDc.nodeAddr) {
+    if (!this.context.connectedDc.nodeAddr) {
       return [NFTBindStatus.DcPeerNotConnected, Errors.ErrNodeAddrIsNull];
     }
 
     try {
-      const connectedPeerIdStr = this.connectedDc.nodeAddr.getPeerId();
+      const connectedPeerIdStr = this.context.connectedDc.nodeAddr.getPeerId();
       if (!connectedPeerIdStr) {
         return [NFTBindStatus.DcPeerNotConnected, Errors.ErrNodeAddrIsNull];
       }
@@ -167,7 +165,7 @@ export class AccountManager {
       }
 
       // 获取客户端
-      const accountClient = new AccountClient(this.connectedDc.client);
+      const accountClient = new AccountClient(this.context.connectedDc.client);
       // 调用账户绑定API
       await accountClient.accountBind(req, mnemonic, this.context);
 
@@ -471,7 +469,7 @@ export class AccountManager {
     if (!appId) {
       return [null, new AccountError("App ID is required")];
     }
-    if (!this.connectedDc.nodeAddr) {
+    if (!this.context.connectedDc.nodeAddr) {
       return [null, new AccountError("No connected node")];
     }
     let subPrivateKey: Ed25519PrivKey;
@@ -494,7 +492,7 @@ export class AccountManager {
         return [null, new AccountError("Failed to get blockchain height")];
       }
       // 获取服务器节点ID
-      const serverPidStr = this.connectedDc.nodeAddr.getPeerId();
+      const serverPidStr = this.context.connectedDc.nodeAddr.getPeerId();
       if (!serverPidStr) {
         return [null, new AccountError("No connected peer ID")];
       }
@@ -529,11 +527,11 @@ export class AccountManager {
       }
 
       // 获取token
-      if (!this.connectedDc.client) {
+      if (!this.context.connectedDc.client) {
         throw [null, Errors.ErrNoAccountPeerConnected];
       }
-      if (this.connectedDc.client.token == "") {
-        const token = await this.connectedDc.client.GetToken(
+      if (this.context.connectedDc.client.token == "") {
+        const token = await this.context.connectedDc.client.GetToken(
           this.context.appInfo.appId || "",
           privateKey.publicKey.string(),
           async (payload: Uint8Array): Promise<Uint8Array> => {
@@ -553,7 +551,7 @@ export class AccountManager {
         signature: signature,
       };
 
-      const client = new AccountClient(this.connectedDc.client);
+      const client = new AccountClient(this.context.connectedDc.client);
       // 添加子公钥
       await client.addSubPubkey(req);
       // Wait for app account creation
@@ -629,10 +627,10 @@ export class AccountManager {
     if(!this.context.publicKey){
       throw Errors.ErrAccountPublicKeyIsNull;
     }
-    if(!this.connectedDc.client){
+    if(!this.context.connectedDc.client){
       throw Errors.ErrNoDcPeerConnected;
     }
-    if(!this.connectedDc.nodeAddr){
+    if(!this.context.connectedDc.nodeAddr){
       throw Errors.ErrNodeAddrIsNull;
     }
     const dbinfo = threadId + "|" + rk + "|" + sk + "|" + remark;
@@ -643,8 +641,8 @@ export class AccountManager {
     if (blockHeight === undefined) {
       throw new AccountError("Failed to get blockchain height");
     }
-    if (this.connectedDc.client.token == "") {
-      const token = await this.connectedDc.client.GetToken(
+    if (this.context.connectedDc.client.token == "") {
+      const token = await this.context.connectedDc.client.GetToken(
         this.context.appInfo.appId || "",
         this.context.publicKey.string(),
         async (payload: Uint8Array): Promise<Uint8Array> => {
@@ -655,8 +653,8 @@ export class AccountManager {
         throw new AccountError("Failed to get token");
       }
     }
-    const accountClient = new AccountClient(this.connectedDc.client);
-    const serverPidStr = this.connectedDc.nodeAddr.getPeerId() || "";
+    const accountClient = new AccountClient(this.context.connectedDc.client);
+    const serverPidStr = this.context.connectedDc.nodeAddr.getPeerId() || "";
     const serverPidBytes = new TextEncoder().encode(serverPidStr);
     // 生成签名数据
     const hvalue = uint32ToLittleEndianBytes(blockHeight);

@@ -9,7 +9,7 @@ import { createLogger } from "../util/logger";
 import { ThemeAuthInfo, ThemeComment } from "../common/types/types";
 import { Direction } from "../common/define";
 import { ThemePermission } from "../common/constants";
-import {padPositiveInt30} from "../util/utils";
+import {padPositiveInt20} from "../util/utils";
 const logger = createLogger('KeyValueModule');
 const indexkey_dckv = "indexkey_dckv"; //索引键名，keyvalue设置过程中key本身的索引键
 /**
@@ -167,7 +167,7 @@ export class KeyValueModule implements DCModule, IKeyValueOperations {
           for (const index of indexArray) {
             let indexValue = "";
             if( index.type === "number" ){ //
-              indexValue = padPositiveInt30(index.value);
+              indexValue = padPositiveInt20(index.value);
             }else{
               indexValue = index.value;
             }
@@ -179,10 +179,6 @@ export class KeyValueModule implements DCModule, IKeyValueOperations {
       } catch (error) {
         logger.error(`设置索引,解析失败:`, error);
       }
-      //追加时间戳索引，保证每次写入的唯一性
-      const timestamp = Date.now();
-      const timestampStr = padPositiveInt30(timestamp);
-      strIndexs += `dc_timestamp_index:${timestampStr}`;
       const res = await kvdb.set(key, value, strIndexs, vaccount);
       return res;
     } catch (error) {
@@ -322,11 +318,50 @@ export class KeyValueModule implements DCModule, IKeyValueOperations {
     const offset = options.offset? options.offset: 0;
     let indexValueStr = "";
     if( options.type === "number" ){ //
-      indexValueStr = padPositiveInt30(indexValue);
+      indexValueStr = padPositiveInt20(indexValue);
     }
     try {
       const res = await kvdb.getWithIndex(indexKey, indexValueStr, limit,seekKey, direction,offset,  vaccount);
     return res;
+    } catch (error) {
+      return [null, error instanceof Error ? error : new Error(String(error))];
+    }
+  }
+
+  /**
+   * 按设置时间顺序获取主题的的键值对列表
+   * @param kvdb KeyValueDB实例
+   * @param limit 返回结果数量限制
+   * @param seekKey 查询起始键,用于分页查询
+   * @param direction 查询方向 
+   * @param offset 结果偏移量
+   * @param vaccount 可选的虚拟账户
+   * @returns [值列表数组生成的json字符串, 错误信息] 数组的每个元素的格式:  key:value$$$dckv_extra$$${'dc_timestamp':'%d','dc_opuser':'%s'}
+   */
+  async getWithTimeOrder(
+    kvdb: KeyValueDB,
+    timestamp: number,//毫秒时间戳
+    options: { limit?: number; seekKey?: string; direction?: Direction; offset?: number },
+    vaccount?: string
+  ): Promise<[string | null, Error | null]> {
+    const err = this.assertInitialized();
+    if (err) {
+      return [null, err];
+    }
+    let timestampStr = "";
+    if( timestamp > 0 ){
+      //把毫秒时间转为微妙时间戳字符串,与DC节点存储的时间戳格式一致
+      timestampStr = padPositiveInt20(timestamp * 1000);
+      //前面补0,保证长度为20位
+      timestampStr = timestampStr.padStart(20, "0");
+    }
+    const limit = options.limit ? options.limit : 10;
+    const seekKey = options.seekKey ? options.seekKey : "";
+    const direction = options.direction ? options.direction : Direction.Forward;
+    const offset = options.offset ? options.offset : 0;
+    try {
+      const res = await kvdb.getWithIndex("indexkey_timestamp", timestampStr, limit, seekKey, direction, offset, vaccount);
+      return res;
     } catch (error) {
       return [null, error instanceof Error ? error : new Error(String(error))];
     }
