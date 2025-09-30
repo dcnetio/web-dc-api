@@ -235,6 +235,11 @@ export class AuthModule implements DCModule, IAuthOperations {
       if (mnemonic) {
         // 登录成功，清空临时私钥
         this.context.privateKey = null;
+        this.context.publicKey = undefined;
+        //清空原来连接的token信息,原来是基于临时私钥登录的
+        client.token = "";
+        this.context.connectedDc.client.token = "";
+        
         if (this.context.appInfo?.appId) {
           const accountManager = new AccountManager(this.context);
          
@@ -484,18 +489,28 @@ export class AuthModule implements DCModule, IAuthOperations {
       this.tokenTask = true;
 
       // 300秒一次心跳维持连接
-      const period = 300000;
+      const period = 1000;
       let count = 0;
+      let waitCount = 0;
 
       // 启动ticker
       logger.info("开始定时验证Token有效性任务");
       (async () => {
         while (this.tokenTask) {
-          count++;
-          logger.info(`Token验证任务: 执行次数 ${count}`);
+          waitCount ++;
           try {
-            await this.getTokenWithDCConnectInfo(this.context.connectedDc);
-            await this.getTokenWithDCConnectInfo(this.context.AccountBackupDc);
+            if (this.context.connectedDc.client?.token == "" || waitCount >= 300) {
+              await this.getTokenWithDCConnectInfo(this.context.connectedDc);
+            }
+            if (this.context.AccountBackupDc.client?.token == "" || waitCount >= 300) {
+              await this.getTokenWithDCConnectInfo(this.context.AccountBackupDc);
+            }
+            if (waitCount >= 300) {
+              waitCount = 0;
+              count++;
+            }
+            console.log(`第${count}次Token验证完成`);
+            
           } catch (error) {
             logger.error("Token验证任务执行失败:", error);
           }
