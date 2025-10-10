@@ -87,8 +87,6 @@ export class WalletManager {
             resolve(false);
             return;
           }
-          // todo设置临时公钥，不需要了
-          // this.context.publicKey = new Ed25519PubKey(messageData.publicKey);
           resolve(true);
         })
         .catch((error) => {
