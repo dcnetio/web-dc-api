@@ -635,9 +635,11 @@ export class WalletManager {
         messageChannel.port1.onmessage = (event) => {
           clearTimeout(timer);
           messageChannel.port1.close();
-          if (this.isIframeOpen()) {
-            // 微信窗口
-            this.removeWalletIframe();
+          if (event.data && event.data.type !== "initConfigResponse") {
+            if (this.isIframeOpen()) {
+              // 微信窗口
+              this.removeWalletIframe();
+            }
           }
           resolve(event);
         };

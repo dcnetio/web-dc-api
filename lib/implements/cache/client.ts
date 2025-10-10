@@ -3,8 +3,8 @@ import { Client } from "../../common/dcapi";
 import { dcnet } from "../../proto/dcnet_proto";
 import { Libp2pGrpcClient } from "grpc-libp2p-client";
 import { toString as uint8ArrayToString } from "uint8arrays/to-string";
-import { DcUtil } from "lib/common/dcutil";
-import { DCContext } from "lib/interfaces";
+import { DcUtil } from "../../../lib/common/dcutil";
+import { DCContext } from "../../../lib/interfaces";
 
 
 
