@@ -87,8 +87,6 @@ export class WalletManager {
             resolve(false);
             return;
           }
-          // todo设置临时公钥，不需要了
-          // this.context.publicKey = new Ed25519PubKey(messageData.publicKey);
           resolve(true);
         })
         .catch((error) => {
@@ -635,9 +633,11 @@ export class WalletManager {
         messageChannel.port1.onmessage = (event) => {
           clearTimeout(timer);
           messageChannel.port1.close();
-          if (this.isIframeOpen()) {
-            // 微信窗口
-            this.removeWalletIframe();
+          if (event.data && event.data.type !== "initConfigResponse") {
+            if (this.isIframeOpen()) {
+              // 微信窗口
+              this.removeWalletIframe();
+            }
           }
           resolve(event);
         };
