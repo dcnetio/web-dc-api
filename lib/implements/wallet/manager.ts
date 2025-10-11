@@ -81,8 +81,7 @@ export class WalletManager {
             return;
           }
           const data = response.data?.data;
-          const messageData = data.message;
-          if (data.success === false || !messageData.publicKey) {
+          if (data.success === false) {
             console.error("initConfig error", message);
             resolve(false);
             return;
