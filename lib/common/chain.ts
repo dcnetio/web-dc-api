@@ -452,8 +452,8 @@ export class ChainUtil {
     }
     
     let  fid =  "";
-     if (appJsonInfo?.fid && appJsonInfo?.fid.length > 0) {
-      const fidBytes = hexToBytes(appJsonInfo?.fid.slice(2));
+     if (appJsonInfo?.fileId && appJsonInfo?.fileId.length > 0) {
+      const fidBytes = hexToBytes(appJsonInfo?.fileId.slice(2));
       fid = new TextDecoder().decode(fidBytes).toString();
     }
     const appInfo :IAppInfo = {
