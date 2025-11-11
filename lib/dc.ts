@@ -3,11 +3,17 @@
 
 import { type Multiaddr } from "@multiformats/multiaddr";
 import { ChainUtil } from "./common/chain";
-import type { DCConnectInfo, APPInfo, User, AccountInfo, Account } from "./common/types/types";
+import type {
+  DCConnectInfo,
+  APPInfo,
+  User,
+  AccountInfo,
+  Account,
+} from "./common/types/types";
 import { DcUtil } from "./common/dcutil";
 import { type HeliaLibp2p } from "helia";
 import { Libp2p } from "@libp2p/interface";
-import { dc_protocol } from "./common/define";
+import { dc_protocol, walletOrigin } from "./common/define";
 import { DCGrpcServer } from "./implements/threaddb/net/grpcserver";
 import { Ed25519PrivKey, Ed25519PubKey } from "./common/dc-key/ed25519";
 import { DCContext } from "../lib/interfaces/DCContext";
@@ -45,7 +51,6 @@ export class DC implements DCContext {
   publicKey: Ed25519PubKey | undefined;
   dbThreadId: string = ""; // 当前用户的去中心化数据库ID
   ethAddress: string = ""; // 以太坊格式的公钥,16进制字符串
-
 
   // 连接相关
   public connectedDc: DCConnectInfo = {};
@@ -85,7 +90,7 @@ export class DC implements DCContext {
     this.dcChain = new ChainUtil();
     this.dcutil = new DcUtil(this.dcChain);
     // //todo 发布注释 remove
-      // this.dcutil.defaultPeerId= "12D3KooWEGzh4AcbJrfZMfQb63wncBUpscMEEyiMemSWzEnjVCPf";
+    // this.dcutil.defaultPeerId= "12D3KooWEGzh4AcbJrfZMfQb63wncBUpscMEEyiMemSWzEnjVCPf";
     // //todo remove end
     this.appInfo = options.appInfo || ({} as APPInfo);
     this.accountInfo = {} as AccountInfo;
@@ -147,7 +152,9 @@ export class DC implements DCContext {
    * backStep 0-注册模块成功，1-链节点连接成功，2-节点连接成功，3-初始化模块成功，
    * @returns 是否成功初始化
    */
-  init = async (backStep?: (step: number) => Promise<void>): Promise<boolean> => {
+  init = async (
+    backStep?: (step: number) => Promise<void>
+  ): Promise<boolean> => {
     if (this.initialized) {
       logger.warn("DC已经初始化，跳过重复初始化");
       return true;
@@ -211,14 +218,19 @@ export class DC implements DCContext {
           backStep && (await backStep(3));
 
           // 设置默认私钥
-          const seed = crypto.getRandomValues(new Uint8Array(32))  
-          this.privateKey = Ed25519PrivKey.fromSeed(seed)
+          const seed = crypto.getRandomValues(new Uint8Array(32));
+          this.privateKey = Ed25519PrivKey.fromSeed(seed);
           const pubKey = this.privateKey.publicKey;
           this.publicKey = pubKey;
 
           // 定时维系token
-          if(this.auth){
-            this.auth.startDcPeerTokenKeepValidTask();
+          if (this.auth) {
+            // 判断是否是钱包连接
+            const appOrigin =
+              typeof window !== "undefined" ? window.location.origin : ""; //"http://localhost:3002"
+            if (appOrigin.indexOf(walletOrigin) === -1) {
+              this.auth.startDcPeerTokenKeepValidTask();
+            }
           }
 
           backStep && (await backStep(4));
@@ -236,7 +248,6 @@ export class DC implements DCContext {
       return false;
     }
   };
-
 
   setAppInfo(appInfo: APPInfo): void {
     this.appInfo = appInfo;
@@ -265,7 +276,7 @@ export class DC implements DCContext {
     let userInfo: User | null = null;
     try {
       this.assertInitialized();
-      if(!this.auth) {
+      if (!this.auth) {
         return [null, new Error("用户模块不存在")];
       }
       const [user, err] = await this.auth.refreshUserInfo();
@@ -296,10 +307,10 @@ export class DC implements DCContext {
             const fid = threadDBInfos[3] || ""; //预加载记录文件ID
             const preCount = threadDBInfos[4] || 0; //预加载记录条数
             //判断本地是否存在数据库
-            if(!this.db) {
-              return [null, new Error("数据库模块不存在")]
+            if (!this.db) {
+              return [null, new Error("数据库模块不存在")];
             }
-            const [dbinfo, error] =  await this.db.getDBInfo(threadid);
+            const [dbinfo, error] = await this.db.getDBInfo(threadid);
             if (dbinfo != null && !error) {
               //本地数据库存在,检查是否需要表结构升级
               if (verno) {
@@ -307,7 +318,7 @@ export class DC implements DCContext {
                 const localVersion = await this.db.loadVerno(threadid);
                 if (localVersion != verno) {
                   //版本号不一致，需要升级表结构
-                 const err = await this.db.upgradeCollections(
+                  const err = await this.db.upgradeCollections(
                     threadid,
                     collections
                   );
@@ -319,22 +330,19 @@ export class DC implements DCContext {
                   await this.db.saveVerno(threadid, verno);
                 }
                 // 需要升级表结构
-                await this.db.upgradeCollections(
-                  threadid,
-                  collections
-                );
+                await this.db.upgradeCollections(threadid, collections);
               }
 
               this.db.refreshDBFromDC(threadid);
               //3秒后将本地数据库同步到DC
               setTimeout(() => {
-                if(this.db){
+                if (this.db) {
                   this.db.syncDBToDC(threadid);
                 }
               }, 5000);
               this.dbThreadId = dbinfo.id;
               return [dbinfo, null];
-            } else if (threadid != ""){
+            } else if (threadid != "") {
               //本地数据库不存在,从DC同步
               await this.db.syncDbFromDC(
                 threadid,
@@ -360,11 +368,11 @@ export class DC implements DCContext {
           return [null, error];
         }
       }
-      if(!this.util) {
+      if (!this.util) {
         return [null, new Error("util模块不存在")];
       }
-      if(!this.db) {
-        return [null, new Error("数据库模块不存在")]
+      if (!this.db) {
+        return [null, new Error("数据库模块不存在")];
       }
       //数据库不存在，创建应用数据库
       const rk = this.util.createSymmetricKey();
@@ -395,8 +403,8 @@ export class DC implements DCContext {
           return [null, new Error("设置用户去中心DB失败")];
         }
       }
-      if(!this.db) {
-        return [null, new Error("数据库模块不存在")]
+      if (!this.db) {
+        return [null, new Error("数据库模块不存在")];
       }
       const [dbinfo, error] = await this.db.getDBInfo(threadId);
       if (dbinfo != null && !error) {
@@ -424,7 +432,7 @@ export class DC implements DCContext {
   ): Promise<boolean> {
     // 加到用户信息上
     try {
-      if(!dc.auth) {
+      if (!dc.auth) {
         return false;
       }
       await dc.auth.setUserDefaultDB(DBthreadid, rk, sk, remark || "");
@@ -444,14 +452,14 @@ export class DC implements DCContext {
       // 初始化定时器
       let interval = setInterval(async () => {
         intervalNum++;
-          if (intervalNum > 20) {
+        if (intervalNum > 20) {
           // 超时停止定时任务
           interval ? clearInterval(interval) : "";
           intervalNum = 0;
           resolve(false);
         }
         // 获取用户信息，判断空间有效期是否延长
-        if(dc.auth){
+        if (dc.auth) {
           const [user, err] = await dc.auth.refreshUserInfo();
           if (!err && user && user.dbConfig) {
             // 绑定成功停止定时任务
@@ -497,7 +505,7 @@ export class DC implements DCContext {
     this.publicKey = undefined; // 清理公钥
     this.dbThreadId = ""; // 清理数据库ID
     this.ethAddress = ""; // 清理以太坊地址
-    
+
     // 清空iframe的私钥公钥
     if (this.auth) {
       this.auth.exitLogin();

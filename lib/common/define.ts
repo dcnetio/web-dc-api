@@ -16,24 +16,28 @@ const walletOpenType =
 const walletOpenOrgin =
   typeof globalThis !== "undefined" ? (globalThis as any).walletOpenOrgin : ""; // 用户传入的打开钱包的源;
 const walletOpenVersion =
-  typeof globalThis !== "undefined" ? (globalThis as any).walletOpenVersion : ""; // 钱包版本号;
-
+  typeof globalThis !== "undefined"
+    ? (globalThis as any).walletOpenVersion
+    : ""; // 钱包版本号;
 
 let _baseUrl = "";
 let _walletOrigin = "";
-if (true) {
-    _baseUrl = "/v0_0_16";
-    _walletOrigin = "https://wallet.dcnetio.com";
-    
-    if(walletOpenOrgin) {
-      _walletOrigin = walletOpenOrgin || "https://wallet.dcnetio.com";
-    }
-    if(walletOpenVersion) {
-      _baseUrl = walletOpenVersion && walletOpenVersion.startsWith("/") ? walletOpenVersion : "/" + walletOpenVersion;
-    }
+if (isProd) {
+  _baseUrl = "/v0_0_16";
+  _walletOrigin = "https://wallet.dcnetio.com";
+
+  if (walletOpenOrgin) {
+    _walletOrigin = walletOpenOrgin || "https://wallet.dcnetio.com";
+  }
+  if (walletOpenVersion) {
+    _baseUrl =
+      walletOpenVersion && walletOpenVersion.startsWith("/")
+        ? walletOpenVersion
+        : "/" + walletOpenVersion;
+  }
 } else {
-    _baseUrl = "";
-    _walletOrigin = "http://localhost:3000";
+  _baseUrl = "";
+  _walletOrigin = "http://localhost:3000";
 }
 export const walletOrigin = _walletOrigin;
 export const walletUrl = _walletOrigin + _baseUrl; // 钱包地址后面统一改成origin+version
