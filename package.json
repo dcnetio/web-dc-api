@@ -5,18 +5,17 @@
   "type": "module",
   "browser": "dist/dc.min.js",
   "main": "dist/index.cjs.js",
-  "module": "dist/index.esm.js",
+  "module": "dist/esm/index.js",
   "types": "dist/index.d.ts",
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "import": "./dist/index.esm.js",
-      "require": "./dist/index.cjs.js"
+      "import": "./dist/esm/index.js",
+      "require": "./dist/index.cjs.js",
+      "browser": "./dist/dc.min.js"
     },
-    "./dc-key/ed25519": {
-      "types": "./dist/dc-key/ed25519.d.ts",
-      "import": "./dist/dc-key/ed25519.esm.js",
-      "require": "./dist/dc-key/ed25519.cjs.js"
+    "./dev": {
+      "import": "./dist/dev/index.js"
     }
   },
   "files": [
@@ -26,8 +25,9 @@
   "scripts": {
     "build:w": "npx rollup -c -w",
     "build": "npx rollup -c",
+    "build:analyze": "npx rollup -c && npx webpack-bundle-analyzer dist/esm/chunks/*.js",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "nodemon --watch lib --ext ts,tsx,js,jsx,json --ignore 'src/**/*.test.ts' --exec 'npx yalc publish --push '"
+    "dev": "nodemon --watch lib --ext ts,tsx,js,jsx,json --ignore 'src/**/*.test.ts' --exec 'npx yalc publish --push'"
   },
   "author": "",
   "license": "ISC",

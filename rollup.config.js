@@ -5,119 +5,176 @@ import json from "@rollup/plugin-json";
 import terser from "@rollup/plugin-terser";
 import babel from "@rollup/plugin-babel";
 import replace from "@rollup/plugin-replace";
-// import { visualizer } from "rollup-plugin-visualizer";
+
 import dts from "rollup-plugin-dts";
 import pkg from "./package.json" assert { type: "json" };
 
-const tsconfig = {
-  tsconfig: "./tsconfig.json",
-  declaration: false,
-};
-
+// 外部依赖（这些将不会被打包进最终文件）
 const external = [
-  ...Object.keys(pkg.dependencies || {}),
-  ...Object.keys(pkg.peerDependencies || {}),
   ...Object.keys(pkg.devDependencies || {}),
-];
+  ...Object.keys(pkg.peerDependencies || {}),
+  // 🔧 移除可能有问题的库，让它们被打包进来
+  // 如果 uint8arrays 在 external 中，需要将其移除
+].filter((dep) => !["uint8arrays", "multiformats"].includes(dep));
 
-const isProduction = process.env.NODE_ENV === "production";
+console.log("NODE_ENV:", process.env.NODE_ENV);
 
-const plugins = [
+const basePlugins = [
   replace({
-    __IS_PROD__: isProduction,
+    __IS_PROD__: true,
     preventAssignment: true,
   }),
   json(),
-  typescript(tsconfig),
   babel({
     babelHelpers: "bundled",
     presets: [
       [
         "@babel/preset-env",
         {
-          targets: "defaults, not IE 11", // 更现代的目标浏览器
+          targets: ">0.25%, not dead, not IE 11",
           useBuiltIns: "usage",
           corejs: 3,
-          modules: false, // 让 Rollup 处理模块
         },
       ],
     ],
     extensions: [".js", ".ts"],
-    // 排除 core-js 导入，让 Rollup 处理
-    exclude: "node_modules/core-js/**",
   }),
-  isProduction &&
-    terser({
-      compress: {
-        drop_console: true,
-        drop_debugger: true,
-      },
-      format: {
-        comments: false,
-      },
-    }),
-  // 添加包分析工具
-  // visualizer({
-  //   filename: "bundle-analysis.html",
-  //   open: true,
-  //   gzipSize: true,
-  // }),
-].filter(Boolean);
+];
 
-// 为 UMD 构建创建全局变量映射
-const getGlobals = () => {
-  const globals = {
-    "grpc-libp2p-client": "GrpcLibp2pClient",
-  };
+const compressionPlugin = terser({
+  compress: {
+    drop_console: true,
+    drop_debugger: true,
+  },
+  format: {
+    comments: false,
+  },
+});
 
-  // 为常见库添加全局变量映射
-  const commonLibs = {
-    lodash: "_",
-    react: "React",
-    "react-dom": "ReactDOM",
-    axios: "axios",
-    // 添加您项目中其他常见库的映射
-  };
+// 全局变量名
+const GLOBAL_NAME = "WebDcApi";
 
-  Object.keys(pkg.dependencies || {}).forEach((dep) => {
-    if (commonLibs[dep]) {
-      globals[dep] = commonLibs[dep];
-    }
-  });
+// 🔧 优化的 resolve 配置
+const getResolveConfig = (isBrowser = true) => ({
+  preferBuiltins: false,
+  browser: isBrowser,
+  // 🔧 添加导出条件，帮助正确解析模块
+  exportConditions: isBrowser
+    ? ["browser", "import", "module", "default"]
+    : ["import", "module", "default"],
+  // 🔧 确保正确解析这些有问题的库
+  dedupe: ["uint8arrays", "multiformats"],
+});
 
-  return globals;
-};
+// 🔧 优化的 commonjs 配置
+const getCommonJSConfig = () => ({
+  transformMixedEsModules: true,
+  // 🔧 显式包含可能有问题的库
+  include: [
+    "node_modules/**",
+    "node_modules/uint8arrays/**",
+    "node_modules/multiformats/**",
+  ],
+  // 🔧 确保正确处理命名导出
+  namedExports: {
+    uint8arrays: ["concat", "toString", "fromString", "equals"],
+    "multiformats/bases/base16": ["base16"],
+    "multiformats/bases/base32": ["base32"],
+    "multiformats/bases/base58": ["base58btc"],
+    "multiformats/bases/base64": ["base64"],
+  },
+});
 
 export default [
+  // ESM格式 - 优化的代码拆分
   {
     input: "lib/index.ts",
-    output: [
-      {
-        file: pkg.module,
-        format: "esm",
-        sourcemap: !isProduction,
-        inlineDynamicImports: true,
+    output: {
+      dir: "dist/esm",
+      format: "esm",
+      sourcemap: false,
+      chunkFileNames: "chunks/[name]-[hash].js",
+      entryFileNames: "index.js",
+      preserveModules: false,
+      // 🔧 优化的手动拆分策略
+      manualChunks: (id) => {
+        // 调试信息：查看正在处理的文件
+        if (process.env.DEBUG_CHUNKS) {
+          console.log("Processing chunk:", id);
+        }
+
+        // 处理 node_modules 中的大型依赖
+        if (id.includes("node_modules")) {
+          // 🔧 将有问题的库单独打包
+          if (id.includes("uint8arrays") || id.includes("multiformats")) {
+            return "vendor-encoding";
+          }
+
+          // Polkadot 相关 - 通常很大
+          if (id.includes("@polkadot/")) return "vendor-polkadot";
+
+          // Helia IPFS 相关库群
+          if (id.includes("@helia/") || id.includes("helia"))
+            return "vendor-helia";
+
+          // P2P网络相关
+          if (id.includes("libp2p") || id.includes("@libp2p/"))
+            return "vendor-libp2p";
+
+          // Protocol Buffers 相关
+          if (id.includes("protobufjs") || id.includes("google-protobuf"))
+            return "vendor-protobuf";
+
+          // 其他工具库
+          if (id.includes("ajv")) return "vendor-validation";
+        }
+        // 默认返回null，让Rollup自动决定
+        return null;
       },
-      {
-        file: pkg.main,
-        format: "cjs",
-        sourcemap: !isProduction,
-        inlineDynamicImports: true,
-      },
-    ],
+
+      // 设置chunk大小警告
+      chunkSizeWarningLimit: 500, // 500KB 警告阈值
+    },
     external,
     plugins: [
-      resolve({
-        preferBuiltins: false,
-        browser: true,
+      resolve(getResolveConfig(true)),
+      commonjs(getCommonJSConfig()),
+      typescript({
+        tsconfig: "./tsconfig.json",
+        declaration: false,
+        declarationMap: false,
+        outDir: "dist/esm",
       }),
-      commonjs({
-        transformMixedEsModules: true,
-      }),
-      ...plugins,
+      ...basePlugins,
+      compressionPlugin,
     ],
   },
 
+  // CJS格式 - 单文件
+  {
+    input: "lib/index.ts",
+    output: {
+      file: pkg.main,
+      format: "cjs",
+      sourcemap: false,
+      inlineDynamicImports: true,
+    },
+    external,
+    plugins: [
+      resolve(getResolveConfig(true)),
+      commonjs(getCommonJSConfig()),
+      typescript({
+        tsconfig: "./tsconfig.json",
+        declaration: false,
+        declarationMap: false,
+        outDir: "dist",
+      }),
+      ...basePlugins,
+      compressionPlugin,
+    ],
+  },
+
+  // 类型定义文件
   {
     input: "lib/index.ts",
     output: {
@@ -125,31 +182,90 @@ export default [
       format: "es",
       inlineDynamicImports: true,
     },
-    plugins: [dts()],
+    plugins: [
+      dts({
+        tsconfig: "./tsconfig.json",
+      }),
+    ],
     external,
   },
 
+  // UMD格式
   {
     input: "lib/index.ts",
     output: {
       file: "dist/dc.min.js",
       format: "umd",
-      name: "WebDcApi",
-      sourcemap: !isProduction,
+      name: GLOBAL_NAME,
+      sourcemap: false,
       exports: "named",
-      globals: getGlobals(),
+      intro: `var global = typeof window !== 'undefined' ? window : this;`,
+      globals: {
+        "grpc-libp2p-client": "GrpcLibp2pClient",
+      },
       inlineDynamicImports: true,
     },
-    external: external.filter((dep) => dep !== "core-js"), // 确保 core-js 被打包
+    external: ["grpc-libp2p-client"],
     plugins: [
       resolve({
-        browser: true,
-        preferBuiltins: false,
+        ...getResolveConfig(true),
+        paths: ["node_modules", "../"],
       }),
-      commonjs({
-        transformMixedEsModules: true,
+      commonjs(getCommonJSConfig()),
+      typescript({
+        tsconfig: "./tsconfig.json",
+        declaration: false,
+        declarationMap: false,
+        outDir: "dist",
       }),
-      ...plugins,
+      ...basePlugins,
+      compressionPlugin,
+    ],
+  },
+
+  // 开发版本ESM（带调试信息）
+  {
+    input: "lib/index.ts",
+    output: {
+      dir: "dist/dev",
+      format: "esm",
+      sourcemap: true,
+      chunkFileNames: "chunks/[name].js",
+      entryFileNames: "index.js",
+      manualChunks: (id) => {
+        // 开发版本使用简化的拆分策略
+        if (id.includes("node_modules")) {
+          // 🔧 将有问题的库单独打包
+          if (id.includes("uint8arrays") || id.includes("multiformats")) {
+            return "vendor-encoding";
+          }
+
+          if (id.includes("@polkadot/")) return "vendor-polkadot";
+          if (id.includes("@helia/") || id.includes("helia"))
+            return "vendor-helia";
+          if (id.includes("libp2p")) return "vendor-libp2p";
+
+          const packageName = id.split("node_modules/")[1].split("/")[0];
+          return `vendor-${packageName.replace("@", "").replace("/", "-")}`;
+        }
+        return null;
+      },
+    },
+    external,
+    plugins: [
+      resolve(getResolveConfig(true)),
+      commonjs(getCommonJSConfig()),
+      typescript({
+        tsconfig: "./tsconfig.json",
+        declaration: false,
+        declarationMap: false,
+        outDir: "dist/dev",
+      }),
+      replace({
+        __IS_PROD__: false,
+        preventAssignment: true,
+      }),
+      json(),
     ],
   },
 ];
