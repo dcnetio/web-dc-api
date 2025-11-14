@@ -1,38 +1,47 @@
-{  
-  "compilerOptions": {  
-    "noImplicitReturns": true,  // 确保所有代码路径都有返回值
-    "strict": true,             // 启用所有严格类型检查
-    "noImplicitAny": true,       // 禁止隐式 any 类型
+{
+  "compilerOptions": {
+    "noImplicitReturns": true, // 确保所有代码路径都有返回值
+    "strict": true, // 启用所有严格类型检查
+    "noImplicitAny": true, // 禁止隐式 any 类型
     "strictFunctionTypes": true,
     "strictNullChecks": true,
     "exactOptionalPropertyTypes": true,
-    "baseUrl": ".",  // 这很重要，确保相对路径正确
-    "target": "ES2020",  
+    "baseUrl": ".", // 这很重要，确保相对路径正确
+    "target": "ES2020",
     "useDefineForClassFields": true,
-    "module": "ESNext",  
-    "lib": ["DOM", "ES2022", "ESNext.Promise"],// 添加 ESNext.Promise
-    "moduleResolution": "Bundler",  // Bundler ： TypeScript 4.7+ 新选项，专为现代打包工具优化  
-    "moduleDetection": "force",     // 强制将所有文件视为模块  
-    "esModuleInterop": true,  
-    "isolatedModules": true,  
-    "verbatimModuleSyntax": false,   // TypeScript 5.0+ 新选项，保留导入语句原样  
-    "resolveJsonModule": true,  
-    "declaration": true,  
-    "declarationMap": true,         // 生成声明文件的映射  
-    "sourceMap": true,  
-    // "strict": true,  
-    // "skipLibCheck": true,  
+    "module": "ESNext",
+    "lib": [
+      "DOM",
+      "ES2022",
+      "ESNext.Promise"
+    ], // 添加 ESNext.Promise
+    "moduleResolution": "Bundler", // Bundler ： TypeScript 4.7+ 新选项，专为现代打包工具优化  
+    "moduleDetection": "force", // 强制将所有文件视为模块  
+    "esModuleInterop": true,
+    "isolatedModules": true,
+    "verbatimModuleSyntax": false, // TypeScript 5.0+ 新选项，保留导入语句原样  
+    "resolveJsonModule": true,
+    "declaration": true,
+    "declarationMap": true, // 生成声明文件的映射  
+    "sourceMap": true,
     "forceConsistentCasingInFileNames": true,
-    "noUncheckedIndexedAccess": true,  // 防止对象/数组索引访问时的类型错误
-    "allowUnreachableCode": false,     // 报告不可达代码
-    "noPropertyAccessFromIndexSignature": true,  // 严格的对象属性访问检查
-    "allowSyntheticDefaultImports": true,  // 允许导入没有默认导出的模块
-    "preserveSymlinks": true,              // 保留符号链接
-    "outDir": "dist",            // 编译输出目录  
-    "rootDir": "lib",            // 源码目录
+    "noUncheckedIndexedAccess": true, // 防止对象/数组索引访问时的类型错误
+    "allowUnreachableCode": false, // 报告不可达代码
+    "noPropertyAccessFromIndexSignature": true, // 严格的对象属性访问检查
+    "allowSyntheticDefaultImports": true, // 允许导入没有默认导出的模块
+    "preserveSymlinks": true, // 保留符号链接
+    // 设置默认输出目录（Rollup会覆盖这些设置）
+    "outDir": "dist",
+    "rootDir": "lib", // 源码目录
     // 添加以下两条防止无限类型递归
     "maxNodeModuleJsDepth": 2
-  },  
-  "include": ["lib/**/*.ts", "lib/**/*.tsx"],
-  "exclude": ["node_modules", "dist"]  
-}  
+  },
+  "include": [
+    "lib/**/*.ts",
+    "lib/**/*.tsx"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist"
+  ]
+}
