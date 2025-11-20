@@ -14,7 +14,15 @@ const { Buffer } = buffer;
 
 const hbBase = new Key('/thread/heads');
 const hbEdge = new Key('/thread/heads:edge');
+type LogHead = {
+  logId: string;
+  head: Head;
+};
 
+
+const FNV_OFFSET_BASIS = 0xcbf29ce484222325n;
+const FNV_PRIME = 0x100000001b3n;
+const MOD64 = 2n ** 64n;
 
 export function newHeadBook(ds: TxnDatastoreExtended): DsHeadBook {
     return new DsHeadBook(ds);
@@ -160,11 +168,10 @@ export class DsHeadBook implements HeadBook {
     private async calculateEdge(tid: ThreadID, key: Key): Promise<number> {
         return this.withTransaction(async txn => {
             try {
-                let data = await txn.get(key);
-                if (!data) {
-                    data = Buffer.alloc(8);
+                const data = await txn.get(key);
+                if (data) {
+                    return this.decodeStoredEdge(data);
                 }
-                return Buffer.from(data).readUInt32BE(0);
             } catch (err: any)  {
                 if (err.code !== 'ERR_NOT_FOUND') throw err;
             }
@@ -172,37 +179,99 @@ export class DsHeadBook implements HeadBook {
             const heads = await this.collectHeads(txn, tid);
             if (heads.length === 0) throw new Error('Thread not found');
 
-            const edge = this.computeEdgeValue(heads);
+            const edge = this.computeHeadsEdge(heads);
             const buffer = Buffer.alloc(8);
-            buffer.writeBigUInt64BE(edge,0);
+            this.writeEdgeValue(buffer, edge);
 
             await txn.put(key, buffer);
-            return edge;
+            return Number(edge);
         });
     }
 
-    private async collectHeads(txn: Transaction, tid: ThreadID): Promise<Head[]> {
+    private async collectHeads(txn: Transaction, tid: ThreadID): Promise<LogHead[]> {
         const query = { prefix: dsThreadKey(tid, hbBase).toString() };
         const results = txn.query(query);
 
-        const heads: Head[] = [];
+        const heads: LogHead[] = [];
         for await (const entry of results) {
+            const rawKey = entry.key as any;
+            const keyObj = rawKey instanceof Key ? rawKey : new Key(rawKey);
+            const namespaces = keyObj.namespaces();
+            const logId = namespaces[namespaces.length - 1];
+            if (!logId) {
+                console.warn(`Skipping malformed head entry for thread ${tid.toString()}`);
+                continue;
+            }
             const record = deserializeHeadBookRecord(new TextDecoder().decode(entry.value));
-            heads.push(...record.heads.map(h => ({
-                ...(h.id ? { id: h.id } : {}),
-                counter: h.counter
-            })));
+            for (const head of record.heads) {
+                if (head.counter === 0) continue;
+                heads.push({
+                    logId,
+                    head: {
+                        ...(head.id ? { id: head.id } : {}),
+                        counter: head.counter,
+                    },
+                });
+            }
         }
-        return heads.filter(h => h.counter !== 0);
+        return heads;
     }
 
-    private computeEdgeValue(heads: Head[]): number {
-        return heads.reduce((acc, h) => acc + h.counter, 0);
+    private computeHeadsEdge(hs: LogHead[]): bigint {
+  const sorted = [...hs].sort((a, b) => {
+    if (a.logId === b.logId) {
+      const left = a.head.id?.toString() ?? '';
+      const right = b.head.id?.toString() ?? '';
+      return left.localeCompare(right);
     }
+    return a.logId.localeCompare(b.logId);
+  });
+
+  const encoder = new TextEncoder();
+  let hash = FNV_OFFSET_BASIS;
+
+  for (const item of sorted) {
+    hash = this.fnv1a64(encoder.encode(item.logId), hash);
+    const headBytes = item.head.id?.bytes ?? new Uint8Array();
+    hash = this.fnv1a64(headBytes, hash);
+  }
+
+    return hash;
+}
+
+private fnv1a64(data: Uint8Array, initial: bigint): bigint {
+  let hash = initial;
+  for (const byte of data) {
+    hash ^= BigInt(byte);
+    hash = (hash * FNV_PRIME) % MOD64;
+  }
+  return hash;
+}
 
     private async invalidateEdge(txn: Transaction, tid: ThreadID): Promise<void> {
         const key = dsThreadKey(tid, hbEdge);
         await txn.delete(key);
+    }
+
+    private decodeStoredEdge(data: Uint8Array): number {
+        const buf: any = Buffer.from(data);
+        const reader = buf as unknown as { readBigUInt64BE?: (offset?: number) => bigint };
+        if (buf.length >= 8 && typeof reader.readBigUInt64BE === 'function') {
+            return Number(reader.readBigUInt64BE(0));
+        }
+        if (buf.length >= 4) {
+            return buf.readUInt32BE(0);
+        }
+        throw new Error('Corrupted head edge value');
+    }
+
+    private writeEdgeValue(buf: any, value: bigint): void {
+        const writer = buf as unknown as { writeBigUInt64BE?: (val: bigint, offset?: number) => number };
+        if (typeof writer.writeBigUInt64BE === 'function') {
+            writer.writeBigUInt64BE(value, 0);
+            return;
+        }
+        buf.writeUInt32BE(Number(value & 0xffffffffn), 0);
     }
 
     private randomDelay(attempt: number): Promise<void> {
