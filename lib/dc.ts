@@ -1,7 +1,6 @@
 // dc.ts
 // 主 DC 类，基于模块系统重构
-
-import { type Multiaddr } from "@multiformats/multiaddr";
+import type { Multiaddr } from "@multiformats/multiaddr";
 import { ChainUtil } from "./common/chain";
 import type {
   DCConnectInfo,
