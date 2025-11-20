@@ -15,13 +15,14 @@ const external = [
   ...Object.keys(pkg.peerDependencies || {}),
   // 🔧 移除可能有问题的库，让它们被打包进来
   // 如果 uint8arrays 在 external 中，需要将其移除
-].filter((dep) => !["uint8arrays", "multiformats"].includes(dep));
+];
 
 console.log("NODE_ENV:", process.env.NODE_ENV);
+const isProd = process.env.NODE_ENV === "production";
 
 const basePlugins = [
   replace({
-    __IS_PROD__: true,
+    __IS_PROD__: isProd,
     preventAssignment: true,
   }),
   json(),
@@ -31,20 +32,21 @@ const basePlugins = [
       [
         "@babel/preset-env",
         {
-          targets: ">0.25%, not dead, not IE 11",
-          useBuiltIns: "usage",
-          corejs: 3,
+          targets: {
+            esmodules: true,
+          },
+          modules: false,
         },
       ],
     ],
-    extensions: [".js", ".ts"],
   }),
+  [("@babel/plugin-proposal-class-properties", { loose: true })],
 ];
 
 const compressionPlugin = terser({
   compress: {
-    drop_console: true,
-    drop_debugger: true,
+    drop_console: false,
+    drop_debugger: false,
   },
   format: {
     comments: false,
@@ -62,76 +64,77 @@ const getResolveConfig = (isBrowser = true) => ({
   exportConditions: isBrowser
     ? ["browser", "import", "module", "default"]
     : ["import", "module", "default"],
-  // 🔧 确保正确解析这些有问题的库
-  dedupe: ["uint8arrays", "multiformats"],
+  // 🔧 确保正确解析 uint8arrays
+  dedupe: ["uint8arrays"],
 });
 
 // 🔧 优化的 commonjs 配置
 const getCommonJSConfig = () => ({
   transformMixedEsModules: true,
-  // 🔧 显式包含可能有问题的库
-  include: [
-    "node_modules/**",
-    "node_modules/uint8arrays/**",
-    "node_modules/multiformats/**",
-  ],
-  // 🔧 确保正确处理命名导出
+  include: ["node_modules/**"],
+  // 🔧 确保 uint8arrays 的所有导出都被正确处理
   namedExports: {
-    uint8arrays: ["concat", "toString", "fromString", "equals"],
-    "multiformats/bases/base16": ["base16"],
-    "multiformats/bases/base32": ["base32"],
-    "multiformats/bases/base58": ["base58btc"],
-    "multiformats/bases/base64": ["base64"],
+    uint8arrays: [
+      "fromString",
+      "toString",
+      "concat",
+      "equals",
+      "compare",
+      "xor",
+      "alloc",
+    ],
+    "uint8arrays/from-string": ["fromString"],
+    "uint8arrays/to-string": ["toString"],
+    "uint8arrays/concat": ["concat"],
+    "uint8arrays/equals": ["equals"],
   },
+  // 🔧 强制转换这些模块
+  requireReturnsDefault: "auto",
 });
+// 高级优化策略
+const manualChunks = (id) => {
+  // 调试信息：查看正在处理的文件
+  if (!id.includes("node_modules")) return null;
 
+  const pathParts = id.split("node_modules/")[1].split("/");
+  const packageName = pathParts[0].startsWith("@")
+    ? `${pathParts[0]}/${pathParts[1]}`
+    : pathParts[0];
+
+  // 🔧 只分离最大的、最独立的包
+  const largeIndependentPackages = {
+    "polkadot-api": ["@polkadot/api"],
+    protobuf: ["protobufjs", "google-protobuf"],
+    "helia-core": ["helia"], // 只分离核心，插件保留在主包
+    "babel-tools": ["@babel/parser", "@babel/traverse"], // Babel 工具
+    // 🔧 可以安全添加的大包（相对独立）
+    validation: ["ajv"], // JSON Schema 验证，相对独立
+    jwt: ["jose"], // JWT 库，相对独立
+    cache: ["lru-cache"], // 缓存库，独立
+  };
+
+  for (const [chunkName, packages] of Object.entries(
+    largeIndependentPackages
+  )) {
+    if (packages.some((pkg) => packageName.includes(pkg))) {
+      return chunkName;
+    }
+  }
+
+  return null; // 其他所有包都保留在主 chunk
+};
 export default [
   // ESM格式 - 优化的代码拆分
   {
     input: "lib/index.ts",
     output: {
       dir: "dist/esm",
-      format: "esm",
+      format: "es",
       sourcemap: false,
       chunkFileNames: "chunks/[name]-[hash].js",
       entryFileNames: "index.js",
-      preserveModules: false,
       // 🔧 优化的手动拆分策略
-      manualChunks: (id) => {
-        // 调试信息：查看正在处理的文件
-        if (process.env.DEBUG_CHUNKS) {
-          console.log("Processing chunk:", id);
-        }
-
-        // 处理 node_modules 中的大型依赖
-        if (id.includes("node_modules")) {
-          // 🔧 将有问题的库单独打包
-          if (id.includes("uint8arrays") || id.includes("multiformats")) {
-            return "vendor-encoding";
-          }
-
-          // Polkadot 相关 - 通常很大
-          if (id.includes("@polkadot/")) return "vendor-polkadot";
-
-          // Helia IPFS 相关库群
-          if (id.includes("@helia/") || id.includes("helia"))
-            return "vendor-helia";
-
-          // P2P网络相关
-          if (id.includes("libp2p") || id.includes("@libp2p/"))
-            return "vendor-libp2p";
-
-          // Protocol Buffers 相关
-          if (id.includes("protobufjs") || id.includes("google-protobuf"))
-            return "vendor-protobuf";
-
-          // 其他工具库
-          if (id.includes("ajv")) return "vendor-validation";
-        }
-        // 默认返回null，让Rollup自动决定
-        return null;
-      },
-
+      manualChunks,
       // 设置chunk大小警告
       chunkSizeWarningLimit: 500, // 500KB 警告阈值
     },
@@ -154,10 +157,12 @@ export default [
   {
     input: "lib/index.ts",
     output: {
-      file: pkg.main,
+      dir: "dist/cjs",
       format: "cjs",
       sourcemap: false,
-      inlineDynamicImports: true,
+      manualChunks,
+      // 设置chunk大小警告
+      chunkSizeWarningLimit: 500, // 500KB 警告阈值
     },
     external,
     plugins: [
@@ -167,7 +172,7 @@ export default [
         tsconfig: "./tsconfig.json",
         declaration: false,
         declarationMap: false,
-        outDir: "dist",
+        outDir: "dist/cjs",
       }),
       ...basePlugins,
       compressionPlugin,
@@ -228,28 +233,11 @@ export default [
     input: "lib/index.ts",
     output: {
       dir: "dist/dev",
-      format: "esm",
+      format: "es",
       sourcemap: true,
       chunkFileNames: "chunks/[name].js",
       entryFileNames: "index.js",
-      manualChunks: (id) => {
-        // 开发版本使用简化的拆分策略
-        if (id.includes("node_modules")) {
-          // 🔧 将有问题的库单独打包
-          if (id.includes("uint8arrays") || id.includes("multiformats")) {
-            return "vendor-encoding";
-          }
-
-          if (id.includes("@polkadot/")) return "vendor-polkadot";
-          if (id.includes("@helia/") || id.includes("helia"))
-            return "vendor-helia";
-          if (id.includes("libp2p")) return "vendor-libp2p";
-
-          const packageName = id.split("node_modules/")[1].split("/")[0];
-          return `vendor-${packageName.replace("@", "").replace("/", "-")}`;
-        }
-        return null;
-      },
+      manualChunks,
     },
     external,
     plugins: [
@@ -261,11 +249,7 @@ export default [
         declarationMap: false,
         outDir: "dist/dev",
       }),
-      replace({
-        __IS_PROD__: false,
-        preventAssignment: true,
-      }),
-      json(),
+      ...basePlugins,
     ],
   },
 ];
