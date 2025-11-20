@@ -5,6 +5,7 @@ import json from "@rollup/plugin-json";
 import terser from "@rollup/plugin-terser";
 import babel from "@rollup/plugin-babel";
 import replace from "@rollup/plugin-replace";
+import inject from "@rollup/plugin-inject";
 
 import dts from "rollup-plugin-dts";
 import pkg from "./package.json" assert { type: "json" };
@@ -21,6 +22,10 @@ console.log("NODE_ENV:", process.env.NODE_ENV);
 const isProd = process.env.NODE_ENV === "production";
 
 const basePlugins = [
+  // 🔧 添加 process polyfill
+  inject({
+    process: 'process',
+  }),
   replace({
     __IS_PROD__: isProd,
     preventAssignment: true,
@@ -45,8 +50,8 @@ const basePlugins = [
 
 const compressionPlugin = terser({
   compress: {
-    drop_console: false,
-    drop_debugger: false,
+    drop_console: isProd ? true : false,
+    drop_debugger: isProd ? true : false,
   },
   format: {
     comments: false,
