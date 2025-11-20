@@ -265,7 +265,7 @@ private async localEdges(tid: ThreadID): Promise<{ addrEdge: number, headsEdge: 
   } catch (err:any) {
     // 处理threaddb 未找到错误
     if (err.message.includes("Thread not found")) {
-      throw new Error("No address edge");
+      // throw new Error("No address edge");
     } else {
       throw new Error(`Address edge: ${err.message}`);
     }
