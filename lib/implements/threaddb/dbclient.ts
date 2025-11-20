@@ -102,21 +102,32 @@ export class DBClient {
             this.net,
             this.client.protocol
           );
-          await grpcClient.pushRecordToPeer(
+          const resFlag = await grpcClient.pushRecordToPeer(
             tid,
             lid,
             rec,
             counter,
             this.logstore,
           );
-          //开启threaddb的block记录上报流
-          await this.dc.createTransferStream(
-            this.client.p2pNode,
-            this.client.blockstore,
-            this.client.peerAddr,
-            BrowserType.ThreadDB,
-            rec.cid().toString(),
-          );
+          if (resFlag === 1) {
+            //开启threaddb的block记录上报流
+            await this.dc.createTransferStream(
+              this.client.p2pNode,
+              this.client.blockstore,
+              this.client.peerAddr,
+              BrowserType.Record,
+              rec.cid().toString(),
+            );
+          }else if(resFlag ===2){
+            //开启threaddb的log上报流
+            await this.dc.createTransferStream(
+              this.client.p2pNode,
+              this.client.blockstore,
+              this.client.peerAddr,
+              BrowserType.ThreadDB,
+              tid.toString(),
+            );
+          }
         } catch (err:any) {
           throw new Error(`Error pushing record: ${err instanceof Error ? err.message : String(err)}`);
         }
@@ -190,12 +201,12 @@ async exchangeEdges(threadIds: ThreadID[]): Promise<void> {
     try {
       // 发送交换边缘请求
       const reply = await grpcClient.exchangeEdges(req);
+
       // 处理响应
       for (const edge of reply.edges || []) {
         if (!edge.threadID) continue;
-        
         const tid = ThreadID.fromBytes(edge.threadID);
-        
+        let createStreamFlag = false;
         // 获取本地可能已更新的边缘
         let addrEdgeLocal = 0, headsEdgeLocal = 0;
         try {
@@ -215,6 +226,7 @@ async exchangeEdges(threadIds: ThreadID[]): Promise<void> {
         if (responseAddrEdge !== 0 && responseAddrEdge !== addrEdgeLocal) {
           // 调度日志更新
           await this.scheduleUpdateLogs(tid);
+          createStreamFlag = true;
           console.debug(`Log information update for thread ${tid} scheduled`);
         }
         // 检查头部边缘是否有更新
@@ -222,7 +234,17 @@ async exchangeEdges(threadIds: ThreadID[]): Promise<void> {
         if (responseHeadEdge !== 0 && responseHeadEdge !== headsEdgeLocal) {
           // 调度记录更新
           await this.scheduleUpdateRecords(tid);
+          createStreamFlag = true;
           console.debug(`Record update for thread ${tid} scheduled`);
+        }
+        if(createStreamFlag){
+          await this.dc.createTransferStream(
+            this.client.p2pNode,
+            this.client.blockstore,
+            this.client.peerAddr,
+            BrowserType.ThreadDB,
+            tid.toString(),
+          );
         }
       }
     } catch (err:any) {
@@ -263,12 +285,12 @@ private async localEdges(tid: ThreadID): Promise<{ addrEdge: number, headsEdge: 
     // 尝试获取地址边缘值
     addrEdge = await this.logstore.addrBook.addrsEdge(tid);
   } catch (err:any) {
-    // 处理threaddb 未找到错误
-    if (err.message.includes("Thread not found")) {
-      throw new Error("No address edge");
-    } else {
-      throw new Error(`Address edge: ${err.message}`);
-    }
+    // // 处理threaddb 未找到错误
+    // if (err.message.includes("Thread not found")) {
+    //   throw new Error("No address edge");
+    // } else {
+    //   throw new Error(`Address edge: ${err.message}`);
+    // }
   }
 
   try {
