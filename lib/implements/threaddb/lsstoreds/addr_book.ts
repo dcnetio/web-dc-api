@@ -10,6 +10,10 @@ import {LRUCache} from 'lru-cache'
 import { ThreadID } from '@textile/threads-id';
 import {DefaultOpts} from './global'
 
+const ADDR_FNV_OFFSET_BASIS = 0xcbf29ce484222325n;
+const ADDR_FNV_PRIME = 0x100000001b3n;
+const ADDR_MOD64 = 2n ** 64n;
+
 
 // 缓存键类型  
 type CacheKey = {  
@@ -363,28 +367,35 @@ private async traverse(withAddrs: boolean): Promise<{ [key: string]: { [key: str
       
 
     private computeAddrsEdge(as: { logId: PeerId, addr: Uint8Array }[]): number {
-        // sort peer addresses for deterministic edge computation
-        as.sort((a, b) => {
-            if (a.logId.toString() === b.logId.toString()) {
+        const sorted = [...as].sort((a, b) => {
+            const left = a.logId.toString();
+            const right = b.logId.toString();
+            if (left === right) {
                 return bytes.compare(a.addr, b.addr);
             }
-            return a.logId.toString() < b.logId.toString() ? -1 : 1;
+            return left < right ? -1 : 1;
         });
 
-        const hasher = new TextEncoder();
-        let hash = 0n;
-        for (const item of as) {
-            const logIdBytes = hasher.encode(item.logId.toString());
-            const addrBytes = item.addr;
-            for (const byte of logIdBytes) {
-                hash = (hash * 31n + BigInt(byte)) % 2n**64n;
-            }
-            for (const byte of addrBytes) {
-                hash = (hash * 31n + BigInt(byte)) % 2n**64n;
-            }
+        const encoder = new TextEncoder();
+        let hash = ADDR_FNV_OFFSET_BASIS;
+
+        for (const item of sorted) {
+            hash = this.fnv1a64(encoder.encode(item.logId.toString()), hash);
+            hash = this.fnv1a64(item.addr, hash);
         }
+
         return Number(hash);
     }
+
+    private fnv1a64(data: Uint8Array, initial: bigint): bigint {
+        let hash = initial;
+        for (const byte of data) {
+            hash ^= BigInt(byte);
+            hash = (hash * ADDR_FNV_PRIME) % ADDR_MOD64;
+        }
+        return hash;
+    }
+
 
     // dumpAddrs(): Promise<DumpAddrBook>;  
     async dumpAddrs(): Promise<DumpAddrBook> {
