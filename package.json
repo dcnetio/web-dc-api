@@ -4,14 +4,14 @@
   "description": "web相关的dcapi",
   "type": "module",
   "browser": "dist/dc.min.js",
-  "main": "dist/index.cjs.js",
+  "main": "dist/cjs/index.js",
   "module": "dist/esm/index.js",
   "types": "dist/index.d.ts",
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
       "import": "./dist/esm/index.js",
-      "require": "./dist/index.cjs.js",
+      "require": "./dist/cjs/index.js",
       "browser": "./dist/dc.min.js"
     },
     "./dev": {
@@ -71,6 +71,7 @@
     "lru-cache": "^11.1.0",
     "multiaddr": "^10.0.1",
     "multiformats": "^13.3.2",
+    "process": "^0.11.10",
     "protobufjs": "^7.5.0",
     "tweetnacl": "^1.0.3",
     "uint8arrays": "^5.1.0",
@@ -84,6 +85,7 @@
     "@babel/preset-env": "^7.27.2",
     "@rollup/plugin-babel": "^6.0.4",
     "@rollup/plugin-commonjs": "^28.0.6",
+    "@rollup/plugin-inject": "^5.0.5",
     "@rollup/plugin-json": "^6.1.0",
     "@rollup/plugin-node-resolve": "^16.0.1",
     "@rollup/plugin-replace": "^6.0.2",
