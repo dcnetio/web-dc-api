@@ -985,8 +985,8 @@ async syncDBFromDC(
         const tID = await this.decodeThreadId(threadid);  
         const logKey = await this.getLogKey(tID);  
         const lid =  peerIdFromPrivateKey(logKey);
-        // await this.dc._connectToObjNodes(threadid);  
-        //await this.addLogToThreadStart(ctx,tID, lid);
+        await this.dc._connectToObjNodes(threadid);  
+        await this.addLogToThreadStart(ctx,tID, lid);
         const sk = SymmetricKey.fromString(b32Sk);
         const rk = SymmetricKey.fromString(b32Rk);
         const threadKey =  new ThreadKey(sk, rk);  
