@@ -64,7 +64,7 @@ import { DBClient } from "../dbclient";
 import { Client } from "../../../common/dcapi";
 import { App, Connector, Net, PubKey, Token } from "../core/app";
 import { ChainUtil } from "../../../common/chain";
-import { DcUtil } from "../../../common/dcutil";
+import { BrowserType, DcUtil } from "../../../common/dcutil";
 import { CreateEvent } from "../cbor/event";
 import { Errors } from "../core/db";
 import { net as net_pb } from "../pb/net_pb";
@@ -138,6 +138,10 @@ export class Network implements Net {
     const signature = this.context.sign(payload);
     return signature;
   };
+
+  getDagService(): DAGCBOR {
+    return this.dagService;
+  }
 
   async getClient(peerId: PeerId): Promise<[Client | null, Error | null]> {
     try {
@@ -1804,13 +1808,24 @@ export class Network implements Net {
         if (!peers) throw new Error(`No peers for thread ${tid}`);
         for (const p of peers) {
           if (!p || p.toString() === "") continue;
+          let dbClient: DBClient | null = null;
           try {
             const [client, _] = await this.getClient(p);
             if (!client) continue;
-            const dbClient = new DBClient(client, this.dc, this, this.logstore);
+            dbClient = new DBClient(client, this.dc, this, this.logstore);
             await dbClient.pushRecordToPeer(tid, lid, rec, counter);
           } catch (err) {
-            continue;
+            if (dbClient && err.message == Errors.ErrLogNotFound.message) { //log文件没绑定,进行绑定
+             try {
+                  await this.context.dbManager?.addLogToThreadStart(null,tid, lid);
+                  const err = await dbClient.pushLogToPeer(tid, lid,rec); //推送本地log文件到对等节点,rec表示最新的记录
+                  if (err){
+                    console.error("Failed to push log after adding to thread:", err);
+                  }
+                }catch (err) {
+                  console.error("Failed to create transfer stream for pushing log:", err);
+                }
+            }
           }
         }
       } catch (err) {

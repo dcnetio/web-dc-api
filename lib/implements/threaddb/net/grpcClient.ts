@@ -452,8 +452,7 @@ private sortRecordsChain(records: IRecord[]): IRecord[] {
       rec: IRecord,
       counter: number,
       logstore: ILogstore,
-    ): Promise<number> {
-      try {
+    ): Promise<void> {
         const body = new net_pb.pb.PushRecordRequest.Body();
         body.threadID = ThreadIDConverter.toBytes(tid.toString()) ;
         body.logID = PeerIDConverter.toBytes(lid.toString());
@@ -469,19 +468,22 @@ private sortRecordsChain(records: IRecord[]): IRecord[] {
           messageBytes,
           30000, // 30秒超时
         );
-        return 1;//推送记录成功
+    }
 
-      } catch (err:any) {
-        if (err.message == Errors.ErrLogNotFound.message) {
-          try {
+
+
+  async pushLogToPeer(
+      tid: ThreadID, 
+      lid: PeerId,
+      logstore: ILogstore,
+    ): Promise<void> {
+      try {
             const timeout = setTimeout(() => {
               throw new Error('Getting log information timed out');
-            }, 30000); // 30秒超时 (PushTimeout)
-            
+            }, 10000); // 10秒超时 (PushTimeout)
             // 获取日志信息
             const log = await logstore.getLog(tid, lid);
             clearTimeout(timeout); // 清除超时
-            
             // 准备日志推送请求
             const logBody = new net_pb.pb.PushLogRequest.Body();
             logBody.threadID = ThreadIDConverter.toBytes(tid.toString());
@@ -489,7 +491,6 @@ private sortRecordsChain(records: IRecord[]): IRecord[] {
             
             const logRequest = new net_pb.pb.PushLogRequest();
             logRequest.body = logBody;
-            
             // 推送缺失的日志
             const logMessageBytes = net_pb.pb.PushLogRequest.encode(logRequest).finish();
             await this.grpcClient.unaryCall(
@@ -497,13 +498,9 @@ private sortRecordsChain(records: IRecord[]): IRecord[] {
               logMessageBytes,
               30000
             );
-            return 2; // 已推送缺失的日志
           } catch (logErr) {
             throw new Error(`Error pushing missing log: ${logErr instanceof Error ? logErr.message : String(logErr)}`);
           }
-        }
-      }
-      return 0; // 推送记录失败
     }
 
     async exchangeEdges(

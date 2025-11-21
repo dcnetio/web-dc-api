@@ -15,6 +15,8 @@ import {net as net_pb} from "../pb/net_pb";
 import { DBClient } from '../dbclient';
 import { Blocks } from 'helia';
 import { AsyncMutex } from '../common/AsyncMutex';
+import { DAGCBOR } from '@helia/dag-cbor';
+
 
 
 // 类型定义  
@@ -91,6 +93,8 @@ export interface Net extends net_Net {
     body: IPLDNode,  
     options?: { threadToken?: ThreadToken, apiToken?: Token }  
   ): Promise<IThreadRecord>  
+  
+  getDagService(): DAGCBOR ;
 
   validate(  
     id: ThreadID,  

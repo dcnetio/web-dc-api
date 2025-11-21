@@ -6,19 +6,21 @@ import { NewThreadOptions } from './core/options';
 import { ThreadID } from '@textile/threads-id'; 
 import { DBGrpcClient } from "./net/grpcClient";
 import { PeerId } from "@libp2p/interface";
-import { IRecord } from "./core/record";
+import { IRecord, } from "./core/record";
 import { DcUtil,BrowserType } from "../../common/dcutil";
 import {net as net_pb} from "./pb/net_pb";
 import {ILogstore} from "./core/logstore";
 import  {IThreadInfo, IThreadLogInfo, ThreadInfo} from "./core/core";
 import {  getHeadUndef, Head } from "./core/head";
 
+
 import { Net } from "./core/app";
 import {SymKey} from "./core/core";
 import { ThreadToken } from "./core/identity";
 import { CidConverter, PeerIDConverter, ThreadIDConverter } from "./pb/proto-custom-types";
-import { logFromProto } from "./cbor/record";
+import {GetRecord, logFromProto } from "./cbor/record";
 import { PeerRecords } from "./net/define";
+import { Errors } from "./core/db";
 
 
 
@@ -102,35 +104,61 @@ export class DBClient {
             this.net,
             this.client.protocol
           );
-          const resFlag = await grpcClient.pushRecordToPeer(
+          await grpcClient.pushRecordToPeer(
             tid,
             lid,
             rec,
             counter,
             this.logstore,
           );
-          if (resFlag === 1) {
-            //开启threaddb的block记录上报流
-            await this.dc.createTransferStream(
+          //开启threaddb的block记录上报流
+          await this.dc.createTransferStream(
               this.client.p2pNode,
               this.client.blockstore,
               this.client.peerAddr,
               BrowserType.Record,
               rec.cid().toString(),
             );
-          }else if(resFlag ===2){
-            //开启threaddb的log上报流
-            await this.dc.createTransferStream(
+        } catch (err:any) {
+          throw err;
+        }
+      }
+    
+
+
+
+  async pushLogToPeer(
+        tid: ThreadID, 
+        lid: PeerId,
+        rec: IRecord,
+      ): Promise<Error | null> {
+        try {
+          if (this.client.p2pNode == null) {
+            throw new Error("p2pNode is null");
+          }
+          const grpcClient = new DBGrpcClient(
+            this.client.p2pNode,
+            this.client.peerAddr,
+            this.client.token,
+            this.net,
+            this.client.protocol
+          );
+          await grpcClient.pushLogToPeer(
+            tid,
+            lid,
+            this.logstore,
+          );
+          await this.dc.createTransferStream(
               this.client.p2pNode,
               this.client.blockstore,
               this.client.peerAddr,
-              BrowserType.ThreadDB,
-              tid.toString(),
+              BrowserType.Record,
+              rec.cid().toString(),
             );
-          }
         } catch (err:any) {
-          throw new Error(`Error pushing record: ${err instanceof Error ? err.message : String(err)}`);
+          return err;
         }
+        return null;
       }
 
 /**
@@ -206,7 +234,6 @@ async exchangeEdges(threadIds: ThreadID[]): Promise<void> {
       for (const edge of reply.edges || []) {
         if (!edge.threadID) continue;
         const tid = ThreadID.fromBytes(edge.threadID);
-        let createStreamFlag = false;
         // 获取本地可能已更新的边缘
         let addrEdgeLocal = 0, headsEdgeLocal = 0;
         try {
@@ -221,12 +248,13 @@ async exchangeEdges(threadIds: ThreadID[]): Promise<void> {
             continue;
           }
         }
+        let needPush = false;
         // 检查地址边缘是否有更新
         const responseAddrEdge = edge.addressEdge || 0;
         if (responseAddrEdge !== 0 && responseAddrEdge !== addrEdgeLocal) {
           // 调度日志更新
           await this.scheduleUpdateLogs(tid);
-          createStreamFlag = true;
+          needPush = true;
           console.debug(`Log information update for thread ${tid} scheduled`);
         }
         // 检查头部边缘是否有更新
@@ -234,18 +262,13 @@ async exchangeEdges(threadIds: ThreadID[]): Promise<void> {
         if (responseHeadEdge !== 0 && responseHeadEdge !== headsEdgeLocal) {
           // 调度记录更新
           await this.scheduleUpdateRecords(tid);
-          createStreamFlag = true;
+          needPush = true;
           console.debug(`Record update for thread ${tid} scheduled`);
         }
-        if(createStreamFlag){
-          await this.dc.createTransferStream(
-            this.client.p2pNode,
-            this.client.blockstore,
-            this.client.peerAddr,
-            BrowserType.ThreadDB,
-            tid.toString(),
-          );
+        if (!needPush) {//将本地的所有log的head都上报给对等点
+          await this.pushLogsHeadToPeer(tid);
         }
+
       }
     } catch (err:any) {
       // 处理特殊错误码
@@ -268,6 +291,38 @@ async exchangeEdges(threadIds: ThreadID[]): Promise<void> {
     throw new Error(`Exchange edges failed: ${err instanceof Error ? err.message : String(err)}`);
   }
 }
+
+private async pushLogsHeadToPeer(tid: ThreadID): Promise<void> {
+  //取出所有log的head对应的记录
+  const logs = await this.logstore.getManagedLogs(tid);
+  //提取出serviceKey
+  const serviceKey = await this.logstore.keyBook.serviceKey(tid);
+   if (!serviceKey) {
+        return ;
+    }
+    const sk = SymmetricKey.fromSymKey(serviceKey);
+  for(const log of logs){
+    const head = await this.logstore.headBook.heads(tid, log.id);
+    let headToPush:Head;
+    if(head.length>0){
+      //取最新的head
+      headToPush = head.reduce((prev, current) => (prev.counter > current.counter) ? prev : current);
+      if (headToPush.id && headToPush.counter > 0) {
+         const rec = await GetRecord(this.net.getDagService(),headToPush.id,sk);
+          if(rec){
+            await this.pushRecordToPeer(
+              tid,
+              log.id,
+              rec,
+              headToPush.counter
+            );
+          }
+      }
+    }
+  }
+}
+
+
 /**
  * 获取threaddb 的本地边缘值（地址和头部）
  * 边缘值用于确定是否需要从远程对等点获取更新

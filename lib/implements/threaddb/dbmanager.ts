@@ -985,8 +985,8 @@ async syncDBFromDC(
         const tID = await this.decodeThreadId(threadid);  
         const logKey = await this.getLogKey(tID);  
         const lid =  peerIdFromPrivateKey(logKey);
-        // await this.dc._connectToObjNodes(threadid);  
-        //await this.addLogToThreadStart(ctx,tID, lid);
+         await this.dc._connectToObjNodes(threadid);  
+        // await this.addLogToThreadStart(ctx,tID, lid); //移动到首次上报数据这边,避免空log上链
         const sk = SymmetricKey.fromString(b32Sk);
         const rk = SymmetricKey.fromString(b32Rk);
         const threadKey =  new ThreadKey(sk, rk);  
@@ -1130,7 +1130,7 @@ async  addLogToThread(ctx: Context, id: ThreadID, lid: PeerId): Promise<void> {
 
 
  async  addLogToThreadStart(  
-  ctx: Context,  
+  ctx: Context|null,  
   id: ThreadID,  
   lid: PeerId  
 ) : Promise<void>  {
@@ -1155,6 +1155,11 @@ async  addLogToThread(ctx: Context, id: ThreadID, lid: PeerId): Promise<void> {
     if (!findFlag) {  
       throw new Error('user not in the thread');
     }  
+    //判断是否已经上报过了
+    const exist = storeUnit?storeUnit.logs.has(lid.toString()):false; 
+    if (exist) {
+        return;
+    }
   }  
 
   // 处理超时  
