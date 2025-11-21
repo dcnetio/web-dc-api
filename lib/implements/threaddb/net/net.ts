@@ -1752,26 +1752,36 @@ export class Network implements Net {
     private startPushWorker() {
       if (this.pushWorkerStarted) return;
       this.pushWorkerStarted = true;
-  
-      const processNext = async () => {
-        if (this.pushQueue.length === 0) {
-          setTimeout(processNext, 1000);
-          return;
+
+      const sleep = (ms: number) =>
+        new Promise<void>((resolve) => setTimeout(resolve, ms));
+
+      const loop = async () => {
+        while (true) {
+          try {
+            const item = this.pushQueue.shift();
+            if (!item) {
+              await sleep(1000);
+              continue;
+            }
+            try {
+              await this._doPushRecord(item.tid, item.lid, item.rec, item.counter);
+            } catch (err) {
+              console.error("pushRecord failed:", err);
+              await sleep(200); // 简单退避，避免持续报错阻塞后续任务
+            }
+          } catch (err) {
+            console.error("push worker crashed:", err);
+            await sleep(500);
+          }
         }
-        const item = this.pushQueue.shift();
-        if (!item) {
-          setTimeout(processNext, 1000);
-          return;
-        }
-        try {
-          await this._doPushRecord(item.tid, item.lid, item.rec, item.counter);
-        } catch (err) {
-          // 可选：失败可重试或丢弃
-          console.error("pushRecord failed:", err);
-        }
-        setTimeout(processNext, 0); // 立即处理下一条
       };
-      processNext();
+
+      loop().catch((err) => {
+        console.error("push worker stopped unexpectedly:", err);
+        this.pushWorkerStarted = false;
+        this.startPushWorker();
+      });
     }
   
   
