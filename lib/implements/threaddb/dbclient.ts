@@ -236,11 +236,11 @@ async exchangeEdges(threadIds: ThreadID[]): Promise<void> {
         if (!edge.threadID) continue;
         const tid = ThreadID.fromBytes(edge.threadID);
         // 获取本地可能已更新的边缘
-        let addrEdgeLocal = 0n, headsEdgeLocal = 0n;
+        let addrEdgeLocal = 0, headsEdgeLocal = 0;
         try {
           const localEdges = await this.localEdges(tid);
-          addrEdgeLocal = localEdges.addrEdge;
-          headsEdgeLocal = localEdges.headsEdge;
+          addrEdgeLocal = Number(localEdges.addrEdge)||0;
+          headsEdgeLocal = Number(localEdges.headsEdge)||0;
         } catch (err:any) {
           // 允许本地边缘为空
           if (err.message !== "No address edge" && 
@@ -251,16 +251,16 @@ async exchangeEdges(threadIds: ThreadID[]): Promise<void> {
         }
         let needPush = false;
         // 检查地址边缘是否有更新
-        const responseAddrEdge = this.edgeToBigInt(edge.addressEdge );
-        if (responseAddrEdge !== 0n && responseAddrEdge !== addrEdgeLocal) {
+        const responseAddrEdge = Number(edge.addressEdge ) || 0;
+        if (responseAddrEdge !== 0 && responseAddrEdge !== addrEdgeLocal) {
           // 调度日志更新
           await this.scheduleUpdateLogs(tid);
           needPush = true;
           console.debug(`Log information update for thread ${tid} scheduled`);
         }
         // 检查头部边缘是否有更新
-        const responseHeadEdge = this.edgeToBigInt(edge.headsEdge);
-        if (responseHeadEdge !== 0n && responseHeadEdge !== headsEdgeLocal) {
+        const responseHeadEdge = Number(edge.headsEdge) || 0;
+        if (responseHeadEdge !== 0 && responseHeadEdge !== headsEdgeLocal) {
           // 调度记录更新
           await this.scheduleUpdateRecords(tid);
           needPush = true;
