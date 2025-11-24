@@ -217,27 +217,37 @@ export class DsHeadBook implements HeadBook {
         return heads;
     }
 
-    private computeHeadsEdge(hs: LogHead[]): bigint {
-  const sorted = [...hs].sort((a, b) => {
-    if (a.logId === b.logId) {
-      const left = a.head.id?.toString() ?? '';
-      const right = b.head.id?.toString() ?? '';
-      return left.localeCompare(right);
-    }
-    return a.logId.localeCompare(b.logId);
-  });
+        private computeHeadsEdge(hs: LogHead[]): bigint {
+                const sorted = [...hs].sort((a, b) => {
+                        if (a.logId === b.logId) {
+                                return this.compareCidBytes(a.head.id?.bytes, b.head.id?.bytes);
+                        }
+                        return a.logId.localeCompare(b.logId);
+                });
 
-  const encoder = new TextEncoder();
-  let hash = FNV_OFFSET_BASIS;
+                const encoder = new TextEncoder();
+                let hash = FNV_OFFSET_BASIS;
 
-  for (const item of sorted) {
-    hash = this.fnv1a64(encoder.encode(item.logId), hash);
-    const headBytes = item.head.id?.bytes ?? new Uint8Array();
-    hash = this.fnv1a64(headBytes, hash);
-  }
+                for (const item of sorted) {
+                        hash = this.fnv1a64(encoder.encode(item.logId), hash);
+                        const headBytes = item.head.id?.bytes ?? new Uint8Array();
+                        hash = this.fnv1a64(headBytes, hash);
+                }
 
-    return hash;
-}
+                return hash;
+        }
+
+        private compareCidBytes(left?: Uint8Array, right?: Uint8Array): number {
+                const a = left ?? new Uint8Array();
+                const b = right ?? new Uint8Array();
+                const min = Math.min(a.length, b.length);
+                for (let i = 0; i < min; i++) {
+                        if (a[i] !== b[i]) {
+                                return a[i] - b[i];
+                        }
+                }
+                return a.length - b.length;
+        }
 
 private fnv1a64(data: Uint8Array, initial: bigint): bigint {
   let hash = initial;
