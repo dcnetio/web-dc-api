@@ -217,11 +217,11 @@ async threadsFromAddrs(): Promise<ThreadID[]> {
     }
 }
 
-async addrsEdge(t: ThreadID): Promise<number> {
+async addrsEdge(t: ThreadID): Promise<bigint> {
     const key = this.genDSKey(t, DsAddrBook.logBookEdge.toString());
     try {
         const value = await this.ds.get(key);
-        return Number(new DataView(value.buffer).getBigUint64(0));
+        return new DataView(value.buffer).getBigUint64(0);
     } catch (err: any) {
         if (err.code !== 'ERR_NOT_FOUND') {
             throw err;
@@ -366,7 +366,7 @@ private async traverse(withAddrs: boolean): Promise<{ [key: string]: { [key: str
 
       
 
-    private computeAddrsEdge(as: { logId: PeerId, addr: Uint8Array }[]): number {
+    private computeAddrsEdge(as: { logId: PeerId, addr: Uint8Array }[]): bigint {
         const sorted = [...as].sort((a, b) => {
             const left = a.logId.toString();
             const right = b.logId.toString();
@@ -384,7 +384,7 @@ private async traverse(withAddrs: boolean): Promise<{ [key: string]: { [key: str
             hash = this.fnv1a64(item.addr, hash);
         }
 
-        return Number(hash);
+        return hash;
     }
 
     private fnv1a64(data: Uint8Array, initial: bigint): bigint {

@@ -151,7 +151,7 @@ export class DsHeadBook implements HeadBook {
         await txn.put(key, recordBytes);
     }
 
-    async headsEdge(tid: ThreadID, retries = 3): Promise<number> {
+    async headsEdge(tid: ThreadID, retries = 3): Promise<bigint> {
         const key = dsThreadKey(tid, hbEdge);
 
         for (let attempt = 1; attempt <= retries; attempt++) {
@@ -165,7 +165,7 @@ export class DsHeadBook implements HeadBook {
         throw new Error('Edge computation failed');
     }
 
-    private async calculateEdge(tid: ThreadID, key: Key): Promise<number> {
+    private async calculateEdge(tid: ThreadID, key: Key): Promise<bigint> {
         return this.withTransaction(async txn => {
             try {
                 const data = await txn.get(key);
@@ -184,7 +184,7 @@ export class DsHeadBook implements HeadBook {
             this.writeEdgeValue(buffer, edge);
 
             await txn.put(key, buffer);
-            return Number(edge);
+            return edge;
         });
     }
 
@@ -263,14 +263,14 @@ private fnv1a64(data: Uint8Array, initial: bigint): bigint {
         await txn.delete(key);
     }
 
-    private decodeStoredEdge(data: Uint8Array): number {
+    private decodeStoredEdge(data: Uint8Array): bigint {
         const buf: any = Buffer.from(data);
         const reader = buf as unknown as { readBigUInt64BE?: (offset?: number) => bigint };
         if (buf.length >= 8 && typeof reader.readBigUInt64BE === 'function') {
-            return Number(reader.readBigUInt64BE(0));
+            return reader.readBigUInt64BE(0);
         }
         if (buf.length >= 4) {
-            return buf.readUInt32BE(0);
+            return BigInt(buf.readUInt32BE(0));
         }
         throw new Error('Corrupted head edge value');
     }
