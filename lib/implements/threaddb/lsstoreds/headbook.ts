@@ -1,5 +1,6 @@
 import { CID } from 'multiformats/cid';
 import { Key,Pair } from 'interface-datastore';
+import { base58btc } from 'multiformats/bases/base58';
 import { Head, HeadBookRecord, serializeHeadBookRecord, deserializeHeadBookRecord } from '../core/head';
 import {
     TxnDatastoreExtended,
@@ -229,7 +230,8 @@ export class DsHeadBook implements HeadBook {
                 let hash = FNV_OFFSET_BASIS;
 
                 for (const item of sorted) {
-                        hash = this.fnv1a64(encoder.encode(item.logId), hash);
+                    const logIdBytes = this.decodeLogId(item.logId, encoder);
+                    hash = this.fnv1a64(logIdBytes, hash);
                         const headBytes = item.head.id?.bytes ?? new Uint8Array();
                         hash = this.fnv1a64(headBytes, hash);
                 }
@@ -248,6 +250,17 @@ export class DsHeadBook implements HeadBook {
                 }
                 return a.length - b.length;
         }
+
+    private decodeLogId(logId: string, encoder: TextEncoder): Uint8Array {
+        if (!logId) {
+            return new Uint8Array();
+        }
+        try {
+            return base58btc.decode(logId);
+        } catch {
+            return encoder.encode(logId);
+        }
+    }
 
 private fnv1a64(data: Uint8Array, initial: bigint): bigint {
   let hash = initial;

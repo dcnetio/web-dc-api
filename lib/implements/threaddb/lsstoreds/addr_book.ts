@@ -9,6 +9,7 @@ import {uniqueLogIds,uniqueThreadIds,DSOptions,AllowEmptyRestore,dsThreadKey} fr
 import {LRUCache} from 'lru-cache'  
 import { ThreadID } from '@textile/threads-id';
 import {DefaultOpts} from './global'
+import { base58btc } from 'multiformats/bases/base58'
 
 const ADDR_FNV_OFFSET_BASIS = 0xcbf29ce484222325n;
 const ADDR_FNV_PRIME = 0x100000001b3n;
@@ -367,21 +368,24 @@ private async traverse(withAddrs: boolean): Promise<{ [key: string]: { [key: str
       
 
     private computeAddrsEdge(as: { logId: PeerId, addr: Uint8Array }[]): bigint {
-        const sorted = [...as].sort((a, b) => {
-            const left = a.logId.toString();
-            const right = b.logId.toString();
-            if (left === right) {
-                return bytes.compare(a.addr, b.addr);
+        const entries = as.map(item => ({
+            logIdBytes: base58btc.decode(item.logId.toString()),
+            addr: item.addr,
+        }));
+
+        entries.sort((a, b) => {
+            const logCompare = bytes.compare(a.logIdBytes, b.logIdBytes);
+            if (logCompare !== 0) {
+                return logCompare;
             }
-            return left < right ? -1 : 1;
+            return bytes.compare(a.addr, b.addr);
         });
 
-        const encoder = new TextEncoder();
         let hash = ADDR_FNV_OFFSET_BASIS;
 
-        for (const item of sorted) {
-            hash = this.fnv1a64(encoder.encode(item.logId.toString()), hash);
-            hash = this.fnv1a64(item.addr, hash);
+        for (const entry of entries) {
+            hash = this.fnv1a64(entry.logIdBytes, hash);
+            hash = this.fnv1a64(entry.addr, hash);
         }
 
         return hash;
