@@ -1815,7 +1815,7 @@ export class Network implements Net {
             dbClient = new DBClient(client, this.dc, this, this.logstore);
             await dbClient.pushRecordToPeer(tid, lid, rec, counter);
           } catch (err) {
-            if (dbClient && err.message == Errors.ErrLogNotFound.message) { //log文件没绑定,进行绑定
+            if (err instanceof Error && dbClient && err.message === Errors.ErrLogNotFound.message) { //log文件没绑定,进行绑定
              try {
                   await this.context.dbManager?.addLogToThreadStart(null,tid, lid);
                   const err = await dbClient.pushLogToPeer(tid, lid,rec); //推送本地log文件到对等节点,rec表示最新的记录
