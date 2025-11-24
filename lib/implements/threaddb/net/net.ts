@@ -1821,6 +1821,8 @@ export class Network implements Net {
                   const err = await dbClient.pushLogToPeer(tid, lid,rec); //推送本地log文件到对等节点,rec表示最新的记录
                   if (err){
                     console.error("Failed to push log after adding to thread:", err);
+                  }else {
+                    await dbClient.pushRecordToPeer(tid, lid, rec, counter);
                   }
                 }catch (err) {
                   console.error("Failed to create transfer stream for pushing log:", err);
