@@ -1,6 +1,7 @@
 import { CID } from 'multiformats/cid';
 import { Key,Pair } from 'interface-datastore';
-import { base58btc } from 'multiformats/bases/base58';
+import { bases } from 'multiformats/basics';
+
 import { Head, HeadBookRecord, serializeHeadBookRecord, deserializeHeadBookRecord } from '../core/head';
 import {
     TxnDatastoreExtended,
@@ -256,8 +257,8 @@ export class DsHeadBook implements HeadBook {
             return new Uint8Array();
         }
         try {
-            return base58btc.decode(logId);
-        } catch {
+            return bases.base58btc.baseDecode(logId);
+        } catch (err: any) {
             return encoder.encode(logId);
         }
     }
