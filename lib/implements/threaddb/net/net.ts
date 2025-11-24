@@ -64,7 +64,7 @@ import { DBClient } from "../dbclient";
 import { Client } from "../../../common/dcapi";
 import { App, Connector, Net, PubKey, Token } from "../core/app";
 import { ChainUtil } from "../../../common/chain";
-import { DcUtil } from "../../../common/dcutil";
+import { BrowserType, DcUtil } from "../../../common/dcutil";
 import { CreateEvent } from "../cbor/event";
 import { Errors } from "../core/db";
 import { net as net_pb } from "../pb/net_pb";
@@ -138,6 +138,10 @@ export class Network implements Net {
     const signature = this.context.sign(payload);
     return signature;
   };
+
+  getDagService(): DAGCBOR {
+    return this.dagService;
+  }
 
   async getClient(peerId: PeerId): Promise<[Client | null, Error | null]> {
     try {
@@ -1752,26 +1756,36 @@ export class Network implements Net {
     private startPushWorker() {
       if (this.pushWorkerStarted) return;
       this.pushWorkerStarted = true;
-  
-      const processNext = async () => {
-        if (this.pushQueue.length === 0) {
-          setTimeout(processNext, 1000);
-          return;
+
+      const sleep = (ms: number) =>
+        new Promise<void>((resolve) => setTimeout(resolve, ms));
+
+      const loop = async () => {
+        while (true) {
+          try {
+            const item = this.pushQueue.shift();
+            if (!item) {
+              await sleep(1000);
+              continue;
+            }
+            try {
+              await this._doPushRecord(item.tid, item.lid, item.rec, item.counter);
+            } catch (err) {
+              console.error("pushRecord failed:", err);
+              await sleep(200); // 简单退避，避免持续报错阻塞后续任务
+            }
+          } catch (err) {
+            console.error("push worker crashed:", err);
+            await sleep(500);
+          }
         }
-        const item = this.pushQueue.shift();
-        if (!item) {
-          setTimeout(processNext, 1000);
-          return;
-        }
-        try {
-          await this._doPushRecord(item.tid, item.lid, item.rec, item.counter);
-        } catch (err) {
-          // 可选：失败可重试或丢弃
-          console.error("pushRecord failed:", err);
-        }
-        setTimeout(processNext, 0); // 立即处理下一条
       };
-      processNext();
+
+      loop().catch((err) => {
+        console.error("push worker stopped unexpectedly:", err);
+        this.pushWorkerStarted = false;
+        this.startPushWorker();
+      });
     }
   
   
@@ -1794,13 +1808,26 @@ export class Network implements Net {
         if (!peers) throw new Error(`No peers for thread ${tid}`);
         for (const p of peers) {
           if (!p || p.toString() === "") continue;
+          let dbClient: DBClient | null = null;
           try {
             const [client, _] = await this.getClient(p);
             if (!client) continue;
-            const dbClient = new DBClient(client, this.dc, this, this.logstore);
+            dbClient = new DBClient(client, this.dc, this, this.logstore);
             await dbClient.pushRecordToPeer(tid, lid, rec, counter);
           } catch (err) {
-            continue;
+            if (dbClient && err.message == Errors.ErrLogNotFound.message) { //log文件没绑定,进行绑定
+             try {
+                  await this.context.dbManager?.addLogToThreadStart(null,tid, lid);
+                  const err = await dbClient.pushLogToPeer(tid, lid,rec); //推送本地log文件到对等节点,rec表示最新的记录
+                  if (err){
+                    console.error("Failed to push log after adding to thread:", err);
+                  }else {
+                    await dbClient.pushRecordToPeer(tid, lid, rec, counter);
+                  }
+                }catch (err) {
+                  console.error("Failed to create transfer stream for pushing log:", err);
+                }
+            }
           }
         }
       } catch (err) {

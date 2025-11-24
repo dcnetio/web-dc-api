@@ -39,6 +39,7 @@ export class Http2_Type {
 export class BrowserType {
   static File = 1;
   static ThreadDB = 2;
+  static Record = 3;
 }
 
 
@@ -448,7 +449,38 @@ export class DcUtil {
     let data: Uint8Array;  
     let handshakeFlag = false
     
-    for await (const chunk of this.chunkGenerator(stream)) { 
+    const chunkIterable = this.chunkGenerator(stream);
+    let waitingForFirstChunk = true;
+    // Guard the first chunk read so we can abort if the remote never responds.
+    while (true) {
+      let iteratorResult: IteratorResult<Uint8Array>;
+      if (waitingForFirstChunk) {
+        let timeoutId: ReturnType<typeof setTimeout> | undefined;
+        const timeoutPromise = new Promise<"timeout">((resolve) => {
+          timeoutId = setTimeout(() => resolve("timeout"), 5_000);
+        });
+        const raceResult = await Promise.race([
+          chunkIterable.next(),
+          timeoutPromise,
+        ]);
+        if (raceResult === "timeout") {
+          console.warn("chunkGenerator first chunk timed out after 5s");
+          break;
+        }
+        if (timeoutId) {
+          clearTimeout(timeoutId);
+        }
+        iteratorResult = raceResult;
+        waitingForFirstChunk = false;
+      } else {
+        iteratorResult = await chunkIterable.next();
+      }
+
+      if (iteratorResult.done) {
+        break;
+      }
+
+      const chunk = iteratorResult.value;
       if (chunk instanceof Uint8ArrayList) {
         data = chunk.subarray();
       } else {
