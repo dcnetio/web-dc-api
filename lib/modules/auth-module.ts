@@ -488,8 +488,8 @@ export class AuthModule implements DCModule, IAuthOperations {
       }
       this.tokenTask = true;
 
-      // 300秒一次心跳维持连接
-      const period = 1000;
+      // 60秒一次心跳维持连接
+      const period = 60*1000;
       let count = 0;
       let waitCount = 0;
 
