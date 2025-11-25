@@ -120,7 +120,7 @@ export class DsAddrBook implements AddrBook {
       // 更新现有地址  
       outer: for (const [i, addr] of addrs.entries()) {  
         for (const entry of record.data.addrs) {  
-          if (addr.bytes == entry.addr) {  
+          if (bytes.compare(addr.bytes, entry.addr) === 0) {
             existed[i] = true  
             entry.ttl = ttl  
             entry.expiry = newExp  

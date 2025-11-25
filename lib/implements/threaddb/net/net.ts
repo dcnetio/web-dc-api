@@ -816,7 +816,7 @@ export class Network implements Net {
       await this.logstore.metadata.putString(
         id,
         "local_log_no_record_flag",
-        `${this.hostID}`
+        `${peerId.toString()}`
       );  
     // 将日志添加到threaddb存储
     await this.logstore.addLog(id, logInfo);
@@ -1776,7 +1776,7 @@ export class Network implements Net {
             }
             try {
               await this._doPushRecord(item.tid, item.lid, item.rec, item.counter);
-              if (!haveRecordFlag && this.hostID == item.lid.toString()) {
+              if (!haveRecordFlag) {
                   await this.logstore.metadata.putString(
                   item.tid,
                   "local_log_no_record_flag",
