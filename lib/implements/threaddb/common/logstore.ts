@@ -11,7 +11,7 @@ import {Key as ThreadKey} from './key';
 import {ThreadInfo} from '../core/core';
 import {Errors} from '../core/db';
 
-export const PermanentAddrTTL = 2^53-1; // 使用 bigint 精确表示 64 位整数  
+export const PermanentAddrTTL = 2**53-1; 
 
 
 const managedSuffix = "/managed";
