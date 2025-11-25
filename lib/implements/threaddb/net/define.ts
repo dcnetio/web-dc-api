@@ -1,7 +1,7 @@
 import { IRecord,IThreadRecord } from '../core/record'; 
 import { ThreadID } from '@textile/threads-id';
 import type { PeerId } from '@libp2p/interface';
-import Multiaddr, { protocols } from 'multiaddr';
+import { registry } from '@multiformats/multiaddr';
 
 
 export const netPullingLimit = 1000; // 拉取记录数的限制
@@ -81,16 +81,27 @@ function createProtocol (code: number, size: number, name: string, resolvable?: 
 // populate tables
 table.forEach(row => {
   const proto = createProtocol(...row)
-  if (!protocols.codes[proto.code]) {
-    protocols.codes[proto.code] = proto
-    protocols.names[proto.name] = proto
+  try {
+    // 检查协议是否已存在
+    const existingProto = registry.getProtocol(proto.code)
+    if (!existingProto) {
+      registry.addProtocol(proto)
+    }
+  } catch (error) {
+    // 如果协议不存在，添加新协议
+    registry.addProtocol(proto)
   }
 })
-if (!protocols.codes[Protocol.code]) {
-    protocols.codes[Protocol.code] = Protocol;
-    protocols.names[Protocol.name] = Protocol;
+ // 添加自定义协议
+try {
+  const existingCustomProto = registry.getProtocol(Protocol.code)
+  if (!existingCustomProto) {
+    registry.addProtocol(Protocol)
+  }
+} catch (error) {
+  registry.addProtocol(Protocol)
 }
- 
+
 
 
 /**
