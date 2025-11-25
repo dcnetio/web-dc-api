@@ -226,12 +226,12 @@ async threadsFromAddrs(): Promise<ThreadID[]> {
 
 
 
-    async addrsEdge(t: ThreadID, retries = 3): Promise<bigint> {
+    async addrsEdge(t: ThreadID, exceptPeerId?: string): Promise<bigint> {
         const key = dsThreadKey(t, DsAddrBook.logBookEdge);
-
+        const retries = 3
         for (let attempt = 1; attempt <= retries; attempt++) {
             try {
-                return await this.calculateEdge(t, key);
+                return await this.calculateEdge(t, key, exceptPeerId);
             } catch (err: any)  {
                 if (err.code !== 'TX_CONFLICT') throw err;
                 await this.randomDelay(attempt);
@@ -240,7 +240,7 @@ async threadsFromAddrs(): Promise<ThreadID[]> {
         throw new Error('Edge computation failed');
     }
 
-    private async calculateEdge(t: ThreadID, key: Key): Promise<bigint> {
+    private async calculateEdge(t: ThreadID, key: Key, exceptPeerId?: string): Promise<bigint> {
         return this.withTransaction(async txn => {
             try {
                 const data = await txn.get(key);
@@ -251,7 +251,7 @@ async threadsFromAddrs(): Promise<ThreadID[]> {
                 if (err.code !== 'ERR_NOT_FOUND') throw err;
             }
 
-            const addrs = await this.collectAddrs(txn, t);
+            const addrs = await this.collectAddrs(txn, t, exceptPeerId);
             if (addrs.length === 0) throw new Error('Thread not found');
 
             const edge = this.computeAddrsEdge(addrs);
@@ -263,7 +263,7 @@ async threadsFromAddrs(): Promise<ThreadID[]> {
         });
     }
 
-    private async collectAddrs(txn: Transaction, t: ThreadID): Promise<{ peerID: PeerId, addr: Uint8Array }[]> {
+    private async collectAddrs(txn: Transaction, t: ThreadID, exceptPeerId?: string): Promise<{ peerID: PeerId, addr: Uint8Array }[]> {
         const query = { prefix: dsThreadKey(t, DsAddrBook.logBookBase).toString() };
         const result = txn.query(query);
         const now = Date.now();
@@ -274,7 +274,7 @@ async threadsFromAddrs(): Promise<ThreadID[]> {
             const key = rawKey instanceof Key ? rawKey : new Key(rawKey.toString());
             const pair: Pair = { key, value: entry.value };
             const { tid,pid, record } = this.decodeAddrEntry(pair, true);
-            if (!record) {
+            if (!record || (exceptPeerId && pid.toString() == exceptPeerId)) {
                 continue;
             }
             for (const addr of record.addrs) {

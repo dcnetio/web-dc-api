@@ -82,6 +82,7 @@ import {
 import * as buffer from "buffer/";
 import { AsyncMutex } from "../common/AsyncMutex";
 import { DCContext } from "../../../interfaces";
+import { time } from "console";
 const { Buffer } = buffer;
 
 /**
@@ -811,7 +812,12 @@ export class Network implements Net {
       managed: true,
       head: head,
     } as IThreadLogInfo;
-
+    //标记本地log没有生成任何记录
+      await this.logstore.metadata.putString(
+        id,
+        "local_log_no_record_flag",
+        `${this.hostID}`
+      );  
     // 将日志添加到threaddb存储
     await this.logstore.addLog(id, logInfo);
     const logIDBytes = new TextEncoder().encode(peerId.toString());
@@ -1759,7 +1765,7 @@ export class Network implements Net {
 
       const sleep = (ms: number) =>
         new Promise<void>((resolve) => setTimeout(resolve, ms));
-
+      let haveRecordFlag = false;
       const loop = async () => {
         while (true) {
           try {
@@ -1770,6 +1776,15 @@ export class Network implements Net {
             }
             try {
               await this._doPushRecord(item.tid, item.lid, item.rec, item.counter);
+              if (!haveRecordFlag && this.hostID == item.lid.toString()) {
+                  await this.logstore.metadata.putString(
+                  item.tid,
+                  "local_log_no_record_flag",
+                  ""
+                );
+                haveRecordFlag = true;
+              }
+              
             } catch (err) {
               console.error("pushRecord failed:", err);
               await sleep(200); // 简单退避，避免持续报错阻塞后续任务

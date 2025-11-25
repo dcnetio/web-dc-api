@@ -338,8 +338,17 @@ private async localEdges(tid: ThreadID): Promise<{ addrEdge: bigint, headsEdge: 
   let addrEdge = 0n;
 
   try {
-    // 尝试获取地址边缘值
-    addrEdge = await this.logstore.addrBook.addrsEdge(tid);
+     const exceptLogId = await this.logstore.metadata.getString(
+        tid,
+        "local_log_no_record_flag"
+      );
+       // 尝试获取地址边缘值
+      if (exceptLogId && exceptLogId?.length > 0) {
+        addrEdge = await this.logstore.addrBook.addrsEdge(tid,exceptLogId);
+      }else{
+        addrEdge = await this.logstore.addrBook.addrsEdge(tid);
+      }
+   
   } catch (err:any) {
     // // 处理threaddb 未找到错误
     // if (err.message.includes("Thread not found")) {

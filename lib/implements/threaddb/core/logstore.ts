@@ -63,7 +63,7 @@ export interface AddrBook {
   clearAddrs(threadId: ThreadID, peerId: PeerId): Promise<void>;  
   logsWithAddrs(threadId: ThreadID): Promise<PeerId[]>;  
   threadsFromAddrs(): Promise<ThreadID[]>;  
-  addrsEdge(threadId: ThreadID): Promise<bigint>;  
+  addrsEdge(threadId: ThreadID,exceptPeerId?:string): Promise<bigint>;  
   dumpAddrs(): Promise<DumpAddrBook>;  
   restoreAddrs(book: DumpAddrBook): Promise<void>;  
 }  
