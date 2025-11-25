@@ -50,8 +50,8 @@ const basePlugins = [
 
 const compressionPlugin = terser({
   compress: {
-    drop_console: isProd ? true : false,
-    drop_debugger: isProd ? true : false,
+    drop_console: true,
+    drop_debugger: true,
   },
   format: {
     comments: false,
@@ -142,6 +142,7 @@ export default [
       manualChunks,
       // 设置chunk大小警告
       chunkSizeWarningLimit: 500, // 500KB 警告阈值
+      exports: 'auto' // 添加这个
     },
     external,
     plugins: [
@@ -168,6 +169,7 @@ export default [
       manualChunks,
       // 设置chunk大小警告
       chunkSizeWarningLimit: 500, // 500KB 警告阈值
+      exports: 'auto' // 添加这个
     },
     external,
     plugins: [
@@ -214,6 +216,7 @@ export default [
         "grpc-libp2p-client": "GrpcLibp2pClient",
       },
       inlineDynamicImports: true,
+      exports: 'auto' // 添加这个
     },
     external: ["grpc-libp2p-client"],
     plugins: [
@@ -234,27 +237,27 @@ export default [
   },
 
   // 开发版本ESM（带调试信息）
-  {
-    input: "lib/index.ts",
-    output: {
-      dir: "dist/dev",
-      format: "es",
-      sourcemap: true,
-      chunkFileNames: "chunks/[name].js",
-      entryFileNames: "index.js",
-      manualChunks,
-    },
-    external,
-    plugins: [
-      resolve(getResolveConfig(true)),
-      commonjs(getCommonJSConfig()),
-      typescript({
-        tsconfig: "./tsconfig.json",
-        declaration: false,
-        declarationMap: false,
-        outDir: "dist/dev",
-      }),
-      ...basePlugins,
-    ],
-  },
+  // {
+  //   input: "lib/index.ts",
+  //   output: {
+  //     dir: "dist/dev",
+  //     format: "es",
+  //     sourcemap: true,
+  //     chunkFileNames: "chunks/[name].js",
+  //     entryFileNames: "index.js",
+  //     manualChunks,
+  //   },
+  //   external,
+  //   plugins: [
+  //     resolve(getResolveConfig(true)),
+  //     commonjs(getCommonJSConfig()),
+  //     typescript({
+  //       tsconfig: "./tsconfig.json",
+  //       declaration: false,
+  //       declarationMap: false,
+  //       outDir: "dist/dev",
+  //     }),
+  //     ...basePlugins,
+  //   ],
+  // },
 ];
