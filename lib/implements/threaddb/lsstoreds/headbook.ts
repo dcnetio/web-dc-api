@@ -1,5 +1,7 @@
 import { CID } from 'multiformats/cid';
 import { Key,Pair } from 'interface-datastore';
+import { bases } from 'multiformats/basics';
+
 import { Head, HeadBookRecord, serializeHeadBookRecord, deserializeHeadBookRecord } from '../core/head';
 import {
     TxnDatastoreExtended,
@@ -151,7 +153,7 @@ export class DsHeadBook implements HeadBook {
         await txn.put(key, recordBytes);
     }
 
-    async headsEdge(tid: ThreadID, retries = 3): Promise<number> {
+    async headsEdge(tid: ThreadID, retries = 3): Promise<bigint> {
         const key = dsThreadKey(tid, hbEdge);
 
         for (let attempt = 1; attempt <= retries; attempt++) {
@@ -165,7 +167,7 @@ export class DsHeadBook implements HeadBook {
         throw new Error('Edge computation failed');
     }
 
-    private async calculateEdge(tid: ThreadID, key: Key): Promise<number> {
+    private async calculateEdge(tid: ThreadID, key: Key): Promise<bigint> {
         return this.withTransaction(async txn => {
             try {
                 const data = await txn.get(key);
@@ -184,7 +186,7 @@ export class DsHeadBook implements HeadBook {
             this.writeEdgeValue(buffer, edge);
 
             await txn.put(key, buffer);
-            return Number(edge);
+            return edge;
         });
     }
 
@@ -217,27 +219,49 @@ export class DsHeadBook implements HeadBook {
         return heads;
     }
 
-    private computeHeadsEdge(hs: LogHead[]): bigint {
-  const sorted = [...hs].sort((a, b) => {
-    if (a.logId === b.logId) {
-      const left = a.head.id?.toString() ?? '';
-      const right = b.head.id?.toString() ?? '';
-      return left.localeCompare(right);
+        private computeHeadsEdge(hs: LogHead[]): bigint {
+                const sorted = [...hs].sort((a, b) => {
+                        if (a.logId === b.logId) {
+                                return this.compareCidBytes(a.head.id?.bytes, b.head.id?.bytes);
+                        }
+                        return a.logId.localeCompare(b.logId);
+                });
+
+                const encoder = new TextEncoder();
+                let hash = FNV_OFFSET_BASIS;
+
+                for (const item of sorted) {
+                    const logIdBytes = this.decodeLogId(item.logId, encoder);
+                    hash = this.fnv1a64(logIdBytes, hash);
+                        const headBytes = item.head.id?.bytes ?? new Uint8Array();
+                        hash = this.fnv1a64(headBytes, hash);
+                }
+
+                return hash;
+        }
+
+        private compareCidBytes(left?: Uint8Array, right?: Uint8Array): number {
+                const a = left ?? new Uint8Array();
+                const b = right ?? new Uint8Array();
+                const min = Math.min(a.length, b.length);
+                for (let i = 0; i < min; i++) {
+                        if (a[i] !== b[i]) {
+                                return a[i] - b[i];
+                        }
+                }
+                return a.length - b.length;
+        }
+
+    private decodeLogId(logId: string, encoder: TextEncoder): Uint8Array {
+        if (!logId) {
+            return new Uint8Array();
+        }
+        try {
+            return bases.base58btc.baseDecode(logId);
+        } catch (err: any) {
+            return encoder.encode(logId);
+        }
     }
-    return a.logId.localeCompare(b.logId);
-  });
-
-  const encoder = new TextEncoder();
-  let hash = FNV_OFFSET_BASIS;
-
-  for (const item of sorted) {
-    hash = this.fnv1a64(encoder.encode(item.logId), hash);
-    const headBytes = item.head.id?.bytes ?? new Uint8Array();
-    hash = this.fnv1a64(headBytes, hash);
-  }
-
-    return hash;
-}
 
 private fnv1a64(data: Uint8Array, initial: bigint): bigint {
   let hash = initial;
@@ -253,14 +277,14 @@ private fnv1a64(data: Uint8Array, initial: bigint): bigint {
         await txn.delete(key);
     }
 
-    private decodeStoredEdge(data: Uint8Array): number {
+    private decodeStoredEdge(data: Uint8Array): bigint {
         const buf: any = Buffer.from(data);
         const reader = buf as unknown as { readBigUInt64BE?: (offset?: number) => bigint };
         if (buf.length >= 8 && typeof reader.readBigUInt64BE === 'function') {
-            return Number(reader.readBigUInt64BE(0));
+            return reader.readBigUInt64BE(0);
         }
         if (buf.length >= 4) {
-            return buf.readUInt32BE(0);
+            return BigInt(buf.readUInt32BE(0));
         }
         throw new Error('Corrupted head edge value');
     }

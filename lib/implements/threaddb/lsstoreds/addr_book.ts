@@ -8,7 +8,11 @@ import  * as pb from '../pb/lstore'
 import {uniqueLogIds,uniqueThreadIds,DSOptions,AllowEmptyRestore,dsThreadKey} from './global'
 import {LRUCache} from 'lru-cache'  
 import { ThreadID } from '@textile/threads-id';
-import {DefaultOpts} from './global'
+import {DefaultOpts} from './global';
+import { TxnDatastoreExtended, Transaction } from '../core/db';
+import * as buffer from "buffer/";
+import { bases } from 'multiformats/basics';
+const { Buffer } = buffer;
 
 const ADDR_FNV_OFFSET_BASIS = 0xcbf29ce484222325n;
 const ADDR_FNV_PRIME = 0x100000001b3n;
@@ -61,12 +65,12 @@ export class DsAddrBook implements AddrBook {
  
  
   private opts: DSOptions  
-  private ds: Datastore  
+  private ds: TxnDatastoreExtended  
    cache: LRUCache<CacheKey, AddrsRecord>  
 
   constructor( ds: Datastore, opts: DSOptions) {  
     this.opts = opts  
-    this.ds = ds  
+    this.ds = ds as TxnDatastoreExtended  
     this.cache = new LRUCache({ max: opts.CacheSize || 0 })   
   }  
 
@@ -90,7 +94,7 @@ export class DsAddrBook implements AddrBook {
         if (!item) return acc 
         const addr = typeof item === 'string'   
           ?  multiaddr(item)   
-          : (item instanceof multiaddr ? item : null)  
+          : (isMultiaddr(item) ? item : null)  
         return addr ? [...acc, addr] : acc  
       } catch {  
         return acc 
@@ -116,7 +120,7 @@ export class DsAddrBook implements AddrBook {
       // 更新现有地址  
       outer: for (const [i, addr] of addrs.entries()) {  
         for (const entry of record.data.addrs) {  
-          if (addr.bytes == entry.addr) {  
+          if (bytes.compare(addr.bytes, entry.addr) === 0) {
             existed[i] = true  
             entry.ttl = ttl  
             entry.expiry = newExp  
@@ -138,6 +142,7 @@ export class DsAddrBook implements AddrBook {
       record.dirty = true  
       await this.cleanRecord(record)  
       await this.flushRecord(record)  
+      await this.invalidateEdge(t)
     } finally {  
       release()  
     }  
@@ -158,6 +163,7 @@ export class DsAddrBook implements AddrBook {
         }
         await this.cleanRecord(record)
         await this.flushRecord(record)
+        await this.invalidateEdge(t)
     } finally {
         release()
     }
@@ -217,43 +223,108 @@ async threadsFromAddrs(): Promise<ThreadID[]> {
     }
 }
 
-async addrsEdge(t: ThreadID): Promise<number> {
-    const key = this.genDSKey(t, DsAddrBook.logBookEdge.toString());
-    try {
-        const value = await this.ds.get(key);
-        return Number(new DataView(value.buffer).getBigUint64(0));
-    } catch (err: any) {
-        if (err.code !== 'ERR_NOT_FOUND') {
+
+
+
+    async addrsEdge(t: ThreadID, exceptPeerId?: string): Promise<bigint> {
+        const key = dsThreadKey(t, DsAddrBook.logBookEdge);
+        const retries = 3
+        for (let attempt = 1; attempt <= retries; attempt++) {
+            try {
+                return await this.calculateEdge(t, key, exceptPeerId);
+            } catch (err: any)  {
+                if (err.code !== 'TX_CONFLICT') throw err;
+                await this.randomDelay(attempt);
+            }
+        }
+        throw new Error('Edge computation failed');
+    }
+
+    private async calculateEdge(t: ThreadID, key: Key, exceptPeerId?: string): Promise<bigint> {
+        return this.withTransaction(async txn => {
+            try {
+                const data = await txn.get(key);
+                if (data) {
+                    return this.decodeStoredEdge(data);
+                }
+            } catch (err: any)  {
+                if (err.code !== 'ERR_NOT_FOUND') throw err;
+            }
+
+            const addrs = await this.collectAddrs(txn, t, exceptPeerId);
+            if (addrs.length === 0) throw new Error('Thread not found');
+
+            const edge = this.computeAddrsEdge(addrs);
+            const buffer = Buffer.alloc(8);
+            this.writeEdgeValue(buffer, edge);
+
+            await txn.put(key, buffer);
+            return edge;
+        });
+    }
+
+    private async collectAddrs(txn: Transaction, t: ThreadID, exceptPeerId?: string): Promise<{ peerID: PeerId, addr: Uint8Array }[]> {
+        const query = { prefix: dsThreadKey(t, DsAddrBook.logBookBase).toString() };
+        const result = txn.query(query);
+        const now = Date.now();
+        const as: { peerID: PeerId, addr: Uint8Array }[] = [];
+
+        for await (const entry of result) {
+            const rawKey = entry.key as any;
+            const key = rawKey instanceof Key ? rawKey : new Key(rawKey.toString());
+            const pair: Pair = { key, value: entry.value };
+            const { tid,pid, record } = this.decodeAddrEntry(pair, true);
+            if (!record || (exceptPeerId && pid.toString() == exceptPeerId)) {
+                continue;
+            }
+            for (const addr of record.addrs) {
+                if (addr.expiry > now) {
+                    as.push({ peerID:pid, addr: addr.addr });
+                }
+            }
+        }
+        return as;
+    }
+
+    private async withTransaction<T>(fn: (txn: Transaction) => Promise<T>): Promise<T> {
+        const txn = await this.ds.newTransactionExtended(false);
+        try {
+            const result = await fn(txn);
+            await txn.commit();
+            return result;
+        } catch (err: any) {
+            txn.discard();
             throw err;
         }
     }
 
-    const result =  this.ds.query({ prefix: this.genDSKey(t, DsAddrBook.logBookBase.toString()).toString()});
-    const now = Date.now();
-    const as: { logId: PeerId, addr: Uint8Array }[] = [];
-
-    for await (const entry of result) {
-        const { tid,pid, record } = this.decodeAddrEntry(entry, true);
-        if (!record) {
-            continue;
+    private decodeStoredEdge(data: Uint8Array): bigint {
+        const buf: any = Buffer.from(data);
+        const reader = buf as unknown as { readBigUInt64BE?: (offset?: number) => bigint };
+        if (buf.length >= 8 && typeof reader.readBigUInt64BE === 'function') {
+            return reader.readBigUInt64BE(0);
         }
-        for (const addr of record.addrs) {
-            if (addr.expiry > now) {
-                as.push({ logId:pid, addr: addr.addr });
-            }
+        if (buf.length >= 4) {
+            return BigInt(buf.readUInt32BE(0));
         }
+        throw new Error('Corrupted head edge value');
     }
 
-    if (as.length === 0) {
-        throw new Error('Thread not found');
+    private writeEdgeValue(buf: any, value: bigint): void {
+        const writer = buf as unknown as { writeBigUInt64BE?: (val: bigint, offset?: number) => number };
+        if (typeof writer.writeBigUInt64BE === 'function') {
+            writer.writeBigUInt64BE(value, 0);
+            return;
+        }
+        buf.writeUInt32BE(Number(value & 0xffffffffn), 0);
     }
 
-    const edge = this.computeAddrsEdge(as);
-    const buff = new ArrayBuffer(8);
-    new BigUint64Array(buff)[0] = BigInt(edge);
-    await this.ds.put(key, new Uint8Array(buff));
-    return edge;
-}
+    private randomDelay(attempt: number): Promise<void> {
+        const delay = 50 * attempt + Math.random() * 30;
+        return new Promise(resolve =>
+            setTimeout(resolve, delay)
+        );
+    }
 
 
 
@@ -343,10 +414,11 @@ private async traverse(withAddrs: boolean): Promise<{ [key: string]: { [key: str
 }
 
 
-    private decodeAddrEntry(entry: Pair, withAddrs: boolean): { tid: ThreadID, pid: PeerId, record?: pb.AddrBookRecord } {
-        const kns = entry.key.toString().split('/');
+    private decodeAddrEntry(entry: any, withAddrs: boolean): { tid: ThreadID, pid: PeerId, record?: pb.AddrBookRecord } {
+        const keyStr = typeof entry.key === 'string' ? entry.key : entry.key.toString();
+        const kns = keyStr.split('/');
         if (kns.length < 3) {
-            throw new Error(`bad addressbook key detected: ${entry.key}`);
+            throw new Error(`bad addressbook key detected: ${keyStr}`);
         }
 
         // get thread and log IDs from the key components
@@ -366,25 +438,39 @@ private async traverse(withAddrs: boolean): Promise<{ [key: string]: { [key: str
 
       
 
-    private computeAddrsEdge(as: { logId: PeerId, addr: Uint8Array }[]): number {
-        const sorted = [...as].sort((a, b) => {
-            const left = a.logId.toString();
-            const right = b.logId.toString();
-            if (left === right) {
-                return bytes.compare(a.addr, b.addr);
+    private computeAddrsEdge(as: { peerID: PeerId, addr: Uint8Array }[]): bigint {
+        const entries = as.map(item => ({
+            peerIDBytes: this.decodePeerId(item.peerID.toString(), new TextEncoder()),
+            addr: item.addr,
+        }));
+
+        entries.sort((a, b) => {
+            const peerIDCompare = bytes.compare(a.peerIDBytes, b.peerIDBytes);
+            if (peerIDCompare !== 0) {
+                return peerIDCompare;
             }
-            return left < right ? -1 : 1;
+            return bytes.compare(a.addr, b.addr);
         });
 
-        const encoder = new TextEncoder();
         let hash = ADDR_FNV_OFFSET_BASIS;
 
-        for (const item of sorted) {
-            hash = this.fnv1a64(encoder.encode(item.logId.toString()), hash);
-            hash = this.fnv1a64(item.addr, hash);
+        for (const entry of entries) {
+            hash = this.fnv1a64(entry.peerIDBytes, hash);
+            hash = this.fnv1a64(entry.addr, hash);
         }
 
-        return Number(hash);
+        return hash;
+    }
+
+ private decodePeerId(peerID: string, encoder: TextEncoder): Uint8Array {
+        if (!peerID) {
+            return new Uint8Array();
+        }
+        try {
+            return bases.base58btc.baseDecode(peerID);
+        } catch (err: any) {
+            return encoder.encode(peerID);
+        }
     }
 
     private fnv1a64(data: Uint8Array, initial: bigint): bigint {
@@ -460,4 +546,4 @@ class AsyncMutex {
       next?.()  
     }  
   }  
-}  
+}

@@ -1,5 +1,6 @@
 import type { Client } from "../../common/dcapi";
 import type { Multiaddr as TMultiaddr } from "@multiformats/multiaddr";
+import Long from "long";
 import { extractPublicKeyFromPeerId } from "../../common/dc-key/keyManager";
 import { SymmetricKey} from './common/key';
 import { NewThreadOptions } from './core/options';
@@ -188,8 +189,8 @@ async exchangeEdges(threadIds: ThreadID[]): Promise<void> {
         // 添加到请求中
         body.threads.push({
           threadID: tid.toBytes(),
-          headsEdge: headsEdge,
-          addressEdge: addrEdge
+          headsEdge: Long.fromString(headsEdge.toString(), true),
+          addressEdge: Long.fromString(addrEdge.toString(), true)
         });
       } catch (err:any) {
         if (err.message !== "No address edge" && 
@@ -238,8 +239,8 @@ async exchangeEdges(threadIds: ThreadID[]): Promise<void> {
         let addrEdgeLocal = 0, headsEdgeLocal = 0;
         try {
           const localEdges = await this.localEdges(tid);
-          addrEdgeLocal = localEdges.addrEdge;
-          headsEdgeLocal = localEdges.headsEdge;
+          addrEdgeLocal = Number(localEdges.addrEdge)||0;
+          headsEdgeLocal = Number(localEdges.headsEdge)||0;
         } catch (err:any) {
           // 允许本地边缘为空
           if (err.message !== "No address edge" && 
@@ -250,7 +251,7 @@ async exchangeEdges(threadIds: ThreadID[]): Promise<void> {
         }
         let needPush = false;
         // 检查地址边缘是否有更新
-        const responseAddrEdge = edge.addressEdge || 0;
+        const responseAddrEdge = Number(edge.addressEdge ) || 0;
         if (responseAddrEdge !== 0 && responseAddrEdge !== addrEdgeLocal) {
           // 调度日志更新
           await this.scheduleUpdateLogs(tid);
@@ -258,7 +259,7 @@ async exchangeEdges(threadIds: ThreadID[]): Promise<void> {
           console.debug(`Log information update for thread ${tid} scheduled`);
         }
         // 检查头部边缘是否有更新
-        const responseHeadEdge = edge.headsEdge || 0;
+        const responseHeadEdge = Number(edge.headsEdge) || 0;
         if (responseHeadEdge !== 0 && responseHeadEdge !== headsEdgeLocal) {
           // 调度记录更新
           await this.scheduleUpdateRecords(tid);
@@ -331,14 +332,23 @@ private async pushLogsHeadToPeer(tid: ThreadID): Promise<void> {
  * @returns 地址边缘值和头部边缘值的对象
  * @throws 错误，包括特定的"No address edge"和"No heads edge"错误
  */
-private async localEdges(tid: ThreadID): Promise<{ addrEdge: number, headsEdge: number }> {
+private async localEdges(tid: ThreadID): Promise<{ addrEdge: bigint, headsEdge: bigint }> {
   // 使用默认值初始化头部边缘值
-  let headsEdge = 0; // EmptyEdgeValue 在 TS 中对应于 0
-  let addrEdge = 0;
+  let headsEdge = 0n; // EmptyEdgeValue 对应 0n
+  let addrEdge = 0n;
 
   try {
-    // 尝试获取地址边缘值
-    addrEdge = await this.logstore.addrBook.addrsEdge(tid);
+     const exceptLogId = await this.logstore.metadata.getString(
+        tid,
+        "local_log_no_record_flag"
+      );
+       // 尝试获取地址边缘值
+      if (exceptLogId && exceptLogId?.length > 0) {
+        addrEdge = await this.logstore.addrBook.addrsEdge(tid,exceptLogId);
+      }else{
+        addrEdge = await this.logstore.addrBook.addrsEdge(tid);
+      }
+   
   } catch (err:any) {
     // // 处理threaddb 未找到错误
     // if (err.message.includes("Thread not found")) {
@@ -362,6 +372,19 @@ private async localEdges(tid: ThreadID): Promise<{ addrEdge: number, headsEdge: 
 
   // 返回边缘值对象
   return { addrEdge, headsEdge };
+}
+
+private edgeToBigInt(value: number | Long | undefined | null): bigint {
+  if (value == null) {
+    return 0n;
+  }
+  if (typeof value === "number") {
+    return BigInt(value >>> 0);
+  }
+  if (Long.isLong(value)) {
+    return BigInt(value.toString());
+  }
+  return 0n;
 }
 /**
  * 调度日志更新

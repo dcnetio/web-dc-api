@@ -63,7 +63,7 @@ export interface AddrBook {
   clearAddrs(threadId: ThreadID, peerId: PeerId): Promise<void>;  
   logsWithAddrs(threadId: ThreadID): Promise<PeerId[]>;  
   threadsFromAddrs(): Promise<ThreadID[]>;  
-  addrsEdge(threadId: ThreadID): Promise<number>;  
+  addrsEdge(threadId: ThreadID,exceptPeerId?:string): Promise<bigint>;  
   dumpAddrs(): Promise<DumpAddrBook>;  
   restoreAddrs(book: DumpAddrBook): Promise<void>;  
 }  
@@ -75,7 +75,7 @@ export interface HeadBook {
   setHeads(threadId: ThreadID, peerId: PeerId, heads: Head[]): Promise<void>;  
   heads(threadId: ThreadID, peerId: PeerId): Promise<Head[]>;  
   clearHeads(threadId: ThreadID, peerId: PeerId): Promise<void>;  
-  headsEdge(threadId: ThreadID): Promise<number>;  
+  headsEdge(threadId: ThreadID): Promise<bigint>;  
   dumpHeads(): Promise<DumpHeadBook>;  
   restoreHeads(book: DumpHeadBook): Promise<void>;  
 }  
