@@ -94,7 +94,7 @@ export class DsAddrBook implements AddrBook {
         if (!item) return acc 
         const addr = typeof item === 'string'   
           ?  multiaddr(item)   
-          : (isMultiaddr(item) ? item : null)   
+          : (isMultiaddr(item) ? item : null)  
         return addr ? [...acc, addr] : acc  
       } catch {  
         return acc 
