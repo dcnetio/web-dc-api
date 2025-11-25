@@ -139,6 +139,7 @@ export class WalletManager {
           //非钱包插件
           return;
         }
+        console.log("debug================listenForWalletLoaded", new Date());
         if (data.type === "walletLoaded") {
           //钱包加载完成
           walletLoadedFlag = true;
@@ -158,7 +159,7 @@ export class WalletManager {
           clearInterval(interval);
           messageChannel.port1.close();
         } else {
-          if (waitTimeCount >= 0) {
+          if (waitTimeCount > 0) {
             waitTimeCount--;
           } else {
             try {
@@ -202,6 +203,7 @@ export class WalletManager {
 
   // 打开钱包iframe窗口
   async openWalletIframe(): Promise<boolean> {
+    console.log("debug================openWalletIframe", new Date());
     return new Promise((resolve, reject) => {
       const walletIframe = document.getElementById(
         this.walletIframeId
@@ -216,7 +218,7 @@ export class WalletManager {
       iframe.src = `${walletUrl}?origin=${appOrigin}`;
       (iframe as any).credentialless = true; // 去掉可以加快加载
       iframe.onload = async () => {
-        resolve(true);
+        console.log("debug================onload", new Date());
       };
       iframe.onerror = (error) => {
         console.error("openWallet error", error);
@@ -247,6 +249,8 @@ export class WalletManager {
         "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture";
       iframe.allowFullscreen = true;
       document.body.appendChild(iframe);
+      console.log("debug================appendChild", new Date());
+      resolve(true);
     });
   }
 
@@ -274,6 +278,7 @@ export class WalletManager {
         const urlWithOrigin = walletUrl + "?origin=" + appOrigin;
         this.walletWindow = window.open(urlWithOrigin, walletWindowName);
       }
+      console.log("debug================initCommChannel", new Date());
       this.initCommChannel();
       const shouldReturnUserInfo = typeof globalThis !== "undefined" && typeof (globalThis as any).shouldReturnUserInfo !== "undefined" ? true : false // 用于判断需要返回用户信息;
       // this.waitForWalletLoaded(this.walletWindow, timeout).then((flag) => {
@@ -287,8 +292,10 @@ export class WalletManager {
               attach: '', // 附加参数，以后可以用来传递一些参数
             },
           };
+          console.log("debug================sendMessageToIframe", new Date());
           this.sendMessageToIframe(message, 600000)
             .then((response) => {
+              console.log("debug================response", new Date());
               console.log("openConnect response", response);
               if (!response || !response.data || !response.data.data) {
                 console.error("openConnect response is null");
@@ -543,6 +550,7 @@ export class WalletManager {
         return;
       }
       if (message.type === "walletLoaded") {
+        console.log("debug================walletLoaded", new Date());
         console.log("walletLoaded", message);
         console.log("event.origin", event.origin);
         console.log("walletOrigin", walletOrigin);

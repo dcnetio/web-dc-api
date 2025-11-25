@@ -4,8 +4,7 @@ import { dcnet as dcnet_proto } from "../../../proto/dcnet_proto";
 import { net as net_pb} from "../pb/net_pb";
 import { Libp2pGrpcClient } from "grpc-libp2p-client";
 import {IThreadLogInfo, SymKey} from "../core/core";
-import  {Multiaddr as TMultiaddr,multiaddr} from '@multiformats/multiaddr'
-import  Multiaddr  from 'multiaddr'
+import  {Multiaddr as TMultiaddr,multiaddr, registry} from '@multiformats/multiaddr'
 import { toString as uint8ArrayToString } from "uint8arrays/to-string";
 import { Key as ThreadKey } from '../common/key';
 import { Ed25519PubKey,Ed25519PrivKey } from "../../../common/dc-key/ed25519";
@@ -23,7 +22,6 @@ import { Net } from "../core/app";
 import { dcnet } from "../../../proto/dcnet_proto";
 import {ThreadMuliaddr} from "../core/core";
 import * as varint from 'uint8-varint'
-import { protocols } from "@multiformats/multiaddr";
 import { SymmetricKey } from '../common/key';
 import { decode } from 'multiformats/hashes/digest';
 import { peerIdFromMultihash } from '@libp2p/peer-id';
@@ -246,7 +244,6 @@ export class DBGrpcClient {
             return bytes.slice(0, i)
            }
            const n = varint.encodingLength(code)
-
            const p = protocols(code)
            const size = this.sizeForAddr(p, bytes.slice(i + n))
        
@@ -578,4 +575,15 @@ private sortRecordsChain(records: IRecord[]): IRecord[] {
       }
     }
 
+}
+function protocols (proto: number | string): Protocol {
+  const codec = registry.getProtocol(proto)
+
+  return {
+    code: codec.code,
+    size: codec.size ?? 0,
+    name: codec.name,
+    resolvable: Boolean(codec.resolvable),
+    path: Boolean(codec.path)
+  }
 }

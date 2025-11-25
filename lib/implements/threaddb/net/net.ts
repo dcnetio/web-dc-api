@@ -10,7 +10,6 @@ import { keys } from "@libp2p/crypto";
 import {
   Multiaddr as TMultiaddr,
   multiaddr,
-  protocols,
 } from "@multiformats/multiaddr"; // 多地址库
 import { Head } from "../core/head";
 import { ThreadID } from "@textile/threads-id";
