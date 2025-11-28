@@ -13,14 +13,10 @@
       "import": "./dist/esm/index.js",
       "require": "./dist/cjs/index.js",
       "browser": "./dist/dc.min.js"
-    },
-    "./dev": {
-      "import": "./dist/dev/index.js"
     }
   },
   "files": [
-    "dist",
-    "lib"
+    "dist"
   ],
   "scripts": {
     "build:w": "npx rollup -c -w",
