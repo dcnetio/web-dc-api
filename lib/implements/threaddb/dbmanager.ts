@@ -1450,7 +1450,6 @@ async getDBInfo(id: ThreadID, opts?: ManagedOptions): Promise<[IDBInfo|null, Err
             throw new Error(`No info available for db ${id}`);
         }
     }catch (err) {
-        console.error(`Error getting DB info for ${id}:`, err);
         return [null, err as Error];
     }  
     return [dbInfo,null];
