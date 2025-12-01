@@ -294,18 +294,28 @@ export class Network implements Net {
       } else {
         identity = this.context.publicKey;
       }
+      //从addr中提取peerId
+      const peerIdStr = addr.addr.getPeerId();
+      if (!peerIdStr) {
+        throw new Error("Invalid peer ID in multiaddress");
+      }
+      const peerId = peerIdFromString(peerIdStr);
+      if (!peerId) {
+        throw new Error("Invalid peer ID");
+      }
+      const addFromSelf = peerId.equals(this.hostID);
 
       // 确保日志唯一性
       await this.ensureUniqueLog(id, options.logKey, identity);
    
-        // try {
-        //   await this.logstore.getThread(id);
-        // } catch (err: any) {
-        //   if (err.message === "Thread not found") {
-        //     throw new Error(`Cannot retrieve thread from self: ${err.message}`);
-        //   }
-        //   throw err;
-        // }
+        try {
+          await this.logstore.getThread(id);
+        } catch (err: any) {
+          if (err.message === "Thread not found") {
+            throw new Error(`Cannot retrieve thread from self: ${err.message}`);
+          }
+          throw err;
+        }
       
 
       // 添加threaddb 到存储
@@ -729,10 +739,17 @@ export class Network implements Net {
             };
 
             const lastRecord = rs.records[rs.records.length - 1]!;
-            offsets[lidStr] = {
-              id: lastRecord.cid(),
-              counter: rs.counter,
-            };
+            if (!offsets[lidStr]) {
+              offsets[lidStr] = {
+                id: lastRecord.cid(),
+                counter: rs.counter,
+              };
+            } else {
+              if (lastRecord.cid().equals(offsets[lidStr]!.id)) {
+                offsets[lidStr]!.counter = rs.counter;
+              }
+            }
+         
 
             if (rs.records.length >= netPullingLimit) {
               continueFlag = true;
@@ -924,11 +941,8 @@ export class Network implements Net {
           // 将记录添加到本地存储
           await this.putRecords(tid, lid, rs.records, rs.counter);
         } catch (err) {
-          throw new Error(
-            `Putting records from log ${lidStr} (thread ${tid}) failed: ${
-              err instanceof Error ? err.message : String(err)
-            }`
-          );
+          console.error(`Error putting records for log ${lidStr}:`, err);
+          continue; // 继续处理其他数据库日志
         }
       }
       // 检查是否可能有更多记录需要获取
@@ -1319,7 +1333,7 @@ export class Network implements Net {
   ): Promise<Record<string, PeerRecords>> {
     try {
       // 构建请求
-      const { req, serviceKey } = await this.buildGetRecordsRequest(tid, offsets, limit);
+     
       
       // 创建记录收集器
       const recordCollector = new RecordCollector();
@@ -1327,6 +1341,7 @@ export class Network implements Net {
       let timeout : NodeJS.Timeout | null = null;
       //遍历节点,按顺序处理
       for (const peerId of peers) {
+         const { req, serviceKey } = await this.buildGetRecordsRequest(tid, offsets, limit);
          try {
            timeout = setTimeout(() => {
                throw new Error(`Timeout getting records from peer ${peerId}`);
@@ -1339,12 +1354,16 @@ export class Network implements Net {
             console.log(`时间:${new Date().toLocaleString()} ,开始从 ${peerId.toString()} 获取记录...`);
             const dbClient = new DBClient(client,this.dc,this,this.logstore);
             const records = await dbClient.getRecordsFromPeer( req, serviceKey);
-            console.log(`时间:${new Date().toLocaleString()} ,从 ${peerId.toString()} 获取记录完成,记录数为:`,Object.keys(records).length);
-            console.log(`开始处理从 ${peerId.toString()} 获取的记录,记录数为:`,Object.keys(records).length);
+            let recordCount = 0;
+            for (const rs of Object.values(records)) {
+              recordCount += rs.records.length;
+            }
+            console.log(`时间:${new Date().toLocaleString()} ,从 ${peerId.toString()} 获取记录完成,记录数为:`,recordCount);
+            console.log(`开始处理从 ${peerId.toString()} 获取的记录,记录数为:`,recordCount);
             for (const [logId, rs] of Object.entries(records)) {
               await recordCollector.batchUpdate(logId, rs);
             }
-            console.log(`处理从 ${peerId.toString()} 获取的记录完成,记录数为:`,Object.keys(records).length);
+            console.log(`处理从 ${peerId.toString()} 获取的记录完成,记录数为:`,recordCount);
           
             if(!multiPeersFlag){
                break;
@@ -1357,6 +1376,23 @@ export class Network implements Net {
               clearTimeout(timeout);
             }
           }
+          //重构offsets
+          const newOffsets: Record<string, { id?: CID, counter: number }> = {};
+          for (const [logId, recs] of Object.entries( recordCollector.list())) {
+            if (recs.records.length > 0) {
+              const lastRecord = recs.records[recs.records.length - 1]!;
+              // 如果有新记录，更新offsets
+              if (recs.counter > (offsets[logId]?.counter || 0)) {
+                newOffsets[logId] = {
+                  id: lastRecord.cid(),
+                  counter: recs.counter,
+                };
+              }
+            } else {
+              newOffsets[logId] = offsets[logId];
+            }
+          }
+          offsets = newOffsets;
       }
       
       return recordCollector.list();

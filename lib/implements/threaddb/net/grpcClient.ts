@@ -338,13 +338,28 @@ export class DBGrpcClient {
         // const logId = peerIdFromMultihash(multihash).toString();
         const rawRecords = logInfo.records || [];
         
-        // 并行转换所有记录
-        const recordPromises = rawRecords.map(async (rec) => {
-          return await RecordFromProto(rec as net_pb.pb.Log.Record, serviceKey);
-        });
+        // 预分配数组大小，避免动态扩容
+        const unsortedRecords: IRecord[] = new Array(rawRecords.length);
         
-        // 等待所有记录转换完成
-        const unsortedRecords = await Promise.all(recordPromises);
+        // 并行转换所有记录，控制并发数
+        const concurrencyLimit = 20;
+        
+        for (let i = 0; i < rawRecords.length; i += concurrencyLimit) {
+            const end = Math.min(i + concurrencyLimit, rawRecords.length);
+            const chunkPromises = [];
+            
+            // 手动构建 Promise 数组，避免 slice
+            for (let j = i; j < end; j++) {
+                chunkPromises.push(RecordFromProto(rawRecords[j] as net_pb.pb.Log.Record, serviceKey));
+            }
+            
+            const chunkResults = await Promise.all(chunkPromises);
+            
+            // 直接赋值，避免 push(...spread)
+            for (let k = 0; k < chunkResults.length; k++) {
+                unsortedRecords[i + k] = chunkResults[k];
+            }
+        }
         
         // 根据链表结构排序记录
         const sortedRecords = this.sortRecordsChain(unsortedRecords);
