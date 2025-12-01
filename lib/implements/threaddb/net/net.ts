@@ -297,31 +297,16 @@ export class Network implements Net {
 
       // 确保日志唯一性
       await this.ensureUniqueLog(id, options.logKey, identity);
-
-      // 分离threaddb 组件以获取对等点地址
-      const threadComp = `/thread/${id.toString()}`;
-      const peerAddr = multiaddr(addr.toString().split(threadComp)[0]);
-     // const peerAddr = addr.addr;
-      // 获取对等点信息
-      const peerId = peerAddr.getPeerId();
-      if (!peerId) {
-        throw new Error("Invalid peer address");
-      }
-
-      const pid = peerIdFromString(peerId);
-      const addFromSelf = pid.toString() === this.hostID;
-
-      // 如果我们从自己添加，检查threaddb 是否存在
-      if (addFromSelf) {
-        try {
-          await this.logstore.getThread(id);
-        } catch (err: any) {
-          if (err.message === "Thread not found") {
-            throw new Error(`Cannot retrieve thread from self: ${err.message}`);
-          }
-          throw err;
-        }
-      }
+   
+        // try {
+        //   await this.logstore.getThread(id);
+        // } catch (err: any) {
+        //   if (err.message === "Thread not found") {
+        //     throw new Error(`Cannot retrieve thread from self: ${err.message}`);
+        //   }
+        //   throw err;
+        // }
+      
 
       // 添加threaddb 到存储
       const threadInfo = new ThreadInfo(id, [], [], options.threadKey);
@@ -335,12 +320,6 @@ export class Network implements Net {
         const logInfo = await this.createLog(id, options.logKey, identity);
         threadInfo.logs.push(logInfo);
       }
-      // 如果不是从自己添加，则连接并获取日志
-      if (!addFromSelf) {
-        // 从对等点更新日志
-        await this.updateLogsFromPeer(id, pid);
-      }
-
       // 返回带有地址的threaddb 信息
       return this.getThreadWithAddrs(id);
     } catch (err) {
@@ -1554,11 +1533,6 @@ export class Network implements Net {
             log.head = await getHeadUndef();
             await this.logstore.addLog(tid, log);
           } else {
-            // 判断log是否已经存在
-            const logPubkey = await this.logstore.keyBook.pubKey(tid, log.id);
-            if (!logPubkey) {
-             await this.logstore.addLog(tid, log);
-            }
             await this.logstore.addrBook.addAddrs(
               tid,
               log.id,
