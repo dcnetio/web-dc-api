@@ -30,6 +30,7 @@ export class WalletManager {
   private iframeId: string = "dcIframeId";
   private walletIframeId: string = "dcWalletIframeId";
   private channelPort2: MessagePort | null = null;
+  private iframeLoaded = false;  
   constructor(context: DCContext) {
     this.context = context;
   }
@@ -38,21 +39,43 @@ export class WalletManager {
     console.log("========init walletManager", appOrigin, walletOrigin);
     const walletOpenFlag = typeof globalThis !== "undefined" && typeof (globalThis as any).walletOpenType !== "undefined" ? true : false // 用于判断是否是直接打开;
     if (walletOpenFlag || appOrigin.indexOf(walletOrigin) === -1) {
-      return new Promise((resolve, reject) => {
+      return new Promise(async (resolve, reject) => {
         // html添加iframe标签，id是dcWalletIframe
-        const iframe = document.createElement("iframe");
-        iframe.id = this.iframeId;
-        iframe.src = `${walletUrl}/iframe?parentOrigin=${appOrigin}`;
-        (iframe as any).credentialless = true;// 去掉可以加快加载
-        iframe.onload = async () => {
-          const bool = await this.initConfig(this);
-          resolve(bool);
-        };
-        iframe.style.display = "none";
-        document.body.appendChild(iframe);
+        const startTime = Date.now();
+        console.log("debug================获取iframe", startTime);
+        let iframe = document.getElementById(this.iframeId) as HTMLIFrameElement;
+        if(!iframe) {
+          console.log("debug================没有iframe");
+          iframe = document.createElement("iframe");
+          iframe.id = this.iframeId;
+          document.body.appendChild(iframe);
+        }
+        (iframe as any).credentialless = true;// iframe和父窗口不可传递cookies等凭证，符合安全规则
+       
+        // 监听钱包iframe发来的消息
         window.addEventListener("message", (event) => {
           this.listenFromWallet(event);
         });
+        const iframeLoaded = globalThis && (globalThis as any).iframeLoaded;
+        if(!iframeLoaded){
+          iframe.onload = async () => {
+            console.log("debug================init walletManager", Date.now() - startTime); 
+            const bool = await this.initConfig(this);
+            console.log("debug================init walletManager iframejs bool111", bool, Date.now() - startTime); 
+            if(bool){
+              this.iframeLoaded = true;
+            }
+            resolve(bool);
+          };
+          // iframe.src = `${walletUrl}/iframe?parentOrigin=${appOrigin}`;
+        }else{
+          const bool = await this.initConfig(this);
+          console.log("debug================init walletManager iframejs bool222", bool, Date.now() - startTime); 
+          if(bool){
+            this.iframeLoaded = true;
+          }
+          resolve(bool);
+        }
       });
     } else {
       return true;
@@ -205,6 +228,7 @@ export class WalletManager {
   async openWalletIframe(): Promise<boolean> {
     console.log("debug================openWalletIframe", new Date());
     return new Promise((resolve, reject) => {
+      console.log("debug================获取钱包iframe", new Date());
       const walletIframe = document.getElementById(
         this.walletIframeId
       ) as HTMLIFrameElement;
@@ -216,7 +240,7 @@ export class WalletManager {
       const iframe = document.createElement("iframe");
       iframe.id = this.walletIframeId;
       iframe.src = `${walletUrl}?origin=${appOrigin}`;
-      (iframe as any).credentialless = true; // 去掉可以加快加载
+      (iframe as any).credentialless = true; // iframe和父窗口不可传递cookies等凭证，符合安全规则
       iframe.onload = async () => {
         console.log("debug================onload", new Date());
       };
@@ -245,11 +269,8 @@ export class WalletManager {
           isolation: isolate;
           transform: translateZ(0);
         `;
-      iframe.allow =
-        "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture";
       iframe.allowFullscreen = true;
       document.body.appendChild(iframe);
-      console.log("debug================appendChild", new Date());
       resolve(true);
     });
   }
@@ -265,6 +286,11 @@ export class WalletManager {
 
   async openConnect(accountInfo: AccountInfo = {} as AccountInfo): Promise<Account> {
     return new Promise(async (resolve, reject) => {
+      try {
+        await this.initCommChannel();
+      } catch (error) {
+        reject(error);
+      }
       if (this.isIframeOpen()) {
         // 微信窗口
         const bool = await this.openWalletIframe();
@@ -279,7 +305,6 @@ export class WalletManager {
         this.walletWindow = window.open(urlWithOrigin, walletWindowName);
       }
       console.log("debug================initCommChannel", new Date());
-      this.initCommChannel();
       const shouldReturnUserInfo = typeof globalThis !== "undefined" && typeof (globalThis as any).shouldReturnUserInfo !== "undefined" ? true : false // 用于判断需要返回用户信息;
       // this.waitForWalletLoaded(this.walletWindow, timeout).then((flag) => {
       //   if (flag) {
@@ -606,6 +631,16 @@ export class WalletManager {
         type: "channelPort1",
       };
       try {
+        let count = 0;
+        while (!this.iframeLoaded) {
+          await new Promise((resolve) => setTimeout(resolve, 100));
+          count++;
+          if(count > 100){
+              console.error("iframe加载超时");
+              throw new Error("iframe加载超时");
+          }
+        }
+
         const messageChannel = new MessageChannel();
         iframe.contentWindow?.postMessage(message, walletOrigin, [
           messageChannel.port1,
@@ -614,6 +649,7 @@ export class WalletManager {
         console.log("initCommChannel success");
       } catch (error) {
         console.error("initCommChannel error", error);
+        throw error;
       }
     } else {
       console.error("iframe不存在");
