@@ -81,7 +81,7 @@ export class AuthModule implements DCModule, IAuthOperations {
    * 账户登录
    * @returns 是否登录成功
    */
-  async accountLoginWithWalletCall(accountInfo: AccountInfo = {} as AccountInfo): Promise<Account | null> {
+  async accountLoginWithWalletCall(accountInfo: AccountInfo = {} as AccountInfo): Promise<Account> {
 
     try {
       this.assertInitialized();
@@ -163,8 +163,7 @@ export class AuthModule implements DCModule, IAuthOperations {
       }
       return data;
     } catch (error) {
-      console.error("accountLogin error", error);
-      return null;
+      throw error;
     }
   }
 
