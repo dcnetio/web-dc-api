@@ -14,6 +14,8 @@ export interface IDatabaseOperations {
    * @returns 错误信息
    */
   initDBManager(): Promise<Error| null>;
+
+  resetDBManager(): void;
   
   /**
    * 创建新数据库

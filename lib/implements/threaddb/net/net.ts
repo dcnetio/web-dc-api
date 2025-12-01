@@ -299,9 +299,9 @@ export class Network implements Net {
       await this.ensureUniqueLog(id, options.logKey, identity);
 
       // 分离threaddb 组件以获取对等点地址
-      // const threadComp = `/thread/${id.toString()}`;
-      // const peerAddr = multiaddr(addr.toString().split(threadComp)[0]);
-      const peerAddr = addr.addr;
+      const threadComp = `/thread/${id.toString()}`;
+      const peerAddr = multiaddr(addr.toString().split(threadComp)[0]);
+     // const peerAddr = addr.addr;
       // 获取对等点信息
       const peerId = peerAddr.getPeerId();
       if (!peerId) {
@@ -1554,6 +1554,11 @@ export class Network implements Net {
             log.head = await getHeadUndef();
             await this.logstore.addLog(tid, log);
           } else {
+            // 判断log是否已经存在
+            const logPubkey = await this.logstore.keyBook.pubKey(tid, log.id);
+            if (!logPubkey) {
+             await this.logstore.addLog(tid, log);
+            }
             await this.logstore.addrBook.addAddrs(
               tid,
               log.id,

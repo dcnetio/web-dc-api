@@ -55,6 +55,11 @@ export class DatabaseModule implements DCModule, IDatabaseOperations {
     this.initialized = false;
   }
 
+  
+//重置数据库
+  async resetDBManager() {
+     this.context.dbManager = undefined;
+  }
 
   
   /**
@@ -138,7 +143,7 @@ export class DatabaseModule implements DCModule, IDatabaseOperations {
       throw new Error("数据库管理器未初始化");
     }
       // 创建数据库
-      const [threadId, err] = await this.context.dbManager.newDB(name, b32Rk, b32Sk, jsonCollections);
+      const [threadId, err] = await this.context.dbManager. newDB(name, b32Rk, b32Sk, jsonCollections);
       if (err) {
         logger.error("创建数据库失败:", err);
         throw err;
