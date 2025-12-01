@@ -739,16 +739,10 @@ export class Network implements Net {
             };
 
             const lastRecord = rs.records[rs.records.length - 1]!;
-            if (!offsets[lidStr]) {
-              offsets[lidStr] = {
-                id: lastRecord.cid(),
-                counter: rs.counter,
-              };
-            } else {
-              if (lastRecord.cid().equals(offsets[lidStr]!.id)) {
-                offsets[lidStr]!.counter = rs.counter;
-              }
-            }
+            offsets[lidStr] = {
+              id: lastRecord.cid(),
+              counter: rs.counter,
+            };
          
 
             if (rs.records.length >= netPullingLimit) {
@@ -1343,9 +1337,6 @@ export class Network implements Net {
       for (const peerId of peers) {
          const { req, serviceKey } = await this.buildGetRecordsRequest(tid, offsets, limit);
          try {
-           timeout = setTimeout(() => {
-               throw new Error(`Timeout getting records from peer ${peerId}`);
-             }, 900000);
             //连接到指定peerId,返回一个Client
             const [client,err] = await this.getClient(peerId);
             if (!client) {
@@ -1353,7 +1344,17 @@ export class Network implements Net {
             }
             console.log(`时间:${new Date().toLocaleString()} ,开始从 ${peerId.toString()} 获取记录...`);
             const dbClient = new DBClient(client,this.dc,this,this.logstore);
-            const records = await dbClient.getRecordsFromPeer( req, serviceKey);
+            
+            // 使用 Promise.race 实现超时
+            const recordsPromise = dbClient.getRecordsFromPeer(req, serviceKey);
+            const timeoutPromise = new Promise<never>((_, reject) => {
+              timeout = setTimeout(() => {
+                reject(new Error(`Timeout getting records from peer ${peerId}`));
+              }, 600000);
+            });
+
+            const records = await Promise.race([recordsPromise, timeoutPromise]);
+
             let recordCount = 0;
             for (const rs of Object.values(records)) {
               recordCount += rs.records.length;
@@ -1369,6 +1370,7 @@ export class Network implements Net {
                break;
             }
           } catch (err) {
+            console.error(`Error getting records from peer ${peerId}:`, err);
             continue;
           }finally{
             // 清除超时
