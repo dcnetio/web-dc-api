@@ -15,9 +15,17 @@ import {
     KeyConverter,  
     ProtoKeyConverter
   } from '../pb/proto-custom-types' 
+import { Net } from '../core/app';
+import { ThreadID } from '@textile/threads-id';
+
 export class DCGrpcServer {
+    private net: Net | undefined;
     constructor(private libp2p: Libp2p, private protocol: string) {}
   
+    setNetwork(net: Net) {
+        this.net = net;
+    }
+
     start() {
       this.libp2p.handle(this.protocol, async ({ stream }) => {
         try {
@@ -73,49 +81,35 @@ export class DCGrpcServer {
       }
       
   
-     async getLogs(streamId: number,request: any,writer: StreamWriter): Promise<any> {
+     async getLogs(streamId: number,request: any,writer: any): Promise<any> {
         console.log('Received GetLogs request')
         const req = net_pb.net.pb.GetLogsRequest.decode(request)
+        let threadId: ThreadID | undefined;
         if (req.body?.threadID) {
-            const threadId = ThreadIDConverter.fromBytes(req.body?.threadID)
+            const threadIdStr = ThreadIDConverter.fromBytes(req.body?.threadID)
+            threadId = ThreadID.fromString(threadIdStr)
             console.log('Thread ID:', threadId.toString())
         }
         if (req.body?.serviceKey) {
             const serviceKey = ProtoKeyConverter.fromBytes(req.body?.serviceKey)
             console.log('Service Key:', serviceKey.toString())
         }
-       const response = new net_pb.net.pb.GetLogsReply()
-       const keyPair = await keys.generateKeyPair("Ed25519");
-        
-           // 获取公钥
-        const publicKey = keyPair.publicKey;
-        const pid = this.libp2p.peerId.toString()
-      // const headBytes  = new TextEncoder().encode("bafybeiai3u5rmdsbmqklo7icdn3x5suoyepu2mqms3vgj4rvnkuyjnivmy")
-        const head = CID.parse("bafybeiai3u5rmdsbmqklo7icdn3x5suoyepu2mqms3vgj4rvnkuyjnivmy")
-        const addr = MultiaddrConverter.toBytes(multiaddr('/ip4/10.0.0.1/tcp/4001/p2p/'+pid))
-        let pubkeyBytes = await KeyConverter.publicToBytes(publicKey)
-        const addrs: Uint8Array[] = []
-        addrs.push(addr)
+
+        if (!this.net) {
+            console.error("Network not set");
+            return;
+       }
        
-       const log = new net_pb.net.pb.Log({
-        /** Log ID */
-        ID: PeerIDConverter.toBytes(pid),
+       if (!threadId) {
+            console.error("Thread ID missing");
+            return;
+       }
 
-        /** Log pubKey */
-        pubKey: pubkeyBytes,
+       const [logs, _] = await this.net.getPbLogs(threadId);
 
-        /** Log addrs */
-        addrs: addrs,
-
-        /** Log head */
-        head: CidConverter.toBytes(head),
-
-        /** Log counter */
-        counter: 0,
-    })
-    for (var i = 0; i < 5000; i++) {//模拟5000个log信息,测试大数据grpc请求是否正常
-        response.logs.push(log)
-    }
+       const response = new net_pb.net.pb.GetLogsReply()
+       response.logs = logs;
+       
     const headlist = { 
         ':status': '200',
         'content-type': 'application/grpc'
