@@ -109,8 +109,13 @@ class Logstore implements ILogstore {
             const set = await this.getLogIDs(id);
             const logs: IThreadLogInfo[] = [];
             for (const l of set) {
-                const i = await this.getLog(id, l);
-                logs.push(i);
+                try{
+                    const i = await this.getLog(id, l);
+                    logs.push(i);
+                }catch(err) {
+                    //skip
+                    console.log(err);
+                }
             }
             let threadKey = new ThreadKey(SymmetricKey.fromSymKey(sk));
             if(rk) {
