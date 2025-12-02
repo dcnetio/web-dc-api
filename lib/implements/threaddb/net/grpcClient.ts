@@ -338,26 +338,36 @@ export class DBGrpcClient {
         // const logId = peerIdFromMultihash(multihash).toString();
         const rawRecords = logInfo.records || [];
         
-        // 预分配数组大小，避免动态扩容
+        // 预分配数组大小
         const unsortedRecords: IRecord[] = new Array(rawRecords.length);
         
-        // 并行转换所有记录，控制并发数
-        const concurrencyLimit = 20;
+        // 使用时间分片策略，确保UI流畅
+        // 目标是保持高帧率，每帧约16ms，我们占用其中一部分时间
+        const TIME_BUDGET = 8; // 8ms
+        let lastYieldTime = Date.now();
         
-        for (let i = 0; i < rawRecords.length; i += concurrencyLimit) {
-            const end = Math.min(i + concurrencyLimit, rawRecords.length);
-            const chunkPromises = [];
+        // 小批量并发，平衡吞吐量和响应性
+        const BATCH_SIZE = 10; 
+        
+        for (let i = 0; i < rawRecords.length; i += BATCH_SIZE) {
+            const end = Math.min(i + BATCH_SIZE, rawRecords.length);
+            const promises = [];
             
-            // 手动构建 Promise 数组，避免 slice
             for (let j = i; j < end; j++) {
-                chunkPromises.push(RecordFromProto(rawRecords[j] as net_pb.pb.Log.Record, serviceKey));
+                promises.push(
+                    RecordFromProto(rawRecords[j] as net_pb.pb.Log.Record, serviceKey)
+                        .then(record => {
+                            unsortedRecords[j] = record;
+                        })
+                );
             }
             
-            const chunkResults = await Promise.all(chunkPromises);
+            await Promise.all(promises);
             
-            // 直接赋值，避免 push(...spread)
-            for (let k = 0; k < chunkResults.length; k++) {
-                unsortedRecords[i + k] = chunkResults[k];
+            // 如果耗时超过预算，强制让出主线程
+            if (Date.now() - lastYieldTime >= TIME_BUDGET) {
+                await new Promise(resolve => setTimeout(resolve, 0));
+                lastYieldTime = Date.now();
             }
         }
         

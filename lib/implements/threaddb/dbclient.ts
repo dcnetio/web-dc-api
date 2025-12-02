@@ -401,7 +401,7 @@ private edgeToBigInt(value: number | Long | undefined | null): bigint {
  * @param tid threaddb ID
  */
 private async scheduleUpdateRecords(tid: ThreadID): Promise<void> {
-  this.net.updateRecordsFromPeer(tid, null,this);
+  await this.net.updateRecordsFromPeer(tid, null,this);
 }
 
 
