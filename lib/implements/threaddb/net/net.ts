@@ -125,6 +125,7 @@ export class Network implements Net {
     this.dagService = dagService;
     this.libp2p = libp2p;
     this.server = grpcServer;
+    this.server.setNetwork(this);
     this.connectors = {};
     this.dcChain = dcChain;
     this.dc = dcUtil;
