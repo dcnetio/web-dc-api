@@ -266,7 +266,7 @@ async exchangeEdges(threadIds: ThreadID[]): Promise<void> {
           needPush = true;
           console.debug(`Record update for thread ${tid} scheduled`);
         }
-        if (!needPush) {//将本地的所有log的head都上报给对等点
+        if (needPush) {//将本地的所有log的head都上报给对等点
           await this.pushLogsHeadToPeer(tid);
         }
 
