@@ -4,7 +4,7 @@ import type { PeerId } from '@libp2p/interface';
 import { registry } from '@multiformats/multiaddr';
 
 
-export const netPullingLimit = 1000; // 拉取记录数的限制
+export const netPullingLimit = 500; // 拉取记录数的限制,原为1000，因grpc消息过大导致截断报错，改为500
 
   declare type IProtocol = {
     code: number;

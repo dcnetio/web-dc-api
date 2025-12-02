@@ -269,6 +269,51 @@ export class AuthModule implements DCModule, IAuthOperations {
     }
   }
 
+
+
+  /**
+   * NFT账号密码修改
+   * @param account NFT账号
+   * @param password 密码
+   * @param seccode 安全码
+   * @param mnemonic 助记词 (可选，如果是主账号登录则需要)
+   */
+  async nftAccountPasswordModify(
+    account: string,
+    password: string,
+    seccode: string,
+    mnemonic?: string
+  ): Promise<Error | null> {
+    try {
+      this.assertInitialized();
+      const accountManager = new AccountManager(this.context);
+      
+      // 判断是否是主账号
+      // Go logic: if dc.Mnemonic != "" && dc.ParentPrivkey != nil { isParent = true }
+      // In TS, we check if mnemonic is provided.
+      const isParent = !!mnemonic;
+      
+      return await accountManager.nftAccountPasswordModify(
+        account,
+        password,
+        seccode,
+        isParent,
+        mnemonic
+      );
+    } catch (error) {
+      return error as Error;
+    }
+  }
+
+
+
+
+
+
+
+
+
+
   async signWithWallet(payload: Uint8Array): Promise<Uint8Array> {
     if (!this.walletManager) {
       throw new Error("walletManager is null");
@@ -308,23 +353,31 @@ export class AuthModule implements DCModule, IAuthOperations {
 
   async signMessageWithWallet(
     data: SignReqMessage
-  ): Promise<SignResponseMessage | null> {
+  ): Promise<[SignResponseMessage | null, Error | null]> {
     if (!this.walletManager) {
       throw new Error("walletManager is null");
     } else {
-      const response = await this.walletManager.signMessage(data);
-      return response;
+      try {
+        const response = await this.walletManager.signMessage(data);
+        return [response, null];
+      } catch (error) {
+        return [null, error as Error];
+      }
     }
   }
 
   async signEIP712MessageWithWallet(
     data: EIP712SignReqMessage
-  ): Promise<SignResponseMessage | null> {
+  ): Promise<[SignResponseMessage | null, Error | null]> {
     if (!this.walletManager) {
       throw new Error("walletManager is null");
     } else {
-      const response = await this.walletManager.signEIP712Message(data);
-      return response;
+      try {
+        const response = await this.walletManager.signEIP712Message(data);
+        return [response, null];
+      } catch (error) {
+        return [null, error as Error];
+      }
     }
   }
   /**
@@ -352,6 +405,7 @@ export class AuthModule implements DCModule, IAuthOperations {
         account,
         password,
         seccode,
+        true, // isParent defaults to true for this public API which requires mnemonic
         mnemonic
       );
       return [res[0], null];

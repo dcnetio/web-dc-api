@@ -55,7 +55,7 @@
     "datastore-idb": "^3.0.1",
     "datastore-level": "^11.0.1",
     "google-protobuf": "~3.21.2",
-    "grpc-libp2p-client": "^0.0.24",
+    "grpc-libp2p-client": "^0.0.26",
     "helia": "5.3.0",
     "interface-ipld-format": "^1.0.1",
     "it-to-buffer": "^4.0.7",

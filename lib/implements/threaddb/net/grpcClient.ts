@@ -338,13 +338,38 @@ export class DBGrpcClient {
         // const logId = peerIdFromMultihash(multihash).toString();
         const rawRecords = logInfo.records || [];
         
-        // 并行转换所有记录
-        const recordPromises = rawRecords.map(async (rec) => {
-          return await RecordFromProto(rec as net_pb.pb.Log.Record, serviceKey);
-        });
+        // 预分配数组大小
+        const unsortedRecords: IRecord[] = new Array(rawRecords.length);
         
-        // 等待所有记录转换完成
-        const unsortedRecords = await Promise.all(recordPromises);
+        // 使用时间分片策略，确保UI流畅
+        // 目标是保持高帧率，每帧约16ms，我们占用其中一部分时间
+        const TIME_BUDGET = 8; // 8ms
+        let lastYieldTime = Date.now();
+        
+        // 小批量并发，平衡吞吐量和响应性
+        const BATCH_SIZE = 10; 
+        
+        for (let i = 0; i < rawRecords.length; i += BATCH_SIZE) {
+            const end = Math.min(i + BATCH_SIZE, rawRecords.length);
+            const promises = [];
+            
+            for (let j = i; j < end; j++) {
+                promises.push(
+                    RecordFromProto(rawRecords[j] as net_pb.pb.Log.Record, serviceKey)
+                        .then(record => {
+                            unsortedRecords[j] = record;
+                        })
+                );
+            }
+            
+            await Promise.all(promises);
+            
+            // 如果耗时超过预算，强制让出主线程
+            if (Date.now() - lastYieldTime >= TIME_BUDGET) {
+                await new Promise(resolve => setTimeout(resolve, 0));
+                lastYieldTime = Date.now();
+            }
+        }
         
         // 根据链表结构排序记录
         const sortedRecords = this.sortRecordsChain(unsortedRecords);

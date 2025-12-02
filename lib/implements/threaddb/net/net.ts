@@ -125,6 +125,7 @@ export class Network implements Net {
     this.dagService = dagService;
     this.libp2p = libp2p;
     this.server = grpcServer;
+    this.server.setNetwork(this);
     this.connectors = {};
     this.dcChain = dcChain;
     this.dc = dcUtil;
@@ -294,6 +295,15 @@ export class Network implements Net {
       } else {
         identity = this.context.publicKey;
       }
+      const peerAddr = addr.addr;
+      // 获取对等点信息
+      const peerId = peerAddr.getPeerId();
+      if (!peerId) {
+        throw new Error("Invalid peer address");
+      }
+
+      const pid = peerIdFromString(peerId);
+      const addFromSelf = pid.toString() === this.hostID;
 
       // 确保日志唯一性
       await this.ensureUniqueLog(id, options.logKey, identity);
@@ -320,6 +330,10 @@ export class Network implements Net {
         const logInfo = await this.createLog(id, options.logKey, identity);
         threadInfo.logs.push(logInfo);
       }
+      if (addFromSelf) {
+        await this.updateLogsFromPeer(id, pid);
+      }
+      
       // 返回带有地址的threaddb 信息
       return this.getThreadWithAddrs(id);
     } catch (err) {
@@ -559,16 +573,19 @@ export class Network implements Net {
   async pullThread(id: ThreadID, timeout: number, options: { token?: ThreadToken | undefined; multiPeersFlag?: boolean | undefined;}): Promise<void> {
     try {
       let recs: Record<string, PeerRecords> = {};
-      const mutex = this.getMutexForThread(id.toString());
-      await mutex.acquire();
+ 
       try {
         if (options.multiPeersFlag) {
           recs = await this.pullThreadDeal(id, options.multiPeersFlag );
         }else{
           recs = await this.pullThreadDeal(id, false );
         }
-      } finally {
-        mutex.release();
+      }catch (err) {
+        throw new Error(
+          `Error pulling thread ${id.toString()}: ${
+            err instanceof Error ? err.message : String(err)
+          }`
+        );
       }
 
       const [connector, appConnected] = this.getConnector(id);
@@ -720,13 +737,16 @@ export class Network implements Net {
         let continueFlag = false;
         for (const [lidStr, rs] of Object.entries(recs)) {
           if (rs.records.length > 0) {
-            const existing = pulledRecs[lidStr] || { records: [], counter: 0 };
-            const records = [...existing.records, ...rs.records];
-
-            pulledRecs[lidStr] = {
-              records: records,
-              counter: rs.counter,
-            };
+            if (!pulledRecs[lidStr]) {
+              pulledRecs[lidStr] = { records: [], counter: 0 };
+            }
+            const entry = pulledRecs[lidStr];
+            
+            // 优化性能：直接push而不是创建新数组，避免大量数据时的内存复制开销
+            for (const r of rs.records) {
+              entry.records.push(r);
+            }
+            entry.counter = rs.counter;
 
             const lastRecord = rs.records[rs.records.length - 1]!;
             offsets[lidStr] = {
@@ -1339,12 +1359,16 @@ export class Network implements Net {
             console.log(`时间:${new Date().toLocaleString()} ,开始从 ${peerId.toString()} 获取记录...`);
             const dbClient = new DBClient(client,this.dc,this,this.logstore);
             const records = await dbClient.getRecordsFromPeer( req, serviceKey);
-            console.log(`时间:${new Date().toLocaleString()} ,从 ${peerId.toString()} 获取记录完成,记录数为:`,Object.keys(records).length);
-            console.log(`开始处理从 ${peerId.toString()} 获取的记录,记录数为:`,Object.keys(records).length);
+            let recCount = 0 
+            for (const [logId, rs] of Object.entries(records)) {
+              recCount += rs.records.length;
+            }
+            console.log(`时间:${new Date().toLocaleString()} ,从 ${peerId.toString()} 获取记录完成,记录数为:`,recCount);
+            console.log(`开始处理从 ${peerId.toString()} 获取的记录,记录数为:`,recCount);
             for (const [logId, rs] of Object.entries(records)) {
               await recordCollector.batchUpdate(logId, rs);
             }
-            console.log(`处理从 ${peerId.toString()} 获取的记录完成,记录数为:`,Object.keys(records).length);
+            console.log(`处理从 ${peerId.toString()} 获取的记录完成,记录数为:`,recCount);
           
             if(!multiPeersFlag){
                break;
@@ -1533,6 +1557,12 @@ export class Network implements Net {
             log.head = await getHeadUndef();
             await this.logstore.addLog(tid, log);
           } else {
+            try {
+              // 更新地址
+               await this.logstore.getLog(tid, log.id); 
+            } catch (err) {//日志不存在,进行添加
+              await this.logstore.addLog(tid, log);
+            }
             await this.logstore.addrBook.addAddrs(
               tid,
               log.id,
@@ -1873,16 +1903,11 @@ export class Network implements Net {
         peers = extPeers;
       }
 
-      // 与每个对等点交换
+      // 与对等点交换,只要一个成功就返回
       for (const pid of peers) {
         // 使用异步方式处理交换，不等待完成
-        this.exchangeWithPeer(pid, tid).catch((err) => {
-          console.error(
-            `Error exchanging with peer ${pid}: ${
-              err instanceof Error ? err.message : String(err)
-            }`
-          );
-        });
+       await this.exchangeWithPeer(pid, tid)
+       break;
       }
     } catch (err) {
       throw new Error(
