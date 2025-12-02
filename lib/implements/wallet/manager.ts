@@ -489,6 +489,11 @@ export class WalletManager {
         reject(new WalletError("未连接钱包"));
         return;
       }
+      try {
+        await this.initCommChannel();
+      } catch (error) {
+        reject(error);
+      }
       if (this.isIframeOpen()) {
         // 微信窗口
         const bool = await this.openWalletIframe();
@@ -546,6 +551,11 @@ export class WalletManager {
         console.log("未连接钱包");
         reject(new WalletError("未连接钱包"));
         return;
+      }
+      try {
+        await this.initCommChannel();
+      } catch (error) {
+        reject(error);
       }
       if (this.isIframeOpen()) {
         // 微信窗口
