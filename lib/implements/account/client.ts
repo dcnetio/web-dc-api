@@ -54,7 +54,7 @@ export class AccountClient {
     return true;
   }
 
-  async accountBind(buildedReq: any, mnemonic: string, context: DCContext): Promise<boolean> {
+  async accountBind(buildedReq: any, mnemonic: string | undefined, context: DCContext): Promise<boolean> {
     if (this.client.p2pNode == null) {
       throw new Error("p2pNode is null");
     }
@@ -69,11 +69,21 @@ export class AccountClient {
     const messageBytes = dcnet.pb.AccountDealRequest.encode(message).finish();
     // try to get token
     // 生成
-    const keymanager = new KeyManager();
-    const selfPrivkey = await keymanager.getEd25519KeyFromMnemonic(
-      mnemonic,
-      ''
-    );
+    let selfPrivkey: Ed25519PrivKey | null = null;
+    if (mnemonic) {
+      const keymanager = new KeyManager();
+      selfPrivkey = await keymanager.getEd25519KeyFromMnemonic(
+        mnemonic,
+        ''
+      );
+    } else {
+      selfPrivkey = context.privateKey || null;
+    }
+
+    if (!selfPrivkey) {
+       throw new Error("No private key available for binding");
+    }
+
     const selfPubkey = selfPrivkey.publicKey;
     const token = await this.client.GetToken(
       context.appInfo.appId || "",
@@ -99,6 +109,36 @@ export class AccountClient {
 
     const responseData = await grpcClient.unaryCall(
       "/dcnet.pb.Service/AccountBind",
+      messageBytes,
+      30000
+    );
+    const decoded = dcnet.pb.AccountDealReply.decode(responseData);
+    return true;
+  }
+
+  async accountInfoModify(buildedReq: any): Promise<boolean> {
+    if (this.client.p2pNode == null) {
+      throw new Error("p2pNode is null");
+    }
+    const message = new dcnet.pb.AccountDealRequest({});
+    message.accounthashencrypt = buildedReq.accounthashencrypt;
+    message.accountencrypt = buildedReq.accountencrypt;
+    message.prikeyencrypt2 = buildedReq.prikeyencrypt2;
+    message.blockheight = buildedReq.blockheight;
+    message.loginkeyrandencrypt = buildedReq.loginkeyrandencrypt;
+    message.peerid = buildedReq.peerid;
+    message.signature = buildedReq.signature;
+    const messageBytes = dcnet.pb.AccountDealRequest.encode(message).finish();
+
+    const grpcClient = new Libp2pGrpcClient(
+      this.client.p2pNode,
+      this.client.peerAddr,
+      this.client.token,
+      this.client.protocol
+    );
+
+    const responseData = await grpcClient.unaryCall(
+      "/dcnet.pb.Service/AccountInfoModify",
       messageBytes,
       30000
     );

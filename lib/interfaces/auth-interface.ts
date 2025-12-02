@@ -65,7 +65,20 @@ export interface IAuthOperations {
     seccode: string,
     mnemonic: string
   ): Promise<[NFTBindStatus | null, Error | null]>;
-
+  /**
+   * NFT账号密码修改
+   * @param account NFT账号
+   * @param password 密码
+   * @param seccode 安全码
+   * @param mnemonic 助记词 (可选，如果是主账号登录则需要)
+   */
+   nftAccountPasswordModify(
+    account: string,
+    password: string,
+    seccode: string,
+    mnemonic?: string
+  ): Promise<Error | null> ;
+  
   /**
    * 创建APP访问账号,返回APP专用私钥
    * @param appId 应用ID
