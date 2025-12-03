@@ -1783,7 +1783,6 @@ export class Network implements Net {
               continue;
             }
             try {
-              await this._doPushRecord(item.tid, item.lid, item.rec, item.counter);
               if (!haveRecordFlag) {
                   await this.logstore.metadata.putString(
                   item.tid,
@@ -1792,6 +1791,8 @@ export class Network implements Net {
                 );
                 haveRecordFlag = true;
               }
+              await this._doPushRecord(item.tid, item.lid, item.rec, item.counter);
+              
               
             } catch (err) {
               console.error("pushRecord failed:", err);
@@ -1837,6 +1838,7 @@ export class Network implements Net {
             if (!client) continue;
             dbClient = new DBClient(client, this.dc, this, this.logstore);
             await dbClient.pushRecordToPeer(tid, lid, rec, counter);
+            break; // 推送成功，退出循环
           } catch (err) {
             if (err instanceof Error && dbClient && err.message === Errors.ErrLogNotFound.message) { //log文件没绑定,进行绑定
              try {
@@ -1846,6 +1848,7 @@ export class Network implements Net {
                     console.error("Failed to push log after adding to thread:", err);
                   }else {
                     await dbClient.pushRecordToPeer(tid, lid, rec, counter);
+                    break; // 推送成功，退出循环
                   }
                 }catch (err) {
                   console.error("Failed to create transfer stream for pushing log:", err);
