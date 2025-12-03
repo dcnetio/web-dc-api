@@ -56,6 +56,7 @@ export class WalletManager {
           iframe.id = this.iframeId;
         }
         (iframe as any).credentialless = true; // iframe和父窗口不可传递cookies等凭证，符合安全规则
+        iframe.style.display = "none";
 
         // 监听钱包iframe发来的消息
         window.addEventListener("message", (event) => {
