@@ -54,7 +54,6 @@ export class WalletManager {
           console.log("debug================没有iframe");
           iframe = document.createElement("iframe");
           iframe.id = this.iframeId;
-          document.body.appendChild(iframe);
         }
         (iframe as any).credentialless = true; // iframe和父窗口不可传递cookies等凭证，符合安全规则
 
@@ -80,7 +79,8 @@ export class WalletManager {
             }
             resolve(bool);
           };
-          // iframe.src = `${walletUrl}/iframe?parentOrigin=${appOrigin}`;
+          iframe.src = `${walletUrl}/iframe?parentOrigin=${appOrigin}`;
+          document.body.appendChild(iframe);
         } else {
           const bool = await this.initConfig(this);
           console.log(
