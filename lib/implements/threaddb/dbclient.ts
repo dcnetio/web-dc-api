@@ -309,7 +309,7 @@ private async pushLogsHeadToPeer(tid: ThreadID): Promise<void> {
       //取最新的head
       headToPush = head.reduce((prev, current) => (prev.counter > current.counter) ? prev : current);
       if (headToPush.id && headToPush.counter > 0) {
-         const rec = await GetRecord(this.net.getDagService(),headToPush.id,sk);
+         const rec = await GetRecord(this.net.getDagService(),headToPush.id,sk,true);
           if(rec){
             await this.pushRecordToPeer(
               tid,

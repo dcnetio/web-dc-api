@@ -106,7 +106,8 @@ export async function CreateRecord(
   return new Record(
     coded,
     obj,
-    config.block
+    config.block,
+    config.serviceKey
   );
 }
 
@@ -121,17 +122,21 @@ export async function CreateRecord(
 export async function GetRecord(
   dag: DAGCBOR,
   id: CID,
-  key: SymmetricKey
+  key: SymmetricKey,
+  local: boolean = false
 ): Promise<IRecord> {
   const blockData = await dag.get<Uint8Array>(id);
   const decrypt = await key.decrypt(blockData);
   const decoded =  dagCBOR.decode<RecordObj>(decrypt);
-  decoded.block = id; //使用加密后且cborencode后数据的cid
+  if (!local) {
+    decoded.block = id; //使用加密后且cborencode后数据的cid
+  }
  // const dblock = await dag.get<Uint8Array>(decoded.block);
   const wrapedRnode = await wrapObject(blockData);
-  const record = new Record(wrapedRnode, decoded);
+  const record = new Record(wrapedRnode, decoded, undefined, key);
   return record
 }
+
 
 /**
  * 使用给定密钥从节点解码记录
@@ -253,15 +258,27 @@ export async function RecordToProto(
   bstore: Blocks,
   rec: IRecord
 ): Promise<net_pb.pb.Log.Record> {
-  const block = await rec.getBlock( bstore);
+
+ let block = await rec.getBlock( bstore);
+  const r = rec as Record;
+     const key = r.key ? r.key() : undefined;
+     if (key) {
+        const encrypted = dagCBOR.decode<Uint8Array>(rec.data());
+        const decrypted = await key.decrypt(encrypted);
+        const obj = dagCBOR.decode<RecordObj>(decrypted);
+        const eventData = await bstore.get(obj.block);
+        block = await cbornode.decode(eventData);
+     }
+
   let event: NetEvent;
   if (block instanceof Event) {
     event = block;
   } else {
-    event = await EventFromNode(block as Node);
+    const eventObj = dagCBOR.decode<EventObj>(block.data());
+    event = new Event(block as Node, eventObj);
   }
   const header = await event.getHeader( bstore);
-  const body = await event.getBody(bstore);
+  const body = await event.getBody(bstore); 
   const record = new net_pb.pb.Log.Record();
   record.recordNode = rec.data();
   record.eventNode = event.data();
@@ -319,13 +336,19 @@ export class Record implements IRecord {
   private _node: Node;
   private _obj: RecordObj;
   private _block?: IPLDNode;
+  private _key?: SymmetricKey;
   
-  constructor(node: Node, obj: RecordObj, block?: IPLDNode) {
+  constructor(node: Node, obj: RecordObj, block?: IPLDNode, key?: SymmetricKey) {
     this._node = node;
     this._obj = obj;
     if (block) {
       this._block = block;
     }
+    this._key = key;
+  }
+
+  key(): SymmetricKey | undefined {
+    return this._key;
   }
   
   cid(): CID {
