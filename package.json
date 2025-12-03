@@ -1,6 +1,6 @@
 {
   "name": "web-dc-api",
-  "version": "0.1.11",
+  "version": "0.1.12",
   "description": "web相关的dcapi",
   "type": "module",
   "browser": "dist/dc.min.js",
