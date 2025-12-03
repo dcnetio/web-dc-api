@@ -111,6 +111,34 @@ export class FileModule implements DCModule, IFileOperations {
   }
   
   /**
+   * 获取指定文件夹CID中指定路径的文件流
+   */
+  async getSeekableFileStreamFromDir(
+    rootCid: string,
+    filePath: string,
+    decryptKey: string
+  ): Promise<SeekableFileStream> {
+    try {
+      this.assertInitialized();
+      
+      const fileStream = await this.fileManager.createSeekableFileStreamFromDir(rootCid, filePath, decryptKey);
+      if(!fileStream) {
+        throw new Error(`获取文件流失败: ${rootCid}/${filePath}`);
+      }
+      
+      // 尝试缓存
+      if (fileStream.getCid()) {
+        this.fileCacheManager.cacheFileStream(fileStream.getCid().toString(), decryptKey, fileStream);
+      }
+      
+      return fileStream;
+    } catch (error) {
+      logger.error(`获取文件流失败: ${rootCid}/${filePath}`, error);
+      throw new Error(`获取文件流失败: ${error instanceof Error ? error.message : String(error)}`);
+    }
+  }
+  
+  /**
    * 清理文件缓存
    */
   clearFileCache(pathname?: string): void {
@@ -276,8 +304,19 @@ async getFolderFileList(
       logger.error("创建自定义文件列表失败:", error);
       return [null, new Error("文件模块未初始化")];
     }
-   
-   
+  }
+
+  /**
+   * 判断CID是文件还是目录
+   */
+  async isFileOrDir(cid: string): Promise<'file' | 'directory' | 'unknown'> {
+    try {
+      this.assertInitialized();
+      return await this.fileManager.isFileOrDir(cid);
+    } catch (error) {
+      logger.error(`判断CID类型失败: ${cid}`, error);
+      return 'unknown';
+    }
   }
   
   /**
@@ -286,6 +325,24 @@ async getFolderFileList(
   private assertInitialized(): void {
     if (!this.initialized) {
       throw new Error("文件模块未初始化");
+    }
+  }
+
+  /**
+   * 获取指定文件夹CID中指定路径的文件内容或目录列表
+   */
+  async getFileFromDir(
+    rootCid: string,
+    filePath: string,
+    decryptKey: string
+  ): Promise<[Uint8Array | Array<{ Name: string; Type: number; Size: number; Hash: string; Path: string; Content?: Uint8Array }> | null, Error | null]> {
+    try {
+      this.assertInitialized();
+      const result = await this.fileManager.getFileFromDir(rootCid, filePath, decryptKey);
+      return [result, null];
+    } catch (error) {
+      logger.error(`获取文件失败: ${rootCid}/${filePath}`, error);
+      return [null, new Error(`获取文件失败: ${error instanceof Error ? error.message : String(error)}`)];
     }
   }
 }

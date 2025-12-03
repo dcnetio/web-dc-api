@@ -428,7 +428,7 @@ export class FileManager {
         }
       }
       if (!rootCID) {
-        console.error("Failed to find root directory CID in IPFS results");
+        console.error("Failed to find root directory CID");
         return [null, new Error("Failed to find root directory CID")];
       }
       // 获取rootCID下的块数量
@@ -1222,6 +1222,57 @@ async getFolderFileList(
     }
   }
 
+  /**
+   * 解析路径获取CID
+   */
+  async resolvePath(rootCid: string, filePath: string): Promise<string | null> {
+    try {
+      const fs = unixfs(this.dcNodeClient);
+      let currentCid = CID.parse(rootCid);
+      // Normalize path: remove leading/trailing slashes, split by /
+      const parts = filePath.replace(/^\/+|\/+$/g, '').split('/').filter(p => p);
+
+      for (const part of parts) {
+        let found = false;
+        for await (const entry of fs.ls(currentCid)) {
+          if (entry.name === part) {
+            currentCid = entry.cid;
+            found = true;
+            break;
+          }
+        }
+        if (!found) return null;
+      }
+      return currentCid.toString();
+    } catch (error) {
+      console.error("resolvePath error:", error);
+      return null;
+    }
+  }
+
+  /**
+   * 从指定文件夹CID和路径创建可寻址文件流
+   */
+  async createSeekableFileStreamFromDir(
+    rootCid: string,
+    filePath: string,
+    decryptKey: string
+  ): Promise<SeekableFileStream | null> {
+    // 连接到节点
+    const [multiAddrs, peers] = await this.dc?._connectToObjNodes(rootCid);
+    if (!multiAddrs && peers) {
+      // 有peers但是没有multiaddrs
+      return null;
+    }
+
+    const fileCid = await this.resolvePath(rootCid, filePath);
+    if (!fileCid) {
+      return null;
+    }
+
+    return this.createSeekableFileStream(fileCid, decryptKey, cidNeedConnect.NOT_NEED);
+  }
+
   readUint64BE(buffer: Uint8Array, offset: number): number {
     // JavaScript中Number可以安全表示的最大整数是2^53-1
     const high =
@@ -1236,5 +1287,61 @@ async getFolderFileList(
       buffer[offset + 7]!;
 
     return high * 2 ** 32 + low;
+  }
+
+  /**
+   * 判断CID是文件还是目录
+   * @param cid 
+   * @returns 'file' | 'directory' | 'unknown'
+   */
+  async isFileOrDir(cid: string): Promise<'file' | 'directory' | 'unknown'> {
+    try {
+      const fs = unixfs(this.dcNodeClient);
+      const stats = await fs.stat(CID.parse(cid));
+      if (stats.type === 'directory') {
+        return 'directory';
+      } else if (stats.type === 'file' || stats.type === 'raw') {
+        return 'file';
+      }
+      return 'unknown';
+    } catch (error) {
+      console.error('isFileOrDir error:', error);
+      return 'unknown';
+    }
+  }
+
+  /**
+   * 从指定文件夹CID和路径获取文件内容或目录列表
+   */
+  async getFileFromDir(
+    rootCid: string,
+    filePath: string,
+    decryptKey: string
+  ): Promise<Uint8Array | Array<{ Name: string; Type: number; Size: number; Hash: string; Path: string; Content?: Uint8Array }> | null> {
+    // 连接到节点
+    const [multiAddrs, peers] = await this.dc?._connectToObjNodes(rootCid);
+    if (!multiAddrs && peers) {
+      // 有peers但是没有multiaddrs
+      return null;
+    }
+
+    const fileCid = await this.resolvePath(rootCid, filePath);
+    if (!fileCid) {
+      return null;
+    }
+
+    // 判断是文件还是目录
+    const type = await this.isFileOrDir(fileCid);
+    if (type === 'directory') {
+      // 如果是目录，返回目录列表 (不递归，只返回当前目录下的一级内容)
+      const [list, err] = await this.getFolderFileList(fileCid, cidNeedConnect.NOT_NEED, false);
+      if (err) {
+        console.error("getFileFromDir getFolderFileList error:", err);
+        return null;
+      }
+      return list;
+    }
+
+    return this.getFileFromDc(fileCid, decryptKey, cidNeedConnect.NOT_NEED);
   }
 }

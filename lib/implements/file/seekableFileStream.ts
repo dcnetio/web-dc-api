@@ -107,7 +107,7 @@ export class SeekableFileStream {
         length: length
       }));
       
-      return data;
+      return data as any as Uint8Array;
     } catch (err) {
       console.error("Error reading plain data:", err);
       return new Uint8Array(0);
@@ -144,7 +144,7 @@ private async readEncrypted(startPosition: number, length: number): Promise<Uint
     const encryptedBlocks = await toBuffer(this.fs.cat(this.cid, {
       offset: readStartPosition,
       length: readTotalSize
-    }));
+    })) as any as Uint8Array;
     
     // 确保获取到了数据
     if (encryptedBlocks.length === 0) {
@@ -228,7 +228,7 @@ private async readEncrypted(startPosition: number, length: number): Promise<Uint
         }
         
         // 更新流缓冲区和位置
-        streamBuffer = prefetchedData;
+        streamBuffer = prefetchedData as any;
         streamBufferPosition = streamPosition;
       } catch (err) {
         console.error("Error prefetching stream data:", err);
@@ -340,5 +340,12 @@ private async readEncrypted(startPosition: number, length: number): Promise<Uint
         console.log("ReadableStream cancelled");
       }
     });
+  }
+  
+  /**
+   * 获取文件CID
+   */
+  getCid(): CID {
+    return this.cid;
   }
 }
