@@ -56,7 +56,8 @@ export class WalletManager {
           iframe.id = this.iframeId;
         }
         (iframe as any).credentialless = true; // iframe和父窗口不可传递cookies等凭证，符合安全规则
-        iframe.style.display = "none";
+        iframe.style.width = "1px";
+        iframe.style.height = "1px";
 
         // 监听钱包iframe发来的消息
         window.addEventListener("message", (event) => {
@@ -65,6 +66,7 @@ export class WalletManager {
         const iframeLoaded = globalThis && (globalThis as any).iframeLoaded;
         if (!iframeLoaded) {
           iframe.onload = async () => {
+            iframe.style.display = "none";
             console.log(
               "debug================init walletManager",
               Date.now() - startTime
