@@ -12,6 +12,7 @@ import pkg from "./package.json" assert { type: "json" };
 
 // 外部依赖（这些将不会被打包进最终文件）
 const external = [
+  ...Object.keys(pkg.dependencies || {}),
   ...Object.keys(pkg.devDependencies || {}),
   ...Object.keys(pkg.peerDependencies || {}),
   // 🔧 移除可能有问题的库，让它们被打包进来
@@ -24,7 +25,7 @@ const isProd = process.env.NODE_ENV === "production";
 const basePlugins = [
   // 🔧 添加 process polyfill
   inject({
-    process: 'process',
+    process: "process",
   }),
   replace({
     __IS_PROD__: isProd,
@@ -76,7 +77,7 @@ const getResolveConfig = (isBrowser = true) => ({
 // 🔧 优化的 commonjs 配置
 const getCommonJSConfig = () => ({
   transformMixedEsModules: true,
-  include: ["node_modules/**"],
+  // include: ["node_modules/**"],
   // 🔧 确保 uint8arrays 的所有导出都被正确处理
   namedExports: {
     uint8arrays: [
@@ -142,7 +143,7 @@ export default [
       manualChunks,
       // 设置chunk大小警告
       chunkSizeWarningLimit: 500, // 500KB 警告阈值
-      exports: 'auto' // 添加这个
+      exports: "auto", // 添加这个
     },
     external,
     plugins: [
@@ -169,7 +170,7 @@ export default [
       manualChunks,
       // 设置chunk大小警告
       chunkSizeWarningLimit: 500, // 500KB 警告阈值
-      exports: 'auto' // 添加这个
+      exports: "auto", // 添加这个
     },
     external,
     plugins: [
@@ -216,7 +217,7 @@ export default [
         "grpc-libp2p-client": "GrpcLibp2pClient",
       },
       inlineDynamicImports: true,
-      exports: 'auto' // 添加这个
+      exports: "auto", // 添加这个
     },
     external: ["grpc-libp2p-client"],
     plugins: [
