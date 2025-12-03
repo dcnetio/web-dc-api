@@ -272,6 +272,8 @@ export class WalletManager {
         "sandbox",
         "allow-scripts allow-forms allow-same-origin"
       );
+      iframe.allow =
+        "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture";
 
       // iframe.sandbox = "allow-scripts allow-forms allow-same-origin";
       // 直接设置 iframe 的样式以覆盖整个页面
