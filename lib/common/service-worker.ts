@@ -1,6 +1,7 @@
 // service-worker.ts
 // 负责处理 Service Worker 相关的功能
 
+import { SeekableFileStream } from "@/implements/file/seekableFileStream";
 import { IFileOperations } from "../interfaces";
 import { createLogger } from "../util/logger";
 
@@ -90,12 +91,28 @@ export async function handleIpfsRequest(
     const DEFAULT_CHUNK_SIZE = 3 * 1024 * 1024; // 默认返回3MB数据块
     let start = 0;
     let end = 0;
+    let subPath = '';
+    if (pathParts.length > 4) {
+      subPath = pathParts.slice(4).join('/'); // 目录下的文件路径
+    }
     
     if (fileOps) {
+      // 判断是文件还是目录
+      const type = await fileOps.isFileOrDir(ipfsPath);
       if (range) {
         // 处理范围请求（视频跳转等）
         try {
-          const fileStream = await fileOps.getSeekableFileStream(ipfsPath, decryptKey);
+          let fileStream :SeekableFileStream | null = null;
+          if (type === 'directory') {
+            // 目录下的文件流
+            fileStream = await fileOps.getSeekableFileStreamFromDir(ipfsPath, subPath, decryptKey);
+          } else {
+            // 普通文件流
+            fileStream = await fileOps.getSeekableFileStream(ipfsPath, decryptKey);
+          }
+          if (!fileStream) {
+            throw new Error(`获取文件流失败: ${ipfsPath}`);
+          }
           fileSize = fileStream.getSize();
           if (fileStream) {
             const match = range.match(/bytes=(\d+)-(\d+)?/);
@@ -128,8 +145,27 @@ export async function handleIpfsRequest(
           return;
         }
       } else {
-        const [fileContent, error] = await fileOps.getFile(ipfsPath, decryptKey);
-       fileData = fileContent;
+        let fileContent: Uint8Array | null = null;
+        if (type === 'directory') {
+          // 目录下的文件请求
+          const [content, error] = await fileOps.getFileFromDir(ipfsPath, subPath, decryptKey);
+          if (error) {
+            throw error;
+          }
+          if (content instanceof Uint8Array) {
+            fileContent = content;
+          } else {
+            throw new Error('请求的路径不是文件');
+          }
+        } else {
+          // 普通文件请求
+          const [content, error] = await fileOps.getFile(ipfsPath, decryptKey);
+          if (error) {
+            throw error;
+          }
+          fileContent = content;
+        }
+        fileData = fileContent;
         // 普通文件请求
         fileSize = fileData ? fileData.length : 0;
         // 非范围请求的文件读取完成后，清理缓存

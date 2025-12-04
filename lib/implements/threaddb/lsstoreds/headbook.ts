@@ -224,7 +224,7 @@ export class DsHeadBook implements HeadBook {
                         if (a.logId === b.logId) {
                                 return this.compareCidBytes(a.head.id?.bytes, b.head.id?.bytes);
                         }
-                        return a.logId.localeCompare(b.logId);
+                        return a.logId < b.logId ? -1 : 1;
                 });
 
                 const encoder = new TextEncoder();

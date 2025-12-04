@@ -17,6 +17,19 @@ export interface IFileOperations {
   ): Promise<SeekableFileStream>;
 
   /**
+   * 获取指定文件夹CID中指定路径的文件流
+   * @param rootCid 根文件夹CID
+   * @param filePath 文件相对路径
+   * @param decryptKey 解密密钥
+   * @returns 可寻址文件流实例
+   */
+  getSeekableFileStreamFromDir(
+    rootCid: string,
+    filePath: string,
+    decryptKey: string
+  ): Promise<SeekableFileStream>;
+
+  /**
    * 清理文件缓存
    * @param pathname 可选的特定路径，不提供则清除所有缓存
    */
@@ -35,6 +48,19 @@ export interface IFileOperations {
    * @returns 文件的字节数组，失败则返回undefined
    */
   getFile(cid: string, decryptKey: string): Promise<[Uint8Array | null, Error | null]>;
+
+  /**
+   * 获取指定文件夹CID中指定路径的文件内容或目录列表
+   * @param rootCid 根文件夹CID
+   * @param filePath 文件相对路径
+   * @param decryptKey 解密密钥
+   * @returns 文件的字节数组或目录列表，失败则返回undefined
+   */
+  getFileFromDir(
+    rootCid: string,
+    filePath: string,
+    decryptKey: string
+  ): Promise<[Uint8Array | Array<{ Name: string; Type: number; Size: number; Hash: string; Path: string; Content?: Uint8Array }> | null, Error | null]>;
 
   /**
    * 创建文件可读流
@@ -77,34 +103,32 @@ export interface IFileOperations {
     ) => void
   ): Promise<[string | null, Error | null]>;
 
+  /**
+   * 获取文件夹下的所有文件,包括内容（支持多级目录递归）
+   * @param cid 根目录的CID
+   * @param decryptKey 解密密钥
+   * @param recursive 是否递归获取子目录，默认false（保持向后兼容）
+   * @returns 文件列表：[{Name:文件或目录名，Type：0-文件 1-目录，Size：大小，Hash：文件或目录cid，Path：完整路径}]
+   */
+  getFolderFileListWithContent(
+    cid: string,
+    decryptKey: string,
+    recursive: boolean
+  ): Promise<[Array<{ Name: string; Type: number; Size: number; Hash: string; Path: string; Content?: Uint8Array }> | null, Error | null]>;
 
+  /**
+   * 获取文件夹下的文件列表（支持多级目录递归）
+   * @param cid 根目录的CID
+   * @param flag 是否需要连接节点
+   * @param recursive 是否递归获取子目录，默认false（保持向后兼容）
+   * @returns 返回JSON格式的文件列表：[{Name:文件或目录名，Type：0-文件 1-目录，Size：大小，Hash：文件或目录cid，Path：完整路径}]
+   */
+  getFolderFileList(
+    cid: string,
+    flag: number,
+    recursive: boolean
+  ): Promise<[Array<{ Name: string; Type: number; Size: number; Hash: string; Path: string; Content?: Uint8Array }> | null, Error | null]>;
 
-
-/**
- * 获取文件夹下的所有文件,包括内容（支持多级目录递归）
- * @param cid 根目录的CID
- * @param decryptKey 解密密钥
- * @param recursive 是否递归获取子目录，默认false（保持向后兼容）
- * @returns 文件列表：[{Name:文件或目录名，Type：0-文件 1-目录，Size：大小，Hash：文件或目录cid，Path：完整路径}]
- */
-getFolderFileListWithContent(
-  cid: string, 
-  decryptKey: string, 
-  recursive: boolean
-): Promise<[Array<{Name: string; Type: number; Size: number; Hash: string; Path: string, Content?: Uint8Array}> | null, Error | null]> ;
-
-/**
- * 获取文件夹下的文件列表（支持多级目录递归）
- * @param cid 根目录的CID
- * @param flag 是否需要连接节点
- * @param recursive 是否递归获取子目录，默认false（保持向后兼容）
- * @returns 返回JSON格式的文件列表：[{Name:文件或目录名，Type：0-文件 1-目录，Size：大小，Hash：文件或目录cid，Path：完整路径}]
- */
- getFolderFileList(
-  cid: string, 
-  flag: number,
-  recursive: boolean
-): Promise<[Array<{Name: string; Type: number; Size: number; Hash: string; Path: string, Content?: Uint8Array}> | null, Error | null]> ;
   /**
    * 创建自定义文件列表
    * @param filesMap 文件列表，可以是Map或Record对象
@@ -117,4 +141,11 @@ getFolderFileListWithContent(
       | Record<string, string | Uint8Array | ArrayBuffer>,
     rootFolderName: string
   ): [FileList | null, Error | null];
+
+  /**
+   * 判断CID是文件还是目录
+   * @param cid
+   * @returns 'file' | 'directory' | 'unknown'
+   */
+  isFileOrDir(cid: string): Promise<'file' | 'directory' | 'unknown'>;
 }

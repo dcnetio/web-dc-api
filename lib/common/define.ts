@@ -13,6 +13,10 @@ if (typeof __IS_PROD__ !== "undefined") {
 }
 const walletOpenType =
   typeof globalThis !== "undefined" ? (globalThis as any).walletOpenType : ""; // 用于判断是否是直接打开;
+const walletIframeOpenFlag =
+  typeof globalThis !== "undefined"
+    ? (globalThis as any).walletIframeOpenFlag
+    : true; // 是否需要打开/iframe，默认打开;
 const walletOpenOrgin =
   typeof globalThis !== "undefined" ? (globalThis as any).walletOpenOrgin : ""; // 用户传入的打开钱包的源;
 const walletOpenVersion =

@@ -37,6 +37,14 @@ export class WalletManager {
 
   async init(): Promise<boolean> {
     console.log("========init walletManager", appOrigin, walletOrigin);
+    const walletIframeOpenFlag =
+      typeof globalThis !== "undefined" &&
+      typeof (globalThis as any).walletIframeOpenFlag !== "undefined"
+        ? (globalThis as any).walletIframeOpenFlag
+        : true; // 是否需要打开/iframe，默认打开;
+    if (!walletIframeOpenFlag) {
+      return true;
+    }
     const walletOpenFlag =
       typeof globalThis !== "undefined" &&
       typeof (globalThis as any).walletOpenType !== "undefined"
