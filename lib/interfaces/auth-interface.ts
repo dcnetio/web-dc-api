@@ -72,13 +72,13 @@ export interface IAuthOperations {
    * @param seccode 安全码
    * @param mnemonic 助记词 (可选，如果是主账号登录则需要)
    */
-   nftAccountPasswordModify(
+  nftAccountPasswordModify(
     account: string,
     password: string,
     seccode: string,
     mnemonic?: string
-  ): Promise<Error | null> ;
-  
+  ): Promise<[boolean | null, Error | null]>;
+
   /**
    * 创建APP访问账号,返回APP专用私钥
    * @param appId 应用ID
