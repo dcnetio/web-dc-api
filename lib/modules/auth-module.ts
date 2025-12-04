@@ -66,7 +66,7 @@ export class AuthModule implements DCModule, IAuthOperations {
     })();
     // 立即返回
     return true;
-}
+  }
 
   /**
    * 关闭认证模块
@@ -81,8 +81,9 @@ export class AuthModule implements DCModule, IAuthOperations {
    * 账户登录
    * @returns 是否登录成功
    */
-  async accountLoginWithWalletCall(accountInfo: AccountInfo = {} as AccountInfo): Promise<Account> {
-
+  async accountLoginWithWalletCall(
+    accountInfo: AccountInfo = {} as AccountInfo
+  ): Promise<Account> {
     try {
       this.assertInitialized();
 
@@ -93,7 +94,7 @@ export class AuthModule implements DCModule, IAuthOperations {
       // 登录成功，清空临时私钥
       this.context.privateKey = null;
       // 如果有返回则保存到context中
-      if(data && data.accountInfo && data.accountInfo.nftAccount) {
+      if (data && data.accountInfo && data.accountInfo.nftAccount) {
         this.context.accountInfo = data.accountInfo;
       }
       const publicKey = new Ed25519PubKey(data.appAccount);
@@ -113,17 +114,18 @@ export class AuthModule implements DCModule, IAuthOperations {
       }
       // 存在token， 获取用户备用节点
       await this.getAccountBackupDc();
-      if (this.context.AccountBackupDc?.client) {//备份节点存在,获取备份节点连接的token
-         // 获取账号备用节点token
-         await this.context.AccountBackupDc?.client.GetToken(
+      if (this.context.AccountBackupDc?.client) {
+        //备份节点存在,获取备份节点连接的token
+        // 获取账号备用节点token
+        await this.context.AccountBackupDc?.client.GetToken(
           this.context.appInfo.appId || "",
           publicKey.string(),
           (payload: Uint8Array): Promise<Uint8Array> => {
             return this.signWithWallet(payload);
           }
         );
-     }
-      
+      }
+
       // 给用户添加用户评论空间
       const [userInfo, err] = await this.getUserInfoWithAccount(
         "0x" + publicKey.toString()
@@ -136,24 +138,34 @@ export class AuthModule implements DCModule, IAuthOperations {
       }
       //获取用户已经使用的评论空间和操作次数
       const commentManager = new CommentManager(this.context);
-      const [offchainUsedInfo,resErr] = await commentManager.getUserOffChainUsedInfo()
+      const [offchainUsedInfo, resErr] =
+        await commentManager.getUserOffChainUsedInfo();
       if (resErr) {
         throw resErr;
       }
-      const leftSpace = offchainUsedInfo?userInfo.offchainSpace - Number(offchainUsedInfo.usedspace) :userInfo.offchainSpace;
-      const leftOptimes = offchainUsedInfo?userInfo.offchainOptimes - Number(offchainUsedInfo.usedtimes):userInfo.offchainOptimes;
+      const leftSpace = offchainUsedInfo
+        ? userInfo.offchainSpace - Number(offchainUsedInfo.usedspace)
+        : userInfo.offchainSpace;
+      const leftOptimes = offchainUsedInfo
+        ? userInfo.offchainOptimes - Number(offchainUsedInfo.usedtimes)
+        : userInfo.offchainOptimes;
       logger.info(
         `用户线下评论空间剩余: ${leftSpace} / ${userInfo.offchainSpace}, 线下操作次数剩余: ${leftOptimes} / ${userInfo.offchainOptimes}`
       );
-      if (leftSpace < OffChainSpaceLimit || leftOptimes < OffChainOpTimesLimit) {
+      if (
+        leftSpace < OffChainSpaceLimit ||
+        leftOptimes < OffChainOpTimesLimit
+      ) {
         if (leftSpace < OffChainSpaceLimit) {
-          const [addOffChainBool, addOffChainError] = await commentManager.addUserOffChainSpace();
+          const [addOffChainBool, addOffChainError] =
+            await commentManager.addUserOffChainSpace();
           if (addOffChainError || !addOffChainBool) {
             throw addOffChainError || new Error("addUserOffChainSpace error");
           }
         }
         if (leftOptimes < OffChainOpTimesLimit) {
-          const [addOffChainOpTimesBool, addOffChainOpTimesError] =await commentManager.addUserOffChainOpTimes(OffChainOpTimes);
+          const [addOffChainOpTimesBool, addOffChainOpTimesError] =
+            await commentManager.addUserOffChainOpTimes(OffChainOpTimes);
           if (addOffChainOpTimesError || !addOffChainOpTimesBool) {
             throw (
               addOffChainOpTimesError || new Error("addUserOffChainSpace error")
@@ -171,9 +183,9 @@ export class AuthModule implements DCModule, IAuthOperations {
    * 账户登录(钱包登录)不抛出异常
    * @returns [账户信息, 错误信息]
    */
-  async accountLoginWithWallet(accountInfo?:AccountInfo): Promise<
-    [Account | null, Error | null]
-  > {
+  async accountLoginWithWallet(
+    accountInfo?: AccountInfo
+  ): Promise<[Account | null, Error | null]> {
     try {
       const account = await this.accountLoginWithWalletCall(accountInfo);
       this.context.userInfo = account;
@@ -183,8 +195,8 @@ export class AuthModule implements DCModule, IAuthOperations {
     }
   }
 
-  exitLogin (): void {
-      this.walletManager.exitLogin();
+  exitLogin(): void {
+    this.walletManager.exitLogin();
   }
 
   /**
@@ -238,10 +250,10 @@ export class AuthModule implements DCModule, IAuthOperations {
         //清空原来连接的token信息,原来是基于临时私钥登录的
         client.token = "";
         this.context.connectedDc.client.token = "";
-        
+
         if (this.context.appInfo?.appId) {
           const accountManager = new AccountManager(this.context);
-         
+
           const res = await accountManager.generateAppAccount(
             this.context.appInfo?.appId,
             mnemonic
@@ -256,11 +268,11 @@ export class AuthModule implements DCModule, IAuthOperations {
         }
         this.context.userInfo = {
           nftAccount, // NFT账号
-          appAccount:userPubkey.raw, // 应用专用账号公钥 
-          ethAccount:'', // 以太坊兼容链上账号
-          chainId:'', // 区块链ID
-          chainName:'', // 区块链名称
-        }
+          appAccount: userPubkey.raw, // 应用专用账号公钥
+          ethAccount: "", // 以太坊兼容链上账号
+          chainId: "", // 区块链ID
+          chainName: "", // 区块链名称
+        };
         return [mnemonic, null];
       }
       return ["", new Error("accountLogin failed")];
@@ -268,8 +280,6 @@ export class AuthModule implements DCModule, IAuthOperations {
       return ["", error as Error];
     }
   }
-
-
 
   /**
    * NFT账号密码修改
@@ -283,36 +293,31 @@ export class AuthModule implements DCModule, IAuthOperations {
     password: string,
     seccode: string,
     mnemonic?: string
-  ): Promise<Error | null> {
+  ): Promise<[boolean | null, Error | null]> {
     try {
       this.assertInitialized();
       const accountManager = new AccountManager(this.context);
-      
+
       // 判断是否是主账号
       // Go logic: if dc.Mnemonic != "" && dc.ParentPrivkey != nil { isParent = true }
       // In TS, we check if mnemonic is provided.
       const isParent = !!mnemonic;
-      
-      return await accountManager.nftAccountPasswordModify(
+
+      const error = await accountManager.nftAccountPasswordModify(
         account,
         password,
         seccode,
         isParent,
         mnemonic
       );
+      if (error) {
+        return [null, error];
+      }
+      return [true, null];
     } catch (error) {
-      return error as Error;
+      return [null, error as Error];
     }
   }
-
-
-
-
-
-
-
-
-
 
   async signWithWallet(payload: Uint8Array): Promise<Uint8Array> {
     if (!this.walletManager) {
@@ -428,8 +433,11 @@ export class AuthModule implements DCModule, IAuthOperations {
     try {
       this.assertInitialized();
       const accountManager = new AccountManager(this.context);
-      const [pubKeyStr, err] = await accountManager.generateAppAccount(appId, mnemonic);
-      if(err !== null) {
+      const [pubKeyStr, err] = await accountManager.generateAppAccount(
+        appId,
+        mnemonic
+      );
+      if (err !== null) {
         return [null, err];
       }
       return [pubKeyStr, null];
@@ -437,7 +445,6 @@ export class AuthModule implements DCModule, IAuthOperations {
       return [null, error as Error];
     }
   }
-
 
   /**
    * 检查NFT账号是否成功绑定到用户的公钥
@@ -467,7 +474,9 @@ export class AuthModule implements DCModule, IAuthOperations {
    * @param nftAccount NFT账号
    * @returns 是否被其他账号绑定
    */
-  async isNftAccountBinded(nftAccount: string): Promise<[boolean | null, Error | null]> {
+  async isNftAccountBinded(
+    nftAccount: string
+  ): Promise<[boolean | null, Error | null]> {
     try {
       this.assertInitialized();
       const accountManager = new AccountManager(this.context);
@@ -529,9 +538,7 @@ export class AuthModule implements DCModule, IAuthOperations {
   /**
    * 开启定时验证 token 线程,不抛出异常
    */
-  async startDcPeerTokenKeepValidTask(): Promise<
-    [boolean, Error | null]
-  > {
+  async startDcPeerTokenKeepValidTask(): Promise<[boolean, Error | null]> {
     try {
       this.assertInitialized();
 
@@ -542,7 +549,7 @@ export class AuthModule implements DCModule, IAuthOperations {
       this.tokenTask = true;
 
       // 60秒一次心跳维持连接
-      const period = 60*1000;
+      const period = 60 * 1000;
       let count = 0;
       let waitCount = 0;
 
@@ -550,20 +557,27 @@ export class AuthModule implements DCModule, IAuthOperations {
       logger.info("开始定时验证Token有效性任务");
       (async () => {
         while (this.tokenTask) {
-          waitCount ++;
+          waitCount++;
           try {
-            if (this.context.connectedDc.client?.token == "" || waitCount >= 300) {
+            if (
+              this.context.connectedDc.client?.token == "" ||
+              waitCount >= 300
+            ) {
               await this.getTokenWithDCConnectInfo(this.context.connectedDc);
             }
-            if (this.context.AccountBackupDc.client?.token == "" || waitCount >= 300) {
-              await this.getTokenWithDCConnectInfo(this.context.AccountBackupDc);
+            if (
+              this.context.AccountBackupDc.client?.token == "" ||
+              waitCount >= 300
+            ) {
+              await this.getTokenWithDCConnectInfo(
+                this.context.AccountBackupDc
+              );
             }
             if (waitCount >= 300) {
               waitCount = 0;
               count++;
             }
             console.log(`第${count}次Token验证完成`);
-            
           } catch (error) {
             logger.error("Token验证任务执行失败:", error);
           }
@@ -580,7 +594,7 @@ export class AuthModule implements DCModule, IAuthOperations {
    * 停止token验证任务,不抛出异常
    */
   private stopTokenKeepValidTask(): void {
-      this.tokenTask = false;
+    this.tokenTask = false;
   }
 
   /**
@@ -588,7 +602,6 @@ export class AuthModule implements DCModule, IAuthOperations {
    * @param connectInfo 连接信息
    */
   private async getTokenWithDCConnectInfo(connectInfo: any): Promise<void> {
-
     try {
       this.assertInitialized();
       // 判断 client 是否为空
@@ -621,7 +634,7 @@ export class AuthModule implements DCModule, IAuthOperations {
 
     // 判断 token 是否为空
     if (!connectInfo.client?.token) {
-      try { 
+      try {
         // 直接获取token
         if (!this.context.publicKey) {
           return;
@@ -739,7 +752,10 @@ export class AuthModule implements DCModule, IAuthOperations {
       this.assertInitialized();
 
       const pubkeyRaw = this.context.getPubkeyRaw();
-      const res = await this.context.dcChain.ifEnoughUserSpace(pubkeyRaw, needSize);
+      const res = await this.context.dcChain.ifEnoughUserSpace(
+        pubkeyRaw,
+        needSize
+      );
       return [res, null];
     } catch (error) {
       return [null, error as Error];
@@ -764,7 +780,6 @@ export class AuthModule implements DCModule, IAuthOperations {
       return [null, error as Error];
     }
   }
-
 
   /**
    * 获取用户默认数据库,不抛出异常
@@ -794,13 +809,13 @@ export class AuthModule implements DCModule, IAuthOperations {
   /**
    * 断言模块已初始化
    */
- private async assertInitialized(timeoutMs = 30000): Promise<void> {
-  const start = Date.now();
-  while (!this.initialized) {
-    if (Date.now() - start > timeoutMs) {
-      throw new Error("认证模块未初始化（超时）");
+  private async assertInitialized(timeoutMs = 30000): Promise<void> {
+    const start = Date.now();
+    while (!this.initialized) {
+      if (Date.now() - start > timeoutMs) {
+        throw new Error("认证模块未初始化（超时）");
+      }
+      await new Promise((res) => setTimeout(res, 100)); // 每 100ms 检查一次
     }
-    await new Promise(res => setTimeout(res, 100)); // 每 100ms 检查一次
   }
-}
 }
