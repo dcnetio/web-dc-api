@@ -26,12 +26,12 @@ const walletOpenVersion =
 
 let _baseUrl = "";
 let _walletOrigin = "";
-if (true) {
-  _baseUrl = "/v0_0_19";
-  _walletOrigin = "https://wallet.dcnetio.com";
+if (isProd) {
+  _baseUrl = "/v0_0_20";
+  _walletOrigin = "https://login.baybird.cn/";
 
   if (walletOpenOrgin) {
-    _walletOrigin = walletOpenOrgin || "https://wallet.dcnetio.com";
+    _walletOrigin = walletOpenOrgin || "https://login.baybird.cn/";
   }
   if (walletOpenVersion) {
     _baseUrl =
