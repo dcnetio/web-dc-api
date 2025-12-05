@@ -1,6 +1,6 @@
 {
   "name": "web-dc-api",
-  "version": "0.1.16",
+  "version": "0.1.17",
   "description": "web相关的dcapi",
   "type": "module",
   "browser": "dist/dc.min.js",
@@ -20,7 +20,7 @@
   ],
   "scripts": {
     "build:w": "npx rollup -c -w",
-    "build": "npx rollup -c",
+    "build": "NODE_ENV=production npx rollup -c",
     "build:analyze": "npx rollup -c && npx webpack-bundle-analyzer dist/esm/chunks/*.js",
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "nodemon --watch lib --ext ts,tsx,js,jsx,json --ignore 'src/**/*.test.ts' --exec 'npx yalc publish --push'"
