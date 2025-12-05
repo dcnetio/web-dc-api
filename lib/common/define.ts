@@ -17,8 +17,8 @@ const walletIframeOpenFlag =
   typeof globalThis !== "undefined"
     ? (globalThis as any).walletIframeOpenFlag
     : true; // 是否需要打开/iframe，默认打开;
-const walletOpenOrgin =
-  typeof globalThis !== "undefined" ? (globalThis as any).walletOpenOrgin : ""; // 用户传入的打开钱包的源;
+const walletOpenOrigin =
+  typeof globalThis !== "undefined" ? (globalThis as any).walletOpenOrigin : ""; // 用户传入的打开钱包的源;
 const walletOpenVersion =
   typeof globalThis !== "undefined"
     ? (globalThis as any).walletOpenVersion
@@ -30,8 +30,8 @@ if (isProd) {
   _baseUrl = "/v0_0_20";
   _walletOrigin = "https://login.baybird.cn/";
 
-  if (walletOpenOrgin) {
-    _walletOrigin = walletOpenOrgin || "https://login.baybird.cn/";
+  if (walletOpenOrigin) {
+    _walletOrigin = walletOpenOrigin || "https://login.baybird.cn/";
   }
   if (walletOpenVersion) {
     _baseUrl =
