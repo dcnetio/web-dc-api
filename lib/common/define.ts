@@ -27,7 +27,7 @@ const walletOpenVersion =
 let _baseUrl = "";
 let _walletOrigin = "";
 if (isProd) {
-  _baseUrl = "/v0_0_19";
+  _baseUrl = "/v0_0_20";
   _walletOrigin = "https://login.baybird.cn/";
 
   if (walletOpenOrgin) {
