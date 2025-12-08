@@ -10,63 +10,97 @@ import { KeyManager } from "../../common/dc-key/keyManager";
 
 export class UtilClient {
   client: Client;
+  context: DCContext;
 
-  constructor(dcClient: Client) {
+  constructor(dcClient: Client, context: DCContext) {
     this.client = dcClient;
+    this.context = context;
   }
 
-/**
- * 设置应用信息
- * @param context DCContext 上下文对象
- * @param threadId 数据库ID
- * @param rk 读取密钥,主要用来加解密真正的数据
- * @param sk 服务密钥,主要用来处理传输过程加解密
- * @param remark 备注信息
- * @returns Promise resolving when operation completes
- */
-async setAppInfo(appId: Uint8Array,owner: Uint8Array,rewarder: Uint8Array,domain: Uint8Array,blockHeight: number,peerId: string,fid:string,signature: Uint8Array): Promise<void> { 
-  if (this.client.p2pNode == null) {
+  /**
+   * 设置应用信息
+   * @param context DCContext 上下文对象
+   * @param threadId 数据库ID
+   * @param rk 读取密钥,主要用来加解密真正的数据
+   * @param sk 服务密钥,主要用来处理传输过程加解密
+   * @param remark 备注信息
+   * @returns Promise resolving when operation completes
+   */
+  async setAppInfo(
+    appId: Uint8Array,
+    owner: Uint8Array,
+    rewarder: Uint8Array,
+    domain: Uint8Array,
+    blockHeight: number,
+    peerId: string,
+    fid: string,
+    signature: Uint8Array
+  ): Promise<void> {
+    if (this.client.p2pNode == null) {
       throw new Error("p2pNode is null");
-  }
-  try {
-    // Create gRPC client
-    const grpcClient = new Libp2pGrpcClient(
-      this.client.p2pNode,
-      this.client.peerAddr,
-      this.client.token,
-      this.client.protocol
-    );
-   
-    // Create request message
-    const message = new dcnet.pb.SetAppInfoRequest();
-    message.appId = appId;
-    message.ownerAccount = owner;
-    message.rewardAccount = rewarder;
-    message.domain = domain;
-    message.blockheight = blockHeight;
-    message.peerid = new TextEncoder().encode(peerId);
-    message.fid = new TextEncoder().encode(fid);
-    message.signature = signature;
-    
-    
-    const messageBytes = dcnet.pb.SetAppInfoRequest.encode(message).finish();
-    
+    }
     try {
-      // Make RPC call
-       await grpcClient.unaryCall(
-        "/dcnet.pb.Service/SetAppInfo",
-        messageBytes,
-        30000
+      // Create gRPC client
+      const grpcClient = new Libp2pGrpcClient(
+        this.client.p2pNode,
+        this.client.peerAddr,
+        this.client.token,
+        this.client.protocol
       );
-      return;
+
+      // Create request message
+      const message = new dcnet.pb.SetAppInfoRequest();
+      message.appId = appId;
+      message.ownerAccount = owner;
+      message.rewardAccount = rewarder;
+      message.domain = domain;
+      message.blockheight = blockHeight;
+      message.peerid = new TextEncoder().encode(peerId);
+      message.fid = new TextEncoder().encode(fid);
+      message.signature = signature;
+
+      const messageBytes = dcnet.pb.SetAppInfoRequest.encode(message).finish();
+
+      try {
+        // Make RPC call
+        await grpcClient.unaryCall(
+          "/dcnet.pb.Service/SetAppInfo",
+          messageBytes,
+          30000
+        );
+        return;
+      } catch (error) {
+        if (error.message.indexOf(Errors.INVALID_TOKEN.message) != -1) {
+          // try to get token
+          const token = await this.client.GetToken(
+            this.context.appInfo.appId || "",
+            this.context.getPublicKey().string(),
+            (payload: Uint8Array): Promise<Uint8Array> => {
+              return this.context.sign(payload);
+            }
+          );
+          if (!token) {
+            throw new Error(Errors.INVALID_TOKEN.message);
+          }
+          const grpcClient = new Libp2pGrpcClient(
+            this.client.p2pNode,
+            this.client.peerAddr,
+            this.client.token,
+            this.client.protocol
+          );
+          await grpcClient.unaryCall(
+            "/dcnet.pb.Service/SetAppInfo",
+            messageBytes,
+            30000
+          );
+          return;
+        }
+        console.error("SetAppInfo error:", error);
+        throw error;
+      }
     } catch (error) {
+      console.error("设置APP信息失败:", error);
       throw error;
     }
-  } catch (error) {
-    console.error("设置APP信息失败:", error);
-    throw error;
   }
 }
-}
-
-
