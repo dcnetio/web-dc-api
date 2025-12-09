@@ -6,7 +6,7 @@ import { AccountManager } from "../implements/account/manager";
 import { CommonClient } from "../common/commonclient";
 import { Client } from "../common/dcapi";
 import { createLogger } from "../util/logger";
-import { isBase32, isHex, sleep } from "../util/utils";
+import { isBase32, sleep } from "../util/utils";
 import { Ed25519PrivKey, Ed25519PubKey } from "../common/dc-key/ed25519";
 import { Errors } from "../common/error";
 import {
@@ -29,7 +29,7 @@ import {
 import { IAuthOperations } from "../interfaces/auth-interface";
 import { DCContext } from "../../lib/interfaces/DCContext";
 import { CommentManager } from "../../lib/implements/comment/manager";
-import { ChainError } from "@/common/chain";
+import { ChainError, Errors as ChainErrors } from "@/common/chain";
 
 const logger = createLogger("AuthModule");
 
@@ -507,7 +507,14 @@ export class AuthModule implements DCModule, IAuthOperations {
       return [res, null];
     } catch (error) {
       if (error instanceof ChainError) {
-        return [null, null];
+        if (
+          error == ChainErrors.ErrUserInfoIsNull ||
+          error == ChainErrors.ErrWalletAccountStorageIsNull ||
+          error == ChainErrors.ErrWalletAccountStorageIsNull ||
+          error == ChainErrors.ErrParentWalletAccountStorageIsNull
+        ) {
+          return [null, null];
+        }
       }
       return [null, error as Error];
     }
