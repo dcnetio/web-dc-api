@@ -6,7 +6,7 @@ import { AccountManager } from "../implements/account/manager";
 import { CommonClient } from "../common/commonclient";
 import { Client } from "../common/dcapi";
 import { createLogger } from "../util/logger";
-import { sleep } from "../util/utils";
+import { isBase32, isHex, sleep } from "../util/utils";
 import { Ed25519PrivKey, Ed25519PubKey } from "../common/dc-key/ed25519";
 import { Errors } from "../common/error";
 import {
@@ -493,8 +493,26 @@ export class AuthModule implements DCModule, IAuthOperations {
   ): Promise<[User | null, Error | null]> {
     try {
       this.assertInitialized();
-      const res = await this.context.dcChain.getUserInfoWithAccount(account);
-      return [res, null];
+      if (isBase32(account)) {
+        // base32格式转hex格式
+        const pubKey = Ed25519PrivKey.unmarshalString(account);
+        const reqAccount = pubKey.toString();
+        const res = await this.context.dcChain.getUserInfoWithAccount(
+          reqAccount
+        );
+        return [res, null];
+      }
+      if (isHex(account)) {
+        let reqAccount = account;
+        if (account.startsWith("0x") === false) {
+          reqAccount = "0x" + account;
+        }
+        const res = await this.context.dcChain.getUserInfoWithAccount(
+          reqAccount
+        );
+        return [res, null];
+      }
+      return [null, new Error("account format error")];
     } catch (error) {
       return [null, error as Error];
     }
