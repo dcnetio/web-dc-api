@@ -493,7 +493,11 @@ export class AuthModule implements DCModule, IAuthOperations {
   ): Promise<[User | null, Error | null]> {
     try {
       this.assertInitialized();
-      const res = await this.context.dcChain.getUserInfoWithAccount(account);
+      let reqAccount = account;
+      if (account.startsWith("0x") === false) {
+        reqAccount = "0x" + account;
+      }
+      const res = await this.context.dcChain.getUserInfoWithAccount(reqAccount);
       return [res, null];
     } catch (error) {
       return [null, error as Error];
