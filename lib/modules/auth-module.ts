@@ -493,16 +493,12 @@ export class AuthModule implements DCModule, IAuthOperations {
   ): Promise<[User | null, Error | null]> {
     try {
       this.assertInitialized();
+      let reqAccount = account;
       if (isBase32(account)) {
         // base32格式转hex格式
         const pubKey = Ed25519PubKey.unmarshalString(account);
-        const reqAccount = pubKey.toString();
-        const res = await this.context.dcChain.getUserInfoWithAccount(
-          reqAccount
-        );
-        return [res, null];
+        reqAccount = pubKey.toString();
       }
-      let reqAccount = account;
       if (account.startsWith("0x") === false) {
         reqAccount = "0x" + account;
       }
