@@ -27,9 +27,9 @@ import {
   User,
 } from "../common/types/types";
 import { IAuthOperations } from "../interfaces/auth-interface";
-import { DCContext } from "../../lib/interfaces/DCContext";
-import { CommentManager } from "../../lib/implements/comment/manager";
-import { ChainError, Errors as ChainErrors } from "@/common/chain";
+import { DCContext } from "../interfaces/DCContext";
+import { CommentManager } from "../implements/comment/manager";
+import { ChainError, Errors as ChainErrors } from "../common/chain";
 
 const logger = createLogger("AuthModule");
 
