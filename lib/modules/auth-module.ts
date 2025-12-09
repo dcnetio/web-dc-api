@@ -29,6 +29,7 @@ import {
 import { IAuthOperations } from "../interfaces/auth-interface";
 import { DCContext } from "../../lib/interfaces/DCContext";
 import { CommentManager } from "../../lib/implements/comment/manager";
+import { ChainError } from "@/common/chain";
 
 const logger = createLogger("AuthModule");
 
@@ -505,6 +506,9 @@ export class AuthModule implements DCModule, IAuthOperations {
       const res = await this.context.dcChain.getUserInfoWithAccount(reqAccount);
       return [res, null];
     } catch (error) {
+      if (error instanceof ChainError) {
+        return [null, null];
+      }
       return [null, error as Error];
     }
   }
