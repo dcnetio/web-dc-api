@@ -495,24 +495,19 @@ export class AuthModule implements DCModule, IAuthOperations {
       this.assertInitialized();
       if (isBase32(account)) {
         // base32格式转hex格式
-        const pubKey = Ed25519PrivKey.unmarshalString(account);
+        const pubKey = Ed25519PubKey.unmarshalString(account);
         const reqAccount = pubKey.toString();
         const res = await this.context.dcChain.getUserInfoWithAccount(
           reqAccount
         );
         return [res, null];
       }
-      if (isHex(account)) {
-        let reqAccount = account;
-        if (account.startsWith("0x") === false) {
-          reqAccount = "0x" + account;
-        }
-        const res = await this.context.dcChain.getUserInfoWithAccount(
-          reqAccount
-        );
-        return [res, null];
+      let reqAccount = account;
+      if (account.startsWith("0x") === false) {
+        reqAccount = "0x" + account;
       }
-      return [null, new Error("account format error")];
+      const res = await this.context.dcChain.getUserInfoWithAccount(reqAccount);
+      return [res, null];
     } catch (error) {
       return [null, error as Error];
     }
