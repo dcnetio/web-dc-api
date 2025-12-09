@@ -156,10 +156,9 @@ function fastExtractPeerId(ma: Multiaddr | string): PeerId | null {
   return peerIdStr ? peerIdFromString(peerIdStr) : null;
 }
 // 编码
-const encodeKey = (buffer: Uint8Array) =>
-  btoa(String.fromCharCode(...buffer));
+const encodeKey = (buffer: Uint8Array) => btoa(String.fromCharCode(...buffer));
 
-// 解码 
+// 解码
 const decodeKey = (str: string) =>
   Uint8Array.from(atob(str), (c) => c.charCodeAt(0));
 
@@ -169,7 +168,7 @@ async function saveKeyPair(key: string, keyPair: Ed25519PrivateKey) {
   const privateKey = encodeKey(keyPair.raw);
   localStorage.setItem(key, privateKey);
 }
-async function loadKeyPair(key:  string) {
+async function loadKeyPair(key: string) {
   const privateKey = localStorage.getItem(key);
   if (privateKey) {
     const keyPair = keys.privateKeyFromRaw(decodeKey(privateKey));
@@ -227,12 +226,10 @@ function hexToAscii(hex: string): string {
 
 // json stringify过程中,将 BigInt 转为字符串
 function jsonStringify(value: any): string {
-  return JSON.stringify(value, (_, val) => 
-    typeof val === 'bigint' ? val.toString() : val
+  return JSON.stringify(value, (_, val) =>
+    typeof val === "bigint" ? val.toString() : val
   );
 }
-
-
 
 /**
  * 将非负数字字符串（可带小数）格式化：
@@ -264,6 +261,11 @@ function padPositiveInt20(v: string | number): string {
   return fracPart ? `${paddedInt}.${fracPart}` : paddedInt;
 }
 
+function isHex(str: string): boolean {
+  // Hex字符串的正则表达式，确保字符串只包含0-9和A-F，并且长度为偶数
+  const hexRegex = /^[0-9A-Fa-f]+$/;
+  return hexRegex.test(str) && str.length % 2 === 0; // Hex的长度必须为偶数
+}
 export {
   sha256,
   getRandomBytes,
@@ -285,5 +287,6 @@ export {
   parseUint32,
   hexToAscii,
   jsonStringify,
-  padPositiveInt20
+  padPositiveInt20,
+  isHex,
 };

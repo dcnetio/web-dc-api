@@ -6,7 +6,7 @@ import { AccountManager } from "../implements/account/manager";
 import { CommonClient } from "../common/commonclient";
 import { Client } from "../common/dcapi";
 import { createLogger } from "../util/logger";
-import { sleep } from "../util/utils";
+import { isHex, sleep } from "../util/utils";
 import { Ed25519PrivKey, Ed25519PubKey } from "../common/dc-key/ed25519";
 import { Errors } from "../common/error";
 import {
@@ -496,6 +496,9 @@ export class AuthModule implements DCModule, IAuthOperations {
       let reqAccount = account;
       if (account.startsWith("0x") === false) {
         reqAccount = "0x" + account;
+      }
+      if (!isHex(reqAccount)) {
+        throw new Error("account is not hex");
       }
       const res = await this.context.dcChain.getUserInfoWithAccount(reqAccount);
       return [res, null];
