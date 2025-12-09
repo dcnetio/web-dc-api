@@ -499,8 +499,8 @@ export class AuthModule implements DCModule, IAuthOperations {
         const pubKey = Ed25519PubKey.unmarshalString(account);
         reqAccount = pubKey.toString();
       }
-      if (account.startsWith("0x") === false) {
-        reqAccount = "0x" + account;
+      if (reqAccount.startsWith("0x") === false) {
+        reqAccount = "0x" + reqAccount;
       }
       const res = await this.context.dcChain.getUserInfoWithAccount(reqAccount);
       return [res, null];
