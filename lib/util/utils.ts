@@ -6,6 +6,7 @@ import { peerIdFromString } from "@libp2p/peer-id";
 import { Ed25519PrivateKey, PeerId } from "@libp2p/interface";
 import { keys } from "@libp2p/crypto";
 import * as buffer from "buffer/";
+import { hexToBytes } from "@noble/curves/abstract/utils";
 const { Buffer } = buffer;
 const { Word32Array, AES, pad, mode, Base64 } = JsCrypto;
 const NonceBytes = 12;
@@ -261,11 +262,6 @@ function padPositiveInt20(v: string | number): string {
   return fracPart ? `${paddedInt}.${fracPart}` : paddedInt;
 }
 
-function isHex(str: string): boolean {
-  // Hex字符串的正则表达式，确保字符串只包含0-9和A-F，并且长度为偶数
-  const hexRegex = /^[0-9A-Fa-f]+$/;
-  return hexRegex.test(str) && str.length % 2 === 0; // Hex的长度必须为偶数
-}
 function isBase32(str: string): boolean {
   try {
     // 尝试解码
@@ -300,6 +296,5 @@ export {
   hexToAscii,
   jsonStringify,
   padPositiveInt20,
-  isHex,
   isBase32,
 };
