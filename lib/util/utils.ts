@@ -268,7 +268,7 @@ function isBase32(str: string): boolean {
     const decoded = base32.decode(str);
     // 编码后再编码回去，确保原字符串和再编码后的一致
     const reencoded = base32.encode(decoded);
-    return reencoded === str.toUpperCase().replace(/=+$/, ""); // 去掉结尾的=
+    return reencoded.toUpperCase() === str.toUpperCase().replace(/=+$/, ""); // 去掉结尾的=
   } catch {
     // 如果解码失败，则不是有效的Base32格式
     return false;
