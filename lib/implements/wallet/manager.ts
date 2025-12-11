@@ -123,7 +123,7 @@ export class WalletManager {
         },
       };
       that
-        .sendMessageToIframe(message, 5000 * 10)
+        .sendMessageToIframe(message, 1000 * 50)
         .then((response) => {
           console.log("initConfig response", response);
           if (!response || !response.data || !response.data.data) {
