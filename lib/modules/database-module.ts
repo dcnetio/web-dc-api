@@ -73,13 +73,14 @@ export class DatabaseModule implements DCModule, IDatabaseOperations {
     if (this.context.dbManager) {
       return null; // 已经初始化过
     }
-      const tdatastore = await createTxnDatastore(this.context.appInfo?.appName);
-      const keyBook = await newKeyBook(tdatastore);
-      const addrBook = await newAddrBook(tdatastore);
-      const headBook = newHeadBook(tdatastore);
-      const threadMetadata = newThreadMetadata(tdatastore);
-      const logstore = newLogstore(keyBook, addrBook, headBook, threadMetadata);
-      const dagService = dagCbor(this.context.dcNodeClient);
+    let location =  this.context.appInfo?.appId || "default_app";
+    const tdatastore = await createTxnDatastore(location);
+    const keyBook = await newKeyBook(tdatastore);
+    const addrBook = await newAddrBook(tdatastore);
+    const headBook = newHeadBook(tdatastore);
+    const threadMetadata = newThreadMetadata(tdatastore);
+    const logstore = newLogstore(keyBook, addrBook, headBook, threadMetadata);
+    const dagService = dagCbor(this.context.dcNodeClient);
       
       if (!this.context.publicKey) {
         throw new Error("公钥未初始化");
