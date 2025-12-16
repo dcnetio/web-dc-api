@@ -265,7 +265,7 @@ export class AuthModule implements DCModule, IAuthOperations {
           }
           // 获取私钥
           const privKey = Ed25519PrivKey.unmarshalString(res[0]);
-          console.log("=================获取私钥 success");
+          this.context.publicKey = privKey.publicKey;
         }
         this.context.userInfo = {
           nftAccount, // NFT账号
@@ -343,17 +343,27 @@ export class AuthModule implements DCModule, IAuthOperations {
     }
   }
 
-  async decryptWithWallet(
+  async decrypt(
     payload: Uint8Array
   ): Promise<[Uint8Array | null, Error | null]> {
     try {
-      if (!this.walletManager) {
-        throw new Error("walletManager is null");
-      }
-      const signature = await this.walletManager.decrypt(payload);
+      const signature = await this.decryptWithWallet(payload);
       return [signature, null];
     } catch (error) {
       return [null, error as Error];
+    }
+  }
+  async decryptWithWallet(payload: Uint8Array): Promise<Uint8Array> {
+    if (!this.walletManager) {
+      throw new Error("walletManager is null");
+    } else {
+      if (!this.context.privateKey) {
+        // 登录过
+        const signature = await this.walletManager.decrypt(payload);
+        return signature;
+      }
+      const signature = this.context.privateKey?.decrypt(payload);
+      return signature;
     }
   }
 

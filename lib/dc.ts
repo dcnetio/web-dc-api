@@ -32,6 +32,7 @@ import {
 } from "./modules";
 import { Client } from "./common/dcapi";
 import { ICollectionConfig, IDBInfo } from "./implements/threaddb/core/core";
+import { KeyManager } from "./common/dc-key/keyManager";
 
 const logger = createLogger("DC");
 
@@ -46,7 +47,7 @@ export class DC implements DCContext {
   dcChain: ChainUtil;
   dcNodeClient!: HeliaLibp2p<Libp2p>;
   dcutil: DcUtil;
-  privateKey: Ed25519PrivKey | undefined;
+  privateKey: Ed25519PrivKey | undefined | null;
   publicKey: Ed25519PubKey | undefined;
   dbThreadId: string = ""; // 当前用户的去中心化数据库ID
   ethAddress: string = ""; // 以太坊格式的公钥,16进制字符串
@@ -269,7 +270,8 @@ export class DC implements DCContext {
   async initUserDB(
     collections: ICollectionConfig[],
     verno?: number, //版本编码,当版本编码变化时，需要重构表结构
-    reset?: boolean
+    reset?: boolean,
+    mnemonic?: string //助记词
   ): Promise<[IDBInfo | null, Error | null]> {
     const dbName = "user_threaddb";
     let userInfo: User | null = null;
@@ -277,6 +279,16 @@ export class DC implements DCContext {
       this.assertInitialized();
       if (!this.auth) {
         return [null, new Error("用户模块不存在")];
+      }
+      if (mnemonic) {
+        // 生成有效的应用子账号
+        const keymanager = new KeyManager();
+        const parPrivateKey = await keymanager.getEd25519KeyFromMnemonic(
+          mnemonic,
+          this.appInfo?.appId || ""
+        );
+        // 设置私钥 （后期清楚）
+        this.privateKey = parPrivateKey;
       }
       const [user, err] = await this.auth.refreshUserInfo();
       if (err) {
@@ -290,9 +302,7 @@ export class DC implements DCContext {
       if (!reset && userInfo && userInfo.dbConfig) {
         // 如果存在dbConfig，说明已经设置了应用数据库,进行解密
         try {
-          const [dbConfig, err] = await this.auth.decryptWithWallet(
-            userInfo.dbConfigRaw
-          );
+          const [dbConfig, err] = await this.auth.decrypt(userInfo.dbConfigRaw);
           if (err || !dbConfig) {
             console.error("解密dbConfig失败", err);
             return [null, err as unknown as Error];

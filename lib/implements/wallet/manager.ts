@@ -706,7 +706,7 @@ export class WalletManager {
         throw error;
       }
     } else {
-      console.error("iframe不存在");
+      console.log("iframe不存在");
     }
   }
   // 利用messageChannel通信
@@ -754,7 +754,7 @@ export class WalletManager {
         }
       });
     } else {
-      console.error("iframe不存在");
+      console.log("iframe不存在");
       return null;
     }
   }

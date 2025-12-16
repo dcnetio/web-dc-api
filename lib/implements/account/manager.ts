@@ -14,7 +14,6 @@ import {
 } from "../../common/dc-key/keyManager";
 import { SymmetricKey } from "../threaddb/common/key";
 import { peerIdFromString } from "@libp2p/peer-id";
-import { request } from "http";
 import { Client } from "../../common/dcapi";
 import { dc_protocol } from "../../common/define";
 
@@ -253,11 +252,11 @@ export class AccountManager {
         needEncryptStr = `mnemonic:${mnemonic}`;
       } else {
         if (!this.context.privateKey) {
-           return [null, NFTBindStatus.Error];
+          return [null, NFTBindStatus.Error];
         }
         needEncryptStr = `privatekey:${this.context.privateKey.string()}`;
       }
-      
+
       // 哈希账号
       const accountBytes = new TextEncoder().encode(account);
       const accountHash = await crypto.subtle.digest("SHA-256", accountBytes);
@@ -274,13 +273,13 @@ export class AccountManager {
       const keymanager = new KeyManager();
       let selfPrivkey: Ed25519PrivKey | null | undefined;
       if (isParent && mnemonic) {
-         selfPrivkey = await keymanager.getEd25519KeyFromMnemonic(mnemonic, "");
+        selfPrivkey = await keymanager.getEd25519KeyFromMnemonic(mnemonic, "");
       } else {
-         selfPrivkey = this.context.privateKey;
+        selfPrivkey = this.context.privateKey;
       }
-      
+
       if (!selfPrivkey) {
-         return [null, NFTBindStatus.Error];
+        return [null, NFTBindStatus.Error];
       }
       const selfPubkey = selfPrivkey.publicKey;
 
@@ -396,9 +395,9 @@ export class AccountManager {
 
       // 签名
       let signature: Uint8Array;
-      if(selfPrivkey != null){
+      if (selfPrivkey != null) {
         signature = selfPrivkey.sign(preSign);
-      }else {
+      } else {
         signature = await this.context.sign(preSign);
       }
       if (!signature) {
@@ -439,10 +438,9 @@ export class AccountManager {
       const accountBytes = new TextEncoder().encode(nftAccount);
       const accountHash = await sha256(accountBytes);
       const nftHexAccount = "0x" + Buffer.from(accountHash).toString("hex");
-      const walletAccount =
-        await (this.chainUtil.dcchainapi?.query as any).dcNode.nftToWalletAccount(
-          nftHexAccount
-        );
+      const walletAccount = await (
+        this.chainUtil.dcchainapi?.query as any
+      ).dcNode.nftToWalletAccount(nftHexAccount);
       // 比较公钥
       return (
         walletAccount.toString() ==
@@ -467,10 +465,9 @@ export class AccountManager {
       const accountBytes = new TextEncoder().encode(nftAccount);
       const accountHash = await sha256(accountBytes);
       const nftHexAccount = "0x" + Buffer.from(accountHash).toString("hex");
-      const walletAccount =
-        await (this.chainUtil.dcchainapi?.query as any).dcNode.nftToWalletAccount(
-          nftHexAccount
-        );
+      const walletAccount = await (
+        this.chainUtil.dcchainapi?.query as any
+      ).dcNode.nftToWalletAccount(nftHexAccount);
       if (!walletAccount.toString()) {
         return false;
       }
@@ -653,13 +650,13 @@ export class AccountManager {
     remark: string,
     vaccount?: string
   ): Promise<void> {
-    if(!this.context.publicKey){
+    if (!this.context.publicKey) {
       throw Errors.ErrAccountPublicKeyIsNull;
     }
-    if(!this.context.connectedDc.client){
+    if (!this.context.connectedDc.client) {
       throw Errors.ErrNoDcPeerConnected;
     }
-    if(!this.context.connectedDc.nodeAddr){
+    if (!this.context.connectedDc.nodeAddr) {
       throw Errors.ErrNodeAddrIsNull;
     }
     const dbinfo = threadId + "|" + rk + "|" + sk + "|" + remark;
@@ -734,7 +731,7 @@ export class AccountManager {
     if (err) {
       return err;
     }
-    
+
     if (!userInfo || !userInfo.peers || userInfo.peers.length === 0) {
       // 发起绑定让用户绑定到指定的节点
       // 如果是主账号或者没有助记词，无法进行绑定操作（因为绑定需要助记词）
@@ -742,16 +739,22 @@ export class AccountManager {
       // Go代码: dc.BindNFTAccount(account, password, seccode)
       // Go的 BindNFTAccount 实现里: if isParent && len(dc.Mnemonic) == 0 { return nil, StatusNoMnemonic }
       // 所以如果 isParent 为 false，它使用 private key。
-      
+
       // 修正：为了保持一致性，我应该重构 bindNFTAccount。
       // 但现在我先实现主要逻辑。
       if (!isParent && !this.context.privateKey) {
-          // 子账号尝试绑定，需要修改 bindNFTAccount 支持无 mnemonic
-          // 暂时返回错误
-          return new Error("Cannot bind account without mnemonic or private key");
+        // 子账号尝试绑定，需要修改 bindNFTAccount 支持无 mnemonic
+        // 暂时返回错误
+        return new Error("Cannot bind account without mnemonic or private key");
       }
-      
-      const [status, err] = await this.bindNFTAccount(account, password, seccode, isParent, mnemonic);
+
+      const [status, err] = await this.bindNFTAccount(
+        account,
+        password,
+        seccode,
+        isParent,
+        mnemonic
+      );
       if (err) {
         return err;
       }
@@ -764,81 +767,83 @@ export class AccountManager {
     // 遍历所有账号所在节点，尝试建立连接
     const peers = userInfo.peers;
     for (const peerIdStr of peers) {
-        try {
-            const peerId = peerIdFromString(peerIdStr);
-            // 连接节点
-            const connected = await this.dc.connectToPeer(peerIdStr);
-            if (!connected) {
-                continue;
-            }
-            
-            // 获取 client
-            const nodeAddr = await this.dc._getNodeAddr(peerIdStr);
-            if (!nodeAddr) {
-                continue;
-            }
-            
-            const client = new Client(
-                this.context.dcNodeClient.libp2p,
-                this.context.dcNodeClient.blockstore,
-                nodeAddr,
-                dc_protocol
-            );
-            
-            // 刷新 token
-            // identity logic from Go: identity := dc.Identity; if isParent { identity = dc.ParentIdentity }
-            // In TS, we use context.publicKey or derived key.
-            // refreshToken needs pubkey and sign callback.
-            
-            let pubkeyStr = "";
-            let signCallback: (payload: Uint8Array) => Promise<Uint8Array>;
-            
-            if (isParent && mnemonic) {
-                const keymanager = new KeyManager();
-                const privKey = await keymanager.getEd25519KeyFromMnemonic(mnemonic, "");
-                pubkeyStr = privKey.publicKey.string();
-                signCallback = async (payload) => privKey.sign(payload);
-            } else {
-                if (!this.context.publicKey) continue;
-                pubkeyStr = this.context.publicKey.string();
-                signCallback = async (payload) => this.context.sign(payload);
-            }
-            
-            await client.refreshToken(
-                this.context.appInfo.appId || "",
-                pubkeyStr,
-                signCallback
-            );
-            
-            // 生成请求
-            const [req, status] = await this.generateAccountDealRequest(
-                account,
-                password,
-                seccode,
-                peerId,
-                isParent,
-                mnemonic
-            );
-            
-            if (status !== NFTBindStatus.Success || !req) {
-                continue;
-            }
-            
-            // 发送请求
-            const accountClient = new AccountClient(client);
-            await accountClient.accountInfoModify(req);
-            
-            // 只要有一个成功就返回？Go代码是:
-            // for client := range connected { ... if err == nil { return } }
-            // 是的，只要成功一个就返回。
-            return null;
-            
-        } catch (e) {
-            console.error(`Failed to modify password on peer ${peerIdStr}:`, e);
-            continue;
+      try {
+        const peerId = peerIdFromString(peerIdStr);
+        // 连接节点
+        const connected = await this.dc.connectToPeer(peerIdStr);
+        if (!connected) {
+          continue;
         }
+
+        // 获取 client
+        const nodeAddr = await this.dc._getNodeAddr(peerIdStr);
+        if (!nodeAddr) {
+          continue;
+        }
+
+        const client = new Client(
+          this.context.dcNodeClient.libp2p,
+          this.context.dcNodeClient.blockstore,
+          nodeAddr,
+          dc_protocol
+        );
+
+        // 刷新 token
+        // identity logic from Go: identity := dc.Identity; if isParent { identity = dc.ParentIdentity }
+        // In TS, we use context.publicKey or derived key.
+        // refreshToken needs pubkey and sign callback.
+
+        let pubkeyStr = "";
+        let signCallback: (payload: Uint8Array) => Promise<Uint8Array>;
+
+        if (isParent && mnemonic) {
+          const keymanager = new KeyManager();
+          const privKey = await keymanager.getEd25519KeyFromMnemonic(
+            mnemonic,
+            ""
+          );
+          pubkeyStr = privKey.publicKey.string();
+          signCallback = async (payload) => privKey.sign(payload);
+        } else {
+          if (!this.context.publicKey) continue;
+          pubkeyStr = this.context.publicKey.string();
+          signCallback = async (payload) => this.context.sign(payload);
+        }
+
+        await client.refreshToken(
+          this.context.appInfo.appId || "",
+          pubkeyStr,
+          signCallback
+        );
+
+        // 生成请求
+        const [req, status] = await this.generateAccountDealRequest(
+          account,
+          password,
+          seccode,
+          peerId,
+          isParent,
+          mnemonic
+        );
+
+        if (status !== NFTBindStatus.Success || !req) {
+          continue;
+        }
+
+        // 发送请求
+        const accountClient = new AccountClient(client);
+        await accountClient.accountInfoModify(req);
+
+        // 只要有一个成功就返回？Go代码是:
+        // for client := range connected { ... if err == nil { return } }
+        // 是的，只要成功一个就返回。
+        return null;
+      } catch (e) {
+        console.error(`Failed to modify password on peer ${peerIdStr}:`, e);
+        continue;
+      }
     }
-    
+
     return new Error("Failed to modify password on any peer");
   }
 }

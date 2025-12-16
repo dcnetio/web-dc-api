@@ -47,9 +47,7 @@ export interface IAuthOperations {
    * @param payload 要解密的数据
    * @returns 解密结果
    */
-  decryptWithWallet(
-    payload: Uint8Array
-  ): Promise<[Uint8Array | null, Error | null]>;
+  decrypt(payload: Uint8Array): Promise<[Uint8Array | null, Error | null]>;
 
   /**
    * 将公钥绑定NFT账号
