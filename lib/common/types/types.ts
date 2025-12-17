@@ -48,9 +48,9 @@ export interface FileTransmit {
 export interface APPInfo {
   appId: string;
   appName: string;
-  appIcon: string;
-  appUrl: string;
-  appVersion: string;
+  appIcon?: string;
+  appUrl?: string;
+  appVersion?: string;
 }
 
 export interface ThemeObj {
