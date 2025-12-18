@@ -60,7 +60,6 @@ export class DC implements DCContext {
   public Blockheight: number = 0;
   public grpcServer!: DCGrpcServer;
   public appInfo: APPInfo;
-  public shouldReturnUserInfo: boolean = false;
   public accountInfo: AccountInfo; // 当前登录的账户信息
   public userInfo: Account | null = null;
   public dbManager: any;
@@ -246,10 +245,6 @@ export class DC implements DCContext {
 
   setAccountInfo(accountInfo: AccountInfo): void {
     this.accountInfo = accountInfo;
-  }
-
-  setShouldReturnUserInfo(shouldReturnUserInfo: boolean): void {
-    this.shouldReturnUserInfo = shouldReturnUserInfo;
   }
 
   /**
