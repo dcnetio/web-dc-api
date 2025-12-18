@@ -30,6 +30,7 @@ import { IAuthOperations } from "../interfaces/auth-interface";
 import { DCContext } from "../interfaces/DCContext";
 import { CommentManager } from "../implements/comment/manager";
 import { ChainError, Errors as ChainErrors } from "../common/chain";
+import { KeyManager } from "../common/dc-key/keyManager";
 
 const logger = createLogger("AuthModule");
 
@@ -101,82 +102,106 @@ export class AuthModule implements DCModule, IAuthOperations {
       const publicKey = new Ed25519PubKey(data.appAccount);
       this.context.publicKey = publicKey;
       this.context.ethAddress = data.ethAccount;
-      // 获取token
-      const token = await this.context.connectedDc?.client.GetToken(
-        this.context.appInfo.appId || "",
-        publicKey.string(),
-        (payload: Uint8Array): Promise<Uint8Array> => {
-          return this.signWithWallet(payload);
-        }
-      );
+      // 获取用户token
+      await this.getUserToken(publicKey.string());
+      // 登录后检查用户空间
+      await this.checkSpaceAfterLogin(publicKey.toString());
 
-      if (!token) {
-        throw new Error("GetToken error");
-      }
-      // 存在token， 获取用户备用节点
-      await this.getAccountBackupDc();
-      if (this.context.AccountBackupDc?.client) {
-        //备份节点存在,获取备份节点连接的token
-        // 获取账号备用节点token
-        await this.context.AccountBackupDc?.client.GetToken(
-          this.context.appInfo.appId || "",
-          publicKey.string(),
-          (payload: Uint8Array): Promise<Uint8Array> => {
-            return this.signWithWallet(payload);
-          }
-        );
-      }
-
-      // 给用户添加用户评论空间
-      const [userInfo, err] = await this.getUserInfoWithAccount(
-        "0x" + publicKey.toString()
-      );
-      if (err) {
-        throw err;
-      }
-      if (userInfo == null) {
-        throw Errors.USER_NOT_BIND_TO_PEER;
-      }
-      //获取用户已经使用的评论空间和操作次数
-      const commentManager = new CommentManager(this.context);
-      const [offchainUsedInfo, resErr] =
-        await commentManager.getUserOffChainUsedInfo();
-      if (resErr) {
-        throw resErr;
-      }
-      const leftSpace = offchainUsedInfo
-        ? userInfo.offchainSpace - Number(offchainUsedInfo.usedspace)
-        : userInfo.offchainSpace;
-      const leftOptimes = offchainUsedInfo
-        ? userInfo.offchainOptimes - Number(offchainUsedInfo.usedtimes)
-        : userInfo.offchainOptimes;
-      logger.info(
-        `用户线下评论空间剩余: ${leftSpace} / ${userInfo.offchainSpace}, 线下操作次数剩余: ${leftOptimes} / ${userInfo.offchainOptimes}`
-      );
-      if (
-        leftSpace < OffChainSpaceLimit ||
-        leftOptimes < OffChainOpTimesLimit
-      ) {
-        if (leftSpace < OffChainSpaceLimit) {
-          const [addOffChainBool, addOffChainError] =
-            await commentManager.addUserOffChainSpace();
-          if (addOffChainError || !addOffChainBool) {
-            throw addOffChainError || new Error("addUserOffChainSpace error");
-          }
-        }
-        if (leftOptimes < OffChainOpTimesLimit) {
-          const [addOffChainOpTimesBool, addOffChainOpTimesError] =
-            await commentManager.addUserOffChainOpTimes(OffChainOpTimes);
-          if (addOffChainOpTimesError || !addOffChainOpTimesBool) {
-            throw (
-              addOffChainOpTimesError || new Error("addUserOffChainSpace error")
-            );
-          }
-        }
-      }
+      // 定时维系token
+      this.startDcPeerTokenKeepValidTask();
       return data;
     } catch (error) {
       throw error;
+    }
+  }
+  async getToken(publicKeyBase32: string): Promise<[boolean, Error | null]> {
+    try {
+      this.getUserToken(publicKeyBase32);
+      return [true, null];
+    } catch (error) {
+      return [false, error];
+    }
+  }
+
+  private async getUserToken(
+    publicKeyBase32: string,
+    signCallback?: (payload: Uint8Array) => Promise<Uint8Array>
+  ): Promise<void> {
+    if (!this.context.connectedDc?.client) {
+      throw new Error("dcClient is null");
+    }
+
+    // 获取token
+    const token = await this.context.connectedDc?.client.GetToken(
+      this.context.appInfo.appId || "",
+      publicKeyBase32,
+      (payload: Uint8Array): Promise<Uint8Array> => {
+        return signCallback ? signCallback(payload) : this.signWith(payload);
+      }
+    );
+
+    if (!token) {
+      throw new Error("GetToken error");
+    }
+    // 存在token， 获取用户备用节点
+    await this.getAccountBackupDc();
+    if (this.context.AccountBackupDc?.client) {
+      //备份节点存在,获取备份节点连接的token
+      // 获取账号备用节点token
+      await this.context.AccountBackupDc?.client.GetToken(
+        this.context.appInfo.appId || "",
+        publicKeyBase32,
+        (payload: Uint8Array): Promise<Uint8Array> => {
+          return signCallback ? signCallback(payload) : this.signWith(payload);
+        }
+      );
+    }
+  }
+
+  private async checkSpaceAfterLogin(publicKeyHex: string): Promise<void> {
+    // 给用户添加用户评论空间
+    const [userInfo, err] = await this.getUserInfoWithAccount(
+      "0x" + publicKeyHex
+    );
+    if (err) {
+      throw err;
+    }
+    if (userInfo == null) {
+      throw Errors.USER_NOT_BIND_TO_PEER;
+    }
+    //获取用户已经使用的评论空间和操作次数
+    const commentManager = new CommentManager(this.context);
+    const [offchainUsedInfo, resErr] =
+      await commentManager.getUserOffChainUsedInfo();
+    if (resErr) {
+      throw resErr;
+    }
+    const leftSpace = offchainUsedInfo
+      ? userInfo.offchainSpace - Number(offchainUsedInfo.usedspace)
+      : userInfo.offchainSpace;
+    const leftOptimes = offchainUsedInfo
+      ? userInfo.offchainOptimes - Number(offchainUsedInfo.usedtimes)
+      : userInfo.offchainOptimes;
+    logger.info(
+      `用户线下评论空间剩余: ${leftSpace} / ${userInfo.offchainSpace}, 线下操作次数剩余: ${leftOptimes} / ${userInfo.offchainOptimes}`
+    );
+    if (leftSpace < OffChainSpaceLimit || leftOptimes < OffChainOpTimesLimit) {
+      if (leftSpace < OffChainSpaceLimit) {
+        const [addOffChainBool, addOffChainError] =
+          await commentManager.addUserOffChainSpace();
+        if (addOffChainError || !addOffChainBool) {
+          throw addOffChainError || new Error("addUserOffChainSpace error");
+        }
+      }
+      if (leftOptimes < OffChainOpTimesLimit) {
+        const [addOffChainOpTimesBool, addOffChainOpTimesError] =
+          await commentManager.addUserOffChainOpTimes(OffChainOpTimes);
+        if (addOffChainOpTimesError || !addOffChainOpTimesBool) {
+          throw (
+            addOffChainOpTimesError || new Error("addUserOffChainSpace error")
+          );
+        }
+      }
     }
   }
 
@@ -235,6 +260,8 @@ export class AuthModule implements DCModule, IAuthOperations {
         throw new Error("connect to user dc peer failed");
       }
       client = connectedClient;
+
+      this.context.AccountBackupDc.nodeAddr = client.peerAddr; // 当前地址
       this.context.AccountBackupDc.client = client;
       const commonClient = new CommonClient(client);
       const mnemonic = await commonClient.accountLogin(
@@ -264,12 +291,50 @@ export class AuthModule implements DCModule, IAuthOperations {
             throw res[1] || new Error("generateAppAccount error");
           }
           // 获取私钥
-          const privKey = Ed25519PrivKey.unmarshalString(res[0]);
-          this.context.publicKey = privKey.publicKey;
+          const keymanager = new KeyManager();
+          const privateKey = await keymanager.getEd25519KeyFromMnemonic(
+            mnemonic,
+            this.context.appInfo?.appId
+          );
+          const publicKey = privateKey.publicKey;
+          this.context.publicKey = publicKey;
+          const parentPrivateKey = await keymanager.getEd25519KeyFromMnemonic(
+            mnemonic,
+            ""
+          );
+          this.context.parentPublicKey = parentPrivateKey.publicKey;
+          // 获取token
+          await this.getUserToken(
+            this.context.publicKey.string(),
+            async (payload: Uint8Array) => {
+              return privateKey.sign(payload);
+            }
+          );
+        } else {
+          // 获取私钥
+          const keymanager = new KeyManager();
+          const privateKey = await keymanager.getEd25519KeyFromMnemonic(
+            mnemonic,
+            ""
+          );
+          const publicKey = privateKey.publicKey;
+          this.context.parentPublicKey = publicKey;
+          this.context.publicKey = publicKey;
+          // 获取token
+          await this.getUserToken(
+            this.context.publicKey.string(),
+            async (payload: Uint8Array) => {
+              return privateKey.sign(payload);
+            }
+          );
         }
+        if (!this.context.publicKey) {
+          throw new Error("publicKey is null after login");
+        }
+
         this.context.userInfo = {
           nftAccount, // NFT账号
-          appAccount: userPubkey.raw, // 应用专用账号公钥
+          appAccount: this.context.publicKey.raw, // 应用专用账号公钥
           ethAccount: "", // 以太坊兼容链上账号
           chainId: "", // 区块链ID
           chainName: "", // 区块链名称
@@ -320,23 +385,23 @@ export class AuthModule implements DCModule, IAuthOperations {
     }
   }
 
-  async signWithWallet(payload: Uint8Array): Promise<Uint8Array> {
+  async signWith(payload: Uint8Array): Promise<Uint8Array> {
     if (!this.walletManager) {
       throw new Error("walletManager is null");
     } else {
-      if (!this.context.privateKey) {
-        // 登录过
-        const signature = await this.walletManager.sign(payload);
+      if (this.context.privateKey) {
+        const signature = this.context.privateKey?.sign(payload) as Uint8Array;
         return signature;
       }
-      const signature = this.context.privateKey?.sign(payload) as Uint8Array;
+      // 钱包
+      const signature = await this.walletManager.sign(payload);
       return signature;
     }
   }
 
   async sign(payload: Uint8Array): Promise<[Uint8Array | null, Error | null]> {
     try {
-      const signature = await this.signWithWallet(payload);
+      const signature = await this.signWith(payload);
       return [signature, null];
     } catch (error) {
       return [null, error as Error];
@@ -347,22 +412,22 @@ export class AuthModule implements DCModule, IAuthOperations {
     payload: Uint8Array
   ): Promise<[Uint8Array | null, Error | null]> {
     try {
-      const signature = await this.decryptWithWallet(payload);
+      const signature = await this.decryptWith(payload);
       return [signature, null];
     } catch (error) {
       return [null, error as Error];
     }
   }
-  async decryptWithWallet(payload: Uint8Array): Promise<Uint8Array> {
+  async decryptWith(payload: Uint8Array): Promise<Uint8Array> {
     if (!this.walletManager) {
       throw new Error("walletManager is null");
     } else {
-      if (!this.context.privateKey) {
-        // 登录过
-        const signature = await this.walletManager.decrypt(payload);
+      if (this.context.privateKey) {
+        const signature = this.context.privateKey?.decrypt(payload);
         return signature;
       }
-      const signature = this.context.privateKey?.decrypt(payload);
+      // 登录过
+      const signature = await this.walletManager.decrypt(payload);
       return signature;
     }
   }

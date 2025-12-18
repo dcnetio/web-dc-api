@@ -124,6 +124,8 @@ export interface IAuthOperations {
     pubkeyAccount: string
   ): Promise<[User | null, Error | null]>;
 
+  getToken(publicKeyBase32: string): Promise<[boolean, Error | null]>;
+
   /**
    * 开启定时验证token线程
    */
