@@ -19,7 +19,7 @@ export interface User {
   offchainSpace: number; //链下允许总调用空间，当前会一直累加
   parentAccount: string; //父账号pubkey
   peers: Array<string>; //账号登录信息存储的节点ID列表
-  purchaseNumber: number; //购买次数
+  purchaseNumber: number; //购买高度
   requestPeers: Array<string>; //允许上传文件的节点ID列表,如果不在列表中则无法上传文件,需要先发起绑定请求
   spamFrozenStatus: number; //垃圾信息相关功能冻结状态
   spamReportAmount: number; //垃圾信息举报次数
