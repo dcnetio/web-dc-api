@@ -15,6 +15,11 @@
       "browser": "./dist/dc.min.js"
     }
   },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dcnetio/web-dc-api.git"
+  },
+  "homepage": "https://github.com/dcnetio/web-dc-api#readme",
   "files": [
     "dist"
   ],
