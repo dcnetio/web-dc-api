@@ -31,10 +31,6 @@ export class CommentClient {
     peerid: string,
     signature: Uint8Array
   ): Promise<boolean> {
-    console.log("AddUserOffChainSpace2 pubkey", pubkey);
-    console.log("AddUserOffChainSpace2 blockheight", blockheight);
-    console.log("AddUserOffChainSpace2 peerid", peerid);
-    console.log("AddUserOffChainSpace2 signature", signature);
     const message = new dcnet.pb.AddUserOffChainSpaceRequest({});
     message.userPubkey = new TextEncoder().encode(pubkey);
     message.blockheight = blockheight;
@@ -55,9 +51,7 @@ export class CommentClient {
         messageBytes,
         30000
       );
-      console.log("AddUserOffChainSpace2 reply", reply);
       const decoded = dcnet.pb.AddUserOffChainSpaceReply.decode(reply);
-      console.log("AddUserOffChainSpace2 decoded", decoded);
       return true;
     } catch (error: any) {
       if (error.message.indexOf(Errors.INVALID_TOKEN.message) != -1) {
@@ -83,9 +77,7 @@ export class CommentClient {
           messageBytes,
           30000
         );
-        console.log("AddUserOffChainSpace2 reply", reply);
         const decoded = dcnet.pb.AddUserOffChainSpaceReply.decode(reply);
-        console.log("AddUserOffChainSpace2 decoded", decoded);
         return true;
       }
       console.error("AddUserOffChainSpace error:", error);
@@ -139,7 +131,6 @@ export class CommentClient {
           30000
         );
         const decoded = dcnet.pb.GetUserOffChainUsedInfoReply.decode(reply);
-        console.log("GetUserOffChainUsedInfo decoded", decoded);
         return decoded;
       }
       throw error;
@@ -204,7 +195,6 @@ export class CommentClient {
           30000
         );
         const decoded = dcnet.pb.AddUserOffChainOpTimesReply.decode(reply);
-        console.log("AddUserOffChainSpace2 decoded", decoded);
         return true;
       }
       throw error;
@@ -241,9 +231,7 @@ export class CommentClient {
         messageBytes,
         30000
       );
-      console.log("AddThemeObj reply", reply);
       const decoded = dcnet.pb.AddThemeObjReply.decode(reply);
-      console.log("AddThemeObj decoded", decoded);
       return decoded.flag;
     } catch (error: any) {
       if (error.message.indexOf(Errors.INVALID_TOKEN.message) != -1) {
@@ -269,9 +257,7 @@ export class CommentClient {
           messageBytes,
           30000
         );
-        console.log("AddThemeObj reply", reply);
         const decoded = dcnet.pb.AddThemeObjReply.decode(reply);
-        console.log("AddThemeObj decoded", decoded);
         return decoded.flag;
       }
       console.error("AddThemeObj error:", error);
@@ -306,9 +292,7 @@ export class CommentClient {
         messageBytes,
         30000
       );
-      console.log("DeleteThemeObj reply", reply);
       const decoded = dcnet.pb.DeleteThemeObjReply.decode(reply);
-      console.log("DeleteThemeObj decoded", decoded);
       return decoded.flag;
     } catch (error: any) {
       if (error.message.indexOf(Errors.INVALID_TOKEN.message) != -1) {

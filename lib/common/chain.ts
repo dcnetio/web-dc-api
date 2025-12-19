@@ -192,7 +192,6 @@ export class ChainUtil {
 
   // 获取用户钱包信息
   async getUserInfoWithNft(nftAccount: string): Promise<User | null> {
-    console.log("=========nftAccount", nftAccount);
     const accountBytes = new TextEncoder().encode(nftAccount);
     const accountHash = await sha256(accountBytes);
 
@@ -319,10 +318,6 @@ export class ChainUtil {
       this.dcchainapi?.query as any
     ).dcNode.onlineNodesAddress();
     const peerListJson = peerList?.toJSON();
-    console.log(
-      "peerListJson================================================",
-      peerListJson
-    );
     if (!peerListJson || typeof peerListJson !== "object") {
       console.error("no peer list found");
       return [];
@@ -337,7 +332,6 @@ export class ChainUtil {
         }
       }
     }
-    console.log("peers", peers);
     return peers;
   };
 

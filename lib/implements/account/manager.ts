@@ -66,7 +66,6 @@ export class AccountManager {
     if (peerAddrs && peerAddrs.length > 0) {
       // 连接备用节点
       const nodeAddr = await this.dc?._connectPeers(peerAddrs);
-      console.log("_connectNodeAddrs nodeAddr:", nodeAddr);
       if (nodeAddr) {
         return [nodeAddr, null];
       }
@@ -87,7 +86,6 @@ export class AccountManager {
     }
     // 从链上获取
     const userInfo = await this.chainUtil.getUserInfoWithNft(nftAccount);
-    console.log("userInfo reply:", userInfo);
     return [userInfo, null];
   };
   bindAccessPeerToUser = async (
@@ -118,7 +116,6 @@ export class AccountManager {
       blockHeight ? blockHeight : 0,
       peerId.toString()
     );
-    console.log("bindAccessPeerToUser bindResult:", bindResult);
     return [true, null];
   };
 
@@ -376,11 +373,6 @@ export class AccountManager {
           hvalue.length +
           serverPidBytes.length
       );
-      console.log("accountHashArray:", accountHashArray);
-      console.log("accountEncrypt:", accountEncrypt);
-      console.log("prikeyencryptHash:", prikeyencryptHash);
-      console.log("hvalue:", hvalue);
-      console.log("serverPidBytes:", serverPidBytes);
 
       let offset = 0;
       preSign.set(accountHashArray, offset);
