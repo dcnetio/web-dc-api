@@ -34,7 +34,7 @@ export class CommonClient {
   async accountLogin(
     nftAccount: string,
     password: string,
-    safecode: string,
+    safecode: string
   ): Promise<string> {
     //登录
     const prikey = await this._accountDoLogin(
@@ -47,8 +47,8 @@ export class CommonClient {
     if (prikey.startsWith("mnemonic:")) {
       mnemonic = prikey.slice(9);
       return mnemonic;
-    } 
-    return '';
+    }
+    return "";
   }
 
   async _accountDoLogin(
@@ -69,7 +69,6 @@ export class CommonClient {
     const tempEdPubkey = Ed25519PubKey.formEd25519PublicKey(publicKey);
     //multiaddr 中提取peerid
     const peerId = await extractPeerIdFromMultiaddr(peerAddr);
-    console.log("peerId:", peerId.toString());
     // 获取当前节点的peerID,并且获取节点的公钥
     const localPubkeyBytes = this.client.p2pNode.peerId.publicKey;
     const req = await generateAccountLoginRequestWithPeerId(

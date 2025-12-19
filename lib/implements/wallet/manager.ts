@@ -54,7 +54,6 @@ export class WalletManager {
       return new Promise(async (resolve, reject) => {
         // html添加iframe标签，id是dcWalletIframe
         const startTime = Date.now();
-        console.log("debug================获取iframe", startTime);
         let iframe = document.getElementById(
           this.iframeId
         ) as HTMLIFrameElement;
@@ -75,16 +74,7 @@ export class WalletManager {
         if (!iframeLoaded) {
           iframe.onload = async () => {
             iframe.style.display = "none";
-            console.log(
-              "debug================init walletManager",
-              Date.now() - startTime
-            );
             const bool = await this.initConfig(this);
-            console.log(
-              "debug================init walletManager iframejs bool111",
-              bool,
-              Date.now() - startTime
-            );
             if (bool) {
               this.iframeLoaded = true;
             }
@@ -94,11 +84,6 @@ export class WalletManager {
           document.body.appendChild(iframe);
         } else {
           const bool = await this.initConfig(this);
-          console.log(
-            "debug================init walletManager iframejs bool222",
-            bool,
-            Date.now() - startTime
-          );
           if (bool) {
             this.iframeLoaded = true;
           }
@@ -125,7 +110,6 @@ export class WalletManager {
       that
         .sendMessageToIframe(message, 1000 * 50)
         .then((response) => {
-          console.log("initConfig response", response);
           if (!response || !response.data || !response.data.data) {
             console.error("initConfig response is null");
             resolve(false);
@@ -257,9 +241,7 @@ export class WalletManager {
 
   // 打开钱包iframe窗口
   async openWalletIframe(): Promise<boolean> {
-    console.log("debug================openWalletIframe", new Date());
     return new Promise((resolve, reject) => {
-      console.log("debug================获取钱包iframe", new Date());
       const walletIframe = document.getElementById(
         this.walletIframeId
       ) as HTMLIFrameElement;
@@ -342,7 +324,6 @@ export class WalletManager {
         const urlWithOrigin = walletUrl + "?origin=" + appOrigin;
         this.walletWindow = window.open(urlWithOrigin, walletWindowName);
       }
-      console.log("debug================initCommChannel", new Date());
       const shouldReturnUserInfo =
         typeof globalThis !== "undefined" &&
         typeof (globalThis as any).shouldReturnUserInfo !== "undefined"
@@ -359,11 +340,8 @@ export class WalletManager {
           attach: "", // 附加参数，以后可以用来传递一些参数
         },
       };
-      console.log("debug================sendMessageToIframe", new Date());
       this.sendMessageToIframe(message, 600000)
         .then((response) => {
-          console.log("debug================response", new Date());
-          console.log("openConnect response", response);
           if (!response || !response.data || !response.data.data) {
             console.error("openConnect response is null");
             reject(new WalletError("openConnect response is null"));
@@ -376,7 +354,6 @@ export class WalletManager {
             reject(new WalletError("openConnect appAccount is null"));
             return;
           }
-          console.log("openConnect success", messageData);
           resolve(messageData);
         })
         .catch((error) => {
@@ -434,7 +411,6 @@ export class WalletManager {
       };
       this.sendMessageToIframe(message, 60000)
         .then((response) => {
-          console.log("decrypt response", response);
           if (!response || !response.data || !response.data.data) {
             console.error("decrypt response is null");
             reject(new WalletError("decrypt response is null"));
@@ -447,7 +423,6 @@ export class WalletManager {
             reject(new WalletError("decrypt messageData is null"));
             return;
           }
-          console.log("decrypt success", messageData);
           resolve(messageData);
         })
         .catch((error) => {
@@ -530,7 +505,6 @@ export class WalletManager {
       };
       this.sendMessageToIframe(message, 60000)
         .then((response: MessageEvent | null) => {
-          console.log("signMessage response", response);
           if (!response || !response.data || !response.data.data) {
             console.error("signMessage response is null");
             reject(new WalletError("signMessage response is null"));
@@ -543,7 +517,6 @@ export class WalletManager {
             reject(new WalletError("signMessage messageData is null"));
             return;
           }
-          console.log("signMessage success", messageData);
           resolve(messageData);
         })
         .catch((error) => {
@@ -593,7 +566,6 @@ export class WalletManager {
       };
       this.sendMessageToIframe(message, 60000)
         .then((response) => {
-          console.log("signEIP712Message response", response);
           if (!response || !response.data || !response.data.data) {
             console.error("signEIP712Message response is null");
             reject(new WalletError("signEIP712Message response is null"));
@@ -606,7 +578,6 @@ export class WalletManager {
             reject(new WalletError("signEIP712Message messageData is null"));
             return;
           }
-          console.log("messageData success", messageData);
           resolve(messageData);
         })
         .catch((error) => {
@@ -627,17 +598,12 @@ export class WalletManager {
         return;
       }
       if (message.type === "walletLoaded") {
-        console.log("debug================walletLoaded", new Date());
-        console.log("walletLoaded", message);
-        console.log("event.origin", event.origin);
-        console.log("walletOrigin", walletOrigin);
         //钱包加载完成
         if (event.origin !== walletOrigin) {
           console.log("来源不匹配", event.origin, walletOrigin);
           return;
         }
         // 钱包打开成功
-        console.log("钱包打开成功", message.data);
         if (this.channelPort2) {
           //port2转移给钱包
           const message = {
