@@ -154,7 +154,6 @@ export class DcUtil {
       return null;
     }
     const nodeAddr = await this._connectPeers(peerAddrs);
-    console.log("_connectNodeAddrs nodeAddr:", nodeAddr);
     if (!nodeAddr) {
       return null;
     }
@@ -186,7 +185,6 @@ export class DcUtil {
             return null;
           }
           const nodeAddr = await this._connectPeers([item]);
-          console.log("_connectNodeAddrs nodeAddr:", nodeAddr);
           if (!nodeAddr) {
             return null;
           }
@@ -215,7 +213,6 @@ export class DcUtil {
 
       async function dialNodeAddr(i: number) {
         if (!peers[i]) {
-          console.log("nodeAddr return");
           num++;
           if (num >= len) {
             reslove(null);
@@ -230,8 +227,6 @@ export class DcUtil {
             const res = await _this.dcNodeClient.libp2p.dial(nodeAddr, {
               signal: AbortSignal.timeout(dial_timeout),
             });
-            console.log("nodeAddr try return");
-            console.log(res);
             if (res) {
               reslove(nodeAddr);
               return;
@@ -258,7 +253,6 @@ export class DcUtil {
   };
 
   _createHeliaNode = async (): Promise<HeliaLibp2p<Libp2p>> => {
-    console.log("_createHeliaNode=======");
     const datastore = new IDBDatastore("helia-meta");
     await datastore.open();
     const blockstore = new IDBBlockstore("helia-blocks");

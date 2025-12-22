@@ -1,6 +1,6 @@
 {
   "name": "web-dc-api",
-  "version": "0.1.19",
+  "version": "0.1.21",
   "description": "web相关的dcapi",
   "type": "module",
   "browser": "dist/dc.min.js",
@@ -15,6 +15,11 @@
       "browser": "./dist/dc.min.js"
     }
   },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dcnetio/web-dc-api.git"
+  },
+  "homepage": "https://github.com/dcnetio/web-dc-api#readme",
   "files": [
     "dist"
   ],

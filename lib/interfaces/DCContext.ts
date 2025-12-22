@@ -1,6 +1,10 @@
-
 import { Ed25519PrivKey, Ed25519PubKey } from "../common/dc-key/ed25519";
-import type { DCConnectInfo, APPInfo, AccountInfo, Account } from "../common/types/types";
+import type {
+  DCConnectInfo,
+  APPInfo,
+  AccountInfo,
+  Account,
+} from "../common/types/types";
 import type { HeliaLibp2p } from "helia";
 import { Libp2p } from "@libp2p/interface";
 import { ChainUtil } from "../common/chain";
@@ -19,15 +23,15 @@ export interface DCContext {
   dcutil: DcUtil;
 
   swInited: boolean;
-  
+
   // 连接信息
   connectedDc: DCConnectInfo;
   // 账号信息备份连接信息
   AccountBackupDc: DCConnectInfo;
-  
+
   // 应用信息
   appInfo: APPInfo;
-  
+
   // 当前登录的账户信息
   accountInfo: AccountInfo;
   // 当前登录的用户信息
@@ -35,17 +39,21 @@ export interface DCContext {
 
   // 数据库管理器
   dbManager?: DBManager;
-  
+
   // 身份相关
   publicKey: Ed25519PubKey | undefined;
   privateKey: Ed25519PrivKey | undefined | null;
+
+  // 父账号公钥
+  parentPublicKey: Ed25519PubKey | undefined | null;
+
   // 以太坊格式的公钥,16进制字符串
   ethAddress: string | undefined;
 
   grpcServer: DCGrpcServer;
-  
+
   // 核心功能
-  sign(payload: Uint8Array): Promise<Uint8Array> ;
+  sign(payload: Uint8Array): Promise<Uint8Array>;
   getPubkeyRaw(): Uint8Array;
   getPublicKey(): Ed25519PubKey;
 }

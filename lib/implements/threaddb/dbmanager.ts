@@ -18,7 +18,6 @@ import { StoreunitInfo } from "../../common/chain";
 import {
   createTransformedDatastore,
   PrefixTransform,
-  TransformedDatastore,
 } from "./common/transformed-datastore";
 import {
   NewOptions,
@@ -89,8 +88,6 @@ export class DBManager {
   public chainUtil: ChainUtil;
   private storagePrefix: string;
   private context: DCContext;
-  private refreshDBFromDCFinished: boolean; // 从DC节点获取的是否完成
-  private syncDBToDCFinished: boolean; // 同步到DC节点的是否完成
 
   constructor(
     store: TxnDatastoreExtended, //实际上是一个LevelDatastore实例,用levelDatastoreAdapter包装
@@ -1390,12 +1387,6 @@ export class DBManager {
       return null;
     } catch (error) {
       return error as Error;
-    } finally {
-      this.refreshDBFromDCFinished = true;
-      if (this.syncDBToDCFinished) {
-        // 同步都完成，则去掉私钥
-        this.context.privateKey = null;
-      }
     }
   }
 
@@ -1409,12 +1400,6 @@ export class DBManager {
       return null;
     } catch (error) {
       return error as Error;
-    } finally {
-      this.syncDBToDCFinished = true;
-      if (this.refreshDBFromDCFinished) {
-        // 同步都完成，则去掉私钥
-        this.context.privateKey = null;
-      }
     }
   }
 

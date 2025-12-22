@@ -22,7 +22,7 @@ export class DCGrpcClient {
   async GetToken(
     appId: string,
     pubkey: string,
-    signCallback: (payload: Uint8Array) => Promise<Uint8Array> ,
+    signCallback: (payload: Uint8Array) => Promise<Uint8Array>
   ): Promise<string> {
     let token: string = "";
     try {
@@ -51,17 +51,16 @@ export class DCGrpcClient {
       };
       // 使用方法
       const dataSourceCallback = (): AsyncIterable<Uint8Array> => {
-        console.log("dataSourceCallback");
         return signatureDataSource.getDataSource();
       };
       const onEndCallback = async () => {
         signatureDataSource.close();
-      }
+      };
       const onErrorCallback = async (err: unknown) => {
         console.log("onErrorCallback", err);
         error = err instanceof Error ? err : new Error(String(err));
         signatureDataSource.close();
-      }
+      };
       await this.grpcClient.Call(
         "/dcnet.pb.Service/GetToken",
         messageBytes,
@@ -72,7 +71,7 @@ export class DCGrpcClient {
         onEndCallback,
         onErrorCallback
       );
-      if(error){
+      if (error) {
         throw error;
       }
       this.token = token;
@@ -86,8 +85,7 @@ export class DCGrpcClient {
   async ValidToken(): Promise<boolean> {
     try {
       const message = new dcnet.pb.ValidTokenRequest({});
-      const messageBytes =
-        dcnet.pb.ValidTokenRequest.encode(message).finish();
+      const messageBytes = dcnet.pb.ValidTokenRequest.encode(message).finish();
       const responseData = await this.grpcClient.unaryCall(
         "/dcnet.pb.Service/ValidToken",
         messageBytes,
@@ -99,6 +97,4 @@ export class DCGrpcClient {
       throw err;
     }
   }
-
-
 }

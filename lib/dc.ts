@@ -49,6 +49,7 @@ export class DC implements DCContext {
   dcutil: DcUtil;
   privateKey: Ed25519PrivKey | undefined | null;
   publicKey: Ed25519PubKey | undefined;
+  parentPublicKey: Ed25519PubKey | undefined | null; // 应用私钥
   dbThreadId: string = ""; // 当前用户的去中心化数据库ID
   ethAddress: string = ""; // 以太坊格式的公钥,16进制字符串
 
@@ -59,7 +60,6 @@ export class DC implements DCContext {
   public Blockheight: number = 0;
   public grpcServer!: DCGrpcServer;
   public appInfo: APPInfo;
-  public shouldReturnUserInfo: boolean = false;
   public accountInfo: AccountInfo; // 当前登录的账户信息
   public userInfo: Account | null = null;
   public dbManager: any;
@@ -223,16 +223,6 @@ export class DC implements DCContext {
           const pubKey = this.privateKey.publicKey;
           this.publicKey = pubKey;
 
-          // 定时维系token
-          if (this.auth) {
-            // 判断是否是钱包连接
-            const appOrigin =
-              typeof window !== "undefined" ? window.location.origin : ""; //"http://localhost:3002"
-            if (appOrigin.indexOf(walletOrigin) === -1) {
-              this.auth.startDcPeerTokenKeepValidTask();
-            }
-          }
-
           backStep && (await backStep(4));
           return true;
         } catch (error) {
@@ -257,10 +247,6 @@ export class DC implements DCContext {
     this.accountInfo = accountInfo;
   }
 
-  setShouldReturnUserInfo(shouldReturnUserInfo: boolean): void {
-    this.shouldReturnUserInfo = shouldReturnUserInfo;
-  }
-
   /**
    * 获取当前用户的去中心数据库信息,如果用户数据库不存在,则会自动创建
    * @param collections 集合配置数组，定义数据库中的集合结构
@@ -270,8 +256,7 @@ export class DC implements DCContext {
   async initUserDB(
     collections: ICollectionConfig[],
     verno?: number, //版本编码,当版本编码变化时，需要重构表结构
-    reset?: boolean,
-    mnemonic?: string //助记词
+    reset?: boolean
   ): Promise<[IDBInfo | null, Error | null]> {
     const dbName = "user_threaddb";
     let userInfo: User | null = null;
@@ -279,16 +264,6 @@ export class DC implements DCContext {
       this.assertInitialized();
       if (!this.auth) {
         return [null, new Error("用户模块不存在")];
-      }
-      if (mnemonic) {
-        // 生成有效的应用子账号
-        const keymanager = new KeyManager();
-        const parPrivateKey = await keymanager.getEd25519KeyFromMnemonic(
-          mnemonic,
-          this.appInfo?.appId || ""
-        );
-        // 设置私钥 （后期清楚）
-        this.privateKey = parPrivateKey;
       }
       const [user, err] = await this.auth.refreshUserInfo();
       if (err) {
@@ -531,22 +506,23 @@ export class DC implements DCContext {
     if (!this.auth) {
       return new Uint8Array();
     }
-    const signature = this.auth.signWithWallet(payload);
+    const signature = this.auth.signWith(payload);
     return signature;
   };
 
   setPublicKey(publicKey: Ed25519PubKey) {
     this.publicKey = publicKey;
   }
+
   /**
    * 获取公钥
    * @returns 公钥对象
    */
   getPublicKey(): Ed25519PubKey {
-    if (!this.publicKey) {
-      throw new Error("公钥未初始化");
+    if (this.publicKey) {
+      return this.publicKey;
     }
-    return this.publicKey;
+    throw new Error("公钥未初始化");
   }
 
   /**
@@ -554,12 +530,18 @@ export class DC implements DCContext {
    * @returns 原始公钥字节数据
    */
   getPubkeyRaw(): Uint8Array {
-    if (!this.publicKey) {
-      throw new Error("公钥未初始化");
+    if (this.publicKey) {
+      return this.publicKey.raw;
     }
-    return this.publicKey.raw;
+    throw new Error("公钥未初始化");
   }
 
+  setParentPublicKey(parentPublicKey: Ed25519PubKey) {
+    this.parentPublicKey = parentPublicKey;
+  }
+  setPrivateKey(appPrivateKey: Ed25519PrivKey | null) {
+    this.privateKey = appPrivateKey;
+  }
   /**
    * 创建DC客户端
    * @param nodeAddr 节点地址
