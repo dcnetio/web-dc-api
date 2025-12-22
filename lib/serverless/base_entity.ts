@@ -12,7 +12,7 @@ export abstract class BaseEntity {
   // 可重写以自定义主键策略
   protected getPrimaryKey(): string {
     const anySelf = this as any;
-    const id = anySelf.id ?? anySelf.key ?? anySelf.pk;
+    const id = anySelf.id ?? anySelf._id  ?? anySelf.key ?? anySelf.pk;
 
     // 仅判 null/undefined，为 0 的数字是合法主键
     if (id === null || id === undefined) {
