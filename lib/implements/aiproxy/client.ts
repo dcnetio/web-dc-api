@@ -45,7 +45,6 @@ export class AIProxyClient {
         messageBytes,
         30000
       );
-      console.log("GetAIProxyConfig reply", reply);
       const decoded = dcnet.pb.GetAIProxyConfigReply.decode(reply);
       if (decoded.flag != 0) {
         throw new Error(Errors.INVALID_TOKEN.message + " flag:" + decoded.flag);
@@ -77,9 +76,7 @@ export class AIProxyClient {
           messageBytes,
           30000
         );
-        console.log("GetAIProxyConfig reply", reply);
         const decoded = dcnet.pb.GetAIProxyConfigReply.decode(reply);
-        console.log("GetAIProxyConfig decoded", decoded);
         if (decoded.flag != 0) {
           throw new Error(
             Errors.INVALID_TOKEN.message + " flag:" + decoded.flag
@@ -117,7 +114,6 @@ export class AIProxyClient {
         messageBytes,
         30000
       );
-      console.log("GetUserOwnAIProxyAuth reply", reply);
       const decoded = dcnet.pb.GetUserOwnAIProxyAuthReply.decode(reply);
       if (decoded.flag != 0) {
         throw new Error(Errors.INVALID_TOKEN.message + " flag:" + decoded.flag);
@@ -148,9 +144,7 @@ export class AIProxyClient {
           messageBytes,
           30000
         );
-        console.log("GetUserOwnAIProxyAuth reply", reply);
         const decoded = dcnet.pb.GetUserOwnAIProxyAuthReply.decode(reply);
-        console.log("GetUserOwnAIProxyAuth decoded", decoded);
         if (decoded.flag != 0) {
           return [
             "",
@@ -258,7 +252,6 @@ export class AIProxyClient {
         if (decodedPayload.flag == AIStreamResponseFlag.CONNECTION_CLOSED) {
           isCompleted = true; // 如果不是流式响应，标记为完成
           clearTimeoutTimer();
-          console.log("*********** CONNECTION_CLOSED ***********222");
         }
         if (onStreamResponse) {
           onStreamResponse(

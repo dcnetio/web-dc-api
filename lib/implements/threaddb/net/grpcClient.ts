@@ -600,6 +600,62 @@ private sortRecordsChain(records: IRecord[]): IRecord[] {
       }
     }
 
+    async addThreadSpace(tid: ThreadID, space: number, opts: NewThreadOptions): Promise<void> {
+      try {
+        const message = new dcnet_proto.pb.AddThreadSpaceRequest({});
+        message.threadID = new TextEncoder().encode(tid.toString());
+        message.blockheight = opts.blockHeight;
+        message.space = space;
+        message.signature = opts.signature;
+        if (opts.vaccount) {
+          message.vaccount = opts.vaccount.bytes();
+        }
+        
+        const messageBytes = dcnet_proto.pb.AddThreadSpaceRequest.encode(message).finish();
+        
+        await this.grpcClient.unaryCall(
+          "/dcnet.pb.Service/AddThreadSpace",
+          messageBytes,
+          30000
+        );
+      } catch (err) {
+        console.error("AddThreadSpace error:", err);
+        throw err;
+      }
+    }
+
+    async getThreadUsedSpace(tid: ThreadID): Promise<number> {
+      try {
+        // Generate random number for request
+        const randnum = Math.floor(Math.random() * Number.MAX_SAFE_INTEGER);
+
+        const message = new dcnet_proto.pb.GetThreadUsedSpaceRequest({});
+        message.threadID = new TextEncoder().encode(tid.toString());
+        message.randnum = randnum;
+
+        const messageBytes = dcnet_proto.pb.GetThreadUsedSpaceRequest.encode(message).finish();
+
+        const response = await this.grpcClient.unaryCall(
+          "/dcnet.pb.Service/GetThreadUsedSpace",
+          messageBytes,
+          30000
+        );
+
+        const reply = dcnet_proto.pb.GetThreadUsedSpaceReply.decode(response);
+        
+        // Return used size as number
+        // Note: proto uint64 is decoded as number or Long, need to convert to number
+        const usedSize = typeof reply.usedsize === 'number' 
+          ? reply.usedsize 
+          : Number(reply.usedsize);
+
+        return usedSize;
+      } catch (err) {
+        console.error("GetThreadUsedSpace error:", err);
+        throw err;
+      }
+    }
+
 }
 function protocols (proto: number | string): Protocol {
   const codec = registry.getProtocol(proto)

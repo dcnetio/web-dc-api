@@ -13,12 +13,12 @@ import { Libp2p } from "@libp2p/interface";
 export class CommentClient {
   client: Client;
   dcNodeClient: HeliaLibp2p<Libp2p>;
-  context:DCContext
+  context: DCContext;
 
   constructor(
     dcClient: Client,
     dcNodeClient: HeliaLibp2p<Libp2p>,
-    context:DCContext
+    context: DCContext
   ) {
     this.client = dcClient;
     this.dcNodeClient = dcNodeClient;
@@ -31,10 +31,6 @@ export class CommentClient {
     peerid: string,
     signature: Uint8Array
   ): Promise<boolean> {
-    console.log("AddUserOffChainSpace2 pubkey", pubkey);
-    console.log("AddUserOffChainSpace2 blockheight", blockheight);
-    console.log("AddUserOffChainSpace2 peerid", peerid);
-    console.log("AddUserOffChainSpace2 signature", signature);
     const message = new dcnet.pb.AddUserOffChainSpaceRequest({});
     message.userPubkey = new TextEncoder().encode(pubkey);
     message.blockheight = blockheight;
@@ -55,9 +51,7 @@ export class CommentClient {
         messageBytes,
         30000
       );
-      console.log("AddUserOffChainSpace2 reply", reply);
       const decoded = dcnet.pb.AddUserOffChainSpaceReply.decode(reply);
-      console.log("AddUserOffChainSpace2 decoded", decoded);
       return true;
     } catch (error: any) {
       if (error.message.indexOf(Errors.INVALID_TOKEN.message) != -1) {
@@ -83,16 +77,13 @@ export class CommentClient {
           messageBytes,
           30000
         );
-        console.log("AddUserOffChainSpace2 reply", reply);
         const decoded = dcnet.pb.AddUserOffChainSpaceReply.decode(reply);
-        console.log("AddUserOffChainSpace2 decoded", decoded);
         return true;
       }
       console.error("AddUserOffChainSpace error:", error);
       throw error;
     }
   }
-
 
   async getUserOffChainUsedInfo(
     vaccount: string = ""
@@ -116,36 +107,34 @@ export class CommentClient {
       const decoded = dcnet.pb.GetUserOffChainUsedInfoReply.decode(reply);
       return decoded;
     } catch (error: any) {
-        if (error.message.indexOf(Errors.INVALID_TOKEN.message) != -1) {
-          // try to get token
-          const token = await this.client.GetToken(
-            this.context.appInfo.appId || "",
-            this.context.getPublicKey().string(),
-            (payload: Uint8Array): Promise<Uint8Array> => {
-              return this.context.sign(payload);
-            }
-          );
-          if (!token) {
-            throw new Error(Errors.INVALID_TOKEN.message);
+      if (error.message.indexOf(Errors.INVALID_TOKEN.message) != -1) {
+        // try to get token
+        const token = await this.client.GetToken(
+          this.context.appInfo.appId || "",
+          this.context.getPublicKey().string(),
+          (payload: Uint8Array): Promise<Uint8Array> => {
+            return this.context.sign(payload);
           }
-          const grpcClient = new Libp2pGrpcClient(
-            this.client.p2pNode,
-            this.client.peerAddr,
-            this.client.token,
-            this.client.protocol
-          );
-          const reply = await grpcClient.unaryCall(
-            "/dcnet.pb.Service/GetUserOffChainUsedInfo",
-            messageBytes,
-            30000
-          );
-          const decoded = dcnet.pb.GetUserOffChainUsedInfoReply.decode(reply);
-          console.log("GetUserOffChainUsedInfo decoded", decoded);
-          return decoded;
+        );
+        if (!token) {
+          throw new Error(Errors.INVALID_TOKEN.message);
         }
-        throw error;
+        const grpcClient = new Libp2pGrpcClient(
+          this.client.p2pNode,
+          this.client.peerAddr,
+          this.client.token,
+          this.client.protocol
+        );
+        const reply = await grpcClient.unaryCall(
+          "/dcnet.pb.Service/GetUserOffChainUsedInfo",
+          messageBytes,
+          30000
+        );
+        const decoded = dcnet.pb.GetUserOffChainUsedInfoReply.decode(reply);
+        return decoded;
       }
-    
+      throw error;
+    }
   }
 
   async addUserOffChainOpTimes(
@@ -157,7 +146,7 @@ export class CommentClient {
     vaccount: string
   ): Promise<boolean> {
     const message = new dcnet.pb.AddUserOffChainOpTimesRequest({});
-   
+
     message.userPubkey = new TextEncoder().encode(pubkey);
     message.blockheight = blockheight;
     message.peerid = new TextEncoder().encode(peerid);
@@ -206,15 +195,11 @@ export class CommentClient {
           30000
         );
         const decoded = dcnet.pb.AddUserOffChainOpTimesReply.decode(reply);
-        console.log("AddUserOffChainSpace2 decoded", decoded);
         return true;
       }
       throw error;
     }
   }
-
-
-
 
   async addThemeObj(
     appId: string,
@@ -246,9 +231,7 @@ export class CommentClient {
         messageBytes,
         30000
       );
-      console.log("AddThemeObj reply", reply);
       const decoded = dcnet.pb.AddThemeObjReply.decode(reply);
-      console.log("AddThemeObj decoded", decoded);
       return decoded.flag;
     } catch (error: any) {
       if (error.message.indexOf(Errors.INVALID_TOKEN.message) != -1) {
@@ -274,18 +257,13 @@ export class CommentClient {
           messageBytes,
           30000
         );
-        console.log("AddThemeObj reply", reply);
         const decoded = dcnet.pb.AddThemeObjReply.decode(reply);
-        console.log("AddThemeObj decoded", decoded);
         return decoded.flag;
       }
       console.error("AddThemeObj error:", error);
       throw error;
     }
   }
-
-
-
 
   async deleteThemeObj(
     appId: string,
@@ -300,7 +278,8 @@ export class CommentClient {
     message.blockheight = blockheight;
     message.userPubkey = new TextEncoder().encode(userPubkey);
     message.signature = signature;
-    const messageBytes = dcnet.pb.DeleteThemeObjRequest.encode(message).finish();
+    const messageBytes =
+      dcnet.pb.DeleteThemeObjRequest.encode(message).finish();
     try {
       const grpcClient = new Libp2pGrpcClient(
         this.client.p2pNode,
@@ -313,9 +292,7 @@ export class CommentClient {
         messageBytes,
         30000
       );
-      console.log("DeleteThemeObj reply", reply);
       const decoded = dcnet.pb.DeleteThemeObjReply.decode(reply);
-      console.log("DeleteThemeObj decoded", decoded);
       return decoded.flag;
     } catch (error: any) {
       if (error.message.indexOf(Errors.INVALID_TOKEN.message) != -1) {
@@ -439,7 +416,7 @@ export class CommentClient {
     message.type = commentType;
     message.commentCid = new TextEncoder().encode(commentCid);
     message.comment = new TextEncoder().encode(comment);
-    message.commentSize =  message.comment.length;
+    message.commentSize = message.comment.length;
     message.refercommentkey = new TextEncoder().encode(refercommentkey);
     if (openFlag !== undefined) {
       message.type = openFlag;
@@ -497,8 +474,6 @@ export class CommentClient {
     }
   }
 
-
-
   async configThemeObjAuth(
     theme: string,
     appId: string,
@@ -518,15 +493,16 @@ export class CommentClient {
     message.theme = new TextEncoder().encode(theme);
     message.blockheight = blockHeight;
     message.content = new TextEncoder().encode(content);
-    message.contentCid = new TextEncoder().encode(contentCid)
-    message.contentSize = contentSize
+    message.contentCid = new TextEncoder().encode(contentCid);
+    message.contentSize = contentSize;
     message.signature = signature;
     message.type = type;
     message.userPubkey = new TextEncoder().encode(userPubkeyStr);
-    if(vAccount){
-       message.vaccount = new TextEncoder().encode(vAccount)
-     }
-    const messageBytes = dcnet.pb.ConfigThemeObjAuthRequest.encode(message).finish();
+    if (vAccount) {
+      message.vaccount = new TextEncoder().encode(vAccount);
+    }
+    const messageBytes =
+      dcnet.pb.ConfigThemeObjAuthRequest.encode(message).finish();
     const grpcClient = new Libp2pGrpcClient(
       this.client.p2pNode,
       this.client.peerAddr,
@@ -723,7 +699,7 @@ export class CommentClient {
     message.appId = new TextEncoder().encode(appId);
     message.theme = new TextEncoder().encode(theme);
     message.themeAuthor = new TextEncoder().encode(themeAuthor);
-    const messageBytes = dcnet.pb.IsThemeExistRequest.encode(message).finish(); 
+    const messageBytes = dcnet.pb.IsThemeExistRequest.encode(message).finish();
 
     try {
       const grpcClient = new Libp2pGrpcClient(
@@ -746,10 +722,9 @@ export class CommentClient {
       return false;
     } catch (error: any) {
       console.error("IsThemeExist error:", error);
-      throw error;  
+      throw error;
     }
   }
-
 
   async getThemeObj(
     appId: string,
@@ -850,7 +825,7 @@ export class CommentClient {
     message.limit = limit;
     message.seekKey = new TextEncoder().encode(seekKey);
     message.aesKey = new TextEncoder().encode(aesKey);
-    if(vaccount){
+    if (vaccount) {
       message.vaccount = new TextEncoder().encode(vaccount);
     }
     const messageBytes =
@@ -915,7 +890,7 @@ export class CommentClient {
     offset: number,
     limit: number,
     seekKey: string,
-    aesKey: string,
+    aesKey: string
   ): Promise<string> {
     const message = new dcnet.pb.GetUserCommentsRequest({});
     message.appId = new TextEncoder().encode(appId);

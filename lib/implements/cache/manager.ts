@@ -21,20 +21,25 @@ export const Errors = {
   // chainUtil is null
   ErrChainUtilIsNull: new CacheError("chainUtil is null"),
   // account privatekey sign is null
-  ErrAccountPrivateSignIsNull: new CacheError("account privatekey sign is null"),
+  ErrAccountPrivateSignIsNull: new CacheError(
+    "account privatekey sign is null"
+  ),
 };
 
-export class CacheManager{
+export class CacheManager {
   dc: DcUtil;
   chainUtil: ChainUtil | undefined;
-  context : DCContext | undefined;
-  constructor( dc: DcUtil, chainUtil?: ChainUtil, context?: DCContext) {
+  context: DCContext | undefined;
+  constructor(dc: DcUtil, chainUtil?: ChainUtil, context?: DCContext) {
     this.dc = dc;
     this.chainUtil = chainUtil;
     this.context = context;
   }
 
-  async getCacheValue(key: string, peerAddr?: Multiaddr): Promise<[string | null, Error | null]> {
+  async getCacheValue(
+    key: string,
+    peerAddr?: Multiaddr
+  ): Promise<[string | null, Error | null]> {
     if (!this.context?.connectedDc?.client) {
       return [null, Errors.ErrNoDcPeerConnected];
     }
@@ -53,7 +58,8 @@ export class CacheManager{
     try {
       let nodeAddr: Multiaddr | undefined;
       if (this.context?.connectedDc.nodeAddr) {
-        const connectedPeerId = this.context.connectedDc.nodeAddr.getPeerId() || "";
+        const connectedPeerId =
+          this.context.connectedDc.nodeAddr.getPeerId() || "";
         if (connectedPeerId && connectedPeerId === peerid) {
           // 同一个节点
           nodeAddr = this.context.connectedDc.nodeAddr;
@@ -69,9 +75,12 @@ export class CacheManager{
         return [null, Errors.ErrNodeAddrIsNull];
       }
 
-      const cacheClient = new CacheClient(this.context!,this.dc,this.context.connectedDc.client);
+      const cacheClient = new CacheClient(
+        this.context!,
+        this.dc,
+        this.context.connectedDc.client
+      );
       const reply = await cacheClient.getCacheValue(nodeAddr, cacheKey);
-      console.log("GetCacheValueReply reply:", reply);
       return [reply, null];
     } catch (err) {
       console.log("getCacheValue error:", err);
@@ -80,7 +89,11 @@ export class CacheManager{
   }
 
   // 设置缓存值
-  setCacheKey = async (value: string, expire: number, peerAddr?: Multiaddr) : Promise<[string | null, Error | null]> => {
+  setCacheKey = async (
+    value: string,
+    expire: number,
+    peerAddr?: Multiaddr
+  ): Promise<[string | null, Error | null]> => {
     if (!this.context?.AccountBackupDc.client) {
       return [null, Errors.ErrNoDcPeerConnected];
     }
@@ -88,7 +101,7 @@ export class CacheManager{
       console.log("chainUtil is null");
       return [null, Errors.ErrChainUtilIsNull];
     }
-    if(!this.context) {
+    if (!this.context) {
       console.log("context is null");
       return [null, Errors.ErrAccountPrivateSignIsNull];
     }
@@ -113,15 +126,18 @@ export class CacheManager{
     preSign.set(preSignPart1, 0);
     preSign.set(hashValue, preSignPart1.length);
 
-    const signature = await  this.context.sign(preSign);
-    const cacheClient = new CacheClient(this.context,this.dc,this.context?.AccountBackupDc.client);
+    const signature = await this.context.sign(preSign);
+    const cacheClient = new CacheClient(
+      this.context,
+      this.dc,
+      this.context?.AccountBackupDc.client
+    );
     const setCacheValueReply = await cacheClient.setCacheKey(
       value,
       blockHeight ? blockHeight : 0,
       expire,
       signature
     );
-    console.log("SetCacheKey reply:", setCacheValueReply);
     return [setCacheValueReply, null];
   };
 }

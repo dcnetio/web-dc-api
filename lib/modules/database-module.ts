@@ -73,13 +73,14 @@ export class DatabaseModule implements DCModule, IDatabaseOperations {
     if (this.context.dbManager) {
       return null; // 已经初始化过
     }
-      const tdatastore = await createTxnDatastore(this.context.appInfo?.appName);
-      const keyBook = await newKeyBook(tdatastore);
-      const addrBook = await newAddrBook(tdatastore);
-      const headBook = newHeadBook(tdatastore);
-      const threadMetadata = newThreadMetadata(tdatastore);
-      const logstore = newLogstore(keyBook, addrBook, headBook, threadMetadata);
-      const dagService = dagCbor(this.context.dcNodeClient);
+    let location =  this.context.appInfo?.appId || "default_app";
+    const tdatastore = await createTxnDatastore(location);
+    const keyBook = await newKeyBook(tdatastore);
+    const addrBook = await newAddrBook(tdatastore);
+    const headBook = newHeadBook(tdatastore);
+    const threadMetadata = newThreadMetadata(tdatastore);
+    const logstore = newLogstore(keyBook, addrBook, headBook, threadMetadata);
+    const dagService = dagCbor(this.context.dcNodeClient);
       
       if (!this.context.publicKey) {
         throw new Error("公钥未初始化");
@@ -302,7 +303,22 @@ export class DatabaseModule implements DCModule, IDatabaseOperations {
     }
   }  
 
-
+// 自动扩展数据库空间
+  async autoExpandDBSpace(threadId: string, expandSpace: number = 50 * 1024 * 1024): Promise<boolean> {
+    try {
+      this.assertInitialized();
+    await this.initDBManager();
+    
+    if (!this.context.dbManager) {
+      throw new Error("数据库管理器未初始化");
+    }
+      const result = await this.context.dbManager.autoExpandDBSpace(threadId,expandSpace);
+      return result;
+    } catch (error) {
+      logger.error("自动扩展数据库空间失败:", error);
+      return false;
+    }
+  }
 
 
   /**

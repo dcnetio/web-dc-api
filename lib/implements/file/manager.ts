@@ -93,7 +93,10 @@ export class FileManager {
   ): Promise<Uint8Array> {
     if (isFirstChunk) {
       // 计算 pubkey 的 hash
-      const pubkeyHash = await crypto.subtle.digest("SHA-256", pubkeyBytes as any);
+      const pubkeyHash = await crypto.subtle.digest(
+        "SHA-256",
+        pubkeyBytes as any
+      );
       const pubkeyHashArray = new Uint8Array(pubkeyHash);
 
       // 创建文件头
@@ -144,17 +147,17 @@ export class FileManager {
 
         // 加密处理
         if (symKey) {
-          content = await symKey.encrypt(content) as any;
+          content = (await symKey.encrypt(content)) as any;
         }
 
         // 文件头处理（仅在第一个分块添加）
         if (pubkeyBytes && offset === 0) {
-          content = await _this._processHeader(
+          content = (await _this._processHeader(
             pubkeyBytes,
             file.size,
             content,
             true // isFirstChunk
-          ) as any;
+          )) as any;
         }
 
         offset += chunkSize;
@@ -233,7 +236,7 @@ export class FileManager {
           await sleep(1000); // 使用毫秒，等同于1秒
         }
       }
-    }catch (error:  any) {
+    } catch (error: any) {
       return [null, error];
     }
 
@@ -257,20 +260,11 @@ export class FileManager {
       if (!cid) {
         return [resCid, Errors.ErrNoFileChose];
       }
-      console.log("==========_uploadLargeFileAdvanced", cid.toString());
       resCid = cid.toString();
       console.log("=========resCid", resCid);
 
       const stats = await fs.stat(cid);
       const filesize = stats.unixfs?.fileSize() || 0;
-      console.log(
-        "=========stats",
-        stats.localFileSize.toString(),
-        stats.localFileSize.toString(),
-        stats.fileSize.toString(),
-        stats.dagSize.toString(),
-        filesize.toString(),
-      );
       const dagFileSize = Number(stats.localDagSize);
       const fileClient = new FileClient(
         this.connectedDc.client,
@@ -302,9 +296,14 @@ export class FileManager {
       if (resError) {
         return [null, resError];
       }
-      if (resStatus === UploadStatus.ERROR || resStatus === UploadStatus.ABNORMAL 
-        || resStatus === UploadStatus.NOSPACE || resStatus === UploadStatus.FILECOUNTERROR
-        || resStatus === UploadStatus.FILESIZEERROR || resStatus === UploadStatus.PULLERROR) {
+      if (
+        resStatus === UploadStatus.ERROR ||
+        resStatus === UploadStatus.ABNORMAL ||
+        resStatus === UploadStatus.NOSPACE ||
+        resStatus === UploadStatus.FILECOUNTERROR ||
+        resStatus === UploadStatus.FILESIZEERROR ||
+        resStatus === UploadStatus.PULLERROR
+      ) {
         //上传失败，不需要操作
         return [null, Errors.ErrNoNeedUpload];
       }
@@ -383,7 +382,7 @@ export class FileManager {
         }
       }
     } catch (error: any) {
-          return  [null, error];
+      return [null, error];
     }
 
     try {
@@ -394,7 +393,10 @@ export class FileManager {
       let pubkeyBytes = this.context.getPubkeyRaw();
 
       // Create hash of public key for owner file
-      const pubkeyHash = await crypto.subtle.digest("SHA-256", pubkeyBytes as any);
+      const pubkeyHash = await crypto.subtle.digest(
+        "SHA-256",
+        pubkeyBytes as any
+      );
       const ownerFileContent = new Uint8Array(pubkeyHash);
 
       // Create folder structure using MFS (memory file system)
@@ -416,11 +418,11 @@ export class FileManager {
         content: this.fileToStream(file, enkey), // 使用文件流
       }));
 
-       const results = fs.addAll(source);
+      const results = fs.addAll(source);
       let rootCID: CID<unknown, number, number, Version> | null = null;
       let totalSize = 0;
-    //  let fileCount = 0;
-      for await (const { path,size, cid } of results) {
+      //  let fileCount = 0;
+      for await (const { path, size, cid } of results) {
         // The entry with path equal to the root folder name is our root
         if (path === rootFolderName) {
           rootCID = cid;
@@ -432,10 +434,9 @@ export class FileManager {
         return [null, new Error("Failed to find root directory CID")];
       }
       // 获取rootCID下的块数量
-    
-     const  fileCount = await this.countDirectoryBlocks(rootCID);
-      
-    
+
+      const fileCount = await this.countDirectoryBlocks(rootCID);
+
       // Get final node and CID
       const finalCid = rootCID.toString();
       const folderSize = totalSize;
@@ -456,9 +457,6 @@ export class FileManager {
       // Sign the data
       const signature = await this.context.sign(preSign);
 
-
-
-
       // Create file options
       const fileOptions = {
         signature,
@@ -474,13 +472,13 @@ export class FileManager {
       }
       let client = this.connectedDc.client;
       if (client === null) {
-        return ["",  new Error("ErrConnectToAccountPeersFail")];
+        return ["", new Error("ErrConnectToAccountPeersFail")];
       }
 
       if (client.peerAddr === null) {
         return ["", new Error("ErrConnectToAccountPeersFail")];
       }
-      if(!this.context.publicKey){
+      if (!this.context.publicKey) {
         return [null, Errors.ErrPublicKeyIsNull];
       }
       if (client.token == "") {
@@ -502,7 +500,7 @@ export class FileManager {
       let resStatus = 0;
       let resError = null;
       // Create channel for async communication
-       fileClient.storeFolder(
+      fileClient.storeFolder(
         rootCID.toString(),
         fileOptions,
         (status: UploadStatus, total: number, processed: number): void => {
@@ -522,9 +520,14 @@ export class FileManager {
         updateTransmitCount(UploadStatus.ERROR, 0, 0);
         return [null, resError];
       }
-      if (resStatus === UploadStatus.ERROR || resStatus === UploadStatus.ABNORMAL 
-        || resStatus === UploadStatus.NOSPACE || resStatus === UploadStatus.FILECOUNTERROR
-        || resStatus === UploadStatus.FILESIZEERROR || resStatus === UploadStatus.PULLERROR) {
+      if (
+        resStatus === UploadStatus.ERROR ||
+        resStatus === UploadStatus.ABNORMAL ||
+        resStatus === UploadStatus.NOSPACE ||
+        resStatus === UploadStatus.FILECOUNTERROR ||
+        resStatus === UploadStatus.FILESIZEERROR ||
+        resStatus === UploadStatus.PULLERROR
+      ) {
         //上传失败的时候，不需要操作
         return [null, Errors.ErrNoNeedUpload];
       }
@@ -549,7 +552,7 @@ export class FileManager {
    * @param rootFolderName - Optional root folder name (defaults to "upload")
    * @returns A FileList-like object that can be used with addFolder
    */
-   createCustomFileList(
+  createCustomFileList(
     filesMap:
       | Map<string, string | Uint8Array | ArrayBuffer>
       | Record<string, string | Uint8Array | ArrayBuffer>,
@@ -584,10 +587,10 @@ export class FileManager {
         new File([fileContent], path.split("/").pop() || "unnamed", {
           type: "application/octet-stream",
         }),
-        "webkitRelativePath", 
+        "webkitRelativePath",
         {
           value: fullPath,
-          writable: false
+          writable: false,
         }
       );
 
@@ -619,12 +622,12 @@ export class FileManager {
         };
       },
     };
-    
+
     // Add files with their indices as keys
     files.forEach((file, index) => {
       fileListObj[index] = file;
     });
-    
+
     const fileList = fileListObj as unknown as FileList;
 
     return fileList;
@@ -638,7 +641,7 @@ export class FileManager {
     >();
     const writer = writable.getWriter();
     const fileReader = new FileReader();
-    const chunkSize = 3 <<20; // 3MB chunks
+    const chunkSize = 3 << 20; // 3MB chunks
     let offset = 0;
     const processFile = async () => {
       try {
@@ -672,44 +675,43 @@ export class FileManager {
     });
     return readable;
   }
-/**
- * Counts all blocks recursively in a directory structure
- * @param rootCID - The CID of the root directory
- * @returns Promise with the total block count
- */
-async countDirectoryBlocks(rootCID: CID): Promise<number> {
-  try {
-    const fs = unixfs(this.dcNodeClient);
-    let totalBlocks = 0;
+  /**
+   * Counts all blocks recursively in a directory structure
+   * @param rootCID - The CID of the root directory
+   * @returns Promise with the total block count
+   */
+  async countDirectoryBlocks(rootCID: CID): Promise<number> {
+    try {
+      const fs = unixfs(this.dcNodeClient);
+      let totalBlocks = 0;
 
-    // Get stats for the root directory itself
-    const rootStats = await fs.stat(rootCID);
-    totalBlocks += Number(rootStats.blocks || 0);
+      // Get stats for the root directory itself
+      const rootStats = await fs.stat(rootCID);
+      totalBlocks += Number(rootStats.blocks || 0);
 
-    // List all entries in the directory and process them recursively
-    for await (const entry of fs.ls(rootCID)) {
-      const { cid, type } = entry;
+      // List all entries in the directory and process them recursively
+      for await (const entry of fs.ls(rootCID)) {
+        const { cid, type } = entry;
 
-      // Get stats for the current entry
-      const stats = await fs.stat(cid);
-      
-      if (type === "directory") {
-        // Recursively count blocks in subdirectories
-        const subDirBlocks = await this.countDirectoryBlocks(cid);
-        totalBlocks += subDirBlocks;
-      } else {
-        // For files, add their block count
-        totalBlocks += Number(stats.blocks || 0);
+        // Get stats for the current entry
+        const stats = await fs.stat(cid);
+
+        if (type === "directory") {
+          // Recursively count blocks in subdirectories
+          const subDirBlocks = await this.countDirectoryBlocks(cid);
+          totalBlocks += subDirBlocks;
+        } else {
+          // For files, add their block count
+          totalBlocks += Number(stats.blocks || 0);
+        }
       }
-    }
 
-    console.log(`Directory ${rootCID.toString()} contains ${totalBlocks} blocks`);
-    return totalBlocks;
-  } catch (error) {
-    console.error("Error counting directory blocks:", error);
-    throw error;
+      return totalBlocks;
+    } catch (error) {
+      console.error("Error counting directory blocks:", error);
+      throw error;
+    }
   }
-}
   /**
    * Extract the root folder name from a FileList
    */
@@ -937,134 +939,175 @@ async countDirectoryBlocks(rootCID: CID): Promise<number> {
     };
   }
 
-
-
-/**
- * 获取文件夹下的所有文件,包括内容（支持多级目录递归）
- * @param cid 根目录的CID
- * @param decryptKey 解密密钥
- * @param recursive 是否递归获取子目录，默认false（保持向后兼容）
- * @returns 文件列表：[{Name:文件或目录名，Type：0-文件 1-目录，Size：大小，Hash：文件或目录cid，Path：完整路径}]
- */
-async getFolderFileListWithContent(
-  cid: string, 
-  decryptKey: string, 
-  recursive: boolean = true
-): Promise<[Array<{Name: string; Type: number; Size: number; Hash: string; Path: string, Content?: Uint8Array}> | null, Error | null]> {
- const [fileList, err] = await this.getFolderFileList(cid, cidNeedConnect.NEED, recursive);
- if (err || !fileList) return [null, err];
- for (let i = 0; i < fileList.length; i++) {
-   const file = fileList[i];
-   if (file?.Type === 0) {
-    if (file?.Name  == "dc_ownuser") {
-      continue;
-    }
-     const content = await this.getFileFromDc(file.Hash, decryptKey,cidNeedConnect.NOT_NEED,true); //和目录同节点,无需连接
-     if (!content) {
-       return [null, Errors.ErrNoFileChose];
-     }
-     file.Content = content;
-   }
- }
-  return [fileList, null];
-}
-
-
-
-/**
- * 获取文件夹下的文件列表（支持多级目录递归）
- * @param cid 根目录的CID
- * @param flag 是否需要连接节点
- * @param recursive 是否递归获取子目录，默认false（保持向后兼容）
- * @returns 返回JSON格式的文件列表：[{Name:文件或目录名，Type：0-文件 1-目录，Size：大小，Hash：文件或目录cid，Path：完整路径}]
- */
-async getFolderFileList(
-  cid: string, 
-  flag?: number,
-  recursive: boolean = true
-): Promise<[Array<{Name: string; Type: number; Size: number; Hash: string; Path: string, Content?: Uint8Array}> | null, Error | null]> {
-  try { 
-    const id = CID.parse(cid);
-    if (flag !== cidNeedConnect.NOT_NEED) {
-      const [multiAddrs, peers] = await this.dc?._connectToObjNodes(cid);
-      if (!multiAddrs && peers) {
-        // 有peers但是没有multiaddrs
-        return [null, Errors.ErrNoDcPeerConnected];
+  /**
+   * 获取文件夹下的所有文件,包括内容（支持多级目录递归）
+   * @param cid 根目录的CID
+   * @param decryptKey 解密密钥
+   * @param recursive 是否递归获取子目录，默认false（保持向后兼容）
+   * @returns 文件列表：[{Name:文件或目录名，Type：0-文件 1-目录，Size：大小，Hash：文件或目录cid，Path：完整路径}]
+   */
+  async getFolderFileListWithContent(
+    cid: string,
+    decryptKey: string,
+    recursive: boolean = true
+  ): Promise<
+    [
+      Array<{
+        Name: string;
+        Type: number;
+        Size: number;
+        Hash: string;
+        Path: string;
+        Content?: Uint8Array;
+      }> | null,
+      Error | null
+    ]
+  > {
+    const [fileList, err] = await this.getFolderFileList(
+      cid,
+      cidNeedConnect.NEED,
+      recursive
+    );
+    if (err || !fileList) return [null, err];
+    for (let i = 0; i < fileList.length; i++) {
+      const file = fileList[i];
+      if (file?.Type === 0) {
+        if (file?.Name == "dc_ownuser") {
+          continue;
+        }
+        const content = await this.getFileFromDc(
+          file.Hash,
+          decryptKey,
+          cidNeedConnect.NOT_NEED,
+          true
+        ); //和目录同节点,无需连接
+        if (!content) {
+          return [null, Errors.ErrNoFileChose];
+        }
+        file.Content = content;
       }
     }
-    
-    const fs = unixfs(this.dcNodeClient);
-    const fileNodes: Array<{
-      Name: string;
-      Type: number;
-      Size: number;
-      Hash: string;
-      Path: string;
-      Content?: Uint8Array; // 可选内容字段，用于存储文件内容
-    }> = [];
-    
-    // 递归获取目录内容的内部函数
-    const traverseDirectory = async (dirCid: CID, currentPath: string = '') => {
-      // 遍历当前目录内容
-      for await (const entry of fs.ls(dirCid)) {
-        const { name, cid, type } = entry;
-        if (name === '.' || name === '..' || name === 'dc_ownuser') {
-          continue; // 跳过当前目录和上级目录
-        }
-        // 构建完整路径
-        const fullPath = currentPath ? `${currentPath}/${name}` : name;
-        
-        // 获取文件/目录的统计信息
-        const stats = await fs.stat(cid);
-        
-        // 构造文件信息对象
-        const fileInfo = {
-          Name: name,
-          Type: type === 'directory' ? 1 : 0, // 0-文件 1-目录
-          Size: type === 'directory' ? 0 : Number(stats.fileSize || 0),
-          Hash: cid.toString(),
-          Path: fullPath
-        };
-        
-        fileNodes.push(fileInfo);
-        
-        // 如果是目录且需要递归，则继续遍历子目录
-        if (type === 'directory' && recursive) {
-          await traverseDirectory(cid, fullPath);
-        }
-      }
-    };
-    
-    // 开始遍历
-    await traverseDirectory(id);
-    return [fileNodes, null];
-  } catch (error) {
-    console.error('获取文件夹列表失败:', error);
-    return [null, error instanceof Error ? error : new Error(String(error))];
+    return [fileList, null];
   }
-}
 
+  /**
+   * 获取文件夹下的文件列表（支持多级目录递归）
+   * @param cid 根目录的CID
+   * @param flag 是否需要连接节点
+   * @param recursive 是否递归获取子目录，默认false（保持向后兼容）
+   * @returns 返回JSON格式的文件列表：[{Name:文件或目录名，Type：0-文件 1-目录，Size：大小，Hash：文件或目录cid，Path：完整路径}]
+   */
+  async getFolderFileList(
+    cid: string,
+    flag?: number,
+    recursive: boolean = true
+  ): Promise<
+    [
+      Array<{
+        Name: string;
+        Type: number;
+        Size: number;
+        Hash: string;
+        Path: string;
+        Content?: Uint8Array;
+      }> | null,
+      Error | null
+    ]
+  > {
+    try {
+      const id = CID.parse(cid);
+      if (flag !== cidNeedConnect.NOT_NEED) {
+        const [multiAddrs, peers] = await this.dc?._connectToObjNodes(cid);
+        if (!multiAddrs && peers) {
+          // 有peers但是没有multiaddrs
+          return [null, Errors.ErrNoDcPeerConnected];
+        }
+      }
 
+      const fs = unixfs(this.dcNodeClient);
+      const fileNodes: Array<{
+        Name: string;
+        Type: number;
+        Size: number;
+        Hash: string;
+        Path: string;
+        Content?: Uint8Array; // 可选内容字段，用于存储文件内容
+      }> = [];
+
+      // 递归获取目录内容的内部函数
+      const traverseDirectory = async (
+        dirCid: CID,
+        currentPath: string = ""
+      ) => {
+        // 遍历当前目录内容
+        for await (const entry of fs.ls(dirCid)) {
+          const { name, cid, type } = entry;
+          if (name === "." || name === ".." || name === "dc_ownuser") {
+            continue; // 跳过当前目录和上级目录
+          }
+          // 构建完整路径
+          const fullPath = currentPath ? `${currentPath}/${name}` : name;
+
+          // 获取文件/目录的统计信息
+          const stats = await fs.stat(cid);
+
+          // 构造文件信息对象
+          const fileInfo = {
+            Name: name,
+            Type: type === "directory" ? 1 : 0, // 0-文件 1-目录
+            Size: type === "directory" ? 0 : Number(stats.fileSize || 0),
+            Hash: cid.toString(),
+            Path: fullPath,
+          };
+
+          fileNodes.push(fileInfo);
+
+          // 如果是目录且需要递归，则继续遍历子目录
+          if (type === "directory" && recursive) {
+            await traverseDirectory(cid, fullPath);
+          }
+        }
+      };
+
+      // 开始遍历
+      await traverseDirectory(id);
+      return [fileNodes, null];
+    } catch (error) {
+      console.error("获取文件夹列表失败:", error);
+      return [null, error instanceof Error ? error : new Error(String(error))];
+    }
+  }
 
   // 从dc网络获取指定文件
   // flag 是否需要连接节点，0-需要，1-不需要
-  getFileFromDc = async (cid: string, decryptKey: string, flag?: number,folderFlag?:boolean) : Promise<Uint8Array | null> => {
+  getFileFromDc = async (
+    cid: string,
+    decryptKey: string,
+    flag?: number,
+    folderFlag?: boolean
+  ): Promise<Uint8Array | null> => {
     if (flag !== cidNeedConnect.NOT_NEED) {
       const [multiAddrs, peers] = await this.dc?._connectToObjNodes(cid);
       if (!multiAddrs && peers) {
         // 有peers但是没有multiaddrs
         return null;
       }
-     // 没有peers
+      // 没有peers
       if (!peers) {
         try {
-          const timeoutPromise = new Promise((resolve) => setTimeout(resolve, 5000, 'Timeout'));
-          const getPromise = this.getFileFromDcContent(cid, decryptKey,folderFlag);
+          const timeoutPromise = new Promise((resolve) =>
+            setTimeout(resolve, 5000, "Timeout")
+          );
+          const getPromise = this.getFileFromDcContent(
+            cid,
+            decryptKey,
+            folderFlag
+          );
           const result = await Promise.race([timeoutPromise, getPromise]);
-          if(result === 'Timeout') {
+          if (result === "Timeout") {
             return null;
           }
-          if(result) {
+          if (result) {
             return result as Uint8Array;
           }
           return null;
@@ -1073,10 +1116,14 @@ async getFolderFileList(
         }
       }
     }
-    return this.getFileFromDcContent(cid, decryptKey,folderFlag);
+    return this.getFileFromDcContent(cid, decryptKey, folderFlag);
   };
 
-  getFileFromDcContent = async (cid: string, decryptKey: string, folderFlag?:boolean): Promise<Uint8Array | null> => {
+  getFileFromDcContent = async (
+    cid: string,
+    decryptKey: string,
+    folderFlag?: boolean
+  ): Promise<Uint8Array | null> => {
     const fs = unixfs(this.dcNodeClient);
     let headDealed = false;
     let waitBuffer = new Uint8Array(0);
@@ -1162,7 +1209,7 @@ async getFolderFileList(
       console.error("getFileFromDc error", error);
       return null;
     }
-  }
+  };
   /**
    * 创建可随机访问的文件流
    */
@@ -1230,7 +1277,10 @@ async getFolderFileList(
       const fs = unixfs(this.dcNodeClient);
       let currentCid = CID.parse(rootCid);
       // Normalize path: remove leading/trailing slashes, split by /
-      const parts = filePath.replace(/^\/+|\/+$/g, '').split('/').filter(p => p);
+      const parts = filePath
+        .replace(/^\/+|\/+$/g, "")
+        .split("/")
+        .filter((p) => p);
 
       for (const part of parts) {
         let found = false;
@@ -1270,7 +1320,11 @@ async getFolderFileList(
       return null;
     }
 
-    return this.createSeekableFileStream(fileCid, decryptKey, cidNeedConnect.NOT_NEED);
+    return this.createSeekableFileStream(
+      fileCid,
+      decryptKey,
+      cidNeedConnect.NOT_NEED
+    );
   }
 
   readUint64BE(buffer: Uint8Array, offset: number): number {
@@ -1291,22 +1345,22 @@ async getFolderFileList(
 
   /**
    * 判断CID是文件还是目录
-   * @param cid 
+   * @param cid
    * @returns 'file' | 'directory' | 'unknown'
    */
-  async isFileOrDir(cid: string): Promise<'file' | 'directory' | 'unknown'> {
+  async isFileOrDir(cid: string): Promise<"file" | "directory" | "unknown"> {
     try {
       const fs = unixfs(this.dcNodeClient);
       const stats = await fs.stat(CID.parse(cid));
-      if (stats.type === 'directory') {
-        return 'directory';
-      } else if (stats.type === 'file' || stats.type === 'raw') {
-        return 'file';
+      if (stats.type === "directory") {
+        return "directory";
+      } else if (stats.type === "file" || stats.type === "raw") {
+        return "file";
       }
-      return 'unknown';
+      return "unknown";
     } catch (error) {
-      console.error('isFileOrDir error:', error);
-      return 'unknown';
+      console.error("isFileOrDir error:", error);
+      return "unknown";
     }
   }
 
@@ -1317,7 +1371,18 @@ async getFolderFileList(
     rootCid: string,
     filePath: string,
     decryptKey: string
-  ): Promise<Uint8Array | Array<{ Name: string; Type: number; Size: number; Hash: string; Path: string; Content?: Uint8Array }> | null> {
+  ): Promise<
+    | Uint8Array
+    | Array<{
+        Name: string;
+        Type: number;
+        Size: number;
+        Hash: string;
+        Path: string;
+        Content?: Uint8Array;
+      }>
+    | null
+  > {
     // 连接到节点
     const [multiAddrs, peers] = await this.dc?._connectToObjNodes(rootCid);
     if (!multiAddrs && peers) {
@@ -1332,9 +1397,13 @@ async getFolderFileList(
 
     // 判断是文件还是目录
     const type = await this.isFileOrDir(fileCid);
-    if (type === 'directory') {
+    if (type === "directory") {
       // 如果是目录，返回目录列表 (不递归，只返回当前目录下的一级内容)
-      const [list, err] = await this.getFolderFileList(fileCid, cidNeedConnect.NOT_NEED, false);
+      const [list, err] = await this.getFolderFileList(
+        fileCid,
+        cidNeedConnect.NOT_NEED,
+        false
+      );
       if (err) {
         console.error("getFileFromDir getFolderFileList error:", err);
         return null;

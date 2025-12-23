@@ -278,6 +278,13 @@ export class EntityRepository<T extends BaseEntity> {
     where: WhereCond | string,
     options: FindIndexOptions = {}
   ): Promise<T[]> {
+    // 如果 where 为空字符串或空对象，直接返回所有数据
+    if (!where || 
+        (typeof where === "string" && where.trim() === "") ||
+        (typeof where === "object" && Object.keys(where).length === 0)) {
+      return this.find(options);
+    }
+
     let cond: WhereCond;
     if (typeof where === "string") {
       cond = parseWhereString(where);

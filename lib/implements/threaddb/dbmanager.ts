@@ -18,7 +18,6 @@ import { StoreunitInfo } from "../../common/chain";
 import {
   createTransformedDatastore,
   PrefixTransform,
-  TransformedDatastore,
 } from "./common/transformed-datastore";
 import {
   NewOptions,
@@ -89,8 +88,6 @@ export class DBManager {
   public chainUtil: ChainUtil;
   private storagePrefix: string;
   private context: DCContext;
-  private refreshDBFromDCFinished: boolean; // 从DC节点获取的是否完成
-  private syncDBToDCFinished: boolean; // 同步到DC节点的是否完成
 
   constructor(
     store: TxnDatastoreExtended, //实际上是一个LevelDatastore实例,用levelDatastoreAdapter包装
@@ -1167,8 +1164,11 @@ export class DBManager {
       blockHeight ? blockHeight : 0
     );
 
+    const peerId = this.connectedDc.nodeAddr
+      ? await extractPeerIdFromMultiaddr(this.connectedDc.nodeAddr)
+      : undefined;
     const peerIdValue: Uint8Array = new TextEncoder().encode(
-      this.connectedDc.nodeAddr?.getPeerId() || ""
+      peerId?.toString() || ""
     );
 
     const preSign = new Uint8Array([
@@ -1390,12 +1390,6 @@ export class DBManager {
       return null;
     } catch (error) {
       return error as Error;
-    } finally {
-      this.refreshDBFromDCFinished = true;
-      if (this.syncDBToDCFinished) {
-        // 同步都完成，则去掉私钥
-        this.context.privateKey = null;
-      }
     }
   }
 
@@ -1409,12 +1403,6 @@ export class DBManager {
       return null;
     } catch (error) {
       return error as Error;
-    } finally {
-      this.syncDBToDCFinished = true;
-      if (this.refreshDBFromDCFinished) {
-        // 同步都完成，则去掉私钥
-        this.context.privateKey = null;
-      }
     }
   }
 
@@ -1581,6 +1569,155 @@ export class DBManager {
     console.debug(`manager: deleted db ${id}`);
     //  });
   }
+
+  /**
+   * 为指定的threaddb添加可使用空间
+   * Add usable space to a specified threaddb
+   * @param threadid Thread ID string
+   * @param space Space to add (uint32)
+   * @returns Promise that resolves when space is added
+   */
+  async addDBSpace(threadid: string, space: number): Promise<void> {
+    try {
+      // Decode thread ID
+      const tID = await this.decodeThreadId(threadid);
+
+      // Get server peer ID bytes
+      const peerId = this.connectedDc.nodeAddr
+        ? await extractPeerIdFromMultiaddr(this.connectedDc.nodeAddr)
+        : undefined;
+      const serverPidBytes = new TextEncoder().encode(
+        peerId?.toString() || ""
+      );
+
+      // Get blockchain height
+      let blockHeight: number;
+      try {
+        blockHeight = (await this.chainUtil.getBlockHeight()) || 0;
+      } catch (err) {
+        throw err;
+      }
+
+      // Convert blockHeight to little endian bytes
+      const bhValue = uint32ToLittleEndianBytes(blockHeight);
+
+      // Convert space to little endian bytes
+      const spaceValue = uint32ToLittleEndianBytes(space);
+
+      // Build signature data: sign(threadID+blockheight+space+peerid)
+      const preSign = new Uint8Array([
+        ...new TextEncoder().encode(threadid),
+        ...bhValue,
+        ...spaceValue,
+        ...serverPidBytes,
+      ]);
+
+      // Sign the data
+      let signature: Uint8Array;
+      try {
+        signature = await this.context.sign(preSign);
+      } catch (err) {
+        throw err;
+      }
+
+      // Check if client is connected
+      if (!this.connectedDc?.client) {
+        throw Errors.ErrNoDcPeerConnected;
+      }
+
+      // Create options
+      const opts: NewThreadOptions = {
+        token: new ThreadToken(this.connectedDc.client.token),
+        blockHeight: blockHeight,
+        signature: signature,
+      };
+
+      // Create gRPC client and call addThreadSpace
+      const dbClient = newGrpcClient(this.connectedDc.client, this.network);
+      
+      await dbClient.addThreadSpace(tID, space, opts);
+    } catch (err) {
+      console.error("addDBSpace error:", err);
+      throw err;
+    }
+  }
+
+  /**
+   * 获取当前threaddb已经使用的存储大小
+   * Get the current storage size info of threaddb
+   * @param threadid Thread ID string
+   * @returns Promise resolving to object with allocatedSize and usedSize
+   */
+  async getThreadDBSizeInfo(
+    threadid: string
+  ): Promise<{ allocatedSize: number; usedSize: number }> {
+    try {
+      // Decode thread ID
+      const tID = await this.decodeThreadId(threadid);
+
+      // 从链上获取用户给该threaddb分配的空间
+      // 查询区块链获取文件存储的节点位置
+      const [storeUnit, err] = await this.chainUtil.objectState(
+        tID.toString()
+      );
+      if (err || !storeUnit) {
+        throw new Error(`Failed to get object state: ${err?.message || "storeUnit is null"}`);
+      }
+
+      const allocatedSize = storeUnit.size || 0;
+
+      // 连接到对象节点
+      const [connectedAddr] = await this.dc._connectToObjNodes(tID.toString());
+      if (!connectedAddr) {
+        throw new Error("Failed to connect to object nodes");
+      }
+
+      // Check if client is connected
+      if (!this.connectedDc?.client) {
+        throw Errors.ErrNoDcPeerConnected;
+      }
+
+      // Create gRPC client and get used space
+      const dbClient = newGrpcClient(this.connectedDc.client, this.network);
+      const usedSize = await dbClient.getThreadUsedSpace(tID);
+
+      return {
+        allocatedSize,
+        usedSize,
+      };
+    } catch (err) {
+      console.error("getThreadDBSizeInfo error:", err);
+      throw err;
+    }
+  }
+
+  //// 自动扩展数据库空间
+  async autoExpandDBSpace(threadId: string, expandSpace: number = 50 * 1024 * 1024): Promise<boolean> {
+    // 获取当前数据库大小信息
+    let sizeInfo;
+    try {
+      sizeInfo = await this.getThreadDBSizeInfo(threadId);
+    } catch (err) {
+      console.error("Failed to get DB size info:", err);
+      return false;
+    }
+
+    const { allocatedSize, usedSize } = sizeInfo;
+    //剩余15M空间时触发扩展
+    const threshold = 15 * 1024 * 1024; // 15 MB
+    if (allocatedSize - usedSize > threshold) {
+      return false; // 不需要扩展
+    }
+
+    try {
+      await this.addDBSpace(threadId, expandSpace);
+      console.info(`Auto expanded DB space by ${expandSpace} bytes for thread ${threadId}`);
+      return true;
+    } catch (err) {
+      console.error("Failed to auto expand DB space:", err);
+      return false;
+    }
+  } 
 
   private async deleteThreadNamespace(id: ThreadID): Promise<void> {
     const pre = dsManagerBaseKey.child(new Key(id.toString())).toString();
