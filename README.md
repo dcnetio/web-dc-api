@@ -33,8 +33,8 @@ import { DC } from 'web-dc-api';
 
 // 1. 配置并初始化 DC 实例
 const dc = new DC({
-  wssUrl: "wss://node1.dc.com", // 替换为实际节点地址
-  backWssUrl: "wss://node2.dc.com",
+  wssUrl: "wss://dcchain.baybird.cn",
+  backWssUrl: "wss://dcchain.baybird.cn",
   appInfo: {
     appId: "your-app-id",
     appName: "Your App Name",
@@ -137,8 +137,8 @@ export const DCProvider = ({ children }: { children: ReactNode }) => {
     try {
       // 初始化配置
       const config = {
-        wssUrl: "wss://node1.dc.com", // 替换为实际节点地址
-        backWssUrl: "wss://node2.dc.com",
+        wssUrl: "wss://dcchain.baybird.cn",
+        backWssUrl: "wss://dcchain.baybird.cn",
         appInfo: {
           appId: "your-app-id",
           appName: "Your App Name",
