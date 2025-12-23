@@ -26,7 +26,7 @@ const walletOpenVersion =
 
 let _baseUrl = "";
 let _walletOrigin = "";
-if (true) {
+if (isProd) {
   _baseUrl = "/v0_0_20";
   _walletOrigin = "https://wallet.dcnetio.com";
 
