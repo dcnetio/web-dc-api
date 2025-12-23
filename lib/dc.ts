@@ -325,6 +325,8 @@ export class DC implements DCContext {
                 }
               }, 5000);
               this.dbThreadId = dbinfo.id;
+               // 自动扩容threaddb,当threaddb的可用空间小于10MB，自动扩容50MB,无需等待结果
+              this.autoExpandDBSpace(this,this.dbThreadId);
               return [dbinfo, null];
             } else if (threadid != "") {
               //本地数据库不存在,从DC同步
@@ -340,6 +342,8 @@ export class DC implements DCContext {
               const [dbinfo, error] = await this.db.getDBInfo(threadid);
               if (dbinfo != null && !error) {
                 this.dbThreadId = dbinfo.id;
+                 // 自动扩容threaddb,当threaddb的可用空间小于10MB，自动扩容50MB,无需等待结果
+                this.autoExpandDBSpace(this,this.dbThreadId);
                 return [dbinfo, null]; //返回dbinfo;
               } else {
                 // 获取DB失败
@@ -400,16 +404,27 @@ export class DC implements DCContext {
         console.error("获取DB失败", error);
         return [null, error];
       }
+     
     } catch (error: any) {
       console.error("初始化用户DB失败", error);
       return [null, error];
     }
   }
 
+  // 自动扩容
+  private async autoExpandDBSpace(dc: DC,
+    DBThreadid: string): Promise<boolean> {
+    //获取当前DB的可用空间
+    if (!dc.db) {
+      return false;
+    }
+    return dc.db.autoExpandDBSpace(DBThreadid, 50 * 1024 * 1024);
+  }
+
   // 设置用户DB
   private async setUserDefaultDB(
     dc: DC,
-    DBthreadid: string,
+    DBThreadid: string,
     rk: string,
     sk: string,
     remark?: string
@@ -419,7 +434,7 @@ export class DC implements DCContext {
       if (!dc.auth) {
         return false;
       }
-      await dc.auth.setUserDefaultDB(DBthreadid, rk, sk, remark || "");
+      await dc.auth.setUserDefaultDB(DBThreadid, rk, sk, remark || "");
     } catch (error) {
       console.error("设置用户默认DB失败", error);
       return false;

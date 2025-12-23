@@ -240,8 +240,19 @@ export async function extractPeerIdFromMultiaddr(
     // 确保地址是 Multiaddr 实例
     const multiAddr = typeof addr === "string" ? multiaddr(addr) : addr;
 
-    // 获取 p2p 或 ipfs 协议的值
-    const p2pValue = multiAddr.getPeerId();
+    // 从 multiaddr 字符串中提取 PeerId
+    // multiaddr 格式示例: /ip4/127.0.0.1/tcp/4001/p2p/QmPeerId...
+    const addrString = multiAddr.toString();
+    const parts = addrString.split('/');
+    
+    // 查找 p2p 或 ipfs 协议后的值
+    let p2pValue: string | undefined;
+    for (let i = 0; i < parts.length - 1; i++) {
+      if (parts[i] === 'p2p' || parts[i] === 'ipfs') {
+        p2pValue = parts[i + 1];
+        break;
+      }
+    }
 
     if (!p2pValue) {
       throw new Error("No PeerId found in multiaddr");
@@ -261,7 +272,7 @@ export async function extractPeerIdFromMultiaddr(
 export async function symKeyFromBytes(bytes: Uint8Array): Promise<SymKey> {
   const key = await window.crypto.subtle.importKey(
     "raw",
-    bytes,
+    bytes as BufferSource,
     { name: "AES-GCM" },
     true,
     ["encrypt", "decrypt"]

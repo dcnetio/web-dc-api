@@ -68,6 +68,10 @@ export interface IDatabaseOperations {
   syncDBToDC(tId: string): Promise<Error | null>;
   
 
+
+  // 自动扩展数据库空间
+  autoExpandDBSpace(threadId: string, expandSpace: number): Promise<boolean> ; 
+  
 /**
  * 获取数据库信息
  * @param id threaddbID
