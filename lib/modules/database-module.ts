@@ -303,7 +303,22 @@ export class DatabaseModule implements DCModule, IDatabaseOperations {
     }
   }  
 
-
+// 自动扩展数据库空间
+  async autoExpandDBSpace(threadId: string, expandSpace: number = 50 * 1024 * 1024): Promise<boolean> {
+    try {
+      this.assertInitialized();
+    await this.initDBManager();
+    
+    if (!this.context.dbManager) {
+      throw new Error("数据库管理器未初始化");
+    }
+      const result = await this.context.dbManager.autoExpandDBSpace(threadId,expandSpace);
+      return result;
+    } catch (error) {
+      logger.error("自动扩展数据库空间失败:", error);
+      return false;
+    }
+  }
 
 
   /**
