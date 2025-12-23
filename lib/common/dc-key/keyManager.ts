@@ -261,7 +261,7 @@ export async function extractPeerIdFromMultiaddr(
 export async function symKeyFromBytes(bytes: Uint8Array): Promise<SymKey> {
   const key = await window.crypto.subtle.importKey(
     "raw",
-    bytes,
+    bytes as BufferSource,
     { name: "AES-GCM" },
     true,
     ["encrypt", "decrypt"]
