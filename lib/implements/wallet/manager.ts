@@ -368,7 +368,13 @@ export class WalletManager {
   // 退出登录 清除iframe中的私钥和公钥
   exitLogin = (): Promise<boolean> => {
     return new Promise((resolve, reject) => {
-      // 每100ms发送一次消息,直到钱包加载完成
+      // 私钥是否存在，存在清楚，不存在发送iframe
+      if (this.context.privateKey) {
+        this.context.privateKey = undefined;
+        this.context.publicKey = undefined;
+        resolve(true);
+        return;
+      }
       const message = {
         type: "exit",
       };
