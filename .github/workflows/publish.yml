@@ -64,9 +64,19 @@ jobs:
           sudo apt-get install -y jq curl
 
           # Request an ID token from GitHub for npm registry audience
-          ID_TOKEN=$(curl -s -H "Authorization: Bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" "$ACTIONS_ID_TOKEN_REQUEST_URL&audience=registry.npmjs.org" | jq -r .value)
-          if [ -z "$ID_TOKEN" ] || [ "$ID_TOKEN" = "null" ]; then
-            echo "Failed to obtain GitHub Actions id-token. Ensure job permission 'id-token: write' is set and workflow is running on GitHub Actions."
+          # Save raw response for debugging (do not print token itself)
+          RESPONSE=$(curl -s -H "Authorization: Bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" "$ACTIONS_ID_TOKEN_REQUEST_URL&audience=registry.npmjs.org")
+          echo "ID token response keys:" && echo "$RESPONSE" | jq 'keys'
+          ID_TOKEN=$(echo "$RESPONSE" | jq -r .value)
+          LENGTH=$(echo -n "$ID_TOKEN" | wc -c)
+          echo "ID token length: $LENGTH"
+          if [ -z "$ID_TOKEN" ] || [ "$ID_TOKEN" = "null" ] || [ "$LENGTH" -lt 10 ]; then
+            echo "Failed to obtain a valid GitHub Actions id-token. Possible causes:"
+            echo " - Job missing 'id-token: write' permission (ensure it's set on the job)."
+            echo " - Workflow run is from a fork or untrusted actor (id-token not available for forked PRs)."
+            echo " - GitHub Actions OIDC is disabled at organization level."
+            echo " - The audience parameter is not accepted; check the npm org OIDC docs/trust settings."
+            echo "Raw response (for debugging):" && echo "$RESPONSE" | jq .
             exit 1
           fi
 
