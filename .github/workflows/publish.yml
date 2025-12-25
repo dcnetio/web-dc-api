@@ -16,7 +16,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      id-token: write
+      id-token: write # 必须保留，用于 --provenance
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -28,6 +28,12 @@ jobs:
         with:
           node-version: '22.x'
           registry-url: 'https://registry.npmjs.org'
+          # 这里会自动配置 .npmrc 使用 NODE_AUTH_TOKEN 环境变量
+
+      - name: Upgrade npm
+        run: |
+          npm install -g npm@10 
+          # Node 22 自带较新 npm，通常不需要降级到 9，除非你有特殊需求
 
       - name: Upgrade npm
         run: |
@@ -48,59 +54,32 @@ jobs:
           else
             echo "changed=false" >> $GITHUB_OUTPUT
           fi
+          # export current version for later steps (used to create release)
+          echo "version=$CUR_VERSION" >> $GITHUB_OUTPUT
 
       - name: Install deps and build
         if: steps.check.outputs.changed == 'true'
         run: |
-          npm install
+          npm ci # 推荐 CI 环境使用 npm ci 替代 npm install
           npm run build --if-present
 
-      - name: Configure npm auth (OIDC only)
-        if: steps.check.outputs.changed == 'true'
-        run: |
-          set -e
-          echo "Attempting OIDC-based auth for npm (OIDC-only, no NPM_TOKEN fallback)"
-          sudo apt-get update -y
-          sudo apt-get install -y jq curl
-
-          # Request an ID token from GitHub for npm registry audience
-          # Save raw response for debugging (do not print token itself)
-          RESPONSE=$(curl -s -H "Authorization: Bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" "$ACTIONS_ID_TOKEN_REQUEST_URL&audience=registry.npmjs.org")
-          echo "ID token response keys:" && echo "$RESPONSE" | jq 'keys'
-          ID_TOKEN=$(echo "$RESPONSE" | jq -r .value)
-          LENGTH=$(echo -n "$ID_TOKEN" | wc -c)
-          echo "ID token length: $LENGTH"
-          if [ -z "$ID_TOKEN" ] || [ "$ID_TOKEN" = "null" ] || [ "$LENGTH" -lt 10 ]; then
-            echo "Failed to obtain a valid GitHub Actions id-token. Possible causes:"
-            echo " - Job missing 'id-token: write' permission (ensure it's set on the job)."
-            echo " - Workflow run is from a fork or untrusted actor (id-token not available for forked PRs)."
-            echo " - GitHub Actions OIDC is disabled at organization level."
-            echo " - The audience parameter is not accepted; check the npm org OIDC docs/trust settings."
-            echo "Raw response (for debugging):" && echo "$RESPONSE" | jq .
-            exit 1
-          fi
-
-          # Exchange ID token for a short-lived npm token
-          # NOTE: your npm organization may require additional configuration to trust GitHub Actions OIDC.
-          NPM_RESPONSE=$(curl -s -X POST https://registry.npmjs.org/-/npm/v1/oidc/authenticate \
-            -H "Content-Type: application/json" \
-            -d "{\"id_token\":\"$ID_TOKEN\"}")
-
-          echo "npm exchange response keys:" && echo "$NPM_RESPONSE" | jq 'keys'
-          # show any error/message fields but redact token
-          echo "npm exchange response (redacted):" && echo "$NPM_RESPONSE" | jq 'del(.token)'
-
-          NPM_TOKEN=$(echo "$NPM_RESPONSE" | jq -r .token)
-
-          if [ -z "$NPM_TOKEN" ] || [ "$NPM_TOKEN" = "null" ]; then
-            echo "OIDC exchange failed or returned empty token. Ensure your npm org trusts GitHub Actions OIDC for this repository."
-            exit 1
-          fi
-
-          echo "//registry.npmjs.org/:_authToken=$NPM_TOKEN" > ~/.npmrc
-          echo "Configured npm auth via OIDC exchange"
+      # --- 删除了那个手动 curl OIDC 的步骤 ---
 
       - name: Publish to npm
         if: steps.check.outputs.changed == 'true'
         run: |
-          npm publish --access public
+          npm publish --provenance
+
+      - name: Create GitHub Release
+        if: steps.check.outputs.changed == 'true'
+        uses: actions/create-release@v1
+        with:
+          tag_name: v${{ steps.check.outputs.version }}
+          release_name: v${{ steps.check.outputs.version }}
+          body: Release ${{ steps.check.outputs.version }}
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # 这一步是关键：直接传递 Secret，setup-node 会处理认证
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
