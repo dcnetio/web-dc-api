@@ -106,4 +106,8 @@
     "vite-plugin-dts": "^4.5.4",
     "webpack-bundle-analyzer": "^4.10.2"
   }
+  ,
+  "optionalDependencies": {
+    "@rollup/rollup-linux-x64-gnu": "4.54.0"
+  }
 }
