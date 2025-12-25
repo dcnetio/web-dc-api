@@ -8,7 +8,13 @@ import replace from "@rollup/plugin-replace";
 import inject from "@rollup/plugin-inject";
 
 import dts from "rollup-plugin-dts";
-import pkg from "./package.json" assert { type: "json" };
+import { readFileSync } from "fs";
+
+// Avoid `import ... assert { type: "json" }` which fails on older Node versions
+// Use file read so the config runs on a wider range of Node runtimes
+const pkg = JSON.parse(
+  readFileSync(new URL("./package.json", import.meta.url), "utf8")
+);
 
 // 外部依赖（这些将不会被打包进最终文件）
 const external = [
