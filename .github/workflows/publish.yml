@@ -15,8 +15,8 @@ jobs:
   publish:
     runs-on: ubuntu-latest
     permissions:
-      contents: read
-      id-token: write # 必须保留，用于 --provenance
+      contents: write # ⚠️ 改为 write，因为创建 Release 需要写权限
+      id-token: write # 用于 --provenance
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -28,12 +28,9 @@ jobs:
         with:
           node-version: '22.x'
           registry-url: 'https://registry.npmjs.org'
-          # 这里会自动配置 .npmrc 使用 NODE_AUTH_TOKEN 环境变量
 
       - name: Upgrade npm
-        run: |
-          npm install -g npm@10 
-          # Node 22 自带较新 npm，通常不需要降级到 9，除非你有特殊需求
+        run: npm install -g npm@10 
 
       - name: Upgrade npm
         run: |
@@ -56,32 +53,35 @@ jobs:
           else
             echo "changed=false" >> $GITHUB_OUTPUT
           fi
-          # export current version for later steps (used to create release)
           echo "version=$CUR_VERSION" >> $GITHUB_OUTPUT
 
       - name: Install deps and build
         if: steps.check.outputs.changed == 'true'
         run: |
-          npm ci # 推荐 CI 环境使用 npm ci 替代 npm install
+          npm ci
           npm run build --if-present
 
-      # --- 删除了那个手动 curl OIDC 的步骤 ---
-
+      # ---------------------------------------------------
+      # 👇 关键修正：Token 必须加在这一步，否则还会报 404/权限错误
+      # ---------------------------------------------------
       - name: Publish to npm
         if: steps.check.outputs.changed == 'true'
-        run: |
-          npm publish --provenance
+        run: npm publish --provenance
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
+      # ---------------------------------------------------
+      # ⚠️ 建议：actions/create-release 已废弃多年且不稳定
+      # 我已替换为目前社区标准的 softprops/action-gh-release
+      # ---------------------------------------------------
       - name: Create GitHub Release
         if: steps.check.outputs.changed == 'true'
-        uses: actions/create-release@v1
+        uses: softprops/action-gh-release@v1
         with:
           tag_name: v${{ steps.check.outputs.version }}
-          release_name: v${{ steps.check.outputs.version }}
+          name: v${{ steps.check.outputs.version }}
           body: Release ${{ steps.check.outputs.version }}
           draft: false
           prerelease: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          # 这一步是关键：直接传递 Secret，setup-node 会处理认证
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
