@@ -35,6 +35,11 @@ jobs:
           npm install -g npm@10 
           # Node 22 自带较新 npm，通常不需要降级到 9，除非你有特殊需求
 
+      - name: Upgrade npm
+        run: |
+          npm install -g npm@10 
+          # Node 22 自带较新 npm，通常不需要降级到 9，除非你有特殊需求
+
       - name: Check version bump
         id: check
         run: |
@@ -51,6 +56,8 @@ jobs:
           else
             echo "changed=false" >> $GITHUB_OUTPUT
           fi
+          # export current version for later steps (used to create release)
+          echo "version=$CUR_VERSION" >> $GITHUB_OUTPUT
 
       - name: Install deps and build
         if: steps.check.outputs.changed == 'true'
@@ -64,6 +71,17 @@ jobs:
         if: steps.check.outputs.changed == 'true'
         run: |
           npm publish --provenance
+
+      - name: Create GitHub Release
+        if: steps.check.outputs.changed == 'true'
+        uses: actions/create-release@v1
+        with:
+          tag_name: v${{ steps.check.outputs.version }}
+          release_name: v${{ steps.check.outputs.version }}
+          body: Release ${{ steps.check.outputs.version }}
+          draft: false
+          prerelease: false
         env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           # 这一步是关键：直接传递 Secret，setup-node 会处理认证
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
