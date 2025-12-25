@@ -252,7 +252,7 @@ export class WalletManager {
       // html添加iframe标签，id是dcWalletIframe
       const iframe = document.createElement("iframe");
       iframe.id = this.walletIframeId;
-      iframe.src = `${walletUrl}?origin=${appOrigin}`;
+      iframe.src = `${walletUrl}/home?origin=${appOrigin}`;
       (iframe as any).credentialless = true; // iframe和父窗口不可传递cookies等凭证，符合安全规则
       iframe.onload = async () => {
         console.log("debug================onload", new Date());
@@ -321,7 +321,7 @@ export class WalletManager {
         }
       } else {
         // 普通窗口
-        const urlWithOrigin = walletUrl + "?origin=" + appOrigin;
+        const urlWithOrigin = walletUrl + "/home?origin=" + appOrigin;
         this.walletWindow = window.open(urlWithOrigin, walletWindowName);
       }
       const shouldReturnUserInfo =
@@ -498,7 +498,7 @@ export class WalletManager {
         }
       } else {
         // 普通窗口
-        const urlWithOrigin = walletUrl + "?origin=" + appOrigin;
+        const urlWithOrigin = walletUrl + "/home?origin=" + appOrigin;
         this.walletWindow = window.open(urlWithOrigin, walletWindowName);
       }
       this.initCommChannel();
@@ -559,7 +559,7 @@ export class WalletManager {
         }
       } else {
         // 普通窗口
-        const urlWithOrigin = walletUrl + "?origin=" + appOrigin;
+        const urlWithOrigin = walletUrl + "/home?origin=" + appOrigin;
         this.walletWindow = window.open(urlWithOrigin, walletWindowName);
       }
       this.initCommChannel();
