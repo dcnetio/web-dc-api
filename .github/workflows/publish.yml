@@ -1,0 +1,59 @@
+name: Publish package on version bump
+
+on:
+  push:
+    branches:
+      - main
+      - master
+      - dev
+    paths:
+      - 'package.json'
+
+concurrency:
+  group: publish-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Check version bump
+        id: check
+        run: |
+          set -e
+          PREV_VERSION=""
+          if git rev-parse --verify HEAD^ >/dev/null 2>&1; then
+            PREV_VERSION=$(git show HEAD^:package.json | node -pe "JSON.parse(require('fs').readFileSync(0,'utf8')).version")
+          fi
+          CUR_VERSION=$(node -pe "JSON.parse(require('fs').readFileSync('package.json','utf8')).version")
+          echo "Previous version: $PREV_VERSION"
+          echo "Current version: $CUR_VERSION"
+          if [ "$PREV_VERSION" != "$CUR_VERSION" ]; then
+            echo "changed=true" >> $GITHUB_OUTPUT
+          else
+            echo "changed=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Install deps and build
+        if: steps.check.outputs.changed == 'true'
+        run: |
+          npm ci
+          npm run build --if-present
+
+      - name: Publish to npm
+        if: steps.check.outputs.changed == 'true'
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          npm publish --access public
