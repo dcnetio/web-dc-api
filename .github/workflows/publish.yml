@@ -82,9 +82,15 @@ jobs:
 
           # Exchange ID token for a short-lived npm token
           # NOTE: your npm organization may require additional configuration to trust GitHub Actions OIDC.
-          NPM_TOKEN=$(curl -s -X POST https://registry.npmjs.org/-/npm/v1/oidc/authenticate \
+          NPM_RESPONSE=$(curl -s -X POST https://registry.npmjs.org/-/npm/v1/oidc/authenticate \
             -H "Content-Type: application/json" \
-            -d "{\"id_token\":\"$ID_TOKEN\"}" | jq -r .token)
+            -d "{\"id_token\":\"$ID_TOKEN\"}")
+
+          echo "npm exchange response keys:" && echo "$NPM_RESPONSE" | jq 'keys'
+          # show any error/message fields but redact token
+          echo "npm exchange response (redacted):" && echo "$NPM_RESPONSE" | jq 'del(.token)'
+
+          NPM_TOKEN=$(echo "$NPM_RESPONSE" | jq -r .token)
 
           if [ -z "$NPM_TOKEN" ] || [ "$NPM_TOKEN" = "null" ]; then
             echo "OIDC exchange failed or returned empty token. Ensure your npm org trusts GitHub Actions OIDC for this repository."
