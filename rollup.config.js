@@ -8,7 +8,12 @@ import replace from "@rollup/plugin-replace";
 import inject from "@rollup/plugin-inject";
 
 import dts from "rollup-plugin-dts";
-import pkg from "./package.json" assert { type: "json" };
+import fs from "fs";
+import { fileURLToPath } from "url";
+
+// Read package.json without using import assertions to avoid loader issues
+const __dirname = fileURLToPath(new URL("./", import.meta.url));
+const pkg = JSON.parse(fs.readFileSync(new URL("./package.json", import.meta.url), "utf8"));
 
 // 外部依赖（这些将不会被打包进最终文件）
 const external = [
