@@ -7,7 +7,7 @@ import {
 import { wordlist } from "@scure/bip39/wordlists/english";
 
 import { ed25519 } from "@noble/curves/ed25519";
-import { sha512 } from "@noble/hashes/sha512";
+import { sha512 } from "@noble/hashes/sha2.js";
 import { HDKey } from "@scure/bip32";
 import { Ed25519PrivKey } from "./ed25519";
 import * as bcrypt from "../../util/bcrypt"; //
@@ -243,12 +243,12 @@ export async function extractPeerIdFromMultiaddr(
     // 从 multiaddr 字符串中提取 PeerId
     // multiaddr 格式示例: /ip4/127.0.0.1/tcp/4001/p2p/QmPeerId...
     const addrString = multiAddr.toString();
-    const parts = addrString.split('/');
-    
+    const parts = addrString.split("/");
+
     // 查找 p2p 或 ipfs 协议后的值
     let p2pValue: string | undefined;
     for (let i = 0; i < parts.length - 1; i++) {
-      if (parts[i] === 'p2p' || parts[i] === 'ipfs') {
+      if (parts[i] === "p2p" || parts[i] === "ipfs") {
         p2pValue = parts[i + 1];
         break;
       }
