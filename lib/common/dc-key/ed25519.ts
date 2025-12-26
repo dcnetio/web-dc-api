@@ -6,7 +6,7 @@ import { base58btc } from "multiformats/bases/base58";
 import { base32 } from "multiformats/bases/base32";
 import type { MultihashDigest } from "multiformats/hashes/interface";
 import type { Ed25519PrivateKey, Ed25519PublicKey } from "@libp2p/interface";
-import { bytesToHex, hexToBytes } from "@noble/hashes/utils";
+import { bytesToHex, hexToBytes } from "@noble/hashes/utils.js";
 import { Encryption } from "../../util/curve25519Encryption";
 
 enum keyType {
