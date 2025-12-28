@@ -65,7 +65,6 @@ export class WalletManager {
         (iframe as any).credentialless = true; // iframe和父窗口不可传递cookies等凭证，符合安全规则
         iframe.style.width = "1px";
         iframe.style.height = "1px";
-        iframe.allow = "publickey-credentials-create; publickey-credentials-get"; //让iframe支持WebAuthn;
 
         // 监听钱包iframe发来的消息
         window.addEventListener("message", (event) => {
@@ -255,6 +254,7 @@ export class WalletManager {
       iframe.id = this.walletIframeId;
       iframe.src = `${walletUrl}/home?origin=${appOrigin}`;
       (iframe as any).credentialless = true; // iframe和父窗口不可传递cookies等凭证，符合安全规则
+
       iframe.onload = async () => {
         console.log("debug================onload", new Date());
       };
@@ -267,7 +267,7 @@ export class WalletManager {
         "allow-scripts allow-forms allow-same-origin"
       );
       iframe.allow =
-        "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture";
+        "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture;publickey-credentials-create; publickey-credentials-get";
 
       // iframe.sandbox = "allow-scripts allow-forms allow-same-origin";
       // 直接设置 iframe 的样式以覆盖整个页面
