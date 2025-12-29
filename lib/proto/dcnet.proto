@@ -660,6 +660,7 @@ message PublishCommentToThemeRequest{
 
 message PublishCommentToThemeReply{
     uint32 flag =1; //0:成功 1:评论空间没有配置 2:评论空间不足
+    uint64 timestamp = 2 ; //接收时的时间戳,由接收节点生成,单位为微秒,存入kevalue数据中
 }
 
 
@@ -680,7 +681,7 @@ message PublishCommentToThemeReply{
 
 message SetKeyValueReply{
     uint32 flag =1; //0:成功 1:空间没有配置 2:keyvalue空间不足
-    uint64 timestamp = 2 ; //接收时的时间戳,由接收节点生成,单位为微秒
+    uint64 timestamp = 2 ; //接收时的时间戳,由接收节点生成,单位为微秒,存入kevalue数据中
 }
 
 
@@ -916,20 +917,6 @@ message GetThemeAuthListReply{
     bytes authListCid = 2; //获取的授权列表结果集存入ipfs网络中后反馈的cid,客户端再通过 getFile获取，结果集是PublishCommentToThemeRequest的数组 json序列化
 }
 
-
-message GetUserThemeConfigInfoRequest {
-    bytes theme = 1; //主题
-    bytes appId = 2; //应用标志
-    bytes themeAuthor = 3;//发布主题的的作者pubkey
-    bytes UserPubkey = 4;//申请访问配置的用户pubkey
-    bytes Vaccount = 5; //虚拟账号,可选,如果有虚拟账号
-}
-
-message GetUserThemeConfigInfoReply {
-   uint32 flag = 1;//获取结果 0:成功 1:权限不足 2:获取失败
-   bytes authInfo = 2; //获取的配置结果,返回请求用户的授权信息,userpubkey:permission:remark(remark可选,存放应用自定义的任何信息),userpubkey为用户的公钥16进制表示(all为特殊情况)，permission为用户的权限，remark为备注信息,应用自定义
-}
-
 message GetUserCommentsRequest{
     bytes appId = 1; //应用标志
     bytes UserPubkey = 2;//发布评论的用户pubkey
@@ -1162,6 +1149,20 @@ message RequestRandDataReply{
 }
 
 
+message GetUserThemeConfigInfoRequest {
+    bytes theme = 1; //主题
+    bytes appId = 2; //应用标志
+    bytes themeAuthor = 3;//发布主题的的作者pubkey
+    bytes UserPubkey = 4;//申请访问配置的用户pubkey
+    bytes Vaccount = 5; //虚拟账号,可选,如果有虚拟账号
+}
+
+message GetUserThemeConfigInfoReply {
+   uint32 flag = 1;//获取结果 0:成功 1:权限不足 2:获取失败
+   bytes authInfo = 2; //获取的配置结果,返回请求用户的授权信息,userpubkey:permission:remark(remark可选,存放应用自定义的任何信息),userpubkey为用户的公钥16进制表示(all为特殊情况)，permission为用户的权限，remark为备注信息,应用自定义
+}
+
+
 message DeductUserOffChainOpTimesRequest {
     bytes userPubkey  = 1; 
     uint32 blockheight = 2; //发送请求时的区块高度
@@ -1184,6 +1185,17 @@ message DeductUserAIProxyOpTimesReply {
     uint32 flag = 1; //0:成功 1:操作次数不足 2:其他失败
 }
 
+message NotifyUserAIProxyOpIncreaseRequest {
+    bytes userPubkey  = 1; 
+    bytes subThemeReq = 2;// 子主题AI调用请求数据包
+    bytes remark = 3; //备注信息
+}
+
+
+message NotifyUserAIProxyOpIncreaseReply {
+    uint32 flag = 1; //0:成功 1:其他失败
+    bytes err = 2; //错误信息
+}
 
 
 message GetAIProxyConfigFromPeerRequest {
@@ -1225,6 +1237,23 @@ message GetUserOwnAIProxyAuthReply {
    bytes authInfo = 2; //获取的配置结果,返回请求用户的授权信息
    bytes configs = 3; //获取的配置结果,返回请求用户的配置列表
 }
+
+
+message GetUserAIProxyAuthRequest {
+    bytes theme = 1; //状态汇聚对象CID
+    bytes appId = 2; //应用标志
+    bytes themeAuthor = 3;//发布状态汇聚对象的的pubkey
+    bytes UserPubkey = 4;//申请访问配置的用户pubkey
+    bytes vaccount = 5 ; //虚拟账号,可选,如果有虚拟账号
+}
+
+message GetUserAIProxyAuthReply {
+   uint32 flag = 1;//获取结果 0:成功 1:权限不足 2:获取失败
+   bytes authInfo = 2; //获取的配置结果,返回请求用户的授权信息
+   bytes configs = 3; //获取的配置结果,返回请求用户的配置列表
+}
+
+
 
 
 
@@ -1498,9 +1527,6 @@ service Service {
     rpc GetThemeComments(GetThemeCommentsRequest) returns (GetThemeCommentsReply){}
 
 
-    //获取用户主题配置的相关信息,包括用户的权限等
-    rpc GetUserThemeConfigInfo(GetUserThemeConfigInfoRequest) returns (GetUserThemeConfigInfoReply) {}
-   
 
      //获取指定已开通对象的权限列表(对GetThemeComments进行包装，增加权限判断)//ok
      rpc GetThemeAuthList(GetThemeAuthListRequest) returns (GetThemeAuthListReply){}
@@ -1538,6 +1564,7 @@ service Service {
    //节点中用户评论相关数据打包完成通知//ok
    rpc UserCommentsDownloadReady(UserCommentsDownloadReadyRequest) returns (UserCommentsDownloadReadyReply){}
 
+  
 
    // 从其他节点同步主题对象到本地
    rpc SyncThemeObj(SyncThemeObjRequest) returns (SyncThemeObjReply) {}
@@ -1569,6 +1596,9 @@ service Service {
 
    // 申请真随机数
     rpc RequestRandData(RequestRandDataRequest) returns (RequestRandDataReply) {}
+
+    //获取用户主题配置的相关信息,包括用户的权限等
+    rpc GetUserThemeConfigInfo(GetUserThemeConfigInfoRequest) returns (GetUserThemeConfigInfoReply) {}
    
     // 申请AI模型或者MCPServer的访问权限
     rpc GetAIProxyConfigFromPeer(GetAIProxyConfigFromPeerRequest) returns (GetAIProxyConfigFromPeerReply) {}
@@ -1586,14 +1616,22 @@ service Service {
     rpc GetAIProxyCallTaskResult(GetAIProxyCallTaskResultRequest) returns (GetAIProxyCallTaskResultReply) {}
 
 
-    //GetUserOwnAIProxyConfig
+    //获取用户自己在指定AI代理下的权限信息
     rpc GetUserOwnAIProxyAuth(GetUserOwnAIProxyAuthRequest) returns (GetUserOwnAIProxyAuthReply) {}
+
+    //获取指定用户的配置权限信息
+    rpc GetUserAIProxyAuth(GetUserAIProxyAuthRequest) returns (GetUserAIProxyAuthReply) {}
+
 
    // 申请扣除用户的链下操作次数
    rpc DeductUserOffChainOpTimes(DeductUserOffChainOpTimesRequest) returns (DeductUserOffChainOpTimesReply) {}
 
    //申请扣除用户的AI代理的操作次数
    rpc DeductUserAIProxyOpTimes(DeductUserAIProxyOpTimesRequest) returns (DeductUserAIProxyOpTimesReply) {}
+
+   //通知其他节点,用户的AI代理的调用次数+1
+   rpc NotifyUserAIProxyOpIncrease(NotifyUserAIProxyOpIncreaseRequest) returns (NotifyUserAIProxyOpIncreaseReply) {}
+
 
    /*************************应用设置相关接口*************************/
    rpc SetAppInfo(SetAppInfoRequest) returns (SetAppInfoReply) {} //设置应用基本信息,发布应用或者更新发布信息时调用
