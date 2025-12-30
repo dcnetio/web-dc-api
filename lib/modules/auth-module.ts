@@ -671,8 +671,9 @@ export class AuthModule implements DCModule, IAuthOperations {
             if (waitCount >= 300) {
               waitCount = 0;
               count++;
+              console.log(`第${count}次Token验证完成`);
             }
-            console.log(`第${count}次Token验证完成`);
+            
           } catch (error) {
             logger.error("Token验证任务执行失败:", error);
           }

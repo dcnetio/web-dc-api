@@ -4,8 +4,6 @@ import {  IRecord } from '../core/record';
 import { SymmetricKey } from '../common/key'
 import { CID } from 'multiformats/cid';
 import * as dagCBOR from '@ipld/dag-cbor';
-import { sha256 } from 'multiformats/hashes/sha2';
-import {  Format } from 'interface-ipld-format';
 
 import { encodeBlock, decodeBlock } from './coding';
 import {Block,Node} from './node';  
