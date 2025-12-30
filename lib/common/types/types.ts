@@ -333,3 +333,11 @@ export type AccountInfo = {
   timeStamp: number;
   type: string;
 };
+
+export interface GetUserAIProxyAuthParams {
+  theme: string; // 状态汇聚对象CID
+  appId: string; // 应用标志
+  themeAuthor: string; // 发布状态汇聚对象的的pubkey
+  UserPubkey: string; // 申请访问配置的用户pubkey
+  vaccount?: string | null; // 虚拟账号,可选,如果有虚拟账号
+}

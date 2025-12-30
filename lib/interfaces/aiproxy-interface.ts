@@ -1,4 +1,11 @@
-import { AIProxyConfig, IAICallConfig, OnStreamResponseType, ProxyCallConfig, UserProxyCallConfig } from "../common/types/types";
+import {
+  AIProxyConfig,
+  GetUserAIProxyAuthParams,
+  IAICallConfig,
+  OnStreamResponseType,
+  ProxyCallConfig,
+  UserProxyCallConfig,
+} from "../common/types/types";
 import { AIProxyUserPermission } from "../common/constants";
 
 /**
@@ -17,8 +24,7 @@ export interface IAIProxyOperations {
     configTheme: string
   ): Promise<[number | null, Error | null]>;
 
-
-   /**
+  /**
    * 删除AI调用的Proxy配置
    * @param appId 应用ID
    * @param configTheme 配置主题
@@ -28,7 +34,7 @@ export interface IAIProxyOperations {
     appId: string,
     configTheme: string
   ): Promise<[number | null, Error | null]>;
-  
+
   /**
    * 配置AI代理的访问配置
    * 如果serverConfig为空,则表示删除该serviceName的配置
@@ -48,7 +54,7 @@ export interface IAIProxyOperations {
     serviceConfig?: AIProxyConfig,
     vaccount?: string
   ): Promise<[boolean | null, Error | null]>;
-  
+
   /**
    * 配置用户的访问权限
    * @param appId 应用ID
@@ -69,7 +75,7 @@ export interface IAIProxyOperations {
     authConfig: ProxyCallConfig,
     vaccount?: string
   ): Promise<[number | null, Error | null]>;
-  
+
   /**
    * 获取AI代理的所有配置
    * 包括服务与授权列表
@@ -84,8 +90,10 @@ export interface IAIProxyOperations {
     themeAuthor: string,
     configTheme: string,
     vaccount?: string
-  ): Promise<[UserProxyCallConfig[] | null, AIProxyConfig[] | null, Error | null]>;
-  
+  ): Promise<
+    [UserProxyCallConfig[] | null, AIProxyConfig[] | null, Error | null]
+  >;
+
   /**
    * 获取当前用户自身的AI代理授权信息
    * @param appId 应用ID
@@ -98,7 +106,7 @@ export interface IAIProxyOperations {
     themeAuthor: string,
     configTheme: string
   ): Promise<[ProxyCallConfig | null, Error | null]>;
-  
+
   /**
    * 执行AI代理调用
    * 包括代理与AI的通信或者与MCPServer的通信
@@ -139,7 +147,19 @@ export interface IAIProxyOperations {
    * @param model 模型名称(可选)
    * @returns Promise<void>
    * */
-  SetAICallConfig(
-    callConfig:IAICallConfig
-  ): Promise<Error | null>;
+  SetAICallConfig(callConfig: IAICallConfig): Promise<Error | null>;
+
+  /**
+   * 获取用户授权信息
+   * @param params 授权参数
+   * @param params.appId 应用ID
+   * @param params.themeAuthor 主题作者的公钥
+   * @param params.configTheme 配置主题
+   * @param params.UserPubkey 用户公钥
+   * @param params.vaccount 虚拟账户
+   * @returns [授权信息, 错误信息]
+   */
+  GetUserAIProxyAuth(
+    params: GetUserAIProxyAuthParams
+  ): Promise<[authConfigs: ProxyCallConfig[] | null, error: Error | null]>;
 }
