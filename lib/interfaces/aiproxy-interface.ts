@@ -161,5 +161,5 @@ export interface IAIProxyOperations {
    */
   GetUserAIProxyAuth(
     params: GetUserAIProxyAuthParams
-  ): Promise<[authConfigs: [UserProxyCallConfig] | null, error: Error | null]>;
+  ): Promise<[authConfigs: ProxyCallConfig[] | null, error: Error | null]>;
 }

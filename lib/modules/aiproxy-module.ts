@@ -268,7 +268,7 @@ export class AIProxyModule implements DCModule, IAIProxyOperations {
 
   async GetUserAIProxyAuth(
     params: GetUserAIProxyAuthParams
-  ): Promise<[authConfigs: [UserProxyCallConfig] | null, error: Error | null]> {
+  ): Promise<[authConfigs: ProxyCallConfig[] | null, error: Error | null]> {
     try {
       this.assertInitialized();
       return this.aiProxyManager.GetUserAIProxyAuth(params);

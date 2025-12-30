@@ -674,7 +674,7 @@ export class AIProxyManager {
 
   async GetUserAIProxyAuth(
     params: GetUserAIProxyAuthParams
-  ): Promise<[authConfigs: [UserProxyCallConfig] | null, error: Error | null]> {
+  ): Promise<[authConfigs: ProxyCallConfig[] | null, error: Error | null]> {
     if (!this.context.publicKey) {
       return [null, new Error("ErrConnectToAccountPeersFail")];
     }
@@ -718,7 +718,14 @@ export class AIProxyManager {
     }
     try {
       const authConfig = JSON.parse(authInfo);
-      return [authConfig, error];
+      // 判断是否是数组
+      if (!Array.isArray(authConfig)) {
+        if (!authConfig.Exp) {
+          return [[], null];
+        }
+        return [[authConfig], null];
+      }
+      return [authConfig as ProxyCallConfig[], null];
     } catch (error: any) {
       return [null, error];
     }
