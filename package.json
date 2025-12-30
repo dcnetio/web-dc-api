@@ -1,6 +1,6 @@
 {
   "name": "web-dc-api",
-  "version": "0.1.25",
+  "version": "0.1.26",
   "description": "一个革命性的去中心化 Web 开发 SDK，让您无需任何服务器即可构建完整的互联网应用",
   "type": "module",
   "browser": "dist/dc.min.js",
