@@ -8,7 +8,9 @@ import { Errors } from "../../common/error";
 import { DCContext } from "../../../lib/interfaces/DCContext";
 import {
   AIStreamResponseFlag,
+  GetUserAIProxyAuthParams,
   OnStreamResponseType,
+  ProxyCallConfig,
 } from "../../common/types/types";
 import { error } from "ajv/dist/vocabularies/applicator/dependencies";
 
@@ -405,6 +407,43 @@ export class AIProxyClient {
         context.signal.removeEventListener("abort", abortListener);
       }
       // 无需关闭 gRPC 客户端连接，因为 Libp2pGrpcClient 没有 close 方法
+    }
+  }
+
+  async GetUserAIProxyAuth(
+    params: GetUserAIProxyAuthParams
+  ): Promise<[string | null, Error | null]> {
+    const message = new dcnet.pb.GetUserAIProxyAuthRequest({});
+    message.theme = new TextEncoder().encode(params.theme);
+    message.appId = new TextEncoder().encode(params.appId);
+    message.themeAuthor = new TextEncoder().encode(params.themeAuthor);
+    message.UserPubkey = new TextEncoder().encode(params.UserPubkey);
+    if (params.vaccount) {
+      message.vaccount = new TextEncoder().encode(params.vaccount);
+    }
+
+    const messageBytes =
+      dcnet.pb.GetUserAIProxyAuthRequest.encode(message).finish();
+    const grpcClient = new Libp2pGrpcClient(
+      this.client.p2pNode,
+      this.client.peerAddr,
+      this.client.token,
+      this.client.protocol
+    );
+    try {
+      const response = await grpcClient.unaryCall(
+        "/dcnet.pb.Service/GetUserAIProxyAuth",
+        messageBytes,
+        30000
+      );
+      const decodedResponse = dcnet.pb.GetUserAIProxyAuthReply.decode(response);
+      if (decodedResponse.flag != 0) {
+        throw new Error("GetUserAIProxyAuth error");
+      }
+      const authInfo = new TextDecoder().decode(decodedResponse.authInfo);
+      return [authInfo, null];
+    } catch (error) {
+      return [null, error];
     }
   }
 }
