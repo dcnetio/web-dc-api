@@ -7,14 +7,10 @@ import * as dagCBOR from '@ipld/dag-cbor';
 
 import { encodeBlock, decodeBlock } from './coding';
 import {Block,Node} from './node';  
-import CID_IPLD from 'cids';
-import { dagCbor ,DAGCBOR} from '@helia/dag-cbor'
 import * as cbornode from './node';
 import { Link } from 'multiformats/link'
 import {IPLDNode} from '../core/core';
 import {Blocks} from 'helia'
-import { wrap } from 'module';
-import { Head } from '../core/head';
 
 
 

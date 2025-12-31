@@ -1,6 +1,18 @@
 import type { Multiaddr } from "@multiformats/multiaddr";
-import {  AIProxyConfig, DCConnectInfo, OnStreamResponseType, ProxyCallConfig, ThemeComment, UserProxyCallConfig } from "../../common/types/types";
-import { AIProxyUserPermission, cidNeedConnect, OpenFlag } from "../../common/constants";
+import {
+  AIProxyConfig,
+  DCConnectInfo,
+  GetUserAIProxyAuthParams,
+  OnStreamResponseType,
+  ProxyCallConfig,
+  ThemeComment,
+  UserProxyCallConfig,
+} from "../../common/types/types";
+import {
+  AIProxyUserPermission,
+  cidNeedConnect,
+  OpenFlag,
+} from "../../common/constants";
 import { CommentManager } from "../comment/manager";
 import { HeliaLibp2p } from "helia";
 import { ChainUtil } from "../../common/chain";
@@ -36,15 +48,12 @@ export const Errors = {
   // chainUtil is null
   ErrChainUtilIsNull: new AIProxyError("chainUtil is null"),
   // account privatekey sign is null
-  ErrAccountPrivateSignIsNull: new AIProxyError("account privatekey sign is null"),
+  ErrAccountPrivateSignIsNull: new AIProxyError(
+    "account privatekey sign is null"
+  ),
   // account publickey is null
   ErrAccountPublicKeyIsNull: new AIProxyError("account publickey is null"),
 };
-
-
-
-
-
 
 export class AIProxyManager {
   private dc: DcUtil;
@@ -66,7 +75,7 @@ export class AIProxyManager {
   // 创建AI调用的Proxy配置
   async createProxyConfig(
     appId: string,
-    configTheme: string, 
+    configTheme: string
   ): Promise<[number | null, Error | null]> {
     // Default group to "DCAPP" if empty
     if (appId === "") {
@@ -76,9 +85,9 @@ export class AIProxyManager {
     const space = 100 << 20;
     // Theme must start with "keyvalue_"
     if (!configTheme.startsWith("keyvalue_")) {
-        configTheme = "keyvalue_" + configTheme;
+      configTheme = "keyvalue_" + configTheme;
     }
-  
+
     try {
       // Assuming AddThemeObjDeal is implemented elsewhere
       const commentManager = new CommentManager(this.context);
@@ -86,7 +95,7 @@ export class AIProxyManager {
         appId,
         configTheme,
         OpenFlag.AUTH,
-        space 
+        space
       );
       return res;
     } catch (error) {
@@ -94,12 +103,10 @@ export class AIProxyManager {
     }
   }
 
-
-
   // 删除AI调用的Proxy配置
   async deleteProxyConfig(
     appId: string,
-    configTheme: string, 
+    configTheme: string
   ): Promise<[number | null, Error | null]> {
     // Default group to "DCAPP" if empty
     if (appId === "") {
@@ -108,22 +115,17 @@ export class AIProxyManager {
 
     // Theme must start with "keyvalue_"
     if (!configTheme.startsWith("keyvalue_")) {
-        configTheme = "keyvalue_" + configTheme;
+      configTheme = "keyvalue_" + configTheme;
     }
-  
+
     try {
       const commentManager = new CommentManager(this.context);
-      const res = await commentManager.deleteThemeObj(
-        appId,
-        configTheme
-      );
+      const res = await commentManager.deleteThemeObj(appId, configTheme);
       return res;
     } catch (error) {
       return [null, error as Error];
     }
   }
-
-
 
   //配置AI代理的访问配置,如果key的值设置为空,则表示删除该key的配置
   async configAIProxy(
@@ -134,50 +136,49 @@ export class AIProxyManager {
     serviceConfig?: AIProxyConfig,
     vaccount?: string
   ): Promise<[boolean | null, Error | null]> {
-    if(!this.context.publicKey) {
+    if (!this.context.publicKey) {
       return [null, Errors.ErrNoDcPeerConnected];
     }
-    const blockHeight: number = await this.chainUtil.getBlockHeight() || 0;
+    const blockHeight: number = (await this.chainUtil.getBlockHeight()) || 0;
     const userPubkey = this.context.getPublicKey();
     let userPubkeyStr = userPubkey.string();
     if (!configTheme.startsWith("keyvalue_")) {
-        configTheme = "keyvalue_" + configTheme;
+      configTheme = "keyvalue_" + configTheme;
     }
-  
+
     let client = this.context.AccountBackupDc?.client || null;
-    if (!client){
-        client = await this.dc.connectToUserDcPeer(this.context.publicKey.raw);
+    if (!client) {
+      client = await this.dc.connectToUserDcPeer(this.context.publicKey.raw);
     }
     if (!client) {
-        return [null, Errors.ErrNoDcPeerConnected];
+      return [null, Errors.ErrNoDcPeerConnected];
     }
-      //获取token
+    //获取token
     await client.GetToken(
-          this.context.appInfo.appId || "",
-          this.context.publicKey.string(),
-          this.context.sign
-        );
-    
+      this.context.appInfo.appId || "",
+      this.context.publicKey.string(),
+      this.context.sign
+    );
 
     if (client === null) {
       return [null, Errors.ErrNoDcPeerConnected];
     }
-    if (client.token  == "") {
-       await client.GetToken(
-          this.context.appInfo.appId || "",
-          this.context.publicKey.string(),
-          this.context.sign
-        );
+    if (client.token == "") {
+      await client.GetToken(
+        this.context.appInfo.appId || "",
+        this.context.publicKey.string(),
+        this.context.sign
+      );
     }
 
-    let content = '';
-    const key = serviceName
+    let content = "";
+    const key = serviceName;
     if (!serviceConfig) {
-        content = `${key}`;
-    }else{
-        serviceConfig.blockheight = blockHeight;
-        const value = JSON.stringify(serviceConfig)
-        content = `${key}:${value}`;   
+      content = `${key}`;
+    } else {
+      serviceConfig.blockheight = blockHeight;
+      const value = JSON.stringify(serviceConfig);
+      content = `${key}:${value}`;
     }
     const contentUint8 = new TextEncoder().encode(content);
     const contenthash = await sha256(contentUint8);
@@ -185,7 +186,6 @@ export class AIProxyManager {
 
     const contentSize = contentUint8.length;
 
-    
     const hValue: Uint8Array = uint32ToLittleEndianBytes(
       blockHeight ? blockHeight : 0
     );
@@ -209,7 +209,7 @@ export class AIProxyManager {
     const signature = await this.context.sign(preSign);
     const keyValueClient = new KeyValueClient(client, this.context);
     try {
-      const [resFlag,_] = await keyValueClient.setKeyValue(
+      const [resFlag, _] = await keyValueClient.setKeyValue(
         configTheme,
         appId,
         configAuthor,
@@ -232,8 +232,6 @@ export class AIProxyManager {
     }
   }
 
-
-
   //配置用户的访问权限
   async configAuth(
     appId: string,
@@ -244,11 +242,11 @@ export class AIProxyManager {
     authConfig: ProxyCallConfig,
     vaccount?: string
   ): Promise<[number | null, Error | null]> {
-    if(!this.context.publicKey) {
+    if (!this.context.publicKey) {
       return [null, Errors.ErrAccountPublicKeyIsNull];
     }
     if (!configTheme.startsWith("keyvalue_")) {
-        configTheme = "keyvalue_" + configTheme;
+      configTheme = "keyvalue_" + configTheme;
     }
     if (!configTheme.endsWith("_authlist")) {
       configTheme = configTheme + "_authlist";
@@ -258,8 +256,8 @@ export class AIProxyManager {
     let userPubkeyStr = userPubkey.string();
 
     let client = this.context.AccountBackupDc?.client || null;
-    if (!client){
-        client = await this.dc.connectToUserDcPeer(this.context.publicKey.raw);
+    if (!client) {
+      client = await this.dc.connectToUserDcPeer(this.context.publicKey.raw);
     }
     if (client === null) {
       return [null, new Error("ErrConnectToAccountPeersFail")];
@@ -268,19 +266,19 @@ export class AIProxyManager {
     if (client.peerAddr === null) {
       return [null, new Error("ErrConnectToAccountPeersFail")];
     }
-    if (client.token  == "") {
-       await client.GetToken(
-          this.context.appInfo.appId || "",
-          this.context.publicKey.string(),
-          this.context.sign
-        );
+    if (client.token == "") {
+      await client.GetToken(
+        this.context.appInfo.appId || "",
+        this.context.publicKey.string(),
+        this.context.sign
+      );
     }
 
     const themeAuthorPubkey: Ed25519PubKey =
       Ed25519PubKey.edPubkeyFromStr(configAuthor);
 
     let pubkeyFlag = true;
-    let forPubkey: Ed25519PubKey | null  = null;
+    let forPubkey: Ed25519PubKey | null = null;
     try {
       forPubkey = Ed25519PubKey.edPubkeyFromStr(authPubkey);
     } catch (error) {
@@ -304,7 +302,7 @@ export class AIProxyManager {
     // Get blockchain height
     let blockHeight: number;
     try {
-      blockHeight = await this.chainUtil.getBlockHeight() || 0;
+      blockHeight = (await this.chainUtil.getBlockHeight()) || 0;
     } catch (error) {
       return [null, new Error("ErrGetBlockHeightFail")];
     }
@@ -368,193 +366,199 @@ export class AIProxyManager {
     themeAuthor: string,
     configTheme: string,
     vaccount?: string
-  ): Promise<[UserProxyCallConfig[] | null,AIProxyConfig[] | null, Error | null]> {
-    if(!this.context.publicKey) {
-      return [null,null, Errors.ErrAccountPublicKeyIsNull];
+  ): Promise<
+    [UserProxyCallConfig[] | null, AIProxyConfig[] | null, Error | null]
+  > {
+    if (!this.context.publicKey) {
+      return [null, null, Errors.ErrAccountPublicKeyIsNull];
     }
     if (!configTheme.startsWith("keyvalue_")) {
-        configTheme = "keyvalue_" + configTheme;
+      configTheme = "keyvalue_" + configTheme;
     }
-   
-
- 
 
     let client = this.context.AccountBackupDc.client || null;
-       if (themeAuthor != this.context.publicKey.string()) {//查询他人主题评论
-         const authorPublicKey: Ed25519PubKey = Ed25519PubKey.edPubkeyFromStr(themeAuthor);
-         client = await this.dc.connectToUserDcPeer(authorPublicKey.raw);
-         if (!client) {
-           return [null,null, Errors.ErrNoDcPeerConnected];
-         }
-       }
+    if (themeAuthor != this.context.publicKey.string()) {
+      //查询他人主题评论
+      const authorPublicKey: Ed25519PubKey =
+        Ed25519PubKey.edPubkeyFromStr(themeAuthor);
+      client = await this.dc.connectToUserDcPeer(authorPublicKey.raw);
+      if (!client) {
+        return [null, null, Errors.ErrNoDcPeerConnected];
+      }
+    }
     if (client === null) {
-      return [null,null, new Error("ErrConnectToAccountPeersFail")];
+      return [null, null, new Error("ErrConnectToAccountPeersFail")];
     }
 
     if (client.peerAddr === null) {
-      return [null,null, new Error("ErrConnectToAccountPeersFail")];
+      return [null, null, new Error("ErrConnectToAccountPeersFail")];
     }
-    if (client.token  == "") {
-       await client.GetToken(
-          this.context.appInfo.appId || "",
-          this.context.publicKey.string(),
-          this.context.sign
-        );
+    if (client.token == "") {
+      await client.GetToken(
+        this.context.appInfo.appId || "",
+        this.context.publicKey.string(),
+        this.context.sign
+      );
     }
     try {
-        const aiProxyClient = new AIProxyClient(client, this.context);
-        const [proxyConfigCid, aesKey, error] = await aiProxyClient.GetAIProxyConfig(
-          appId,
-          themeAuthor,
-          configTheme
-        )
-        if (error) {
-          return [null,null, error];
-        }
-        const fileManager = new FileManager(
-            this.dc,
-            this.context.AccountBackupDc,
-            this.chainUtil,
-            this.dcNodeClient,
-            this.context
-            );
-        const cid = proxyConfigCid;
-        const fileContent = await fileManager.getFileFromDc(
-            cid,
-            "",
-            cidNeedConnect.NOT_NEED,
-            false
-            );
-        if (!fileContent) {
-        return [[],[], null];
-        }
-        const fileContentString = uint8ArrayToString(fileContent);
-        const result = await this.handleAllConfig(fileContentString, aesKey);
-        if (!result) {
-          return [[], [], null];
-        }
-        const [allAuth, allContent] = result;
-        return [allAuth, allContent, null];
-
+      const aiProxyClient = new AIProxyClient(client, this.context);
+      const [proxyConfigCid, aesKey, error] =
+        await aiProxyClient.GetAIProxyConfig(appId, themeAuthor, configTheme);
+      if (error) {
+        return [null, null, error];
+      }
+      const fileManager = new FileManager(
+        this.dc,
+        this.context.AccountBackupDc,
+        this.chainUtil,
+        this.dcNodeClient,
+        this.context
+      );
+      const cid = proxyConfigCid;
+      const fileContent = await fileManager.getFileFromDc(
+        cid,
+        "",
+        cidNeedConnect.NOT_NEED,
+        false
+      );
+      if (!fileContent) {
+        return [[], [], null];
+      }
+      const fileContentString = uint8ArrayToString(fileContent);
+      const result = await this.handleAllConfig(fileContentString, aesKey);
+      if (!result) {
+        return [[], [], null];
+      }
+      const [allAuth, allContent] = result;
+      return [allAuth, allContent, null];
     } catch (error) {
-      return [null, null, error as  Error];
+      return [null, null, error as Error];
     }
   }
 
+  private handleAllConfig = async (
+    fileContentString: string,
+    aesKey: string
+  ): Promise<[UserProxyCallConfig[], AIProxyConfig[]] | null> => {
+    const reader = new BrowserLineReader(fileContentString);
+    let allContent: Array<AIProxyConfig> = [];
+    let allAuth: Array<UserProxyCallConfig> = [];
 
-  private handleAllConfig = async (fileContentString: string,aesKey:string): Promise<[UserProxyCallConfig[],AIProxyConfig[]] | null> => {
-      const reader = new BrowserLineReader(fileContentString);
-      let allContent: Array<AIProxyConfig> = [];
-       let allAuth: Array<UserProxyCallConfig> = [];
-  
-      if (!this.context.getPublicKey()) {
-        return null;
-      }
-      const decryptKey = SymmetricKey.fromString(aesKey);
-      // readLine 循环
-      while (true) {
-        const { line, error } = readLine(reader);
-        if (error && error.message !== "EOF") {
-          console.error("读取错误:", error);
+    if (!this.context.getPublicKey()) {
+      return null;
+    }
+    const decryptKey = SymmetricKey.fromString(aesKey);
+    // readLine 循环
+    while (true) {
+      const { line, error } = readLine(reader);
+      if (error && error.message !== "EOF") {
+        console.error("读取错误:", error);
+        break;
+      } else if (line) {
+        // 将Uint8Array转回字符串
+        const decoder = new TextDecoder();
+        const lineString = decoder.decode(line);
+        if (!lineString) {
           break;
-        } else if (line) {
-          // 将Uint8Array转回字符串
-          const decoder = new TextDecoder();
-          const lineString = decoder.decode(line);
-          if (!lineString) {
-            break;
-          }
-          const lineContent = base32.decode(lineString);
-          const plainContent = await decryptKey.decrypt(lineContent);
-          const contentStr = new TextDecoder().decode(plainContent);
-          if (!contentStr) {
-            continue; // 如果内容为空，跳过
-          }
-          if (contentStr.startsWith("$$auth$$:")) { //授权信息
-            try {
-              const authContent = contentStr.split("$$auth$$:")[1];
-              if (!authContent ) {
-                console.error("无效的授权信息格式:", contentStr);
-                continue; // 如果格式不正确，跳过
-              }
-              const parts = authContent.split(":");
-              if (parts.length < 2) {
-                console.error("无效的授权信息格式:", authContent);
-                continue; // 如果格式不正确，跳过
-              }
-              //解析出userpubkey
-              const userPubkey = parts[0] || "";
-              const permission = parts[1] || "";
-              const authContentStr = authContent.substring(
-                userPubkey.length + permission.length + 2 // +2 for the colon and the next colon
-              );
-              //解析到ProxyCallConfig结构
-              const authConfig = JSON.parse(authContentStr);
-              allAuth.push({
-                UserPubkey: userPubkey,
-                permission: parseInt(permission), //转成数字
-                authConfig: authConfig,
-              });
-            } catch (error) {
-              console.error("解析授权信息错误:", error);
-            }
-            continue;
-          }
-          //keyvalue中取出value
-          const parts: string[] = contentStr.split(":");
-          if (parts.length < 2) {
-            console.error("无效的内容格式:", contentStr);
-            continue; // 如果格式不正确，跳过
-          }
-
-          const valueWithExtra = contentStr.substring((parts[0]||"").length + 1);
+        }
+        const lineContent = base32.decode(lineString);
+        const plainContent = await decryptKey.decrypt(lineContent);
+        const contentStr = new TextDecoder().decode(plainContent);
+        if (!contentStr) {
+          continue; // 如果内容为空，跳过
+        }
+        if (contentStr.startsWith("$$auth$$:")) {
+          //授权信息
           try {
-            //解析出扩展信息(时间戳,用户公钥等)
-            const valueParts = valueWithExtra.split("$$$dckv_extra$$$");
-            const value = valueParts[0] || "{}";
-            const content = JSON.parse(value);
-            if (valueParts.length > 1) {
-              const extraStr = valueParts[1] || "{}";
-              const extra = JSON.parse(extraStr);
-              if (extra) {
-                if (extra.dc_timestamp) {
-                  content.timestamp = extra.dc_timestamp;
-                }
-                if (extra.dc_opuser) {
-                  content.userPubkey = extra.dc_opuser;
-                }
+            const authContent = contentStr.split("$$auth$$:")[1];
+            if (!authContent) {
+              console.error("无效的授权信息格式:", contentStr);
+              continue; // 如果格式不正确，跳过
+            }
+            const parts = authContent.split(":");
+            if (parts.length < 2) {
+              console.error("无效的授权信息格式:", authContent);
+              continue; // 如果格式不正确，跳过
+            }
+            //解析出userpubkey
+            const userPubkey = parts[0] || "";
+            const permission = parts[1] || "";
+            const authContentStr = authContent.substring(
+              userPubkey.length + permission.length + 2 // +2 for the colon and the next colon
+            );
+            //解析到ProxyCallConfig结构
+            const authConfig = JSON.parse(authContentStr);
+            allAuth.push({
+              UserPubkey: userPubkey,
+              permission: parseInt(permission), //转成数字
+              authConfig: authConfig,
+            });
+          } catch (error) {
+            console.error("解析授权信息错误:", error);
+          }
+          continue;
+        }
+        //keyvalue中取出value
+        const parts: string[] = contentStr.split(":");
+        if (parts.length < 2) {
+          console.error("无效的内容格式:", contentStr);
+          continue; // 如果格式不正确，跳过
+        }
+
+        const valueWithExtra = contentStr.substring(
+          (parts[0] || "").length + 1
+        );
+        try {
+          //解析出扩展信息(时间戳,用户公钥等)
+          const valueParts = valueWithExtra.split("$$$dckv_extra$$$");
+          const value = valueParts[0] || "{}";
+          const content = JSON.parse(value);
+          if (valueParts.length > 1) {
+            const extraStr = valueParts[1] || "{}";
+            const extra = JSON.parse(extraStr);
+            if (extra) {
+              if (extra.dc_timestamp) {
+                content.timestamp = extra.dc_timestamp;
+              }
+              if (extra.dc_opuser) {
+                content.userPubkey = extra.dc_opuser;
               }
             }
-            allContent.push(content as AIProxyConfig);
-          } catch (error) {
-            console.error("解析内容错误:", error);
           }
+          allContent.push(content as AIProxyConfig);
+        } catch (error) {
+          console.error("解析内容错误:", error);
         }
       }
-      return [allAuth, allContent] as [Array<UserProxyCallConfig>, Array<AIProxyConfig>];   
-    };
+    }
+    return [allAuth, allContent] as [
+      Array<UserProxyCallConfig>,
+      Array<AIProxyConfig>
+    ];
+  };
 
-    
   async GetUserOwnAIProxyAuth(
     appId: string,
     themeAuthor: string,
-    configTheme: string,
+    configTheme: string
   ): Promise<[authConfig: ProxyCallConfig | null, error: Error | null]> {
-    if(!this.context.publicKey) {
-        return [null, new Error("ErrConnectToAccountPeersFail")];
+    if (!this.context.publicKey) {
+      return [null, new Error("ErrConnectToAccountPeersFail")];
     }
-    if( !configTheme.startsWith("keyvalue_")) {
-        configTheme = "keyvalue_" + configTheme;
+    if (!configTheme.startsWith("keyvalue_")) {
+      configTheme = "keyvalue_" + configTheme;
     }
-    
-     let client = this.context.AccountBackupDc?.client || null;
-       if (themeAuthor != this.context.publicKey.string()) {//查询他人主题评论
-         const authorPublicKey: Ed25519PubKey = Ed25519PubKey.edPubkeyFromStr(themeAuthor);
-         client = await this.dc.connectToUserDcPeer(authorPublicKey.raw);
-         if (!client) {
-           return [null, Errors.ErrNoDcPeerConnected];
-         }
-       }
+
+    let client = this.context.AccountBackupDc?.client || null;
+    if (themeAuthor != this.context.publicKey.string()) {
+      //查询他人主题评论
+      const authorPublicKey: Ed25519PubKey =
+        Ed25519PubKey.edPubkeyFromStr(themeAuthor);
+      client = await this.dc.connectToUserDcPeer(authorPublicKey.raw);
+      if (!client) {
+        return [null, Errors.ErrNoDcPeerConnected];
+      }
+    }
 
     if (client === null) {
       return [null, new Error("ErrConnectToAccountPeersFail")];
@@ -563,12 +567,12 @@ export class AIProxyManager {
     if (client.peerAddr === null) {
       return [null, new Error("ErrConnectToAccountPeersFail")];
     }
-    if (client.token  == "") {
-       await client.GetToken(
-          this.context.appInfo.appId || "",
-          this.context.publicKey.string(),
-          this.context.sign
-        );
+    if (client.token == "") {
+      await client.GetToken(
+        this.context.appInfo.appId || "",
+        this.context.publicKey.string(),
+        this.context.sign
+      );
     }
     const aiProxyClient = new AIProxyClient(client, this.context);
     const [authInfo, error] = await aiProxyClient.GetUserOwnAIProxyAuth(
@@ -582,13 +586,13 @@ export class AIProxyManager {
     try {
       const authConfig = JSON.parse(authInfo);
       return [authConfig, error];
-    }catch (error:any) {
+    } catch (error: any) {
       return [null, error];
     }
   }
-    
+
   //AI相关代理的调用,包括代理与AI的通信或者与MCPServer的通信
- async DoAIProxyCall( 
+  async DoAIProxyCall(
     context: { signal?: AbortSignal },
     appId: string,
     themeAuthor: string,
@@ -596,75 +600,134 @@ export class AIProxyManager {
     serviceName: string,
     reqBody: string,
     forceRefresh: boolean,
-    onStreamResponse: OnStreamResponseType | null = null ,
+    onStreamResponse: OnStreamResponseType | null = null,
     headers?: string,
     path?: string,
-    model?: string): Promise< number>
-    {
-       if( !configTheme.startsWith("keyvalue_")) {
-            configTheme = "keyvalue_" + configTheme;
-        }
-        const blockHeight = (await this.chainUtil.getBlockHeight()) || 0;
-        const hValue: Uint8Array = uint32ToLittleEndianBytes(
-            blockHeight ? blockHeight : 0
-        );
-        const forceRefreshFlag = forceRefresh ? 1 : 0;
-        const forceRefreshValue: Uint8Array = uint32ToLittleEndianBytes(forceRefreshFlag);
-        const themeAuthorValue: Uint8Array = new TextEncoder().encode(themeAuthor);
-        const themeValue: Uint8Array = new TextEncoder().encode(configTheme);
-        const appIdValue: Uint8Array = new TextEncoder().encode(appId);
-        const serviceNameValue: Uint8Array = new TextEncoder().encode(serviceName);
-        const pathValue: Uint8Array = new TextEncoder().encode(path);
-        const headersValue: Uint8Array = new TextEncoder().encode(headers);
-        const reqBodyValue: Uint8Array = new TextEncoder().encode(reqBody);
-        const modelValue: Uint8Array = new TextEncoder().encode(model);
-        const preSign = new Uint8Array([
-            ...themeValue,
-            ...appIdValue,
-            ...themeAuthorValue,
-            ...hValue,
-            ...serviceNameValue,
-            ...pathValue,
-            ...reqBodyValue,
-            ...forceRefreshValue,
-            ...modelValue,
-            ...headersValue
-        ]);
-        if (!this.context.AccountBackupDc.client) {
-          throw new Error("ErrConnectToAccountPeersFail");
-        }
-        if(!this.context.publicKey){
-            throw new Error("ErrConnectToAccountPeersFail");
-        }
+    model?: string
+  ): Promise<number> {
+    if (!configTheme.startsWith("keyvalue_")) {
+      configTheme = "keyvalue_" + configTheme;
+    }
+    const blockHeight = (await this.chainUtil.getBlockHeight()) || 0;
+    const hValue: Uint8Array = uint32ToLittleEndianBytes(
+      blockHeight ? blockHeight : 0
+    );
+    const forceRefreshFlag = forceRefresh ? 1 : 0;
+    const forceRefreshValue: Uint8Array =
+      uint32ToLittleEndianBytes(forceRefreshFlag);
+    const themeAuthorValue: Uint8Array = new TextEncoder().encode(themeAuthor);
+    const themeValue: Uint8Array = new TextEncoder().encode(configTheme);
+    const appIdValue: Uint8Array = new TextEncoder().encode(appId);
+    const serviceNameValue: Uint8Array = new TextEncoder().encode(serviceName);
+    const pathValue: Uint8Array = new TextEncoder().encode(path);
+    const headersValue: Uint8Array = new TextEncoder().encode(headers);
+    const reqBodyValue: Uint8Array = new TextEncoder().encode(reqBody);
+    const modelValue: Uint8Array = new TextEncoder().encode(model);
+    const preSign = new Uint8Array([
+      ...themeValue,
+      ...appIdValue,
+      ...themeAuthorValue,
+      ...hValue,
+      ...serviceNameValue,
+      ...pathValue,
+      ...reqBodyValue,
+      ...forceRefreshValue,
+      ...modelValue,
+      ...headersValue,
+    ]);
+    if (!this.context.AccountBackupDc.client) {
+      throw new Error("ErrConnectToAccountPeersFail");
+    }
+    if (!this.context.publicKey) {
+      throw new Error("ErrConnectToAccountPeersFail");
+    }
 
-        if (this.context.AccountBackupDc.client.token == "") {
-          await this.context.AccountBackupDc.client.GetToken(
-              this.context.appInfo.appId || "",
-              this.context.publicKey.string(),
-              this.context.sign
-            );
-        }
-        const signature = await  this.context.sign(preSign);
-        const proxyClient = new AIProxyClient(
-            this.context.AccountBackupDc.client,
-            this.context
-        );
-        let res = await proxyClient.DoAIProxyCall(
-            context,
-            appId,
-            themeAuthor,
-            configTheme,
-            serviceName,
-            path || "",
-            headers || "",
-            reqBody,
-            model || "",
-            forceRefreshFlag,
-            blockHeight ,
-            signature,
-            onStreamResponse
-        );
-       return res;
+    if (this.context.AccountBackupDc.client.token == "") {
+      await this.context.AccountBackupDc.client.GetToken(
+        this.context.appInfo.appId || "",
+        this.context.publicKey.string(),
+        this.context.sign
+      );
+    }
+    const signature = await this.context.sign(preSign);
+    const proxyClient = new AIProxyClient(
+      this.context.AccountBackupDc.client,
+      this.context
+    );
+    let res = await proxyClient.DoAIProxyCall(
+      context,
+      appId,
+      themeAuthor,
+      configTheme,
+      serviceName,
+      path || "",
+      headers || "",
+      reqBody,
+      model || "",
+      forceRefreshFlag,
+      blockHeight,
+      signature,
+      onStreamResponse
+    );
+    return res;
+  }
+
+  async GetUserAIProxyAuth(
+    params: GetUserAIProxyAuthParams
+  ): Promise<[authConfigs: ProxyCallConfig[] | null, error: Error | null]> {
+    if (!this.context.publicKey) {
+      return [null, new Error("ErrConnectToAccountPeersFail")];
+    }
+    if (!params.theme.startsWith("keyvalue_")) {
+      params.theme = "keyvalue_" + params.theme;
+    }
+
+    let client = this.context.AccountBackupDc?.client || null;
+    if (params.themeAuthor != this.context.publicKey.string()) {
+      //查询他人主题评论
+      const authorPublicKey: Ed25519PubKey = Ed25519PubKey.edPubkeyFromStr(
+        params.themeAuthor
+      );
+      client = await this.dc.connectToUserDcPeer(authorPublicKey.raw);
+      if (!client) {
+        return [null, Errors.ErrNoDcPeerConnected];
       }
-}
+    }
 
+    if (client === null) {
+      return [null, new Error("ErrConnectToAccountPeersFail")];
+    }
+
+    if (client.peerAddr === null) {
+      return [null, new Error("ErrConnectToAccountPeersFail")];
+    }
+    if (client.token == "") {
+      await client.GetToken(
+        this.context.appInfo.appId || "",
+        this.context.publicKey.string(),
+        this.context.sign
+      );
+    }
+    const aiProxyClient = new AIProxyClient(client, this.context);
+    const [authInfo, error] = await aiProxyClient.GetUserAIProxyAuth(params);
+    if (error) {
+      return [null, error];
+    }
+    if (!authInfo) {
+      return [null, new Error("GetUserAIProxyAuth is empty")];
+    }
+    try {
+      const authConfig = JSON.parse(authInfo);
+      // 判断是否是数组
+      if (!Array.isArray(authConfig)) {
+        if (!authConfig.Exp) {
+          return [[], null];
+        }
+        return [[authConfig], null];
+      }
+      return [authConfig as ProxyCallConfig[], null];
+    } catch (error: any) {
+      return [null, error];
+    }
+  }
+}
