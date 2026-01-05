@@ -220,6 +220,8 @@ export class DcUtil {
           return;
         }
         const addrParts = peers[i].split(",");
+        // // todo 临时测试，192.168.31.31改成10.0.0.2
+        // addrParts[1] = addrParts[1].replace(/192.168.31.31/g, "10.0.0.2");
         const nodeAddr = multiaddr(addrParts[1]);
 
         try {
