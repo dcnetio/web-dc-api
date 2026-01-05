@@ -165,8 +165,7 @@ async GetUserOwnAIProxyAuth(
     model?: string): Promise<[number | null, Error | null]>
     {
       try{
-
-      
+        
         this.assertInitialized();
         if (this.aiCallConfig == null && (!appId || !themeAuthor || !configTheme || !serviceName)) {
             throw new Error("AI调用配置未设置");
@@ -201,6 +200,8 @@ async GetUserOwnAIProxyAuth(
         if (!serviceName) {
             throw new Error("服务名称不能为空");
         }
+        console.debug("开始调用AI代理: themeAuthor=", themeAuthor, " configTheme=", configTheme, " serviceName=", serviceName);
+      
         const res = await this.aiProxyManager.DoAIProxyCall(context,appId , themeAuthor, configTheme, serviceName, reqBody, forceRefresh, onStreamResponse, headersStr, path|| this.aiCallConfig?.path, model|| this.aiCallConfig?.model);
         return [res, null];
       } catch (error) {
