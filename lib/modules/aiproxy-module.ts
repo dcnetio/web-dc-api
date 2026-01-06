@@ -184,64 +184,52 @@ export class AIProxyModule implements DCModule, IAIProxyOperations {
     serviceName?: string,
     headers?: Record<string, string>,
     path?: string,
-    model?: string
-  ): Promise<[number | null, Error | null]> {
-    try {
-      this.assertInitialized();
-      if (
-        this.aiCallConfig == null &&
-        (!appId || !themeAuthor || !configTheme || !serviceName)
-      ) {
-        throw new Error("AI调用配置未设置");
+    model?: string): Promise<[number | null, Error | null]>
+    {
+      try{
+        
+        this.assertInitialized();
+        if (this.aiCallConfig == null && (!appId || !themeAuthor || !configTheme || !serviceName)) {
+            throw new Error("AI调用配置未设置");
+        }
+        let headersStr = "";
+        if (headers) {
+            headersStr = JSON.stringify(headers);
+        }else if (this.aiCallConfig?.headers) {
+            headersStr = JSON.stringify(this.aiCallConfig.headers);
+        }
+        if (!configTheme) {
+            configTheme = this.aiCallConfig?.theme;
+        }
+        if (!configTheme) {
+            throw new Error("配置主题不能为空");
+        }
+        if (!appId) {
+            appId = this.aiCallConfig?.appId;
+        }
+        if (!appId) {
+            throw new Error("应用ID不能为空");
+        }
+        if (!themeAuthor) {
+            themeAuthor = this.aiCallConfig?.themeAuthor;
+        }
+        if (!themeAuthor) {
+            throw new Error("主题作者公钥不能为空");
+        }
+        if (!serviceName) {
+            serviceName = this.aiCallConfig?.service;
+        }
+        if (!serviceName) {
+            throw new Error("服务名称不能为空");
+        }
+        console.debug("开始调用AI代理: themeAuthor=", themeAuthor, " configTheme=", configTheme, " serviceName=", serviceName);
+      
+        const res = await this.aiProxyManager.DoAIProxyCall(context,appId , themeAuthor, configTheme, serviceName, reqBody, forceRefresh, onStreamResponse, headersStr, path|| this.aiCallConfig?.path, model|| this.aiCallConfig?.model);
+        return [res, null];
+      } catch (error) {
+        logger.error("AI代理调用失败:", error);
+        return [null, error instanceof Error ? error : new Error(String(error))];
       }
-      let headersStr = "";
-      if (headers) {
-        headersStr = JSON.stringify(headers);
-      } else if (this.aiCallConfig?.headers) {
-        headersStr = JSON.stringify(this.aiCallConfig.headers);
-      }
-      if (!configTheme) {
-        configTheme = this.aiCallConfig?.theme;
-      }
-      if (!configTheme) {
-        throw new Error("配置主题不能为空");
-      }
-      if (!appId) {
-        appId = this.aiCallConfig?.appId;
-      }
-      if (!appId) {
-        throw new Error("应用ID不能为空");
-      }
-      if (!themeAuthor) {
-        themeAuthor = this.aiCallConfig?.themeAuthor;
-      }
-      if (!themeAuthor) {
-        throw new Error("主题作者公钥不能为空");
-      }
-      if (!serviceName) {
-        serviceName = this.aiCallConfig?.service;
-      }
-      if (!serviceName) {
-        throw new Error("服务名称不能为空");
-      }
-      const res = await this.aiProxyManager.DoAIProxyCall(
-        context,
-        appId,
-        themeAuthor,
-        configTheme,
-        serviceName,
-        reqBody,
-        forceRefresh,
-        onStreamResponse,
-        headersStr,
-        path || this.aiCallConfig?.path,
-        model || this.aiCallConfig?.model
-      );
-      return [res, null];
-    } catch (error) {
-      logger.error("AI代理调用失败:", error);
-      return [null, error instanceof Error ? error : new Error(String(error))];
-    }
   }
 
   /**

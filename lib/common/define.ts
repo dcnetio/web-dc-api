@@ -28,10 +28,10 @@ let _baseUrl = "";
 let _walletOrigin = "";
 if (true) {
   _baseUrl = "/v0_1_2";
-  _walletOrigin = "https://login.baybird.cn";
+  _walletOrigin = "https://login.baybird.cn";//海外用https://wallet.dcnetio.com
 
   if (walletOpenOrigin) {
-    _walletOrigin = walletOpenOrigin || "https://login.baybird.cn";
+    _walletOrigin = walletOpenOrigin ;
   }
   if (walletOpenVersion) {
     _baseUrl =

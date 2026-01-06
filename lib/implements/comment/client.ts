@@ -260,7 +260,6 @@ export class CommentClient {
         const decoded = dcnet.pb.AddThemeObjReply.decode(reply);
         return decoded.flag;
       }
-      console.error("AddThemeObj error:", error);
       throw error;
     }
   }
