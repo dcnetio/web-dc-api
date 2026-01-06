@@ -107,7 +107,6 @@ async addUserOffChainOpTimes(
       }
       return res;
     } catch (error) {
-      logger.error(`为主题 ${theme} 开通评论功能失败:`, error);
       return [null, error as Error];
     }
   }
