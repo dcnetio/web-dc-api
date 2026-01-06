@@ -202,7 +202,6 @@ export class CommentManager {
       }
       return [null, Errors.ErrAddThemeObj];
     } catch (err) {
-      console.error("addThemeObj error:", err);
       throw err;
     }
   }

@@ -63,7 +63,6 @@
     "google-protobuf": "~3.21.2",
     "grpc-libp2p-client": "^0.0.28",
     "helia": "5.3.0",
-    "interface-ipld-format": "^1.0.1",
     "it-to-buffer": "^4.0.7",
     "jose": "^6.0.8",
     "jsbn": "^1.1.0",
