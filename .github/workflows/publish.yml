@@ -32,6 +32,11 @@ jobs:
       - name: Upgrade npm
         run: npm install -g npm@10 
 
+      - name: Upgrade npm
+        run: |
+          npm install -g npm@10 
+          # Node 22 自带较新 npm，通常不需要降级到 9，除非你有特殊需求
+
       - name: Check version bump
         id: check
         run: |

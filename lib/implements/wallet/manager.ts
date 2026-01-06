@@ -253,6 +253,7 @@ export class WalletManager {
       iframe.id = this.walletIframeId;
       iframe.src = `${walletUrl}/home?origin=${appOrigin}`;
       (iframe as any).credentialless = true; // iframe和父窗口不可传递cookies等凭证，符合安全规则
+
       iframe.onload = async () => {
         console.log("debug================onload", new Date());
       };
