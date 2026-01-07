@@ -1,19 +1,20 @@
-import { Context } from '../core/core';
-import { IThreadEvent as NetEvent, EventHeader as NetEventHeader } from '../core/event';
-import {  IRecord } from '../core/record';
-import { SymmetricKey } from '../common/key'
-import { CID } from 'multiformats/cid';
-import * as dagCBOR from '@ipld/dag-cbor';
+import { Context } from "../core/core";
+import {
+  IThreadEvent as NetEvent,
+  EventHeader as NetEventHeader,
+} from "../core/event";
+import { IRecord } from "../core/record";
+import { SymmetricKey } from "../common/key";
+import { CID } from "multiformats/cid";
+import * as dagCBOR from "@ipld/dag-cbor";
 
-import { encodeBlock, decodeBlock } from './coding';
-import {Block,Node} from './node';  
-import * as cbornode from './node';
-import { Link } from 'multiformats/link'
-import {IPLDNode} from '../core/core';
-import {Blocks} from 'helia'
-
-
-
+import { encodeBlock, decodeBlock } from "./coding";
+import { Block, Node } from "./node";
+import * as cbornode from "./node";
+import { Link } from "multiformats/link";
+import { IPLDNode } from "../core/core";
+import { Blocks } from "helia";
+import { DAGCBOR } from "@helia/dag-cbor";
 
 // 注册 CBOR 类型
 // TypeScript 不需要像 Go 一样的 init 函数中的注册
@@ -47,27 +48,27 @@ export async function CreateEvent(
   if (!body.rawData) {
     throw new Error("Node data is undefined");
   }
-  const bodyBlock = new Block (body.rawData(), body.cid());
+  const bodyBlock = new Block(body.rawData(), body.cid());
   // 使用密钥加密 body
   const codedBody = await encodeBlock(bodyBlock, key);
-  
+
   // 序列化密钥
   const keyb = key.bytes();
-  
+
   // 创建事件头部
   const eventHeader: EventHeaderObj = {
-    key: keyb
+    key: keyb,
   };
 
   const header = await cbornode.wrapObject(eventHeader);
   const codedHeader = await encodeBlock(header, rkey);
- 
+
   // 创建事件对象
   const obj: EventObj = {
     body: codedBody.cid(),
-    header: codedHeader.cid()
+    header: codedHeader.cid(),
   };
-  
+
   // 包装事件对象为 CBOR 节点
   const node = await cbornode.wrapObject(obj);
   // 添加到 DAG
@@ -76,7 +77,7 @@ export async function CreateEvent(
     await bstore.put(codedHeader.cid(), codedHeader.data());
     await bstore.put(codedBody.cid(), codedBody.data());
   }
-  
+
   // 返回事件
   return new Event(
     node,
@@ -93,18 +94,11 @@ export async function CreateEvent(
  * @param id 事件的 CID
  * @returns 获取的事件
  */
-export async function GetEvent(
-  dag: DAGCBOR,
-  id: CID
-): Promise<NetEvent> {
-  const blockData = await dag.get<Uint8Array>( id);
+export async function GetEvent(dag: DAGCBOR, id: CID): Promise<NetEvent> {
+  const blockData = await dag.get<Uint8Array>(id);
   const eventNode = await cbornode.decode(blockData);
   return EventFromNode(eventNode);
 }
-
-
-
-
 
 /**
  * 将节点解码为事件
@@ -113,13 +107,17 @@ export async function GetEvent(
  */
 export async function EventFromNode(eNode: Node): Promise<NetEvent> {
   try {
-   //取出头部
+    //取出头部
     const eventObj = eNode as unknown as EventObj;
     const wrapedRnode = await cbornode.wrapObject(eventObj);
     const event = new Event(wrapedRnode, eventObj);
     return event;
   } catch (err) {
-    throw new Error(`Failed to decode node into event: ${err instanceof Error ? err.message : String(err)}`);
+    throw new Error(
+      `Failed to decode node into event: ${
+        err instanceof Error ? err.message : String(err)
+      }`
+    );
   }
 }
 
@@ -135,15 +133,19 @@ export async function EventFromRecord(
   rec: IRecord
 ): Promise<NetEvent> {
   try {
-    const block = await rec.getBlock( bstore);
-    
+    const block = await rec.getBlock(bstore);
+
     // 检查是否已经是 Event
     if (block instanceof Event) {
       return block;
     }
     return await EventFromNode(block as Node);
   } catch (err) {
-    throw new Error(`Failed to get event from record: ${err instanceof Error ? err.message : String(err)}`);
+    throw new Error(
+      `Failed to get event from record: ${
+        err instanceof Error ? err.message : String(err)
+      }`
+    );
   }
 }
 
@@ -169,15 +171,10 @@ export async function RemoveEvent(
 export class Event implements NetEvent {
   private _node: Node;
   private _obj: EventObj;
-  private _header?: EventHeader  ;
+  private _header?: EventHeader;
   private _body?: Node;
-  
-  constructor(
-    node: Node,
-    obj: EventObj,
-    header?: EventHeader ,
-    body?: Node 
-  ) {
+
+  constructor(node: Node, obj: EventObj, header?: EventHeader, body?: Node) {
     this._node = node;
     this._obj = obj;
     if (header) {
@@ -187,92 +184,81 @@ export class Event implements NetEvent {
       this._body = body;
     }
   }
-  
-  
-   cid(): CID {
+
+  cid(): CID {
     return this._node.cid();
   }
-  
+
   headerCID(): CID {
     return this._obj.header;
   }
 
-    
-
-
-  async getHeader(
-    bstore: Blocks,
-    key?: SymmetricKey
-  ): Promise<NetEventHeader> {
+  async getHeader(bstore: Blocks, key?: SymmetricKey): Promise<NetEventHeader> {
     if (!this._header) {
       const blockData = await bstore.get(this._obj.header);
       const headerNode = await cbornode.wrapObject(blockData);
       this._header = new EventHeader(headerNode);
     }
-    try{
-    if (!this._header.isLoaded() && key) {
-      const decoded = dagCBOR.decode<Uint8Array>(this._header.node().data()) ; 
-      if (!decoded) {
-        throw new Error("Failed to decode block");
+    try {
+      if (!this._header.isLoaded() && key) {
+        const decoded = dagCBOR.decode<Uint8Array>(this._header.node().data());
+        if (!decoded) {
+          throw new Error("Failed to decode block");
+        }
+        let encryptedData = decoded;
+        try {
+          encryptedData = dagCBOR.decode<Uint8Array>(decoded);
+        } catch (e) {}
+        const data: Uint8Array = await key.decrypt(encryptedData);
+        const header = dagCBOR.decode<EventHeaderObj>(data);
+        this._header.setObj(header);
       }
-      let encryptedData = decoded;
-      try {
-        encryptedData = dagCBOR.decode<Uint8Array>(decoded);
-      } catch (e) {
-      }
-      const data: Uint8Array =  await key.decrypt(encryptedData);
-      const header = dagCBOR.decode<EventHeaderObj>(data) ;
-      this._header.setObj(header);
-    }
-    }catch(err){
-      throw new Error(`Failed to decode header: ${err instanceof Error ? err.message : String(err)}`);
+    } catch (err) {
+      throw new Error(
+        `Failed to decode header: ${
+          err instanceof Error ? err.message : String(err)
+        }`
+      );
     }
 
     return this._header;
   }
-  
+
   bodyCID(): CID {
     return this._obj.body;
   }
-  
-  async getBody(
-    bstore: Blocks,
-    key?: SymmetricKey
-  ): Promise<IPLDNode> {
+
+  async getBody(bstore: Blocks, key?: SymmetricKey): Promise<IPLDNode> {
     let k: SymmetricKey | null = null;
-    
+
     if (key) {
-      const header = await this.getHeader( bstore, key);
+      const header = await this.getHeader(bstore, key);
       k = await header.key();
     }
-    
-    if (!this._body) {
-     const block = await bstore.get(this._obj.body);
-     this._body = await cbornode.wrapObject(block);
 
+    if (!this._body) {
+      const block = await bstore.get(this._obj.body);
+      this._body = await cbornode.wrapObject(block);
     }
-    
+
     if (!k) {
       return this._body;
     } else {
       return decodeBlock(this._body, k);
     }
   }
-  
 
   data(): Uint8Array {
     return this._node.data();
   }
-  
-  links(): Link[]   {
+
+  links(): Link[] {
     return this._node.links();
   }
-  
+
   size(): number {
     return this._node.size();
   }
-  
-  
 }
 
 /**
@@ -281,21 +267,20 @@ export class Event implements NetEvent {
 export class EventHeader implements NetEventHeader {
   private _node: Node;
   private _obj: EventHeaderObj | null;
-  
 
   constructor(node: Node, obj: EventHeaderObj | null = null) {
     this._node = node;
     this._obj = obj;
   }
-  
+
   isLoaded(): boolean {
     return this._obj !== null;
   }
-  
+
   setObj(obj: EventHeaderObj): void {
     this._obj = obj;
   }
-  
+
   node(): Node {
     return this._node;
   }
@@ -306,25 +291,24 @@ export class EventHeader implements NetEventHeader {
   links(): Link[] {
     return this._node.links();
   }
-  
+
   async key(): Promise<SymmetricKey> {
     if (!this._obj) {
       throw new Error("EventHeader object not loaded");
     }
-    
+
     if (!this._obj.key) {
       throw new Error("Key is undefined");
     }
-    
+
     return SymmetricKey.fromBytes(this._obj.key);
   }
 
-   data(): Uint8Array {
+  data(): Uint8Array {
     return this._node.data();
   }
-  
-  
-   size(): number {
+
+  size(): number {
     return this._node.size();
   }
 }
