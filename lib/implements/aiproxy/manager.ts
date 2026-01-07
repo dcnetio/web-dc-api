@@ -714,7 +714,7 @@ export class AIProxyManager {
       return [null, error];
     }
     if (!authInfo) {
-      return [null, new Error("GetUserAIProxyAuth is empty")];
+      return [[], null];
     }
     try {
       const authConfig = JSON.parse(authInfo);
