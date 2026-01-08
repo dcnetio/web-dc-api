@@ -1,6 +1,11 @@
-import { walletOrigin, walletUrl, walletWindowName } from "../../common/define";
+import {
+  walletIframeOpenFlag,
+  walletOpenType,
+  walletOrigin,
+  walletUrl,
+  walletWindowName,
+} from "../../common/define";
 import { DCContext } from "../../../lib/interfaces/DCContext";
-import { Ed25519PubKey } from "../../common/dc-key/ed25519";
 import type {
   Account,
   AccountInfo,
@@ -37,20 +42,8 @@ export class WalletManager {
 
   async init(): Promise<boolean> {
     console.log("========init walletManager", appOrigin, walletOrigin);
-    const walletIframeOpenFlag =
-      typeof globalThis !== "undefined" &&
-      typeof (globalThis as any).walletIframeOpenFlag !== "undefined"
-        ? (globalThis as any).walletIframeOpenFlag
-        : true; // 是否需要打开/iframe，默认打开;
-    if (!walletIframeOpenFlag) {
-      return true;
-    }
-    const walletOpenFlag =
-      typeof globalThis !== "undefined" &&
-      typeof (globalThis as any).walletOpenType !== "undefined"
-        ? true
-        : false; // 用于判断是否是直接打开;
-    if (walletOpenFlag || appOrigin.indexOf(walletOrigin) === -1) {
+
+    if (walletIframeOpenFlag || appOrigin.indexOf(walletOrigin) === -1) {
       return new Promise(async (resolve, reject) => {
         // html添加iframe标签，id是dcWalletIframe
         const startTime = Date.now();
@@ -225,10 +218,6 @@ export class WalletManager {
 
   // 判断是否iframe打开钱包
   private isIframeOpen = (): boolean => {
-    const walletOpenType =
-      typeof globalThis !== "undefined"
-        ? (globalThis as any).walletOpenType
-        : ""; // 用于判断是否是直接打开;
     if (walletOpenType == "iframe") {
       return true;
     }
