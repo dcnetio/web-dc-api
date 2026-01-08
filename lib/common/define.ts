@@ -41,7 +41,7 @@ if (isProd) {
   }
 } else {
   _baseUrl = "";
-  _walletOrigin = "http://localhost:3000";
+  _walletOrigin = "http://192.168.31.31:3000";
 }
 export const walletOrigin = _walletOrigin;
 export const walletUrl = _walletOrigin + _baseUrl; // 钱包地址后面统一改成origin+version
