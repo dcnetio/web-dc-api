@@ -1,22 +1,17 @@
-// 只考虑浏览器环境
-declare const __IS_PROD__: boolean | undefined;
+import config from "../../config.json";
+import configPro from "../../config.prod.json";
+const isDev =
+  typeof globalThis !== "undefined" ? (globalThis as any).isDev : false;
+const configInfo = isDev ? config : configPro;
 
-let isProd = false;
-// 打包后用 __IS_PROD__，源码直用时用 window.IS_PROD
-if (typeof __IS_PROD__ !== "undefined") {
-  isProd = __IS_PROD__;
-} else if (
-  typeof window !== "undefined" &&
-  typeof (window as any).IS_PROD !== "undefined"
-) {
-  isProd = (window as any).IS_PROD;
-}
-const walletOpenType =
+const _walletOpenType =
   typeof globalThis !== "undefined" ? (globalThis as any).walletOpenType : ""; // 用于判断是否是直接打开;
-const walletIframeOpenFlag =
-  typeof globalThis !== "undefined"
+
+const _walletIframeOpenFlag =
+  typeof globalThis !== "undefined" &&
+  typeof (globalThis as any).walletIframeOpenFlag !== "undefined"
     ? (globalThis as any).walletIframeOpenFlag
-    : true; // 是否需要打开/iframe，默认打开;
+    : true; // 是否需要打开/iframe，默认打开iframe;
 const walletOpenOrigin =
   typeof globalThis !== "undefined" ? (globalThis as any).walletOpenOrigin : ""; // 用户传入的打开钱包的源;
 const walletOpenVersion =
@@ -24,12 +19,9 @@ const walletOpenVersion =
     ? (globalThis as any).walletOpenVersion
     : ""; // 钱包版本号;
 
-let _baseUrl = "";
-let _walletOrigin = "";
-if (true) {
-  _baseUrl = "/v0_1_2";
-  _walletOrigin = "https://login.baybird.cn"; //海外用https://wallet.dcnetio.com
-
+let _baseUrl = configInfo.baseUrl;
+let _walletOrigin = configInfo.walletOrigin;
+if (!isDev) {
   if (walletOpenOrigin) {
     _walletOrigin = walletOpenOrigin;
   }
@@ -39,10 +31,9 @@ if (true) {
         ? walletOpenVersion
         : "/" + walletOpenVersion;
   }
-} else {
-  _baseUrl = "";
-  _walletOrigin = "http://localhost:3000";
 }
+export const walletOpenType = _walletOpenType;
+export const walletIframeOpenFlag = _walletIframeOpenFlag;
 export const walletOrigin = _walletOrigin;
 export const walletUrl = _walletOrigin + _baseUrl; // 钱包地址后面统一改成origin+version
 export const walletWindowName = "walletWindow"; // 窗口名称

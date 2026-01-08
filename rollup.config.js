@@ -13,7 +13,9 @@ import { fileURLToPath } from "url";
 
 // Read package.json without using import assertions to avoid loader issues
 const __dirname = fileURLToPath(new URL("./", import.meta.url));
-const pkg = JSON.parse(fs.readFileSync(new URL("./package.json", import.meta.url), "utf8"));
+const pkg = JSON.parse(
+  fs.readFileSync(new URL("./package.json", import.meta.url), "utf8")
+);
 
 // 外部依赖（这些将不会被打包进最终文件）
 const external = [
@@ -25,7 +27,6 @@ const external = [
 ];
 
 console.log("NODE_ENV:", process.env.NODE_ENV);
-const isProd = process.env.NODE_ENV === "production";
 
 const basePlugins = [
   // 🔧 添加 process polyfill
@@ -33,7 +34,6 @@ const basePlugins = [
     process: "process",
   }),
   replace({
-    __IS_PROD__: isProd,
     preventAssignment: true,
   }),
   json(),
