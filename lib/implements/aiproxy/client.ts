@@ -371,7 +371,7 @@ export class AIProxyClient {
           }
         );
         if (!token) {
-          throw new Error(Errors.INVALID_TOKEN.message);
+          throw new Error(error.message);
         }
         const grpcClient = new Libp2pGrpcClient(
           this.client.p2pNode,

@@ -610,7 +610,7 @@ export class AIProxyManager {
     }
     const blockHeight = (await this.chainUtil.getBlockHeight()) || 0;
     const hValue: Uint8Array = uint32ToLittleEndianBytes(
-      blockHeight ? blockHeight : 0
+      blockHeight || 0
     );
     const forceRefreshFlag = forceRefresh ? 1 : 0;
     const forceRefreshValue: Uint8Array =
