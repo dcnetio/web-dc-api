@@ -647,6 +647,7 @@ export class AuthModule implements DCModule, IAuthOperations {
       const period = 60 * 1000;
       let count = 0;
       let waitCount = 0;
+      const len = 30;
 
       // 启动ticker
       logger.info("开始定时验证Token有效性任务");
@@ -656,24 +657,23 @@ export class AuthModule implements DCModule, IAuthOperations {
           try {
             if (
               this.context.connectedDc.client?.token == "" ||
-              waitCount >= 300
+              waitCount >= len
             ) {
               await this.getTokenWithDCConnectInfo(this.context.connectedDc);
             }
             if (
               this.context.AccountBackupDc.client?.token == "" ||
-              waitCount >= 300
+              waitCount >= len
             ) {
               await this.getTokenWithDCConnectInfo(
                 this.context.AccountBackupDc
               );
             }
-            if (waitCount >= 300) {
+            if (waitCount >= len) {
               waitCount = 0;
               count++;
               console.log(`第${count}次Token验证完成`);
             }
-            
           } catch (error) {
             logger.error("Token验证任务执行失败:", error);
           }

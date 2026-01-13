@@ -66,13 +66,8 @@ function newGrpcClient(client: Client, net: Net): DBGrpcClient {
   if (client.p2pNode == null || client.p2pNode.peerId == null) {
     throw new Error("p2pNode is null or node privateKey is null");
   }
-  const grpcClient = new DBGrpcClient(
-    client.p2pNode,
-    client.peerAddr,
-    client.token,
-    net,
-    client.protocol
-  );
+  console.log("token======666", client.token);
+  const grpcClient = new DBGrpcClient(client, net);
   return grpcClient;
 }
 
@@ -99,6 +94,7 @@ export class DBManager {
     storagePrefix: string,
     context: DCContext
   ) {
+    console.log("token========7777", connectedDc?.client?.token);
     this.store = store;
     this.network = network;
     this.dc = dc;
@@ -1337,6 +1333,8 @@ export class DBManager {
         ...peerIdValue,
       ]);
       const signature = await this.context.sign(preSign);
+      console.log("publicKey======3333", this.context.publicKey?.string());
+      console.log("token======3333", this.connectedDc.client.token);
 
       // Create thread options
       const opts: NewThreadOptions = {
@@ -1586,9 +1584,7 @@ export class DBManager {
       const peerId = this.connectedDc.nodeAddr
         ? await extractPeerIdFromMultiaddr(this.connectedDc.nodeAddr)
         : undefined;
-      const serverPidBytes = new TextEncoder().encode(
-        peerId?.toString() || ""
-      );
+      const serverPidBytes = new TextEncoder().encode(peerId?.toString() || "");
 
       // Get blockchain height
       let blockHeight: number;
@@ -1634,7 +1630,7 @@ export class DBManager {
 
       // Create gRPC client and call addThreadSpace
       const dbClient = newGrpcClient(this.connectedDc.client, this.network);
-      
+
       await dbClient.addThreadSpace(tID, space, opts);
     } catch (err) {
       console.error("addDBSpace error:", err);
@@ -1657,11 +1653,11 @@ export class DBManager {
 
       // 从链上获取用户给该threaddb分配的空间
       // 查询区块链获取文件存储的节点位置
-      const [storeUnit, err] = await this.chainUtil.objectState(
-        tID.toString()
-      );
+      const [storeUnit, err] = await this.chainUtil.objectState(tID.toString());
       if (err || !storeUnit) {
-        throw new Error(`Failed to get object state: ${err?.message || "storeUnit is null"}`);
+        throw new Error(
+          `Failed to get object state: ${err?.message || "storeUnit is null"}`
+        );
       }
 
       const allocatedSize = storeUnit.size || 0;
@@ -1692,7 +1688,10 @@ export class DBManager {
   }
 
   //// 自动扩展数据库空间
-  async autoExpandDBSpace(threadId: string, expandSpace: number = 50 * 1024 * 1024): Promise<boolean> {
+  async autoExpandDBSpace(
+    threadId: string,
+    expandSpace: number = 50 * 1024 * 1024
+  ): Promise<boolean> {
     // 获取当前数据库大小信息
     let sizeInfo;
     try {
@@ -1711,13 +1710,15 @@ export class DBManager {
 
     try {
       await this.addDBSpace(threadId, expandSpace);
-      console.info(`Auto expanded DB space by ${expandSpace} bytes for thread ${threadId}`);
+      console.info(
+        `Auto expanded DB space by ${expandSpace} bytes for thread ${threadId}`
+      );
       return true;
     } catch (err) {
       console.error("Failed to auto expand DB space:", err);
       return false;
     }
-  } 
+  }
 
   private async deleteThreadNamespace(id: ThreadID): Promise<void> {
     const pre = dsManagerBaseKey.child(new Key(id.toString())).toString();
