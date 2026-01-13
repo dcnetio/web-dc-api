@@ -240,7 +240,7 @@ export class EntityRepository<T extends BaseEntity> {
     const [ok,resTimestamp, err] = await this.ops.set(this.db, key, value, indexs, vaccount);
     if (err) throw err;
     if (!ok) throw new Error(`${this.entityCtor.name}.save failed`);
-    entity.dc_timestamp = resTimestamp ? resTimestamp : 0; // 设置时间戳
+    entity.dc_timestamp = resTimestamp  || 0; // 设置时间戳
     return entity.dc_timestamp;
   }
 
@@ -304,7 +304,7 @@ export class EntityRepository<T extends BaseEntity> {
     }
 
     const { field, operator, value } = cond;
-    const filtered = list.filter(obj => {
+    return list.filter(obj => {
       const v = (obj as any)[field];
       switch (operator) {
         case "=": return v == value;
@@ -316,8 +316,6 @@ export class EntityRepository<T extends BaseEntity> {
         default: return false;
       }
     });
-
-    return filtered;
   }
 
    // 获取
