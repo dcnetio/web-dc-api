@@ -85,8 +85,7 @@ function buildIndexPayload(entity: object, ctor: Function): string {
       const f = first.field;
       const raw = (entity as any)[f];
       const { type, value } = asIndexTypeAndValue(raw, colTypeByName.get(f));
-      // 单列索引用字段名作为索引键
-      items.push({ key: f, type, value });
+      items.push({ key: idx.name, type, value });
     } else {
       // 复合索引：索引名作为 key，值为字段值数组的 JSON，类型 json
       const key = idx.name;
