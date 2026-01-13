@@ -316,7 +316,7 @@ export class KeyValueModule implements DCModule, IKeyValueOperations {
     const seekKey = options.seekKey? options.seekKey: "";
     const direction = options.direction? options.direction: Direction.Forward;
     const offset = options.offset? options.offset: 0;
-    let indexValueStr = "";
+    let indexValueStr = indexValue;
     if( options.type === "number" ){ //
       indexValueStr = padPositiveInt20(indexValue);
     }
