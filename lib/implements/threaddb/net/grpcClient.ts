@@ -3,7 +3,7 @@ import { dcnet as dcnet_proto } from "../../../proto/dcnet_proto";
 import { net as net_pb } from "../pb/net_pb";
 import { Libp2pGrpcClient } from "grpc-libp2p-client";
 import { IThreadLogInfo } from "../core/core";
-import { multiaddr, registry } from "@multiformats/multiaddr";
+import { Multiaddr, multiaddr, registry } from "@multiformats/multiaddr";
 import { toString as uint8ArrayToString } from "uint8arrays/to-string";
 import { Key as ThreadKey } from "../common/key";
 import { Ed25519PubKey, Ed25519PrivKey } from "../../../common/dc-key/ed25519";
@@ -66,11 +66,13 @@ interface Protocol {
 
 export class DBGrpcClient {
   client: Client;
+  peerAddr: Multiaddr;
   net: Net;
 
-  constructor(client: Client, net: Net) {
+  constructor(client: Client, net: Net, peerAddr?: Multiaddr) {
     this.client = client;
     this.net = net;
+    this.peerAddr = peerAddr ?? this.client.peerAddr;
   }
 
   async requestThreadID(): Promise<string> {
@@ -80,7 +82,7 @@ export class DBGrpcClient {
         dcnet_proto.pb.ThreadIDRequest.encode(message).finish();
       const grpcClient = new Libp2pGrpcClient(
         this.client.p2pNode,
-        this.client.peerAddr,
+        this.peerAddr,
         this.client.token,
         this.client.protocol
       );
@@ -106,9 +108,7 @@ export class DBGrpcClient {
       if (opts.threadKey == null) {
         throw new Error("threadKey is null");
       }
-      const serverPeerId = await extractPeerIdFromMultiaddr(
-        this.client.peerAddr
-      );
+      const serverPeerId = await extractPeerIdFromMultiaddr(this.peerAddr);
       const sPubkey = await extractPublicKeyFromPeerId(serverPeerId);
 
       const message = new dcnet_proto.pb.CreateThreadRequest({});
@@ -123,7 +123,7 @@ export class DBGrpcClient {
         dcnet_proto.pb.CreateThreadRequest.encode(message).finish();
       const grpcClient = new Libp2pGrpcClient(
         this.client.p2pNode,
-        this.client.peerAddr,
+        this.peerAddr,
         this.client.token,
         this.client.protocol
       );
@@ -153,7 +153,7 @@ export class DBGrpcClient {
       }
       const grpcClient = new Libp2pGrpcClient(
         this.client.p2pNode,
-        this.client.peerAddr,
+        this.peerAddr,
         this.client.token,
         this.client.protocol
       );
@@ -344,7 +344,7 @@ export class DBGrpcClient {
 
       const grpcClient = new Libp2pGrpcClient(
         this.client.p2pNode,
-        this.client.peerAddr,
+        this.peerAddr,
         this.client.token,
         this.client.protocol
       );
@@ -521,7 +521,7 @@ export class DBGrpcClient {
     const messageBytes = net_pb.pb.PushRecordRequest.encode(message).finish();
     const grpcClient = new Libp2pGrpcClient(
       this.client.p2pNode,
-      this.client.peerAddr,
+      this.peerAddr,
       this.client.token,
       this.client.protocol
     );
@@ -557,7 +557,7 @@ export class DBGrpcClient {
         net_pb.pb.PushLogRequest.encode(logRequest).finish();
       const grpcClient = new Libp2pGrpcClient(
         this.client.p2pNode,
-        this.client.peerAddr,
+        this.peerAddr,
         this.client.token,
         this.client.protocol
       );
@@ -582,7 +582,7 @@ export class DBGrpcClient {
       const messageBytes = net_pb.pb.ExchangeEdgesRequest.encode(req).finish();
       const grpcClient = new Libp2pGrpcClient(
         this.client.p2pNode,
-        this.client.peerAddr,
+        this.peerAddr,
         this.client.token,
         this.client.protocol
       );
@@ -621,7 +621,7 @@ export class DBGrpcClient {
       const messageBytes = net_pb.pb.GetLogsRequest.encode(req).finish();
       const grpcClient = new Libp2pGrpcClient(
         this.client.p2pNode,
-        this.client.peerAddr,
+        this.peerAddr,
         this.client.token,
         this.client.protocol
       );
@@ -653,7 +653,7 @@ export class DBGrpcClient {
       const messageBytes = dcnet.pb.GetThreadRequest.encode(req).finish();
       const grpcClient = new Libp2pGrpcClient(
         this.client.p2pNode,
-        this.client.peerAddr,
+        this.peerAddr,
         this.client.token,
         this.client.protocol
       );
@@ -670,7 +670,7 @@ export class DBGrpcClient {
       return threadInfo;
     } catch (err) {
       console.error(
-        `getThreadFromPeer error for peer ${this.client.peerAddr.toString()}:`,
+        `getThreadFromPeer error for peer ${this.peerAddr.toString()}:`,
         err
       );
       throw err;
@@ -696,7 +696,7 @@ export class DBGrpcClient {
         dcnet_proto.pb.AddThreadSpaceRequest.encode(message).finish();
       const grpcClient = new Libp2pGrpcClient(
         this.client.p2pNode,
-        this.client.peerAddr,
+        this.peerAddr,
         this.client.token,
         this.client.protocol
       );
@@ -725,7 +725,7 @@ export class DBGrpcClient {
         dcnet_proto.pb.GetThreadUsedSpaceRequest.encode(message).finish();
       const grpcClient = new Libp2pGrpcClient(
         this.client.p2pNode,
-        this.client.peerAddr,
+        this.peerAddr,
         this.client.token,
         this.client.protocol
       );

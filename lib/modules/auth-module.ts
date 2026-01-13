@@ -116,7 +116,7 @@ export class AuthModule implements DCModule, IAuthOperations {
   }
   async getToken(publicKeyBase32: string): Promise<[boolean, Error | null]> {
     try {
-      this.getUserToken(publicKeyBase32);
+      await this.getUserToken(publicKeyBase32);
       return [true, null];
     } catch (error) {
       return [false, error];
