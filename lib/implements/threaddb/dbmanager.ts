@@ -66,7 +66,6 @@ function newGrpcClient(client: Client, net: Net): DBGrpcClient {
   if (client.p2pNode == null || client.p2pNode.peerId == null) {
     throw new Error("p2pNode is null or node privateKey is null");
   }
-  console.log("token======666", client.token);
   const grpcClient = new DBGrpcClient(client, net);
   return grpcClient;
 }
@@ -94,7 +93,6 @@ export class DBManager {
     storagePrefix: string,
     context: DCContext
   ) {
-    console.log("token========7777", connectedDc?.client?.token);
     this.store = store;
     this.network = network;
     this.dc = dc;
@@ -1333,8 +1331,6 @@ export class DBManager {
         ...peerIdValue,
       ]);
       const signature = await this.context.sign(preSign);
-      console.log("publicKey======3333", this.context.publicKey?.string());
-      console.log("token======3333", this.connectedDc.client.token);
 
       // Create thread options
       const opts: NewThreadOptions = {
