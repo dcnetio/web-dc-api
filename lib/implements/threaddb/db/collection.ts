@@ -955,44 +955,48 @@ export class Txn implements ITxn{
       }
       
       // Copy the data to avoid modifying the input
-      const updated = newInstances[i]!.slice(0);
+      const updated = newInstances[i]!.slice();
       
       // Try to get instance ID, set one if missing
       let id = await getInstanceID(updated);
+      let result: { id: InstanceID; data: Uint8Array };
       if (id === EmptyInstanceID) {
-        const result = setNewInstanceID(updated);
-        id = result.id;
-        const updatedWithId = result.data;
-        
-        // Validate schema
-        this.collection.validInstance(updatedWithId);
-        
-        results[i] = id;
-        const key = this.collection.baseKey().child(new Key(id));
-        
-        try {
-          const exists = await this.collection.db.datastore.has(key);
-          if (exists) {
-            throw errCantCreateExistingInstance;
-          }
-        } catch (err) {
-          if (err !== errCantCreateExistingInstance) {
-            throw new Error(`Error checking if instance exists: ${err instanceof Error ? err.message : String(err)}`);
-          }
-          throw err;
-        }
-        
-        // Set modified timestamp
-        const { data: updatedWithTimestamp } = setModifiedTag(updatedWithId);
-        
-        // Add action
-        this.actions.push({
-          type: CoreActionType.Create,
-          instanceID: id,
-          collectionName: this.collection.name,
-          current: updatedWithTimestamp
-        });
+         result = setNewInstanceID(updated);
+      }else{
+        result = { id, data: updated };
       }
+      id = result.id;
+      const updatedWithId = result.data;
+      
+      // Validate schema
+      this.collection.validInstance(updatedWithId);
+      
+      results[i] = id;
+      const key = this.collection.baseKey().child(new Key(id));
+      
+      try {
+        const exists = await this.collection.db.datastore.has(key);
+        if (exists) {
+          throw errCantCreateExistingInstance;
+        }
+      } catch (err) {
+        if (err !== errCantCreateExistingInstance) {
+          throw new Error(`Error checking if instance exists: ${err instanceof Error ? err.message : String(err)}`);
+        }
+        throw err;
+      }
+      
+      // Set modified timestamp
+      const { data: updatedWithTimestamp } = setModifiedTag(updatedWithId);
+      
+      // Add action
+      this.actions.push({
+        type: CoreActionType.Create,
+        instanceID: id,
+        collectionName: this.collection.name,
+        current: updatedWithTimestamp
+      });
+      
     }
     
     return results;
