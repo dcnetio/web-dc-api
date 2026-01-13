@@ -90,7 +90,7 @@ export class DC implements DCContext {
     this.dcChain = new ChainUtil();
     this.dcutil = new DcUtil(this.dcChain);
     // //todo 发布注释 remove
-    // this.dcutil.defaultPeerId= "12D3KooWEGzh4AcbJrfZMfQb63wncBUpscMEEyiMemSWzEnjVCPf";
+    // this.dcutil.defaultPeerId = "12D3KooWEGzh4AcbJrfZMfQb63wncBUpscMEEyiMemSWzEnjVCPf";
     // //todo remove end
     this.appInfo = options.appInfo || ({} as APPInfo);
     this.accountInfo = {} as AccountInfo;
@@ -325,8 +325,8 @@ export class DC implements DCContext {
                 }
               }, 5000);
               this.dbThreadId = dbinfo.id;
-               // 自动扩容threaddb,当threaddb的可用空间小于10MB，自动扩容50MB,无需等待结果
-              this.autoExpandDBSpace(this,this.dbThreadId);
+              // 自动扩容threaddb,当threaddb的可用空间小于10MB，自动扩容50MB,无需等待结果
+              this.autoExpandDBSpace(this, this.dbThreadId);
               return [dbinfo, null];
             } else if (threadid != "") {
               //本地数据库不存在,从DC同步
@@ -342,8 +342,8 @@ export class DC implements DCContext {
               const [dbinfo, error] = await this.db.getDBInfo(threadid);
               if (dbinfo != null && !error) {
                 this.dbThreadId = dbinfo.id;
-                 // 自动扩容threaddb,当threaddb的可用空间小于10MB，自动扩容50MB,无需等待结果
-                this.autoExpandDBSpace(this,this.dbThreadId);
+                // 自动扩容threaddb,当threaddb的可用空间小于10MB，自动扩容50MB,无需等待结果
+                this.autoExpandDBSpace(this, this.dbThreadId);
                 return [dbinfo, null]; //返回dbinfo;
               } else {
                 // 获取DB失败
@@ -404,7 +404,6 @@ export class DC implements DCContext {
         console.error("获取DB失败", error);
         return [null, error];
       }
-     
     } catch (error: any) {
       console.error("初始化用户DB失败", error);
       return [null, error];
@@ -412,8 +411,10 @@ export class DC implements DCContext {
   }
 
   // 自动扩容
-  private async autoExpandDBSpace(dc: DC,
-    DBThreadid: string): Promise<boolean> {
+  private async autoExpandDBSpace(
+    dc: DC,
+    DBThreadid: string
+  ): Promise<boolean> {
     //获取当前DB的可用空间
     if (!dc.db) {
       return false;
