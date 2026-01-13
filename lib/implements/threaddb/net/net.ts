@@ -7,10 +7,7 @@ import {
   peerIdFromString,
 } from "@libp2p/peer-id";
 import { keys } from "@libp2p/crypto";
-import {
-  Multiaddr as TMultiaddr,
-  multiaddr,
-} from "@multiformats/multiaddr"; // 多地址库
+import { Multiaddr as TMultiaddr, multiaddr } from "@multiformats/multiaddr"; // 多地址库
 import { Head } from "../core/head";
 import { ThreadID } from "@textile/threads-id";
 import { Ed25519PrivKey, Ed25519PubKey } from "../../../common/dc-key/ed25519";
@@ -58,7 +55,6 @@ import {
   CreateRecordConfig,
 } from "../cbor/record";
 import { IThreadEvent } from "../core/event";
-import { DBGrpcClient } from "./grpcClient";
 import { DBClient } from "../dbclient";
 import { Client } from "../../../common/dcapi";
 import { App, Connector, Net, PubKey, Token } from "../core/app";
@@ -105,7 +101,12 @@ export class Network implements Net {
   private connectors: Record<string, Connector>;
   private cachePeers: Record<string, TMultiaddr> = {};
   private threadMutexes: Record<string, AsyncMutex> = {};
-  private pushQueue: Array<{ tid: ThreadID; lid: PeerId; rec: IRecord; counter: number }> = [];
+  private pushQueue: Array<{
+    tid: ThreadID;
+    lid: PeerId;
+    rec: IRecord;
+    counter: number;
+  }> = [];
   private pushWorkerStarted = false;
 
   constructor(
@@ -307,16 +308,15 @@ export class Network implements Net {
 
       // 确保日志唯一性
       await this.ensureUniqueLog(id, options.logKey, identity);
-   
-        // try {
-        //   await this.logstore.getThread(id);
-        // } catch (err: any) {
-        //   if (err.message === "Thread not found") {
-        //     throw new Error(`Cannot retrieve thread from self: ${err.message}`);
-        //   }
-        //   throw err;
-        // }
-      
+
+      // try {
+      //   await this.logstore.getThread(id);
+      // } catch (err: any) {
+      //   if (err.message === "Thread not found") {
+      //     throw new Error(`Cannot retrieve thread from self: ${err.message}`);
+      //   }
+      //   throw err;
+      // }
 
       // 添加threaddb 到存储
       const threadInfo = new ThreadInfo(id, [], [], options.threadKey);
@@ -333,7 +333,7 @@ export class Network implements Net {
       if (addFromSelf) {
         await this.updateLogsFromPeer(id, pid);
       }
-      
+
       // 返回带有地址的threaddb 信息
       return this.getThreadWithAddrs(id);
     } catch (err) {
@@ -570,17 +570,24 @@ export class Network implements Net {
   /**
    * Pull thread updates from peers
    */
-  async pullThread(id: ThreadID, timeout: number, options: { token?: ThreadToken | undefined; multiPeersFlag?: boolean | undefined;}): Promise<void> {
+  async pullThread(
+    id: ThreadID,
+    timeout: number,
+    options: {
+      token?: ThreadToken | undefined;
+      multiPeersFlag?: boolean | undefined;
+    }
+  ): Promise<void> {
     try {
       let recs: Record<string, PeerRecords> = {};
- 
+
       try {
         if (options.multiPeersFlag) {
-          recs = await this.pullThreadDeal(id, options.multiPeersFlag );
-        }else{
-          recs = await this.pullThreadDeal(id, false );
+          recs = await this.pullThreadDeal(id, options.multiPeersFlag);
+        } else {
+          recs = await this.pullThreadDeal(id, false);
         }
-      }catch (err) {
+      } catch (err) {
         throw new Error(
           `Error pulling thread ${id.toString()}: ${
             err instanceof Error ? err.message : String(err)
@@ -597,12 +604,15 @@ export class Network implements Net {
         const lid = peerIdFromString(lidStr);
         const rs = rec as PeerRecords;
         if (appConnected) {
-           // 使用并发控制，但不分批 - 避免慢任务拖累整批
+          // 使用并发控制，但不分批 - 避免慢任务拖累整批
           const maxConcurrency = 10;
           let activePromises: Promise<void>[] = [];
           let processedCount = 0;
 
-          const processRecord = async (r: any, index: number): Promise<void> => {
+          const processRecord = async (
+            r: any,
+            index: number
+          ): Promise<void> => {
             try {
               const block = await r.getBlock(this.bstore);
               const event =
@@ -612,11 +622,9 @@ export class Network implements Net {
 
               const header = await event.getHeader(this.bstore);
               const body = await event.getBody(this.bstore);
-              
 
-            // Store internal blocks locally
-            await this.addMany([event, header, body]);
-              
+              // Store internal blocks locally
+              await this.addMany([event, header, body]);
             } catch (err) {
               console.error(`预加载记录 ${index + 1} 失败:`, err);
               // 继续处理其他记录
@@ -635,9 +643,9 @@ export class Network implements Net {
                 activePromises.splice(index, 1);
               }
             });
-            
+
             activePromises.push(promise);
-            
+
             // 当达到最大并发数时，等待最快完成的一个
             if (activePromises.length >= maxConcurrency) {
               await Promise.race(activePromises);
@@ -645,7 +653,7 @@ export class Network implements Net {
           }
           // 等待所有剩余的Promise完成
           await Promise.all(activePromises);
-          
+
           console.log(`所有 ${rs.records.length} 条记录预加载完成`);
           //开始正式处理,前面数据已经拉取到本地,这时处理速度很快
           let indexCounter = rs.counter - rs.records.length + 1;
@@ -693,7 +701,6 @@ export class Network implements Net {
       for (const r of tRecords) {
         await this.putRecords(id, r.logid, [r.record], r.counter);
       }
-
     } catch (err) {
       throw err;
     }
@@ -707,7 +714,10 @@ export class Network implements Net {
   /**
    * Pull thread records from peers
    */
-  async pullThreadDeal(tid: ThreadID,multiPeersFlag: boolean=false): Promise<Record<string, PeerRecords>> {
+  async pullThreadDeal(
+    tid: ThreadID,
+    multiPeersFlag: boolean = false
+  ): Promise<Record<string, PeerRecords>> {
     try {
       let [offsets, peers] = await this.threadOffsets(tid);
       try {
@@ -741,7 +751,7 @@ export class Network implements Net {
               pulledRecs[lidStr] = { records: [], counter: 0 };
             }
             const entry = pulledRecs[lidStr];
-            
+
             // 优化性能：直接push而不是创建新数组，避免大量数据时的内存复制开销
             for (const r of rs.records) {
               entry.records.push(r);
@@ -811,11 +821,11 @@ export class Network implements Net {
       head: head,
     } as IThreadLogInfo;
     //标记本地log没有生成任何记录
-      await this.logstore.metadata.putString(
-        id,
-        "local_log_no_record_flag",
-        `${peerId.toString()}`
-      );  
+    await this.logstore.metadata.putString(
+      id,
+      "local_log_no_record_flag",
+      `${peerId.toString()}`
+    );
     // 将日志添加到threaddb存储
     await this.logstore.addLog(id, logInfo);
     const logIDBytes = new TextEncoder().encode(peerId.toString());
@@ -1183,7 +1193,6 @@ export class Network implements Net {
 
     // Bridge the gap between the last provided record and current head
     if (!complete && chain.length > 0) {
-
       let c = chain[chain.length - 1]!.prevID();
       while (c && !(last.cid().toString() == "")) {
         if (c.equals(head.id)) {
@@ -1331,58 +1340,75 @@ export class Network implements Net {
    * 从指定对等点获取记录
    */
   async getRecords(
-    peers: PeerId[], 
-    tid: ThreadID, 
-    offsets: Record<string, { id?: CID, counter: number }>,
+    peers: PeerId[],
+    tid: ThreadID,
+    offsets: Record<string, { id?: CID; counter: number }>,
     limit: number,
     multiPeersFlag: boolean = false
   ): Promise<Record<string, PeerRecords>> {
     try {
       // 构建请求
-      const { req, serviceKey } = await this.buildGetRecordsRequest(tid, offsets, limit);
-      
+      const { req, serviceKey } = await this.buildGetRecordsRequest(
+        tid,
+        offsets,
+        limit
+      );
+
       // 创建记录收集器
       const recordCollector = new RecordCollector();
-        // 设置超时
-      let timeout : NodeJS.Timeout | null = null;
+      // 设置超时
+      let timeout: NodeJS.Timeout | null = null;
       //遍历节点,按顺序处理
       for (const peerId of peers) {
-         try {
-           timeout = setTimeout(() => {
-               throw new Error(`Timeout getting records from peer ${peerId}`);
-             }, 900000);
-            //连接到指定peerId,返回一个Client
-            const [client,err] = await this.getClient(peerId);
-            if (!client) {
-              throw new Error(`Error getting records from peer ${peerId},no client,errinfo: ${err}`);
-            }
-            console.log(`时间:${new Date().toLocaleString()} ,开始从 ${peerId.toString()} 获取记录...`);
-            const dbClient = new DBClient(client,this.dc,this,this.logstore);
-            const records = await dbClient.getRecordsFromPeer( req, serviceKey);
-            let recCount = 0 
-            for (const [logId, rs] of Object.entries(records)) {
-              recCount += rs.records.length;
-            }
-            console.log(`时间:${new Date().toLocaleString()} ,从 ${peerId.toString()} 获取记录完成,记录数为:`,recCount);
-            console.log(`开始处理从 ${peerId.toString()} 获取的记录,记录数为:`,recCount);
-            for (const [logId, rs] of Object.entries(records)) {
-              await recordCollector.batchUpdate(logId, rs);
-            }
-            console.log(`处理从 ${peerId.toString()} 获取的记录完成,记录数为:`,recCount);
-          
-            if(!multiPeersFlag){
-               break;
-            }
-          } catch (err) {
-            continue;
-          }finally{
-            // 清除超时
-            if (timeout) {
-              clearTimeout(timeout);
-            }
+        try {
+          timeout = setTimeout(() => {
+            throw new Error(`Timeout getting records from peer ${peerId}`);
+          }, 900000);
+          //连接到指定peerId,返回一个Client
+          const [client, err] = await this.getClient(peerId);
+          if (!client) {
+            throw new Error(
+              `Error getting records from peer ${peerId},no client,errinfo: ${err}`
+            );
           }
+          console.log(
+            `时间:${new Date().toLocaleString()} ,开始从 ${peerId.toString()} 获取记录...`
+          );
+          const dbClient = new DBClient(client, this.dc, this, this.logstore);
+          const records = await dbClient.getRecordsFromPeer(req, serviceKey);
+          let recCount = 0;
+          for (const [logId, rs] of Object.entries(records)) {
+            recCount += rs.records.length;
+          }
+          console.log(
+            `时间:${new Date().toLocaleString()} ,从 ${peerId.toString()} 获取记录完成,记录数为:`,
+            recCount
+          );
+          console.log(
+            `开始处理从 ${peerId.toString()} 获取的记录,记录数为:`,
+            recCount
+          );
+          for (const [logId, rs] of Object.entries(records)) {
+            await recordCollector.batchUpdate(logId, rs);
+          }
+          console.log(
+            `处理从 ${peerId.toString()} 获取的记录完成,记录数为:`,
+            recCount
+          );
+
+          if (!multiPeersFlag) {
+            break;
+          }
+        } catch (err) {
+          continue;
+        } finally {
+          // 清除超时
+          if (timeout) {
+            clearTimeout(timeout);
+          }
+        }
       }
-      
+
       return recordCollector.list();
     } catch (err) {
       console.error("getRecords error:", err);
@@ -1559,8 +1585,9 @@ export class Network implements Net {
           } else {
             try {
               // 更新地址
-               await this.logstore.getLog(tid, log.id); 
-            } catch (err) {//日志不存在,进行添加
+              await this.logstore.getLog(tid, log.id);
+            } catch (err) {
+              //日志不存在,进行添加
               await this.logstore.addLog(tid, log);
             }
             await this.logstore.addrBook.addAddrs(
@@ -1764,106 +1791,117 @@ export class Network implements Net {
     return rec;
   }
 
+  // 启动队列处理任务（只需调用一次）
+  private startPushWorker() {
+    if (this.pushWorkerStarted) return;
+    this.pushWorkerStarted = true;
 
-
-    // 启动队列处理任务（只需调用一次）
-    private startPushWorker() {
-      if (this.pushWorkerStarted) return;
-      this.pushWorkerStarted = true;
-
-      const sleep = (ms: number) =>
-        new Promise<void>((resolve) => setTimeout(resolve, ms));
-      let haveRecordFlag = false;
-      const loop = async () => {
-        while (true) {
+    const sleep = (ms: number) =>
+      new Promise<void>((resolve) => setTimeout(resolve, ms));
+    let haveRecordFlag = false;
+    const loop = async () => {
+      while (true) {
+        try {
+          const item = this.pushQueue.shift();
+          if (!item) {
+            await sleep(1000);
+            continue;
+          }
           try {
-            const item = this.pushQueue.shift();
-            if (!item) {
-              await sleep(1000);
-              continue;
+            if (!haveRecordFlag) {
+              await this.logstore.metadata.putString(
+                item.tid,
+                "local_log_no_record_flag",
+                ""
+              );
+              haveRecordFlag = true;
             }
-            try {
-              if (!haveRecordFlag) {
-                  await this.logstore.metadata.putString(
-                  item.tid,
-                  "local_log_no_record_flag",
-                  ""
-                );
-                haveRecordFlag = true;
-              }
-              await this._doPushRecord(item.tid, item.lid, item.rec, item.counter);
-              
-              
-            } catch (err) {
-              console.error("pushRecord failed:", err);
-              await sleep(200); // 简单退避，避免持续报错阻塞后续任务
-            }
+            await this._doPushRecord(
+              item.tid,
+              item.lid,
+              item.rec,
+              item.counter
+            );
           } catch (err) {
-            console.error("push worker crashed:", err);
-            await sleep(500);
+            console.error("pushRecord failed:", err);
+            await sleep(200); // 简单退避，避免持续报错阻塞后续任务
           }
+        } catch (err) {
+          console.error("push worker crashed:", err);
+          await sleep(500);
         }
-      };
-
-      loop().catch((err) => {
-        console.error("push worker stopped unexpectedly:", err);
-        this.pushWorkerStarted = false;
-        this.startPushWorker();
-      });
-    }
-  
-  
-    // 原始推送逻辑，供队列消费
-    private async _doPushRecord(
-      tid: ThreadID,
-      lid: PeerId,
-      rec: IRecord,
-      counter: number
-    ): Promise<void> {
-      try {
-        const addrs: TMultiaddr[] = [];
-        const info = await this.logstore.getThread(tid);
-        for (const l of info.logs) {
-          if (l.addrs && l.addrs.length > 0) {
-            addrs.push(...l.addrs);
-          }
-        }
-        const peers = await this.getPeers(tid);
-        if (!peers) throw new Error(`No peers for thread ${tid}`);
-        for (const p of peers) {
-          if (!p || p.toString() === "") continue;
-          let dbClient: DBClient | null = null;
-          try {
-            const [client, _] = await this.getClient(p);
-            if (!client) continue;
-            dbClient = new DBClient(client, this.dc, this, this.logstore);
-            await dbClient.pushRecordToPeer(tid, lid, rec, counter);
-            break; // 推送成功，退出循环
-          } catch (err) {
-            if (err instanceof Error && dbClient && err.message === Errors.ErrLogNotFound.message) { //log文件没绑定,进行绑定
-             try {
-                  await this.context.dbManager?.addLogToThreadStart(null,tid, lid);
-                  const err = await dbClient.pushLogToPeer(tid, lid,rec); //推送本地log文件到对等节点,rec表示最新的记录
-                  if (err){
-                    console.error("Failed to push log after adding to thread:", err);
-                  }else {
-                    await dbClient.pushRecordToPeer(tid, lid, rec, counter);
-                    break; // 推送成功，退出循环
-                  }
-                }catch (err) {
-                  console.error("Failed to create transfer stream for pushing log:", err);
-                }
-            }
-          }
-        }
-      } catch (err) {
-        throw new Error(
-          `Failed to push record: ${
-            err instanceof Error ? err.message : String(err)
-          }`
-        );
       }
+    };
+
+    loop().catch((err) => {
+      console.error("push worker stopped unexpectedly:", err);
+      this.pushWorkerStarted = false;
+      this.startPushWorker();
+    });
+  }
+
+  // 原始推送逻辑，供队列消费
+  private async _doPushRecord(
+    tid: ThreadID,
+    lid: PeerId,
+    rec: IRecord,
+    counter: number
+  ): Promise<void> {
+    try {
+      const addrs: TMultiaddr[] = [];
+      const info = await this.logstore.getThread(tid);
+      for (const l of info.logs) {
+        if (l.addrs && l.addrs.length > 0) {
+          addrs.push(...l.addrs);
+        }
+      }
+      const peers = await this.getPeers(tid);
+      if (!peers) throw new Error(`No peers for thread ${tid}`);
+      for (const p of peers) {
+        if (!p || p.toString() === "") continue;
+        let dbClient: DBClient | null = null;
+        try {
+          const [client, _] = await this.getClient(p);
+          if (!client) continue;
+          dbClient = new DBClient(client, this.dc, this, this.logstore);
+          await dbClient.pushRecordToPeer(tid, lid, rec, counter);
+          break; // 推送成功，退出循环
+        } catch (err) {
+          if (
+            err instanceof Error &&
+            dbClient &&
+            err.message === Errors.ErrLogNotFound.message
+          ) {
+            //log文件没绑定,进行绑定
+            try {
+              await this.context.dbManager?.addLogToThreadStart(null, tid, lid);
+              const err = await dbClient.pushLogToPeer(tid, lid, rec); //推送本地log文件到对等节点,rec表示最新的记录
+              if (err) {
+                console.error(
+                  "Failed to push log after adding to thread:",
+                  err
+                );
+              } else {
+                await dbClient.pushRecordToPeer(tid, lid, rec, counter);
+                break; // 推送成功，退出循环
+              }
+            } catch (err) {
+              console.error(
+                "Failed to create transfer stream for pushing log:",
+                err
+              );
+            }
+          }
+        }
+      }
+    } catch (err) {
+      throw new Error(
+        `Failed to push record: ${
+          err instanceof Error ? err.message : String(err)
+        }`
+      );
     }
+  }
 
   /**
    * 推送记录到日志地址和threaddb 主题
@@ -1909,8 +1947,8 @@ export class Network implements Net {
       // 与对等点交换,只要一个成功就返回
       for (const pid of peers) {
         // 使用异步方式处理交换，不等待完成
-       await this.exchangeWithPeer(pid, tid)
-       break;
+        await this.exchangeWithPeer(pid, tid);
+        break;
       }
     } catch (err) {
       throw new Error(
@@ -1993,7 +2031,7 @@ class RecordCollector {
         this.counters.set(logId, counter);
       }
     } finally {
-       this.mutex.release();
+      this.mutex.release();
     }
   }
 
@@ -2029,7 +2067,7 @@ class RecordCollector {
         this.records.set(logId, logRecords);
       }
 
-       rs.records.forEach(record => {
+      rs.records.forEach((record) => {
         const key = record.cid().toString();
         logRecords!.set(key, record);
       });

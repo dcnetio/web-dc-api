@@ -1,6 +1,6 @@
 {
   "name": "web-dc-api",
-  "version": "0.1.30",
+  "version": "0.1.31",
   "description": "一个革命性的去中心化 Web 开发 SDK，让您无需任何服务器即可构建完整的互联网应用",
   "type": "module",
   "browser": "dist/dc.min.js",
@@ -61,7 +61,7 @@
     "datastore-idb": "^3.0.1",
     "datastore-level": "^11.0.1",
     "google-protobuf": "~3.21.2",
-    "grpc-libp2p-client": "^0.0.28",
+    "grpc-libp2p-client": "^0.0.29",
     "helia": "5.3.0",
     "it-to-buffer": "^4.0.7",
     "jose": "^6.0.8",
