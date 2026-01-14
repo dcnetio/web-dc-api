@@ -1369,8 +1369,9 @@ export class DBManager {
       if (errors.length === threadInfo.addrs.length) {
         throw new Error(`create db failed:${errors.join(",")}`);
       }
-      const ctx = createContext(30000);
-      await this.addLogToThreadStart(ctx, threadID, lid);
+      //移除log与thread的添加,只有在推送记录时才添加
+     // const ctx = createContext(30000);
+     //    this.addLogToThreadStart(ctx, threadID, lid);
       return [threadID.toString(), null];
     } catch (error) {
       return ["", error as Error];
