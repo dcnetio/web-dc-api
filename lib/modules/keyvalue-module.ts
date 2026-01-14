@@ -145,6 +145,59 @@ export class KeyValueModule implements DCModule, IKeyValueOperations {
   }
   
 
+
+
+   /**
+     * 获取当前用户自身的kevdb授权信息,用户自己调用
+     * @param kvdb keyvalue数据库实例
+     * @param vaccount 可选的虚拟账户
+     * @returns [授权配置, 错误信息]
+     */
+     async GetUserOwnAuth(
+        kvdb: KeyValueDB,
+        vaccount?: string
+      ): Promise<[authInfo: ThemeAuthInfo | null, error: Error | null]> {
+        try {
+          this.assertInitialized();
+          return this.keyValueManager.GetUserOwnAuth(
+            kvdb.getAppId(),
+            kvdb.getAuthor(),
+            kvdb.getName(),
+            vaccount
+          );
+        } catch (error) {
+          return Promise.resolve([null, error as Error]);
+        }
+      }
+  
+    /**
+       * 获取指定用户授权信息
+       * @param kvdb keyvalue数据库实例
+       * @param userPubkey 用户公钥
+       * @param vaccount 可选的虚拟账户
+       * @returns [授权信息, 错误信息]
+       */
+      GetUserAuth(
+         kvdb: KeyValueDB,
+         userPubkey: string,
+         vaccount?: string
+      ): Promise<[ThemeAuthInfo | null, Error | null]>{
+         try {
+            this.assertInitialized();
+            return this.keyValueManager.GetUserAuth(
+              kvdb.getAppId(),
+              kvdb.getAuthor(),
+              kvdb.getName(),
+              userPubkey,
+              vaccount
+            );
+          } catch (error) {
+            return Promise.resolve([null, error as Error]);
+          }
+      }
+  
+     
+
   
   async set(
     kvdb: KeyValueDB,

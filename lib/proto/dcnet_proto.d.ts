@@ -17669,6 +17669,460 @@ export namespace dcnet {
             public static getTypeUrl(typeUrlPrefix?: string): string;
         }
 
+        /** Properties of a GetUserOwnAuthInfoRequest. */
+        interface IGetUserOwnAuthInfoRequest {
+
+            /** GetUserOwnAuthInfoRequest theme */
+            theme?: (Uint8Array|null);
+
+            /** GetUserOwnAuthInfoRequest appId */
+            appId?: (Uint8Array|null);
+
+            /** GetUserOwnAuthInfoRequest themeAuthor */
+            themeAuthor?: (Uint8Array|null);
+
+            /** GetUserOwnAuthInfoRequest vaccount */
+            vaccount?: (Uint8Array|null);
+        }
+
+        /** Represents a GetUserOwnAuthInfoRequest. */
+        class GetUserOwnAuthInfoRequest implements IGetUserOwnAuthInfoRequest {
+
+            /**
+             * Constructs a new GetUserOwnAuthInfoRequest.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: dcnet.pb.IGetUserOwnAuthInfoRequest);
+
+            /** GetUserOwnAuthInfoRequest theme. */
+            public theme: Uint8Array;
+
+            /** GetUserOwnAuthInfoRequest appId. */
+            public appId: Uint8Array;
+
+            /** GetUserOwnAuthInfoRequest themeAuthor. */
+            public themeAuthor: Uint8Array;
+
+            /** GetUserOwnAuthInfoRequest vaccount. */
+            public vaccount: Uint8Array;
+
+            /**
+             * Creates a new GetUserOwnAuthInfoRequest instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns GetUserOwnAuthInfoRequest instance
+             */
+            public static create(properties?: dcnet.pb.IGetUserOwnAuthInfoRequest): dcnet.pb.GetUserOwnAuthInfoRequest;
+
+            /**
+             * Encodes the specified GetUserOwnAuthInfoRequest message. Does not implicitly {@link dcnet.pb.GetUserOwnAuthInfoRequest.verify|verify} messages.
+             * @param message GetUserOwnAuthInfoRequest message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: dcnet.pb.IGetUserOwnAuthInfoRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified GetUserOwnAuthInfoRequest message, length delimited. Does not implicitly {@link dcnet.pb.GetUserOwnAuthInfoRequest.verify|verify} messages.
+             * @param message GetUserOwnAuthInfoRequest message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: dcnet.pb.IGetUserOwnAuthInfoRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes a GetUserOwnAuthInfoRequest message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns GetUserOwnAuthInfoRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): dcnet.pb.GetUserOwnAuthInfoRequest;
+
+            /**
+             * Decodes a GetUserOwnAuthInfoRequest message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns GetUserOwnAuthInfoRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): dcnet.pb.GetUserOwnAuthInfoRequest;
+
+            /**
+             * Verifies a GetUserOwnAuthInfoRequest message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates a GetUserOwnAuthInfoRequest message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns GetUserOwnAuthInfoRequest
+             */
+            public static fromObject(object: { [k: string]: any }): dcnet.pb.GetUserOwnAuthInfoRequest;
+
+            /**
+             * Creates a plain object from a GetUserOwnAuthInfoRequest message. Also converts values to other types if specified.
+             * @param message GetUserOwnAuthInfoRequest
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: dcnet.pb.GetUserOwnAuthInfoRequest, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this GetUserOwnAuthInfoRequest to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for GetUserOwnAuthInfoRequest
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** Properties of a GetUserOwnAuthInfoReply. */
+        interface IGetUserOwnAuthInfoReply {
+
+            /** GetUserOwnAuthInfoReply flag */
+            flag?: (number|null);
+
+            /** GetUserOwnAuthInfoReply authInfo */
+            authInfo?: (Uint8Array|null);
+
+            /** GetUserOwnAuthInfoReply configs */
+            configs?: (Uint8Array|null);
+        }
+
+        /** Represents a GetUserOwnAuthInfoReply. */
+        class GetUserOwnAuthInfoReply implements IGetUserOwnAuthInfoReply {
+
+            /**
+             * Constructs a new GetUserOwnAuthInfoReply.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: dcnet.pb.IGetUserOwnAuthInfoReply);
+
+            /** GetUserOwnAuthInfoReply flag. */
+            public flag: number;
+
+            /** GetUserOwnAuthInfoReply authInfo. */
+            public authInfo: Uint8Array;
+
+            /** GetUserOwnAuthInfoReply configs. */
+            public configs: Uint8Array;
+
+            /**
+             * Creates a new GetUserOwnAuthInfoReply instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns GetUserOwnAuthInfoReply instance
+             */
+            public static create(properties?: dcnet.pb.IGetUserOwnAuthInfoReply): dcnet.pb.GetUserOwnAuthInfoReply;
+
+            /**
+             * Encodes the specified GetUserOwnAuthInfoReply message. Does not implicitly {@link dcnet.pb.GetUserOwnAuthInfoReply.verify|verify} messages.
+             * @param message GetUserOwnAuthInfoReply message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: dcnet.pb.IGetUserOwnAuthInfoReply, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified GetUserOwnAuthInfoReply message, length delimited. Does not implicitly {@link dcnet.pb.GetUserOwnAuthInfoReply.verify|verify} messages.
+             * @param message GetUserOwnAuthInfoReply message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: dcnet.pb.IGetUserOwnAuthInfoReply, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes a GetUserOwnAuthInfoReply message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns GetUserOwnAuthInfoReply
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): dcnet.pb.GetUserOwnAuthInfoReply;
+
+            /**
+             * Decodes a GetUserOwnAuthInfoReply message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns GetUserOwnAuthInfoReply
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): dcnet.pb.GetUserOwnAuthInfoReply;
+
+            /**
+             * Verifies a GetUserOwnAuthInfoReply message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates a GetUserOwnAuthInfoReply message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns GetUserOwnAuthInfoReply
+             */
+            public static fromObject(object: { [k: string]: any }): dcnet.pb.GetUserOwnAuthInfoReply;
+
+            /**
+             * Creates a plain object from a GetUserOwnAuthInfoReply message. Also converts values to other types if specified.
+             * @param message GetUserOwnAuthInfoReply
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: dcnet.pb.GetUserOwnAuthInfoReply, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this GetUserOwnAuthInfoReply to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for GetUserOwnAuthInfoReply
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** Properties of a GetUserAuthInfoRequest. */
+        interface IGetUserAuthInfoRequest {
+
+            /** GetUserAuthInfoRequest theme */
+            theme?: (Uint8Array|null);
+
+            /** GetUserAuthInfoRequest appId */
+            appId?: (Uint8Array|null);
+
+            /** GetUserAuthInfoRequest themeAuthor */
+            themeAuthor?: (Uint8Array|null);
+
+            /** GetUserAuthInfoRequest userPubkey */
+            userPubkey?: (Uint8Array|null);
+
+            /** GetUserAuthInfoRequest vaccount */
+            vaccount?: (Uint8Array|null);
+        }
+
+        /** Represents a GetUserAuthInfoRequest. */
+        class GetUserAuthInfoRequest implements IGetUserAuthInfoRequest {
+
+            /**
+             * Constructs a new GetUserAuthInfoRequest.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: dcnet.pb.IGetUserAuthInfoRequest);
+
+            /** GetUserAuthInfoRequest theme. */
+            public theme: Uint8Array;
+
+            /** GetUserAuthInfoRequest appId. */
+            public appId: Uint8Array;
+
+            /** GetUserAuthInfoRequest themeAuthor. */
+            public themeAuthor: Uint8Array;
+
+            /** GetUserAuthInfoRequest userPubkey. */
+            public userPubkey: Uint8Array;
+
+            /** GetUserAuthInfoRequest vaccount. */
+            public vaccount: Uint8Array;
+
+            /**
+             * Creates a new GetUserAuthInfoRequest instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns GetUserAuthInfoRequest instance
+             */
+            public static create(properties?: dcnet.pb.IGetUserAuthInfoRequest): dcnet.pb.GetUserAuthInfoRequest;
+
+            /**
+             * Encodes the specified GetUserAuthInfoRequest message. Does not implicitly {@link dcnet.pb.GetUserAuthInfoRequest.verify|verify} messages.
+             * @param message GetUserAuthInfoRequest message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: dcnet.pb.IGetUserAuthInfoRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified GetUserAuthInfoRequest message, length delimited. Does not implicitly {@link dcnet.pb.GetUserAuthInfoRequest.verify|verify} messages.
+             * @param message GetUserAuthInfoRequest message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: dcnet.pb.IGetUserAuthInfoRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes a GetUserAuthInfoRequest message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns GetUserAuthInfoRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): dcnet.pb.GetUserAuthInfoRequest;
+
+            /**
+             * Decodes a GetUserAuthInfoRequest message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns GetUserAuthInfoRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): dcnet.pb.GetUserAuthInfoRequest;
+
+            /**
+             * Verifies a GetUserAuthInfoRequest message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates a GetUserAuthInfoRequest message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns GetUserAuthInfoRequest
+             */
+            public static fromObject(object: { [k: string]: any }): dcnet.pb.GetUserAuthInfoRequest;
+
+            /**
+             * Creates a plain object from a GetUserAuthInfoRequest message. Also converts values to other types if specified.
+             * @param message GetUserAuthInfoRequest
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: dcnet.pb.GetUserAuthInfoRequest, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this GetUserAuthInfoRequest to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for GetUserAuthInfoRequest
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** Properties of a GetUserAuthInfoReply. */
+        interface IGetUserAuthInfoReply {
+
+            /** GetUserAuthInfoReply flag */
+            flag?: (number|null);
+
+            /** GetUserAuthInfoReply authInfo */
+            authInfo?: (Uint8Array|null);
+
+            /** GetUserAuthInfoReply configs */
+            configs?: (Uint8Array|null);
+        }
+
+        /** Represents a GetUserAuthInfoReply. */
+        class GetUserAuthInfoReply implements IGetUserAuthInfoReply {
+
+            /**
+             * Constructs a new GetUserAuthInfoReply.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: dcnet.pb.IGetUserAuthInfoReply);
+
+            /** GetUserAuthInfoReply flag. */
+            public flag: number;
+
+            /** GetUserAuthInfoReply authInfo. */
+            public authInfo: Uint8Array;
+
+            /** GetUserAuthInfoReply configs. */
+            public configs: Uint8Array;
+
+            /**
+             * Creates a new GetUserAuthInfoReply instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns GetUserAuthInfoReply instance
+             */
+            public static create(properties?: dcnet.pb.IGetUserAuthInfoReply): dcnet.pb.GetUserAuthInfoReply;
+
+            /**
+             * Encodes the specified GetUserAuthInfoReply message. Does not implicitly {@link dcnet.pb.GetUserAuthInfoReply.verify|verify} messages.
+             * @param message GetUserAuthInfoReply message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: dcnet.pb.IGetUserAuthInfoReply, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified GetUserAuthInfoReply message, length delimited. Does not implicitly {@link dcnet.pb.GetUserAuthInfoReply.verify|verify} messages.
+             * @param message GetUserAuthInfoReply message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: dcnet.pb.IGetUserAuthInfoReply, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes a GetUserAuthInfoReply message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns GetUserAuthInfoReply
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): dcnet.pb.GetUserAuthInfoReply;
+
+            /**
+             * Decodes a GetUserAuthInfoReply message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns GetUserAuthInfoReply
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): dcnet.pb.GetUserAuthInfoReply;
+
+            /**
+             * Verifies a GetUserAuthInfoReply message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates a GetUserAuthInfoReply message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns GetUserAuthInfoReply
+             */
+            public static fromObject(object: { [k: string]: any }): dcnet.pb.GetUserAuthInfoReply;
+
+            /**
+             * Creates a plain object from a GetUserAuthInfoReply message. Also converts values to other types if specified.
+             * @param message GetUserAuthInfoReply
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: dcnet.pb.GetUserAuthInfoReply, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this GetUserAuthInfoReply to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for GetUserAuthInfoReply
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
         /** Properties of a GetUserThemeConfigInfoRequest. */
         interface IGetUserThemeConfigInfoRequest {
 
@@ -18988,6 +19442,9 @@ export namespace dcnet {
 
             /** GetUserOwnAIProxyAuthRequest themeAuthor */
             themeAuthor?: (Uint8Array|null);
+
+            /** GetUserOwnAIProxyAuthRequest vaccount */
+            vaccount?: (Uint8Array|null);
         }
 
         /** Represents a GetUserOwnAIProxyAuthRequest. */
@@ -19007,6 +19464,9 @@ export namespace dcnet {
 
             /** GetUserOwnAIProxyAuthRequest themeAuthor. */
             public themeAuthor: Uint8Array;
+
+            /** GetUserOwnAIProxyAuthRequest vaccount. */
+            public vaccount: Uint8Array;
 
             /**
              * Creates a new GetUserOwnAIProxyAuthRequest instance using the specified properties.
@@ -22186,6 +22646,34 @@ export namespace dcnet {
             public getThemeAuthList(request: dcnet.pb.IGetThemeAuthListRequest): Promise<dcnet.pb.GetThemeAuthListReply>;
 
             /**
+             * Calls GetUserOwnAuthInfo.
+             * @param request GetUserOwnAuthInfoRequest message or plain object
+             * @param callback Node-style callback called with the error, if any, and GetUserOwnAuthInfoReply
+             */
+            public getUserOwnAuthInfo(request: dcnet.pb.IGetUserOwnAuthInfoRequest, callback: dcnet.pb.Service.GetUserOwnAuthInfoCallback): void;
+
+            /**
+             * Calls GetUserOwnAuthInfo.
+             * @param request GetUserOwnAuthInfoRequest message or plain object
+             * @returns Promise
+             */
+            public getUserOwnAuthInfo(request: dcnet.pb.IGetUserOwnAuthInfoRequest): Promise<dcnet.pb.GetUserOwnAuthInfoReply>;
+
+            /**
+             * Calls GetUserAuthInfo.
+             * @param request GetUserAuthInfoRequest message or plain object
+             * @param callback Node-style callback called with the error, if any, and GetUserAuthInfoReply
+             */
+            public getUserAuthInfo(request: dcnet.pb.IGetUserAuthInfoRequest, callback: dcnet.pb.Service.GetUserAuthInfoCallback): void;
+
+            /**
+             * Calls GetUserAuthInfo.
+             * @param request GetUserAuthInfoRequest message or plain object
+             * @returns Promise
+             */
+            public getUserAuthInfo(request: dcnet.pb.IGetUserAuthInfoRequest): Promise<dcnet.pb.GetUserAuthInfoReply>;
+
+            /**
              * Calls GetUserComments.
              * @param request GetUserCommentsRequest message or plain object
              * @param callback Node-style callback called with the error, if any, and GetUserCommentsReply
@@ -23104,6 +23592,20 @@ export namespace dcnet {
              * @param [response] GetThemeAuthListReply
              */
             type GetThemeAuthListCallback = (error: (Error|null), response?: dcnet.pb.GetThemeAuthListReply) => void;
+
+            /**
+             * Callback as used by {@link dcnet.pb.Service#getUserOwnAuthInfo}.
+             * @param error Error, if any
+             * @param [response] GetUserOwnAuthInfoReply
+             */
+            type GetUserOwnAuthInfoCallback = (error: (Error|null), response?: dcnet.pb.GetUserOwnAuthInfoReply) => void;
+
+            /**
+             * Callback as used by {@link dcnet.pb.Service#getUserAuthInfo}.
+             * @param error Error, if any
+             * @param [response] GetUserAuthInfoReply
+             */
+            type GetUserAuthInfoCallback = (error: (Error|null), response?: dcnet.pb.GetUserAuthInfoReply) => void;
 
             /**
              * Callback as used by {@link dcnet.pb.Service#getUserComments}.
