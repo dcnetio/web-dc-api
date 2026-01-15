@@ -89,6 +89,156 @@ export class KeyValueClient {
     }
   }
 
+
+
+  async GetUserOwnAuth(
+    appId: string,
+    themeAuthor: string,
+    configTheme: string,
+    vAccount?: string
+  ): Promise<[authInfo: string, error: Error | null]> {
+    const message = new dcnet.pb.GetUserOwnAuthInfoRequest({});
+    message.appId = new TextEncoder().encode(appId);
+    message.themeAuthor = new TextEncoder().encode(themeAuthor);
+    message.theme = new TextEncoder().encode(configTheme);
+    if (vAccount) {
+      message.vaccount = new TextEncoder().encode(vAccount);
+    }
+    const messageBytes =
+      dcnet.pb.GetUserOwnAuthInfoRequest.encode(message).finish();
+    const grpcClient = new Libp2pGrpcClient(
+      this.client.p2pNode,
+      this.client.peerAddr,
+      this.client.token,
+      this.client.protocol
+    );
+    try {
+      const reply = await grpcClient.unaryCall(
+        "/dcnet.pb.Service/GetUserOwnAuthInfo",
+        messageBytes,
+        30000
+      );
+      const decoded = dcnet.pb.GetUserOwnAuthInfoReply.decode(reply);
+      if (decoded.flag != 0) {
+        throw new Error(Errors.INVALID_TOKEN.message + " flag:" + decoded.flag);
+      }
+      const authInfo = new TextDecoder().decode(decoded.authInfo);
+      return [authInfo, null];
+    } catch (error) {
+      if (
+        typeof error === "object" &&
+        error !== null &&
+        "message" in error &&
+        typeof (error as any).message === "string" &&
+        (error as any).message.indexOf(Errors.INVALID_TOKEN.message) != -1
+      ) {
+        // try to get token
+        const token = await this.client.GetToken(
+          this.context.appInfo.appId || "",
+          this.context.getPublicKey().string(),
+          (payload: Uint8Array): Promise<Uint8Array> => {
+            return this.context.sign(payload);
+          }
+        );
+        if (!token) {
+          throw new Error(Errors.INVALID_TOKEN.message);
+        }
+        const reply = await grpcClient.unaryCall(
+          "/dcnet.pb.Service/GetUserOwnAuthInfo",
+          messageBytes,
+          30000
+        );
+        const decoded = dcnet.pb.GetUserOwnAuthInfoReply.decode(reply);
+        if (decoded.flag != 0) {
+          return [
+            "",
+            new Error(Errors.INVALID_TOKEN.message + " flag:" + decoded.flag),
+          ];
+        }
+        const authInfo = new TextDecoder().decode(decoded.authInfo);
+        return [authInfo, null];
+      }
+      return ["", error instanceof Error ? error : new Error(String(error))];
+    }
+  }
+
+
+
+  async GetUserAuth(
+    appId: string,
+    themeAuthor: string,
+    configTheme: string,
+    userPubkey: string,
+    vAccount?: string
+  ): Promise<[authInfo: string, error: Error | null]> {
+    const message = new dcnet.pb.GetUserAuthInfoRequest({});
+    message.appId = new TextEncoder().encode(appId);
+    message.themeAuthor = new TextEncoder().encode(themeAuthor);
+    message.theme = new TextEncoder().encode(configTheme);
+    message.userPubkey = new TextEncoder().encode(userPubkey);
+    if (vAccount) {
+      message.vaccount = new TextEncoder().encode(vAccount);
+    }
+    const messageBytes =
+      dcnet.pb.GetUserAuthInfoRequest.encode(message).finish();
+    const grpcClient = new Libp2pGrpcClient(
+      this.client.p2pNode,
+      this.client.peerAddr,
+      this.client.token,
+      this.client.protocol
+    );
+    try {
+      const reply = await grpcClient.unaryCall(
+        "/dcnet.pb.Service/GetUserAuthInfo",
+        messageBytes,
+        30000
+      );
+      const decoded = dcnet.pb.GetUserAuthInfoReply.decode(reply);
+      if (decoded.flag != 0) {
+        throw new Error(Errors.INVALID_TOKEN.message + " flag:" + decoded.flag);
+      }
+      const authInfo = new TextDecoder().decode(decoded.authInfo);
+      return [authInfo, null];
+    } catch (error) {
+      if (
+        typeof error === "object" &&
+        error !== null &&
+        "message" in error &&
+        typeof (error as any).message === "string" &&
+        (error as any).message.indexOf(Errors.INVALID_TOKEN.message) != -1
+      ) {
+        // try to get token
+        const token = await this.client.GetToken(
+          this.context.appInfo.appId || "",
+          this.context.getPublicKey().string(),
+          (payload: Uint8Array): Promise<Uint8Array> => {
+            return this.context.sign(payload);
+          }
+        );
+        if (!token) {
+          throw new Error(Errors.INVALID_TOKEN.message);
+        }
+        const reply = await grpcClient.unaryCall(
+          "/dcnet.pb.Service/GetUserAuthInfo",
+          messageBytes,
+          30000
+        );
+        const decoded = dcnet.pb.GetUserAuthInfoReply.decode(reply);
+        if (decoded.flag != 0) {
+          return [
+            "",
+            new Error(Errors.INVALID_TOKEN.message + " flag:" + decoded.flag),
+          ];
+        }
+        const authInfo = new TextDecoder().decode(decoded.authInfo);
+        return [authInfo, null];
+      }
+      return ["", error instanceof Error ? error : new Error(String(error))];
+    }
+  }
+
+
+
   async setKeyValue(
     theme: string,
     appId: string,

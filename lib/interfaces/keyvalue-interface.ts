@@ -55,6 +55,31 @@ export interface IKeyValueOperations {
     vaccount?: string
   ): Promise<[ThemeAuthInfo[]|null,ThemeComment[] | null, Error | null]>;
 
+
+   /**
+     * 获取当前用户自身的kevdb授权信息,用户自己调用
+     * @param kvdb keyvalue数据库实例
+     * @param vaccount 可选的虚拟账户
+     * @returns [授权配置, 错误信息]
+     */
+    GetUserOwnAuth(
+      kvdb: KeyValueDB,
+      vaccount?: string
+    ): Promise<[ThemeAuthInfo | null, Error | null]>;
+  
+    /**
+       * 获取指定用户授权信息
+       * @param kvdb keyvalue数据库实例
+       * @param userPubkey 用户公钥
+       * @param vaccount 可选的虚拟账户
+       * @returns [授权信息, 错误信息]
+       */
+      GetUserAuth(
+         kvdb: KeyValueDB,
+         userPubkey: string,
+         vaccount?: string
+      ): Promise<[ThemeAuthInfo | null, Error | null]>;
+  
   /**
    * 设置键值对，支持索引功能
    * @param kvdb: KeyValueDB,

@@ -1149,6 +1149,36 @@ message RequestRandDataReply{
 }
 
 
+
+
+message GetUserOwnAuthInfoRequest {
+    bytes theme = 1; //状态汇聚对象CID
+    bytes appId = 2; //应用标志
+    bytes themeAuthor = 3;//发布状态汇聚对象的的pubkey
+    bytes vaccount = 4 ; //虚拟账号,可选,如果有虚拟账号
+}
+
+message GetUserOwnAuthInfoReply {
+   uint32 flag = 1;//获取结果 0:成功 1:权限不足 2:获取失败
+   bytes authInfo = 2; //获取的配置结果,返回请求用户的授权信息
+   bytes configs = 3; //获取的配置结果,返回请求用户的配置列表
+}
+
+message GetUserAuthInfoRequest {
+    bytes theme = 1; //状态汇聚对象CID
+    bytes appId = 2; //应用标志
+    bytes themeAuthor = 3;//发布状态汇聚对象的的pubkey
+    bytes userPubkey = 4;//申请访问配置的用户pubkey
+    bytes vaccount = 5 ; //虚拟账号,可选,如果有虚拟账号
+}
+
+message GetUserAuthInfoReply {
+   uint32 flag = 1;//获取结果 0:成功 1:权限不足 2:获取失败
+   bytes authInfo = 2; //获取的配置结果,返回请求用户的授权信息
+   bytes configs = 3; //获取的配置结果,返回请求用户的配置列表
+}
+    
+
 message GetUserThemeConfigInfoRequest {
     bytes theme = 1; //主题
     bytes appId = 2; //应用标志
@@ -1230,6 +1260,7 @@ message GetUserOwnAIProxyAuthRequest {
     bytes theme = 1; //状态汇聚对象CID
     bytes appId = 2; //应用标志
     bytes themeAuthor = 3;//发布状态汇聚对象的的pubkey
+    bytes vaccount = 4 ; //虚拟账号,可选,如果有虚拟账号
 }
 
 message GetUserOwnAIProxyAuthReply {
@@ -1530,6 +1561,14 @@ service Service {
 
      //获取指定已开通对象的权限列表(对GetThemeComments进行包装，增加权限判断)//ok
      rpc GetThemeAuthList(GetThemeAuthListRequest) returns (GetThemeAuthListReply){}
+
+
+       //获取用户自己在指定主题对象下的权限配置信息
+    rpc GetUserOwnAuthInfo(GetUserOwnAuthInfoRequest) returns (GetUserOwnAuthInfoReply) {}
+
+    //获取指定用户的配置权限信息
+    rpc GetUserAuthInfo(GetUserAuthInfoRequest) returns (GetUserAuthInfoReply) {}
+
 
     //获取用户所有已经发布的评论//ok
     rpc GetUserComments(GetUserCommentsRequest) returns (GetUserCommentsReply){}
