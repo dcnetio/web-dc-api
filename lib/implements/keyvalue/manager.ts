@@ -1,22 +1,18 @@
 import { KeyValueClient } from "./client";
 import {
-  DCConnectInfo,
   ThemeAuthInfo,
   ThemeComment,
 } from "../../common/types/types";
 import { OpenFlag } from "../../common/constants";
 import { CommentManager } from "../comment/manager";
-import { HeliaLibp2p } from "helia";
 import { ChainUtil } from "../../common/chain";
 import { DcUtil } from "../../common/dcutil";
 import { Ed25519PubKey } from "../../common/dc-key/ed25519";
 import { sha256, uint32ToLittleEndianBytes } from "../../util/utils";
 import { base32 } from "multiformats/bases/base32";
-import { Client } from "../../common/dcapi";
 import { CommentType, Direction } from "../../common/define";
 import { DCContext } from "../../../lib/interfaces/DCContext";
-import { AnyExtensionField } from "protobufjs";
-import { isArray } from "util";
+
 
 //定义Key-Value存储的数据类型
 export enum KeyValueStoreType { //存储主题类型 1:鉴权主题(读写都需要鉴权) 2:公共主题(默认所有用户可读,写需要鉴权)
@@ -50,6 +46,18 @@ export class KeyValueDB {
     this.dbname = dbname;
     this.themeAuthor = themeAuthor;
     this.manager = manager;
+  }
+
+  getName() {
+    return this.dbname;
+  }
+
+  getAuthor() {
+    return this.themeAuthor;
+  }
+
+  getAppId() {
+    return this.appId;
   }
 
   //设置键值对
@@ -218,9 +226,7 @@ export class KeyValueManager {
     }
 
     // Set minimum space (100M)
-    if (space < 100 << 20) {
-      space = 100 << 20;
-    }
+    space = Math.max(space, 100 << 20)
     // Theme must start with "keyvalue_"
     if (!theme.startsWith("keyvalue_")) {
       theme = "keyvalue_" + theme;
@@ -340,9 +346,12 @@ export class KeyValueManager {
     }
     let forPubkeyHex: string;
     if (pubkeyFlag && forPubkey !== null) {
-      forPubkeyHex = forPubkey.string();
+      forPubkeyHex = "0x" + forPubkey.toString();
     } else {
       forPubkeyHex = authPubkey;
+      if (!authPubkey.startsWith("0x") && !authPubkey.startsWith("0X") && authPubkey != "all") {
+        forPubkeyHex = "0x" + authPubkey;
+      }
     }
 
     const content = `${forPubkeyHex}:${permission}:${remark}`;
@@ -414,6 +423,144 @@ export class KeyValueManager {
     }
   }
 
+
+
+    async GetUserOwnAuth(
+      appId: string,
+      themeAuthor: string,
+      configTheme: string,
+       vaccount?: string
+    ): Promise<[themeAuthInfo: ThemeAuthInfo | null, error: Error | null]> {
+      if (!this.context.publicKey) {
+        return [null, new Error("ErrConnectToAccountPeersFail")];
+      }
+      if (!configTheme.startsWith("keyvalue_")) {
+        configTheme = "keyvalue_" + configTheme;
+      }
+  
+      let client = this.context.AccountBackupDc?.client || null;
+      if (themeAuthor != this.context.publicKey.string()) {
+        //查询他人主题评论
+        const authorPublicKey: Ed25519PubKey =
+          Ed25519PubKey.edPubkeyFromStr(themeAuthor);
+        client = await this.dc.connectToUserDcPeer(authorPublicKey.raw);
+        if (!client) {
+          return [null, Errors.ErrNoDcPeerConnected];
+        }
+      }
+  
+      if (client === null) {
+        return [null, new Error("ErrConnectToAccountPeersFail")];
+      }
+  
+      if (client.peerAddr === null) {
+        return [null, new Error("ErrConnectToAccountPeersFail")];
+      }
+      if (client.token == "") {
+        await client.GetToken(
+          this.context.appInfo.appId || "",
+          this.context.publicKey.string(),
+          this.context.sign
+        );
+      }
+      const keyValueClient = new KeyValueClient(client, this.context);
+      const [authInfo, error] = await keyValueClient.GetUserOwnAuth(
+        appId,
+        themeAuthor,
+        configTheme
+      );
+      if (error) {
+        return [null, error];
+      }
+      if (!authInfo) {
+        let authFields = configTheme.split("$$$");
+        if (authFields.length > 2) {
+          try{
+          const themeAuthInfo = {
+            pubkey: authFields[0]!,
+            permission: parseInt(authFields[1]!),
+            remark: authFields.length > 3 ? authFields[2]! : "",
+          };
+          return [themeAuthInfo, null];
+        }catch(e){
+          return [null, e];
+        }
+        } 
+      }
+      return [null, null];
+    }
+
+
+
+    async GetUserAuth(
+      appId: string,
+      themeAuthor: string,
+      configTheme: string,
+      userPubkeyStr: string,
+       vaccount?: string
+    ): Promise<[themeAuthInfo: ThemeAuthInfo | null, error: Error | null]> {
+      if (!this.context.publicKey) {
+        return [null, new Error("ErrConnectToAccountPeersFail")];
+      }
+      if (!configTheme.startsWith("keyvalue_")) {
+        configTheme = "keyvalue_" + configTheme;
+      }
+  
+      let client = this.context.AccountBackupDc?.client || null;
+      if (themeAuthor != this.context.publicKey.string()) {
+        //查询他人主题评论
+        const authorPublicKey: Ed25519PubKey =
+          Ed25519PubKey.edPubkeyFromStr(themeAuthor);
+        client = await this.dc.connectToUserDcPeer(authorPublicKey.raw);
+        if (!client) {
+          return [null, Errors.ErrNoDcPeerConnected];
+        }
+      }
+  
+      if (client === null) {
+        return [null, new Error("ErrConnectToAccountPeersFail")];
+      }
+  
+      if (client.peerAddr === null) {
+        return [null, new Error("ErrConnectToAccountPeersFail")];
+      }
+      if (client.token == "") {
+        await client.GetToken(
+          this.context.appInfo.appId || "",
+          this.context.publicKey.string(),
+          this.context.sign
+        );
+      }
+      const keyValueClient = new KeyValueClient(client, this.context);
+      const [authInfo, error] = await keyValueClient.GetUserAuth(
+        appId,
+        themeAuthor,
+        configTheme,
+        userPubkeyStr,
+        vaccount
+      );
+      if (error) {
+        return [null, error];
+      }
+      if (!authInfo) {
+        let authFields = configTheme.split("$$$");
+        if (authFields.length > 2) {
+          try{
+          const themeAuthInfo = {
+            pubkey: authFields[0]!,
+            permission: parseInt(authFields[1]!),
+            remark: authFields.length > 3 ? authFields[2]! : "",
+          };
+          return [themeAuthInfo, null];
+        }catch(e){
+          return [null, e];
+        }
+        } 
+      }
+      return [null, null];
+    }
+
+
   async getAuthList(
     appId: string,
     themeAuthor: string,
@@ -459,10 +606,26 @@ export class KeyValueManager {
             continue;
           }
           const authPubkey = parts[0]!;
+          //转成带protobuf协议的base32格式
+          let forPubkey: Ed25519PubKey | null = null;
+          try {
+            if (authPubkey.startsWith("0x") || authPubkey.startsWith("0X")) {
+              forPubkey = Ed25519PubKey.edPubkeyFromStr(
+                authPubkey
+              );
+            } 
+          } catch (error) {
+            continue;
+          }
+          let authPubkeyStr = authPubkey;
+          if (forPubkey != null) {
+            authPubkeyStr = forPubkey.string();
+          }
           const permission = parseInt(parts[1]!);
-          const remark = content.substring(parts[0]!.length + 2);
+          let remarkStart = parts[0]!.length + parts[1]!.length + 2;
+          const remark = content.length > remarkStart ? content.substring(remarkStart) : "";
           authList.push({
-            pubkey: authPubkey,
+            pubkey: authPubkeyStr,
             permission: permission,
             remark: remark,
           });
