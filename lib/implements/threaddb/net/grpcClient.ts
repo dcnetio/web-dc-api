@@ -593,10 +593,9 @@ export class DBGrpcClient {
         30000
       );
       // 解码响应
-      const reply = net_pb.pb.ExchangeEdgesReply.decode(response);
-      return reply;
+      return  net_pb.pb.ExchangeEdgesReply.decode(response);
+
     } catch (err) {
-      console.error("exchangeEdges error:", err);
       throw err;
     }
   }
