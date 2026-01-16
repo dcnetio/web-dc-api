@@ -641,8 +641,8 @@ export class AuthModule implements DCModule, IAuthOperations {
       }
       this.tokenTask = true;
 
-      // 300秒一次心跳维持连接
-      const period = 300 * 1000;
+      // 60秒一次心跳维持连接
+      const period = 60 * 1000;
 
       // 启动ticker
       logger.info("开始定时验证Token有效性任务");
