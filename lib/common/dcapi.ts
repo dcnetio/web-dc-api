@@ -79,7 +79,10 @@ export class Client {
           this.token,
           this.protocol
         );
-        await grpcClient.ValidToken();
+        const validFlag = await grpcClient.ValidToken(5900);
+        if (!validFlag) {
+          throw new Error("token is timeout");
+        }
       } catch (err) {
         throw err;
       }

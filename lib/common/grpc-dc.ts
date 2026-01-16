@@ -82,16 +82,29 @@ export class DCGrpcClient {
     }
   }
 
-  async ValidToken(): Promise<boolean> {
+  async ValidToken(expires: number=5900): Promise<boolean> {
     try {
-      const message = new dcnet.pb.ValidTokenRequest({});
-      const messageBytes = dcnet.pb.ValidTokenRequest.encode(message).finish();
-      const responseData = await this.grpcClient.unaryCall(
-        "/dcnet.pb.Service/ValidToken",
-        messageBytes,
-        30000
-      );
-      dcnet.pb.ValidTokenReply.decode(responseData);
+      const t = this.token;
+      if (!t) {
+        return false;
+      }
+      const parts = t.split(".");
+      if (parts.length < 2) {
+        return false;
+      }
+      const payload = parts[1];
+      const b64 = payload.replace(/-/g, "+").replace(/_/g, "/");
+      const pad = b64.length % 4;
+      const padded = pad ? b64 + "====".slice(0, 4 - pad) : b64;
+      const json = Buffer.from(padded, "base64").toString("utf8");
+      const obj = JSON.parse(json);
+      const iat = Number(obj.iat ?? obj.IssuedAt ?? obj.issuedAt);
+      if (!Number.isFinite(iat)) {
+        return false;
+      }
+      if (Math.floor(Date.now() / 1000) - expires > iat) {
+        throw new Error("token is expire");
+      }
       return true;
     } catch (err) {
       throw err;
