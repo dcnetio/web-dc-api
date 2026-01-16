@@ -472,14 +472,14 @@ export class KeyValueManager {
       if (error) {
         return [null, error];
       }
-      if (!authInfo) {
-        let authFields = configTheme.split("$$$");
+      if (authInfo) {
+        let authFields = authInfo.split("$$$");
         if (authFields.length > 2) {
           try{
           const themeAuthInfo = {
             pubkey: authFields[0]!,
             permission: parseInt(authFields[1]!),
-            remark: authFields.length > 3 ? authFields[2]! : "",
+            remark: authFields.length >= 3 ? authFields[2]! : "",
           };
           return [themeAuthInfo, null];
         }catch(e){
@@ -542,14 +542,14 @@ export class KeyValueManager {
       if (error) {
         return [null, error];
       }
-      if (!authInfo) {
-        let authFields = configTheme.split("$$$");
+      if (authInfo) {
+        let authFields = authInfo.split("$$$");
         if (authFields.length > 2) {
           try{
           const themeAuthInfo = {
             pubkey: authFields[0]!,
             permission: parseInt(authFields[1]!),
-            remark: authFields.length > 3 ? authFields[2]! : "",
+            remark: authFields.length >=3 ? authFields[2]! : "",
           };
           return [themeAuthInfo, null];
         }catch(e){
@@ -571,7 +571,7 @@ export class KeyValueManager {
       theme = "keyvalue_" + theme;
     }
     if (!theme.endsWith("_authlist")) {
-      theme = theme + "_authlist";
+      theme += "_authlist";
     }
     let seekKey: string = "";
     let originAuthList: ThemeComment[] = [];
