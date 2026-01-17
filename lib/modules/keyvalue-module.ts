@@ -72,13 +72,12 @@ export class KeyValueModule implements DCModule, IKeyValueOperations {
     }
     
     try {
-      const [kvdb,err] = await this.keyValueManager.createStore(
+      return await this.keyValueManager.createStore(
         appId,
         theme,
         space,
         type
       );
-      return [kvdb,err];
     } catch (error) {
       return [null, error instanceof Error ? error : new Error(String(error))];
     }
@@ -95,12 +94,11 @@ export class KeyValueModule implements DCModule, IKeyValueOperations {
       return [null, err];
     }
     try {
-      const [kvdb,err] = await this.keyValueManager.getKeyValueDB(
+      return await this.keyValueManager.getKeyValueDB(
         appId,
         theme,
         themeAuthor
       );
-      return [kvdb,err];
     } catch (error) {
       return [null, error instanceof Error ? error : new Error(String(error))];
     }
@@ -121,8 +119,7 @@ export class KeyValueModule implements DCModule, IKeyValueOperations {
     }
     
     try {
-       const res = await kvdb.configAuth(authPubkey, permission, remark, vaccount);
-      return res;
+       return await kvdb.configAuth(authPubkey, permission, remark, vaccount);
     } catch (error) {
       return [null, error instanceof Error ? error : new Error(String(error))];
     }
@@ -137,8 +134,7 @@ export class KeyValueModule implements DCModule, IKeyValueOperations {
     }
     
     try {
-      const res = await kvdb.getAuthList(vaccount);
-      return res;
+      return await kvdb.getAuthList(vaccount);
     } catch (error) {
       return [null, null, error instanceof Error ? error : new Error(String(error))];
     }
@@ -232,8 +228,7 @@ export class KeyValueModule implements DCModule, IKeyValueOperations {
       } catch (error) {
         logger.error(`设置索引,解析失败:`, error);
       }
-      const res = await kvdb.set(key, value, strIndexs, vaccount);
-      return res;
+      return await kvdb.set(key, value, strIndexs, vaccount);
     } catch (error) {
       return [null,null, error instanceof Error ? error : new Error(String(error))];
     }
@@ -275,8 +270,7 @@ export class KeyValueModule implements DCModule, IKeyValueOperations {
     }
     
     try {
-      const res = await kvdb.get(key, writerPubkey, vaccount);
-      return res;
+      return  await kvdb.get(key, writerPubkey, vaccount);
     } catch (error) {
       return [null, error instanceof Error ? error : new Error(String(error))];
     }
@@ -303,13 +297,13 @@ export class KeyValueModule implements DCModule, IKeyValueOperations {
     if (err) {
       return [null, err];
     }
-    const limit = options.limit? options.limit: 10;
-    const seekKey = options.seekKey? options.seekKey: "";
-    const direction = options.direction? options.direction: Direction.Forward;
-    const offset = options.offset? options.offset: 0;
+    const limit = options.limit || 10;
+    const seekKey = options.seekKey || "";
+    const direction = options.direction || Direction.Forward;
+    const offset = options.offset || 0;
     try {
-      const res = await kvdb.getWithIndex(indexkey_dckv, key, limit, seekKey, direction, offset, vaccount);
-      return res;
+      return await kvdb.getWithIndex(indexkey_dckv, key, limit, seekKey, direction, offset, vaccount);
+  
     } catch (error) {
       return [null, error instanceof Error ? error : new Error(String(error))];
     }
@@ -335,8 +329,8 @@ export class KeyValueModule implements DCModule, IKeyValueOperations {
     }
 
     try {
-      const res = await kvdb.getBatch(keys, writerPubkey, vaccount);
-      return res;
+      return await kvdb.getBatch(keys, writerPubkey, vaccount);
+
     } catch (error) {
       return [null, error instanceof Error ? error : new Error(String(error))];
     }
@@ -365,17 +359,16 @@ export class KeyValueModule implements DCModule, IKeyValueOperations {
     if (err) {
       return [null, err];
     }
-    const limit = options.limit? options.limit: 10;
-    const seekKey = options.seekKey? options.seekKey: "";
-    const direction = options.direction? options.direction: Direction.Forward;
-    const offset = options.offset? options.offset: 0;
+    const limit = options.limit || 10;
+    const seekKey = options.seekKey || "";
+    const direction = options.direction || Direction.Forward;
+    const offset = options.offset || 0;
     let indexValueStr = indexValue;
     if( options.type === "number" ){ //
       indexValueStr = padPositiveInt20(indexValue);
     }
     try {
-      const res = await kvdb.getWithIndex(indexKey, indexValueStr, limit,seekKey, direction,offset,  vaccount);
-    return res;
+      return await kvdb.getWithIndex(indexKey, indexValueStr, limit,seekKey, direction,offset,  vaccount);
     } catch (error) {
       return [null, error instanceof Error ? error : new Error(String(error))];
     }
@@ -408,13 +401,12 @@ export class KeyValueModule implements DCModule, IKeyValueOperations {
       //前面补0,保证长度为20位
       timestampStr = timestampStr.padStart(20, "0");
     }
-    const limit = options.limit ? options.limit : 10;
-    const seekKey = options.seekKey ? options.seekKey : "";
-    const direction = options.direction ? options.direction : Direction.Forward;
-    const offset = options.offset ? options.offset : 0;
+    const limit = options.limit || 10;
+    const seekKey = options.seekKey || "";
+    const direction = options.direction || Direction.Forward;
+    const offset = options.offset || 0;
     try {
-      const res = await kvdb.getWithIndex("indexkey_timestamp", timestampStr, limit, seekKey, direction, offset, vaccount);
-      return res;
+      return await kvdb.getWithIndex("indexkey_timestamp", timestampStr, limit, seekKey, direction, offset, vaccount);
     } catch (error) {
       return [null, error instanceof Error ? error : new Error(String(error))];
     }

@@ -178,4 +178,26 @@ export interface IKeyValueOperations {
     options: { type?:string; limit?: number; seekKey?: string; direction?: Direction; offset?: number } ,
     vaccount?: string
   ): Promise<[string | null, Error | null]>;
+
+    /**
+   * 按设置时间顺序获取主题的的键值对列表
+   * @param kvdb KeyValueDB实例
+   * @param limit 返回结果数量限制
+   * @param seekKey 查询起始键,用于分页查询
+   * @param direction 查询方向 
+   * @param offset 结果偏移量
+   * @param vaccount 可选的虚拟账户
+   * @returns [值列表数组生成的json字符串, 错误信息] 数组的每个元素的格式:  key:value$$$dckv_extra$$${'dc_timestamp':'%d','dc_opuser':'%s'}
+   */
+   getWithTimeOrder(
+    kvdb: KeyValueDB,
+    timestamp: number,//毫秒时间戳
+    options: { limit?: number; seekKey?: string; direction?: Direction; offset?: number },
+    vaccount?: string
+  ): Promise<[string | null, Error | null]> ;
 }
+
+
+
+
+
