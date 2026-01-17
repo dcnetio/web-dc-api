@@ -20,6 +20,7 @@ import { WalletManager } from "../implements/wallet/manager";
 import {
   Account,
   AccountInfo,
+  DCConnectInfo,
   EIP712SignReqMessage,
   NFTBindStatus,
   SignReqMessage,
@@ -279,6 +280,8 @@ export class AuthModule implements DCModule, IAuthOperations {
         client.token = "";
         this.context.connectedDc.client.token = "";
 
+        let privateKey = null;
+        let publicKey = null;
         if (this.context.appInfo?.appId) {
           const accountManager = new AccountManager(this.context);
 
@@ -292,45 +295,40 @@ export class AuthModule implements DCModule, IAuthOperations {
           }
           // 获取私钥
           const keymanager = new KeyManager();
-          const privateKey = await keymanager.getEd25519KeyFromMnemonic(
+          privateKey = await keymanager.getEd25519KeyFromMnemonic(
             mnemonic,
             this.context.appInfo?.appId
           );
-          const publicKey = privateKey.publicKey;
+          publicKey = privateKey.publicKey;
           this.context.publicKey = publicKey;
           const parentPrivateKey = await keymanager.getEd25519KeyFromMnemonic(
             mnemonic,
             ""
           );
           this.context.parentPublicKey = parentPrivateKey.publicKey;
-          // 获取token
-          await this.getUserToken(
-            this.context.publicKey.string(),
-            async (payload: Uint8Array) => {
-              return privateKey.sign(payload);
-            }
-          );
         } else {
           // 获取私钥
           const keymanager = new KeyManager();
-          const privateKey = await keymanager.getEd25519KeyFromMnemonic(
-            mnemonic,
-            ""
-          );
-          const publicKey = privateKey.publicKey;
+          privateKey = await keymanager.getEd25519KeyFromMnemonic(mnemonic, "");
+          publicKey = privateKey.publicKey;
           this.context.parentPublicKey = publicKey;
           this.context.publicKey = publicKey;
-          // 获取token
-          await this.getUserToken(
-            this.context.publicKey.string(),
-            async (payload: Uint8Array) => {
-              return privateKey.sign(payload);
-            }
-          );
         }
         if (!this.context.publicKey) {
           throw new Error("publicKey is null after login");
         }
+        // 获取token
+        await this.getUserToken(
+          this.context.publicKey.string(),
+          async (payload: Uint8Array) => {
+            return privateKey.sign(payload);
+          }
+        );
+        // 登录后检查用户空间
+        await this.checkSpaceAfterLogin(publicKey.toString());
+
+        // 定时维系token
+        this.startDcPeerTokenKeepValidTask();
 
         this.context.userInfo = {
           nftAccount, // NFT账号
@@ -645,34 +643,19 @@ export class AuthModule implements DCModule, IAuthOperations {
 
       // 60秒一次心跳维持连接
       const period = 60 * 1000;
-      let count = 0;
-      let waitCount = 0;
-      const len = 30;
 
       // 启动ticker
       logger.info("开始定时验证Token有效性任务");
       (async () => {
         while (this.tokenTask) {
-          waitCount++;
           try {
-            if (
-              this.context.connectedDc.client?.token == "" ||
-              waitCount >= len
-            ) {
+            if (this.context.connectedDc.client) {
               await this.getTokenWithDCConnectInfo(this.context.connectedDc);
             }
-            if (
-              this.context.AccountBackupDc.client?.token == "" ||
-              waitCount >= len
-            ) {
+            if (this.context.AccountBackupDc.client) {
               await this.getTokenWithDCConnectInfo(
                 this.context.AccountBackupDc
               );
-            }
-            if (waitCount >= len) {
-              waitCount = 0;
-              count++;
-              console.log(`第${count}次Token验证完成`);
             }
           } catch (error) {
             logger.error("Token验证任务执行失败:", error);
@@ -697,7 +680,9 @@ export class AuthModule implements DCModule, IAuthOperations {
    * 获取或刷新指定连接信息的Token
    * @param connectInfo 连接信息
    */
-  private async getTokenWithDCConnectInfo(connectInfo: any): Promise<void> {
+  private async getTokenWithDCConnectInfo(
+    connectInfo: DCConnectInfo
+  ): Promise<void> {
     try {
       this.assertInitialized();
       // 判断 client 是否为空
