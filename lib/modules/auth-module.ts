@@ -100,8 +100,10 @@ export class AuthModule implements DCModule, IAuthOperations {
       if (data && data.accountInfo && data.accountInfo.nftAccount) {
         this.context.accountInfo = data.accountInfo;
       }
+      
       const publicKey = new Ed25519PubKey(data.appAccount);
       this.context.publicKey = publicKey;
+      data.account = publicKey.string();
       this.context.ethAddress = data.ethAccount;
       // 获取用户token
       await this.getUserToken(publicKey.string());

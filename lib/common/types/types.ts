@@ -154,6 +154,7 @@ export interface ModelConfig {
 export interface Account {
   nftAccount: string; // NFT账号
   appAccount: Uint8Array; // 应用专用账号公钥
+  account: string; // 存储账号公钥,appAccount的base32编码字符串
   ethAccount: string; // 以太坊兼容链上账号
   chainId: string; // 区块链ID
   chainName: string; // 区块链名称
