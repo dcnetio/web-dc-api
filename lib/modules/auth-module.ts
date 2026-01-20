@@ -390,12 +390,12 @@ export class AuthModule implements DCModule, IAuthOperations {
       throw new Error("walletManager is null");
     } else {
       if (this.context.privateKey) {
-        const signature = this.context.privateKey?.sign(payload) as Uint8Array;
-        return signature;
+        return this.context.privateKey?.sign(payload) as Uint8Array;
+        
       }
       // 钱包
-      const signature = await this.walletManager.sign(payload);
-      return signature;
+      return await this.walletManager.sign(payload);
+      
     }
   }
 

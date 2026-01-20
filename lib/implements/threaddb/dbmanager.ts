@@ -1155,7 +1155,7 @@ export class DBManager {
 
     // 生成用户签名
     const hValue: Uint8Array = uint32ToLittleEndianBytes(
-      blockHeight ? blockHeight : 0
+      blockHeight || 0
     );
 
     const peerId = this.connectedDc.nodeAddr

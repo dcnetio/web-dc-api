@@ -522,8 +522,7 @@ export class DC implements DCContext {
     if (!this.auth) {
       return new Uint8Array();
     }
-    const signature = this.auth.signWith(payload);
-    return signature;
+    return this.auth.signWith(payload);
   };
 
   setPublicKey(publicKey: Ed25519PubKey) {
