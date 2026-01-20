@@ -100,7 +100,7 @@ export class AuthModule implements DCModule, IAuthOperations {
       if (data && data.accountInfo && data.accountInfo.nftAccount) {
         this.context.accountInfo = data.accountInfo;
       }
-      
+
       const publicKey = new Ed25519PubKey(data.appAccount);
       this.context.publicKey = publicKey;
       data.account = publicKey.string();
@@ -308,6 +308,7 @@ export class AuthModule implements DCModule, IAuthOperations {
             ""
           );
           this.context.parentPublicKey = parentPrivateKey.publicKey;
+          this.context.privateKey = privateKey;
         } else {
           // 获取私钥
           const keymanager = new KeyManager();
@@ -315,6 +316,7 @@ export class AuthModule implements DCModule, IAuthOperations {
           publicKey = privateKey.publicKey;
           this.context.parentPublicKey = publicKey;
           this.context.publicKey = publicKey;
+          this.context.privateKey = privateKey;
         }
         if (!this.context.publicKey) {
           throw new Error("publicKey is null after login");
@@ -332,7 +334,10 @@ export class AuthModule implements DCModule, IAuthOperations {
         // 定时维系token
         this.startDcPeerTokenKeepValidTask();
 
+        this.context.privateKey = null;
+
         this.context.userInfo = {
+          account: this.context.publicKey.string(),
           nftAccount, // NFT账号
           appAccount: this.context.publicKey.raw, // 应用专用账号公钥
           ethAccount: "", // 以太坊兼容链上账号

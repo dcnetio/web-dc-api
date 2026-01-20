@@ -4,6 +4,12 @@ import { dcnet } from "../proto/dcnet_proto";
 import { Libp2pGrpcClient } from "grpc-libp2p-client";
 import { DataSource } from "../proto/datasource";
 import { Ed25519PubKey } from "./dc-key/ed25519";
+import { jwtDecode, JwtPayload } from "jwt-decode";
+
+interface CustomJwtPayload extends JwtPayload {
+  // 可以添加自定义字段
+  [key: string]: any;
+}
 
 export class DCGrpcClient {
   grpcClient: Libp2pGrpcClient;
@@ -82,32 +88,70 @@ export class DCGrpcClient {
     }
   }
 
-  async ValidToken(expires: number=5900): Promise<boolean> {
+  async ValidToken(maxAge: number = 5900): Promise<boolean> {
+    // 参数验证
+    if (maxAge <= 0) {
+      throw new Error("maxAge must be positive");
+    }
+
     try {
-      const t = this.token;
-      if (!t) {
+      const token = this.token;
+      if (!token || typeof token !== "string") {
         return false;
       }
-      const parts = t.split(".");
-      if (parts.length < 2) {
+
+      // 简单格式检查
+      if (token.split(".").length !== 3) {
         return false;
       }
-      const payload = parts[1];
-      const b64 = payload.replace(/-/g, "+").replace(/_/g, "/");
-      const pad = b64.length % 4;
-      const padded = pad ? b64 + "====".slice(0, 4 - pad) : b64;
-      const json = Buffer.from(padded, "base64").toString("utf8");
-      const obj = JSON.parse(json);
-      const iat = Number(obj.iat ?? obj.IssuedAt ?? obj.issuedAt);
-      if (!Number.isFinite(iat)) {
+
+      const decoded = jwtDecode<CustomJwtPayload>(token);
+      const now = Math.floor(Date.now() / 1000);
+      const TOLERANCE = 60; // 60秒容差
+
+      // 1. 必须有签发时间
+      if (decoded.iat === undefined) {
         return false;
       }
-      if (Math.floor(Date.now() / 1000) - expires > iat) {
-        throw new Error("token is expire");
+
+      // 2. 签发时间不能在未来
+      if (decoded.iat > now + TOLERANCE) {
+        return false;
       }
+
+      // 3. 检查是否超过最大有效期
+      if (now - maxAge > decoded.iat + TOLERANCE) {
+        return false;
+      }
+
+      // 4. 检查过期时间
+      if (decoded.exp !== undefined) {
+        // 过期时间不能早于签发时间
+        if (decoded.exp < decoded.iat) {
+          return false;
+        }
+
+        if (now >= decoded.exp + TOLERANCE) {
+          return false;
+        }
+      }
+
+      // 5. 检查生效时间
+      if (decoded.nbf !== undefined) {
+        // 生效时间不能晚于过期时间
+        if (decoded.exp !== undefined && decoded.nbf >= decoded.exp) {
+          return false;
+        }
+
+        if (now < decoded.nbf - TOLERANCE) {
+          return false;
+        }
+      }
+
       return true;
-    } catch (err) {
-      throw err;
+    } catch (error) {
+      console.error("Token validation failed:", error);
+      return false;
     }
   }
 }
