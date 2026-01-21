@@ -235,6 +235,68 @@ export class KeyValueModule implements DCModule, IKeyValueOperations {
   }
 
 
+
+  /**
+   * 设置需要统计功能的键值对,调用本方法如果valueFlag为false时,会为key对应value中的指定字段进行加减操作,这时直接可以通过get方法传入key获取到最新的值内容
+   * 也自动为DB全局的统计字段进行加减操作，如果valueFlag为true,则只为DB全局的统计字段进行加减操作,支持索引功能
+   * @param kvdb: KeyValueDB,
+   * @param key 键名
+   * @param value  值内容,格式如下:{add:{"field1":10,"field2":5},sub:{"field1":10,"field2":-5},allflag:true,countdate:"2020-01-01",yearFlag:true,monthFlag:true,valueFlag:true,value:"value"}  
+   *              表示对field1进行加10,减10,对field2进行加5,减-5,allflag表示是不是累计到主题总计数上,如果为true,则同时更新主题的总计数,否则只更新当前key的统计值,countdate不为空表示统计
+   *              到所有key累计的总的countdate日期上,yearFlag为true,表示统计值添加到所有key累计的总的按年统计,monthFlag为true,表示统计值添加到所有key累计的总的按月统计,valueFlag为true,表示同时设置该key的值为value字段指定的内容
+   * @param indexs 索引列表，格式为json字符串:[{key:"indexkey1",type:"string",value:"value"},{key:"indexkey2",type:"number", value:12}],设置索引后,后续查询可以通过索引快速定位
+   * @param vaccount 可选的虚拟账户
+   * @returns [是否设置成功, 时间戳, 错误信息]
+   */
+  async setWithCount(
+    kvdb: KeyValueDB,
+    key: string,
+    value: string,
+    indexs: string,
+    vaccount?: string
+  ): Promise<[boolean | null, number | null, Error | null]>{
+      const err = this.assertInitialized();
+    if (err) {
+      return [null, null, err];
+    }
+    //检查value格式
+    try {
+      JSON.parse(value);
+    } catch (error) {
+      return [null,null, error instanceof Error ? error : new Error(String(error))];
+    }
+    return await this.set(kvdb, key, value, indexs, vaccount);
+  }
+
+
+  /**  获取DB全局的统计数据,即所有key设置操作累计的的统计数据汇总
+   * @param kvdb: KeyValueDB,
+   * @param countType 统计类型,0:总计数,1:按天统计,2:按月统计,3:按年统计
+   * @param typeStr 类型字符串,countType:0 时为空, countType:1时格式为"yyyy-MM-dd",countType:2时格式为"yyyy-MM",countType:3时格式为"yyyy"
+   * @param vaccount 可选的虚拟账户
+   * @returns [统计值json字符串格式{field1:10,field2:5}, 错误信息]
+   */ 
+  async getDBCount(
+    kvdb: KeyValueDB,
+    countType: number, //统计类型,0:总计数,1:按天统计,2:按月统计,3:按年统计
+    typeStr: string, //类型字符串,countType:0 时为空, countType:1时格式为"yyyy-MM-dd",countType:2时格式为"yyyy-MM",countType:3时格式为"yyyy"
+    vaccount?: string
+  ): Promise<[string | null, Error | null]> {
+      const err = this.assertInitialized();
+    if (err) {
+      return [null, err];
+    }
+    let key = "";
+    if (countType === 0) {
+      key = "global_all";
+    } else if (countType === 1) {
+      key = `global_${typeStr}`;
+    } 
+    return await this.get(kvdb, key, kvdb.getAuthor(), vaccount);
+  }
+
+
+
  /**
    * 获取当前用户设置的指定键的元数据
    * @param kvdb 
