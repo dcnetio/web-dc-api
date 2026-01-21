@@ -244,6 +244,9 @@ export class EntityRepository<T extends BaseEntity> {
   }
 
 
+
+  
+
   async deleteById(id: string, vaccount?: string): Promise<void> {
     const key = id;
     const [ok,_ ,err] = await this.ops.set(this.db, key, "","", vaccount); // 空值用于标记删除
@@ -414,5 +417,74 @@ export class EntityRepository<T extends BaseEntity> {
       out.push(inst);
     }
     return out;
+  }
+
+  /** 断言仓储已初始化 */
+  private assertInitialized(): Error | void {
+    if (!this.ops || !this.db) {
+      return new Error("EntityRepository 未初始化");
+    }
+  }
+
+  // 保存实体并返回当前库中该实体类型的总数
+  async saveWithCount(
+    entity: T,
+    value: string, //value中可能包含valueFlag字段，表示是否需要合并entity.toJSON(),格式:{add:{"field1":10,"field2":5},sub:{"field2":5},allflag:true,countdate:"2020-01-01",yearFlag:true,monthFlag:true,valueFlag:true,value:"value"}  
+    indexs: string = "",
+    vaccount?: string
+  ): Promise<[boolean | null, number | null, Error | null]> {
+    const err = this.assertInitialized();
+    if (err) {
+      return [null, null, err];
+    }
+    let parsed: any = null;
+    try {
+      parsed = JSON.parse(value);
+    } catch (error) {
+      return [null, null, error instanceof Error ? error : new Error(String(error))];
+    }
+
+    // derive key from entity
+    const key = (entity as any).getPrimaryKey ? (entity as any).getPrimaryKey() : "";
+    if (!key) {
+      return [null, null, new Error("entity primary key is empty")];
+    }
+
+    // if valueFlag is true, merge entity.toJSON() into parsed.value and use entity-built indexes
+    let idxPayload = indexs && indexs !== "" ? indexs : "";
+    if (parsed && parsed.valueFlag) {
+      const entityJson = (entity as any).toJSON ? (entity as any).toJSON() : {};
+      parsed.value = Object.assign({}, entityJson, parsed.value ?? {});
+      idxPayload = buildIndexPayload(entity as object, this.entityCtor);
+    }
+
+    const finalValue = JSON.stringify(parsed);
+    try {
+      return await this.ops.setWithCount(this.db, key, finalValue, idxPayload, vaccount);
+    } catch (error) {
+      return [null, null, error instanceof Error ? error : new Error(String(error))];
+    }
+  }
+
+  async getDBCount(
+    countType: number,
+    typeStr: string,
+    vaccount?: string
+  ): Promise<[string | null, Error | null]> {
+    const err = this.assertInitialized();
+    if (err) {
+      return [null, err];
+    }
+    let key = "";
+    if (countType === 0) {
+      key = "global_all";
+    } else if (countType === 1) {
+      key = `global_${typeStr}`;
+    }
+    try {
+      return await this.ops.getDBCount(this.db, countType, typeStr, vaccount);
+    } catch (error) {
+      return [null, error instanceof Error ? error : new Error(String(error))];
+    }
   }
 }
