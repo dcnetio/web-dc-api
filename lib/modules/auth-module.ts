@@ -11,11 +11,10 @@ import { Ed25519PrivKey, Ed25519PubKey } from "../common/dc-key/ed25519";
 import { Errors } from "../common/error";
 import {
   dc_protocol,
+  isIframeOpen,
   OffChainOpTimes,
   OffChainOpTimesLimit,
   OffChainSpaceLimit,
-  shouldReturnUserInfo,
-  walletIframeOpenFlag,
 } from "../common/define";
 import { Multiaddr } from "@multiformats/multiaddr";
 import { WalletManager } from "../implements/wallet/manager";
@@ -215,13 +214,11 @@ export class AuthModule implements DCModule, IAuthOperations {
    * 账户登录(钱包登录)不抛出异常
    * @returns [账户信息, 错误信息]
    */
-  async accountLoginWithWallet(
-    accountInfo?: AccountInfo
-  ): Promise<[Account | null, Error | null]> {
+  async accountLoginWithWallet(): Promise<[Account | null, Error | null]> {
     try {
-      let nAccountInfo = accountInfo;
+      let nAccountInfo = null;
       // 需要返回用户信息的情况下，而且没有传过来的时候，则需要从本地获取
-      if (shouldReturnUserInfo && !nAccountInfo) {
+      if (isIframeOpen()) {
         const currentAccount = await getData(store_account, "currentAccount");
         nAccountInfo =
           currentAccount && currentAccount.value
