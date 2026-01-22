@@ -1,4 +1,5 @@
 import {
+  shouldReturnUserInfo,
   walletIframeOpenFlag,
   walletOpenType,
   walletOrigin,
@@ -313,9 +314,6 @@ export class WalletManager {
         const urlWithOrigin = walletUrl + "/home?origin=" + appOrigin;
         this.walletWindow = window.open(urlWithOrigin, walletWindowName);
       }
-      const shouldReturnUserInfo =
-        !!(typeof globalThis !== "undefined" &&
-        typeof (globalThis as any).shouldReturnUserInfo !== "undefined"); // 用于判断需要返回用户信息;
       // this.waitForWalletLoaded(this.walletWindow, timeout).then((flag) => {
       //   if (flag) {
       const message = {
@@ -689,8 +687,12 @@ export class WalletManager {
         messageChannel.port1.onmessage = (event) => {
           clearTimeout(timer);
           messageChannel.port1.close();
-          if (event.data && event.data.type !== "initConfigResponse" && this.isIframeOpen()) {
-                this.removeWalletIframe();
+          if (
+            event.data &&
+            event.data.type !== "initConfigResponse" &&
+            this.isIframeOpen()
+          ) {
+            this.removeWalletIframe();
           }
           resolve(event);
         };

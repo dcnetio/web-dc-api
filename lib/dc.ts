@@ -12,7 +12,7 @@ import type {
 import { DcUtil } from "./common/dcutil";
 import { type HeliaLibp2p } from "helia";
 import { Libp2p } from "@libp2p/interface";
-import { dc_protocol, walletOrigin } from "./common/define";
+import { dc_protocol, shouldReturnUserInfo } from "./common/define";
 import { DCGrpcServer } from "./implements/threaddb/net/grpcserver";
 import { Ed25519PrivKey, Ed25519PubKey } from "./common/dc-key/ed25519";
 import { DCContext } from "../lib/interfaces/DCContext";
@@ -33,6 +33,7 @@ import {
 import { Client } from "./common/dcapi";
 import { ICollectionConfig, IDBInfo } from "./implements/threaddb/core/core";
 import { KeyManager } from "./common/dc-key/keyManager";
+import { initializeDatabase } from "./indexDB/db";
 
 const logger = createLogger("DC");
 
@@ -224,6 +225,11 @@ export class DC implements DCContext {
           this.publicKey = pubKey;
 
           backStep && (await backStep(4));
+          // 是iframe打开的需要存储登录信息
+          if (shouldReturnUserInfo) {
+            // indexDB初始
+            initializeDatabase();
+          }
           return true;
         } catch (error) {
           logger.error("连接到DC节点失败:", error);

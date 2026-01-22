@@ -14,6 +14,8 @@ import {
   OffChainOpTimes,
   OffChainOpTimesLimit,
   OffChainSpaceLimit,
+  shouldReturnUserInfo,
+  walletIframeOpenFlag,
 } from "../common/define";
 import { Multiaddr } from "@multiformats/multiaddr";
 import { WalletManager } from "../implements/wallet/manager";
@@ -32,6 +34,7 @@ import { DCContext } from "../interfaces/DCContext";
 import { CommentManager } from "../implements/comment/manager";
 import { ChainError, Errors as ChainErrors } from "../common/chain";
 import { KeyManager } from "../common/dc-key/keyManager";
+import { getData, store_account, updateData } from "@/indexDB/db";
 
 const logger = createLogger("AuthModule");
 
@@ -216,7 +219,22 @@ export class AuthModule implements DCModule, IAuthOperations {
     accountInfo?: AccountInfo
   ): Promise<[Account | null, Error | null]> {
     try {
-      const account = await this.accountLoginWithWalletCall(accountInfo);
+      let nAccountInfo = accountInfo;
+      // 需要返回用户信息的情况下，而且没有传过来的时候，则需要从本地获取
+      if (shouldReturnUserInfo && !nAccountInfo) {
+        const currentAccount = await getData(store_account, "currentAccount");
+        nAccountInfo =
+          currentAccount && currentAccount.value
+            ? currentAccount.value
+            : undefined;
+      }
+      const account = await this.accountLoginWithWalletCall(nAccountInfo);
+      if (account && account.accountInfo && account.accountInfo.nftAccount) {
+        updateData(store_account, {
+          key: "currentAccount",
+          value: account.accountInfo,
+        });
+      }
       this.context.userInfo = account;
       return [account, null];
     } catch (error) {
@@ -396,11 +414,9 @@ export class AuthModule implements DCModule, IAuthOperations {
     } else {
       if (this.context.privateKey) {
         return this.context.privateKey?.sign(payload) as Uint8Array;
-        
       }
       // 钱包
       return await this.walletManager.sign(payload);
-      
     }
   }
 
@@ -429,11 +445,9 @@ export class AuthModule implements DCModule, IAuthOperations {
     } else {
       if (this.context.privateKey) {
         return this.context.privateKey?.decrypt(payload);
-    
       }
       // 登录过
       return await this.walletManager.decrypt(payload);
- 
     }
   }
 

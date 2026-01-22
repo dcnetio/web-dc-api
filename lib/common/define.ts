@@ -18,6 +18,10 @@ const walletOpenVersion =
   typeof globalThis !== "undefined"
     ? (globalThis as any).walletOpenVersion
     : ""; // 钱包版本号;
+const _shouldReturnUserInfo = !!(
+  typeof globalThis !== "undefined" &&
+  typeof (globalThis as any).shouldReturnUserInfo !== "undefined"
+); // 用于判断需要返回用户信息;
 
 let _baseUrl = configInfo.baseUrl;
 let _walletOrigin = configInfo.walletOrigin;
@@ -36,6 +40,7 @@ export const walletOpenType = _walletOpenType;
 export const walletIframeOpenFlag = _walletIframeOpenFlag;
 export const walletOrigin = _walletOrigin;
 export const walletUrl = _walletOrigin + _baseUrl; // 钱包地址后面统一改成origin+version
+export const shouldReturnUserInfo = _shouldReturnUserInfo;
 export const walletWindowName = "walletWindow"; // 窗口名称
 export const dc_protocol = "/dc/thread/0.0.1";
 export const dial_timeout = 1000;
