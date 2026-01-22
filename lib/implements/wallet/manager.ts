@@ -1,7 +1,7 @@
 import {
+  isIframeOpen,
   shouldReturnUserInfo,
   walletIframeOpenFlag,
-  walletOpenType,
   walletOrigin,
   walletUrl,
   walletWindowName,
@@ -217,17 +217,6 @@ export class WalletManager {
     });
   };
 
-  // 判断是否iframe打开钱包
-  private isIframeOpen = (): boolean => {
-    if (walletOpenType == "iframe") {
-      return true;
-    }
-    const ua = navigator.userAgent.toLowerCase();
-    return ua.indexOf("micromessenger") !== -1;
-    // todo 临时测试
-    // return true
-  };
-
   // 打开钱包iframe窗口
   async openWalletIframe(): Promise<boolean> {
     return new Promise((resolve, reject) => {
@@ -301,7 +290,7 @@ export class WalletManager {
       } catch (error) {
         reject(error);
       }
-      if (this.isIframeOpen()) {
+      if (isIframeOpen()) {
         // 微信窗口
         const bool = await this.openWalletIframe();
         if (!bool) {
@@ -473,7 +462,7 @@ export class WalletManager {
       } catch (error) {
         reject(error);
       }
-      if (this.isIframeOpen()) {
+      if (isIframeOpen()) {
         // 微信窗口
         const bool = await this.openWalletIframe();
         if (!bool) {
@@ -534,7 +523,7 @@ export class WalletManager {
       } catch (error) {
         reject(error);
       }
-      if (this.isIframeOpen()) {
+      if (isIframeOpen()) {
         // 微信窗口
         const bool = await this.openWalletIframe();
         if (!bool) {
@@ -678,7 +667,7 @@ export class WalletManager {
       // 等待钱包iframe返回,并关闭channel,超时时间timeout
       return new Promise((resolve, reject) => {
         const timer = setTimeout(() => {
-          if (this.isIframeOpen()) {
+          if (isIframeOpen()) {
             // 微信窗口
             this.removeWalletIframe();
           }
@@ -690,7 +679,7 @@ export class WalletManager {
           if (
             event.data &&
             event.data.type !== "initConfigResponse" &&
-            this.isIframeOpen()
+            isIframeOpen()
           ) {
             this.removeWalletIframe();
           }
@@ -704,7 +693,7 @@ export class WalletManager {
           console.error("sendMessageToIframe postMessage error", error);
           clearTimeout(timer);
           messageChannel.port1.close();
-          if (this.isIframeOpen()) {
+          if (isIframeOpen()) {
             // 微信窗口
             this.removeWalletIframe();
           }

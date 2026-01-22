@@ -1,20 +1,30 @@
 import config from "../../config.json";
 import configPro from "../../config.prod.json";
-const isDev =
+const _isDev =
   typeof globalThis !== "undefined" ? (globalThis as any).isDev : false;
-const configInfo = isDev ? config : configPro;
+const configInfo = _isDev ? config : configPro;
 
 const _walletOpenType =
   typeof globalThis !== "undefined" ? (globalThis as any).walletOpenType : ""; // 用于判断是否是直接打开;
 
+// 判断是否iframe打开钱包
+const _isIframeOpen = (): boolean => {
+  if (_walletOpenType == "iframe") {
+    return true;
+  }
+  const ua = navigator.userAgent.toLowerCase();
+  return ua.indexOf("micromessenger") !== -1;
+  // todo 临时测试
+  // return true
+};
 const _walletIframeOpenFlag =
   typeof globalThis !== "undefined" &&
   typeof (globalThis as any).walletIframeOpenFlag !== "undefined"
     ? (globalThis as any).walletIframeOpenFlag
     : true; // 是否需要打开/iframe，默认打开iframe;
-const walletOpenOrigin =
+const _walletOpenOrigin =
   typeof globalThis !== "undefined" ? (globalThis as any).walletOpenOrigin : ""; // 用户传入的打开钱包的源;
-const walletOpenVersion =
+const _walletOpenVersion =
   typeof globalThis !== "undefined"
     ? (globalThis as any).walletOpenVersion
     : ""; // 钱包版本号;
@@ -25,18 +35,18 @@ const _shouldReturnUserInfo = !!(
 
 let _baseUrl = configInfo.baseUrl;
 let _walletOrigin = configInfo.walletOrigin;
-if (!isDev) {
-  if (walletOpenOrigin) {
-    _walletOrigin = walletOpenOrigin;
+if (!_isDev) {
+  if (_walletOpenOrigin) {
+    _walletOrigin = _walletOpenOrigin;
   }
-  if (walletOpenVersion) {
+  if (_walletOpenVersion) {
     _baseUrl =
-      walletOpenVersion && walletOpenVersion.startsWith("/")
-        ? walletOpenVersion
-        : "/" + walletOpenVersion;
+      _walletOpenVersion && _walletOpenVersion.startsWith("/")
+        ? _walletOpenVersion
+        : "/" + _walletOpenVersion;
   }
 }
-export const walletOpenType = _walletOpenType;
+export const isIframeOpen = _isIframeOpen;
 export const walletIframeOpenFlag = _walletIframeOpenFlag;
 export const walletOrigin = _walletOrigin;
 export const walletUrl = _walletOrigin + _baseUrl; // 钱包地址后面统一改成origin+version

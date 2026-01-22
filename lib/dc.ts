@@ -12,7 +12,7 @@ import type {
 import { DcUtil } from "./common/dcutil";
 import { type HeliaLibp2p } from "helia";
 import { Libp2p } from "@libp2p/interface";
-import { dc_protocol, shouldReturnUserInfo } from "./common/define";
+import { dc_protocol, isIframeOpen } from "./common/define";
 import { DCGrpcServer } from "./implements/threaddb/net/grpcserver";
 import { Ed25519PrivKey, Ed25519PubKey } from "./common/dc-key/ed25519";
 import { DCContext } from "../lib/interfaces/DCContext";
@@ -226,7 +226,7 @@ export class DC implements DCContext {
 
           backStep && (await backStep(4));
           // 是iframe打开的需要存储登录信息
-          if (shouldReturnUserInfo) {
+          if (isIframeOpen()) {
             // indexDB初始
             initializeDatabase();
           }

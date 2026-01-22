@@ -18,9 +18,7 @@ export interface IAuthOperations {
    * 账户登录通过钱包
    * @returns 是否登录成功
    */
-  accountLoginWithWallet(
-    accountInfo?: AccountInfo
-  ): Promise<[Account | null, Error | null]>;
+  accountLoginWithWallet(): Promise<[Account | null, Error | null]>;
 
   /**
    * 账户登录
