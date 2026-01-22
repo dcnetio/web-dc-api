@@ -8,12 +8,34 @@ import { ApiPromise, WsProvider } from "@polkadot/api";
 import { isUser, sha256, hexToAscii } from "../util/utils";
 import { IAppInfo, User, PeerStatus } from "./types/types";
 
-import { hexToBytes } from "@noble/curves/abstract/utils";
 import { base32 } from "multiformats/bases/base32";
 import * as buffer from "buffer/";
 import { Ed25519PubKey } from "./dc-key/ed25519";
-import { UnibaseDecoder } from "multiformats";
 const { Buffer } = buffer;
+
+const _hexMap: Record<string, number> = {
+  0: 0, 1: 1, 2: 2, 3: 3, 4: 4, 5: 5, 6: 6, 7: 7, 8: 8, 9: 9,
+  a: 10, b: 11, c: 12, d: 13, e: 14, f: 15,
+  A: 10, B: 11, C: 12, D: 13, E: 14, F: 15
+};
+
+function hexToBytes(hex: string): Uint8Array {
+  if (typeof hex !== "string") {
+    throw new TypeError("hexToBytes: expected string, got " + typeof hex);
+  }
+  if (hex.length % 2) throw new Error("hexToBytes: received invalid unpadded hex");
+  
+  const array = new Uint8Array(hex.length / 2);
+  for (let i = 0; i < array.length; i++) {
+    const high = _hexMap[hex[i * 2]];
+    const low = _hexMap[hex[i * 2 + 1]];
+    if (high === undefined || low === undefined) {
+      throw new Error("hexToBytes: received invalid hex characters");
+    }
+    array[i] = (high << 4) | low;
+  }
+  return array;
+}
 
 // 错误定义
 export class ChainError extends Error {
@@ -43,19 +65,91 @@ export interface StoreunitInfo {
 
 export class ChainUtil {
   dcchainapi: ApiPromise | undefined;
+  private blockChainAddr: string = "";
+  private isReconnecting: boolean = false;
+
   // 连接链节点
   create = async (blockChainAddr: string) => {
+    this.blockChainAddr = blockChainAddr;
     const chainProvider = new WsProvider(blockChainAddr);
-    this.dcchainapi = await ApiPromise.create({
-      provider: chainProvider,
-      throwOnConnect: true,
-      throwOnUnknown: true,
+
+    chainProvider.on("connected", () => {
+      console.log("Chain connected to " + blockChainAddr);
     });
+    chainProvider.on("disconnected", () => {
+      console.warn("Chain disconnected from " + blockChainAddr);
+      if (!this.isReconnecting) {
+        this.reconnect();
+      }
+    });
+    chainProvider.on("error", (err) => {
+      console.error("Chain connection error:", err);
+      if (!this.isReconnecting) {
+        this.reconnect();
+      }
+    });
+
+    try {
+      this.dcchainapi = await ApiPromise.create({
+        provider: chainProvider,
+        throwOnConnect: true,
+        throwOnUnknown: true,
+      });
+    } catch (e) {
+      console.error("dcchainapi init exception:", e);
+      try {
+        await chainProvider.disconnect();
+      } catch (ignore) {}
+      return false;
+    }
+
     if (!this.dcchainapi) {
       console.error("dcchainapi init failed");
       return false;
     }
+
     return true;
+  };
+
+  // 重连操作
+  reconnect = async () => {
+    if (this.isReconnecting) return;
+    this.isReconnecting = true;
+
+    console.log("Attempting to reconnect to chain...");
+    if (this.dcchainapi) {
+      try {
+        await this.dcchainapi.disconnect();
+      } catch (ignore) {}
+      this.dcchainapi = undefined;
+    }
+
+    const doReconnect = async () => {
+      if (!this.blockChainAddr) {
+        this.isReconnecting = false;
+        return;
+      }
+
+      const success = await this.create(this.blockChainAddr);
+      if (success) {
+        console.log("Reconnection successful");
+        this.isReconnecting = false;
+        // 再次检查连接状态，防止在重连过程中发生的断线被忽略
+        if (this.dcchainapi && !this.dcchainapi.isConnected) {
+          this.reconnect();
+        }
+      } else {
+        console.warn("Reconnection failed, retrying in 5s...");
+        setTimeout(doReconnect, 5000);
+      }
+    };
+
+    if (this.blockChainAddr) {
+      // 避免立即重连造成的频繁尝试
+      setTimeout(doReconnect, 3000);
+    } else {
+      this.isReconnecting = false;
+    }
   };
 
   // 获取区块高度
@@ -151,10 +245,10 @@ export class ChainUtil {
     if (!walletAccount || !walletAccount.toString()) {
       throw new Error("walletAccount is null");
     }
-    const userInfo = await this.getUserInfoWithAccount(
+    return await this.getUserInfoWithAccount(
       walletAccount.toString()
     );
-    return userInfo;
+   
   }
 
   /**
@@ -196,8 +290,8 @@ export class ChainUtil {
     const accountHash = await sha256(accountBytes);
 
     const nftHexAccount = "0x" + Buffer.from(accountHash).toString("hex");
-    const userInfo = await this.getUserInfoWithNftHex(nftHexAccount);
-    return userInfo;
+    return await this.getUserInfoWithNftHex(nftHexAccount);
+  
   }
 
   async getUserWalletAccount(nftAccount: string): Promise<string | null> {
@@ -225,8 +319,8 @@ export class ChainUtil {
     ) {
       return;
     }
-    const peers = (fileInfoJSON as { peers: string[] }).peers || [];
-    return peers;
+    return (fileInfoJSON as { peers: string[] }).peers || [];
+
   };
 
   // 获取用户节点列表
@@ -237,8 +331,8 @@ export class ChainUtil {
       if (!userInfo || !isUser(userInfo)) {
         return null;
       }
-      const peers = userInfo.peers;
-      return peers;
+      return userInfo.peers;
+
     } catch (error) {
       console.error("getAccountPeers error:", error);
       return null;
@@ -381,8 +475,7 @@ export class ChainUtil {
               ? (data as any)["users"].map((user: any) => {
                   try {
                     const userBytes = hexToBytes(user.slice(2));
-                    const mbUser = base32.encode(userBytes);
-                    return mbUser;
+                    return base32.encode(userBytes);
                   } catch (e) {
                     console.warn("Failed to convert peer ID format:", e);
                     return String(user); // 如果转换失败，保留原格式
@@ -441,8 +534,7 @@ export class ChainUtil {
   };
   refreshUserInfo = async (pubkeyRaw: Uint8Array): Promise<User> => {
     const hexAccount = "0x" + Buffer.from(pubkeyRaw).toString("hex");
-    const userInfo = await this.getUserInfoWithAccount(hexAccount);
-    return userInfo;
+    return await this.getUserInfoWithAccount(hexAccount);
   };
 
   // 获取应用信息
