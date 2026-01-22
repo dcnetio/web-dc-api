@@ -1,6 +1,6 @@
 import { UploadStatus, type DCConnectInfo } from "../../common/types/types";
 import { FileClient } from "./client";
-import type { HeliaLibp2p } from "helia";
+import type { Helia } from "helia";
 import { ChainUtil } from "../../common/chain";
 import { Errors as GErrors } from "../../common/error";
 
@@ -67,13 +67,13 @@ export class FileManager {
   dc: DcUtil;
   connectedDc: DCConnectInfo = {};
   chainUtil: ChainUtil;
-  dcNodeClient: HeliaLibp2p<Libp2p>;
+  dcNodeClient: Helia<Libp2p>;
   context: DCContext;
   constructor(
     dc: DcUtil,
     connectedDc: DCConnectInfo,
     chainUtil: ChainUtil,
-    dcNodeClient: HeliaLibp2p<Libp2p>,
+    dcNodeClient: Helia<Libp2p>,
     context: DCContext
   ) {
     this.dc = dc;
@@ -263,7 +263,7 @@ export class FileManager {
 
       const stats = await fs.stat(cid);
       const filesize = stats.unixfs?.fileSize() || 0;
-      const dagFileSize = Number(stats.localDagSize);
+      const dagFileSize = Number((stats as any).localDagSize);
       const fileClient = new FileClient(
         this.connectedDc.client,
         this.dcNodeClient,
@@ -685,11 +685,11 @@ export class FileManager {
 
       // Get stats for the root directory itself
       const rootStats = await fs.stat(rootCID);
-      totalBlocks += Number(rootStats.blocks || 0);
+      totalBlocks += Number((rootStats as any).blocks || 0);
 
       // List all entries in the directory and process them recursively
       for await (const entry of fs.ls(rootCID)) {
-        const { cid, type } = entry;
+        const { cid, type } = entry as any;
 
         // Get stats for the current entry
         const stats = await fs.stat(cid);
@@ -700,7 +700,7 @@ export class FileManager {
           totalBlocks += subDirBlocks;
         } else {
           // For files, add their block count
-          totalBlocks += Number(stats.blocks || 0);
+          totalBlocks += Number((stats as any).blocks || 0);
         }
       }
 
@@ -867,7 +867,7 @@ export class FileManager {
   }
 
   private async *chunkGenerator(stream: Stream): AsyncGenerator<Uint8Array> {
-    const iterator = stream.source[Symbol.asyncIterator]();
+    const iterator = (stream as any).source[Symbol.asyncIterator]();
     while (true) {
       try {
         const { done, value } = await iterator.next();
@@ -1039,7 +1039,7 @@ export class FileManager {
       ) => {
         // 遍历当前目录内容
         for await (const entry of fs.ls(dirCid)) {
-          const { name, cid, type } = entry;
+          const { name, cid, type } = entry as any;
           if (name === "." || name === ".." || name === "dc_ownuser") {
             continue; // 跳过当前目录和上级目录
           }
@@ -1053,7 +1053,7 @@ export class FileManager {
           const fileInfo = {
             Name: name,
             Type: type === "directory" ? 1 : 0, // 0-文件 1-目录
-            Size: type === "directory" ? 0 : Number(stats.fileSize || 0),
+            Size: type === "directory" ? 0 : Number((stats as any).fileSize || 0),
             Hash: cid.toString(),
             Path: fullPath,
           };

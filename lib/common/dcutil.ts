@@ -5,7 +5,7 @@ import { IDBBlockstore } from "blockstore-idb";
 import { keys } from "@libp2p/crypto";
 import { circuitRelayTransport } from "@libp2p/circuit-relay-v2";
 import { webRTC, webRTCDirect } from "@libp2p/webrtc";
-import { createHelia, HeliaLibp2p } from "helia";
+import { createHelia, Helia } from "helia";
 import { createLibp2p, Libp2p } from "libp2p";
 import { identify, identifyPush } from "@libp2p/identify";
 
@@ -57,7 +57,7 @@ const { signal } = controller;
 export class DcUtil {
   dcChain: ChainUtil;
   connectLength: number;
-  dcNodeClient: HeliaLibp2p<Libp2p> | undefined; // 什么类型？dc node 对象，主要用于建立连接
+  dcNodeClient: Helia<Libp2p> | undefined; // 什么类型？dc node 对象，主要用于建立连接
   defaultPeerId: string | undefined; // 默认 peerId
 
   constructor(dcChain: ChainUtil) {
@@ -254,7 +254,7 @@ export class DcUtil {
     });
   };
 
-  _createHeliaNode = async (): Promise<HeliaLibp2p<Libp2p>> => {
+  _createHeliaNode = async (): Promise<Helia<Libp2p>> => {
     const datastore = new IDBDatastore("helia-meta");
     await datastore.open();
     const blockstore = new IDBBlockstore("helia-blocks");
@@ -272,7 +272,7 @@ export class DcUtil {
     // libp2p is the networking layer that underpins Helia
     const libp2p = await createLibp2p({
       privateKey: keyPair,
-      datastore: datastore,
+      datastore: datastore as any,
       transports: [webRTCDirect(), circuitRelayTransport(), webRTC()], //
       connectionEncrypters: [noise()],
       connectionGater: {
@@ -287,6 +287,7 @@ export class DcUtil {
 
       streamMuxers: [
         yamux({
+          // @ts-ignore
           maxStreamWindowSize: 256 * 1024, // 流窗口大小
           maxMessageSize: 16 * 1024, // 消息分片阈值
           keepAliveInterval: 15_000, // 保活检测间隔 (ms)
@@ -318,15 +319,15 @@ export class DcUtil {
       },
     });
 
-    const dcNodeClient: HeliaLibp2p<Libp2p> = await createHelia({
+    const dcNodeClient: Helia<Libp2p> = await createHelia({
       blockBrokers: [
         bitswap({
           maxInboundStreams: 64,
           maxOutboundStreams: 128,
         }),
       ],
-      datastore,
-      blockstore,
+      datastore: datastore as any,
+      blockstore: blockstore as any,
       libp2p,
     });
 
@@ -452,7 +453,7 @@ export class DcUtil {
     //判断是否有现成的stream,如果已经存在就直接使用
     const stream = await nodeConn.newStream("/dc/transfer/1.0.0");
     try {
-      const writer = new StreamWriter(stream.sink);
+      const writer = new StreamWriter((stream as any).sink);
       const mParts: Uint8Array[] = [];
       let parsedMessage: {
         type: number;
@@ -547,7 +548,14 @@ export class DcUtil {
 
             // 通过 blockstore 获取该 CID 对应的区块
             try {
-              const block = await blockstore.get(cid);
+              let block: any = await blockstore.get(cid);
+              if (block && block[Symbol.asyncIterator]) {
+                 const parts: Uint8Array[] = [];
+                 for await (const part of block) {
+                     parts.push(part);
+                 }
+                 block = concatenateUint8Arrays(...parts);
+              }
               const fetchReply = new oidfetch.pb.FetchReply({ data: block });
               const fetchReplyBytes =
                 oidfetch.pb.FetchReply.encode(fetchReply).finish();
@@ -573,7 +581,7 @@ export class DcUtil {
   }
 
   private async *chunkGenerator(stream: Stream): AsyncGenerator<Uint8Array> {
-    const iterator = stream.source[Symbol.asyncIterator]();
+    const iterator = (stream as any).source[Symbol.asyncIterator]();
     while (true) {
       try {
         const { done, value } = await iterator.next();

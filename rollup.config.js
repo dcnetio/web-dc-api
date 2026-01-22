@@ -115,7 +115,7 @@ const manualChunks = (id) => {
   // 🔧 只分离最大的、最独立的包
   const largeIndependentPackages = {
     "polkadot-api": ["@polkadot/api"],
-    protobuf: ["protobufjs", "google-protobuf"],
+    protobuf: ["protobufjs"],
     "helia-core": ["helia"], // 只分离核心，插件保留在主包
     "babel-tools": ["@babel/parser", "@babel/traverse"], // Babel 工具
     // 🔧 可以安全添加的大包（相对独立）

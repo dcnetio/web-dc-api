@@ -1,12 +1,11 @@
 import { User } from "../common/types/types";
 import { base32 } from "multiformats/bases/base32";
-import * as JsCrypto from "jscrypto/es6";
 import { Multiaddr, multiaddr } from "@multiformats/multiaddr";
 import { peerIdFromString } from "@libp2p/peer-id";
 import { Ed25519PrivateKey, PeerId, PrivateKey } from "@libp2p/interface";
 import { keys } from "@libp2p/crypto";
 import { Uint8ArrayList } from "uint8arraylist";
-const { Word32Array, AES, pad, mode, Base64 } = JsCrypto;
+
 const NonceBytes = 12;
 const TagBytes = 16;
 
@@ -150,33 +149,38 @@ async function iterableToUint8Array(iterable: AsyncIterable<Uint8Array>): Promis
   return result;
 }
 
-function decryptContentForBrowser(
+async function decryptContentForBrowser(
   encryptBuffer: Uint8Array,
   decryptKey: string
-) {
-  if (decryptKey == "" || encryptBuffer.length <= 28) {
+): Promise<Uint8Array> {
+  if (decryptKey == "" || encryptBuffer.length <= NonceBytes + TagBytes) {
     return encryptBuffer;
   }
+  
   const nonce = encryptBuffer.subarray(0, NonceBytes);
-  const iv = new Word32Array(nonce);
-  const tag = encryptBuffer.subarray(
-    encryptBuffer.length - TagBytes,
-    encryptBuffer.length
+  const ciphertext = encryptBuffer.subarray(NonceBytes);
+  const keyBytes = base32.decode(decryptKey);
+  
+  // 使用 Web Crypto API 进行解密
+  const key = await crypto.subtle.importKey(
+    'raw',
+    keyBytes as any,
+    { name: 'AES-GCM' },
+    false,
+    ['decrypt']
   );
-  const kdfSalt = new Word32Array(tag);
-  const encryptContent = encryptBuffer.subarray(
-    NonceBytes,
-    encryptBuffer.length - TagBytes
+  
+  const decrypted = await crypto.subtle.decrypt(
+    {
+      name: 'AES-GCM',
+      iv: nonce as any,
+      tagLength: 128
+    },
+    key,
+    ciphertext as any
   );
-  const cipherText = new Word32Array(encryptContent);
-  const key = new Word32Array(base32.decode(decryptKey));
-  const decrypted = AES.decrypt(cipherText.toString(Base64), key, {
-    iv: iv,
-    padding: pad.NoPadding,
-    mode: mode.GCM,
-    kdfSalt: kdfSalt,
-  });
-  return decrypted.toUint8Array();
+  
+  return new Uint8Array(decrypted);
 }
 
 // 比较两个字节数组是否相等

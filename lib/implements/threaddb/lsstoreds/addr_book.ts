@@ -4,7 +4,8 @@ import {  peerIdFromString } from '@libp2p/peer-id'
 import type { PeerId,PrivateKey,PublicKey } from "@libp2p/interface";
 import { Multiaddr, multiaddr, isMultiaddr } from '@multiformats/multiaddr'  
 import {  AddrBook,DumpAddrBook} from '../core/logstore' // 核心接口定义  
-import  * as pb from '../pb/lstore'
+import { net } from '../pb/lstore_pb'
+import pb = net.pb
 import {uniqueLogIds,uniqueThreadIds,DSOptions,AllowEmptyRestore,dsThreadKey} from './global'
 import {LRUCache} from 'lru-cache'  
 import { ThreadID } from '@textile/threads-id';
@@ -118,7 +119,7 @@ export class DsAddrBook implements AddrBook {
       // 更新现有地址  
       outer: for (const [i, addr] of addrs.entries()) {  
         for (const entry of record.data.addrs) {  
-          if (bytes.compare(addr.bytes, entry.addr) === 0) {
+          if (entry.addr && bytes.compare(addr.bytes, entry.addr) === 0) {
             existed[i] = true  
             entry.ttl = ttl  
             entry.expiry = newExp  
@@ -276,7 +277,8 @@ async threadsFromAddrs(): Promise<ThreadID[]> {
                 continue;
             }
             for (const addr of record.addrs) {
-                if (addr.expiry > now) {
+                const expiry = typeof addr.expiry === 'number' ? addr.expiry : ((addr.expiry && (addr.expiry as any).toNumber) ? (addr.expiry as any).toNumber() : 0);
+                if (expiry > now && addr.addr) {
                     as.push({ peerID:pid, addr: addr.addr });
                 }
             }
@@ -339,7 +341,7 @@ async threadsFromAddrs(): Promise<ThreadID[]> {
     const key = this.genDSKey(t, p)  
     try {  
         const data = await this.ds.get(key)  
-        const record =  pb.AddrBookRecord.deserialize(data)
+        const record =  pb.AddrBookRecord.decode(data)
         const addrsRecord = { lock: new AsyncMutex(), data: record, dirty: false }
         await this.cleanRecord(addrsRecord)
         if (update) {
@@ -364,20 +366,25 @@ async threadsFromAddrs(): Promise<ThreadID[]> {
   }  
 
   private async cleanRecord(record: AddrsRecord): Promise<boolean> {  
-    const now = Date.now()  
-    const valid = record.data.addrs.filter(a => a.expiry > now)  
+    const now = Date.now();
+    const getExp = (e: any) => typeof e === 'number' ? e : ((e && e.toNumber) ? e.toNumber() : 0);
+    const valid = record.data.addrs.filter(a => getExp(a.expiry) > now)  
     const changed = valid.length !== record.data.addrs.length  
-    record.data.addrs = valid.sort((a, b) => a.expiry - b.expiry)  
+    record.data.addrs = valid.sort((a, b) => getExp(a.expiry) - getExp(b.expiry))  
     return changed  
   }  
 
   private async flushRecord(record: AddrsRecord): Promise<void> {  
+    if (!record.data.threadID || !record.data.peerID) {
+        // Should not happen if initialized correctly
+        return;
+    }  
     const threadId = ThreadID.fromBytes(record.data.threadID)
     const logId = new TextDecoder().decode(record.data.peerID)
     if (record.data.addrs.length === 0) {  
         await this.ds.delete(this.genDSKey(threadId, logId))
     } else {  
-      const data = record.data.serialize()
+      const data = pb.AddrBookRecord.encode(record.data).finish()
       await this.ds.put(this.genDSKey(threadId, logId), data)  
     }  
     record.dirty = false  
@@ -427,7 +434,7 @@ private async traverse(withAddrs: boolean): Promise<{ [key: string]: { [key: str
         const pid = peerIdFromString(ls!);
 
         if (withAddrs) {
-            const record = pb.AddrBookRecord.deserialize(entry.value);
+            const record = pb.AddrBookRecord.decode(entry.value);
             return { tid, pid, record };
         }
 
@@ -490,9 +497,9 @@ private async traverse(withAddrs: boolean): Promise<{ [key: string]: { [key: str
             const lm: { [key: string]: { addr: Multiaddr, expires: Date }[] } = {};
             for (const [lid, rec] of Object.entries(logs)) {
                 if (rec.addrs.length > 0) {
-                    const addrs = rec.addrs.map(r => ({
-                        addr: multiaddr(r.addr),
-                        expires: new Date(r.expiry)
+                    const addrs = rec.addrs.filter(r => r.addr).map(r => ({
+                        addr: multiaddr(r.addr!),
+                        expires: new Date(typeof r.expiry === 'number' ? r.expiry : ((r.expiry && (r.expiry as any).toNumber) ? (r.expiry as any).toNumber() : 0))
                     }));
                     lm[lid] = addrs.map(a => ({ addr: a.addr, expires: a.expires }));
                 }

@@ -63,7 +63,7 @@ export class AddrInfoManager implements AddrInfo {
     const record = PeerRecord.createFromProtobuf(data)  
     return new AddrInfoManager({  
       peerId: record.peerId,  
-      multiaddrs: record.multiaddrs  
+      multiaddrs: record.multiaddrs as any
     })  
   }  
 

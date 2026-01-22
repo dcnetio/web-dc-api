@@ -10,7 +10,7 @@ import type {
   Account,
 } from "./common/types/types";
 import { DcUtil } from "./common/dcutil";
-import { type HeliaLibp2p } from "helia";
+import { type Helia } from "helia";
 import { Libp2p } from "@libp2p/interface";
 import { dc_protocol, isIframeOpen } from "./common/define";
 import { DCGrpcServer } from "./implements/threaddb/net/grpcserver";
@@ -46,7 +46,7 @@ export class DC implements DCContext {
   blockChainAddr: string;
   backChainAddr: string;
   dcChain: ChainUtil;
-  dcNodeClient!: HeliaLibp2p<Libp2p>;
+  dcNodeClient!: Helia<Libp2p>;
   dcutil: DcUtil;
   privateKey: Ed25519PrivKey | undefined | null;
   publicKey: Ed25519PubKey | undefined;

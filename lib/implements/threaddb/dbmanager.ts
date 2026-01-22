@@ -1068,7 +1068,7 @@ export class DBManager {
       if (connectedConn) {
         //连接成功
         connectedPeerId = connectedConn?.remotePeer;
-        dbMultiAddr = connectedConn.remoteAddr;
+        dbMultiAddr = connectedConn.remoteAddr as any;
       } else {
         //从区块链中获取节点信息,再连接
         const [connectedAddr, peers] = await this.dc._connectToObjNodes(
@@ -1077,7 +1077,7 @@ export class DBManager {
         if (!connectedAddr) {
           throw new Error("connect to obj nodes failed");
         }
-        dbMultiAddr = connectedAddr;
+        dbMultiAddr = connectedAddr as any;
       }
 
       const collections = collectionInfos.map((info) => ({

@@ -4,7 +4,7 @@ import {
   ThemeComment,
   ThemeObj,
 } from "../../common/types/types";
-import type { HeliaLibp2p } from "helia";
+import type { Helia } from "helia";
 import { ChainUtil } from "../../common/chain";
 import { base32 } from "multiformats/bases/base32";
 
@@ -61,7 +61,7 @@ export const Errors = {
 export class CommentManager {
   dc: DcUtil;
   connectedDc: DCConnectInfo = {};
-  dcNodeClient: HeliaLibp2p<Libp2p>;
+  dcNodeClient: Helia<Libp2p>;
   chainUtil: ChainUtil;
   context: DCContext;
   constructor(context: DCContext) {

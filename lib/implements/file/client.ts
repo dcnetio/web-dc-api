@@ -1,7 +1,7 @@
 import { Libp2pGrpcClient } from "grpc-libp2p-client";
 import type { Client } from "../../common/dcapi";
 import { dcnet } from "../../proto/dcnet_proto";
-import { HeliaLibp2p } from "helia";
+import { Helia } from "helia";
 import { Libp2p } from "libp2p";
 import { DCContext } from "../../../lib/interfaces/DCContext";
 import { uint32ToLittleEndianBytes, uint64ToLittleEndianBytes } from "../../util/utils";
@@ -25,12 +25,12 @@ const uploadRespondStatus = {
 
 export class FileClient {
   client: Client;
-  dcNodeClient: HeliaLibp2p<Libp2p>;
+  dcNodeClient: Helia<Libp2p>;
   context: DCContext;
 
   constructor(
     dcClient: Client,
-    dcNodeClient: HeliaLibp2p<Libp2p>,
+    dcNodeClient: Helia<Libp2p>,
     context: DCContext
   ) {
     this.client = dcClient;

@@ -1,6 +1,5 @@
 import { randomBytes } from "@stablelib/random";
-import { box } from "tweetnacl";
-import { BigInteger } from "jsbn";
+import { x25519 } from '@noble/curves/ed25519';
 // import { webcrypto } from 'crypto';
 
 export class Encryption {
@@ -8,8 +7,8 @@ export class Encryption {
   private static readonly PUBLIC_KEY_LENGTH = 32;
   private static readonly MAC_LENGTH = 16;
 
-  // Curve25519的素数
-  private static readonly CURVE25519_P = new BigInteger(
+  // Curve25519的素数 (2^255 - 19)
+  private static readonly CURVE25519_P = BigInt(
     "57896044618658097711785492504343953926634992332820282019728792003956564819949"
   );
 
@@ -19,16 +18,16 @@ export class Encryption {
       .join("");
   }
 
-  // 将字节数组转换为BigInteger
-  private static bytesToBigInt(bytes: Uint8Array): BigInteger {
+  // 将字节数组转换为BigInt
+  private static bytesToBigInt(bytes: Uint8Array): bigint {
     let hex = Array.from(bytes)
       .map((b) => b.toString(16).padStart(2, "0"))
       .join("");
-    return new BigInteger(hex, 16);
+    return BigInt('0x' + hex);
   }
 
-  // 将BigInteger转换为固定长度的字节数组
-  private static bigIntToBytes(bn: BigInteger, length: number): Uint8Array {
+  // 将BigInt转换为固定长度的字节数组
+  private static bigIntToBytes(bn: bigint, length: number): Uint8Array {
     const hex = bn.toString(16).padStart(length * 2, "0");
     const bytes = new Uint8Array(length);
     for (let i = 0; i < length; i++) {
@@ -39,39 +38,39 @@ export class Encryption {
 
   // 扩展欧几里得算法计算模逆
   private static extendedEuclidean(
-    a: BigInteger,
-    b: BigInteger
-  ): [BigInteger, BigInteger, BigInteger] {
-    if (b.equals(BigInteger.ZERO)) {
-      return [a, new BigInteger("1"), new BigInteger("0")];
+    a: bigint,
+    b: bigint
+  ): [bigint, bigint, bigint] {
+    if (b === 0n) {
+      return [a, 1n, 0n];
     }
 
-    const [gcd, x1, y1] = this.extendedEuclidean(b, a.mod(b));
+    const [gcd, x1, y1] = this.extendedEuclidean(b, a % b);
     const x = y1;
-    const y = x1.subtract(a.divide(b).multiply(y1));
+    const y = x1 - (a / b) * y1;
     return [gcd, x, y];
   }
 
   // 安全的模逆计算
-  private static safeModInverse(a: BigInteger, m: BigInteger): BigInteger {
+  private static safeModInverse(a: bigint, m: bigint): bigint {
     // 确保a为正数
-    let positiveA = a.mod(m);
-    if (positiveA.compareTo(BigInteger.ZERO) < 0) {
-      positiveA = positiveA.add(m);
+    let positiveA = a % m;
+    if (positiveA < 0n) {
+      positiveA = positiveA + m;
     }
 
     // 计算GCD和模逆
     const [gcd, x] = this.extendedEuclidean(positiveA, m);
 
     // 检查是否存在模逆
-    if (!gcd.equals(new BigInteger("1"))) {
+    if (gcd !== 1n) {
       throw new Error("Modular inverse does not exist");
     }
 
     // 确保结果为正数
-    let result = x.mod(m);
-    if (result.compareTo(BigInteger.ZERO) < 0) {
-      result = result.add(m);
+    let result = x % m;
+    if (result < 0n) {
+      result = result + m;
     }
     return result;
   }
@@ -89,15 +88,15 @@ export class Encryption {
     // 2. 清除最高位
     bigEndianY[0] &= 0b0111_1111;
 
-    // 3. 转换为BigInteger并计算 u = (1 + y) / (1 - y)
+    // 3. 转换为BigInt并计算 u = (1 + y) / (1 - y)
     const y = this.bytesToBigInt(bigEndianY);
-    const one = new BigInteger("1");
+    const one = 1n;
 
     // 计算分子 (1 + y)
-    const numerator = one.add(y);
+    const numerator = one + y;
 
     // 计算分母 (1 - y)
-    const denominator = one.subtract(y);
+    const denominator = one - y;
 
     try {
       // 使用新的安全模逆计算
@@ -107,7 +106,7 @@ export class Encryption {
       );
 
       // 计算 u
-      let u = numerator.multiply(denominatorInv).mod(this.CURVE25519_P);
+      let u = (numerator * denominatorInv) % this.CURVE25519_P;
 
       // 4. 转换回little endian
       const result = this.bigIntToBytes(u, 32);
@@ -135,16 +134,19 @@ export class Encryption {
       }
 
       const curve25519PublicKey =
-        Encryption.ed25519PublicKeyToCurve25519(recipientPublicKey); //ed25519.getPublicKey(recipientPublicKey);
-      const ephemeralKeyPair = box.keyPair();
+        Encryption.ed25519PublicKeyToCurve25519(recipientPublicKey);
+      
+      // 生成临时密钥对 (使用 @noble/curves)
+      const ephemeralPrivateKey = randomBytes(32);
+      const ephemeralPublicKey = x25519.getPublicKey(ephemeralPrivateKey);
+      
       const nonce = randomBytes(this.NONCE_LENGTH);
 
-      const encrypted = box(
-        message,
-        nonce,
-        curve25519PublicKey,
-        ephemeralKeyPair.secretKey
-      );
+      // 使用 x25519 计算共享密钥
+      const sharedSecret = x25519.getSharedSecret(ephemeralPrivateKey, curve25519PublicKey);
+      
+      // 使用 Web Crypto API 进行加密
+      const encrypted = await this.encryptWithSharedSecret(message, sharedSecret, nonce);
 
       if (!encrypted) {
         throw new Error("Encryption failed");
@@ -157,7 +159,7 @@ export class Encryption {
       let offset = 0;
       result.set(nonce, offset);
       offset += this.NONCE_LENGTH;
-      result.set(ephemeralKeyPair.publicKey, offset);
+      result.set(ephemeralPublicKey, offset);
       offset += this.PUBLIC_KEY_LENGTH;
       result.set(encrypted, offset);
 
@@ -165,6 +167,64 @@ export class Encryption {
     } catch (error: any) {
       throw new Error(`Encryption failed: ${error.message}`);
     }
+  }
+
+  // 使用 Web Crypto API 进行 ChaCha20-Poly1305 或 AES-GCM 加密
+  private static async encryptWithSharedSecret(
+    message: Uint8Array,
+    sharedSecret: Uint8Array,
+    nonce: Uint8Array
+  ): Promise<Uint8Array> {
+    // 导入密钥
+    const key = await crypto.subtle.importKey(
+      'raw',
+      sharedSecret.slice(0, 32),
+      { name: 'AES-GCM' },
+      false,
+      ['encrypt']
+    );
+
+    // 加密
+    const encrypted = await crypto.subtle.encrypt(
+      {
+        name: 'AES-GCM',
+        iv: nonce.slice(0, 12) as any,
+        tagLength: 128
+      },
+      key,
+      message as any
+    );
+
+    return new Uint8Array(encrypted);
+  }
+
+  // 使用 Web Crypto API 进行解密
+  private static async decryptWithSharedSecret(
+    ciphertext: Uint8Array,
+    sharedSecret: Uint8Array,
+    nonce: Uint8Array
+  ): Promise<Uint8Array> {
+    // 导入密钥
+    const key = await crypto.subtle.importKey(
+      'raw',
+      sharedSecret.slice(0, 32),
+      { name: 'AES-GCM' },
+      false,
+      ['decrypt']
+    );
+
+    // 解密
+    const decrypted = await crypto.subtle.decrypt(
+      {
+        name: 'AES-GCM',
+        iv: nonce.slice(0, 12) as any,
+        tagLength: 128
+      },
+      key,
+      ciphertext as any
+    );
+
+    return new Uint8Array(decrypted);
   }
 
   static async encryptWithDebug(
@@ -190,22 +250,19 @@ export class Encryption {
       console.log("- Ed25519 Public Key:", this.toHex(recipientPublicKey));
       console.log("- Curve25519 Public Key:", this.toHex(curve25519PublicKey));
 
-      const ephemeralKeyPair = box.keyPair();
+      const ephemeralPrivateKey = randomBytes(32);
+      const ephemeralPublicKey = x25519.getPublicKey(ephemeralPrivateKey);
       console.log("\nEphemeral Key Pair:");
-      console.log("- Public Key:", this.toHex(ephemeralKeyPair.publicKey));
-      console.log("- Secret Key:", this.toHex(ephemeralKeyPair.secretKey));
+      console.log("- Public Key:", this.toHex(ephemeralPublicKey));
+      console.log("- Secret Key:", this.toHex(ephemeralPrivateKey));
 
       const nonce = randomBytes(this.NONCE_LENGTH);
       console.log("\nNonce:");
       console.log("- Value:", this.toHex(nonce));
       console.log("- Length:", nonce.length);
 
-      const encrypted = box(
-        message,
-        nonce,
-        curve25519PublicKey,
-        ephemeralKeyPair.secretKey
-      );
+      const sharedSecret = x25519.getSharedSecret(ephemeralPrivateKey, curve25519PublicKey);
+      const encrypted = await this.encryptWithSharedSecret(message, sharedSecret, nonce);
 
       if (!encrypted) {
         throw new Error("Encryption failed");
@@ -222,7 +279,7 @@ export class Encryption {
       let offset = 0;
       result.set(nonce, offset);
       offset += this.NONCE_LENGTH;
-      result.set(ephemeralKeyPair.publicKey, offset);
+      result.set(ephemeralPublicKey, offset);
       offset += this.PUBLIC_KEY_LENGTH;
       result.set(encrypted, offset);
 
@@ -352,19 +409,16 @@ export class Encryption {
         );
       }
 
-      // 计算共享密钥
-      const sharedKey = box.before(ephemeralPublicKey, curve25519PrivateKey);
-      if (!sharedKey) {
-        throw new Error("Failed to compute shared key");
-      }
+      // 计算共享密钥 (使用 x25519)
+      const sharedSecret = x25519.getSharedSecret(curve25519PrivateKey, ephemeralPublicKey);
 
       if (debug) {
         console.log("\n--- Shared Key Computation ---");
-        console.log("Computed Shared Key:", this.toHex(sharedKey));
+        console.log("Computed Shared Secret:", this.toHex(sharedSecret));
       }
 
-      // 解密数据
-      const decrypted = box.open.after(ciphertext, nonce, sharedKey);
+      // 解密数据 (使用 Web Crypto API)
+      const decrypted = await this.decryptWithSharedSecret(ciphertext, sharedSecret, nonce);
       if (!decrypted) {
         throw new Error("Decryption failed - invalid MAC");
       }

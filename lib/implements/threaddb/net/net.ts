@@ -556,7 +556,7 @@ export class Network implements Net {
         const withPeerId = addr.encapsulate(
           `/p2p/${this.libp2p.peerId.toString()}`
         );
-        const threadMultiaddr = new ThreadMuliaddr(withPeerId, tinfo.id);
+        const threadMultiaddr = new ThreadMuliaddr(withPeerId as any, tinfo.id);
         resultAddrs.push(threadMultiaddr);
       }
       tinfo.addrs = resultAddrs;

@@ -14,7 +14,7 @@ import {
   OpenFlag,
 } from "../../common/constants";
 import { CommentManager } from "../comment/manager";
-import { HeliaLibp2p } from "helia";
+import { Helia } from "helia";
 import { ChainUtil } from "../../common/chain";
 import { DcUtil } from "../../common/dcutil";
 import { Ed25519PubKey } from "../../common/dc-key/ed25519";
@@ -57,12 +57,12 @@ export const Errors = {
 
 export class AIProxyManager {
   private dc: DcUtil;
-  private dcNodeClient: HeliaLibp2p<Libp2p>;
+  private dcNodeClient: Helia<Libp2p>;
   private chainUtil: ChainUtil;
   private context: DCContext;
   constructor(
     dc: DcUtil,
-    dcNodeClient: HeliaLibp2p<Libp2p>,
+    dcNodeClient: Helia<Libp2p>,
     chainUtil: ChainUtil,
     context: DCContext
   ) {
