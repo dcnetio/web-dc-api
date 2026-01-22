@@ -452,8 +452,39 @@ export class DcUtil {
     });
     //判断是否有现成的stream,如果已经存在就直接使用
     const stream = await nodeConn.newStream("/dc/transfer/1.0.0");
+    
+    // 兼容 Helia 6 / Libp2p 3+ 的 Stream 接口 (没有 .sink/.source 属性)
+    const streamSink = async (source: AsyncIterable<Uint8Array>) => {
+      // 如果有旧版 .sink，优先使用
+      if (typeof (stream as any).sink === 'function') {
+        return (stream as any).sink(source)
+      }
+
+      // 新版接口: stream.send / stream.close
+      try {
+        for await (const chunk of source) {
+          // send 返回 false 表示 buffer 满，需要等待 drain 事件
+          if (!(stream.send(chunk instanceof Uint8Array ? chunk : (chunk as any).subarray()))) {
+            await new Promise<void>(resolve => {
+              const listener = () => {
+                 stream.removeEventListener('drain', listener)
+                 resolve()
+              }
+              stream.addEventListener('drain', listener)
+            })
+          }
+        }
+      } catch(err) {
+        console.error("Stream sink error:", err)
+        stream.abort(err as Error)
+        throw err
+      } finally {
+        await stream.close()
+      }
+    }
+
     try {
-      const writer = new StreamWriter((stream as any).sink);
+      const writer = new StreamWriter(streamSink);
       const mParts: Uint8Array[] = [];
       let parsedMessage: {
         type: number;
@@ -581,7 +612,16 @@ export class DcUtil {
   }
 
   private async *chunkGenerator(stream: Stream): AsyncGenerator<Uint8Array> {
-    const iterator = (stream as any).source[Symbol.asyncIterator]();
+    // 兼容: 优先检查 .source, 否则直接迭代 stream
+    const s = stream as any
+    const iteratorSrc = s.source || s
+    
+    if (!iteratorSrc[Symbol.asyncIterator]) {
+       console.warn("Stream source is not async iterable", stream)
+       return
+    }
+
+    const iterator = iteratorSrc[Symbol.asyncIterator]();
     while (true) {
       try {
         const { done, value } = await iterator.next();
