@@ -29,17 +29,18 @@ const classes = [
 ];
 
 classes.forEach(cls => {
-    // Replace $root.net.pb.ClassName.Something -> ClassName.Something
+    // Replace $root.net.pb.ClassName.Something -> pb.ClassName.Something
+    // We use pb.ClassName because these are cross-references between classes in the same module
     const nestedRegex = new RegExp(`\\$root\\.net\\.pb\\.${cls}\\.`, 'g');
-    newContent = newContent.replace(nestedRegex, `${cls}.`);
+    newContent = newContent.replace(nestedRegex, `pb.${cls}.`);
     
-    // Also $root.net.pb.ClassName( -> ClassName(  (constructors)
+    // Also $root.net.pb.ClassName( -> pb.ClassName(  (constructors)
     const ctorRegex = new RegExp(`new \\$root\\.net\\.pb\\.${cls}\\(`, 'g');
-    newContent = newContent.replace(ctorRegex, `new ${cls}(`);
+    newContent = newContent.replace(ctorRegex, `new pb.${cls}(`);
     
     // instanceof checks
     const instanceOfRegex = new RegExp(`instanceof \\$root\\.net\\.pb\\.${cls}`, 'g');
-    newContent = newContent.replace(instanceOfRegex, `instanceof ${cls}`);
+    newContent = newContent.replace(instanceOfRegex, `instanceof pb.${cls}`);
 });
 
 // For remaining cross-references, use pb.X
