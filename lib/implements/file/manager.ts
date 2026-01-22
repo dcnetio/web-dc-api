@@ -11,22 +11,20 @@ import {
   uint32ToLittleEndianBytes,
   uint64ToBigEndianBytes,
   uint64ToLittleEndianBytes,
+  iterableToUint8Array,
 } from "../../util/utils";
 
 import { unixfs } from "@helia/unixfs";
 import { SymmetricKey } from "../threaddb/common/key";
 import { CID, Version } from "multiformats/cid";
 import { BrowserType, DcUtil } from "../../common/dcutil";
-import toBuffer from "it-to-buffer";
 import { decryptContent } from "../../util/dccrypt";
-import * as buffer from "buffer/";
 import { Uint8ArrayList } from "uint8arraylist";
 import { Libp2p, Stream } from "@libp2p/interface";
 import { cidNeedConnect } from "../../common/constants";
 import { SeekableFileStream } from "./seekableFileStream";
 import { AccountClient } from "../account/client";
 import { DCContext } from "../../../lib/interfaces/DCContext";
-const { Buffer } = buffer;
 
 const NonceBytes = 12;
 const TagBytes = 16;
@@ -1139,7 +1137,7 @@ export class FileManager {
     try {
       for (;;) {
         if (!headDealed && !folderFlag) {
-          const headBuf = await toBuffer(fs.cat(CID.parse(cid), catOptions));
+          const headBuf = await iterableToUint8Array(fs.cat(CID.parse(cid), catOptions));
           readCount += headBuf.length;
           if (headBuf.length > 0) {
             waitBuffer = mergeUInt8Arrays(waitBuffer, headBuf) as any;
@@ -1153,7 +1151,7 @@ export class FileManager {
               if (
                 compareByteArrays(
                   waitBuffer.subarray(0, 10),
-                  Buffer.from("$$dcfile$$")
+                  new TextEncoder().encode("$$dcfile$$")
                 )
               ) {
                 //判断是否是dc网络存储的文件头
@@ -1175,7 +1173,7 @@ export class FileManager {
         }
         catOptions.offset = readCount;
         catOptions.length = encryptextLen;
-        const buf = await toBuffer(fs.cat(CID.parse(cid), catOptions));
+        const buf = await iterableToUint8Array(fs.cat(CID.parse(cid), catOptions));
         if (buf.length > 0) {
           readCount += buf.length;
         }
@@ -1231,7 +1229,7 @@ export class FileManager {
 
     try {
       // 读取头信息
-      const headerData = await toBuffer(
+      const headerData = await iterableToUint8Array(
         fs.cat(CID.parse(cid), {
           offset: 0,
           length: 32,
@@ -1241,7 +1239,7 @@ export class FileManager {
       // 检查是否有DC文件头
       const hasHeader = compareByteArrays(
         headerData.subarray(0, 10),
-        Buffer.from(dcFileHead)
+        new TextEncoder().encode(dcFileHead)
       );
 
       // 获取文件大小

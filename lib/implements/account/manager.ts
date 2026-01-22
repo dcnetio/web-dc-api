@@ -3,7 +3,7 @@ import { ChainUtil } from "../../common/chain";
 import { DcUtil } from "../../common/dcutil";
 import { DCConnectInfo, NFTBindStatus, User } from "../../common/types/types";
 import { AccountClient } from "./client";
-import { sha256, uint32ToLittleEndianBytes } from "../../util/utils";
+import { sha256, uint32ToLittleEndianBytes, uint8ArrayToHex } from "../../util/utils";
 import { Ed25519PrivKey, Ed25519PubKey } from "../../common/dc-key/ed25519";
 import { DCContext } from "../../../lib/interfaces/DCContext";
 import { PeerId } from "@libp2p/interface";
@@ -429,7 +429,7 @@ export class AccountManager {
       }
       const accountBytes = new TextEncoder().encode(nftAccount);
       const accountHash = await sha256(accountBytes);
-      const nftHexAccount = "0x" + Buffer.from(accountHash).toString("hex");
+    const nftHexAccount = "0x" + uint8ArrayToHex(accountHash);
       const walletAccount = await (
         this.chainUtil.dcchainapi?.query as any
       ).dcNode.nftToWalletAccount(nftHexAccount);
@@ -456,7 +456,7 @@ export class AccountManager {
       }
       const accountBytes = new TextEncoder().encode(nftAccount);
       const accountHash = await sha256(accountBytes);
-      const nftHexAccount = "0x" + Buffer.from(accountHash).toString("hex");
+      const nftHexAccount = "0x" + uint8ArrayToHex(accountHash);
       const walletAccount = await (
         this.chainUtil.dcchainapi?.query as any
       ).dcNode.nftToWalletAccount(nftHexAccount);

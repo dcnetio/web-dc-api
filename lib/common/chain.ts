@@ -5,13 +5,11 @@
 import { Multiaddr, multiaddr } from "@multiformats/multiaddr";
 import { ApiPromise, WsProvider } from "@polkadot/api";
 
-import { isUser, sha256, hexToAscii } from "../util/utils";
+import { isUser, sha256, hexToAscii, uint8ArrayToHex, hexToUtf8 } from "../util/utils";
 import { IAppInfo, User, PeerStatus } from "./types/types";
 
 import { base32 } from "multiformats/bases/base32";
-import * as buffer from "buffer/";
 import { Ed25519PubKey } from "./dc-key/ed25519";
-const { Buffer } = buffer;
 
 const _hexMap: Record<string, number> = {
   0: 0, 1: 1, 2: 2, 3: 3, 4: 4, 5: 5, 6: 6, 7: 7, 8: 8, 9: 9,
@@ -289,7 +287,7 @@ export class ChainUtil {
     const accountBytes = new TextEncoder().encode(nftAccount);
     const accountHash = await sha256(accountBytes);
 
-    const nftHexAccount = "0x" + Buffer.from(accountHash).toString("hex");
+    const nftHexAccount = "0x" + uint8ArrayToHex(accountHash);
     return await this.getUserInfoWithNftHex(nftHexAccount);
   
   }
@@ -297,7 +295,7 @@ export class ChainUtil {
   async getUserWalletAccount(nftAccount: string): Promise<string | null> {
     const accountBytes = new TextEncoder().encode(nftAccount);
     const accountHash = await sha256(accountBytes);
-    const nftHexAccount = "0x" + Buffer.from(accountHash).toString("hex");
+    const nftHexAccount = "0x" + uint8ArrayToHex(accountHash);
     const walletAccount = await (
       this.dcchainapi?.query as any
     ).dcNode.nftToWalletAccount(nftHexAccount);
@@ -326,7 +324,7 @@ export class ChainUtil {
   // 获取用户节点列表
   getAccountPeers = async (account: Uint8Array): Promise<string[] | null> => {
     try {
-      const hexAccount = "0x" + Buffer.from(account).toString("hex");
+      const hexAccount = "0x" + uint8ArrayToHex(account);
       const userInfo = await this.getUserInfoWithAccount(hexAccount);
       if (!userInfo || !isUser(userInfo)) {
         return null;
@@ -351,10 +349,9 @@ export class ChainUtil {
   //     console.log("no ip address found for peer: ", peerid);
   //     return;
   //   }
-  //   let nodeAddr = Buffer.from(
-  //     (peerInfoJson as { ipAddress: string }).ipAddress.slice(2),
-  //     "hex"
-  //   ).toString("utf8");
+  //   let nodeAddr = hexToUtf8(
+  //     (peerInfoJson as { ipAddress: string }).ipAddress.slice(2)
+  //   );
   //   let addrParts = nodeAddr.split(",");
   //   nodeAddr = addrParts[0];
   //   //节点ws监听端口号在原来的tcp监听的基础上加10
@@ -391,10 +388,9 @@ export class ChainUtil {
       console.error("no ip address found for peer: ", peerid);
       return [null, PeerStatus.PeerStatusOffline];
     }
-    let nodeAddr = Buffer.from(
-      (peerInfoJson as { ipAddress: string }).ipAddress.slice(2),
-      "hex"
-    ).toString("utf8");
+    let nodeAddr = hexToUtf8(
+      (peerInfoJson as { ipAddress: string }).ipAddress.slice(2)
+    );
     let addrParts = nodeAddr.split(",");
     if (addrParts.length < 2) {
       return [null, PeerStatus.PeerStatusOffline];
@@ -421,7 +417,7 @@ export class ChainUtil {
       for (let i = 0; i < peerListJson.length; i++) {
         const peer = peerListJson[i];
         if (typeof peer === "string") {
-          const peerJson = Buffer.from(peer.slice(2), "hex").toString("utf8");
+          const peerJson = hexToUtf8(peer.slice(2));
           peers = peers.concat(peerJson);
         }
       }
@@ -506,7 +502,7 @@ export class ChainUtil {
     pubkeyRaw: Uint8Array,
     needSize?: number
   ): Promise<boolean> => {
-    const hexAccount = "0x" + Buffer.from(pubkeyRaw).toString("hex");
+    const hexAccount = "0x" + uint8ArrayToHex(pubkeyRaw);
     // 获取用户存储空间
     const userInfo = await this.getUserInfoWithAccount(hexAccount);
     if (!userInfo) {
@@ -533,7 +529,7 @@ export class ChainUtil {
     return true;
   };
   refreshUserInfo = async (pubkeyRaw: Uint8Array): Promise<User> => {
-    const hexAccount = "0x" + Buffer.from(pubkeyRaw).toString("hex");
+    const hexAccount = "0x" + uint8ArrayToHex(pubkeyRaw);
     return await this.getUserInfoWithAccount(hexAccount);
   };
 
@@ -543,7 +539,7 @@ export class ChainUtil {
       throw new Error("dcchainapi is not initialized");
     }
     const appIdBytes = new TextEncoder().encode(appId);
-    const appIdHex = "0x" + Buffer.from(appIdBytes).toString("hex");
+    const appIdHex = "0x" + uint8ArrayToHex(appIdBytes);
     const appInfoStr = await (this.dcchainapi?.query as any).dcNode.appsInfo(
       appIdHex
     );

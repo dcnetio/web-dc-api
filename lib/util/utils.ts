@@ -3,11 +3,9 @@ import { base32 } from "multiformats/bases/base32";
 import * as JsCrypto from "jscrypto/es6";
 import { Multiaddr, multiaddr } from "@multiformats/multiaddr";
 import { peerIdFromString } from "@libp2p/peer-id";
-import { Ed25519PrivateKey, PeerId } from "@libp2p/interface";
+import { Ed25519PrivateKey, PeerId, PrivateKey } from "@libp2p/interface";
 import { keys } from "@libp2p/crypto";
-import * as buffer from "buffer/";
-import { hexToBytes } from "@noble/curves/abstract/utils";
-const { Buffer } = buffer;
+import { Uint8ArrayList } from "uint8arraylist";
 const { Word32Array, AES, pad, mode, Base64 } = JsCrypto;
 const NonceBytes = 12;
 const TagBytes = 16;
@@ -87,8 +85,7 @@ function uint8ArrayToUint64(
   if (bytes.length !== 8) {
     throw new Error("Uint8Array must be exactly 8 bytes long");
   }
-  const buffer = bytes.buffer;
-  const view = new DataView(buffer);
+  const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
   return view.getBigUint64(0, littleEndian);
 }
 
@@ -98,6 +95,60 @@ function isUser(obj: any): obj is User {
 }
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+/**
+ * 将 Uint8Array 转换为十六进制字符串
+ */
+function uint8ArrayToHex(bytes: Uint8Array): string {
+  let hex = '';
+  for (let i = 0; i < bytes.length; i++) {
+    hex += bytes[i]!.toString(16).padStart(2, '0');
+  }
+  return hex;
+}
+
+/**
+ * 将十六进制字符串转换为 UTF-8 字符串
+ */
+function hexToUtf8(hex: string): string {
+  if (typeof hex !== "string") {
+    throw new TypeError("hexToUtf8: expected string, got " + typeof hex);
+  }
+  if (hex.length % 2) throw new Error("hexToUtf8: received invalid unpadded hex");
+  
+  const bytes = new Uint8Array(hex.length / 2);
+  for (let i = 0; i < bytes.length; i++) {
+    const byte = parseInt(hex.substring(i * 2, i * 2 + 2), 16);
+    if (isNaN(byte)) {
+      throw new Error("hexToUtf8: received invalid hex characters");
+    }
+    bytes[i] = byte;
+  }
+  return new TextDecoder().decode(bytes);
+}
+
+/**
+ * 将异步迭代器转换为 Uint8Array (纯前端实现)
+ */
+async function iterableToUint8Array(iterable: AsyncIterable<Uint8Array>): Promise<Uint8Array> {
+  const chunks: Uint8Array[] = [];
+  for await (const chunk of iterable) {
+    chunks.push(chunk instanceof Uint8ArrayList ? chunk.subarray() : chunk);
+  }
+  
+  // 计算总长度
+  const totalLength = chunks.reduce((acc, chunk) => acc + chunk.length, 0);
+  
+  // 合并所有块
+  const result = new Uint8Array(totalLength);
+  let offset = 0;
+  for (const chunk of chunks) {
+    result.set(chunk, offset);
+    offset += chunk.length;
+  }
+  
+  return result;
+}
 
 function decryptContentForBrowser(
   encryptBuffer: Uint8Array,
@@ -169,7 +220,7 @@ async function saveKeyPair(key: string, keyPair: Ed25519PrivateKey) {
   const privateKey = encodeKey(keyPair.raw);
   localStorage.setItem(key, privateKey);
 }
-async function loadKeyPair(key: string) {
+async function loadKeyPair(key: string): Promise<PrivateKey | null> {
   const privateKey = localStorage.getItem(key);
   if (privateKey) {
     const keyPair = keys.privateKeyFromRaw(decodeKey(privateKey));
@@ -221,8 +272,12 @@ function parseUint32(str: string) {
 function hexToAscii(hex: string): string {
   // 移除0x前缀（如果存在）
   const cleanHex = hex.startsWith("0x") ? hex.slice(2) : hex;
-  // 使用Buffer将16进制转换为字符串
-  return Buffer.from(cleanHex, "hex").toString("ascii");
+  // 将十六进制转换为 ASCII 字符串
+  const bytes = new Uint8Array(cleanHex.length / 2);
+  for (let i = 0; i < bytes.length; i++) {
+    bytes[i] = parseInt(cleanHex.substring(i * 2, i * 2 + 2), 16);
+  }
+  return String.fromCharCode(...bytes);
 }
 
 // json stringify过程中,将 BigInt 转为字符串
@@ -297,4 +352,7 @@ export {
   jsonStringify,
   padPositiveInt20,
   isBase32,
+  iterableToUint8Array,
+  uint8ArrayToHex,
+  hexToUtf8,
 };

@@ -1,9 +1,8 @@
 import { CID } from 'multiformats/cid';
 import * as dagCBOR from '@ipld/dag-cbor';
 
-import { dagCbor } from '@helia/dag-cbor'
+
 import { sha256 } from 'multiformats/hashes/sha2';
-import CID_IPLD from 'cids';
 import { Link } from 'multiformats/link'
 import { IBlock } from '../core/core';
 // 常量定义 - CBOR Tag for links

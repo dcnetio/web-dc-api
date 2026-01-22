@@ -5,7 +5,6 @@ import { HeliaLibp2p } from "helia";
 import { Libp2p } from "libp2p";
 import { DCContext } from "../../../lib/interfaces/DCContext";
 import { uint32ToLittleEndianBytes, uint64ToLittleEndianBytes } from "../../util/utils";
-import CID from "cids";
 import { UploadStatus } from "../../common/types/types";
 
 const uploadRespondStatus = {

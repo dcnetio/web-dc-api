@@ -1,6 +1,5 @@
 import { ChainUtil } from "../../common/chain";
 import { DCConnectInfo } from "../../common/types/types";
-import * as buffer from "buffer/";
 import { MessageClient } from "./client";
 import { CID } from "multiformats";
 import { sha256 } from "multiformats/hashes/sha2";
@@ -9,7 +8,6 @@ import { uint32ToLittleEndianBytes } from "../../util/utils";
 import { DcUtil } from "../../common/dcutil";
 import { dcnet } from "../../proto/dcnet_proto";
 import { DCContext } from "../../../lib/interfaces/DCContext";
-const { Buffer } = buffer;
 // 错误定义
 export class DCError extends Error {
   constructor(message: string) {

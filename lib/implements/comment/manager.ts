@@ -9,7 +9,6 @@ import { ChainUtil } from "../../common/chain";
 import { base32 } from "multiformats/bases/base32";
 
 import { DcUtil } from "../../common/dcutil";
-import * as buffer from "buffer/";
 import { extractPeerIdFromMultiaddr } from "../../common/dc-key/keyManager";
 import { Multiaddr } from "@multiformats/multiaddr";
 import { CommentClient } from "./client";
@@ -30,7 +29,6 @@ import { Ed25519PubKey } from "../../common/dc-key/ed25519";
 import { CommentType, Direction } from "../../common/define";
 import { SymmetricKey } from "../threaddb/common/key";
 import { Libp2p } from "@libp2p/interface";
-const { Buffer } = buffer;
 
 // 创建一个可以取消的信号
 const controller = new AbortController();
@@ -740,7 +738,7 @@ export class CommentManager {
         this.dcNodeClient,
         this.context
       );
-      const cid = Buffer.from(res).toString();
+      const cid = res;
       const fileContent = await fileManager.getFileFromDc(
         cid,
         "",
@@ -825,7 +823,7 @@ export class CommentManager {
         this.dcNodeClient,
         this.context
       );
-      const cid = Buffer.from(res).toString();
+      const cid = res;
       const fileContent = await fileManager.getFileFromDc(
         cid,
         "",
@@ -1115,7 +1113,7 @@ export class CommentManager {
         this.dcNodeClient,
         this.context
       );
-      const cid = Buffer.from(res).toString();
+      const cid = res;
       const fileContent = await fileManager.getFileFromDc(
         cid,
         "",

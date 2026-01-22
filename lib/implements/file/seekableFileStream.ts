@@ -1,7 +1,7 @@
 import { UnixFS } from "@helia/unixfs";
 import { CID } from "multiformats/cid";
-import toBuffer from "it-to-buffer";
 import { decryptContent } from "../../util/dccrypt";
+import { iterableToUint8Array } from "../../util/utils";
 
 /**
  * 可定位文件流类
@@ -102,12 +102,12 @@ export class SeekableFileStream {
       const actualOffset = startPosition + this.fileInfo.headerSize;
       
       // 直接读取指定长度
-      const data = await toBuffer(this.fs.cat(this.cid, {
+      const data = await iterableToUint8Array(this.fs.cat(this.cid, {
         offset: actualOffset,
         length: length
       }));
       
-      return data as any as Uint8Array;
+      return data;
     } catch (err) {
       console.error("Error reading plain data:", err);
       return new Uint8Array(0);
@@ -141,10 +141,10 @@ private async readEncrypted(startPosition: number, length: number): Promise<Uint
   
   try {
     // 读取加密块
-    const encryptedBlocks = await toBuffer(this.fs.cat(this.cid, {
+    const encryptedBlocks = await iterableToUint8Array(this.fs.cat(this.cid, {
       offset: readStartPosition,
       length: readTotalSize
-    })) as any as Uint8Array;
+    }));
     
     // 确保获取到了数据
     if (encryptedBlocks.length === 0) {

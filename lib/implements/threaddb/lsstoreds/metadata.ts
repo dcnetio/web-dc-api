@@ -1,8 +1,6 @@
 import { Key, Datastore, Query } from 'interface-datastore'  
 import { IThreadMetadata, DumpMetadata, MetadataKey } from '../core/logstore'
 import { ThreadID } from '@textile/threads-id';
-import * as buffer from "buffer/";
-const { Buffer } = buffer;
 
 const AllowEmptyRestore = false  
 
