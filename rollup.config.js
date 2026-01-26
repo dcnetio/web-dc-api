@@ -141,7 +141,7 @@ export default [
     output: {
       dir: "dist/esm",
       format: "es",
-      sourcemap: false,
+      sourcemap: true,
       chunkFileNames: "chunks/[name]-[hash].js",
       entryFileNames: "index.js",
       // 🔧 优化的手动拆分策略
