@@ -14,7 +14,7 @@ import { fileURLToPath } from "url";
 // Read package.json without using import assertions to avoid loader issues
 const __dirname = fileURLToPath(new URL("./", import.meta.url));
 const pkg = JSON.parse(
-  fs.readFileSync(new URL("./package.json", import.meta.url), "utf8")
+  fs.readFileSync(new URL("./package.json", import.meta.url), "utf8"),
 );
 
 // 外部依赖（这些将不会被打包进最终文件）
@@ -56,7 +56,7 @@ const basePlugins = [
 
 const compressionPlugin = terser({
   compress: {
-    drop_console: true,
+    drop_console: ["log", "info", "warn", "debug", "trace"],
     drop_debugger: true,
   },
   format: {
@@ -125,7 +125,7 @@ const manualChunks = (id) => {
   };
 
   for (const [chunkName, packages] of Object.entries(
-    largeIndependentPackages
+    largeIndependentPackages,
   )) {
     if (packages.some((pkg) => packageName.includes(pkg))) {
       return chunkName;
