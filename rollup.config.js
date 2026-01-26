@@ -142,6 +142,10 @@ export default [
       dir: "dist/esm",
       format: "es",
       sourcemap: true,
+      sourcemapPathTransform: (relativeSourcePath) => {
+        // 确保 sourcemap 中的路径正确
+        return relativeSourcePath;
+      },
       chunkFileNames: "chunks/[name]-[hash].js",
       entryFileNames: "index.js",
       // 🔧 优化的手动拆分策略
@@ -156,8 +160,8 @@ export default [
       commonjs(getCommonJSConfig()),
       typescript({
         tsconfig: "./tsconfig.json",
-        declaration: false,
-        declarationMap: false,
+        declaration: true,
+        declarationMap: true,
         outDir: "dist/esm",
       }),
       ...basePlugins,
