@@ -54,7 +54,6 @@
     "async-mutex": "^0.5.0",
     "blockstore-idb": "^3.0.1",
     "datastore-idb": "^4.0.1",
-    "grpc-libp2p-client": "^0.0.31",
     "helia": "^6.0.0",
     "jose": "^6.0.8",
     "jwt-decode": "^4.0.0",
