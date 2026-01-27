@@ -141,7 +141,7 @@ export default [
     output: {
       dir: "dist/esm",
       format: "es",
-      sourcemap: true,
+      sourcemap: false,
       sourcemapPathTransform: (relativeSourcePath) => {
         // 确保 sourcemap 中的路径正确
         return relativeSourcePath;
@@ -160,8 +160,8 @@ export default [
       commonjs(getCommonJSConfig()),
       typescript({
         tsconfig: "./tsconfig.json",
-        declaration: true,
-        declarationMap: true,
+        declaration: false,
+        declarationMap: false,
         outDir: "dist/esm",
       }),
       ...basePlugins,

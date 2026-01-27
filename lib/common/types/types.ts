@@ -156,8 +156,8 @@ export interface Account {
   appAccount: Uint8Array; // 应用专用账号公钥
   account: string; // 存储账号公钥,appAccount的base32编码字符串
   ethAccount: string; // 以太坊兼容链上账号
-  chainId: string; // 区块链ID
-  chainName: string; // 区块链名称
+  chainId?: string; // 区块链ID
+  chainName?: string; // 区块链名称
   accountInfo?: AccountInfo;
 }
 
@@ -201,7 +201,7 @@ export enum AIStreamResponseFlag {
 export type OnStreamResponseType = (
   flag: AIStreamResponseFlag,
   content: string,
-  err: string
+  err: string,
 ) => void;
 
 export enum NFTBindStatus {
