@@ -711,4 +711,8 @@ export class DC implements DCContext {
   get util() {
     return this.getModule<UtilModule>(CoreModuleName.UTIL);
   }
+
+  get libp2p() {
+    return this.dcNodeClient.libp2p;
+  } 
 }

@@ -222,6 +222,8 @@ export class FileModule implements DCModule, IFileOperations {
     }
   }
 
+
+
   /**
    * 添加文件夹
    */
@@ -243,6 +245,51 @@ export class FileModule implements DCModule, IFileOperations {
       return [null, new Error(`添加文件夹失败: ${error instanceof Error ? error.message : String(error)}`)];
     }
   }
+
+   /**
+   * 添加文件到本地(不上传DC)
+   */
+  async addFileInLocal(
+    file: File,
+    enkey: string
+  ): Promise<[string | null, Error | null]> {
+   
+    try {
+      if (!file) {
+        throw new Error("文件不能为空");
+      }
+      const res = await this.fileManager.addFileInLocal(file, enkey);
+      return res;
+    } catch (error) {
+      logger.error(`添加文件到本地失败: ${file?.name}`, error);
+      return [null, new Error(`添加文件到本地失败: ${error instanceof Error ? error.message : String(error)}`)];
+    }
+}
+
+
+
+  /**
+   * 添加文件夹到本地(不上传DC)
+   */
+  async addFolderInLocal(
+    files: FileList,
+    enkey: string
+  ): Promise<[string | null, Error | null]> {
+   
+    try {
+       this.assertInitialized();
+      if (!files || files.length === 0) {
+        throw new Error("文件夹不能为空");
+      }
+      const res = await this.fileManager.addFolderInLocal(files, enkey);
+      return res;
+    } catch (error) {
+      logger.error(`添加文件夹到本地失败`, error);
+      return [null, new Error(`添加文件夹到本地失败: ${error instanceof Error ? error.message : String(error)}`)];
+    }
+  }
+
+
 
 
 /**
