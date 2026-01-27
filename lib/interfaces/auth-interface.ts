@@ -15,6 +15,11 @@ import {
  */
 export interface IAuthOperations {
   /**
+   * 获取当前登录用户信息
+   * @returns 当前登录用户信息
+   */
+  getLoginInfo(): Promise<[Account | null, Error | null]>;
+  /**
    * 账户登录通过钱包
    * @returns 是否登录成功
    */
@@ -30,7 +35,7 @@ export interface IAuthOperations {
   accountLogin(
     nftAccount: string,
     password: string,
-    safecode: string
+    safecode: string,
   ): Promise<[string, Error | null]>;
 
   /**
@@ -59,7 +64,7 @@ export interface IAuthOperations {
     account: string,
     password: string,
     seccode: string,
-    mnemonic: string
+    mnemonic: string,
   ): Promise<[NFTBindStatus | null, Error | null]>;
   /**
    * NFT账号密码修改
@@ -72,7 +77,7 @@ export interface IAuthOperations {
     account: string,
     password: string,
     seccode: string,
-    mnemonic?: string
+    mnemonic?: string,
   ): Promise<[boolean | null, Error | null]>;
 
   /**
@@ -83,7 +88,7 @@ export interface IAuthOperations {
    */
   generateAppAccount(
     appId: string,
-    mnemonic: string
+    mnemonic: string,
   ): Promise<[string | null, Error | null]>;
 
   /**
@@ -94,7 +99,7 @@ export interface IAuthOperations {
    */
   isNftAccountBindSuccess(
     nftAccount: string,
-    pubKeyStr: string
+    pubKeyStr: string,
   ): Promise<[boolean | null, Error | null]>;
 
   /**
@@ -103,7 +108,7 @@ export interface IAuthOperations {
    * @returns 是否被其他账号绑定
    */
   isNftAccountBinded(
-    nftAccount: string
+    nftAccount: string,
   ): Promise<[boolean | null, Error | null]>;
 
   /**
@@ -119,7 +124,7 @@ export interface IAuthOperations {
    * @returns 用户信息
    */
   getUserInfoWithAccount(
-    pubkeyAccount: string
+    pubkeyAccount: string,
   ): Promise<[User | null, Error | null]>;
 
   getToken(publicKeyBase32: string): Promise<[boolean, Error | null]>;
@@ -155,7 +160,7 @@ export interface IAuthOperations {
     rk: string,
     sk: string,
     remark: string,
-    vaccount?: string
+    vaccount?: string,
   ): Promise<Error | null>;
 
   /**
@@ -173,7 +178,7 @@ export interface IAuthOperations {
         }
    */
   signMessageWithWallet(
-    data: SignReqMessage
+    data: SignReqMessage,
   ): Promise<[SignResponseMessage | null, Error | null]>;
 
   /**
@@ -193,7 +198,7 @@ export interface IAuthOperations {
       }
    */
   signEIP712MessageWithWallet(
-    data: EIP712SignReqMessage
+    data: EIP712SignReqMessage,
   ): Promise<[SignResponseMessage | null, Error | null]>;
 
   /**
