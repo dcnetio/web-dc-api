@@ -33,7 +33,7 @@ import { DCContext } from "../interfaces/DCContext";
 import { CommentManager } from "../implements/comment/manager";
 import { ChainError, Errors as ChainErrors } from "../common/chain";
 import { KeyManager } from "../common/dc-key/keyManager";
-import { getData, store_account, updateData } from "@/indexDB/db";
+import { getData, store_account, updateData } from "../indexDB/db";
 
 const logger = createLogger("AuthModule");
 
@@ -87,7 +87,7 @@ export class AuthModule implements DCModule, IAuthOperations {
    * @returns 是否登录成功
    */
   async accountLoginWithWalletCall(
-    accountInfo: AccountInfo = {} as AccountInfo
+    accountInfo: AccountInfo = {} as AccountInfo,
   ): Promise<Account> {
     try {
       this.assertInitialized();
@@ -130,7 +130,7 @@ export class AuthModule implements DCModule, IAuthOperations {
 
   private async getUserToken(
     publicKeyBase32: string,
-    signCallback?: (payload: Uint8Array) => Promise<Uint8Array>
+    signCallback?: (payload: Uint8Array) => Promise<Uint8Array>,
   ): Promise<void> {
     if (!this.context.connectedDc?.client) {
       throw new Error("dcClient is null");
@@ -142,7 +142,7 @@ export class AuthModule implements DCModule, IAuthOperations {
       publicKeyBase32,
       (payload: Uint8Array): Promise<Uint8Array> => {
         return signCallback ? signCallback(payload) : this.signWith(payload);
-      }
+      },
     );
 
     if (!token) {
@@ -158,7 +158,7 @@ export class AuthModule implements DCModule, IAuthOperations {
         publicKeyBase32,
         (payload: Uint8Array): Promise<Uint8Array> => {
           return signCallback ? signCallback(payload) : this.signWith(payload);
-        }
+        },
       );
     }
   }
@@ -166,7 +166,7 @@ export class AuthModule implements DCModule, IAuthOperations {
   private async checkSpaceAfterLogin(publicKeyHex: string): Promise<void> {
     // 给用户添加用户评论空间
     const [userInfo, err] = await this.getUserInfoWithAccount(
-      "0x" + publicKeyHex
+      "0x" + publicKeyHex,
     );
     if (err) {
       throw err;
@@ -188,7 +188,7 @@ export class AuthModule implements DCModule, IAuthOperations {
       ? userInfo.offchainOptimes - Number(offchainUsedInfo.usedtimes)
       : userInfo.offchainOptimes;
     logger.info(
-      `用户线下评论空间剩余: ${leftSpace} / ${userInfo.offchainSpace}, 线下操作次数剩余: ${leftOptimes} / ${userInfo.offchainOptimes}`
+      `用户线下评论空间剩余: ${leftSpace} / ${userInfo.offchainSpace}, 线下操作次数剩余: ${leftOptimes} / ${userInfo.offchainOptimes}`,
     );
     if (leftSpace < OffChainSpaceLimit || leftOptimes < OffChainOpTimesLimit) {
       if (leftSpace < OffChainSpaceLimit) {
@@ -253,7 +253,7 @@ export class AuthModule implements DCModule, IAuthOperations {
   async accountLogin(
     nftAccount: string,
     password: string,
-    safecode: string
+    safecode: string,
   ): Promise<[string, Error | null]> {
     try {
       this.assertInitialized();
@@ -263,16 +263,15 @@ export class AuthModule implements DCModule, IAuthOperations {
       }
       //连接account所在的节点,并获取client
       let client = this.context.connectedDc?.client || null;
-      const walletAccount = await this.context.dcChain?.getUserWalletAccount(
-        nftAccount
-      );
+      const walletAccount =
+        await this.context.dcChain?.getUserWalletAccount(nftAccount);
       if (!walletAccount) {
         throw new Error("getUserWalletAccount error");
       }
       const userPubkey: Ed25519PubKey =
         Ed25519PubKey.edPubkeyFromStr(walletAccount);
       const connectedClient = await this.context.dcutil.connectToUserDcPeer(
-        userPubkey.raw
+        userPubkey.raw,
       );
       if (!connectedClient) {
         throw new Error("connect to user dc peer failed");
@@ -285,7 +284,7 @@ export class AuthModule implements DCModule, IAuthOperations {
       const mnemonic = await commonClient.accountLogin(
         nftAccount,
         password,
-        safecode
+        safecode,
       );
       console.log("=================accountLogin success");
 
@@ -304,7 +303,7 @@ export class AuthModule implements DCModule, IAuthOperations {
 
           const res = await accountManager.generateAppAccount(
             this.context.appInfo?.appId,
-            mnemonic
+            mnemonic,
           );
           console.log("=================generateAppAccount success");
           if (res[0] === null) {
@@ -314,13 +313,13 @@ export class AuthModule implements DCModule, IAuthOperations {
           const keymanager = new KeyManager();
           privateKey = await keymanager.getEd25519KeyFromMnemonic(
             mnemonic,
-            this.context.appInfo?.appId
+            this.context.appInfo?.appId,
           );
           publicKey = privateKey.publicKey;
           this.context.publicKey = publicKey;
           const parentPrivateKey = await keymanager.getEd25519KeyFromMnemonic(
             mnemonic,
-            ""
+            "",
           );
           this.context.parentPublicKey = parentPrivateKey.publicKey;
           this.context.privateKey = privateKey;
@@ -341,7 +340,7 @@ export class AuthModule implements DCModule, IAuthOperations {
           this.context.publicKey.string(),
           async (payload: Uint8Array) => {
             return privateKey.sign(payload);
-          }
+          },
         );
         // 登录后检查用户空间
         await this.checkSpaceAfterLogin(publicKey.toString());
@@ -378,7 +377,7 @@ export class AuthModule implements DCModule, IAuthOperations {
     account: string,
     password: string,
     seccode: string,
-    mnemonic?: string
+    mnemonic?: string,
   ): Promise<[boolean | null, Error | null]> {
     try {
       this.assertInitialized();
@@ -394,7 +393,7 @@ export class AuthModule implements DCModule, IAuthOperations {
         password,
         seccode,
         isParent,
-        mnemonic
+        mnemonic,
       );
       if (error) {
         return [null, error];
@@ -427,7 +426,7 @@ export class AuthModule implements DCModule, IAuthOperations {
   }
 
   async decrypt(
-    payload: Uint8Array
+    payload: Uint8Array,
   ): Promise<[Uint8Array | null, Error | null]> {
     try {
       const signature = await this.decryptWith(payload);
@@ -449,7 +448,7 @@ export class AuthModule implements DCModule, IAuthOperations {
   }
 
   async signMessageWithWallet(
-    data: SignReqMessage
+    data: SignReqMessage,
   ): Promise<[SignResponseMessage | null, Error | null]> {
     if (!this.walletManager) {
       throw new Error("walletManager is null");
@@ -464,7 +463,7 @@ export class AuthModule implements DCModule, IAuthOperations {
   }
 
   async signEIP712MessageWithWallet(
-    data: EIP712SignReqMessage
+    data: EIP712SignReqMessage,
   ): Promise<[SignResponseMessage | null, Error | null]> {
     if (!this.walletManager) {
       throw new Error("walletManager is null");
@@ -488,7 +487,7 @@ export class AuthModule implements DCModule, IAuthOperations {
     account: string,
     password: string,
     seccode: string,
-    mnemonic: string
+    mnemonic: string,
   ): Promise<[NFTBindStatus | null, Error | null]> {
     try {
       this.assertInitialized();
@@ -503,7 +502,7 @@ export class AuthModule implements DCModule, IAuthOperations {
         password,
         seccode,
         true, // isParent defaults to true for this public API which requires mnemonic
-        mnemonic
+        mnemonic,
       );
       return [res[0], null];
     } catch (error) {
@@ -520,14 +519,14 @@ export class AuthModule implements DCModule, IAuthOperations {
    */
   async generateAppAccount(
     appId: string,
-    mnemonic: string
+    mnemonic: string,
   ): Promise<[string | null, Error | null]> {
     try {
       this.assertInitialized();
       const accountManager = new AccountManager(this.context);
       const [pubKeyStr, err] = await accountManager.generateAppAccount(
         appId,
-        mnemonic
+        mnemonic,
       );
       if (err !== null) {
         return [null, err];
@@ -546,14 +545,14 @@ export class AuthModule implements DCModule, IAuthOperations {
    */
   async isNftAccountBindSuccess(
     nftAccount: string,
-    pubKeyStr: string
+    pubKeyStr: string,
   ): Promise<[boolean | null, Error | null]> {
     try {
       this.assertInitialized();
       const accountManager = new AccountManager(this.context);
       const res = await accountManager.isNftAccountBindSuccess(
         nftAccount,
-        pubKeyStr
+        pubKeyStr,
       );
       return [res, null];
     } catch (error) {
@@ -567,7 +566,7 @@ export class AuthModule implements DCModule, IAuthOperations {
    * @returns 是否被其他账号绑定
    */
   async isNftAccountBinded(
-    nftAccount: string
+    nftAccount: string,
   ): Promise<[boolean | null, Error | null]> {
     try {
       this.assertInitialized();
@@ -581,7 +580,7 @@ export class AuthModule implements DCModule, IAuthOperations {
 
   // 获取用户钱包信息，不抛出异常
   async getUserInfoWithAccount(
-    account: string
+    account: string,
   ): Promise<[User | null, Error | null]> {
     try {
       this.assertInitialized();
@@ -640,7 +639,7 @@ export class AuthModule implements DCModule, IAuthOperations {
       this.context.dcNodeClient.libp2p,
       this.context.dcNodeClient.blockstore,
       nodeAddr,
-      dc_protocol
+      dc_protocol,
     );
 
     return dcClient;
@@ -672,7 +671,7 @@ export class AuthModule implements DCModule, IAuthOperations {
             }
             if (this.context.AccountBackupDc.client) {
               await this.getTokenWithDCConnectInfo(
-                this.context.AccountBackupDc
+                this.context.AccountBackupDc,
               );
             }
           } catch (error) {
@@ -699,7 +698,7 @@ export class AuthModule implements DCModule, IAuthOperations {
    * @param connectInfo 连接信息
    */
   private async getTokenWithDCConnectInfo(
-    connectInfo: DCConnectInfo
+    connectInfo: DCConnectInfo,
   ): Promise<void> {
     try {
       this.assertInitialized();
@@ -742,7 +741,7 @@ export class AuthModule implements DCModule, IAuthOperations {
         await connectInfo.client?.GetToken(
           this.context.appInfo.appId || "",
           this.context.publicKey.string(),
-          this.context.sign
+          this.context.sign,
         );
         return;
       } catch (error) {
@@ -765,7 +764,7 @@ export class AuthModule implements DCModule, IAuthOperations {
         await connectInfo.client?.refreshToken(
           this.context.appInfo.appId || "",
           this.context.publicKey.string(),
-          this.context.sign
+          this.context.sign,
         );
       } else {
         logger.info("需要重连节点");
@@ -773,7 +772,7 @@ export class AuthModule implements DCModule, IAuthOperations {
         let resClient: Client | undefined;
         try {
           const nodeAddr = await this.context.dcutil?._getNodeAddr(
-            connectInfo.nodeAddr?.getPeerId() as string
+            connectInfo.nodeAddr?.getPeerId() as string,
           );
           if (!nodeAddr) {
             logger.error("无法获取节点地址");
@@ -788,7 +787,7 @@ export class AuthModule implements DCModule, IAuthOperations {
           logger.error(
             `获取客户端失败, err: ${
               e?.message
-            }, PEERID: ${connectInfo.nodeAddr?.getPeerId()}`
+            }, PEERID: ${connectInfo.nodeAddr?.getPeerId()}`,
           );
           return;
         }
@@ -806,13 +805,13 @@ export class AuthModule implements DCModule, IAuthOperations {
           await connectInfo.client?.GetToken(
             this.context.appInfo.appId || "",
             this.context.publicKey.string(),
-            this.context.sign
+            this.context.sign,
           );
         } catch (tokenErr: any) {
           logger.error(
             `获取token失败, err: ${
               tokenErr?.message
-            }, PEERID: ${connectInfo.nodeAddr?.getPeerId()}`
+            }, PEERID: ${connectInfo.nodeAddr?.getPeerId()}`,
           );
         }
       }
@@ -824,7 +823,7 @@ export class AuthModule implements DCModule, IAuthOperations {
    * @returns 用户信息
    */
   async getUserInfoWithNft(
-    nftAccount: string
+    nftAccount: string,
   ): Promise<[User | null, Error | null]> {
     try {
       this.assertInitialized();
@@ -845,7 +844,7 @@ export class AuthModule implements DCModule, IAuthOperations {
    * @returns [是否足够, 错误信息]
    */
   async ifEnoughUserSpace(
-    needSize?: number
+    needSize?: number,
   ): Promise<[boolean | null, Error | null]> {
     try {
       this.assertInitialized();
@@ -853,7 +852,7 @@ export class AuthModule implements DCModule, IAuthOperations {
       const pubkeyRaw = this.context.getPubkeyRaw();
       const res = await this.context.dcChain.ifEnoughUserSpace(
         pubkeyRaw,
-        needSize
+        needSize,
       );
       return [res, null];
     } catch (error) {
@@ -893,7 +892,7 @@ export class AuthModule implements DCModule, IAuthOperations {
     rk: string,
     sk: string,
     remark: string,
-    vaccount?: string
+    vaccount?: string,
   ): Promise<Error | null> {
     try {
       this.assertInitialized();
