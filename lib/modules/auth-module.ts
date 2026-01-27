@@ -152,7 +152,7 @@ export class AuthModule implements DCModule, IAuthOperations {
     try {
       await this.getUserToken(publicKeyBase32);
       return [true, null];
-    } catch (error) {
+    } catch (error: any) {
       return [false, error];
     }
   }
