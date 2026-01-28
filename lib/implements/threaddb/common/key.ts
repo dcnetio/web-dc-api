@@ -1,12 +1,10 @@
  
-import { secretbox, randomBytes } from 'tweetnacl'  
+import { randomBytes } from '@stablelib/random';
 
 import { base32 } from 'multiformats/bases/base32';
 import { SymKey } from '../core/core';
 import { symKeyFromBytes } from '../../../common/dc-key/keyManager';
-import type { PublicKey,PrivateKey } from "@libp2p/interface"; 
-import * as JsCrypto from "jscrypto/es6";
-const { Word32Array, AES, pad, mode, Base64 } = JsCrypto;
+import type { PublicKey,PrivateKey } from "@libp2p/interface";
 
 // Constants
 const NonceBytes = 12;
@@ -145,29 +143,24 @@ async  encrypt(
   if(exNonce && exNonce.length === NonceBytes) {
     nonce = exNonce;
   }
-  // 生成随机初始化向量 (96 bits)  
-  const iv = crypto.getRandomValues(nonce);  
-  // 加密配置  
-  const algorithm = {  
-    name: "AES-GCM",  
-    iv: iv,  
-    tagLength: 128 // 认证标签长度 (bits)  
-  };  
-  const symKey = await this.toSymKey();
-  // 执行加密  
-  const ciphertext = await crypto.subtle.encrypt(  
-    algorithm,  
-    symKey.key,  
-    plaintext as any
-  );  
-  // 提取认证标签（最后16字节）  
-  //const tag = ciphertext.slice(ciphertext.byteLength - 16);  
   
-  // 分离密文主体（去除标签）  
- // const ciphertextBody = ciphertext.slice(0, ciphertext.byteLength - 16);  
-  const result = new Uint8Array(nonce.length + ciphertext.byteLength);
+  // 使用 Web Crypto API 进行 AES-GCM 加密
+  const symKey = await this.toSymKey();
+  
+  const encrypted = await crypto.subtle.encrypt(
+    {
+      name: "AES-GCM",
+      iv: nonce as any,
+      tagLength: 128
+    },
+    symKey.key,
+    plaintext as any
+  );
+  
+  // 合并 nonce 和密文
+  const result = new Uint8Array(nonce.length + encrypted.byteLength);
   result.set(nonce, 0);
-  result.set(new Uint8Array(ciphertext), nonce.length);
+  result.set(new Uint8Array(encrypted), nonce.length);
   return result;
 } 
 
@@ -179,31 +172,28 @@ async  encrypt(
    * Decrypt uses key to perform AES-256 GCM decryption on ciphertext
    */
   async decrypt(encryptBuffer: Uint8Array): Promise<Uint8Array> {
-  
-   if (encryptBuffer.length <= 28) {
+    if (encryptBuffer.length <= NonceBytes + TagBytes) {
       return encryptBuffer;
     }
+    
     const nonce = encryptBuffer.subarray(0, NonceBytes);
-    const iv = new Word32Array(nonce);
-    const tag = encryptBuffer.subarray(
-      encryptBuffer.length - TagBytes,
-      encryptBuffer.length
+    const ciphertext = encryptBuffer.subarray(NonceBytes);
+    
+    const symKey = await this.toSymKey();
+    
+    // 使用 Web Crypto API 解密
+    const decrypted = await crypto.subtle.decrypt(
+      {
+        name: "AES-GCM",
+        iv: nonce as any,
+        tagLength: 128
+      },
+      symKey.key,
+      ciphertext as any
     );
-    const kdfSalt = new Word32Array(tag);
-    const encryptContent = encryptBuffer.subarray(
-      NonceBytes,
-      encryptBuffer.length - TagBytes
-    );
-    const cipherText = new Word32Array(encryptContent);
-    const key = new Word32Array(this._raw);
-    const decrypted = AES.decrypt(cipherText.toString(Base64), key, {
-      iv: iv,
-      padding: pad.NoPadding,
-      mode: mode.GCM,
-      kdfSalt: kdfSalt,
-    });
-    return decrypted.toUint8Array();
-}
+    
+    return new Uint8Array(decrypted);
+  }
 }
 
 

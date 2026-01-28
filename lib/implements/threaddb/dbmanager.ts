@@ -42,10 +42,9 @@ import { NewThreadOptions } from "./core/options";
 import { ThreadToken } from "./core/identity";
 import { DBGrpcClient } from "./net/grpcClient";
 import type { Client } from "../../common/dcapi";
-import { jsonStringify } from "../../util/utils";
+import { jsonStringify, uint8ArrayToHex } from "../../util/utils";
 import { Protocol } from "./net/define";
 import { parseJsonToQuery } from "./db/json2Query";
-import * as buffer from "buffer/";
 import { dial_timeout } from "../../common/define";
 import multibase, { decode as multibaseDecode } from "multibase";
 import { net as net_pb } from "./pb/net_pb";
@@ -54,7 +53,6 @@ import { FileManager } from "../file/manager";
 import { newIterator } from "./db/collection";
 import { Query } from "./db/query";
 import { DCContext } from "../../interfaces";
-const { Buffer } = buffer;
 
 export const ThreadProtocol = "/dc/" + Protocol.name + "/" + Protocol.version;
 
@@ -174,20 +172,20 @@ export class DBManager {
       const storedBytes = await this.store.get(new Key(storageKey));
       if (storedBytes) {
         const key = Ed25519PrivKey.fromString(
-          Buffer.from(storedBytes).toString("hex")
+          uint8ArrayToHex(storedBytes)
         );
         return key;
       } else {
         // Create new key if none exists
         const key = await this.newLogKey();
-        this.store.put(new Key(storageKey), Buffer.from(key.raw));
+        this.store.put(new Key(storageKey), key.raw);
         return key;
       }
     } catch (err: any) {
       if (err.code === "ERR_NOT_FOUND") {
         // Create new key if none exists
         const key = await this.newLogKey();
-        this.store.put(new Key(storageKey), Buffer.from(key.raw));
+        this.store.put(new Key(storageKey), key.raw);
         return key;
       }
       throw new Error(`Failed to get/create log key: ${err}`);
@@ -1070,7 +1068,7 @@ export class DBManager {
       if (connectedConn) {
         //连接成功
         connectedPeerId = connectedConn?.remotePeer;
-        dbMultiAddr = connectedConn.remoteAddr;
+        dbMultiAddr = connectedConn.remoteAddr as any;
       } else {
         //从区块链中获取节点信息,再连接
         const [connectedAddr, peers] = await this.dc._connectToObjNodes(
@@ -1079,7 +1077,7 @@ export class DBManager {
         if (!connectedAddr) {
           throw new Error("connect to obj nodes failed");
         }
-        dbMultiAddr = connectedAddr;
+        dbMultiAddr = connectedAddr as any;
       }
 
       const collections = collectionInfos.map((info) => ({
@@ -1775,7 +1773,7 @@ export class DBManager {
       }
 
       // 创建实例
-      const instanceID = await collection.create(Buffer.from(jsonInstance));
+      const instanceID = await collection.create(new TextEncoder().encode(jsonInstance));
       // 返回实例ID
       return instanceID ? instanceID.toString() : "";
     } catch (err) {
@@ -1871,7 +1869,7 @@ export class DBManager {
         throw new Error("Collection does not exist");
       }
       // 保存实例
-      await collection.save(Buffer.from(instance));
+      await collection.save(new TextEncoder().encode(instance));
     } catch (err) {
       console.error(
         `Failed to save instance: ${
@@ -2020,22 +2018,38 @@ export class DBManager {
         return jsonStringify(results);
       } else {
         // 如果结果是字节数组，则需要连接它们
-        const resultArray = results as Buffer[];
-        const joinedResult = Buffer.concat([
-          Buffer.from("["),
-          Buffer.concat(
+        const resultArray = results as Uint8Array[];
+        
+        // Helper function to concatenate Uint8Arrays
+        const concatUint8Arrays = (arrays: Uint8Array[]): Uint8Array => {
+          const totalLength = arrays.reduce((acc, arr) => acc + arr.length, 0);
+          const result = new Uint8Array(totalLength);
+          let offset = 0;
+          for (const arr of arrays) {
+            result.set(arr, offset);
+            offset += arr.length;
+          }
+          return result;
+        };
+        
+        const openBracket = new TextEncoder().encode("[");
+        const closeBracket = new TextEncoder().encode("]");
+        const comma = new TextEncoder().encode(",");
+        const empty = new Uint8Array(0);
+        
+        const joinedResult = concatUint8Arrays([
+          openBracket,
+          concatUint8Arrays(
             resultArray.map((buf, idx) =>
-              Buffer.concat([
+              concatUint8Arrays([
                 buf,
-                idx < resultArray.length - 1
-                  ? Buffer.from(",")
-                  : Buffer.from(""),
+                idx < resultArray.length - 1 ? comma : empty,
               ])
             )
           ),
-          Buffer.from("]"),
+          closeBracket,
         ]);
-        return joinedResult.toString();
+        return new TextDecoder().decode(joinedResult);
       }
     } catch (err) {
       console.error(
@@ -2077,8 +2091,8 @@ export class DBManager {
       const result = await collection.findByID(instanceID);
 
       // 返回实例
-      return result instanceof Buffer
-        ? result.toString()
+      return result instanceof Uint8Array
+        ? new TextDecoder().decode(result)
         : jsonStringify(result);
     } catch (err) {
       console.error(

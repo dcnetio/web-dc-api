@@ -11,8 +11,6 @@ import { HeadBook, DumpHeadBook } from '../core/logstore';
 import { ThreadID } from '@textile/threads-id';
 import type { PeerId } from "@libp2p/interface";
 import { dsLogKey, dsThreadKey, AllowEmptyRestore } from './global';
-import * as buffer from "buffer/";
-const { Buffer } = buffer;
 
 const hbBase = new Key('/thread/heads');
 const hbEdge = new Key('/thread/heads:edge');
@@ -182,7 +180,7 @@ export class DsHeadBook implements HeadBook {
             if (heads.length === 0) throw new Error('Thread not found');
 
             const edge = this.computeHeadsEdge(heads);
-            const buffer = Buffer.alloc(8);
+            const buffer = new Uint8Array(8);
             this.writeEdgeValue(buffer, edge);
 
             await txn.put(key, buffer);
@@ -278,24 +276,24 @@ private fnv1a64(data: Uint8Array, initial: bigint): bigint {
     }
 
     private decodeStoredEdge(data: Uint8Array): bigint {
-        const buf: any = Buffer.from(data);
-        const reader = buf as unknown as { readBigUInt64BE?: (offset?: number) => bigint };
-        if (buf.length >= 8 && typeof reader.readBigUInt64BE === 'function') {
-            return reader.readBigUInt64BE(0);
+        if (data.length >= 8) {
+            const view = new DataView(data.buffer, data.byteOffset, data.byteLength);
+            return view.getBigUint64(0, false); // false = big-endian
         }
-        if (buf.length >= 4) {
-            return BigInt(buf.readUInt32BE(0));
+        if (data.length >= 4) {
+            const view = new DataView(data.buffer, data.byteOffset, data.byteLength);
+            return BigInt(view.getUint32(0, false)); // false = big-endian
         }
         throw new Error('Corrupted head edge value');
     }
 
-    private writeEdgeValue(buf: any, value: bigint): void {
-        const writer = buf as unknown as { writeBigUInt64BE?: (val: bigint, offset?: number) => number };
-        if (typeof writer.writeBigUInt64BE === 'function') {
-            writer.writeBigUInt64BE(value, 0);
+    private writeEdgeValue(buf: Uint8Array, value: bigint): void {
+        const view = new DataView(buf.buffer, buf.byteOffset, buf.byteLength);
+        if (buf.length >= 8) {
+            view.setBigUint64(0, value, false); // false = big-endian
             return;
         }
-        buf.writeUInt32BE(Number(value & 0xffffffffn), 0);
+        view.setUint32(0, Number(value & 0xffffffffn), false); // false = big-endian
     }
 
     private randomDelay(attempt: number): Promise<void> {

@@ -5,7 +5,7 @@ import type {
   AccountInfo,
   Account,
 } from "../common/types/types";
-import type { HeliaLibp2p } from "helia";
+import type { Helia } from "helia";
 import { Libp2p } from "@libp2p/interface";
 import { ChainUtil } from "../common/chain";
 import { DcUtil } from "../common/dcutil";
@@ -18,7 +18,7 @@ import { DCGrpcServer } from "../implements/threaddb/net/grpcserver";
  */
 export interface DCContext {
   // 核心基础设施
-  dcNodeClient: HeliaLibp2p<Libp2p>;
+  dcNodeClient: Helia;
   dcChain: ChainUtil;
   dcutil: DcUtil;
 

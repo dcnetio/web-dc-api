@@ -227,7 +227,7 @@ class DsKeyBook implements KeyBook {
 
   private processReadKeyEntry(namespaces: string[], value: Uint8Array, dump: DumpKeyBook) {  
     const [tid] = namespaces.slice(2, 3)    
-    dump.data.read[tid!] = Buffer.from(value)  
+    dump.data.read[tid!] = value  
   } 
 
   private processServiceKeyEntry(namespaces: string[], value: Uint8Array, dump: DumpKeyBook) {  
@@ -235,7 +235,7 @@ class DsKeyBook implements KeyBook {
   if (!tid) {  
       throw new Error(`Invalid namespaces for service key: ${namespaces.join('/')}`)  
     } 
-    dump.data.service[tid] = Buffer.from(value)  
+    dump.data.service[tid] = value  
   } 
 
 async restoreKeys(dump: DumpKeyBook): Promise<void> {

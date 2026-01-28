@@ -15,7 +15,7 @@
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
     // 🔧 调整严格模式设置以提高兼容性
-    "strict": false, // 保持 false，避免过于严格
+    "strict": true, // 保持 false，避免过于严格
     "noImplicitAny": true,
     "strictFunctionTypes": false, // 🔧 放宽函数类型检查
     "strictNullChecks": true,

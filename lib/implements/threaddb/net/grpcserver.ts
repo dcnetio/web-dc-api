@@ -27,12 +27,13 @@ export class DCGrpcServer {
     }
 
     start() {
-      this.libp2p.handle(this.protocol, async ({ stream }) => {
+      this.libp2p.handle(this.protocol, async (data: any) => {
+        const { stream } = data;
         try {
           const hpack = new HPACK()
           //生成number的streamId
           let method = "";
-          const writer =  new StreamWriter(stream.sink) as any;
+          const writer =  new StreamWriter((stream as any).sink) as any;
           const http2Parser = new HTTP2Parser(writer)
           http2Parser.onData = async (payload, frameHeader) => {
             const requestData = payload.subarray(5) // 去除帧头部分

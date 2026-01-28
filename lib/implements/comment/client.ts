@@ -2,7 +2,7 @@ import { Libp2pGrpcClient } from "grpc-libp2p-client";
 import type { Client } from "../../common/dcapi";
 import { dcnet } from "../../proto/dcnet_proto";
 import { DataSource } from "../../proto/datasource";
-import { HeliaLibp2p } from "helia";
+import { Helia } from "helia";
 import { unixfs } from "@helia/unixfs";
 import { toString as uint8ArrayToString } from "uint8arrays/to-string";
 import { FileManager } from "../file/manager";
@@ -12,12 +12,12 @@ import { Libp2p } from "@libp2p/interface";
 
 export class CommentClient {
   client: Client;
-  dcNodeClient: HeliaLibp2p<Libp2p>;
+  dcNodeClient: Helia<Libp2p>;
   context: DCContext;
 
   constructor(
     dcClient: Client,
-    dcNodeClient: HeliaLibp2p<Libp2p>,
+    dcNodeClient: Helia<Libp2p>,
     context: DCContext
   ) {
     this.client = dcClient;

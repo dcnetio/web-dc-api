@@ -74,11 +74,10 @@ import {
   ProtoKeyConverter,
   json,
 } from "../pb/proto-custom-types";
-import * as buffer from "buffer/";
 import { AsyncMutex } from "../common/AsyncMutex";
 import { DCContext } from "../../../interfaces";
 import { time } from "console";
-const { Buffer } = buffer;
+import { hexToUtf8 } from "../../../util/utils";
 
 /**
  * Creates a new ThreadRecord
@@ -230,7 +229,7 @@ export class Network implements Net {
     }
     const peerIds: PeerId[] = [];
     for (const peer of peers) {
-      const peerStr = Buffer.from(peer.slice(2), "hex").toString("utf8");
+      const peerStr = hexToUtf8(peer.slice(2));
       const peerId = peerIdFromString(peerStr);
       if (!peerId) {
         continue;
@@ -557,7 +556,7 @@ export class Network implements Net {
         const withPeerId = addr.encapsulate(
           `/p2p/${this.libp2p.peerId.toString()}`
         );
-        const threadMultiaddr = new ThreadMuliaddr(withPeerId, tinfo.id);
+        const threadMultiaddr = new ThreadMuliaddr(withPeerId as any, tinfo.id);
         resultAddrs.push(threadMultiaddr);
       }
       tinfo.addrs = resultAddrs;

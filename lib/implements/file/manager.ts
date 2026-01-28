@@ -1,6 +1,6 @@
 import { UploadStatus, type DCConnectInfo } from "../../common/types/types";
 import { FileClient } from "./client";
-import type { HeliaLibp2p } from "helia";
+import type { Helia } from "helia";
 import { ChainUtil } from "../../common/chain";
 import { Errors as GErrors } from "../../common/error";
 
@@ -11,22 +11,20 @@ import {
   uint32ToLittleEndianBytes,
   uint64ToBigEndianBytes,
   uint64ToLittleEndianBytes,
+  iterableToUint8Array,
 } from "../../util/utils";
 
 import { unixfs } from "@helia/unixfs";
 import { SymmetricKey } from "../threaddb/common/key";
 import { CID, Version } from "multiformats/cid";
 import { BrowserType, DcUtil } from "../../common/dcutil";
-import toBuffer from "it-to-buffer";
 import { decryptContent } from "../../util/dccrypt";
-import * as buffer from "buffer/";
 import { Uint8ArrayList } from "uint8arraylist";
 import { Libp2p, Stream } from "@libp2p/interface";
 import { cidNeedConnect } from "../../common/constants";
 import { SeekableFileStream } from "./seekableFileStream";
 import { AccountClient } from "../account/client";
 import { DCContext } from "../../../lib/interfaces/DCContext";
-const { Buffer } = buffer;
 
 const NonceBytes = 12;
 const TagBytes = 16;
@@ -69,13 +67,13 @@ export class FileManager {
   dc: DcUtil;
   connectedDc: DCConnectInfo = {};
   chainUtil: ChainUtil;
-  dcNodeClient: HeliaLibp2p<Libp2p>;
+  dcNodeClient: Helia<Libp2p>;
   context: DCContext;
   constructor(
     dc: DcUtil,
     connectedDc: DCConnectInfo,
     chainUtil: ChainUtil,
-    dcNodeClient: HeliaLibp2p<Libp2p>,
+    dcNodeClient: Helia<Libp2p>,
     context: DCContext
   ) {
     this.dc = dc;
@@ -265,7 +263,7 @@ export class FileManager {
 
       const stats = await fs.stat(cid);
       const filesize = stats.unixfs?.fileSize() || 0;
-      const dagFileSize = Number(stats.localDagSize);
+      const dagFileSize = Number((stats as any).localDagSize);
       const fileClient = new FileClient(
         this.connectedDc.client,
         this.dcNodeClient,
@@ -687,11 +685,11 @@ export class FileManager {
 
       // Get stats for the root directory itself
       const rootStats = await fs.stat(rootCID);
-      totalBlocks += Number(rootStats.blocks || 0);
+      totalBlocks += Number((rootStats as any).blocks || 0);
 
       // List all entries in the directory and process them recursively
       for await (const entry of fs.ls(rootCID)) {
-        const { cid, type } = entry;
+        const { cid, type } = entry as any;
 
         // Get stats for the current entry
         const stats = await fs.stat(cid);
@@ -702,7 +700,7 @@ export class FileManager {
           totalBlocks += subDirBlocks;
         } else {
           // For files, add their block count
-          totalBlocks += Number(stats.blocks || 0);
+          totalBlocks += Number((stats as any).blocks || 0);
         }
       }
 
@@ -869,7 +867,7 @@ export class FileManager {
   }
 
   private async *chunkGenerator(stream: Stream): AsyncGenerator<Uint8Array> {
-    const iterator = stream.source[Symbol.asyncIterator]();
+    const iterator = (stream as any).source[Symbol.asyncIterator]();
     while (true) {
       try {
         const { done, value } = await iterator.next();
@@ -1041,7 +1039,7 @@ export class FileManager {
       ) => {
         // 遍历当前目录内容
         for await (const entry of fs.ls(dirCid)) {
-          const { name, cid, type } = entry;
+          const { name, cid, type } = entry as any;
           if (name === "." || name === ".." || name === "dc_ownuser") {
             continue; // 跳过当前目录和上级目录
           }
@@ -1055,7 +1053,7 @@ export class FileManager {
           const fileInfo = {
             Name: name,
             Type: type === "directory" ? 1 : 0, // 0-文件 1-目录
-            Size: type === "directory" ? 0 : Number(stats.fileSize || 0),
+            Size: type === "directory" ? 0 : Number((stats as any).fileSize || 0),
             Hash: cid.toString(),
             Path: fullPath,
           };
@@ -1139,7 +1137,7 @@ export class FileManager {
     try {
       for (;;) {
         if (!headDealed && !folderFlag) {
-          const headBuf = await toBuffer(fs.cat(CID.parse(cid), catOptions));
+          const headBuf = await iterableToUint8Array(fs.cat(CID.parse(cid), catOptions));
           readCount += headBuf.length;
           if (headBuf.length > 0) {
             waitBuffer = mergeUInt8Arrays(waitBuffer, headBuf) as any;
@@ -1153,7 +1151,7 @@ export class FileManager {
               if (
                 compareByteArrays(
                   waitBuffer.subarray(0, 10),
-                  Buffer.from("$$dcfile$$")
+                  new TextEncoder().encode("$$dcfile$$")
                 )
               ) {
                 //判断是否是dc网络存储的文件头
@@ -1175,7 +1173,7 @@ export class FileManager {
         }
         catOptions.offset = readCount;
         catOptions.length = encryptextLen;
-        const buf = await toBuffer(fs.cat(CID.parse(cid), catOptions));
+        const buf = await iterableToUint8Array(fs.cat(CID.parse(cid), catOptions));
         if (buf.length > 0) {
           readCount += buf.length;
         }
@@ -1231,7 +1229,7 @@ export class FileManager {
 
     try {
       // 读取头信息
-      const headerData = await toBuffer(
+      const headerData = await iterableToUint8Array(
         fs.cat(CID.parse(cid), {
           offset: 0,
           length: 32,
@@ -1241,7 +1239,7 @@ export class FileManager {
       // 检查是否有DC文件头
       const hasHeader = compareByteArrays(
         headerData.subarray(0, 10),
-        Buffer.from(dcFileHead)
+        new TextEncoder().encode(dcFileHead)
       );
 
       // 获取文件大小

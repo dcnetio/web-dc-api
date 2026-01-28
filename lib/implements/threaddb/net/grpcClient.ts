@@ -31,10 +31,8 @@ import {
   MultiaddrConverter,
   ThreadIDConverter,
 } from "../pb/proto-custom-types";
-import * as buffer from "buffer/";
 import { ILogstore } from "../core/logstore";
 import { Client } from "@/common/dcapi";
-const { Buffer } = buffer;
 
 export const GrpcStatus = {
   OK: 0,
@@ -215,8 +213,8 @@ export class DBGrpcClient {
 
             let counter = -1;
             if (lg.counter && lg.counter.length > 0) {
-              const counterBuffer = Buffer.from(lg.counter);
-              counter = Number(counterBuffer.readBigUInt64BE(0));
+              const view = new DataView(lg.counter.buffer, lg.counter.byteOffset, lg.counter.byteLength);
+              counter = Number(view.getBigUint64(0, false)); // false = big-endian
             }
             return {
               id,

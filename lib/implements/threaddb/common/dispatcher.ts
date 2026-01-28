@@ -1,5 +1,3 @@
-import * as buffer from "buffer/";
-const { Buffer } = buffer;
 import {  Key, Query,Pair } from 'interface-datastore';
 import {DBPrefix } from '../core/db';
 import { Event ,TxnDatastoreExtended, Transaction} from '../core/db'; // Assuming Event is defined in a core module
@@ -47,7 +45,7 @@ export class Dispatcher {
         try {
             for (const event of events) {
                 const key = this.getKey(event);
-                const buffer = Buffer.from(jsonStringify(event));
+                const buffer = new TextEncoder().encode(jsonStringify(event));
                 await txn.put(key, buffer);
             }
             await txn.commit();

@@ -18,6 +18,7 @@ import * as cbornode from './node';
 import { KeyConverter, PeerIDConverter } from '../pb/proto-custom-types';
 import { decode } from 'multiformats/hashes/digest';
 import { peerIdFromMultihash } from '@libp2p/peer-id';
+import { concat } from 'uint8arrays';
 import {multiaddr} from "@multiformats/multiaddr";
 import { Head } from '../core/head';
 // 记录的节点结构
@@ -266,7 +267,13 @@ export async function RecordToProto(
         const encrypted = dagCBOR.decode<Uint8Array>(rec.data());
         const decrypted = await key.decrypt(encrypted);
         const obj = dagCBOR.decode<RecordObj>(decrypted);
-        const eventData = await bstore.get(obj.block);
+        // Consuming AsyncIterable from bstore.get
+        const chunks = [];
+        // @ts-ignore - bstore.get return type mismatch in newer Helia versions
+        for await (const chunk of bstore.get(obj.block)) {
+          chunks.push(chunk);
+        }
+        const eventData = concat(chunks);
         block = await cbornode.decode(eventData);
      }
 

@@ -35,16 +35,14 @@ const _shouldReturnUserInfo = !!(
 
 let _baseUrl = configInfo.baseUrl;
 let _walletOrigin = configInfo.walletOrigin;
-if (!_isDev) {
-  if (_walletOpenOrigin) {
-    _walletOrigin = _walletOpenOrigin;
-  }
-  if (_walletOpenVersion) {
-    _baseUrl =
-      _walletOpenVersion && _walletOpenVersion.startsWith("/")
-        ? _walletOpenVersion
-        : "/" + _walletOpenVersion;
-  }
+if (_walletOpenOrigin) {
+  _walletOrigin = _walletOpenOrigin;
+}
+if (_walletOpenVersion) {
+  _baseUrl =
+    _walletOpenVersion && _walletOpenVersion.startsWith("/")
+      ? _walletOpenVersion
+      : "/" + _walletOpenVersion;
 }
 export const isIframeOpen = _isIframeOpen;
 export const walletIframeOpenFlag = _walletIframeOpenFlag;
