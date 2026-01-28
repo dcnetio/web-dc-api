@@ -485,9 +485,9 @@ export class KeyValueClient {
         messageBytes,
         30000
       );
-      console.log("getValuesWithIndex reply", reply);
+      // console.log("getValuesWithIndex reply", reply);
       const decoded = dcnet.pb.GetValuesWithIndexReply.decode(reply);
-      console.log("getValuesWithIndex decoded", decoded);
+      // console.log("getValuesWithIndex decoded", decoded);
       if(decoded.flag == 0) {
         return decoded.keyValues;
       }
