@@ -351,7 +351,7 @@ export class WalletManager {
       const message = {
         type: "getLoginInfo",
       };
-      this.sendMessageToIframe(message, 30000)
+      this.sendMessageToIframe(message, 10000)
         .then((response) => {
           if (!response || !response.data || !response.data.data) {
             console.error("getLoginInfo response is null");
@@ -361,7 +361,6 @@ export class WalletManager {
           const data = response.data?.data;
           const messageData: Account = data.message;
           if (data.success === false || !messageData) {
-            console.error("getLoginInfo error", message);
             reject(new WalletError("getLoginInfo messageData is null"));
             return;
           }
