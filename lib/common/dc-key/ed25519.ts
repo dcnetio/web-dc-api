@@ -1,5 +1,5 @@
 import { ed25519 } from "@noble/curves/ed25519";
-import * as protobuf from "protobufjs";
+import protobuf from "protobufjs";
 import { identity } from "multiformats/hashes/identity";
 import { CID } from "multiformats/cid";
 import { base58btc } from "multiformats/bases/base58";

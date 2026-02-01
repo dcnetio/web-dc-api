@@ -209,6 +209,8 @@ export default [
       dir: "dist/cjs",
       format: "cjs",
       sourcemap: true, // ✅ 开启 Source Map
+      entryFileNames: "[name].cjs", // 使用 .cjs 扩展名
+      chunkFileNames: "[name]-[hash].cjs", // chunk 文件也使用 .cjs
       manualChunks,
       exports: "auto",
     },
