@@ -70,7 +70,7 @@ export class UtilClient {
         );
         return;
       } catch (error) {
-        if (error.message.indexOf(Errors.INVALID_TOKEN.message) != -1) {
+        if (error instanceof Error && error.message.indexOf(Errors.INVALID_TOKEN.message) != -1) {
           // try to get token
           const token = await this.client.GetToken(
             this.context.appInfo.appId || "",

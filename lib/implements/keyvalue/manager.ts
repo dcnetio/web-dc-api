@@ -483,7 +483,7 @@ export class KeyValueManager {
           };
           return [themeAuthInfo, null];
         }catch(e){
-          return [null, e];
+          return [null, e instanceof Error ? e : new Error(String(e))];
         }
         } 
       }
@@ -553,7 +553,7 @@ export class KeyValueManager {
           };
           return [themeAuthInfo, null];
         }catch(e){
-          return [null, e];
+          return [null, e instanceof Error ? e : new Error(String(e))];
         }
         } 
       }

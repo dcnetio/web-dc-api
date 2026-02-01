@@ -145,7 +145,7 @@ export class AuthModule implements DCModule, IAuthOperations {
       this.context.userInfo = account;
       return [account, null];
     } catch (error) {
-      return [null, error];
+      return [null, error instanceof Error ? error : new Error(String(error))];
     }
   }
   async getToken(publicKeyBase32: string): Promise<[boolean, Error | null]> {

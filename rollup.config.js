@@ -39,6 +39,7 @@ const basePlugins = [
   json(),
   babel({
     babelHelpers: "bundled",
+    compact: false, // 禁用压缩，避免大文件的性能优化提示
     presets: [
       [
         "@babel/preset-env",
@@ -84,22 +85,6 @@ const getResolveConfig = (isBrowser = true) => ({
 const getCommonJSConfig = () => ({
   transformMixedEsModules: true,
   // include: ["node_modules/**"],
-  // 🔧 确保 uint8arrays 的所有导出都被正确处理
-  namedExports: {
-    uint8arrays: [
-      "fromString",
-      "toString",
-      "concat",
-      "equals",
-      "compare",
-      "xor",
-      "alloc",
-    ],
-    "uint8arrays/from-string": ["fromString"],
-    "uint8arrays/to-string": ["toString"],
-    "uint8arrays/concat": ["concat"],
-    "uint8arrays/equals": ["equals"],
-  },
   // 🔧 强制转换这些模块
   requireReturnsDefault: "auto",
 });
@@ -137,6 +122,50 @@ const manualChunks = (id) => {
   return null; // 其他所有包都保留在主 chunk
 };
 
+// 警告过滤器
+const onwarn = (warning, warn) => {
+  const warningString = warning.toString();
+  const warningMessage = warning.message || '';
+  
+  // 忽略 @noble/ciphers 的注解警告
+  if (warning.code === 'INVALID_ANNOTATION' || warningMessage.includes('@__NO_SIDE_EFFECTS__')) {
+    if ((warning.id && warning.id.includes('@noble/ciphers')) || warningMessage.includes('@noble/ciphers')) {
+      return;
+    }
+  }
+  
+  // 忽略 @polkadot 的注解警告
+  if (warning.code === 'INVALID_ANNOTATION' || warningMessage.includes('/*#__PURE__*/')) {
+    if ((warning.id && warning.id.includes('@polkadot')) || warningMessage.includes('@polkadot')) {
+      return;
+    }
+  }
+  
+  // 忽略来自 node_modules 的循环依赖警告
+  if (warning.code === 'CIRCULAR_DEPENDENCY' || warningMessage.includes('Circular depend')) {
+    if (warningMessage.includes('node_modules') || (warning.ids && warning.ids.some(id => id.includes('node_modules')))) {
+      return;
+    }
+  }
+  
+  // 忽略 detect-browser 的 this 重写警告
+  if (warning.code === 'THIS_IS_UNDEFINED' || warningMessage.includes('this" has been rewritten')) {
+    if ((warning.id && warning.id.includes('detect-browser')) || warningMessage.includes('detect-browser')) {
+      return;
+    }
+  }
+  
+  // 忽略 protobufjs 的 eval 警告
+  if (warning.code === 'EVAL' || warningMessage.includes('eval')) {
+    if ((warning.id && warning.id.includes('protobufjs')) || warningMessage.includes('protobufjs')) {
+      return;
+    }
+  }
+  
+  // 显示其他警告
+  warn(warning);
+};
+
 export default [
   // ESM格式 - 优化的代码拆分
   // ⚠️ 变更：开启 SourceMap，关闭压缩
@@ -153,8 +182,6 @@ export default [
       entryFileNames: "index.js",
       // 🔧 优化的手动拆分策略
       manualChunks,
-      // 设置chunk大小警告
-      chunkSizeWarningLimit: 500, // 500KB 警告阈值
       exports: "auto",
     },
     external,
@@ -171,6 +198,7 @@ export default [
       ...basePlugins,
       // compressionPlugin, // ❌ ESM 版本不压缩，方便调试
     ],
+    onwarn,
   },
 
   // CJS格式 - 单文件
@@ -182,8 +210,6 @@ export default [
       format: "cjs",
       sourcemap: true, // ✅ 开启 Source Map
       manualChunks,
-      // 设置chunk大小警告
-      chunkSizeWarningLimit: 500, // 500KB 警告阈值
       exports: "auto",
     },
     external,
@@ -200,6 +226,7 @@ export default [
       ...basePlugins,
       // compressionPlugin, // ❌ CJS 版本不压缩
     ],
+    onwarn,
   },
 
   // 类型定义文件
@@ -210,12 +237,15 @@ export default [
       format: "es",
       inlineDynamicImports: true,
     },
+    external,
+    onwarn,
     plugins: [
       dts({
         tsconfig: "./tsconfig.json",
       }),
     ],
     external,
+    onwarn,
   },
 
   // UMD格式
@@ -235,6 +265,7 @@ export default [
       exports: "auto",
     },
     external: ["grpc-libp2p-client"],
+    onwarn,
     plugins: [
       resolve({
         ...getResolveConfig(true),
