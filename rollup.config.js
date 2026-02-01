@@ -22,11 +22,11 @@ const external = [
   ...Object.keys(pkg.dependencies || {}),
   ...Object.keys(pkg.devDependencies || {}),
   ...Object.keys(pkg.peerDependencies || {}),
-  // 🔧 移除可能有问题的库，让它们被打包进来
-  // 如果 uint8arrays 在 external 中，需要将其移除
+  // 注意：如果你需要 uint8arrays 被打包，请确保它不在这些列表中，或者手动从 external 数组中过滤掉
 ];
 
 console.log("NODE_ENV:", process.env.NODE_ENV);
+const isProduction = process.env.NODE_ENV === "production";
 
 const basePlugins = [
   // 🔧 添加 process polyfill
@@ -54,9 +54,10 @@ const basePlugins = [
   [("@babel/plugin-proposal-class-properties", { loose: true })],
 ];
 
-const compressionPlugin = terser({
+// 🔧 UMD 专用压缩配置 (仅用于 CDN .min.js 版本)
+const umdCompressionPlugin = terser({
   compress: {
-    drop_console: ["log", "info", "warn", "debug", "trace"],
+    drop_console: ["debug", "trace"], // 保留 info/warn/error
     drop_debugger: true,
   },
   format: {
@@ -102,6 +103,7 @@ const getCommonJSConfig = () => ({
   // 🔧 强制转换这些模块
   requireReturnsDefault: "auto",
 });
+
 // 高级优化策略
 const manualChunks = (id) => {
   // 调试信息：查看正在处理的文件
@@ -134,16 +136,17 @@ const manualChunks = (id) => {
 
   return null; // 其他所有包都保留在主 chunk
 };
+
 export default [
   // ESM格式 - 优化的代码拆分
+  // ⚠️ 变更：开启 SourceMap，关闭压缩
   {
     input: "lib/index.ts",
     output: {
       dir: "dist/esm",
       format: "es",
-      sourcemap: false,
+      sourcemap: true, // ✅ 开启 Source Map
       sourcemapPathTransform: (relativeSourcePath) => {
-        // 确保 sourcemap 中的路径正确
         return relativeSourcePath;
       },
       chunkFileNames: "chunks/[name]-[hash].js",
@@ -152,7 +155,7 @@ export default [
       manualChunks,
       // 设置chunk大小警告
       chunkSizeWarningLimit: 500, // 500KB 警告阈值
-      exports: "auto", // 添加这个
+      exports: "auto",
     },
     external,
     plugins: [
@@ -163,23 +166,25 @@ export default [
         declaration: false,
         declarationMap: false,
         outDir: "dist/esm",
+        sourceMap: true, // ✅ 确保 TS 编译生成 Map
       }),
       ...basePlugins,
-      compressionPlugin,
+      // compressionPlugin, // ❌ ESM 版本不压缩，方便调试
     ],
   },
 
   // CJS格式 - 单文件
+  // ⚠️ 变更：开启 SourceMap，关闭压缩
   {
     input: "lib/index.ts",
     output: {
       dir: "dist/cjs",
       format: "cjs",
-      sourcemap: false,
+      sourcemap: true, // ✅ 开启 Source Map
       manualChunks,
       // 设置chunk大小警告
       chunkSizeWarningLimit: 500, // 500KB 警告阈值
-      exports: "auto", // 添加这个
+      exports: "auto",
     },
     external,
     plugins: [
@@ -190,9 +195,10 @@ export default [
         declaration: false,
         declarationMap: false,
         outDir: "dist/cjs",
+        sourceMap: true, // ✅ 确保 TS 编译生成 Map
       }),
       ...basePlugins,
-      compressionPlugin,
+      // compressionPlugin, // ❌ CJS 版本不压缩
     ],
   },
 
@@ -213,20 +219,21 @@ export default [
   },
 
   // UMD格式
+  // ⚠️ 变更：开启 SourceMap (虽然会被压缩，但有 Map 文件)
   {
     input: "lib/index.ts",
     output: {
       file: "dist/dc.min.js",
       format: "umd",
       name: GLOBAL_NAME,
-      sourcemap: false,
+      sourcemap: true, // ✅ 开启 Source Map
       exports: "named",
       intro: `var global = typeof window !== 'undefined' ? window : this;`,
       globals: {
         "grpc-libp2p-client": "GrpcLibp2pClient",
       },
       inlineDynamicImports: true,
-      exports: "auto", // 添加这个
+      exports: "auto",
     },
     external: ["grpc-libp2p-client"],
     plugins: [
@@ -240,34 +247,10 @@ export default [
         declaration: false,
         declarationMap: false,
         outDir: "dist",
+        sourceMap: true, // ✅ 确保 TS 编译生成 Map
       }),
       ...basePlugins,
-      compressionPlugin,
+      umdCompressionPlugin, // ✅ 只在 UMD/Min 版本保留强压缩
     ],
   },
-
-  // 开发版本ESM（带调试信息）
-  // {
-  //   input: "lib/index.ts",
-  //   output: {
-  //     dir: "dist/dev",
-  //     format: "es",
-  //     sourcemap: true,
-  //     chunkFileNames: "chunks/[name].js",
-  //     entryFileNames: "index.js",
-  //     manualChunks,
-  //   },
-  //   external,
-  //   plugins: [
-  //     resolve(getResolveConfig(true)),
-  //     commonjs(getCommonJSConfig()),
-  //     typescript({
-  //       tsconfig: "./tsconfig.json",
-  //       declaration: false,
-  //       declarationMap: false,
-  //       outDir: "dist/dev",
-  //     }),
-  //     ...basePlugins,
-  //   ],
-  // },
 ];
