@@ -227,7 +227,6 @@ export default [
       format: "umd",
       name: GLOBAL_NAME,
       sourcemap: true, // ✅ 开启 Source Map
-      exports: "named",
       intro: `var global = typeof window !== 'undefined' ? window : this;`,
       globals: {
         "grpc-libp2p-client": "GrpcLibp2pClient",
