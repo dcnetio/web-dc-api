@@ -225,7 +225,7 @@ export default [
     plugins: [
       // CJS需要inject插件提供process和buffer
       inject({
-        process: "process",
+        process: ["process", "process"],
         Buffer: ["buffer", "Buffer"],
       }),
       resolve(getResolveConfig(true)),
@@ -283,7 +283,7 @@ export default [
     plugins: [
       // UMD需要inject插件提供process和buffer
       inject({
-        process: "process",
+        process: ["process", "process"],
         Buffer: ["buffer", "Buffer"],
       }),
       resolve({
