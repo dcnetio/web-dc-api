@@ -120,7 +120,7 @@ class TransformedDatastore extends BaseDatastore {
   //   yield* this.queryExtended({ ...query });  
   // }  
 
-  async *query( q: Query): AsyncIterable<Pair> {  
+  async *query( q: Query): AsyncGenerator<Pair> {  
       const results = this.queryExtended(q as QueryExt)  
       for await (const result of results) {  
         yield {key: new Key(result.key), value: result.value}

@@ -119,11 +119,40 @@ export class AuthModule implements DCModule, IAuthOperations {
       throw error;
     }
   }
+
+  async getLoginInfo(): Promise<[Account | null, Error | null]> {
+    try {
+      this.assertInitialized();
+
+      if (!this.context.connectedDc?.client) {
+        throw new Error("dcClient is null");
+      }
+      const account: Account = await this.walletManager.getLoginInfo(); // getLoginInfo 返回登录信息{nftAccount, appAccount, ethAccount}
+      // 登录成功，清空临时私钥
+      this.context.privateKey = null;
+
+      const publicKey = new Ed25519PubKey(account.appAccount);
+      this.context.publicKey = publicKey;
+      account.account = publicKey.string();
+      this.context.ethAddress = account.ethAccount;
+      // 获取用户token
+      await this.getUserToken(publicKey.string());
+      // 登录后检查用户空间
+      await this.checkSpaceAfterLogin(publicKey.toString());
+
+      // 定时维系token
+      this.startDcPeerTokenKeepValidTask();
+      this.context.userInfo = account;
+      return [account, null];
+    } catch (error) {
+      return [null, error instanceof Error ? error : new Error(String(error))];
+    }
+  }
   async getToken(publicKeyBase32: string): Promise<[boolean, Error | null]> {
     try {
       await this.getUserToken(publicKeyBase32);
       return [true, null];
-    } catch (error) {
+    } catch (error: any) {
       return [false, error];
     }
   }

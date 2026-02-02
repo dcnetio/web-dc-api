@@ -18,7 +18,7 @@ class IDBDatastoreAdapter implements TxnDatastoreExtended {
     async *queryKeys(  
       query: KeyQuery,  
       options?: AbortOptions  
-    ): AsyncIterable<Key> {  
+    ): AsyncGenerator<Key> {  
       const { filters = [], prefix } = query;  
       const q = { prefix } as Query;
       for await (const { key } of this.store.query(q)) {  
@@ -41,14 +41,14 @@ class IDBDatastoreAdapter implements TxnDatastoreExtended {
     async *query(
       query: Query,
       options?: AbortOptions
-    ): AsyncIterable<Pair> {
+    ): AsyncGenerator<Pair> {
       try {
         
         // 获取迭代器
         const storeQuery = this.store.query(query);
         
         // 检查异步迭代器协议
-        if (!storeQuery || typeof storeQuery[Symbol.asyncIterator] !== 'function') {
+        if (!storeQuery || typeof (storeQuery as any)[Symbol.asyncIterator] !== 'function') {
           return;
         }
         
@@ -108,7 +108,7 @@ class IDBDatastoreAdapter implements TxnDatastoreExtended {
     async *putMany(  
       source: AwaitIterable<Pair>,  
       options?: AbortOptions  
-    ): AsyncIterable<Key> {  
+    ): AsyncGenerator<Key> {  
       const batch = this.batch();  
       
       for await (const entry of source) {  
@@ -123,7 +123,7 @@ class IDBDatastoreAdapter implements TxnDatastoreExtended {
     async *getMany(  
       source: AwaitIterable<Key>,  
       options?: AbortOptions  
-    ): AsyncIterable<Pair> {  
+    ): AsyncGenerator<Pair> {  
       for await (const key of source) {  
         try {  
           const value = await this.get(key);  
@@ -140,7 +140,7 @@ class IDBDatastoreAdapter implements TxnDatastoreExtended {
     async *deleteMany(  
       source: AwaitIterable<Key>,  
       options?: AbortOptions  
-    ): AsyncIterable<Key> {  
+    ): AsyncGenerator<Key> {  
       const batch = this.batch();  
       
       for await (const key of source) {  

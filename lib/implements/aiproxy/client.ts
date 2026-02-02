@@ -361,7 +361,7 @@ export class AIProxyClient {
         return AIStreamResponseFlag.EXTERNAL_EXIT;
       }
 
-      if (error.message.indexOf(Errors.INVALID_TOKEN.message) != -1) {
+      if (error instanceof Error && error.message.indexOf(Errors.INVALID_TOKEN.message) != -1) {
         // try to get token
         const token = await this.client.GetToken(
           this.context.appInfo.appId || "",
@@ -371,7 +371,7 @@ export class AIProxyClient {
           }
         );
         if (!token) {
-          throw new Error(error.message);
+          throw new Error(error instanceof Error ? error.message : String(error));
         }
         const grpcClient = new Libp2pGrpcClient(
           this.client.p2pNode,
@@ -443,7 +443,7 @@ export class AIProxyClient {
       const authInfo = new TextDecoder().decode(decodedResponse.authInfo);
       return [authInfo, null];
     } catch (error) {
-      return [null, error];
+      return [null, error instanceof Error ? error : new Error(String(error))];
     }
   }
 }

@@ -321,6 +321,38 @@ export class FileManager {
     return [resCid, null];
   }
 
+
+
+
+  // 添加文件到本地节点
+  async addFileInLocal(
+    file: File,
+    enkey: string
+  ): Promise<[string | null, Error | null]> {
+    let resCid: CID | null = null;
+    try {
+      const symKey =
+        enkey && enkey.length > 0 ? SymmetricKey.fromString(enkey) : null;
+      const fs = unixfs(this.dcNodeClient);
+      const pubkeyBytes = this.context.getPubkeyRaw();
+      
+      const cid = await this._uploadLargeFileAdvanced(
+        file,
+        { offset: 0, chunkHashes: [] },
+        pubkeyBytes,
+        symKey
+      );
+      if (!cid) {
+        return ["", Errors.ErrNoFileChose];
+      }
+      resCid = cid;
+    } catch (error: any) {
+      return ["", error];
+    }
+    return [resCid.toString(), null];
+  }
+
+
   /**
    * Adds a folder to the DC network using browser FileList
    * @param folderInput - Files from a directory input element
@@ -540,6 +572,73 @@ export class FileManager {
       return [finalCid, null];
     } catch (error) {
       console.error("Folder upload failed:", error);
+      return [null, error instanceof Error ? error : new Error(String(error))];
+    }
+  }
+
+
+
+  /**
+   * Adds a folder to the DC network using browser FileList
+   * @param folderInput - Files from a directory input element
+   * @param enkey - Encryption key
+   * @returns Promise with CID string and error if any
+   */
+  async addFolderInLocal(
+    fileList: FileList,
+    enkey: string
+  ): Promise<[string | null, Error | null]> {
+   
+    try {
+      // Create IPFS file system interface
+      const fs = unixfs(this.dcNodeClient);
+
+      // Generate user flag file (dc_ownuser)
+      let pubkeyBytes = this.context.getPubkeyRaw();
+
+      // Create hash of public key for owner file
+      const pubkeyHash = await crypto.subtle.digest(
+        "SHA-256",
+        pubkeyBytes as any
+      );
+      const ownerFileContent = new Uint8Array(pubkeyHash);
+
+      // Create folder structure using MFS (memory file system)
+      // Get root folder name
+      const rootFolderName = this.extractRootFolderName(fileList);
+      //排除掉 dc_ownuser 文件,然后又加上去,防止重复添加
+      const files = Array.from(fileList).filter(
+        (file) => file.name !== "dc_ownuser"
+      );
+      //将ownerFileContent作为文件内容,最后添加到根目录
+      const ownerPath = rootFolderName + "/dc_ownuser";
+      files.push(
+        new File([ownerFileContent], "dc_ownuser", { type: "text/plain" })
+      );
+
+      // 将文件路径与内容流映射
+      const source = Array.from(files).map((file) => ({
+        path: file.name === "dc_ownuser" ? ownerPath : file.webkitRelativePath, // 获取文件相对路径
+        content: this.fileToStream(file, enkey), // 使用文件流
+      }));
+
+      const results = fs.addAll(source);
+      let rootCID: CID<unknown, number, number, Version> | null = null;
+      let totalSize = 0;
+      //  let fileCount = 0;
+      for await (const { path, size, cid } of results) {
+        // The entry with path equal to the root folder name is our root
+        if (path === rootFolderName) {
+          rootCID = cid;
+          totalSize = Number(size);
+        }
+      }
+      if (!rootCID) {
+        console.error("Failed to find root directory CID");
+        return [null, new Error("Failed to find root directory CID")];
+      }
+      return [rootCID.toString(), null];
+    } catch (error) {
       return [null, error instanceof Error ? error : new Error(String(error))];
     }
   }

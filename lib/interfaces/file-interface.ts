@@ -86,21 +86,27 @@ export interface IFileOperations {
     onUpdateTransmitSize: (status: number, size: number) => void
   ): Promise<[string | null, Error | null]>;
 
-  /**
-   * 添加文件夹到存储
-   * @param files 要上传的文件夹下的文件列表
-   * @param enkey 加密密钥,base32的symmetric key
-   * @param onUpdateTransmitCount 传输进度回调函数
+
+    /**
+   * 添加文件到本地存储
+   * @param file 要上传的文件对象
+   * @param enkey 加密密钥
    * @returns 添加结果
    */
-  addFolder(
+  addFileInLocal(
+    file: File,
+    enkey: string
+  ): Promise<[string | null, Error | null]>;
+
+  /**
+   * 添加文件夹到本地存储
+   * @param files 要上传的文件夹下的文件列表
+   * @param enkey 加密密钥,base32的symmetric key
+   * @returns 添加结果
+   */
+  addFolderInLocal(
     files: FileList,
-    enkey: string,
-    onUpdateTransmitCount: (
-      status: number,
-      total: number,
-      process: number
-    ) => void
+    enkey: string
   ): Promise<[string | null, Error | null]>;
 
   /**

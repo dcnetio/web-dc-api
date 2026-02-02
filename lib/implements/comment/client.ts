@@ -712,9 +712,9 @@ export class CommentClient {
         messageBytes,
         30000
       );
-      console.log("IsThemeExist reply", reply);
+      // console.log("IsThemeExist reply", reply);
       const decoded = dcnet.pb.IsThemeExistReply.decode(reply);
-      console.log("IsThemeExist decoded", decoded);
+      // console.log("IsThemeExist decoded", decoded);
       if (decoded.flag == 0) {
         return true;
       }

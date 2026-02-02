@@ -4,6 +4,7 @@ import { IDBDatastore } from "datastore-idb";
 import { IDBBlockstore } from "blockstore-idb";
 import { keys } from "@libp2p/crypto";
 import { circuitRelayTransport } from "@libp2p/circuit-relay-v2";
+import { webSockets } from "@libp2p/websockets";
 import { webRTC, webRTCDirect } from "@libp2p/webrtc";
 import { createHelia, Helia } from "helia";
 import { createLibp2p, Libp2p } from "libp2p";
@@ -273,7 +274,7 @@ export class DcUtil {
     const libp2p = await createLibp2p({
       privateKey: keyPair,
       datastore: datastore as any,
-      transports: [webRTCDirect(), circuitRelayTransport(), webRTC()], //
+      transports: [webRTCDirect(), circuitRelayTransport(), webRTC(),webSockets()], //
       connectionEncrypters: [noise()],
       connectionGater: {
         denyDialMultiaddr: () => false, // this is necessary to dial local addresses at all
