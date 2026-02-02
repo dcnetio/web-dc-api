@@ -648,7 +648,10 @@ export class Network implements Net {
             // 当达到最大并发数时，等待最快完成的一个
             if (activePromises.length >= maxConcurrency) {
               await Promise.race(activePromises);
-              // 防止主线程被微任务占满导致UI卡死
+            }
+            
+            // 每处理10个任务就让出主线程，防止UI卡死
+            if (i % 10 === 0 && i > 0) {
               await new Promise((r) => setTimeout(r, 0));
             }
           }
@@ -685,6 +688,11 @@ export class Network implements Net {
               createtime: createtime,
               logid: lid,
             });
+            
+            // 每处理10条记录让出主线程，避免UI卡死
+            if (i % 10 === 0 && i > 0) {
+              await new Promise((r) => setTimeout(r, 0));
+            }
           }
         } else {
           await this.putRecords(id, lid, rs.records, rs.counter);
@@ -701,6 +709,11 @@ export class Network implements Net {
       // Process each record in order
       for (const r of tRecords) {
         await this.putRecords(id, r.logid, [r.record], r.counter);
+        // 每处理5条记录让出主线程
+        if (i % 5 === 0 && i > 0) {
+          await new Promise((resolve) => setTimeout(resolve, 0));
+        }
+        i++;
       }
     } catch (err) {
       throw err;
