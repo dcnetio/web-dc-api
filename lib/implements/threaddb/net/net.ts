@@ -648,6 +648,8 @@ export class Network implements Net {
             // 当达到最大并发数时，等待最快完成的一个
             if (activePromises.length >= maxConcurrency) {
               await Promise.race(activePromises);
+              // 防止主线程被微任务占满导致UI卡死
+              await new Promise((r) => setTimeout(r, 0));
             }
           }
           // 等待所有剩余的Promise完成
