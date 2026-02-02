@@ -1,5 +1,3 @@
-import crypto from "crypto";
-
 import {
   peerIdFromPublicKey,
   peerIdFromPrivateKey,

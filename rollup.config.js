@@ -29,9 +29,10 @@ console.log("NODE_ENV:", process.env.NODE_ENV);
 const isProduction = process.env.NODE_ENV === "production";
 
 const basePlugins = [
-  // 🔧 添加 process polyfill
+  // 🔧 添加 process 和 buffer polyfills
   inject({
     process: "process",
+    Buffer: ["buffer", "Buffer"],
   }),
   replace({
     preventAssignment: true,
