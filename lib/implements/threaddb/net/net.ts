@@ -648,8 +648,8 @@ export class Network implements Net {
               await Promise.race(activePromises);
             }
             
-            // 每处理10个任务就让出主线程，防止UI卡死
-            if (i % 10 === 0 && i > 0) {
+            // 每处理3个任务就让出主线程，防止UI卡死
+            if (i % 3 === 0 && i > 0) {
               await new Promise((r) => setTimeout(r, 0));
             }
           }
@@ -687,8 +687,8 @@ export class Network implements Net {
               logid: lid,
             });
             
-            // 每处理10条记录让出主线程，避免UI卡死
-            if (i % 10 === 0 && i > 0) {
+            // 每处理5条记录让出主线程，避免UI卡死
+            if (i % 3 === 0 && i > 0) {
               await new Promise((r) => setTimeout(r, 0));
             }
           }
@@ -707,8 +707,8 @@ export class Network implements Net {
       // Process each record in order
       for (const r of tRecords) {
         await this.putRecords(id, r.logid, [r.record], r.counter);
-        // 每处理5条记录让出主线程
-        if (i % 5 === 0 && i > 0) {
+        // 每处理3条记录让出主线程，提高响应性
+        if (i % 3 === 0 && i > 0) {
           await new Promise((resolve) => setTimeout(resolve, 0));
         }
         i++;

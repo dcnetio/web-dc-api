@@ -323,7 +323,10 @@ export class DC implements DCContext {
                 await this.db.upgradeCollections(threadid, collections);
               }
 
-              this.db.refreshDBFromDC(threadid);
+              // 后台异步刷新数据库，不阻塞登录流程
+              this.db.refreshDBFromDC(threadid).catch(err => {
+                console.warn('后台刷新数据库失败:', err);
+              });
               //3秒后将本地数据库同步到DC
               setTimeout(() => {
                 if (this.db) {

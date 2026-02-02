@@ -29,13 +29,15 @@ console.log("NODE_ENV:", process.env.NODE_ENV);
 const isProduction = process.env.NODE_ENV === "production";
 
 const basePlugins = [
-  // 🔧 添加 process 和 buffer polyfills
-  inject({
-    process: "process",
-    Buffer: ["buffer", "Buffer"],
-  }),
+  // 🔧 注意：inject插件会在所有格式中注入导入
+  // 对于ESM构建，process和buffer应该由使用方提供或通过import maps处理
   replace({
     preventAssignment: true,
+    values: {
+      // 替换process.env等常见用法为浏览器兼容版本
+      'process.env.NODE_ENV': JSON.stringify('production'),
+      'process.browser': 'true',
+    },
   }),
   json(),
   babel({
@@ -53,7 +55,6 @@ const basePlugins = [
       ],
     ],
   }),
-  [("@babel/plugin-proposal-class-properties", { loose: true })],
 ];
 
 // 🔧 UMD 专用压缩配置 (仅用于 CDN .min.js 版本)
@@ -80,6 +81,11 @@ const getResolveConfig = (isBrowser = true) => ({
     : ["import", "module", "default"],
   // 🔧 确保正确解析 uint8arrays
   dedupe: ["uint8arrays"],
+  // 🔧 为浏览器环境提供替代方案
+  alias: isBrowser ? {
+    'process': 'process/browser',
+    'buffer': 'buffer',
+  } : {},
 });
 
 // 🔧 优化的 commonjs 配置
@@ -217,6 +223,11 @@ export default [
     },
     external,
     plugins: [
+      // CJS需要inject插件提供process和buffer
+      inject({
+        process: "process",
+        Buffer: ["buffer", "Buffer"],
+      }),
       resolve(getResolveConfig(true)),
       commonjs(getCommonJSConfig()),
       typescript({
@@ -270,6 +281,11 @@ export default [
     external: ["grpc-libp2p-client"],
     onwarn,
     plugins: [
+      // UMD需要inject插件提供process和buffer
+      inject({
+        process: "process",
+        Buffer: ["buffer", "Buffer"],
+      }),
       resolve({
         ...getResolveConfig(true),
         paths: ["node_modules", "../"],
