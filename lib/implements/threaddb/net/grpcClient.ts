@@ -358,25 +358,21 @@ export class DBGrpcClient {
 
       // 处理响应数据
       const result: Record<string, PeerRecords> = {};
+      const logs = response.logs || [];
 
-      for (const logInfo of response.logs || []) {
+      // 外层循环：遍历每个日志，每处理一个日志后让出控制权
+      for (let logIndex = 0; logIndex < logs.length; logIndex++) {
+        const logInfo = logs[logIndex];
         if (!logInfo.logID) continue;
 
         const logId = PeerIDConverter.fromBytes(logInfo.logID).toString();
-        // const multihash = decode(logInfo.logID);
-        // const logId = peerIdFromMultihash(multihash).toString();
         const rawRecords = logInfo.records || [];
 
         // 预分配数组大小
         const unsortedRecords: IRecord[] = new Array(rawRecords.length);
 
-        // 使用时间分片策略，确保UI流畅
-        // 目标是保持高帧率，每帧约16ms，我们占用其中一部分时间
-        const TIME_BUDGET = 8; // 8ms
-        let lastYieldTime = Date.now();
-
-        // 小批量并发，平衡吞吐量和响应性
-        const BATCH_SIZE = 10;
+        // 内层循环：处理记录，使用更小的批量
+        const BATCH_SIZE = 2; // 进一步降低到2，提高响应性
 
         for (let i = 0; i < rawRecords.length; i += BATCH_SIZE) {
           const end = Math.min(i + BATCH_SIZE, rawRecords.length);
@@ -395,20 +391,20 @@ export class DBGrpcClient {
 
           await Promise.all(promises);
 
-          // 如果耗时超过预算，强制让出主线程
-          if (Date.now() - lastYieldTime >= TIME_BUDGET) {
-            await new Promise((resolve) => setTimeout(resolve, 0));
-            lastYieldTime = Date.now();
-          }
+          // 每处理一批就让出主线程，保持UI响应
+          await new Promise((resolve) => setTimeout(resolve, 0));
         }
 
         // 根据链表结构排序记录
-        const sortedRecords = this.sortRecordsChain(unsortedRecords);
+        const sortedRecords = await this.sortRecordsChain(unsortedRecords);
 
         result[logId] = {
           records: sortedRecords,
           counter: (logInfo.log?.counter as number) || 0,
         };
+
+        // 每处理完一个日志，让出控制权
+        await new Promise((resolve) => setTimeout(resolve, 0));
       }
 
       return result;
@@ -422,19 +418,25 @@ export class DBGrpcClient {
    * 根据链表结构排序记录
    * 确保第二个记录的 prevID() 等于第一个记录的 blockID()，以此类推
    */
-  private sortRecordsChain(records: IRecord[]): IRecord[] {
+  private async sortRecordsChain(records: IRecord[]): Promise<IRecord[]> {
     if (records.length <= 1) {
       return records;
     }
 
     const sorted: IRecord[] = [];
     const recordMap = new Map<string, IRecord>();
+    const prevToRecordMap = new Map<string, IRecord>(); // 建立 prevID -> record 的反向索引
     let headRecord: IRecord | null = null;
 
-    // 建立 blockID 到记录的映射
+    // 建立双向映射：blockID -> record 和 prevID -> record
     for (const record of records) {
       const blockId = record.blockID().toString();
       recordMap.set(blockId, record);
+      
+      const prevId = record.prevID();
+      if (prevId) {
+        prevToRecordMap.set(prevId.toString(), record);
+      }
     }
 
     // 找到链表头部（没有前驱的记录）
@@ -453,34 +455,34 @@ export class DBGrpcClient {
       headRecord = records[0] ? records[0] : null;
     }
 
-    // 从头部开始构建有序链表
+    // 从头部开始构建有序链表，使用反向索引加速查找
     let currentRecord = headRecord;
     const processed = new Set<string>();
+    let processedCount = 0;
 
     while (
       currentRecord &&
       !processed.has(currentRecord.blockID().toString())
     ) {
       sorted.push(currentRecord);
-      processed.add(currentRecord.blockID().toString());
-
-      // 查找下一个记录（prevID 指向当前记录的 blockID）
       const currentBlockId = currentRecord.blockID().toString();
-      let nextRecord: IRecord | null = null;
+      processed.add(currentBlockId);
+      processedCount++;
 
-      for (const record of records) {
-        if (processed.has(record.blockID().toString())) {
-          continue; // 已处理过
-        }
-
-        const prevId = record.prevID();
-        if (prevId && prevId.toString() === currentBlockId) {
-          nextRecord = record;
-          break;
-        }
+      // 每处理3条记录让出主线程（降低频率以提高性能）
+      if (processedCount % 3 === 0) {
+        await new Promise((resolve) => setTimeout(resolve, 0));
       }
 
-      currentRecord = nextRecord;
+      // 使用反向索引快速查找下一个记录（O(1) 而不是 O(n)）
+      const nextRecord = prevToRecordMap.get(currentBlockId);
+      
+      // 如果找到了下一个记录且未处理过，继续
+      if (nextRecord && !processed.has(nextRecord.blockID().toString())) {
+        currentRecord = nextRecord;
+      } else {
+        currentRecord = null;
+      }
     }
 
     // 检查是否所有记录都被处理了

@@ -596,8 +596,10 @@ export class Network implements Net {
 
       // Handle records
       const tRecords: TimestampedRecord[] = [];
+      const logEntries = Object.entries(recs);
 
-      for (const [lidStr, rec] of Object.entries(recs)) {
+      for (let logIndex = 0; logIndex < logEntries.length; logIndex++) {
+        const [lidStr, rec] = logEntries[logIndex]!;
         const lid = peerIdFromString(lidStr);
         const rs = rec as PeerRecords;
         if (appConnected) {
@@ -648,8 +650,8 @@ export class Network implements Net {
               await Promise.race(activePromises);
             }
             
-            // 每处理3个任务就让出主线程，防止UI卡死
-            if (i % 3 === 0 && i > 0) {
+            // 每处理2个任务就让出主线程，防止UI卡死
+            if (i % 2 === 0 && i > 0) {
               await new Promise((r) => setTimeout(r, 0));
             }
           }
@@ -687,14 +689,22 @@ export class Network implements Net {
               logid: lid,
             });
             
-            // 每处理5条记录让出主线程，避免UI卡死
-            if (i % 3 === 0 && i > 0) {
+            // 每处理2条记录让出主线程，因为包含大量重操作（解析、存储、获取时间戳）
+            if (i % 2 === 0 && i > 0) {
               await new Promise((r) => setTimeout(r, 0));
             }
           }
         } else {
           await this.putRecords(id, lid, rs.records, rs.counter);
         }
+        
+        // 每处理完一个日志让出控制权
+        await new Promise((resolve) => setTimeout(resolve, 0));
+      }
+
+      // 大数据排序前让出控制权
+      if (tRecords.length > 10) {
+        await new Promise((resolve) => setTimeout(resolve, 0));
       }
 
       tRecords.sort((a, b) => {
@@ -702,16 +712,18 @@ export class Network implements Net {
         if (a.createtime > b.createtime) return 1;
         return 0;
       });
-      let i = 0;
+
+      // 排序后让出控制权
+      await new Promise((resolve) => setTimeout(resolve, 0));
 
       // Process each record in order
-      for (const r of tRecords) {
+      for (let i = 0; i < tRecords.length; i++) {
+        const r = tRecords[i]!;
         await this.putRecords(id, r.logid, [r.record], r.counter);
-        // 每处理3条记录让出主线程，提高响应性
-        if (i % 3 === 0 && i > 0) {
+        // 每处理2条记录让出主线程，提高响应性
+        if (i % 2 === 0 && i > 0) {
           await new Promise((resolve) => setTimeout(resolve, 0));
         }
-        i++;
       }
     } catch (err) {
       throw err;
@@ -958,13 +970,18 @@ export class Network implements Net {
         recs = await this.getRecordsFromPeer(peerId, req, serviceKey);
       }
       // 处理接收到的记录
-      for (const [lidStr, rs] of Object.entries(recs)) {
+      const entries = Object.entries(recs);
+      for (let entryIndex = 0; entryIndex < entries.length; entryIndex++) {
+        const [lidStr, rs] = entries[entryIndex]!;
         try {
           // 将字符串ID转换为PeerId对象
           const lid = peerIdFromString(lidStr);
 
           // 将记录添加到本地存储
           await this.putRecords(tid, lid, rs.records, rs.counter);
+          
+          // 每处理一个日志后让出控制权
+          await new Promise((resolve) => setTimeout(resolve, 0));
         } catch (err) {
           throw new Error(
             `Putting records from log ${lidStr} (thread ${tid}) failed: ${
@@ -1097,7 +1114,11 @@ export class Network implements Net {
           validate = true;
         }
       }
-      for (const record of chain) {
+      
+      // 处理记录链，每3条记录让出一次控制权
+      for (let recordIndex = 0; recordIndex < chain.length; recordIndex++) {
+        const record = chain[recordIndex]!;
+        
         if (validate) {
           // Validate the record
           const block = await record.value().getBlock(this.bstore);
@@ -1158,6 +1179,11 @@ export class Network implements Net {
 
         // Add record to blockstore
         await this.bstore.put(record.value().cid(), record.value().data());
+        
+        // 每处理2条记录让出主线程，进一步提高响应性
+        if (recordIndex % 2 === 0 && recordIndex > 0) {
+          await new Promise((resolve) => setTimeout(resolve, 0));
+        }
       }
     } finally {
       mutex.release();
@@ -1371,7 +1397,8 @@ export class Network implements Net {
       // 设置超时
       let timeout: NodeJS.Timeout | null = null;
       //遍历节点,按顺序处理
-      for (const peerId of peers) {
+      for (let peerIndex = 0; peerIndex < peers.length; peerIndex++) {
+        const peerId = peers[peerIndex]!;
         try {
           timeout = setTimeout(() => {
             throw new Error(`Timeout getting records from peer ${peerId}`);
@@ -1379,38 +1406,32 @@ export class Network implements Net {
           //连接到指定peerId,返回一个Client
           const [client, err] = await this.getClient(peerId);
           if (!client) {
-            throw new Error(
-              `Error getting records from peer ${peerId},no client,errinfo: ${err}`
-            );
+            continue;
           }
-          console.log(
-            `时间:${new Date().toLocaleString()} ,开始从 ${peerId.toString()} 获取记录...`
-          );
           const dbClient = new DBClient(client, this.dc, this, this.logstore);
+          const startTime = Date.now();
           const records = await dbClient.getRecordsFromPeer(req, serviceKey);
+          
           let recCount = 0;
           for (const [logId, rs] of Object.entries(records)) {
             recCount += rs.records.length;
           }
+          
+          // 合并日志，减少输出次数
           console.log(
-            `时间:${new Date().toLocaleString()} ,从 ${peerId.toString()} 获取记录完成,记录数为:`,
-            recCount
+            `[记录同步] 从 ${peerId.toString().slice(0, 8)}... 获取 ${recCount} 条记录 (耗时: ${Date.now() - startTime}ms)`
           );
-          console.log(
-            `开始处理从 ${peerId.toString()} 获取的记录,记录数为:`,
-            recCount
-          );
+          
           for (const [logId, rs] of Object.entries(records)) {
             await recordCollector.batchUpdate(logId, rs);
           }
-          console.log(
-            `处理从 ${peerId.toString()} 获取的记录完成,记录数为:`,
-            recCount
-          );
 
           if (!multiPeersFlag) {
             break;
           }
+          
+          // 每处理完一个对等点后让出控制权
+          await new Promise((resolve) => setTimeout(resolve, 0));
         } catch (err) {
           continue;
         } finally {
