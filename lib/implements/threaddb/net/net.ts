@@ -4,6 +4,7 @@ import {
   peerIdFromMultihash,
   peerIdFromString,
 } from "@libp2p/peer-id";
+import { extractPublicKeyFromPeerId } from "../../../common/dc-key/keyManager";
 import { keys } from "@libp2p/crypto";
 import { Multiaddr as TMultiaddr, multiaddr } from "@multiformats/multiaddr"; // 多地址库
 import { Head } from "../core/head";
@@ -98,6 +99,7 @@ export class Network implements Net {
   private connectors: Record<string, Connector>;
   private cachePeers: Record<string, TMultiaddr> = {};
   private threadMutexes: Record<string, AsyncMutex> = {};
+  private knownLogs: Set<string> = new Set();
   private pushQueue: Array<{
     tid: ThreadID;
     lid: PeerId;
@@ -604,7 +606,7 @@ export class Network implements Net {
         const rs = rec as PeerRecords;
         if (appConnected) {
           // 使用并发控制，但不分批 - 避免慢任务拖累整批
-          const maxConcurrency = 10;
+          const maxConcurrency = 3; // 最大并发数
           let activePromises: Promise<void>[] = [];
           let processedCount = 0;
 
@@ -613,17 +615,23 @@ export class Network implements Net {
             index: number
           ): Promise<void> => {
             try {
-              const block = await r.getBlock(this.bstore);
-              const event =
-                block instanceof Event
-                  ? block
-                  : await EventFromNode(block as Node);
+              // 增加超时控制，防止单个任务卡死导致队列阻塞
+              await Promise.race([
+                (async () => {
+                   const block = await r.getBlock(this.bstore);
+                   const event =
+                     block instanceof Event
+                       ? block
+                       : await EventFromNode(block as Node);
 
-              const header = await event.getHeader(this.bstore);
-              const body = await event.getBody(this.bstore);
+                   const header = await event.getHeader(this.bstore);
+                   const body = await event.getBody(this.bstore);
 
-              // Store internal blocks locally
-              await this.addMany([event, header, body]);
+                   // Store internal blocks locally
+                   await this.addMany([event, header, body]);
+                })(),
+                new Promise((_, reject) => setTimeout(() => reject(new Error('Process Timeout')), 30000))
+              ]);
             } catch (err) {
               console.error(`预加载记录 ${index + 1} 失败:`, err);
               // 继续处理其他记录
@@ -633,8 +641,12 @@ export class Network implements Net {
           // 处理所有记录，但控制并发数
           for (let i = 0; i < rs.records.length; i++) {
             const r = rs.records[i]!;
+            
             // 创建处理Promise
-            const promise = processRecord(r, i).finally(() => {
+            const taskPromise = processRecord(r, i);
+            
+            // 包装Promise用于队列管理
+            const promise = taskPromise.finally(() => {
               processedCount++;
               // 从活跃Promise列表中移除
               const index = activePromises.indexOf(promise);
@@ -647,11 +659,18 @@ export class Network implements Net {
 
             // 当达到最大并发数时，等待最快完成的一个
             if (activePromises.length >= maxConcurrency) {
-              await Promise.race(activePromises);
+              try {
+                  await Promise.race(activePromises);
+              } catch (e) {
+                  // Promise.race 不应该抛出错误，因为 activePromises 中的 promise 都处理了 catch
+                  // 但为了保险起见，这里捕获异常防止循环中断
+                  console.warn('Race interrupted', e);
+              }
             }
             
-            // 每处理2个任务就让出主线程，防止UI卡死
-            if (i % 2 === 0 && i > 0) {
+            // 每处理50个任务就让出主线程，防止UI卡死
+            // 2个太频繁了，上万条记录会导致数千次EventLoop切换，严重拖慢整体速度。改为50或更合适
+            if (i % 50 === 0 && i > 0) {
               await new Promise((r) => setTimeout(r, 0));
             }
           }
@@ -761,41 +780,46 @@ export class Network implements Net {
 
       // Continue pulling until no more records
       while (true) {
-        const recs = await this.getRecords(
-          peers,
-          tid,
-          offsets,
-          netPullingLimit,
-          multiPeersFlag
-        );
-        let continueFlag = false;
-        for (const [lidStr, rs] of Object.entries(recs)) {
-          if (rs.records.length > 0) {
-            if (!pulledRecs[lidStr]) {
-              pulledRecs[lidStr] = { records: [], counter: 0 };
-            }
-            const entry = pulledRecs[lidStr];
+        try {
+          const recs = await this.getRecords(
+            peers,
+            tid,
+            offsets,
+            netPullingLimit,
+            multiPeersFlag
+          );
+          let continueFlag = false;
+          for (const [lidStr, rs] of Object.entries(recs)) {
+            if (rs.records.length > 0) {
+              if (!pulledRecs[lidStr]) {
+                pulledRecs[lidStr] = { records: [], counter: 0 };
+              }
+              const entry = pulledRecs[lidStr];
 
-            // 优化性能：直接push而不是创建新数组，避免大量数据时的内存复制开销
-            for (const r of rs.records) {
-              entry.records.push(r);
-            }
-            entry.counter = rs.counter;
+              // 优化性能：直接push而不是创建新数组，避免大量数据时的内存复制开销
+              for (const r of rs.records) {
+                entry.records.push(r);
+              }
+              entry.counter = rs.counter;
 
-            const lastRecord = rs.records[rs.records.length - 1]!;
-            offsets[lidStr] = {
-              id: lastRecord.cid(),
-              counter: rs.counter,
-            };
+              const lastRecord = rs.records[rs.records.length - 1]!;
+              offsets[lidStr] = {
+                id: lastRecord.cid(),
+                counter: rs.counter,
+              };
 
-            if (rs.records.length >= netPullingLimit) {
-              continueFlag = true;
+              if (rs.records.length >= netPullingLimit) {
+                continueFlag = true;
+              }
             }
           }
-        }
 
-        if (!continueFlag) {
-          break;
+          if (!continueFlag) {
+            break;
+          }
+        } catch (err) {
+          console.warn("Error pulling records (stopping sync loop):", err);
+          break; // Stop loop on error but return what we have
         }
       }
       return pulledRecs;
@@ -1068,6 +1092,75 @@ export class Network implements Net {
     recs: IRecord[],
     counter: number
   ): Promise<void> {
+    // 确保日志在线程信息中存在（自愈逻辑）
+    // 即使 loadRecords 认为记录已存在（chain为空），我们也需要确保 threadInfo 包含该日志
+    // 否则 threadOffsets 不会返回该日志，导致停止同步
+    if (recs.length > 0) {
+      try {
+        const cacheKey = `${tid.toString()}:${lid.toString()}`;
+        if (!this.knownLogs.has(cacheKey)) {
+          const info = await this.logstore.getThread(tid);
+          const exists = info.logs.find(
+            (l) => l.id.toString() === lid.toString()
+          );
+          if (!exists) {
+            let shouldAddLog = false;
+              // 尝试从 lid 中提取 pubkey 并验证
+              try {
+                const extractedPubKey = await extractPublicKeyFromPeerId(lid);
+                if (extractedPubKey) {
+                  const ed25519ExtractedKey = new Ed25519PubKey(
+                    extractedPubKey.bytes instanceof Uint8Array 
+                      ? extractedPubKey.bytes 
+                      : (extractedPubKey as any).bytes()
+                  );
+
+                  const rec = recs[0]!;
+                  let payload: Uint8Array;
+                  if (rec.prevID()) {
+                    const blockBytes = rec.blockID().bytes;
+                    const prevBytes = rec.prevID()!.bytes;
+                    payload = new Uint8Array(
+                      blockBytes.length + prevBytes.length
+                    );
+                    payload.set(blockBytes);
+                    payload.set(prevBytes, blockBytes.length);
+                  } else {
+                    payload = rec.pubKey();
+                  }
+
+                  const verified = await ed25519ExtractedKey.verify(
+                    payload,
+                    rec.sig()
+                  );
+                  if (verified) {
+                    await this.logstore.addLog(tid, {
+                      id: lid,
+                      pubKey: ed25519ExtractedKey,
+                      addrs: [],
+                      managed: false, // Adding required property
+                    } as unknown as IThreadLogInfo);
+                     this.knownLogs.add(cacheKey);
+                  }
+                }
+              } catch (e) {
+                // ignore error
+              }
+          } else {
+             this.knownLogs.add(cacheKey);
+          }
+         
+        }
+      } catch (err) {
+        // 仅记录警告，不中断流程
+        console.warn(
+          `[putRecords] Failed to ensure log existence for ${lid.toString()}:`,
+          err
+        );
+        return;
+      }
+    }
+
     const [chain, head] = await this.loadRecords(tid, lid, recs, counter);
 
     if (chain.length === 0) {
@@ -1394,53 +1487,97 @@ export class Network implements Net {
 
       // 创建记录收集器
       const recordCollector = new RecordCollector();
-      // 设置超时
-      let timeout: NodeJS.Timeout | null = null;
-      //遍历节点,按顺序处理
-      for (let peerIndex = 0; peerIndex < peers.length; peerIndex++) {
-        const peerId = peers[peerIndex]!;
+      
+      const MAX_CONCURRENCY = 3;
+      const peerQueue = [...peers];
+      let stopProcessing = false;
+
+      const processPeer = async (peerId: PeerId) => {
+        if (stopProcessing) return;
+        
         try {
-          timeout = setTimeout(() => {
-            throw new Error(`Timeout getting records from peer ${peerId}`);
-          }, 900000);
-          //连接到指定peerId,返回一个Client
-          const [client, err] = await this.getClient(peerId);
-          if (!client) {
-            continue;
-          }
-          const dbClient = new DBClient(client, this.dc, this, this.logstore);
-          const startTime = Date.now();
-          const records = await dbClient.getRecordsFromPeer(req, serviceKey);
-          
-          let recCount = 0;
-          for (const [logId, rs] of Object.entries(records)) {
-            recCount += rs.records.length;
-          }
-          
-          // 合并日志，减少输出次数
-          console.log(
-            `[记录同步] 从 ${peerId.toString().slice(0, 8)}... 获取 ${recCount} 条记录 (耗时: ${Date.now() - startTime}ms)`
-          );
-          
-          for (const [logId, rs] of Object.entries(records)) {
-            await recordCollector.batchUpdate(logId, rs);
-          }
+          await new Promise<void>((resolve, reject) => {
+            const timeout = setTimeout(() => {
+              reject(new Error(`Timeout getting records from peer ${peerId}`));
+            }, 900000);
+
+            (async () => {
+              try {
+                //连接到指定peerId,返回一个Client
+                const [client, err] = await this.getClient(peerId);
+                if (!client) {
+                  return;
+                }
+                const dbClient = new DBClient(
+                  client,
+                  this.dc,
+                  this,
+                  this.logstore
+                );
+                const startTime = Date.now();
+                const records = await dbClient.getRecordsFromPeer(
+                  req,
+                  serviceKey
+                );
+
+                let recCount = 0;
+                if (records) {
+                  for (const [logId, rs] of Object.entries(records)) {
+                    recCount += rs.records.length;
+                  }
+                }
+
+                // 合并日志，减少输出次数
+                console.log(
+                  `[记录同步] 从 ${peerId
+                    .toString()
+                    .slice(0, 8)}... 获取 ${recCount} 条记录 (耗时: ${
+                    Date.now() - startTime
+                  }ms)`
+                );
+
+                if (records) {
+                  for (const [logId, rs] of Object.entries(records)) {
+                    await recordCollector.batchUpdate(logId, rs);
+                  }
+                }
+              } catch (err) {
+                throw err;
+              }
+            })()
+              .then(() => resolve())
+              .catch((err) => reject(err))
+              .finally(() => clearTimeout(timeout));
+          });
 
           if (!multiPeersFlag) {
-            break;
+            stopProcessing = true;
           }
-          
-          // 每处理完一个对等点后让出控制权
-          await new Promise((resolve) => setTimeout(resolve, 0));
         } catch (err) {
-          continue;
-        } finally {
-          // 清除超时
-          if (timeout) {
-            clearTimeout(timeout);
-          }
+             //让出控制权
+             await new Promise((resolve) => setTimeout(resolve, 0));
         }
-      }
+      };
+
+      // 启动并发工作线程
+      const workers = Array(Math.min(peers.length, MAX_CONCURRENCY))
+        .fill(null)
+        .map(async () => {
+          while (peerQueue.length > 0 && !stopProcessing) {
+            const peerId = peerQueue.shift();
+            if (peerId) {
+              try {
+                await processPeer(peerId);
+              } catch (err) {
+                console.warn(`Worker error processing peer ${peerId}:`, err);
+              }
+              // 每个任务完成后让出控制权
+              await new Promise((resolve) => setTimeout(resolve, 0));
+            }
+          }
+        });
+
+      await Promise.all(workers);
 
       return recordCollector.list();
     } catch (err) {
@@ -1817,12 +1954,13 @@ export class Network implements Net {
       block: event,
       prev: prev,
       key: lg.privKey as Ed25519PrivKey,
-      pubKey: this.context.publicKey,
+      pubKey: this.context.publicKey, //这里不需要用lg.pubKey,因为不用record的pubkey来验证身份,而是用log的pubkey来验证身份,这里主要是为了表明是谁创建的record
       serviceKey: sk,
     } as CreateRecordConfig);
 
     return rec;
   }
+
 
   // 启动队列处理任务（只需调用一次）
   private startPushWorker() {

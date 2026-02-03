@@ -347,11 +347,21 @@ export class DBGrpcClient {
         this.client.protocol
       );
       // 调用 gRPC 方法
-      const responseData = await grpcClient.unaryCall(
-        "/net.pb.Service/GetRecords",
-        messageBytes,
-        900000
-      );
+      let responseData: Uint8Array;
+      try {
+        responseData = await grpcClient.unaryCall(
+          "/net.pb.Service/GetRecords",
+          messageBytes,
+          20000
+        );
+      } catch (err: any) {
+        // 如果是 AggregateError，意味着所有尝试都失败了（libp2p 连接问题）
+        if (err.name === "AggregateError" || err.message.includes("All promises were rejected")) {
+           // 转换为更明确的不可用错误，以便上层 net.ts 可以捕获并跳过该节点
+           throw new Error("UNAVAILABLE: All connection attempts failed");
+        }
+        throw err;
+      }
 
       // 解码响应
       const response = net_pb.pb.GetRecordsReply.decode(responseData);
@@ -372,7 +382,7 @@ export class DBGrpcClient {
         const unsortedRecords: IRecord[] = new Array(rawRecords.length);
 
         // 内层循环：处理记录，使用更小的批量
-        const BATCH_SIZE = 2; // 进一步降低到2，提高响应性
+        const BATCH_SIZE = 10;
 
         for (let i = 0; i < rawRecords.length; i += BATCH_SIZE) {
           const end = Math.min(i + BATCH_SIZE, rawRecords.length);

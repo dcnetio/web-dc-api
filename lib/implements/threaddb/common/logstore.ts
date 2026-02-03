@@ -127,11 +127,24 @@ class Logstore implements ILogstore {
     }
 
     private async getLogIDs(id: ThreadID): Promise<Set<PeerId>> {
-        const set: Set<PeerId> = new Set();
+        const set = new Set<PeerId>();
+        const existing = new Set<string>();
+
+        const addUnique = (pid: PeerId) => {
+            if (!pid) return;
+            const pidStr = pid.toString();
+            if (!existing.has(pidStr)) {
+                existing.add(pidStr);
+                set.add(pid);
+            }
+        };
+
         const logsWithKeys = await this.keyBook.logsWithKeys(id);
-        logsWithKeys.forEach(l => set.add(l));
+        logsWithKeys.forEach(addUnique);
+        
         const logsWithAddrs = await this.addrBook.logsWithAddrs(id);
-        logsWithAddrs.forEach(l => set.add(l));
+        logsWithAddrs.forEach(addUnique);
+        
         return set;
     }
 
