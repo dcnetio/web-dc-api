@@ -351,6 +351,10 @@ export class DC implements DCContext {
               const [dbinfo, error] = await this.db.getDBInfo(threadid);
               if (dbinfo != null && !error) {
                 this.dbThreadId = dbinfo.id;
+                // 后台异步刷新数据库，不阻塞登录流程
+                this.db.refreshDBFromDC(threadid).catch(err => {
+                  console.warn('后台刷新数据库失败:', err);
+                });
                 // 自动扩容threaddb,当threaddb的可用空间小于10MB，自动扩容50MB,无需等待结果
                 this.autoExpandDBSpace(this, this.dbThreadId);
                 return [dbinfo, null]; //返回dbinfo;

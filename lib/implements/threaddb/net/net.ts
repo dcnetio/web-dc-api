@@ -590,10 +590,13 @@ export class Network implements Net {
         let activePromises: Promise<void>[] = [];
         let processedCount = 0;
         let indexCounter = rs.counter - rs.records.length + 1;
+        let lastYieldTime = Date.now();
+        const TIME_SLICE = 12; // 12ms 时间切片
 
         const processRecord = async (r: any, index: number): Promise<void> => {
+          let timeoutId: any;
           try {
-            // 增加超时控制，防止单个任务卡死导致队列阻塞
+            // 优化：显式管理 Timer，避免 Timer 泄露导致的 DevTools 卡顿
             await Promise.race([
               (async () => {
                 const block = await r.getBlock(this.bstore);
@@ -621,13 +624,19 @@ export class Network implements Net {
                   logid: lid,
                 });
               })(),
-              new Promise((_, reject) =>
-                setTimeout(() => reject(new Error("Process Timeout")), 30000)
-              ),
+              new Promise((_, reject) => {
+                timeoutId = setTimeout(
+                  () => reject(new Error("Process Timeout")),
+                  30000
+                );
+              }),
             ]);
           } catch (err) {
             console.error(`处理记录 ${index + 1} 失败:`, err);
-            throw err;
+            // 这里不 throw，让 Promise.all 能够继续处理其他记录，除非需要中断整个流程
+            // throw err;
+          } finally {
+            if (timeoutId) clearTimeout(timeoutId);
           }
         };
 
@@ -655,15 +664,14 @@ export class Network implements Net {
             try {
               await Promise.race(activePromises);
             } catch (e) {
-              // Promise.race 不应该抛出错误，因为 activePromises 中的 promise 都处理了 catch
-              // 但为了保险起见，这里捕获异常防止循环中断
-              // console.warn("Race interrupted", e);
+              // Promise.race 不应该抛出错误
             }
           }
 
-          // 每处理 10 个任务就让出主线程，防止UI卡死
-          if (i % 10 === 0 && i > 0) {
+          // 基于时间切片让出主线程
+          if (Date.now() - lastYieldTime > TIME_SLICE) {
             await new Promise((r) => setTimeout(r, 0));
+            lastYieldTime = Date.now();
           }
         }
         // 等待所有剩余的Promise完成
@@ -2310,15 +2318,19 @@ class RecordCollector {
 
       // 避免forEach导致大循环卡顿，使用普通for循环并分片让出
       const records = rs.records;
+      let lastYieldTime = Date.now();
+      const TIME_SLICE = 12; // 12ms
+
       for (let i = 0; i < records.length; i++) {
         const record = records[i];
         // cid() 计算可能会有些耗时
         const key = record.cid().toString();
         logRecords!.set(key, record);
 
-        // 每处理 10 条记录让出一次主线程，防止数据量大时锁死 UI
-        if (i > 0 && i % 10 === 0) {
+        // 每处理 10 条记录或者时间片耗尽让出一次主线程
+        if ((i > 0 && i % 10 === 0) || Date.now() - lastYieldTime > TIME_SLICE) {
           await new Promise((resolve) => setTimeout(resolve, 0));
+          lastYieldTime = Date.now();
         }
       }
     } finally {
