@@ -200,11 +200,9 @@ export class StreamWriter {
         this.backpressureHistory.shift()  
       }  
 
-      const avg = this.backpressureHistory.reduce((a, b) => a + b, 0) / historySize  
-      const dynamicThreshold = Math.min(  
-        this.options.bufferSize! * 0.8,   
-        avg * 1.5  
-      )  
+      const historyLen = this.backpressureHistory.length || 1;
+      const avg = this.backpressureHistory.reduce((a, b) => a + b, 0) / historyLen  
+      const dynamicThreshold = this.options.bufferSize! * 0.8
 
       if (currentSize < dynamicThreshold || currentSize === 0 ) {  
         if (this.isBackpressure) {  

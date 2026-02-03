@@ -486,7 +486,7 @@ export class DcUtil {
 
     try {
       const writer = new StreamWriter(streamSink);
-      const mParts: Uint8Array[] = [];
+      const bufferList = new Uint8ArrayList();
       let parsedMessage: {
         type: number;
         version: number;
@@ -532,74 +532,85 @@ export class DcUtil {
         } else {
           data = chunk;
         }
-        mParts.push(data);
-        // 合并所有数据块为完整 Uint8Array
-        const fullMessage = concatenateUint8Arrays(...mParts);
-        parsedMessage = null;
-        parsedMessage = this.parseMessage(fullMessage);
-        if (parsedMessage) {
-          if (parsedMessage.type === 3) {
-            //close
+        bufferList.append(data);
+
+        // bufferList loop to process messages
+        while (bufferList.length >= 7) {
+          const header = bufferList.subarray(0, 7);
+          const payloadLength = ((header[3] << 24) | (header[4] << 16) | (header[5] << 8) | header[6]) >>> 0;
+          const totalLength = 7 + payloadLength;
+          
+          if (bufferList.length < totalLength) {
             break;
           }
-          if (!handshakeFlag) {
-            // 解析消息
-            const initRequest = oidfetch.pb.InitRequset.decode(
-              parsedMessage.payload
-            );
-            if (!initRequest) {
-              continue;
+
+          const fullMessage = bufferList.subarray(0, totalLength);
+          bufferList.consume(totalLength);
+          
+          parsedMessage = this.parseMessage(fullMessage);
+          
+          if (parsedMessage) {
+            if (parsedMessage.type === 3) {
+              //close
+              return;
             }
-            //mParts 清空
-            mParts.length = 0;
-            //发送数据到服务器
-            const message = new TextEncoder().encode(oid);
-            const initReply = new oidfetch.pb.InitReply({
-              type: type,
-              oid: message,
-            });
-            //组装数据
-            const initReplyBytes =
-              oidfetch.pb.InitReply.encode(initReply).finish();
-            const messageData = this.assembleCustomMessage({
-              type: Http2_Type.ACK,
-              version: 1,
-              payload: initReplyBytes,
-            }) as any;
-            await writer.write(messageData);
-            handshakeFlag = true;
-          } else {
-            // 解析消息
-            const fetchRequest = oidfetch.pb.FetchRequest.decode(
-              parsedMessage.payload
-            );
-
-            const resCid = new TextDecoder().decode(fetchRequest.cid);
-            //获取resCid对应的block
-            const cid = CID.parse(resCid);
-
-            // 通过 blockstore 获取该 CID 对应的区块
-            try {
-              let block: any = await blockstore.get(cid);
-              if (block && block[Symbol.asyncIterator]) {
-                 const parts: Uint8Array[] = [];
-                 for await (const part of block) {
-                     parts.push(part);
-                 }
-                 block = concatenateUint8Arrays(...parts);
+            if (!handshakeFlag) {
+              // 解析消息
+              const initRequest = oidfetch.pb.InitRequset.decode(
+                parsedMessage.payload
+              );
+              if (!initRequest) {
+                continue;
               }
-              const fetchReply = new oidfetch.pb.FetchReply({ data: block });
-              const fetchReplyBytes =
-                oidfetch.pb.FetchReply.encode(fetchReply).finish();
+              
+              //发送数据到服务器
+              const message = new TextEncoder().encode(oid);
+              const initReply = new oidfetch.pb.InitReply({
+                type: type,
+                oid: message,
+              });
+              //组装数据
+              const initReplyBytes =
+                oidfetch.pb.InitReply.encode(initReply).finish();
               const messageData = this.assembleCustomMessage({
                 type: Http2_Type.ACK,
                 version: 1,
-                payload: fetchReplyBytes,
+                payload: initReplyBytes,
               }) as any;
               await writer.write(messageData);
-              mParts.length = 0;
-            } catch (error) {
-              console.error("Error retrieving block:", error);
+              handshakeFlag = true;
+            } else {
+              // 解析消息
+              const fetchRequest = oidfetch.pb.FetchRequest.decode(
+                parsedMessage.payload
+              );
+
+              const resCid = new TextDecoder().decode(fetchRequest.cid);
+              //获取resCid对应的block
+              const cid = CID.parse(resCid);
+
+              // 通过 blockstore 获取该 CID 对应的区块
+              try {
+                let block: any = await blockstore.get(cid);
+                if (block && block[Symbol.asyncIterator]) {
+                   const parts: Uint8Array[] = [];
+                   for await (const part of block) {
+                       parts.push(part);
+                   }
+                   block = concatenateUint8Arrays(...parts);
+                }
+                const fetchReply = new oidfetch.pb.FetchReply({ data: block });
+                const fetchReplyBytes =
+                  oidfetch.pb.FetchReply.encode(fetchReply).finish();
+                const messageData = this.assembleCustomMessage({
+                  type: Http2_Type.ACK,
+                  version: 1,
+                  payload: fetchReplyBytes,
+                }) as any;
+                await writer.write(messageData);
+              } catch (error) {
+                console.error("Error retrieving block:", error);
+              }
             }
           }
         }

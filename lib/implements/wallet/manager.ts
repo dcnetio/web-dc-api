@@ -43,6 +43,12 @@ export class WalletManager {
 
   async init(): Promise<boolean> {
     console.log("========init walletManager", appOrigin, walletOrigin);
+    // Check if we are in a browser environment with document access
+    if (typeof document === 'undefined') {
+      console.warn("WalletManager: document is undefined, skipping iframe initialization.");
+      return true; // or false, depending on if we want to signal failure or just skip
+    }
+
     const that = this;
 
     if (walletIframeOpenFlag || appOrigin.indexOf(walletOrigin) === -1) {
@@ -131,7 +137,11 @@ export class WalletManager {
     timeout: number,
   ) => {
     // localStorage中获取是否支持window.opener
-    const openerFlag = localStorage.getItem(localStorageKey_dcwallet_opener);
+    let openerFlag = null;
+    if (typeof localStorage !== "undefined") {
+      openerFlag = localStorage.getItem(localStorageKey_dcwallet_opener);
+    }
+    
     let waitTimeCount = 1;
     if (openerFlag == "true") {
       waitTimeCount = 3;
@@ -145,7 +155,9 @@ export class WalletManager {
           clearInterval(interval);
           clearTimeout(timeoutHandle);
           messageChannel.port1.close();
-          window.removeEventListener("message", listenForWalletLoaded);
+          if (typeof window !== "undefined") {
+            window.removeEventListener("message", listenForWalletLoaded);
+          }
           resolve(true);
         }
       };
@@ -173,17 +185,23 @@ export class WalletManager {
         if (data.type === "walletLoaded") {
           //钱包加载完成
           walletLoadedFlag = true;
-          localStorage.setItem(localStorageKey_dcwallet_opener, "true");
+          if (typeof localStorage !== "undefined") {
+            localStorage.setItem(localStorageKey_dcwallet_opener, "true");
+          }
           clearInterval(interval);
           clearTimeout(timeoutHandle);
           messageChannel.port1.close();
-          window.removeEventListener("message", listenForWalletLoaded);
+          if (typeof window !== "undefined") {
+            window.removeEventListener("message", listenForWalletLoaded);
+          }
           resolve(true);
         }
       };
 
       //添加监听事件
-      window.addEventListener("message", listenForWalletLoaded);
+      if (typeof window !== "undefined") {
+        window.addEventListener("message", listenForWalletLoaded);
+      }
       const interval = setInterval(() => {
         if (walletLoadedFlag) {
           clearInterval(interval);

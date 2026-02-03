@@ -1622,33 +1622,14 @@ export class Network implements Net {
           while (peerQueue.length > 0 && !stopProcessing) {
             const peerId = peerQueue.shift();
             if (peerId) {
-              const maxAttempts = 3;
-              let attempts = 0;
-              let success = false;
-              
-              while(attempts < maxAttempts && !success && !stopProcessing) {
-                attempts++;
-                try {
-                  await processPeer(peerId);
-                  success = true;
-                } catch (err) {
-                   const pidStr = peerId.toString().slice(0, 8);
-                   const errMsg = err instanceof Error ? err.message : String(err);
-
-                   // 如果是离线错误，直接停止重试
-                   if (errMsg.includes("peerStatus is not online")) {
-                       console.warn(`[getRecords] Peer ${pidStr} 离线/不可达，停止重试: ${errMsg}`);
-                       break;
-                   }
-
-                   if (attempts >= maxAttempts || stopProcessing) {
-                      console.warn(`[getRecords] Peer ${pidStr} 最终失败 (尝试 ${attempts}次):`, err);
-                   } else {
-                      console.warn(`[getRecords] Peer ${pidStr} 失败 (尝试 ${attempts}/${maxAttempts}), 1s后重试:`, errMsg);
-                      await new Promise((resolve) => setTimeout(resolve, 1000));
-                   }
-                }
+              // 逻辑调整：不再重试，失败直接处理下一个节点
+              try {
+                await processPeer(peerId);
+              } catch (err) {
+                 const pidStr = peerId.toString().slice(0, 8);
+                 console.warn(`[getRecords] Peer ${pidStr} 失败，跳过不重试:`, err);
               }
+
               // 每个任务完成后让出控制权
               await new Promise((resolve) => setTimeout(resolve, 0));
             }

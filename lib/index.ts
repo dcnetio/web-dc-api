@@ -49,6 +49,9 @@ export { createLogger, configureLogger, LogLevel } from './util/logger';
 // 导出keyManager
 export { KeyManager } from './common/dc-key/keyManager';
 
+// 导出Worker辅助函数
+export { exposeDC, wrapWorker } from './worker';
+
 // 导出私钥
 export { Ed25519PrivKey, Ed25519PubKey } from './common/dc-key/ed25519';
 
