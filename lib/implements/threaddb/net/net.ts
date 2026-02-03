@@ -566,6 +566,141 @@ export class Network implements Net {
     }
   }
 
+
+  /**
+   * Process pulled records
+   */
+  private async _processPulledRecords(
+    id: ThreadID,
+    recs: Record<string, PeerRecords>
+  ): Promise<void> {
+    const [connector, appConnected] = this.getConnector(id);
+
+    // Handle records
+    const tRecords: TimestampedRecord[] = [];
+    const logEntries = Object.entries(recs);
+
+    for (let logIndex = 0; logIndex < logEntries.length; logIndex++) {
+      const [lidStr, rec] = logEntries[logIndex]!;
+      const lid = peerIdFromString(lidStr);
+      const rs = rec as PeerRecords;
+      if (appConnected) {
+        // 使用并发控制，但不分批 - 避免慢任务拖累整批
+        const maxConcurrency = 3; // 最大并发数
+        let activePromises: Promise<void>[] = [];
+        let processedCount = 0;
+        let indexCounter = rs.counter - rs.records.length + 1;
+
+        const processRecord = async (r: any, index: number): Promise<void> => {
+          try {
+            // 增加超时控制，防止单个任务卡死导致队列阻塞
+            await Promise.race([
+              (async () => {
+                const block = await r.getBlock(this.bstore);
+                const event =
+                  block instanceof Event
+                    ? block
+                    : await EventFromNode(block as Node);
+
+                const header = await event.getHeader(this.bstore);
+                const body = await event.getBody(this.bstore);
+
+                // Store internal blocks locally
+                await this.addMany([event, header, body]);
+
+                const tRecord = newRecord(r, id, lid);
+                const counter = indexCounter + index;
+                const createtime = await connector!.getNetRecordCreateTime(
+                  tRecord
+                );
+
+                tRecords.push({
+                  record: r,
+                  counter: counter,
+                  createtime: createtime,
+                  logid: lid,
+                });
+              })(),
+              new Promise((_, reject) =>
+                setTimeout(() => reject(new Error("Process Timeout")), 30000)
+              ),
+            ]);
+          } catch (err) {
+            console.error(`处理记录 ${index + 1} 失败:`, err);
+            throw err;
+          }
+        };
+
+        // 处理所有记录，但控制并发数
+        for (let i = 0; i < rs.records.length; i++) {
+          const r = rs.records[i]!;
+
+          // 创建处理Promise
+          const taskPromise = processRecord(r, i);
+
+          // 包装Promise用于队列管理
+          const promise = taskPromise.finally(() => {
+            processedCount++;
+            // 从活跃Promise列表中移除
+            const index = activePromises.indexOf(promise);
+            if (index > -1) {
+              activePromises.splice(index, 1);
+            }
+          });
+
+          activePromises.push(promise);
+
+          // 当达到最大并发数时，等待最快完成的一个
+          if (activePromises.length >= maxConcurrency) {
+            try {
+              await Promise.race(activePromises);
+            } catch (e) {
+              // Promise.race 不应该抛出错误，因为 activePromises 中的 promise 都处理了 catch
+              // 但为了保险起见，这里捕获异常防止循环中断
+              // console.warn("Race interrupted", e);
+            }
+          }
+
+          // 每处理 10 个任务就让出主线程，防止UI卡死
+          if (i % 10 === 0 && i > 0) {
+            await new Promise((r) => setTimeout(r, 0));
+          }
+        }
+        // 等待所有剩余的Promise完成
+        await Promise.all(activePromises);
+      } else {
+        await this.putRecords(id, lid, rs.records, rs.counter);
+      }
+
+      // 每处理完一个日志让出控制权
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    }
+
+    // 大数据排序前让出控制权
+    if (tRecords.length > 10) {
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    }
+
+    tRecords.sort((a, b) => {
+      if (a.createtime < b.createtime) return -1;
+      if (a.createtime > b.createtime) return 1;
+      return 0;
+    });
+
+    // 排序后让出控制权
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    // Process each record in order
+    for (let i = 0; i < tRecords.length; i++) {
+      const r = tRecords[i]!;
+      await this.putRecords(id, r.logid, [r.record], r.counter);
+      // 每处理2条记录让出主线程，提高响应性
+      if (i % 2 === 0 && i > 0) {
+        await new Promise((resolve) => setTimeout(resolve, 0));
+      }
+    }
+  }
+
   /**
    * Pull thread updates from peers
    */
@@ -578,13 +713,11 @@ export class Network implements Net {
     }
   ): Promise<void> {
     try {
-      let recs: Record<string, PeerRecords> = {};
-
       try {
         if (options.multiPeersFlag) {
-          recs = await this.pullThreadDeal(id, options.multiPeersFlag);
+          await this.pullThreadDeal(id, options.multiPeersFlag);
         } else {
-          recs = await this.pullThreadDeal(id, false);
+          await this.pullThreadDeal(id, false);
         }
       } catch (err) {
         throw new Error(
@@ -592,157 +725,6 @@ export class Network implements Net {
             err instanceof Error ? err.message : String(err)
           }`
         );
-      }
-
-      const [connector, appConnected] = this.getConnector(id);
-
-      // Handle records
-      const tRecords: TimestampedRecord[] = [];
-      const logEntries = Object.entries(recs);
-
-      for (let logIndex = 0; logIndex < logEntries.length; logIndex++) {
-        const [lidStr, rec] = logEntries[logIndex]!;
-        const lid = peerIdFromString(lidStr);
-        const rs = rec as PeerRecords;
-        if (appConnected) {
-          // 使用并发控制，但不分批 - 避免慢任务拖累整批
-          const maxConcurrency = 3; // 最大并发数
-          let activePromises: Promise<void>[] = [];
-          let processedCount = 0;
-
-          const processRecord = async (
-            r: any,
-            index: number
-          ): Promise<void> => {
-            try {
-              // 增加超时控制，防止单个任务卡死导致队列阻塞
-              await Promise.race([
-                (async () => {
-                   const block = await r.getBlock(this.bstore);
-                   const event =
-                     block instanceof Event
-                       ? block
-                       : await EventFromNode(block as Node);
-
-                   const header = await event.getHeader(this.bstore);
-                   const body = await event.getBody(this.bstore);
-
-                   // Store internal blocks locally
-                   await this.addMany([event, header, body]);
-                })(),
-                new Promise((_, reject) => setTimeout(() => reject(new Error('Process Timeout')), 30000))
-              ]);
-            } catch (err) {
-              console.error(`预加载记录 ${index + 1} 失败:`, err);
-              // 继续处理其他记录
-            }
-          };
-
-          // 处理所有记录，但控制并发数
-          for (let i = 0; i < rs.records.length; i++) {
-            const r = rs.records[i]!;
-            
-            // 创建处理Promise
-            const taskPromise = processRecord(r, i);
-            
-            // 包装Promise用于队列管理
-            const promise = taskPromise.finally(() => {
-              processedCount++;
-              // 从活跃Promise列表中移除
-              const index = activePromises.indexOf(promise);
-              if (index > -1) {
-                activePromises.splice(index, 1);
-              }
-            });
-
-            activePromises.push(promise);
-
-            // 当达到最大并发数时，等待最快完成的一个
-            if (activePromises.length >= maxConcurrency) {
-              try {
-                  await Promise.race(activePromises);
-              } catch (e) {
-                  // Promise.race 不应该抛出错误，因为 activePromises 中的 promise 都处理了 catch
-                  // 但为了保险起见，这里捕获异常防止循环中断
-                  console.warn('Race interrupted', e);
-              }
-            }
-            
-            // 每处理50个任务就让出主线程，防止UI卡死
-            // 2个太频繁了，上万条记录会导致数千次EventLoop切换，严重拖慢整体速度。改为50或更合适
-            if (i % 50 === 0 && i > 0) {
-              await new Promise((r) => setTimeout(r, 0));
-            }
-          }
-          // 等待所有剩余的Promise完成
-          await Promise.all(activePromises);
-
-          console.log(`所有 ${rs.records.length} 条记录预加载完成`);
-          //开始正式处理,前面数据已经拉取到本地,这时处理速度很快
-          let indexCounter = rs.counter - rs.records.length + 1;
-
-          for (let i = 0; i < rs.records.length; i++) {
-            const r = rs.records[i]!;
-
-            // Get blocks for validation
-            const block = await r.getBlock(this.bstore);
-            const event =
-              block instanceof Event
-                ? block
-                : await EventFromNode(block as Node);
-
-            const header = await event.getHeader(this.bstore);
-            const body = await event.getBody(this.bstore);
-
-            // Store internal blocks locally
-            await this.addMany([event, header, body]);
-
-            const tRecord = newRecord(r, id, lid);
-            const counter = indexCounter + i;
-            const createtime = await connector!.getNetRecordCreateTime(tRecord);
-
-            tRecords.push({
-              record: r,
-              counter: counter,
-              createtime: createtime,
-              logid: lid,
-            });
-            
-            // 每处理2条记录让出主线程，因为包含大量重操作（解析、存储、获取时间戳）
-            if (i % 2 === 0 && i > 0) {
-              await new Promise((r) => setTimeout(r, 0));
-            }
-          }
-        } else {
-          await this.putRecords(id, lid, rs.records, rs.counter);
-        }
-        
-        // 每处理完一个日志让出控制权
-        await new Promise((resolve) => setTimeout(resolve, 0));
-      }
-
-      // 大数据排序前让出控制权
-      if (tRecords.length > 10) {
-        await new Promise((resolve) => setTimeout(resolve, 0));
-      }
-
-      tRecords.sort((a, b) => {
-        if (a.createtime < b.createtime) return -1;
-        if (a.createtime > b.createtime) return 1;
-        return 0;
-      });
-
-      // 排序后让出控制权
-      await new Promise((resolve) => setTimeout(resolve, 0));
-
-      // Process each record in order
-      for (let i = 0; i < tRecords.length; i++) {
-        const r = tRecords[i]!;
-        await this.putRecords(id, r.logid, [r.record], r.counter);
-        // 每处理2条记录让出主线程，提高响应性
-        if (i % 2 === 0 && i > 0) {
-          await new Promise((resolve) => setTimeout(resolve, 0));
-        }
       }
     } catch (err) {
       throw err;
@@ -776,58 +758,113 @@ export class Network implements Net {
         );
         // Ignore getPeers errors
       }
-      const pulledRecs: Record<string, PeerRecords> = {};
+      
+      if (peers.length === 0) return {};
 
-      // Continue pulling until no more records
-      while (true) {
-        try {
-          const recs = await this.getRecords(
-            peers,
-            tid,
-            offsets,
-            netPullingLimit,
-            multiPeersFlag
-          );
-          let continueFlag = false;
-          for (const [lidStr, rs] of Object.entries(recs)) {
-            if (rs.records.length > 0) {
-              if (!pulledRecs[lidStr]) {
-                pulledRecs[lidStr] = { records: [], counter: 0 };
-              }
-              const entry = pulledRecs[lidStr];
+      // 1. Random shuffle peers (Fisher-Yates)
+      for (let i = peers.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [peers[i], peers[j]] = [peers[j]!, peers[i]!];
+      }
 
-              // 优化性能：直接push而不是创建新数组，避免大量数据时的内存复制开销
-              const rsRecords = rs.records;
-              for (let i = 0; i < rsRecords.length; i++) {
-                entry.records.push(rsRecords[i]);
-                // 如果单次批量数据量非常大，也需要让出控制权
-                if (i > 0 && i % 1000 === 0) {
-                  await new Promise((r) => setTimeout(r, 0));
-                }
-              }
-              entry.counter = rs.counter;
+      // 2. Try first peer randomly
+      let firstPeerSuccess = false;
+      let remainingPeers: PeerId[] = [];
 
-              const lastRecord = rs.records[rs.records.length - 1]!;
-              offsets[lidStr] = {
-                id: lastRecord.cid(),
-                counter: rs.counter,
-              };
+      for (let i = 0; i < peers.length; i++) {
+        const peer = peers[i]!;
+        let success = false;
+        
+        while (true) {
+          try {
+            const recs = await this.getRecords(
+              [peer],
+              tid,
+              offsets,
+              netPullingLimit,
+              false
+            );
 
-              if (rs.records.length >= netPullingLimit) {
-                continueFlag = true;
+            if (Object.keys(recs).length === 0) {
+                success = true;
+                break;
+            }
+
+            await this._processPulledRecords(tid, recs);
+
+            let hasMore = false;
+            for (const [lidStr, rs] of Object.entries(recs)) {
+              if (rs.records.length > 0) {
+                 const lastRecord = rs.records[rs.records.length - 1]!;
+                 offsets[lidStr] = {
+                   id: lastRecord.cid(),
+                   counter: rs.counter,
+                 };
+                 if (rs.records.length >= netPullingLimit) hasMore = true;
               }
             }
-          }
 
-          if (!continueFlag) {
-            break;
+            if (!hasMore) {
+              success = true;
+              break;
+            }
+          } catch (err) {
+            console.warn(`Failed to sync with peer ${peer}:`, err);
+            success = false;
+            break; 
           }
-        } catch (err) {
-          console.warn("Error pulling records (stopping sync loop):", err);
-          break; // Stop loop on error but return what we have
+        }
+
+        if (success) {
+           firstPeerSuccess = true;
+           remainingPeers = peers.slice(i + 1);
+           break;
         }
       }
-      return pulledRecs;
+
+      if (!firstPeerSuccess) return {};
+
+      // 3. Re-extract offsets
+      [offsets] = await this.threadOffsets(tid);
+
+      // 4. Sequence sync remaining peers
+       for (const peer of remainingPeers) {
+        if (!peer) continue;
+        while (true) {
+          try {
+            const recs = await this.getRecords(
+              [peer],
+              tid,
+              offsets,
+              netPullingLimit,
+              false
+            );
+
+            if (Object.keys(recs).length === 0) break;
+
+            await this._processPulledRecords(tid, recs);
+
+            let hasMore = false;
+            for (const [lidStr, rs] of Object.entries(recs)) {
+               if (rs.records.length > 0) {
+                 const lastRecord = rs.records[rs.records.length - 1]!;
+                 offsets[lidStr] = {
+                   id: lastRecord.cid(),
+                   counter: rs.counter,
+                 };
+                 if (rs.records.length >= netPullingLimit) hasMore = true;
+              }
+            }
+
+            if (!hasMore) break;
+          } catch (err) {
+            console.warn(`Failed to sync with remaining peer ${peer}:`, err);
+            break;
+          }
+        }
+      }
+
+      return {};
     } catch (err) {
       throw err;
     }
@@ -1588,10 +1625,18 @@ export class Network implements Net {
                   success = true;
                 } catch (err) {
                    const pidStr = peerId.toString().slice(0, 8);
+                   const errMsg = err instanceof Error ? err.message : String(err);
+
+                   // 如果是离线错误，直接停止重试
+                   if (errMsg.includes("peerStatus is not online")) {
+                       console.warn(`[getRecords] Peer ${pidStr} 离线/不可达，停止重试: ${errMsg}`);
+                       break;
+                   }
+
                    if (attempts >= maxAttempts || stopProcessing) {
                       console.warn(`[getRecords] Peer ${pidStr} 最终失败 (尝试 ${attempts}次):`, err);
                    } else {
-                      console.warn(`[getRecords] Peer ${pidStr} 失败 (尝试 ${attempts}/${maxAttempts}), 1s后重试:`, err instanceof Error ? err.message : err);
+                      console.warn(`[getRecords] Peer ${pidStr} 失败 (尝试 ${attempts}/${maxAttempts}), 1s后重试:`, errMsg);
                       await new Promise((resolve) => setTimeout(resolve, 1000));
                    }
                 }
@@ -2271,8 +2316,8 @@ class RecordCollector {
         const key = record.cid().toString();
         logRecords!.set(key, record);
 
-        // 每处理 50 条记录让出一次主线程，防止数据量大时锁死 UI
-        if (i > 0 && i % 50 === 0) {
+        // 每处理 10 条记录让出一次主线程，防止数据量大时锁死 UI
+        if (i > 0 && i % 10 === 0) {
           await new Promise((resolve) => setTimeout(resolve, 0));
         }
       }

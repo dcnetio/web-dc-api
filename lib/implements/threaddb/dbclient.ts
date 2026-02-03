@@ -144,7 +144,13 @@ export class DBClient {
       body.threads = [];
 
       // 填充本地边缘信息
+      let processCount = 0;
       for (const tid of threadIds) {
+        processCount++;
+        // 每处理50个Thread让出主线程，避免UI卡顿
+        if (processCount % 50 === 0) {
+          await new Promise((resolve) => setTimeout(resolve, 0));
+        }
         try {
           // 获取本地边缘信息
           const { addrEdge, headsEdge } = await this.localEdges(tid);
@@ -190,7 +196,14 @@ export class DBClient {
         const reply = await grpcClient.exchangeEdges(req);
 
         // 处理响应
+        let processResponseCount = 0;
         for (const edge of reply.edges || []) {
+          processResponseCount++;
+          // 处理响应的操作比较重（涉及数据库读写和可能的网络请求），每处理5个就让出一次
+          if (processResponseCount % 5 === 0) {
+            await new Promise((resolve) => setTimeout(resolve, 0));
+          }
+
           if (!edge.threadID) continue;
           const tid = ThreadID.fromBytes(edge.threadID);
           // 获取本地可能已更新的边缘
@@ -272,7 +285,13 @@ export class DBClient {
       return;
     }
     const sk = SymmetricKey.fromSymKey(serviceKey);
+    let logCount = 0;
     for (const log of logs) {
+      logCount++;
+      // 每处理10个Log让出主线程
+      if (logCount % 10 === 0) {
+        await new Promise((resolve) => setTimeout(resolve, 0));
+      }
       const head = await this.logstore.headBook.heads(tid, log.id);
       let headToPush: Head;
       if (head.length > 0) {

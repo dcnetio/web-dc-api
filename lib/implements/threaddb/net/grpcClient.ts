@@ -382,7 +382,7 @@ export class DBGrpcClient {
         const unsortedRecords: IRecord[] = new Array(rawRecords.length);
 
         // 内层循环：处理记录，使用更小的批量
-        const BATCH_SIZE = 10;
+        const BATCH_SIZE = 50;
 
         for (let i = 0; i < rawRecords.length; i += BATCH_SIZE) {
           const end = Math.min(i + BATCH_SIZE, rawRecords.length);
@@ -479,8 +479,8 @@ export class DBGrpcClient {
       processed.add(currentBlockId);
       processedCount++;
 
-      // 每处理3条记录让出主线程（降低频率以提高性能）
-      if (processedCount % 3 === 0) {
+      // 每处理500条记录让出主线程（降低频率以提高性能）
+      if (processedCount % 500 === 0) {
         await new Promise((resolve) => setTimeout(resolve, 0));
       }
 
