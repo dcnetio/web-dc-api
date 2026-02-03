@@ -1556,7 +1556,7 @@ export class Network implements Net {
         await new Promise<void>((resolve, reject) => {
             const timeout = setTimeout(() => {
               reject(new Error(`Timeout getting records from peer ${peerId}`));
-            }, 45000); // 缩短超时到 45s
+            }, 900000);
 
             (async () => {
               try {

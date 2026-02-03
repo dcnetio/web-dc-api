@@ -60,10 +60,11 @@ export class WalletManager {
         // (iframe as any).credentialless = true; // iframe和父窗口不可传递cookies等凭证，符合安全规则
         iframe.style.width = "1px";
         iframe.style.height = "1px";
-        // 监听钱包iframe发来的消息
-        window.addEventListener("message", (event) => {
-          that.listenFromWallet(event);
-        });
+        if (typeof window !== "undefined") {
+          window.addEventListener("message", (event) => {
+            that.listenFromWallet(event);
+          });
+        }
         const iframeLoaded = that.iframeLoaded;
         if (!iframeLoaded) {
           iframe.onload = async () => {
