@@ -797,8 +797,13 @@ export class Network implements Net {
               const entry = pulledRecs[lidStr];
 
               // 优化性能：直接push而不是创建新数组，避免大量数据时的内存复制开销
-              for (const r of rs.records) {
-                entry.records.push(r);
+              const rsRecords = rs.records;
+              for (let i = 0; i < rsRecords.length; i++) {
+                entry.records.push(rsRecords[i]);
+                // 如果单次批量数据量非常大，也需要让出控制权
+                if (i > 0 && i % 1000 === 0) {
+                  await new Promise((r) => setTimeout(r, 0));
+                }
               }
               entry.counter = rs.counter;
 
@@ -1245,20 +1250,25 @@ export class Network implements Net {
 
         // Update head counter
         updatedCounter++;
+        
+        const rCid = record.value().cid();
+        if (rCid) {
+          // Set new head for the log
+          await this.logstore.headBook.setHead(tid, lid, {
+            id: rCid,
+            counter: updatedCounter,
+          });
 
-        // Set new head for the log
-        await this.logstore.headBook.setHead(tid, lid, {
-          id: record.value().cid(),
-          counter: updatedCounter,
-        });
-
-        // Set checkpoint for log
-        await this.setThreadLogPoint(
-          tid,
-          lid,
-          updatedCounter,
-          record.value().cid()
-        );
+          // Set checkpoint for log
+          await this.setThreadLogPoint(
+            tid,
+            lid,
+            updatedCounter,
+            rCid
+          );
+        } else {
+          console.warn(`[putRecords] Record CID undefined, skipping head update. Log: ${lid.toString()}, Counter: ${updatedCounter}`);
+        }
 
         // Handle record in app connector
         if (appConnected) {
@@ -1488,6 +1498,8 @@ export class Network implements Net {
       // 创建记录收集器
       const recordCollector = new RecordCollector();
       
+      console.log(`[getRecords] 开始同步，目标 Peer 数: ${peers.length}, 多点同步: ${multiPeersFlag}`);
+
       const MAX_CONCURRENCY = 3;
       const peerQueue = [...peers];
       let stopProcessing = false;
@@ -1495,18 +1507,19 @@ export class Network implements Net {
       const processPeer = async (peerId: PeerId) => {
         if (stopProcessing) return;
         
-        try {
-          await new Promise<void>((resolve, reject) => {
+        // 这里的 try-catch 去掉，让错误向上传递给 worker 用于重试
+        await new Promise<void>((resolve, reject) => {
             const timeout = setTimeout(() => {
               reject(new Error(`Timeout getting records from peer ${peerId}`));
-            }, 900000);
+            }, 45000); // 缩短超时到 45s
 
             (async () => {
               try {
                 //连接到指定peerId,返回一个Client
                 const [client, err] = await this.getClient(peerId);
                 if (!client) {
-                  return;
+                   // 抛出错误以便重试
+                   throw new Error(`Connection failed: ${err instanceof Error ? err.message : String(err)}`);
                 }
                 const dbClient = new DBClient(
                   client,
@@ -1528,13 +1541,15 @@ export class Network implements Net {
                 }
 
                 // 合并日志，减少输出次数
-                console.log(
-                  `[记录同步] 从 ${peerId
-                    .toString()
-                    .slice(0, 8)}... 获取 ${recCount} 条记录 (耗时: ${
-                    Date.now() - startTime
-                  }ms)`
-                );
+                const pidStr = peerId.toString();
+                // 仅在有数据时打印，减少日志噪音
+                if (recCount > 0) {
+                    console.log(
+                      `[记录同步] 从 ${pidStr.slice(0, 8)}...${pidStr.slice(-4)} 获取 ${recCount} 条记录 (耗时: ${
+                        Date.now() - startTime
+                      }ms)`
+                    );
+                }
 
                 if (records) {
                   for (const [logId, rs] of Object.entries(records)) {
@@ -1548,28 +1563,38 @@ export class Network implements Net {
               .then(() => resolve())
               .catch((err) => reject(err))
               .finally(() => clearTimeout(timeout));
-          });
+        });
 
-          if (!multiPeersFlag) {
-            stopProcessing = true;
-          }
-        } catch (err) {
-             //让出控制权
-             await new Promise((resolve) => setTimeout(resolve, 0));
+        if (!multiPeersFlag) {
+          stopProcessing = true;
         }
       };
 
-      // 启动并发工作线程
+      // 启动并发工作线程    
       const workers = Array(Math.min(peers.length, MAX_CONCURRENCY))
         .fill(null)
         .map(async () => {
           while (peerQueue.length > 0 && !stopProcessing) {
             const peerId = peerQueue.shift();
             if (peerId) {
-              try {
-                await processPeer(peerId);
-              } catch (err) {
-                console.warn(`Worker error processing peer ${peerId}:`, err);
+              const maxAttempts = 3;
+              let attempts = 0;
+              let success = false;
+              
+              while(attempts < maxAttempts && !success && !stopProcessing) {
+                attempts++;
+                try {
+                  await processPeer(peerId);
+                  success = true;
+                } catch (err) {
+                   const pidStr = peerId.toString().slice(0, 8);
+                   if (attempts >= maxAttempts || stopProcessing) {
+                      console.warn(`[getRecords] Peer ${pidStr} 最终失败 (尝试 ${attempts}次):`, err);
+                   } else {
+                      console.warn(`[getRecords] Peer ${pidStr} 失败 (尝试 ${attempts}/${maxAttempts}), 1s后重试:`, err instanceof Error ? err.message : err);
+                      await new Promise((resolve) => setTimeout(resolve, 1000));
+                   }
+                }
               }
               // 每个任务完成后让出控制权
               await new Promise((resolve) => setTimeout(resolve, 0));
@@ -2238,10 +2263,19 @@ class RecordCollector {
         this.records.set(logId, logRecords);
       }
 
-      rs.records.forEach((record) => {
+      // 避免forEach导致大循环卡顿，使用普通for循环并分片让出
+      const records = rs.records;
+      for (let i = 0; i < records.length; i++) {
+        const record = records[i];
+        // cid() 计算可能会有些耗时
         const key = record.cid().toString();
         logRecords!.set(key, record);
-      });
+
+        // 每处理 50 条记录让出一次主线程，防止数据量大时锁死 UI
+        if (i > 0 && i % 50 === 0) {
+          await new Promise((resolve) => setTimeout(resolve, 0));
+        }
+      }
     } finally {
       this.mutex.release();
     }

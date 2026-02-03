@@ -28,12 +28,19 @@ export class DCGrpcServer {
 
     start() {
       this.libp2p.handle(this.protocol, async (data: any) => {
-        const { stream } = data;
+        // 兼容不同的 handler 签名 (data.stream 或 data 本身是 stream)
+        const stream = data.stream || data;
         try {
+          if (!stream) {
+              console.error("Stream is undefined in handle callback");
+              return;
+          }
           const hpack = new HPACK()
           //生成number的streamId
           let method = "";
-          const writer =  new StreamWriter((stream as any).sink) as any;
+          // 兼容新版 libp2p, stream 可能本身就是 sink，或者没有 .sink 属性
+          const sink = (stream as any).sink ? (stream as any).sink : stream;
+          const writer =  new StreamWriter(sink) as any;
           const http2Parser = new HTTP2Parser(writer)
           http2Parser.onData = async (payload, frameHeader) => {
             const requestData = payload.subarray(5) // 去除帧头部分

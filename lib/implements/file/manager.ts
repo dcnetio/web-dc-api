@@ -966,7 +966,16 @@ export class FileManager {
   }
 
   private async *chunkGenerator(stream: Stream): AsyncGenerator<Uint8Array> {
-    const iterator = (stream as any).source[Symbol.asyncIterator]();
+    // 兼容: 优先检查 .source, 否则直接迭代 stream
+    const s = stream as any;
+    const iteratorSrc = s.source || s;
+
+    if (!iteratorSrc[Symbol.asyncIterator]) {
+      console.warn("Stream source is not async iterable", stream);
+      return;
+    }
+
+    const iterator = iteratorSrc[Symbol.asyncIterator]();
     while (true) {
       try {
         const { done, value } = await iterator.next();
