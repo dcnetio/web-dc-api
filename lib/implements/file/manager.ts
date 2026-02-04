@@ -25,6 +25,7 @@ import { cidNeedConnect } from "../../common/constants";
 import { SeekableFileStream } from "./seekableFileStream";
 import { AccountClient } from "../account/client";
 import { DCContext } from "../../../lib/interfaces/DCContext";
+import { multiaddr, Multiaddr } from "@multiformats/multiaddr";
 
 const NonceBytes = 12;
 const TagBytes = 16;
@@ -47,6 +48,7 @@ export const Errors = {
   ErrNoPeerIdIsNull: new FileError("peerId is null"),
   ErrNoNeedUpload: new FileError("no need upload"),
   ErrPublicKeyIsNull: new FileError("publickey is null"),
+  ErrBuildServerConnect: new FileError("build server connect error"),
 };
 
 export interface MediaController {
@@ -74,7 +76,7 @@ export class FileManager {
     connectedDc: DCConnectInfo,
     chainUtil: ChainUtil,
     dcNodeClient: Helia<Libp2p>,
-    context: DCContext
+    context: DCContext,
   ) {
     this.dc = dc;
     this.connectedDc = connectedDc;
@@ -87,13 +89,13 @@ export class FileManager {
     pubkeyBytes: Uint8Array,
     fileSize: number,
     content: Uint8Array,
-    isFirstChunk: boolean
+    isFirstChunk: boolean,
   ): Promise<Uint8Array> {
     if (isFirstChunk) {
       // 计算 pubkey 的 hash
       const pubkeyHash = await crypto.subtle.digest(
         "SHA-256",
-        pubkeyBytes as any
+        pubkeyBytes as any,
       );
       const pubkeyHashArray = new Uint8Array(pubkeyHash);
 
@@ -121,7 +123,7 @@ export class FileManager {
     file: File,
     resumeState = { offset: 0, chunkHashes: [] },
     pubkeyBytes?: Uint8Array,
-    symKey?: SymmetricKey | null
+    symKey?: SymmetricKey | null,
   ): Promise<CID | null> {
     const fs = unixfs(this.dcNodeClient);
 
@@ -154,7 +156,7 @@ export class FileManager {
             pubkeyBytes,
             file.size,
             content,
-            true // isFirstChunk
+            true, // isFirstChunk
           )) as any;
         }
 
@@ -176,7 +178,7 @@ export class FileManager {
    */
   async isAccessPeerIdBinded(): Promise<boolean> {
     const userInfo = await this.chainUtil.refreshUserInfo(
-      this.context.getPubkeyRaw()
+      this.context.getPubkeyRaw(),
     );
 
     if (userInfo.requestPeers && userInfo.requestPeers.length > 0) {
@@ -195,7 +197,7 @@ export class FileManager {
     file: File,
     enkey: string,
     onUpdateTransmitSize: (status: UploadStatus, size: number) => void,
-    vaccount?: string
+    vaccount?: string,
   ): Promise<[string | null, Error | null]> {
     if (!this.connectedDc?.client) {
       return [null, Errors.ErrNoDcPeerConnected];
@@ -219,7 +221,7 @@ export class FileManager {
         await accountClient.bindAccessPeerToUser(
           this.context,
           blockHeight ? blockHeight : 0,
-          peerId
+          peerId,
         );
         //等待绑定信息上链,最多等待20秒
         let waitCount = 0;
@@ -253,7 +255,7 @@ export class FileManager {
         file,
         { offset: 0, chunkHashes: [] },
         pubkeyBytes,
-        symKey
+        symKey,
       );
       if (!cid) {
         return [resCid, Errors.ErrNoFileChose];
@@ -267,7 +269,7 @@ export class FileManager {
       const fileClient = new FileClient(
         this.connectedDc.client,
         this.dcNodeClient,
-        this.context
+        this.context,
       );
       let resStatus = 0;
       let resFlag = false;
@@ -285,7 +287,7 @@ export class FileManager {
         async (error: Error) => {
           resFlag = true;
           resError = error;
-        }
+        },
       );
       //等待storeRes 为true
       while (!resFlag) {
@@ -312,7 +314,7 @@ export class FileManager {
         this.dcNodeClient.blockstore,
         nodeAddr,
         BrowserType.File,
-        resCid
+        resCid,
       );
     } catch (error) {
       console.error("=========stream close", error);
@@ -321,13 +323,10 @@ export class FileManager {
     return [resCid, null];
   }
 
-
-
-
   // 添加文件到本地节点
   async addFileInLocal(
     file: File,
-    enkey: string
+    enkey: string,
   ): Promise<[string | null, Error | null]> {
     let resCid: CID | null = null;
     try {
@@ -335,12 +334,12 @@ export class FileManager {
         enkey && enkey.length > 0 ? SymmetricKey.fromString(enkey) : null;
       const fs = unixfs(this.dcNodeClient);
       const pubkeyBytes = this.context.getPubkeyRaw();
-      
+
       const cid = await this._uploadLargeFileAdvanced(
         file,
         { offset: 0, chunkHashes: [] },
         pubkeyBytes,
-        symKey
+        symKey,
       );
       if (!cid) {
         return ["", Errors.ErrNoFileChose];
@@ -351,7 +350,6 @@ export class FileManager {
     }
     return [resCid.toString(), null];
   }
-
 
   /**
    * Adds a folder to the DC network using browser FileList
@@ -367,9 +365,9 @@ export class FileManager {
     updateTransmitCount: (
       status: UploadStatus,
       total: number,
-      progress: number
+      progress: number,
     ) => void,
-    vaccount?: string
+    vaccount?: string,
   ): Promise<[string | null, Error | null]> {
     if (!this.connectedDc?.client) {
       return [null, Errors.ErrNoDcPeerConnected];
@@ -396,7 +394,7 @@ export class FileManager {
         await accountClient.bindAccessPeerToUser(
           this.context,
           blockHeight ? blockHeight : 0,
-          peerId
+          peerId,
         );
         //等待绑定信息上链,最多等待20秒
         let waitCount = 0;
@@ -425,7 +423,7 @@ export class FileManager {
       // Create hash of public key for owner file
       const pubkeyHash = await crypto.subtle.digest(
         "SHA-256",
-        pubkeyBytes as any
+        pubkeyBytes as any,
       );
       const ownerFileContent = new Uint8Array(pubkeyHash);
 
@@ -434,12 +432,12 @@ export class FileManager {
       const rootFolderName = this.extractRootFolderName(fileList);
       //排除掉 dc_ownuser 文件,然后又加上去,防止重复添加
       const files = Array.from(fileList).filter(
-        (file) => file.name !== "dc_ownuser"
+        (file) => file.name !== "dc_ownuser",
       );
       //将ownerFileContent作为文件内容,最后添加到根目录
       const ownerPath = rootFolderName + "/dc_ownuser";
       files.push(
-        new File([ownerFileContent], "dc_ownuser", { type: "text/plain" })
+        new File([ownerFileContent], "dc_ownuser", { type: "text/plain" }),
       );
 
       // 将文件路径与内容流映射
@@ -515,7 +513,7 @@ export class FileManager {
         await client.GetToken(
           this.context.appInfo.appId || "",
           this.context.publicKey.string(),
-          this.context.sign
+          this.context.sign,
         );
       }
 
@@ -523,7 +521,7 @@ export class FileManager {
       const fileClient = new FileClient(
         this.connectedDc.client,
         this.dcNodeClient,
-        this.context
+        this.context,
       );
 
       let resFlag = false;
@@ -541,7 +539,7 @@ export class FileManager {
         async (error: Error) => {
           resFlag = true;
           resError = error;
-        }
+        },
       );
       while (!resFlag) {
         await sleep(100);
@@ -567,7 +565,7 @@ export class FileManager {
         this.dcNodeClient.blockstore,
         nodeAddr,
         BrowserType.File,
-        finalCid
+        finalCid,
       );
       return [finalCid, null];
     } catch (error) {
@@ -575,8 +573,6 @@ export class FileManager {
       return [null, error instanceof Error ? error : new Error(String(error))];
     }
   }
-
-
 
   /**
    * Adds a folder to the DC network using browser FileList
@@ -586,9 +582,8 @@ export class FileManager {
    */
   async addFolderInLocal(
     fileList: FileList,
-    enkey: string
+    enkey: string,
   ): Promise<[string | null, Error | null]> {
-   
     try {
       // Create IPFS file system interface
       const fs = unixfs(this.dcNodeClient);
@@ -599,7 +594,7 @@ export class FileManager {
       // Create hash of public key for owner file
       const pubkeyHash = await crypto.subtle.digest(
         "SHA-256",
-        pubkeyBytes as any
+        pubkeyBytes as any,
       );
       const ownerFileContent = new Uint8Array(pubkeyHash);
 
@@ -608,12 +603,12 @@ export class FileManager {
       const rootFolderName = this.extractRootFolderName(fileList);
       //排除掉 dc_ownuser 文件,然后又加上去,防止重复添加
       const files = Array.from(fileList).filter(
-        (file) => file.name !== "dc_ownuser"
+        (file) => file.name !== "dc_ownuser",
       );
       //将ownerFileContent作为文件内容,最后添加到根目录
       const ownerPath = rootFolderName + "/dc_ownuser";
       files.push(
-        new File([ownerFileContent], "dc_ownuser", { type: "text/plain" })
+        new File([ownerFileContent], "dc_ownuser", { type: "text/plain" }),
       );
 
       // 将文件路径与内容流映射
@@ -653,7 +648,7 @@ export class FileManager {
     filesMap:
       | Map<string, string | Uint8Array | ArrayBuffer>
       | Record<string, string | Uint8Array | ArrayBuffer>,
-    rootFolderName: string = "upload"
+    rootFolderName: string = "upload",
   ): FileList {
     // Convert object to Map if needed
     const filesMapObj =
@@ -688,7 +683,7 @@ export class FileManager {
         {
           value: fullPath,
           writable: false,
-        }
+        },
       );
 
       // Set webkitRelativePath property
@@ -855,7 +850,7 @@ export class FileManager {
     parentDir: any, // MFS Directory type (replace with actual type)
     dirPath: string,
     fileName: File,
-    enkey: string
+    enkey: string,
   ): Promise<[string | null, Error | null]> {
     let symKey: SymmetricKey | null = null;
     const readPath = `${dirPath}/${fileName}`; // Use path joining appropriate for your env
@@ -939,7 +934,7 @@ export class FileManager {
 
   // Helper method to convert a ReadableStream to AsyncIterable
   private async *streamToAsyncIterable(
-    stream: ReadableStream<Uint8Array>
+    stream: ReadableStream<Uint8Array>,
   ): AsyncGenerator<Uint8Array> {
     const reader = stream.getReader();
     try {
@@ -1014,7 +1009,7 @@ export class FileManager {
     return buffer;
   }
   parseMessage(
-    data: Uint8Array
+    data: Uint8Array,
   ): { type: number; version: number; payload: Uint8Array } | null {
     if (data.length < 7) {
       return null;
@@ -1055,7 +1050,7 @@ export class FileManager {
   async getFolderFileListWithContent(
     cid: string,
     decryptKey: string,
-    recursive: boolean = true
+    recursive: boolean = true,
   ): Promise<
     [
       Array<{
@@ -1066,13 +1061,13 @@ export class FileManager {
         Path: string;
         Content?: Uint8Array;
       }> | null,
-      Error | null
+      Error | null,
     ]
   > {
     const [fileList, err] = await this.getFolderFileList(
       cid,
       cidNeedConnect.NEED,
-      recursive
+      recursive,
     );
     if (err || !fileList) return [null, err];
     for (let i = 0; i < fileList.length; i++) {
@@ -1085,7 +1080,7 @@ export class FileManager {
           file.Hash,
           decryptKey,
           cidNeedConnect.NOT_NEED,
-          true
+          true,
         ); //和目录同节点,无需连接
         if (!content) {
           return [null, Errors.ErrNoFileChose];
@@ -1106,7 +1101,7 @@ export class FileManager {
   async getFolderFileList(
     cid: string,
     flag?: number,
-    recursive: boolean = true
+    recursive: boolean = true,
   ): Promise<
     [
       Array<{
@@ -1117,7 +1112,7 @@ export class FileManager {
         Path: string;
         Content?: Uint8Array;
       }> | null,
-      Error | null
+      Error | null,
     ]
   > {
     try {
@@ -1143,7 +1138,7 @@ export class FileManager {
       // 递归获取目录内容的内部函数
       const traverseDirectory = async (
         dirCid: CID,
-        currentPath: string = ""
+        currentPath: string = "",
       ) => {
         // 遍历当前目录内容
         for await (const entry of fs.ls(dirCid)) {
@@ -1161,7 +1156,8 @@ export class FileManager {
           const fileInfo = {
             Name: name,
             Type: type === "directory" ? 1 : 0, // 0-文件 1-目录
-            Size: type === "directory" ? 0 : Number((stats as any).fileSize || 0),
+            Size:
+              type === "directory" ? 0 : Number((stats as any).fileSize || 0),
             Hash: cid.toString(),
             Path: fullPath,
           };
@@ -1190,7 +1186,7 @@ export class FileManager {
     cid: string,
     decryptKey: string,
     flag?: number,
-    folderFlag?: boolean
+    folderFlag?: boolean,
   ): Promise<Uint8Array | null> => {
     if (flag !== cidNeedConnect.NOT_NEED) {
       const [multiAddrs, peers] = await this.dc?._connectToObjNodes(cid);
@@ -1202,12 +1198,12 @@ export class FileManager {
       if (!peers) {
         try {
           const timeoutPromise = new Promise((resolve) =>
-            setTimeout(resolve, 5000, "Timeout")
+            setTimeout(resolve, 5000, "Timeout"),
           );
           const getPromise = this.getFileFromDcContent(
             cid,
             decryptKey,
-            folderFlag
+            folderFlag,
           );
           const result = await Promise.race([timeoutPromise, getPromise]);
           if (result === "Timeout") {
@@ -1225,10 +1221,35 @@ export class FileManager {
     return this.getFileFromDcContent(cid, decryptKey, folderFlag);
   };
 
+  getFileFromDcWithPeerAddr = async (
+    cid: string,
+    decryptKey: string,
+    peerAddr: string,
+  ): Promise<[Uint8Array | null, Error | null]> => {
+    try {
+      // 建立链接
+      const nodeAddr = multiaddr(peerAddr);
+      const conn = await this.dcNodeClient?.libp2p.dial(nodeAddr, {
+        signal: AbortSignal.timeout(1000),
+      });
+      if (!conn) {
+        return [null, Errors.ErrBuildServerConnect];
+      }
+      const fileContent = await this.getFileFromDcContent(
+        cid,
+        decryptKey,
+        false,
+      );
+      return [fileContent, null];
+    } catch (error: any) {
+      return [null, error];
+    }
+  };
+
   getFileFromDcContent = async (
     cid: string,
     decryptKey: string,
-    folderFlag?: boolean
+    folderFlag?: boolean,
   ): Promise<Uint8Array | null> => {
     const fs = unixfs(this.dcNodeClient);
     let headDealed = false;
@@ -1245,7 +1266,9 @@ export class FileManager {
     try {
       for (;;) {
         if (!headDealed && !folderFlag) {
-          const headBuf = await iterableToUint8Array(fs.cat(CID.parse(cid), catOptions));
+          const headBuf = await iterableToUint8Array(
+            fs.cat(CID.parse(cid), catOptions),
+          );
           readCount += headBuf.length;
           if (headBuf.length > 0) {
             waitBuffer = mergeUInt8Arrays(waitBuffer, headBuf) as any;
@@ -1259,7 +1282,7 @@ export class FileManager {
               if (
                 compareByteArrays(
                   waitBuffer.subarray(0, 10),
-                  new TextEncoder().encode("$$dcfile$$")
+                  new TextEncoder().encode("$$dcfile$$"),
                 )
               ) {
                 //判断是否是dc网络存储的文件头
@@ -1281,7 +1304,9 @@ export class FileManager {
         }
         catOptions.offset = readCount;
         catOptions.length = encryptextLen;
-        const buf = await iterableToUint8Array(fs.cat(CID.parse(cid), catOptions));
+        const buf = await iterableToUint8Array(
+          fs.cat(CID.parse(cid), catOptions),
+        );
         if (buf.length > 0) {
           readCount += buf.length;
         }
@@ -1322,7 +1347,7 @@ export class FileManager {
   async createSeekableFileStream(
     cid: string,
     decryptKey: string,
-    flag?: number
+    flag?: number,
   ): Promise<SeekableFileStream | null> {
     // 连接到节点
     if (flag !== cidNeedConnect.NOT_NEED) {
@@ -1341,13 +1366,13 @@ export class FileManager {
         fs.cat(CID.parse(cid), {
           offset: 0,
           length: 32,
-        })
+        }),
       );
 
       // 检查是否有DC文件头
       const hasHeader = compareByteArrays(
         headerData.subarray(0, 10),
-        new TextEncoder().encode(dcFileHead)
+        new TextEncoder().encode(dcFileHead),
       );
 
       // 获取文件大小
@@ -1412,7 +1437,7 @@ export class FileManager {
   async createSeekableFileStreamFromDir(
     rootCid: string,
     filePath: string,
-    decryptKey: string
+    decryptKey: string,
   ): Promise<SeekableFileStream | null> {
     // 连接到节点
     const [multiAddrs, peers] = await this.dc?._connectToObjNodes(rootCid);
@@ -1429,7 +1454,7 @@ export class FileManager {
     return this.createSeekableFileStream(
       fileCid,
       decryptKey,
-      cidNeedConnect.NOT_NEED
+      cidNeedConnect.NOT_NEED,
     );
   }
 
@@ -1476,7 +1501,7 @@ export class FileManager {
   async getFileFromDir(
     rootCid: string,
     filePath: string,
-    decryptKey: string
+    decryptKey: string,
   ): Promise<
     | Uint8Array
     | Array<{
@@ -1508,7 +1533,7 @@ export class FileManager {
       const [list, err] = await this.getFolderFileList(
         fileCid,
         cidNeedConnect.NOT_NEED,
-        false
+        false,
       );
       if (err) {
         console.error("getFileFromDir getFolderFileList error:", err);

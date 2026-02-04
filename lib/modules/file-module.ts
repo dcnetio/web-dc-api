@@ -1,7 +1,7 @@
 // modules/file-module.ts
 // 文件功能模块
 
-import {  IFileOperations } from "../interfaces/file-interface";
+import { IFileOperations } from "../interfaces/file-interface";
 import { DCContext } from "../../lib/interfaces/DCContext";
 import { DCModule, CoreModuleName } from "../common/module-system";
 import { FileManager } from "../implements/file/manager";
@@ -9,8 +9,10 @@ import { FileCacheManager } from "../implements/file/file-cache-manager";
 import { SeekableFileStream } from "../implements/file/seekableFileStream";
 import { createLogger } from "../util/logger";
 import { registerServiceWorker } from "../common/service-worker";
+import { cidNeedConnect } from "@/common/constants";
+import { Multiaddr } from "@multiformats/multiaddr";
 
-const logger = createLogger('FileModule');
+const logger = createLogger("FileModule");
 
 /**
  * 文件模块
@@ -22,7 +24,7 @@ export class FileModule implements DCModule, IFileOperations {
   private fileCacheManager!: FileCacheManager;
   private initialized: boolean = false;
   private swUrl: string;
-  
+
   constructor(url: string) {
     this.swUrl = url;
   }
@@ -39,28 +41,31 @@ export class FileModule implements DCModule, IFileOperations {
         context.connectedDc,
         context.dcChain,
         context.dcNodeClient,
-        context
+        context,
       );
-      
+
       this.fileCacheManager = new FileCacheManager();
-      
+
       // 注册 Service Worker
       try {
-        logger.info('Service Worker 已开始注册');
-        const registration = await registerServiceWorker(this, this.swUrl || '');
-        if(registration) {
-          logger.info('Service Worker 注册成功');
+        logger.info("Service Worker 已开始注册");
+        const registration = await registerServiceWorker(
+          this,
+          this.swUrl || "",
+        );
+        if (registration) {
+          logger.info("Service Worker 注册成功");
           context.swInited = true;
-        }else {
-          logger.warn('Service Worker 注册失败');
+        } else {
+          logger.warn("Service Worker 注册失败");
           context.swInited = false;
         }
       } catch (err) {
-        logger.warn('Service Worker 注册失败:', err);
+        logger.warn("Service Worker 注册失败:", err);
         context.swInited = false;
         // 服务工作者注册失败不阻断模块初始化
       }
-      
+
       this.initialized = true;
       return true;
     } catch (error) {
@@ -68,7 +73,7 @@ export class FileModule implements DCModule, IFileOperations {
       return false;
     }
   }
-  
+
   /**
    * 关闭文件模块
    */
@@ -80,64 +85,84 @@ export class FileModule implements DCModule, IFileOperations {
     }
     this.initialized = false;
   }
-  
+
   /**
    * 获取可寻址文件流
    */
-  async getSeekableFileStream(ipfsPath: string, decryptKey: string): Promise<SeekableFileStream> {
-    
+  async getSeekableFileStream(
+    ipfsPath: string,
+    decryptKey: string,
+  ): Promise<SeekableFileStream> {
     try {
       this.assertInitialized();
       // 先查看缓存
-      const cachedStream = this.fileCacheManager.getCachedFileStream(ipfsPath, decryptKey);
+      const cachedStream = this.fileCacheManager.getCachedFileStream(
+        ipfsPath,
+        decryptKey,
+      );
       if (cachedStream) {
         return cachedStream;
       }
-      
+
       // 没有缓存，创建新的流
-      const fileStream = await this.fileManager.createSeekableFileStream(ipfsPath, decryptKey);
-      if(!fileStream) {
+      const fileStream = await this.fileManager.createSeekableFileStream(
+        ipfsPath,
+        decryptKey,
+      );
+      if (!fileStream) {
         throw new Error(`获取文件流失败: ${ipfsPath}`);
       }
-      
+
       // 将新创建的流保存到缓存
       this.fileCacheManager.cacheFileStream(ipfsPath, decryptKey, fileStream);
-      
+
       return fileStream;
     } catch (error) {
       logger.error(`获取文件流失败: ${ipfsPath}`, error);
-      throw new Error(`获取文件流失败: ${error instanceof Error ? error.message : String(error)}`);
+      throw new Error(
+        `获取文件流失败: ${error instanceof Error ? error.message : String(error)}`,
+      );
     }
   }
-  
+
   /**
    * 获取指定文件夹CID中指定路径的文件流
    */
   async getSeekableFileStreamFromDir(
     rootCid: string,
     filePath: string,
-    decryptKey: string
+    decryptKey: string,
   ): Promise<SeekableFileStream> {
     try {
       this.assertInitialized();
-      
-      const fileStream = await this.fileManager.createSeekableFileStreamFromDir(rootCid, filePath, decryptKey);
-      if(!fileStream) {
+
+      const fileStream = await this.fileManager.createSeekableFileStreamFromDir(
+        rootCid,
+        filePath,
+        decryptKey,
+      );
+      if (!fileStream) {
         throw new Error(`获取文件流失败: ${rootCid}/${filePath}`);
       }
-      
+
       // 尝试缓存
       if (fileStream.getCid()) {
-        this.fileCacheManager.cacheFileStream(fileStream.getCid().toString(), decryptKey, fileStream);
+        this.fileCacheManager.cacheFileStream(
+          fileStream.getCid().toString(),
+          decryptKey,
+          fileStream,
+        );
       }
-      
+
       return fileStream;
     } catch (error) {
       logger.error(`获取文件流失败: ${rootCid}/${filePath}`, error);
-      throw new Error(`获取文件流失败: ${error instanceof Error ? error.message : String(error)}`);
+      throw new Error(
+        `获取文件流失败: ${error instanceof Error ? error.message : String(error)}`,
+      );
     }
   }
-  
+
   /**
    * 清理文件缓存
    */
@@ -149,11 +174,11 @@ export class FileModule implements DCModule, IFileOperations {
       logger.error(`清理文件缓存失败`, error);
     }
   }
-  
+
   /**
    * 获取缓存统计信息
    */
-  getCacheStats(): [{ total: number, keys: string[] } | null, Error | null] {
+  getCacheStats(): [{ total: number; keys: string[] } | null, Error | null] {
     try {
       this.assertInitialized();
       const stats = this.fileCacheManager.getCacheStats();
@@ -162,35 +187,68 @@ export class FileModule implements DCModule, IFileOperations {
       return [null, error as Error];
     }
   }
-  
+
   /**
    * 获取文件内容
    */
-  async getFile(cid: string, decryptKey: string): Promise<[Uint8Array | null, Error | null]> {
+  async getFile(
+    cid: string,
+    decryptKey: string,
+  ): Promise<[Uint8Array | null, Error | null]> {
     try {
       this.assertInitialized();
       const fileContent = await this.fileManager.getFileFromDc(cid, decryptKey);
       return [fileContent, null];
     } catch (error) {
       logger.error(`获取文件失败: ${cid}`, error);
-      throw [null, new Error(`获取文件失败: ${error instanceof Error ? error.message : String(error)}`)];
+      throw [
+        null,
+        new Error(
+          `获取文件失败: ${error instanceof Error ? error.message : String(error)}`,
+        ),
+      ];
     }
   }
-  
+
+  /**
+   * 获取文件内容
+   * @param cid 文件CID
+   * @param decryptKey 解密密钥
+   * @returns 文件内容
+
+   */
+  async getFileFromDcWithPeerAddr(
+    cid: string,
+    decryptKey: string,
+    peerAddr: string,
+  ): Promise<[Uint8Array | null, Error | null]> {
+    try {
+      this.assertInitialized();
+      return this.fileManager.getFileFromDcWithPeerAddr(
+        cid,
+        decryptKey,
+        peerAddr,
+      );
+    } catch (error) {
+      logger.error(`获取文件失败: ${cid}`, error);
+      throw [null, error];
+    }
+  }
+
   /**
    * 创建文件流
    */
   async createFileStream(
     cid: string,
-    decryptKey: string
+    decryptKey: string,
   ): Promise<ReadableStream<Uint8Array> | null> {
     try {
       this.assertInitialized();
       const fileStream = await this.fileManager.createSeekableFileStream(
         cid,
-        decryptKey
+        decryptKey,
       );
-      if(!fileStream) {
+      if (!fileStream) {
         return null;
       }
       return fileStream.createReadableStream();
@@ -199,30 +257,36 @@ export class FileModule implements DCModule, IFileOperations {
       return null;
     }
   }
-  
+
   /**
    * 添加文件
    */
   async addFile(
     file: File,
     enkey: string,
-    onUpdateTransmitSize: (status: number, size: number) => void
+    onUpdateTransmitSize: (status: number, size: number) => void,
   ): Promise<[string | null, Error | null]> {
-   
     try {
-       this.assertInitialized();
+      this.assertInitialized();
       if (!file) {
         throw new Error("文件不能为空");
       }
-      const res = await this.fileManager.addFile(file, enkey, onUpdateTransmitSize);
+      const res = await this.fileManager.addFile(
+        file,
+        enkey,
+        onUpdateTransmitSize,
+      );
       return res;
     } catch (error) {
       logger.error(`添加文件失败: ${file?.name}`, error);
-      return [null, new Error(`添加文件失败: ${error instanceof Error ? error.message : String(error)}`)];
+      return [
+        null,
+        new Error(
+          `添加文件失败: ${error instanceof Error ? error.message : String(error)}`,
+        ),
+      ];
     }
   }
-
-
 
   /**
    * 添加文件夹
@@ -230,30 +294,41 @@ export class FileModule implements DCModule, IFileOperations {
   async addFolder(
     files: FileList,
     enkey: string,
-    onUpdateTransmitCount: (status: number, total: number, process: number) => void
+    onUpdateTransmitCount: (
+      status: number,
+      total: number,
+      process: number,
+    ) => void,
   ): Promise<[string | null, Error | null]> {
-   
     try {
-       this.assertInitialized();
+      this.assertInitialized();
       if (!files || files.length === 0) {
         throw new Error("文件夹不能为空");
       }
-      const res = await this.fileManager.addFolder(files, enkey, onUpdateTransmitCount);
+      const res = await this.fileManager.addFolder(
+        files,
+        enkey,
+        onUpdateTransmitCount,
+      );
       return res;
     } catch (error) {
       logger.error(`添加文件夹失败`, error);
-      return [null, new Error(`添加文件夹失败: ${error instanceof Error ? error.message : String(error)}`)];
+      return [
+        null,
+        new Error(
+          `添加文件夹失败: ${error instanceof Error ? error.message : String(error)}`,
+        ),
+      ];
     }
   }
 
-   /**
+  /**
    * 添加文件到本地(不上传DC)
    */
   async addFileInLocal(
     file: File,
-    enkey: string
+    enkey: string,
   ): Promise<[string | null, Error | null]> {
-   
     try {
       if (!file) {
         throw new Error("文件不能为空");
@@ -262,22 +337,24 @@ export class FileModule implements DCModule, IFileOperations {
       return res;
     } catch (error) {
       logger.error(`添加文件到本地失败: ${file?.name}`, error);
-      return [null, new Error(`添加文件到本地失败: ${error instanceof Error ? error.message : String(error)}`)];
+      return [
+        null,
+        new Error(
+          `添加文件到本地失败: ${error instanceof Error ? error.message : String(error)}`,
+        ),
+      ];
     }
-}
-
-
+  }
 
   /**
    * 添加文件夹到本地(不上传DC)
    */
   async addFolderInLocal(
     files: FileList,
-    enkey: string
+    enkey: string,
   ): Promise<[string | null, Error | null]> {
-   
     try {
-       this.assertInitialized();
+      this.assertInitialized();
       if (!files || files.length === 0) {
         throw new Error("文件夹不能为空");
       }
@@ -285,47 +362,78 @@ export class FileModule implements DCModule, IFileOperations {
       return res;
     } catch (error) {
       logger.error(`添加文件夹到本地失败`, error);
-      return [null, new Error(`添加文件夹到本地失败: ${error instanceof Error ? error.message : String(error)}`)];
+      return [
+        null,
+        new Error(
+          `添加文件夹到本地失败: ${error instanceof Error ? error.message : String(error)}`,
+        ),
+      ];
     }
   }
 
+  /**
+   * 获取文件夹下的所有文件,包括内容（支持多级目录递归）
+   * @param cid 根目录的CID
+   * @param decryptKey 解密密钥
+   * @param recursive 是否递归获取子目录，默认false（保持向后兼容）
+   * @returns 文件列表：[{Name:文件或目录名，Type：0-文件 1-目录，Size：大小，Hash：文件或目录cid，Path：完整路径}]
+   */
+  async getFolderFileListWithContent(
+    cid: string,
+    decryptKey: string,
+    recursive: boolean = true,
+  ): Promise<
+    [
+      Array<{
+        Name: string;
+        Type: number;
+        Size: number;
+        Hash: string;
+        Path: string;
+        Content?: Uint8Array;
+      }> | null,
+      Error | null,
+    ]
+  > {
+    const [fileList, err] = await this.fileManager.getFolderFileListWithContent(
+      cid,
+      decryptKey,
+      recursive,
+    );
+    return [fileList, err];
+  }
 
-
-
-/**
- * 获取文件夹下的所有文件,包括内容（支持多级目录递归）
- * @param cid 根目录的CID
- * @param decryptKey 解密密钥
- * @param recursive 是否递归获取子目录，默认false（保持向后兼容）
- * @returns 文件列表：[{Name:文件或目录名，Type：0-文件 1-目录，Size：大小，Hash：文件或目录cid，Path：完整路径}]
- */
-async getFolderFileListWithContent(
-  cid: string, 
-  decryptKey: string, 
-  recursive: boolean = true
-): Promise<[Array<{Name: string; Type: number; Size: number; Hash: string; Path: string, Content?: Uint8Array}> | null, Error | null]> {
- const [fileList, err] = await this.fileManager.getFolderFileListWithContent(cid, decryptKey, recursive);
- return [fileList, err];
-}
-
-/**
- * 获取文件夹下的文件列表（支持多级目录递归）
- * @param cid 根目录的CID
- * @param flag 是否需要连接节点
- * @param recursive 是否递归获取子目录，默认false（保持向后兼容）
- * @returns 返回JSON格式的文件列表：[{Name:文件或目录名，Type：0-文件 1-目录，Size：大小，Hash：文件或目录cid，Path：完整路径}]
- */
-async getFolderFileList(
-  cid: string, 
-  flag?: number,
-  recursive: boolean = true
-): Promise<[Array<{Name: string; Type: number; Size: number; Hash: string; Path: string, Content?: Uint8Array}> | null, Error | null]> {
- const [fileList, err] = await this.fileManager.getFolderFileList(cid, flag, recursive);
- return [fileList, err];
-}
-
-
-
+  /**
+   * 获取文件夹下的文件列表（支持多级目录递归）
+   * @param cid 根目录的CID
+   * @param flag 是否需要连接节点
+   * @param recursive 是否递归获取子目录，默认false（保持向后兼容）
+   * @returns 返回JSON格式的文件列表：[{Name:文件或目录名，Type：0-文件 1-目录，Size：大小，Hash：文件或目录cid，Path：完整路径}]
+   */
+  async getFolderFileList(
+    cid: string,
+    flag?: number,
+    recursive: boolean = true,
+  ): Promise<
+    [
+      Array<{
+        Name: string;
+        Type: number;
+        Size: number;
+        Hash: string;
+        Path: string;
+        Content?: Uint8Array;
+      }> | null,
+      Error | null,
+    ]
+  > {
+    const [fileList, err] = await this.fileManager.getFolderFileList(
+      cid,
+      flag,
+      recursive,
+    );
+    return [fileList, err];
+  }
 
   /**
    * Creates a custom FileList object from file paths and contents
@@ -337,16 +445,19 @@ async getFolderFileList(
     filesMap:
       | Map<string, string | Uint8Array | ArrayBuffer>
       | Record<string, string | Uint8Array | ArrayBuffer>,
-    rootFolderName: string = "upload"
+    rootFolderName: string = "upload",
   ): [FileList | null, Error | null] {
     try {
       this.assertInitialized();
-       // filesMap 判断
-    if (!filesMap || filesMap.size === 0) {
-      return [null, new Error("文件夹不能为空")];
-    }
-    const fileList = this.fileManager.createCustomFileList(filesMap, rootFolderName);
-    return [fileList, null];
+      // filesMap 判断
+      if (!filesMap || filesMap.size === 0) {
+        return [null, new Error("文件夹不能为空")];
+      }
+      const fileList = this.fileManager.createCustomFileList(
+        filesMap,
+        rootFolderName,
+      );
+      return [fileList, null];
     } catch (error) {
       logger.error("创建自定义文件列表失败:", error);
       return [null, new Error("文件模块未初始化")];
@@ -356,16 +467,16 @@ async getFolderFileList(
   /**
    * 判断CID是文件还是目录
    */
-  async isFileOrDir(cid: string): Promise<'file' | 'directory' | 'unknown'> {
+  async isFileOrDir(cid: string): Promise<"file" | "directory" | "unknown"> {
     try {
       this.assertInitialized();
       return await this.fileManager.isFileOrDir(cid);
     } catch (error) {
       logger.error(`判断CID类型失败: ${cid}`, error);
-      return 'unknown';
+      return "unknown";
     }
   }
-  
+
   /**
    * 断言模块已初始化
    */
@@ -381,15 +492,40 @@ async getFolderFileList(
   async getFileFromDir(
     rootCid: string,
     filePath: string,
-    decryptKey: string
-  ): Promise<[Uint8Array | Array<{ Name: string; Type: number; Size: number; Hash: string; Path: string; Content?: Uint8Array }> | null, Error | null]> {
+    decryptKey: string,
+  ): Promise<
+    [
+      (
+        | Uint8Array
+        | Array<{
+            Name: string;
+            Type: number;
+            Size: number;
+            Hash: string;
+            Path: string;
+            Content?: Uint8Array;
+          }>
+        | null
+      ),
+      Error | null,
+    ]
+  > {
     try {
       this.assertInitialized();
-      const result = await this.fileManager.getFileFromDir(rootCid, filePath, decryptKey);
+      const result = await this.fileManager.getFileFromDir(
+        rootCid,
+        filePath,
+        decryptKey,
+      );
       return [result, null];
     } catch (error) {
       logger.error(`获取文件失败: ${rootCid}/${filePath}`, error);
-      return [null, new Error(`获取文件失败: ${error instanceof Error ? error.message : String(error)}`)];
+      return [
+        null,
+        new Error(
+          `获取文件失败: ${error instanceof Error ? error.message : String(error)}`,
+        ),
+      ];
     }
   }
 }

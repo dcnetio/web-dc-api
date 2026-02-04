@@ -13,7 +13,7 @@ export interface IFileOperations {
    */
   getSeekableFileStream(
     ipfsPath: string,
-    decryptKey: string
+    decryptKey: string,
   ): Promise<SeekableFileStream>;
 
   /**
@@ -26,7 +26,7 @@ export interface IFileOperations {
   getSeekableFileStreamFromDir(
     rootCid: string,
     filePath: string,
-    decryptKey: string
+    decryptKey: string,
   ): Promise<SeekableFileStream>;
 
   /**
@@ -39,7 +39,7 @@ export interface IFileOperations {
    * 获取缓存统计信息
    * @returns 包含缓存总数和键列表的统计对象
    */
-  getCacheStats(): [{ total: number, keys: string[] } | null, Error | null];
+  getCacheStats(): [{ total: number; keys: string[] } | null, Error | null];
 
   /**
    * 获取文件内容
@@ -47,8 +47,23 @@ export interface IFileOperations {
    * @param decryptKey 解密密钥
    * @returns 文件的字节数组，失败则返回undefined
    */
-  getFile(cid: string, decryptKey: string): Promise<[Uint8Array | null, Error | null]>;
+  getFile(
+    cid: string,
+    decryptKey: string,
+  ): Promise<[Uint8Array | null, Error | null]>;
 
+  /**
+   * 获取文件内容
+   * @param cid
+   * @param decryptKey 解密密钥
+   * @param peerAddr 对等节点地址
+   * @returns 文件的字节数组，失败则返回undefined
+   */
+  getFileFromDcWithPeerAddr(
+    cid: string,
+    decryptKey: string,
+    peerAddr: string,
+  ): Promise<[Uint8Array | null, Error | null]>;
   /**
    * 获取指定文件夹CID中指定路径的文件内容或目录列表
    * @param rootCid 根文件夹CID
@@ -59,8 +74,24 @@ export interface IFileOperations {
   getFileFromDir(
     rootCid: string,
     filePath: string,
-    decryptKey: string
-  ): Promise<[Uint8Array | Array<{ Name: string; Type: number; Size: number; Hash: string; Path: string; Content?: Uint8Array }> | null, Error | null]>;
+    decryptKey: string,
+  ): Promise<
+    [
+      (
+        | Uint8Array
+        | Array<{
+            Name: string;
+            Type: number;
+            Size: number;
+            Hash: string;
+            Path: string;
+            Content?: Uint8Array;
+          }>
+        | null
+      ),
+      Error | null,
+    ]
+  >;
 
   /**
    * 创建文件可读流
@@ -70,7 +101,7 @@ export interface IFileOperations {
    */
   createFileStream(
     cid: string,
-    decryptKey: string
+    decryptKey: string,
   ): Promise<ReadableStream<Uint8Array> | null>;
 
   /**
@@ -83,11 +114,10 @@ export interface IFileOperations {
   addFile(
     file: File,
     enkey: string,
-    onUpdateTransmitSize: (status: number, size: number) => void
+    onUpdateTransmitSize: (status: number, size: number) => void,
   ): Promise<[string | null, Error | null]>;
 
-
-    /**
+  /**
    * 添加文件到本地存储
    * @param file 要上传的文件对象
    * @param enkey 加密密钥
@@ -95,7 +125,7 @@ export interface IFileOperations {
    */
   addFileInLocal(
     file: File,
-    enkey: string
+    enkey: string,
   ): Promise<[string | null, Error | null]>;
 
   /**
@@ -106,7 +136,7 @@ export interface IFileOperations {
    */
   addFolderInLocal(
     files: FileList,
-    enkey: string
+    enkey: string,
   ): Promise<[string | null, Error | null]>;
 
   /**
@@ -119,8 +149,20 @@ export interface IFileOperations {
   getFolderFileListWithContent(
     cid: string,
     decryptKey: string,
-    recursive: boolean
-  ): Promise<[Array<{ Name: string; Type: number; Size: number; Hash: string; Path: string; Content?: Uint8Array }> | null, Error | null]>;
+    recursive: boolean,
+  ): Promise<
+    [
+      Array<{
+        Name: string;
+        Type: number;
+        Size: number;
+        Hash: string;
+        Path: string;
+        Content?: Uint8Array;
+      }> | null,
+      Error | null,
+    ]
+  >;
 
   /**
    * 获取文件夹下的文件列表（支持多级目录递归）
@@ -132,8 +174,20 @@ export interface IFileOperations {
   getFolderFileList(
     cid: string,
     flag: number,
-    recursive: boolean
-  ): Promise<[Array<{ Name: string; Type: number; Size: number; Hash: string; Path: string; Content?: Uint8Array }> | null, Error | null]>;
+    recursive: boolean,
+  ): Promise<
+    [
+      Array<{
+        Name: string;
+        Type: number;
+        Size: number;
+        Hash: string;
+        Path: string;
+        Content?: Uint8Array;
+      }> | null,
+      Error | null,
+    ]
+  >;
 
   /**
    * 创建自定义文件列表
@@ -145,7 +199,7 @@ export interface IFileOperations {
     filesMap:
       | Map<string, string | Uint8Array | ArrayBuffer>
       | Record<string, string | Uint8Array | ArrayBuffer>,
-    rootFolderName: string
+    rootFolderName: string,
   ): [FileList | null, Error | null];
 
   /**
@@ -153,5 +207,5 @@ export interface IFileOperations {
    * @param cid
    * @returns 'file' | 'directory' | 'unknown'
    */
-  isFileOrDir(cid: string): Promise<'file' | 'directory' | 'unknown'>;
+  isFileOrDir(cid: string): Promise<"file" | "directory" | "unknown">;
 }
