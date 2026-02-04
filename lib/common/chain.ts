@@ -69,7 +69,7 @@ export class ChainUtil {
   // 连接链节点
   create = async (blockChainAddr: string) => {
     this.blockChainAddr = blockChainAddr;
-    const chainProvider = new WsProvider(blockChainAddr);
+    const chainProvider = new WsProvider(blockChainAddr, 5000, undefined, 30000);
 
     chainProvider.on("connected", () => {
       console.log("Chain connected to " + blockChainAddr);

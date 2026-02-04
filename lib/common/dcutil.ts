@@ -299,10 +299,10 @@ export class DcUtil {
         }),
       ],
       services: {
-        // dht: kadDHT({
-        //   // 启用 DHT 加强节点发现
-        //   clientMode: true,
-        // }),
+        dht: kadDHT({
+          // 启用 DHT 加强节点发现
+          clientMode: true,
+        }),
         autoNAT: autoNAT(),
         dcutr: dcutr(),
         identify: identify(),
@@ -451,38 +451,43 @@ export class DcUtil {
     const nodeConn = await libp2p.dial(nodeAddr, {
       signal: AbortSignal.timeout(dial_timeout),
     });
-    //判断是否有现成的stream,如果已经存在就直接使用
-    const stream = await nodeConn.newStream("/dc/transfer/1.0.0");
+    const stream = await nodeConn.newStream("/dc/transfer/1.0.0", {
+      signal: AbortSignal.timeout(10000),
+    });
     
-    // 兼容 Helia 6 / Libp2p 3+ 的 Stream 接口 (没有 .sink/.source 属性)
+    // 使用新版 Stream 接口: stream.send / stream.close
     const streamSink = async (source: AsyncIterable<Uint8Array>) => {
-      // 如果有旧版 .sink，优先使用
-      if (typeof (stream as any).sink === 'function') {
-        return (stream as any).sink(source)
-      }
-
-      // 新版接口: stream.send / stream.close
       try {
         for await (const chunk of source) {
-          // send 返回 false 表示 buffer 满，需要等待 drain 事件
-          if (!(stream.send(chunk instanceof Uint8Array ? chunk : (chunk as any).subarray()))) {
-            await new Promise<void>(resolve => {
-              const listener = () => {
-                 stream.removeEventListener('drain', listener)
-                 resolve()
-              }
-              stream.addEventListener('drain', listener)
-            })
+          const data = chunk instanceof Uint8Array ? chunk : (chunk as any).subarray();
+          if (!stream.send(data)) {
+            await new Promise<void>((resolve, reject) => {
+              const cleanup = () => {
+                stream.removeEventListener('drain', onDrain);
+                stream.removeEventListener('close', onClose);
+              };
+              const onDrain = () => { cleanup(); resolve(); };
+              const onClose = () => { cleanup(); reject(new Error('Stream closed')); };
+
+              stream.addEventListener('drain', onDrain);
+              stream.addEventListener('close', onClose);
+            });
           }
         }
       } catch(err) {
-        console.error("Stream sink error:", err)
-        stream.abort(err as Error)
-        throw err
+        if ((err as Error).message !== 'Stream closed' && (err as Error).message !== 'Stream aborted') {
+            console.error("Stream sink error:", err);
+        }
+        stream.abort(err as Error);
+        throw err;
       } finally {
-        await stream.close()
+        await stream.close();
       }
-    }
+    };
+
+    let blocksSent = 0;
+    let bytesReceived = 0;
+    let bytesSent = 0;
 
     try {
       const writer = new StreamWriter(streamSink);
@@ -497,20 +502,21 @@ export class DcUtil {
 
       const chunkIterable = this.chunkGenerator(stream);
       let waitingForFirstChunk = true;
-      // Guard the first chunk read so we can abort if the remote never responds.
+      const IDLE_TIMEOUT = 30000;
+      
       while (true) {
         let iteratorResult: IteratorResult<Uint8Array>;
         if (waitingForFirstChunk) {
           let timeoutId: ReturnType<typeof setTimeout> | undefined;
           const timeoutPromise = new Promise<"timeout">((resolve) => {
-            timeoutId = setTimeout(() => resolve("timeout"), 5_000);
+            timeoutId = setTimeout(() => resolve("timeout"), 10_000);
           });
           const raceResult = await Promise.race([
             chunkIterable.next(),
             timeoutPromise,
           ]);
           if (raceResult === "timeout") {
-            console.warn("chunkGenerator first chunk timed out after 5s");
+            console.warn("Transfer stream: First chunk timed out after 10s");
             break;
           }
           if (timeoutId) {
@@ -519,7 +525,21 @@ export class DcUtil {
           iteratorResult = raceResult;
           waitingForFirstChunk = false;
         } else {
-          iteratorResult = await chunkIterable.next();
+          const readTimeout = new Promise<IteratorResult<Uint8Array>>((_, reject) => {
+            setTimeout(() => reject(new Error("Read timeout after 30s")), IDLE_TIMEOUT);
+          });
+          try {
+            iteratorResult = await Promise.race([
+              chunkIterable.next(),
+              readTimeout,
+            ]);
+          } catch (err) {
+            if ((err as Error).message === "Read timeout after 30s") {
+              console.warn("Stream read timeout after 30s idle");
+              break;
+            }
+            throw err;
+          }
         }
 
         if (iteratorResult.done) {
@@ -532,9 +552,11 @@ export class DcUtil {
         } else {
           data = chunk;
         }
+        bytesReceived += data.length;
         bufferList.append(data);
 
         // bufferList loop to process messages
+        let messagesProcessed = 0;
         while (bufferList.length >= 7) {
           const header = bufferList.subarray(0, 7);
           const payloadLength = ((header[3] << 24) | (header[4] << 16) | (header[5] << 8) | header[6]) >>> 0;
@@ -550,46 +572,38 @@ export class DcUtil {
           parsedMessage = this.parseMessage(fullMessage);
           
           if (parsedMessage) {
-            if (parsedMessage.type === 3) {
-              //close
+            if (parsedMessage.type === Http2_Type.Close) {
+              console.log(`Transfer completed - Blocks sent: ${blocksSent}, Bytes sent: ${(bytesSent / 1024 / 1024).toFixed(2)}MB`);
               return;
             }
-            if (!handshakeFlag) {
-              // 解析消息
-              const initRequest = oidfetch.pb.InitRequset.decode(
-                parsedMessage.payload
-              );
-              if (!initRequest) {
-                continue;
-              }
-              
-              //发送数据到服务器
-              const message = new TextEncoder().encode(oid);
+            if (!handshakeFlag && parsedMessage.type === Http2_Type.Handshake) {
               const initReply = new oidfetch.pb.InitReply({
                 type: type,
-                oid: message,
+                oid: new TextEncoder().encode(oid),
               });
-              //组装数据
-              const initReplyBytes =
-                oidfetch.pb.InitReply.encode(initReply).finish();
-              const messageData = this.assembleCustomMessage({
+              const initReplyBytes = oidfetch.pb.InitReply.encode(initReply).finish();
+              const replyData = this.assembleCustomMessage({
                 type: Http2_Type.ACK,
                 version: 1,
                 payload: initReplyBytes,
               }) as any;
-              await writer.write(messageData);
+              
+              const writeTimeout = new Promise((_, reject) => {
+                setTimeout(() => reject(new Error("Write timeout")), 10000);
+              });
+              await Promise.race([
+                writer.write(replyData),
+                writeTimeout,
+              ]);
               handshakeFlag = true;
-            } else {
-              // 解析消息
+            } else if (handshakeFlag && parsedMessage.type === Http2_Type.Data) {
               const fetchRequest = oidfetch.pb.FetchRequest.decode(
                 parsedMessage.payload
               );
 
               const resCid = new TextDecoder().decode(fetchRequest.cid);
-              //获取resCid对应的block
               const cid = CID.parse(resCid);
 
-              // 通过 blockstore 获取该 CID 对应的区块
               try {
                 let block: any = await blockstore.get(cid);
                 if (block && block[Symbol.asyncIterator]) {
@@ -600,48 +614,61 @@ export class DcUtil {
                    block = concatenateUint8Arrays(...parts);
                 }
                 const fetchReply = new oidfetch.pb.FetchReply({ data: block });
-                const fetchReplyBytes =
-                  oidfetch.pb.FetchReply.encode(fetchReply).finish();
-                const messageData = this.assembleCustomMessage({
+                const fetchReplyBytes = oidfetch.pb.FetchReply.encode(fetchReply).finish();
+                const responseData = this.assembleCustomMessage({
                   type: Http2_Type.ACK,
                   version: 1,
                   payload: fetchReplyBytes,
                 }) as any;
-                await writer.write(messageData);
+                
+                const writeTimeout = new Promise((_, reject) => {
+                  setTimeout(() => reject(new Error("Write timeout")), 10000);
+                });
+                await Promise.race([
+                  writer.write(responseData),
+                  writeTimeout,
+                ]);
+                blocksSent++;
+                bytesSent += responseData.length;
               } catch (error) {
-                console.error("Error retrieving block:", error);
+                console.error("Error retrieving/sending block:", error);
+                throw error;
               }
             }
+          }
+          
+          // 每处理10条消息让出一次执行权，避免阻塞主线程
+          messagesProcessed++;
+          if (messagesProcessed % 10 === 0) {
+            await new Promise(resolve => setTimeout(resolve, 0));
           }
         }
       }
     } catch (err) {
-      console.error("createTransferStream error:", err);
+      console.error("Transfer stream error:", err, `- Blocks sent: ${blocksSent}, Bytes sent: ${(bytesSent / 1024 / 1024).toFixed(2)}MB`);
       throw err;
     } finally {
-      stream.close();
+      try {
+        stream.close();
+      } catch (closeErr) {
+        console.warn("Error closing stream:", closeErr);
+      }
     }
   }
 
   private async *chunkGenerator(stream: Stream): AsyncGenerator<Uint8Array> {
-    // 兼容: 优先检查 .source, 否则直接迭代 stream
-    const s = stream as any
-    const iteratorSrc = s.source || s
-    
-    if (!iteratorSrc[Symbol.asyncIterator]) {
-       console.warn("Stream source is not async iterable", stream)
-       return
-    }
-
-    const iterator = iteratorSrc[Symbol.asyncIterator]();
+    const iterator = stream[Symbol.asyncIterator]();
     while (true) {
       try {
         const { done, value } = await iterator.next();
-        if (done) break;
+        if (done) {
+          break;
+        }
         const res = value instanceof Uint8ArrayList ? value.subarray() : value;
         yield res;
       } catch (err) {
-        console.log("chunkGenerator error:", err);
+        console.error("Stream chunk error:", err);
+        break;
       }
     }
   }

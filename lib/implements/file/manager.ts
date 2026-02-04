@@ -246,7 +246,7 @@ export class FileManager {
         enkey && enkey.length > 0 ? SymmetricKey.fromString(enkey) : null;
       const fs = unixfs(this.dcNodeClient);
       const pubkeyBytes = this.context.getPubkeyRaw();
-      // const peerId = "12D3KooWEGzh4AcbJrfZMfQb63wncBUpscMEEyiMemSWzEnjVCPf";
+       //const peerId = "12D3KooWEGzh4AcbJrfZMfQb63wncBUpscMEEyiMemSWzEnjVCPf";
       let nodeAddr = await this.dc?._getNodeAddr(peerId);
       if (!nodeAddr) {
         return [null, Errors.ErrNoDcPeerConnected];
@@ -265,7 +265,8 @@ export class FileManager {
 
       const stats = await fs.stat(cid);
       const filesize = stats.unixfs?.fileSize() || 0;
-      const dagFileSize = Number((stats as any).localDagSize);
+      // helia新版本fs.stat返回的localDagSize可能不准确或不存在，直接使用filesize
+      const dagFileSize = Number(filesize);
       const fileClient = new FileClient(
         this.connectedDc.client,
         this.dcNodeClient,
@@ -307,7 +308,7 @@ export class FileManager {
         //上传失败，不需要操作
         return [null, Errors.ErrNoNeedUpload];
       }
-
+      console.log("=========nodeAddr", nodeAddr.toString());
       //创建文件主动上报流
       await this.dc.createTransferStream(
         this.dcNodeClient.libp2p,
