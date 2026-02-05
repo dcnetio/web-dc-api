@@ -16,7 +16,8 @@ let swMessageHandler: ((event: MessageEvent) => void) | null = null;
  */
 export async function registerServiceWorker(
   fileOps?: IFileOperations,
-  swUrl: string = ""
+  swUrl: string = "",
+  swScope: string = ""
 ): Promise<ServiceWorkerRegistration | null> {
   if (!("serviceWorker" in navigator))
     return Promise.reject("Service Worker not supported");
@@ -32,7 +33,13 @@ export async function registerServiceWorker(
     return null;
   }
   const swPath = new URL(swUrl || "/sw.js", location.origin).href;
-  const registration = await navigator.serviceWorker.register(swPath);
+  const registration = await navigator.serviceWorker.register(
+    swPath,
+    swScope ? { scope: new URL(swScope, location.origin).href } : undefined
+  );
+  if (registration?.scope) {
+    logger.info(`ServiceWorker scope: ${registration.scope}`);
+  }
   // 只保留一个监听器，避免重复处理同一请求
   if (swMessageHandler) {
     navigator.serviceWorker.removeEventListener("message", swMessageHandler);
