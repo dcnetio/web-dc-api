@@ -67,7 +67,7 @@ export class DcUtil {
   }
   // 连接到所有文件存储节点
   _connectToObjNodes = async (
-    cid: string
+    cid: string,
   ): Promise<[Multiaddr | null, string[] | null]> => {
     const peers = await this.dcChain.getObjNodes(cid);
     if (!peers) {
@@ -94,7 +94,7 @@ export class DcUtil {
           return;
         }
         const [nodeAddr, _] = await _this.dcChain.getDcNodeWebrtcDirectAddr(
-          peerListJson[i]
+          peerListJson[i],
         );
         if (!nodeAddr) {
           console.error("no nodeAddr return");
@@ -125,7 +125,7 @@ export class DcUtil {
             if (num >= len) {
               console.error(
                 "dial nodeAddr error,error:%s",
-                (error as any).message
+                (error as any).message,
               );
               reject((error as any).message);
             }
@@ -162,14 +162,14 @@ export class DcUtil {
       this.dcNodeClient?.libp2p,
       this.dcNodeClient.blockstore,
       nodeAddr,
-      dc_protocol
+      dc_protocol,
     );
     return client;
   };
 
   // 连接节点列表
   connectToUserAllDcPeers = async (
-    account: Uint8Array
+    account: Uint8Array,
   ): Promise<Client[] | null> => {
     const peerAddrs = await this.dcChain.getAccountPeers(account);
     if (!peerAddrs || peerAddrs.length == 0) {
@@ -193,7 +193,7 @@ export class DcUtil {
             this.dcNodeClient?.libp2p,
             this.dcNodeClient.blockstore,
             nodeAddr,
-            dc_protocol
+            dc_protocol,
           );
           clients.push(client);
         } catch (error) {
@@ -222,7 +222,7 @@ export class DcUtil {
         }
         const addrParts = peers[i].split(",");
         // // todo 临时测试，192.168.31.31改成10.0.0.2
-         addrParts[1] = addrParts[1].replace(/192.168.31.31/g, "10.0.0.2");
+        addrParts[1] = addrParts[1].replace(/192.168.31.31/g, "10.0.0.2");
         const nodeAddr = multiaddr(addrParts[1]);
 
         try {
@@ -264,7 +264,7 @@ export class DcUtil {
     // const memoryDatastore = new MemoryDatastore();
     // 创建或导入私钥
     let keyPair = (await loadKeyPair(
-      "ed25519_privateKey"
+      "ed25519_privateKey",
     )) as Ed25519PrivateKey;
     if (!keyPair) {
       keyPair = await keys.generateKeyPair("Ed25519");
@@ -274,7 +274,12 @@ export class DcUtil {
     const libp2p = await createLibp2p({
       privateKey: keyPair,
       datastore: datastore as any,
-      transports: [webRTCDirect(), circuitRelayTransport(), webRTC(),webSockets()], //
+      transports: [
+        webRTCDirect(),
+        circuitRelayTransport(),
+        webRTC(),
+        webSockets(),
+      ], //
       connectionEncrypters: [noise()],
       connectionGater: {
         denyDialMultiaddr: () => false, // this is necessary to dial local addresses at all
@@ -323,8 +328,8 @@ export class DcUtil {
     const dcNodeClient: Helia<Libp2p> = await createHelia({
       blockBrokers: [
         bitswap({
-          maxInboundStreams: 64,
-          maxOutboundStreams: 128,
+          maxInboundStreams: 32,
+          maxOutboundStreams: 32,
         }),
       ],
       datastore: datastore as any,
@@ -400,7 +405,7 @@ export class DcUtil {
   };
 
   _getConnectDcNodeList = async (
-    nodeList: string[]
+    nodeList: string[],
   ): Promise<Multiaddr | undefined> => {
     if (nodeList.length > this.connectLength) {
       let dcNodeList = this._getRandomNodeList(nodeList, this.connectLength);
@@ -408,7 +413,7 @@ export class DcUtil {
       if (!nodeAddr) {
         // allNodeList 过滤掉dcNodeList
         const leftNodeList = nodeList.filter(
-          (node) => dcNodeList.indexOf(node) === -1
+          (node) => dcNodeList.indexOf(node) === -1,
         );
         return this._getConnectDcNodeList(leftNodeList);
       }
@@ -446,7 +451,7 @@ export class DcUtil {
     blockstore: Blocks,
     nodeAddr: Multiaddr,
     type: number,
-    oid: string
+    oid: string,
   ) {
     const nodeConn = await libp2p.dial(nodeAddr, {
       signal: AbortSignal.timeout(dial_timeout),
@@ -454,29 +459,39 @@ export class DcUtil {
     const stream = await nodeConn.newStream("/dc/transfer/1.0.0", {
       signal: AbortSignal.timeout(10000),
     });
-    
+
     // 使用新版 Stream 接口: stream.send / stream.close
     const streamSink = async (source: AsyncIterable<Uint8Array>) => {
       try {
         for await (const chunk of source) {
-          const data = chunk instanceof Uint8Array ? chunk : (chunk as any).subarray();
+          const data =
+            chunk instanceof Uint8Array ? chunk : (chunk as any).subarray();
           if (!stream.send(data)) {
             await new Promise<void>((resolve, reject) => {
               const cleanup = () => {
-                stream.removeEventListener('drain', onDrain);
-                stream.removeEventListener('close', onClose);
+                stream.removeEventListener("drain", onDrain);
+                stream.removeEventListener("close", onClose);
               };
-              const onDrain = () => { cleanup(); resolve(); };
-              const onClose = () => { cleanup(); reject(new Error('Stream closed')); };
+              const onDrain = () => {
+                cleanup();
+                resolve();
+              };
+              const onClose = () => {
+                cleanup();
+                reject(new Error("Stream closed"));
+              };
 
-              stream.addEventListener('drain', onDrain);
-              stream.addEventListener('close', onClose);
+              stream.addEventListener("drain", onDrain);
+              stream.addEventListener("close", onClose);
             });
           }
         }
-      } catch(err) {
-        if ((err as Error).message !== 'Stream closed' && (err as Error).message !== 'Stream aborted') {
-            console.error("Stream sink error:", err);
+      } catch (err) {
+        if (
+          (err as Error).message !== "Stream closed" &&
+          (err as Error).message !== "Stream aborted"
+        ) {
+          console.error("Stream sink error:", err);
         }
         stream.abort(err as Error);
         throw err;
@@ -503,7 +518,7 @@ export class DcUtil {
       const chunkIterable = this.chunkGenerator(stream);
       let waitingForFirstChunk = true;
       const IDLE_TIMEOUT = 30000;
-      
+
       while (true) {
         let iteratorResult: IteratorResult<Uint8Array>;
         if (waitingForFirstChunk) {
@@ -525,9 +540,14 @@ export class DcUtil {
           iteratorResult = raceResult;
           waitingForFirstChunk = false;
         } else {
-          const readTimeout = new Promise<IteratorResult<Uint8Array>>((_, reject) => {
-            setTimeout(() => reject(new Error("Read timeout after 30s")), IDLE_TIMEOUT);
-          });
+          const readTimeout = new Promise<IteratorResult<Uint8Array>>(
+            (_, reject) => {
+              setTimeout(
+                () => reject(new Error("Read timeout after 30s")),
+                IDLE_TIMEOUT,
+              );
+            },
+          );
           try {
             iteratorResult = await Promise.race([
               chunkIterable.next(),
@@ -559,21 +579,28 @@ export class DcUtil {
         let messagesProcessed = 0;
         while (bufferList.length >= 7) {
           const header = bufferList.subarray(0, 7);
-          const payloadLength = ((header[3] << 24) | (header[4] << 16) | (header[5] << 8) | header[6]) >>> 0;
+          const payloadLength =
+            ((header[3] << 24) |
+              (header[4] << 16) |
+              (header[5] << 8) |
+              header[6]) >>>
+            0;
           const totalLength = 7 + payloadLength;
-          
+
           if (bufferList.length < totalLength) {
             break;
           }
 
           const fullMessage = bufferList.subarray(0, totalLength);
           bufferList.consume(totalLength);
-          
+
           parsedMessage = this.parseMessage(fullMessage);
-          
+
           if (parsedMessage) {
             if (parsedMessage.type === Http2_Type.Close) {
-              console.log(`Transfer completed - Blocks sent: ${blocksSent}, Bytes sent: ${(bytesSent / 1024 / 1024).toFixed(2)}MB`);
+              console.log(
+                `Transfer completed - Blocks sent: ${blocksSent}, Bytes sent: ${(bytesSent / 1024 / 1024).toFixed(2)}MB`,
+              );
               return;
             }
             if (!handshakeFlag && parsedMessage.type === Http2_Type.Handshake) {
@@ -581,24 +608,25 @@ export class DcUtil {
                 type: type,
                 oid: new TextEncoder().encode(oid),
               });
-              const initReplyBytes = oidfetch.pb.InitReply.encode(initReply).finish();
+              const initReplyBytes =
+                oidfetch.pb.InitReply.encode(initReply).finish();
               const replyData = this.assembleCustomMessage({
                 type: Http2_Type.ACK,
                 version: 1,
                 payload: initReplyBytes,
               }) as any;
-              
+
               const writeTimeout = new Promise((_, reject) => {
                 setTimeout(() => reject(new Error("Write timeout")), 10000);
               });
-              await Promise.race([
-                writer.write(replyData),
-                writeTimeout,
-              ]);
+              await Promise.race([writer.write(replyData), writeTimeout]);
               handshakeFlag = true;
-            } else if (handshakeFlag && parsedMessage.type === Http2_Type.Data) {
+            } else if (
+              handshakeFlag &&
+              parsedMessage.type === Http2_Type.Data
+            ) {
               const fetchRequest = oidfetch.pb.FetchRequest.decode(
-                parsedMessage.payload
+                parsedMessage.payload,
               );
 
               const resCid = new TextDecoder().decode(fetchRequest.cid);
@@ -607,27 +635,25 @@ export class DcUtil {
               try {
                 let block: any = await blockstore.get(cid);
                 if (block && block[Symbol.asyncIterator]) {
-                   const parts: Uint8Array[] = [];
-                   for await (const part of block) {
-                       parts.push(part);
-                   }
-                   block = concatenateUint8Arrays(...parts);
+                  const parts: Uint8Array[] = [];
+                  for await (const part of block) {
+                    parts.push(part);
+                  }
+                  block = concatenateUint8Arrays(...parts);
                 }
                 const fetchReply = new oidfetch.pb.FetchReply({ data: block });
-                const fetchReplyBytes = oidfetch.pb.FetchReply.encode(fetchReply).finish();
+                const fetchReplyBytes =
+                  oidfetch.pb.FetchReply.encode(fetchReply).finish();
                 const responseData = this.assembleCustomMessage({
                   type: Http2_Type.ACK,
                   version: 1,
                   payload: fetchReplyBytes,
                 }) as any;
-                
+
                 const writeTimeout = new Promise((_, reject) => {
                   setTimeout(() => reject(new Error("Write timeout")), 10000);
                 });
-                await Promise.race([
-                  writer.write(responseData),
-                  writeTimeout,
-                ]);
+                await Promise.race([writer.write(responseData), writeTimeout]);
                 blocksSent++;
                 bytesSent += responseData.length;
               } catch (error) {
@@ -636,16 +662,20 @@ export class DcUtil {
               }
             }
           }
-          
+
           // 每处理10条消息让出一次执行权，避免阻塞主线程
           messagesProcessed++;
           if (messagesProcessed % 10 === 0) {
-            await new Promise(resolve => setTimeout(resolve, 0));
+            await new Promise((resolve) => setTimeout(resolve, 0));
           }
         }
       }
     } catch (err) {
-      console.error("Transfer stream error:", err, `- Blocks sent: ${blocksSent}, Bytes sent: ${(bytesSent / 1024 / 1024).toFixed(2)}MB`);
+      console.error(
+        "Transfer stream error:",
+        err,
+        `- Blocks sent: ${blocksSent}, Bytes sent: ${(bytesSent / 1024 / 1024).toFixed(2)}MB`,
+      );
       throw err;
     } finally {
       try {
@@ -700,7 +730,7 @@ export class DcUtil {
   }
 
   parseMessage(
-    data: Uint8Array
+    data: Uint8Array,
   ): { type: number; version: number; payload: Uint8Array } | null {
     if (data.length < 7) {
       return null;

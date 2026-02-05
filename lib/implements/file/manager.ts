@@ -246,7 +246,7 @@ export class FileManager {
         enkey && enkey.length > 0 ? SymmetricKey.fromString(enkey) : null;
       const fs = unixfs(this.dcNodeClient);
       const pubkeyBytes = this.context.getPubkeyRaw();
-       //const peerId = "12D3KooWEGzh4AcbJrfZMfQb63wncBUpscMEEyiMemSWzEnjVCPf";
+      //const peerId = "12D3KooWEGzh4AcbJrfZMfQb63wncBUpscMEEyiMemSWzEnjVCPf";
       let nodeAddr = await this.dc?._getNodeAddr(peerId);
       if (!nodeAddr) {
         return [null, Errors.ErrNoDcPeerConnected];
@@ -261,7 +261,6 @@ export class FileManager {
         return [resCid, Errors.ErrNoFileChose];
       }
       resCid = cid.toString();
-      console.log("=========resCid", resCid);
 
       const stats = await fs.stat(cid);
       const filesize = stats.unixfs?.fileSize() || 0;
@@ -308,7 +307,6 @@ export class FileManager {
         //上传失败，不需要操作
         return [null, Errors.ErrNoNeedUpload];
       }
-      console.log("=========nodeAddr", nodeAddr.toString());
       //创建文件主动上报流
       await this.dc.createTransferStream(
         this.dcNodeClient.libp2p,
@@ -1252,93 +1250,68 @@ export class FileManager {
     decryptKey: string,
     folderFlag?: boolean,
   ): Promise<Uint8Array | null> => {
-    const fs = unixfs(this.dcNodeClient);
-    let headDealed = false;
-    let waitBuffer = new Uint8Array(0);
-    let fileContent = new Uint8Array(0);
-
-    const encryptextLen = (3 << 20) + NonceBytes + TagBytes; //每段密文长度(最后一段可能会短一点)
-    const catOptions = {
-      offset: 0,
-      length: 32,
-      // signal: AbortSignal.timeout(5000),
-    };
-    let readCount = 0;
     try {
-      for (;;) {
+      const fs = unixfs(this.dcNodeClient);
+      const stream = fs.cat(CID.parse(cid));
+
+      let waitBuffer = new Uint8Array(0);
+      let fileContent = new Uint8Array(0);
+      let headDealed = false;
+
+      const encryptextLen = (3 << 20) + NonceBytes + TagBytes;
+      const headerLen = 32;
+
+      for await (const chunk of stream) {
+        waitBuffer = mergeUInt8Arrays(waitBuffer, chunk) as any;
+
+        // 1. 处理头部 (仅处理一次)
         if (!headDealed && !folderFlag) {
-          const headBuf = await iterableToUint8Array(
-            fs.cat(CID.parse(cid), catOptions),
-          );
-          readCount += headBuf.length;
-          if (headBuf.length > 0) {
-            waitBuffer = mergeUInt8Arrays(waitBuffer, headBuf) as any;
-            if (waitBuffer.length < 32) {
-              catOptions.offset = waitBuffer.length;
-              catOptions.length = 32 - waitBuffer.length;
-              continue;
-            } else {
-              //判断是否是dc网络存储的文件头
-              headDealed = true;
-              if (
-                compareByteArrays(
-                  waitBuffer.subarray(0, 10),
-                  new TextEncoder().encode("$$dcfile$$"),
-                )
-              ) {
-                //判断是否是dc网络存储的文件头
-                waitBuffer = waitBuffer.subarray(32, waitBuffer.length);
-              }
+          if (waitBuffer.length >= headerLen) {
+            // 检查头部标识 $$dcfile$$
+            const isDcFile = compareByteArrays(
+              waitBuffer.subarray(0, 10),
+              new TextEncoder().encode("$$dcfile$$"),
+            );
+
+            if (isDcFile) {
+              // 是标准头部，移除32字节头部
+              waitBuffer = waitBuffer.subarray(headerLen);
             }
+            // 标记头部已处理
+            headDealed = true;
           } else {
-            if (waitBuffer.length > 0) {
-              if (decryptKey != "") {
-                const decrypted = await decryptContent(waitBuffer, decryptKey);
-                fileContent = mergeUInt8Arrays(fileContent, decrypted) as any;
-              } else {
-                fileContent = mergeUInt8Arrays(fileContent, waitBuffer) as any;
-              }
-            }
-            break;
+            // 数据不足以判断头部，继续读取下一块
+            continue;
           }
-          continue;
         }
-        catOptions.offset = readCount;
-        catOptions.length = encryptextLen;
-        const buf = await iterableToUint8Array(
-          fs.cat(CID.parse(cid), catOptions),
-        );
-        if (buf.length > 0) {
-          readCount += buf.length;
-        }
-        if (buf.length > 0) {
-          waitBuffer = mergeUInt8Arrays(waitBuffer, buf) as any;
-          while (waitBuffer.length >= encryptextLen) {
-            const encryptBuffer = waitBuffer.subarray(0, encryptextLen);
-            waitBuffer = waitBuffer.subarray(encryptextLen, waitBuffer.length);
-            if (decryptKey == "") {
-              fileContent = mergeUInt8Arrays(fileContent, encryptBuffer) as any;
-              continue;
-            }
-            //解密
+
+        // 2. 处理内容分块解密
+        while (waitBuffer.length >= encryptextLen) {
+          const encryptBuffer = waitBuffer.subarray(0, encryptextLen);
+          waitBuffer = waitBuffer.subarray(encryptextLen);
+
+          if (decryptKey) {
             const decrypted = await decryptContent(encryptBuffer, decryptKey);
             fileContent = mergeUInt8Arrays(fileContent, decrypted) as any;
+          } else {
+            fileContent = mergeUInt8Arrays(fileContent, encryptBuffer) as any;
           }
-        } else {
-          if (waitBuffer.length > 0) {
-            if (decryptKey != "") {
-              const decrypted = await decryptContent(waitBuffer, decryptKey);
-              fileContent = mergeUInt8Arrays(fileContent, decrypted) as any;
-            } else {
-              fileContent = mergeUInt8Arrays(fileContent, waitBuffer) as any;
-            }
-          }
-          break;
         }
       }
+
+      // 3. 处理剩余数据
+      if (waitBuffer.length > 0) {
+        if (decryptKey) {
+          const decrypted = await decryptContent(waitBuffer, decryptKey);
+          fileContent = mergeUInt8Arrays(fileContent, decrypted) as any;
+        } else {
+          fileContent = mergeUInt8Arrays(fileContent, waitBuffer) as any;
+        }
+      }
+
       return fileContent;
     } catch (error) {
-      console.error("getFileFromDc error", error);
+      console.error("getFileFromDcContent error", error);
       return null;
     }
   };
