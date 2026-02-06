@@ -352,7 +352,7 @@ export class DBGrpcClient {
         responseData = await grpcClient.unaryCall(
           "/net.pb.Service/GetRecords",
           messageBytes,
-          20000
+          120000
         );
       } catch (err: any) {
         // 如果是 AggregateError，意味着所有尝试都失败了（libp2p 连接问题）

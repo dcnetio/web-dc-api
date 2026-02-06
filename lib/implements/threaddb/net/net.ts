@@ -627,7 +627,7 @@ export class Network implements Net {
               new Promise((_, reject) => {
                 timeoutId = setTimeout(
                   () => reject(new Error("Process Timeout")),
-                  30000
+                  900000
                 );
               }),
             ]);
@@ -766,7 +766,7 @@ export class Network implements Net {
         );
         // Ignore getPeers errors
       }
-      
+
       if (peers.length === 0) return {};
 
       // 1. Random shuffle peers (Fisher-Yates)
@@ -775,27 +775,25 @@ export class Network implements Net {
         [peers[i], peers[j]] = [peers[j]!, peers[i]!];
       }
 
-      // 2. Try first peer randomly
-      let firstPeerSuccess = false;
-      let remainingPeers: PeerId[] = [];
-
-      for (let i = 0; i < peers.length; i++) {
-        const peer = peers[i]!;
+      // Definition of the sync logic for a single peer
+      const syncPeer = async (
+        peer: PeerId,
+        offsetsToUpdate: Record<string, any>
+      ) => {
         let success = false;
-        
         while (true) {
           try {
             const recs = await this.getRecords(
               [peer],
               tid,
-              offsets,
+              offsetsToUpdate,
               netPullingLimit,
               false
             );
 
             if (Object.keys(recs).length === 0) {
-                success = true;
-                break;
+              success = true;
+              break;
             }
 
             await this._processPulledRecords(tid, recs);
@@ -803,12 +801,12 @@ export class Network implements Net {
             let hasMore = false;
             for (const [lidStr, rs] of Object.entries(recs)) {
               if (rs.records.length > 0) {
-                 const lastRecord = rs.records[rs.records.length - 1]!;
-                 offsets[lidStr] = {
-                   id: lastRecord.cid(),
-                   counter: rs.counter,
-                 };
-                 if (rs.records.length >= netPullingLimit) hasMore = true;
+                const lastRecord = rs.records[rs.records.length - 1]!;
+                offsetsToUpdate[lidStr] = {
+                  id: lastRecord.cid(),
+                  counter: rs.counter,
+                };
+                if (rs.records.length >= netPullingLimit) hasMore = true;
               }
             }
 
@@ -819,57 +817,47 @@ export class Network implements Net {
           } catch (err) {
             console.warn(`Failed to sync with peer ${peer}:`, err);
             success = false;
-            break; 
+            break;
           }
         }
+        return success;
+      };
+
+      // 2. Try first peer randomly
+      let firstPeerSuccess = false;
+      let remainingPeers: PeerId[] = [];
+
+      for (let i = 0; i < peers.length; i++) {
+        const peer = peers[i]!;
+        const success = await syncPeer(peer, offsets);
 
         if (success) {
-           firstPeerSuccess = true;
-           remainingPeers = peers.slice(i + 1);
-           break;
+          firstPeerSuccess = true;
+          remainingPeers = peers.slice(i + 1);
+          break;
+        } else {
+          // Add delay to prevent rapid-fire log spam if all peers are failing quickly
+          // 失败后简单等待一下，避免日志刷屏
+          await new Promise((resolve) => setTimeout(resolve, 500));
         }
       }
 
       if (!firstPeerSuccess) return {};
 
-      // 3. Re-extract offsets
-      [offsets] = await this.threadOffsets(tid);
-
-      // 4. Sequence sync remaining peers
-       for (const peer of remainingPeers) {
-        if (!peer) continue;
-        while (true) {
+      // 4. Sequence sync remaining peers directly asynchronously without waiting
+      if (remainingPeers.length > 0) {
+        (async () => {
           try {
-            const recs = await this.getRecords(
-              [peer],
-              tid,
-              offsets,
-              netPullingLimit,
-              false
-            );
-
-            if (Object.keys(recs).length === 0) break;
-
-            await this._processPulledRecords(tid, recs);
-
-            let hasMore = false;
-            for (const [lidStr, rs] of Object.entries(recs)) {
-               if (rs.records.length > 0) {
-                 const lastRecord = rs.records[rs.records.length - 1]!;
-                 offsets[lidStr] = {
-                   id: lastRecord.cid(),
-                   counter: rs.counter,
-                 };
-                 if (rs.records.length >= netPullingLimit) hasMore = true;
-              }
+            // 3. Re-extract offsets
+            const [latestOffsets] = await this.threadOffsets(tid);
+            for (const peer of remainingPeers) {
+              if (!peer) continue;
+              await syncPeer(peer, latestOffsets);
             }
-
-            if (!hasMore) break;
           } catch (err) {
-            console.warn(`Failed to sync with remaining peer ${peer}:`, err);
-            break;
+            console.warn(`Background sync failed for thread ${tid}`, err);
           }
-        }
+        })();
       }
 
       return {};
@@ -1542,7 +1530,8 @@ export class Network implements Net {
 
       // 创建记录收集器
       const recordCollector = new RecordCollector();
-      
+      let successCount = 0;
+
       console.log(`[getRecords] 开始同步，目标 Peer 数: ${peers.length}, 多点同步: ${multiPeersFlag}`);
 
       const MAX_CONCURRENCY = 3;
@@ -1577,6 +1566,8 @@ export class Network implements Net {
                   req,
                   serviceKey
                 );
+                
+                successCount++;
 
                 let recCount = 0;
                 if (records) {
@@ -1637,6 +1628,11 @@ export class Network implements Net {
         });
 
       await Promise.all(workers);
+
+      // 如果所有节点都失败了，抛出错误而不是返回空结果
+      if (successCount === 0 && peers.length > 0) {
+        throw new Error("Failed to get records from all peers");
+      }
 
       return recordCollector.list();
     } catch (err) {
@@ -2026,17 +2022,23 @@ export class Network implements Net {
     if (this.pushWorkerStarted) return;
     this.pushWorkerStarted = true;
 
+    // 标志，避免重复写入
+    let haveRecordFlag = false;
     const sleep = (ms: number) =>
       new Promise<void>((resolve) => setTimeout(resolve, ms));
-    let haveRecordFlag = false;
+
     const loop = async () => {
       while (true) {
         try {
-          const item = this.pushQueue.shift();
-          if (!item) {
+          if (this.pushQueue.length === 0) {
+            // 按照需求保留1秒等待，方便1秒内的记录积攒后处理或保持Worker活跃
             await sleep(1000);
-            continue;
+            if (this.pushQueue.length === 0) continue;
           }
+
+          const item = this.pushQueue.shift();
+          if (!item) continue;
+
           try {
             if (!haveRecordFlag) {
               await this.logstore.metadata.putString(
@@ -2054,7 +2056,8 @@ export class Network implements Net {
             );
           } catch (err) {
             console.error("pushRecord failed:", err);
-            await sleep(200); // 简单退避，避免持续报错阻塞后续任务
+            // 失败后简单等待一下
+            await sleep(200);
           }
         } catch (err) {
           console.error("push worker crashed:", err);
@@ -2066,6 +2069,7 @@ export class Network implements Net {
     loop().catch((err) => {
       console.error("push worker stopped unexpectedly:", err);
       this.pushWorkerStarted = false;
+      // 异常退出尝试重启
       this.startPushWorker();
     });
   }
