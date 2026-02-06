@@ -1251,8 +1251,71 @@ export class FileManager {
     folderFlag?: boolean,
   ): Promise<Uint8Array | null> => {
     try {
+      // 1. 验证 dcNodeClient
+      if (!this.dcNodeClient) {
+        console.error("getFileFromDcContent: dcNodeClient is not initialized");
+        return null;
+      }
+
+      // 2. 验证 cid 参数
+      if (!cid) {
+        console.error("getFileFromDcContent: cid is null or undefined");
+        return null;
+      }
+
+      // 3. 解析 CID
+      let cidObj: CID;
+      try {
+        // 首先检查是否已经是 CID 对象
+        const asCID = CID.asCID(cid);
+        if (asCID) {
+          cidObj = asCID;
+        } else if (typeof cid === "string") {
+          // 清理字符串并解析
+          const cleanCid = cid.trim();
+          if (!cleanCid) {
+            console.error(
+              "getFileFromDcContent: cid is empty string after trim",
+            );
+            return null;
+          }
+          cidObj = CID.parse(cleanCid);
+        } else {
+          console.error(
+            "getFileFromDcContent: invalid cid type",
+            "type:",
+            typeof cid,
+            "value:",
+            cid,
+          );
+          return null;
+        }
+      } catch (parseError) {
+        console.error(
+          "getFileFromDcContent: CID parse failed",
+          "error:",
+          parseError,
+          "cid:",
+          cid,
+        );
+        return null;
+      }
+
+      // 4. 获取文件流
       const fs = unixfs(this.dcNodeClient);
-      const stream = fs.cat(CID.parse(cid));
+      let stream: any;
+      try {
+        stream = fs.cat(cidObj);
+      } catch (catError) {
+        console.error(
+          "getFileFromDcContent: fs.cat failed",
+          "error:",
+          catError,
+          "cid:",
+          cidObj.toString(),
+        );
+        return null;
+      }
 
       let waitBuffer = new Uint8Array(0);
       let fileContent = new Uint8Array(0);
