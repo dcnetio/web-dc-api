@@ -835,6 +835,10 @@ export class Network implements Net {
           firstPeerSuccess = true;
           remainingPeers = peers.slice(i + 1);
           break;
+        } else {
+          // Add delay to prevent rapid-fire log spam if all peers are failing quickly
+          // 失败后简单等待一下，避免日志刷屏
+          await new Promise((resolve) => setTimeout(resolve, 500));
         }
       }
 
@@ -1526,7 +1530,8 @@ export class Network implements Net {
 
       // 创建记录收集器
       const recordCollector = new RecordCollector();
-      
+      let successCount = 0;
+
       console.log(`[getRecords] 开始同步，目标 Peer 数: ${peers.length}, 多点同步: ${multiPeersFlag}`);
 
       const MAX_CONCURRENCY = 3;
@@ -1561,6 +1566,8 @@ export class Network implements Net {
                   req,
                   serviceKey
                 );
+                
+                successCount++;
 
                 let recCount = 0;
                 if (records) {
@@ -1621,6 +1628,11 @@ export class Network implements Net {
         });
 
       await Promise.all(workers);
+
+      // 如果所有节点都失败了，抛出错误而不是返回空结果
+      if (successCount === 0 && peers.length > 0) {
+        throw new Error("Failed to get records from all peers");
+      }
 
       return recordCollector.list();
     } catch (err) {
