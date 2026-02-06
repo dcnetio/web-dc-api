@@ -627,7 +627,7 @@ export class Network implements Net {
               new Promise((_, reject) => {
                 timeoutId = setTimeout(
                   () => reject(new Error("Process Timeout")),
-                  30000
+                  900000
                 );
               }),
             ]);
