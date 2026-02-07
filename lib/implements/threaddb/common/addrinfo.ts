@@ -5,6 +5,7 @@ import { PeerRecord } from '@libp2p/peer-record'
 import { multiaddr, type Multiaddr } from '@multiformats/multiaddr'  
 import { CodeError } from '@libp2p/interfaces/errors'  
 import { equals as uint8ArrayEquals } from 'uint8arrays'  
+import { getPeerIdString } from "../../../util/utils";
 
 export interface AddrInfo {  
   peerId: PeerId  
@@ -38,7 +39,7 @@ export class AddrInfoManager implements AddrInfo {
       }  
       seen.add(str)  
 
-      if (ma.getPeerId() != this.peerId.toString()) {  
+      if (getPeerIdString(ma) != this.peerId.toString()) {  
         throw new CodeError(`Multiaddr ${str} does not contain peer ID ${this.peerId}`, 'ERR_INVALID_MULTIADDR')  
       }  
     }  

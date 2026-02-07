@@ -207,9 +207,16 @@ function mergeUInt8Arrays(a1: Uint8Array, a2: Uint8Array): Uint8Array {
 }
 function fastExtractPeerId(ma: Multiaddr | string): PeerId | null {
   const addr = typeof ma === "string" ? multiaddr(ma) : ma;
-  const peerIdStr = addr.getPeerId(); // 直接使用内置方法
+  const peerIdStr = getPeerIdString(addr);
 
   return peerIdStr ? peerIdFromString(peerIdStr) : null;
+}
+
+function getPeerIdString(ma: any): string | undefined {
+  if (!ma) return undefined;
+  return ma
+    .getComponents()
+    .find((c: any) => c.name === "p2p" || c.name === "ipfs")?.value;
 }
 // 编码
 const encodeKey = (buffer: Uint8Array) => btoa(String.fromCharCode(...buffer));
@@ -359,4 +366,5 @@ export {
   iterableToUint8Array,
   uint8ArrayToHex,
   hexToUtf8,
+  getPeerIdString,
 };

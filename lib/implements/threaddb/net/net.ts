@@ -76,7 +76,7 @@ import {
 import { AsyncMutex } from "../common/AsyncMutex";
 import { DCContext } from "../../../interfaces";
 import { time } from "console";
-import { hexToUtf8 } from "../../../util/utils";
+import { hexToUtf8, getPeerIdString } from "../../../util/utils";
 
 /**
  * Creates a new ThreadRecord
@@ -297,7 +297,7 @@ export class Network implements Net {
       }
       const peerAddr = addr.addr;
       // 获取对等点信息
-      const peerId = peerAddr.getPeerId();
+      const peerId = getPeerIdString(peerAddr);
       if (!peerId) {
         throw new Error("Invalid peer address");
       }
@@ -1496,7 +1496,7 @@ export class Network implements Net {
    * Extract peer ID from multiaddress and check if callable
    */
   async callablePeer(addr: TMultiaddr): Promise<[PeerId, boolean]> {
-    const p = addr.getPeerId();
+    const p = getPeerIdString(addr);
     if (!p) {
       throw new Error("Address does not contain peer ID");
     }

@@ -77,8 +77,9 @@ const getResolveConfig = (isBrowser = true) => ({
   browser: isBrowser,
   // 🔧 添加导出条件，帮助正确解析模块
   exportConditions: isBrowser
-    ? ["browser", "import", "module", "default"]
-    : ["import", "module", "default"],
+    ? ["module", "browser", "import", "default"]
+    : ["module", "import", "default"],
+  mainFields: ["module", "browser", "main"],
   // 🔧 确保正确解析 uint8arrays
   dedupe: ["uint8arrays"],
   // 🔧 为浏览器环境提供替代方案

@@ -5,6 +5,7 @@ import { dcnet } from "../../proto/dcnet_proto";
 import { Errors } from "../../common/error";
 import { toString as uint8ArrayToString } from "uint8arrays/to-string";
 import { DCContext } from "../../../lib/interfaces/DCContext";
+import { getPeerIdString } from "../../util/utils";
 
 export class MessageClient {
   client: Client;
@@ -22,7 +23,7 @@ export class MessageClient {
   }
 
   sendMsgToUserBox = async (userMsg: dcnet.pb.UserMsg): Promise<number> => {
-    const peerId = this.client.peerAddr.getPeerId();
+    const peerId = getPeerIdString(this.client.peerAddr);
     if (!peerId) {
       throw new Error("peerId is undefined");
     }

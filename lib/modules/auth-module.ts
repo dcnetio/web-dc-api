@@ -6,7 +6,7 @@ import { AccountManager } from "../implements/account/manager";
 import { CommonClient } from "../common/commonclient";
 import { Client } from "../common/dcapi";
 import { createLogger } from "../util/logger";
-import { isBase32, sleep } from "../util/utils";
+import { getPeerIdString, isBase32, sleep } from "../util/utils";
 import { Ed25519PrivKey, Ed25519PubKey } from "../common/dc-key/ed25519";
 import { Errors } from "../common/error";
 import {
@@ -801,7 +801,7 @@ export class AuthModule implements DCModule, IAuthOperations {
         let resClient: Client | undefined;
         try {
           const nodeAddr = await this.context.dcutil?._getNodeAddr(
-            connectInfo.nodeAddr?.getPeerId() as string,
+            getPeerIdString(connectInfo.nodeAddr) as string,
           );
           if (!nodeAddr) {
             logger.error("无法获取节点地址");
@@ -816,7 +816,7 @@ export class AuthModule implements DCModule, IAuthOperations {
           logger.error(
             `获取客户端失败, err: ${
               e?.message
-            }, PEERID: ${connectInfo.nodeAddr?.getPeerId()}`,
+            }, PEERID: ${getPeerIdString(connectInfo.nodeAddr)}`,
           );
           return;
         }
@@ -840,7 +840,7 @@ export class AuthModule implements DCModule, IAuthOperations {
           logger.error(
             `获取token失败, err: ${
               tokenErr?.message
-            }, PEERID: ${connectInfo.nodeAddr?.getPeerId()}`,
+            }, PEERID: ${getPeerIdString(connectInfo.nodeAddr)}`,
           );
         }
       }

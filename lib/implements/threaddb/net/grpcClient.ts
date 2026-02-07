@@ -768,7 +768,8 @@ function protocols(proto: number | string): Protocol {
     code: codec.code,
     size: codec.size ?? 0,
     name: codec.name,
-    resolvable: Boolean(codec.resolvable),
-    path: Boolean(codec.path),
+    // @ts-ignore
+    resolvable: Boolean((codec as any).resolvable),
+    path: Boolean((codec as any).path),
   };
 }

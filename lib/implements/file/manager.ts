@@ -12,6 +12,7 @@ import {
   uint64ToBigEndianBytes,
   uint64ToLittleEndianBytes,
   iterableToUint8Array,
+  getPeerIdString,
 } from "../../util/utils";
 
 import { unixfs } from "@helia/unixfs";
@@ -184,7 +185,7 @@ export class FileManager {
     if (userInfo.requestPeers && userInfo.requestPeers.length > 0) {
       for (const peerId of userInfo.requestPeers) {
         // 已经是绑定节点，直接返回true
-        if (peerId === this.connectedDc.nodeAddr?.getPeerId()) {
+        if (peerId === getPeerIdString(this.connectedDc.nodeAddr)) {
           return true;
         }
       }
@@ -209,7 +210,7 @@ export class FileManager {
 
     // this.dcNodeClient.libp2p.dialProtocol(this.connectedDc.nodeAddr, '/ipfs/bitswap/1.2.0')
     const blockHeight = await this.chainUtil.getBlockHeight();
-    const peerId = this.connectedDc.nodeAddr?.getPeerId();
+    const peerId = getPeerIdString(this.connectedDc.nodeAddr);
     if (!peerId) {
       return [null, Errors.ErrNoPeerIdIsNull];
     }
@@ -379,7 +380,7 @@ export class FileManager {
 
     // this.dcNodeClient.libp2p.dialProtocol(this.connectedDc.nodeAddr, '/ipfs/bitswap/1.2.0')
     const blockHeight = await this.chainUtil.getBlockHeight();
-    const peerId = this.connectedDc.nodeAddr?.getPeerId();
+    const peerId = getPeerIdString(this.connectedDc.nodeAddr);
     if (!peerId) {
       return [null, Errors.ErrNoPeerIdIsNull];
     }

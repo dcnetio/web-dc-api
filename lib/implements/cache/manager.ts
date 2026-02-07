@@ -3,7 +3,7 @@ import { DCConnectInfo } from "../../common/types/types";
 import { CacheClient } from "./client";
 import { DcUtil } from "../../common/dcutil";
 import { ChainUtil } from "../../common/chain";
-import { sha256, uint32ToLittleEndianBytes } from "../../util/utils";
+import { sha256, uint32ToLittleEndianBytes, getPeerIdString } from "../../util/utils";
 import { DCContext } from "../../../lib/interfaces/DCContext";
 
 // 错误定义
@@ -59,7 +59,7 @@ export class CacheManager {
       let nodeAddr: Multiaddr | undefined;
       if (this.context?.connectedDc.nodeAddr) {
         const connectedPeerId =
-          this.context.connectedDc.nodeAddr.getPeerId() || "";
+          getPeerIdString(this.context.connectedDc.nodeAddr) || "";
         if (connectedPeerId && connectedPeerId === peerid) {
           // 同一个节点
           nodeAddr = this.context.connectedDc.nodeAddr;

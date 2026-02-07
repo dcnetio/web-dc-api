@@ -3,7 +3,7 @@ import { ChainUtil } from "../../common/chain";
 import { DcUtil } from "../../common/dcutil";
 import { DCConnectInfo, NFTBindStatus, User } from "../../common/types/types";
 import { AccountClient } from "./client";
-import { sha256, uint32ToLittleEndianBytes, uint8ArrayToHex } from "../../util/utils";
+import { sha256, uint32ToLittleEndianBytes, uint8ArrayToHex, getPeerIdString } from "../../util/utils";
 import { Ed25519PrivKey, Ed25519PubKey } from "../../common/dc-key/ed25519";
 import { DCContext } from "../../../lib/interfaces/DCContext";
 import { PeerId } from "@libp2p/interface";
@@ -103,7 +103,7 @@ export class AccountManager {
       console.error("context is null");
       return [null, Errors.ErrAccountPrivateSignIsNull];
     }
-    const peerId = peerAddr.getPeerId();
+    const peerId = getPeerIdString(peerAddr);
     if (!peerId) {
       console.error("peerId is null");
       return [null, Errors.ErrNoAccountPeerConnected];
@@ -144,7 +144,7 @@ export class AccountManager {
     }
 
     try {
-      const connectedPeerIdStr = this.context.connectedDc.nodeAddr.getPeerId();
+      const connectedPeerIdStr = getPeerIdString(this.context.connectedDc.nodeAddr);
       if (!connectedPeerIdStr) {
         return [NFTBindStatus.DcPeerNotConnected, Errors.ErrNodeAddrIsNull];
       }
@@ -510,7 +510,7 @@ export class AccountManager {
         return [null, new AccountError("Failed to get blockchain height")];
       }
       // 获取服务器节点ID
-      const serverPidStr = this.context.connectedDc.nodeAddr.getPeerId();
+      const serverPidStr = getPeerIdString(this.context.connectedDc.nodeAddr);
       if (!serverPidStr) {
         return [null, new AccountError("No connected peer ID")];
       }
@@ -672,7 +672,7 @@ export class AccountManager {
       }
     }
     const accountClient = new AccountClient(this.context.connectedDc.client);
-    const serverPidStr = this.context.connectedDc.nodeAddr.getPeerId() || "";
+    const serverPidStr = getPeerIdString(this.context.connectedDc.nodeAddr) || "";
     const serverPidBytes = new TextEncoder().encode(serverPidStr);
     // 生成签名数据
     const hvalue = uint32ToLittleEndianBytes(blockHeight);

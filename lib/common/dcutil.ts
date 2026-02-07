@@ -1,5 +1,5 @@
 import { ChainUtil } from "./chain";
-import { isName, multiaddr } from "@multiformats/multiaddr";
+import { multiaddr } from "@multiformats/multiaddr";
 import { IDBDatastore } from "datastore-idb";
 import { IDBBlockstore } from "blockstore-idb";
 import { keys } from "@libp2p/crypto";
@@ -14,7 +14,7 @@ import { yamux } from "@chainsafe/libp2p-yamux";
 import { noise } from "@chainsafe/libp2p-noise";
 import type { Multiaddr } from "@multiformats/multiaddr";
 import { kadDHT } from "@libp2p/kad-dht";
-import { loadKeyPair, saveKeyPair } from "../util/utils";
+import { loadKeyPair, saveKeyPair, getPeerIdString } from "../util/utils";
 import { Ed25519PrivateKey } from "@libp2p/interface";
 import { ping } from "@libp2p/ping";
 // import {mdns} from '@libp2p/mdns'
@@ -361,10 +361,10 @@ export class DcUtil {
       console.error("no node address found for peer: ", peerId);
       return;
     }
-    if (isName(nodeAddr)) {
-      const addrs = await nodeAddr.resolve();
-      nodeAddr = addrs[0] ? addrs[0] : null;
-    }
+    // if (isName(nodeAddr)) {
+    //   const addrs = await nodeAddr.resolve();
+    //   nodeAddr = addrs[0] ? addrs[0] : null;
+    // }
     return nodeAddr ? nodeAddr : undefined;
   };
 
@@ -397,7 +397,7 @@ export class DcUtil {
     }
 
     // 保存默认节点
-    const defaultPeerId = (nodeAddr as Multiaddr).getPeerId();
+    const defaultPeerId = getPeerIdString(nodeAddr);
     if (defaultPeerId) {
       localStorage.setItem("defaultPeerId", defaultPeerId.toString());
     }

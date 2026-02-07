@@ -8,7 +8,7 @@ import {
   User,
 } from "../../common/types/types";
 import { UtilClient } from "./client";
-import { sha256, uint32ToLittleEndianBytes } from "../../util/utils";
+import { sha256, uint32ToLittleEndianBytes, getPeerIdString } from "../../util/utils";
 import { Ed25519PrivKey, Ed25519PubKey } from "../../common/dc-key/ed25519";
 import { DCContext } from "../../../lib/interfaces/DCContext";
 import { PeerId } from "@libp2p/interface";
@@ -85,7 +85,7 @@ export class UtilManager {
       }
     }
     const utilClient = new UtilClient(this.connectedDc.client, this.context);
-    const serverPidStr = this.connectedDc.nodeAddr.getPeerId() || "";
+    const serverPidStr = getPeerIdString(this.connectedDc.nodeAddr) || "";
     const serverPidBytes = new TextEncoder().encode(serverPidStr);
     const appIdBytes = new TextEncoder().encode(appId);
     const domainBytes = new TextEncoder().encode(domain);

@@ -4,7 +4,7 @@ import { MessageClient } from "./client";
 import { CID } from "multiformats";
 import { sha256 } from "multiformats/hashes/sha2";
 import { Ed25519PubKey } from "../../common/dc-key/ed25519";
-import { uint32ToLittleEndianBytes } from "../../util/utils";
+import { uint32ToLittleEndianBytes, getPeerIdString } from "../../util/utils";
 import { DcUtil } from "../../common/dcutil";
 import { dcnet } from "../../proto/dcnet_proto";
 import { DCContext } from "../../../lib/interfaces/DCContext";
@@ -101,7 +101,7 @@ export class MessageManager {
       let allMsgs: dcnet.pb.IUserMsg[] = [];
       for (const client of clients) {
         if (client) {
-          const peerId = client.peerAddr.getPeerId() || "";
+          const peerId = getPeerIdString(client.peerAddr) || "";
           const publicKeyString = this.context.getPublicKey().string();
           // 获取token
           if(!client.token) {

@@ -13,6 +13,7 @@ import { extractPeerIdFromMultiaddr } from "../../common/dc-key/keyManager";
 import { Multiaddr } from "@multiformats/multiaddr";
 import { CommentClient } from "./client";
 import {
+  getPeerIdString,
   parseUint32,
   sha256,
   uint32ToLittleEndianBytes,
@@ -376,7 +377,7 @@ export class CommentManager {
       // 准备签名数据
       const hValue = uint32ToLittleEndianBytes(blockHeight);
       const tValue = uint32ToLittleEndianBytes(times);
-      const peerId = this.context.AccountBackupDc?.nodeAddr.getPeerId() || "";
+      const peerId = getPeerIdString(this.context.AccountBackupDc?.nodeAddr) || "";
       const peerIdBytes = new TextEncoder().encode(peerId);
       const preSign = new Uint8Array([...peerIdBytes, ...tValue, ...hValue]);
 
