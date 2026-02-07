@@ -102,7 +102,8 @@ export class SeekableFileStream {
       const actualOffset = startPosition + this.fileInfo.headerSize;
       
       // 直接读取指定长度
-      const data = await iterableToUint8Array(this.fs.cat(this.cid, {
+      // @ts-ignore
+      const data = await iterableToUint8Array(this.fs.cat(this.cid.toString(), {
         offset: actualOffset,
         length: length
       }));
@@ -141,7 +142,8 @@ private async readEncrypted(startPosition: number, length: number): Promise<Uint
   
   try {
     // 读取加密块
-    const encryptedBlocks = await iterableToUint8Array(this.fs.cat(this.cid, {
+    // @ts-ignore
+    const encryptedBlocks = await iterableToUint8Array(this.fs.cat(this.cid.toString(), {
       offset: readStartPosition,
       length: readTotalSize
     }));

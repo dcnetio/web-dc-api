@@ -262,7 +262,8 @@ export class FileManager {
       }
       resCid = cid.toString();
 
-      const stats = await fs.stat(cid);
+      // @ts-ignore
+      const stats = await fs.stat(cid.toString());
       const filesize = stats.unixfs?.fileSize() || 0;
       // helia新版本fs.stat返回的localDagSize可能不准确或不存在，直接使用filesize
       const dagFileSize = Number(filesize);
@@ -777,15 +778,18 @@ export class FileManager {
       let totalBlocks = 0;
 
       // Get stats for the root directory itself
-      const rootStats = await fs.stat(rootCID);
+      // @ts-ignore
+      const rootStats = await fs.stat(rootCID.toString());
       totalBlocks += Number((rootStats as any).blocks || 0);
 
       // List all entries in the directory and process them recursively
-      for await (const entry of fs.ls(rootCID)) {
+      // @ts-ignore
+      for await (const entry of fs.ls(rootCID.toString())) {
         const { cid, type } = entry as any;
 
         // Get stats for the current entry
-        const stats = await fs.stat(cid);
+        // @ts-ignore
+        const stats = await fs.stat(cid.toString());
 
         if (type === "directory") {
           // Recursively count blocks in subdirectories
@@ -1140,7 +1144,8 @@ export class FileManager {
         currentPath: string = "",
       ) => {
         // 遍历当前目录内容
-        for await (const entry of fs.ls(dirCid)) {
+        // @ts-ignore
+        for await (const entry of fs.ls(dirCid.toString())) {
           const { name, cid, type } = entry as any;
           if (name === "." || name === ".." || name === "dc_ownuser") {
             continue; // 跳过当前目录和上级目录
@@ -1149,7 +1154,8 @@ export class FileManager {
           const fullPath = currentPath ? `${currentPath}/${name}` : name;
 
           // 获取文件/目录的统计信息
-          const stats = await fs.stat(cid);
+          // @ts-ignore
+          const stats = await fs.stat(cid.toString());
 
           // 构造文件信息对象
           const fileInfo = {
@@ -1305,7 +1311,9 @@ export class FileManager {
       const fs = unixfs(this.dcNodeClient);
       let stream: any;
       try {
-        stream = fs.cat(cidObj);
+        // 兼容处理：转换为字符串传入，解决 multiformats/cid 版本不一致导致的 instanceof 检查失败问题
+        // @ts-ignore
+        stream = fs.cat(cidObj.toString());
       } catch (catError) {
         console.error(
           "getFileFromDcContent: fs.cat failed",
@@ -1400,7 +1408,8 @@ export class FileManager {
     try {
       // 读取头信息
       const headerData = await iterableToUint8Array(
-        fs.cat(CID.parse(cid), {
+        // @ts-ignore
+        fs.cat(cid, {
           offset: 0,
           length: 32,
         }),
@@ -1452,7 +1461,8 @@ export class FileManager {
 
       for (const part of parts) {
         let found = false;
-        for await (const entry of fs.ls(currentCid)) {
+        // @ts-ignore
+        for await (const entry of fs.ls(currentCid.toString())) {
           if (entry.name === part) {
             currentCid = entry.cid;
             found = true;
@@ -1519,7 +1529,8 @@ export class FileManager {
   async isFileOrDir(cid: string): Promise<"file" | "directory" | "unknown"> {
     try {
       const fs = unixfs(this.dcNodeClient);
-      const stats = await fs.stat(CID.parse(cid));
+      // @ts-ignore
+      const stats = await fs.stat(cid);
       if (stats.type === "directory") {
         return "directory";
       } else if (stats.type === "file" || stats.type === "raw") {
