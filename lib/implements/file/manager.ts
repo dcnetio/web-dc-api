@@ -15,7 +15,7 @@ import {
   getPeerIdString,
 } from "../../util/utils";
 
-import { unixfs } from "@helia/unixfs";
+import { unixfs, type ExtendedStatOptions, type ExtendedFileStats, type ExtendedDirectoryStats, type ExtendedRawStats } from "@helia/unixfs";
 import { SymmetricKey } from "../threaddb/common/key";
 import { CID, Version } from "multiformats/cid";
 import { BrowserType, DcUtil } from "../../common/dcutil";
@@ -270,13 +270,14 @@ export class FileManager {
       let stats;
       try {
         // @ts-ignore
-        stats = await fs.stat(cid.toString(), { signal: controller.signal });
+        stats = await fs.stat(cid.toString(), {
+          signal: controller.signal,
+          extended: true,
+        });
       } finally {
         clearTimeout(timeoutId);
       }
-      const filesize = stats.unixfs?.fileSize() || 0;
-      // helia新版本fs.stat返回的localDagSize可能不准确或不存在，直接使用filesize
-      const dagFileSize = Number(filesize);
+      const dagFileSize = stats.dagSize ? Number(stats.dagSize) : 0;
       const fileClient = new FileClient(
         this.connectedDc.client,
         this.dcNodeClient,
@@ -464,7 +465,7 @@ export class FileManager {
         // The entry with path equal to the root folder name is our root
         if (path === rootFolderName) {
           rootCID = cid;
-          totalSize = Number(size);
+          break;
         }
       }
       if (!rootCID) {
@@ -474,7 +475,7 @@ export class FileManager {
       // 计算 rootCID 后的block数量
       let fileCount = 0;
       try {
-        fileCount = await this.countDirectoryBlocks(rootCID);
+        [fileCount, totalSize] = await this.countDirectoryBlocks(rootCID);
       } catch (e) {
         fileCount = 0;
       }
@@ -786,10 +787,10 @@ export class FileManager {
    * @param rootCID - The CID of the root directory
    * @returns Promise with the total block count
    */
-  async countDirectoryBlocks(rootCID: CID): Promise<number> {
+  async countDirectoryBlocks(rootCID: CID): Promise<[number,number]> {
     try {
       const fs = unixfs(this.dcNodeClient);
-      let totalBlocks = 0;
+
 
       // Get stats for the root directory itself
       const controller = new AbortController();
@@ -801,57 +802,16 @@ export class FileManager {
         // @ts-ignore
         rootStats = await fs.stat(rootCID.toString(), {
           signal: controller.signal,
+          extended: true,
         });
       } finally {
         clearTimeout(timeoutId);
       }
-      totalBlocks += this.getBlocksCountFromStats(rootStats);
 
-      // List all entries in the directory and process them recursively
-      const lsController = new AbortController();
-      let lsTimeoutId = setTimeout(() => lsController.abort(), 15000);
-      const resetLsTimeout = () => {
-        clearTimeout(lsTimeoutId);
-        lsTimeoutId = setTimeout(() => lsController.abort(), 15000);
-      };
 
-      try {
-        // @ts-ignore
-        for await (const entry of fs.ls(rootCID.toString(), {
-          signal: lsController.signal,
-        })) {
-          resetLsTimeout();
-          const { cid, type } = entry as any;
-
-          // Get stats for the current entry
-        const entryController = new AbortController();
-        const entryTimeoutId = setTimeout(() => {
-          entryController.abort();
-        }, 15000);
-        let stats;
-        try {
-          // @ts-ignore
-          stats = await fs.stat(cid.toString(), {
-            signal: entryController.signal,
-          });
-        } finally {
-          clearTimeout(entryTimeoutId);
-        }
-
-        if (type === "directory") {
-          // Recursively count blocks in subdirectories
-          const subDirBlocks = await this.countDirectoryBlocks(cid);
-          totalBlocks += subDirBlocks;
-        } else {
-          // For files, try to read blocks; if missing, estimate from file size
-          totalBlocks += this.getBlocksCountFromStats(stats);
-        }
-      }
-      } finally {
-        if (lsTimeoutId) clearTimeout(lsTimeoutId);
-      }
-
-      return totalBlocks;
+      const totalBlocks = rootStats.blocks ? Number(rootStats.blocks) : 0;
+      const totalSize = rootStats.dagSize ? Number(rootStats.dagSize) : 0;
+      return [totalBlocks, totalSize];
     } catch (error) {
       console.error("Error counting directory blocks:", error);
       throw error;
@@ -1253,6 +1213,7 @@ export class FileManager {
             // @ts-ignore
             stats = await fs.stat(cid.toString(), {
               signal: controller.signal,
+              extended: true,
             });
           } finally {
             clearTimeout(timeoutId);
@@ -1678,7 +1639,7 @@ export class FileManager {
       let stats;
       try {
         // @ts-ignore
-        stats = await fs.stat(cid, { signal: controller.signal });
+        stats = await fs.stat(cid, { signal: controller.signal, extended: true });
       } finally {
         clearTimeout(timeoutId);
       }
