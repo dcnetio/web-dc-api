@@ -97,6 +97,11 @@ export class SeekableFileStream {
    * @param length 读取长度
    */
   private async readPlain(startPosition: number, length: number): Promise<Uint8Array> {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => {
+      controller.abort();
+    }, 15000);
+
     try {
       // 计算实际文件中的偏移量（考虑文件头）
       const actualOffset = startPosition + this.fileInfo.headerSize;
@@ -105,11 +110,14 @@ export class SeekableFileStream {
       // @ts-ignore
       const data = await iterableToUint8Array(this.fs.cat(this.cid.toString(), {
         offset: actualOffset,
-        length: length
+        length: length,
+        signal: controller.signal
       }));
+      clearTimeout(timeoutId);
       
       return data;
     } catch (err) {
+      clearTimeout(timeoutId);
       console.error("Error reading plain data:", err);
       return new Uint8Array(0);
     }
@@ -140,13 +148,20 @@ private async readEncrypted(startPosition: number, length: number): Promise<Uint
 
   const readTotalSize = neededBlocks * this.encryptChunkSize;
   
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => {
+    controller.abort();
+  }, 15000);
+
   try {
     // 读取加密块
     // @ts-ignore
     const encryptedBlocks = await iterableToUint8Array(this.fs.cat(this.cid.toString(), {
       offset: readStartPosition,
-      length: readTotalSize
+      length: readTotalSize,
+      signal: controller.signal
     }));
+    clearTimeout(timeoutId);
     
     // 确保获取到了数据
     if (encryptedBlocks.length === 0) {
@@ -185,6 +200,7 @@ private async readEncrypted(startPosition: number, length: number): Promise<Uint
     result.set(decryptedData.subarray(offsetInBlock, offsetInBlock + length), 0);
     return result;
   } catch (err) {
+    clearTimeout(timeoutId);
     console.error("Error reading encrypted data:", err);
     return new Uint8Array(0);
   }

@@ -263,8 +263,17 @@ export class FileManager {
       }
       resCid = cid.toString();
 
-      // @ts-ignore
-      const stats = await fs.stat(cid.toString());
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => {
+        controller.abort();
+      }, 15000);
+      let stats;
+      try {
+        // @ts-ignore
+        stats = await fs.stat(cid.toString(), { signal: controller.signal });
+      } finally {
+        clearTimeout(timeoutId);
+      }
       const filesize = stats.unixfs?.fileSize() || 0;
       // helia新版本fs.stat返回的localDagSize可能不准确或不存在，直接使用filesize
       const dagFileSize = Number(filesize);
@@ -794,18 +803,51 @@ export class FileManager {
       let totalBlocks = 0;
 
       // Get stats for the root directory itself
-      // @ts-ignore
-      const rootStats = await fs.stat(rootCID.toString());
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => {
+        controller.abort();
+      }, 15000);
+      let rootStats;
+      try {
+        // @ts-ignore
+        rootStats = await fs.stat(rootCID.toString(), {
+          signal: controller.signal,
+        });
+      } finally {
+        clearTimeout(timeoutId);
+      }
       totalBlocks += this.getBlocksCountFromStats(rootStats);
 
       // List all entries in the directory and process them recursively
-      // @ts-ignore
-      for await (const entry of fs.ls(rootCID.toString())) {
-        const { cid, type } = entry as any;
+      const lsController = new AbortController();
+      let lsTimeoutId = setTimeout(() => lsController.abort(), 15000);
+      const resetLsTimeout = () => {
+        clearTimeout(lsTimeoutId);
+        lsTimeoutId = setTimeout(() => lsController.abort(), 15000);
+      };
 
-        // Get stats for the current entry
+      try {
         // @ts-ignore
-        const stats = await fs.stat(cid.toString());
+        for await (const entry of fs.ls(rootCID.toString(), {
+          signal: lsController.signal,
+        })) {
+          resetLsTimeout();
+          const { cid, type } = entry as any;
+
+          // Get stats for the current entry
+        const entryController = new AbortController();
+        const entryTimeoutId = setTimeout(() => {
+          entryController.abort();
+        }, 15000);
+        let stats;
+        try {
+          // @ts-ignore
+          stats = await fs.stat(cid.toString(), {
+            signal: entryController.signal,
+          });
+        } finally {
+          clearTimeout(entryTimeoutId);
+        }
 
         if (type === "directory") {
           // Recursively count blocks in subdirectories
@@ -815,6 +857,9 @@ export class FileManager {
           // For files, try to read blocks; if missing, estimate from file size
           totalBlocks += this.getBlocksCountFromStats(stats);
         }
+      }
+      } finally {
+        if (lsTimeoutId) clearTimeout(lsTimeoutId);
       }
 
       return totalBlocks;
@@ -896,7 +941,14 @@ export class FileManager {
       // Process the file in a separate async function (equivalent to goroutine)
       (async () => {
         try {
-          const file = await fetch(readPath).then((r) => r.blob());
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 30000);
+          const file = await fetch(readPath, {
+            signal: controller.signal,
+          }).then((r) => {
+            clearTimeout(timeoutId);
+            return r.blob();
+          });
           const fileReader = new FileReader();
           const chunkSize = 1024;
           let offset = 0;
@@ -987,7 +1039,10 @@ export class FileManager {
   private async readFile(path: string): Promise<Blob | null> {
     try {
       // Browser implementation example - replace with appropriate method
-      const response = await fetch(path);
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 30000);
+      const response = await fetch(path, { signal: controller.signal });
+      clearTimeout(timeoutId);
       return await response.blob();
     } catch (error) {
       console.error("Error reading file:", error);
@@ -1176,18 +1231,40 @@ export class FileManager {
         currentPath: string = "",
       ) => {
         // 遍历当前目录内容
-        // @ts-ignore
-        for await (const entry of fs.ls(dirCid.toString())) {
-          const { name, cid, type } = entry as any;
-          if (name === "." || name === ".." || name === "dc_ownuser") {
-            continue; // 跳过当前目录和上级目录
-          }
+        const controller = new AbortController();
+        let timeoutId = setTimeout(() => controller.abort(), 15000);
+        const resetTimeout = () => {
+          clearTimeout(timeoutId);
+          timeoutId = setTimeout(() => controller.abort(), 15000);
+        };
+
+        try {
+          // @ts-ignore
+          for await (const entry of fs.ls(dirCid.toString(), {
+            signal: controller.signal,
+          })) {
+            resetTimeout();
+            const { name, cid, type } = entry as any;
+            if (name === "." || name === ".." || name === "dc_ownuser") {
+              continue; // 跳过当前目录和上级目录
+            }
           // 构建完整路径
           const fullPath = currentPath ? `${currentPath}/${name}` : name;
 
           // 获取文件/目录的统计信息
-          // @ts-ignore
-          const stats = await fs.stat(cid.toString());
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => {
+            controller.abort();
+          }, 15000);
+          let stats;
+          try {
+            // @ts-ignore
+            stats = await fs.stat(cid.toString(), {
+              signal: controller.signal,
+            });
+          } finally {
+            clearTimeout(timeoutId);
+          }
 
           // 构造文件信息对象
           const fileInfo = {
@@ -1205,6 +1282,9 @@ export class FileManager {
           if (type === "directory" && recursive) {
             await traverseDirectory(cid, fullPath);
           }
+        }
+        } finally {
+          if (timeoutId) clearTimeout(timeoutId);
         }
       };
 
@@ -1342,11 +1422,23 @@ export class FileManager {
       // 4. 获取文件流
       const fs = unixfs(this.dcNodeClient);
       let stream: any;
+      const controller = new AbortController();
+      let timeoutId: any;
+      const resetTimeout = () => {
+        if (timeoutId) clearTimeout(timeoutId);
+        timeoutId = setTimeout(() => {
+          controller.abort();
+          console.error("getFileFromDcContent: timeout fetching cid", cid);
+        }, 15000);
+      };
+
       try {
+        resetTimeout();
         // 兼容处理：转换为字符串传入，解决 multiformats/cid 版本不一致导致的 instanceof 检查失败问题
         // @ts-ignore
-        stream = fs.cat(cidObj.toString());
+        stream = fs.cat(cidObj.toString(), { signal: controller.signal });
       } catch (catError) {
+        clearTimeout(timeoutId);
         console.error(
           "getFileFromDcContent: fs.cat failed",
           "error:",
@@ -1364,8 +1456,10 @@ export class FileManager {
       const encryptextLen = (3 << 20) + NonceBytes + TagBytes;
       const headerLen = 32;
 
-      for await (const chunk of stream) {
-        waitBuffer = mergeUInt8Arrays(waitBuffer, chunk) as any;
+      try {
+        for await (const chunk of stream) {
+          resetTimeout();
+          waitBuffer = mergeUInt8Arrays(waitBuffer, chunk) as any;
 
         // 1. 处理头部 (仅处理一次)
         if (!headDealed && !folderFlag) {
@@ -1413,6 +1507,9 @@ export class FileManager {
       }
 
       return fileContent;
+      } finally {
+        if (timeoutId) clearTimeout(timeoutId);
+      }
     } catch (error) {
       console.error("getFileFromDcContent error", error);
       return null;
@@ -1437,6 +1534,11 @@ export class FileManager {
 
     const fs = unixfs(this.dcNodeClient);
 
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => {
+      controller.abort();
+    }, 15000);
+
     try {
       // 读取头信息
       const headerData = await iterableToUint8Array(
@@ -1444,8 +1546,10 @@ export class FileManager {
         fs.cat(cid, {
           offset: 0,
           length: 32,
+          signal: controller.signal,
         }),
       );
+      clearTimeout(timeoutId);
 
       // 检查是否有DC文件头
       const hasHeader = compareByteArrays(
@@ -1473,6 +1577,7 @@ export class FileManager {
         encryptChunkSize: (3 << 20) + NonceBytes + TagBytes,
       });
     } catch (err) {
+      clearTimeout(timeoutId);
       console.error("Failed to create seekable file stream:", err);
       return null;
     }
@@ -1493,13 +1598,26 @@ export class FileManager {
 
       for (const part of parts) {
         let found = false;
-        // @ts-ignore
-        for await (const entry of fs.ls(currentCid.toString())) {
-          if (entry.name === part) {
-            currentCid = entry.cid;
-            found = true;
-            break;
+        const controller = new AbortController();
+        let timeoutId = setTimeout(() => controller.abort(), 15000);
+        const resetTimeout = () => {
+          clearTimeout(timeoutId);
+          timeoutId = setTimeout(() => controller.abort(), 15000);
+        };
+        try {
+          // @ts-ignore
+          for await (const entry of fs.ls(currentCid.toString(), {
+            signal: controller.signal,
+          })) {
+            resetTimeout();
+            if (entry.name === part) {
+              currentCid = entry.cid;
+              found = true;
+              break;
+            }
           }
+        } finally {
+          clearTimeout(timeoutId);
         }
         if (!found) return null;
       }
@@ -1561,8 +1679,17 @@ export class FileManager {
   async isFileOrDir(cid: string): Promise<"file" | "directory" | "unknown"> {
     try {
       const fs = unixfs(this.dcNodeClient);
-      // @ts-ignore
-      const stats = await fs.stat(cid);
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => {
+        controller.abort();
+      }, 15000);
+      let stats;
+      try {
+        // @ts-ignore
+        stats = await fs.stat(cid, { signal: controller.signal });
+      } finally {
+        clearTimeout(timeoutId);
+      }
       if (stats.type === "directory") {
         return "directory";
       } else if (stats.type === "file" || stats.type === "raw") {
