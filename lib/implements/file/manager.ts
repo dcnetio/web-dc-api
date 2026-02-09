@@ -471,24 +471,13 @@ export class FileManager {
         console.error("Failed to find root directory CID");
         return [null, new Error("Failed to find root directory CID")];
       }
-      // 计算 rootCID 下的文件数量（与 Go 实现一致：按文件数量计数）
+      // 计算 rootCID 后的block数量
       let fileCount = 0;
       try {
-        const [fileNodes, fileErr] = await this.getFolderFileList(
-          rootCID.toString(),
-          cidNeedConnect.NOT_NEED,
-          true,
-        );
-        if (!fileErr && fileNodes) {
-          // 排除 dc_ownuser 标志文件
-          fileCount = fileNodes.filter(
-            (n) => n.Type === 0 && n.Name !== "dc_ownuser",
-          ).length;
-        }
+        fileCount = await this.countDirectoryBlocks(rootCID);
       } catch (e) {
         fileCount = 0;
       }
-      fileCount++;
 
       // Get final node and CID
       const finalCid = rootCID.toString();
@@ -1007,6 +996,9 @@ export class FileManager {
   private getBlocksCountFromStats(stats: any): number {
     // Only support latest stat shape: expect `blocks` to be provided by unixfs.stat
     try {
+      if (Array.isArray((stats as any).blockSizes)) {
+        return (stats as any).blockSizes.length;
+      }
       const maybeBlocks = (stats as any).blocks;
       if (typeof maybeBlocks === "number") {
         return Number(maybeBlocks);
