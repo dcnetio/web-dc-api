@@ -374,7 +374,25 @@ export class Record implements IRecord {
       return this._block;
     }
     
-    const data = await bstore.get(this._obj.block);
+    // Support newer Helia/blockstore which returns an AsyncIterable of chunks
+    // for `get`. If `bstore.get` returns an async iterable, consume it;
+    // otherwise treat it as a single Uint8Array.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const maybe = (bstore as any).get(this._obj.block);
+    let data: Uint8Array;
+    if (maybe && typeof maybe[Symbol.asyncIterator] === 'function') {
+      const chunks: Uint8Array[] = [];
+      // consume async iterable
+      // @ts-ignore
+      for await (const ch of maybe) {
+        chunks.push(ch);
+      }
+      data = concat(chunks);
+    } else {
+      // `get` returned a promise/resolved Uint8Array
+      data = await maybe;
+    }
+
     this._block = await cbornode.wrapObject(data);
     return this._block;
   }

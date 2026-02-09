@@ -335,7 +335,19 @@ export async function  wrapObject(obj: any): Promise<Node> {
     const block = new Block(data, cid);
     
     // 创建兼容 Uint8Array 的深拷贝
-    const clone = structuredClone(obj) || deepCopyWithTypedArrays(obj);
+    let clone: any;
+    try {
+      if (typeof structuredClone === 'function') {
+        clone = structuredClone(obj);
+      } else {
+        // structuredClone not available, fallback
+        clone = deepCopyWithTypedArrays(obj);
+      }
+    } catch (e) {
+      // If structuredClone fails (e.g. AsyncGenerator cannot be cloned),
+      // fallback to our custom deep copy that handles TypedArrays.
+      clone = deepCopyWithTypedArrays(obj);
+    }
     
     return await newObject(block, clone);
   } catch (err) {

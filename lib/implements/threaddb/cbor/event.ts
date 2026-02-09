@@ -7,6 +7,7 @@ import { IRecord } from "../core/record";
 import { SymmetricKey } from "../common/key";
 import { CID } from "multiformats/cid";
 import * as dagCBOR from "@ipld/dag-cbor";
+import { concat } from 'uint8arrays';
 
 import { encodeBlock, decodeBlock } from "./coding";
 import { Block, Node } from "./node";
@@ -195,7 +196,22 @@ export class Event implements NetEvent {
 
   async getHeader(bstore: Blocks, key?: SymmetricKey): Promise<NetEventHeader> {
     if (!this._header) {
-      const blockData = await bstore.get(this._obj.header);
+      // `bstore.get` in newer helia may return an AsyncIterable of chunks.
+      // Consume it if necessary and concatenate into a single Uint8Array.
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const maybe = (bstore as any).get(this._obj.header);
+      let blockData: Uint8Array;
+      if (maybe && typeof maybe[Symbol.asyncIterator] === 'function') {
+        const chunks: Uint8Array[] = [];
+        // @ts-ignore
+        for await (const ch of maybe) {
+          chunks.push(ch);
+        }
+        blockData = concat(chunks);
+      } else {
+        blockData = await maybe;
+      }
+
       const headerNode = await cbornode.wrapObject(blockData);
       this._header = new EventHeader(headerNode);
     }
@@ -237,7 +253,21 @@ export class Event implements NetEvent {
     }
 
     if (!this._body) {
-      const block = await bstore.get(this._obj.body);
+      // Handle possible AsyncIterable from `bstore.get` as above
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const maybe = (bstore as any).get(this._obj.body);
+      let block: Uint8Array;
+      if (maybe && typeof maybe[Symbol.asyncIterator] === 'function') {
+        const chunks: Uint8Array[] = [];
+        // @ts-ignore
+        for await (const ch of maybe) {
+          chunks.push(ch);
+        }
+        block = concat(chunks);
+      } else {
+        block = await maybe;
+      }
+
       this._body = await cbornode.wrapObject(block);
     }
 
