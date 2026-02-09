@@ -202,12 +202,21 @@ class TransformedTransaction implements Transaction {
 // ======== 过滤器处理器 ========  
 class FilterProcessor {  
   static process(input: QueryExt, transform: KeyTransform): QueryExt {  
-    const query = structuredClone(input);  
-    
-    // 前缀转换  
-    if (query.prefix) {  
-      query.prefix = transform.convert(new Key(query.prefix)).toString();  
-    }  
+    let query: QueryExt;
+    try {
+      query = structuredClone(input);
+    } catch (e) {
+      // 如果 structuredClone 失败（例如包含函数或不可克隆类型），使用安全浅拷贝回退。
+      query = { ...(input as any) } as QueryExt;
+      if ((input as any).filters) {
+        query.filters = [ ...(input as any).filters ];
+      }
+    }
+
+    // 前缀转换
+    if (query.prefix) {
+      query.prefix = transform.convert(new Key(query.prefix)).toString();
+    }
 
     // 过滤器转换  
     if (query.filters) {  
