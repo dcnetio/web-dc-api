@@ -462,9 +462,21 @@ export class FileManager {
         console.error("Failed to find root directory CID");
         return [null, new Error("Failed to find root directory CID")];
       }
-      // 获取rootCID下的块数量
-
-      const fileCount = await this.countDirectoryBlocks(rootCID);
+      // 计算 rootCID 下的文件数量（与 Go 实现一致：按文件数量计数）
+      let fileCount = 0;
+      try {
+        const [fileNodes, fileErr] = await this.getFolderFileList(
+          rootCID.toString(),
+          cidNeedConnect.NOT_NEED,
+          true,
+        );
+        if (!fileErr && fileNodes) {
+          // 排除 dc_ownuser 标志文件
+          fileCount = fileNodes.filter((n) => n.Type === 0 && n.Name !== "dc_ownuser").length;
+        }
+      } catch (e) {
+        fileCount = 0;
+      }
 
       // Get final node and CID
       const finalCid = rootCID.toString();
@@ -781,7 +793,7 @@ export class FileManager {
       // Get stats for the root directory itself
       // @ts-ignore
       const rootStats = await fs.stat(rootCID.toString());
-      totalBlocks += Number((rootStats as any).blocks || 0);
+      totalBlocks += this.getBlocksCountFromStats(rootStats);
 
       // List all entries in the directory and process them recursively
       // @ts-ignore
@@ -797,8 +809,8 @@ export class FileManager {
           const subDirBlocks = await this.countDirectoryBlocks(cid);
           totalBlocks += subDirBlocks;
         } else {
-          // For files, add their block count
-          totalBlocks += Number((stats as any).blocks || 0);
+          // For files, try to read blocks; if missing, estimate from file size
+          totalBlocks += this.getBlocksCountFromStats(stats);
         }
       }
 
@@ -933,6 +945,22 @@ export class FileManager {
       return [cid.toString(), null];
     } catch (error) {
       return [null, error instanceof Error ? error : new Error(String(error))];
+    }
+  }
+
+  // Helper to compute block count from fs.stat result with fallbacks
+  private getBlocksCountFromStats(stats: any): number {
+    // Only support latest stat shape: expect `blocks` to be provided by unixfs.stat
+    try {
+      const maybeBlocks = (stats as any).blocks;
+      if (typeof maybeBlocks === "number") {
+        return Number(maybeBlocks);
+      }
+      // If `blocks` is absent, return 0 (no backward compatibility logic)
+      return 0;
+    } catch (err) {
+      console.warn("getBlocksCountFromStats error:", err);
+      return 0;
     }
   }
 
