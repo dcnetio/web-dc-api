@@ -116,7 +116,7 @@ export class Network implements Net {
     logstore: ILogstore,
     bstore: Blocks,
     dagService: DAGCBOR,
-    context: DCContext
+    context: DCContext,
   ) {
     this.logstore = logstore;
     this.hostID = libp2p.peerId.toString();
@@ -153,7 +153,7 @@ export class Network implements Net {
       if (!cacheAddr) {
         cachedFlag = false;
         [peerAddr, peerStatus] = await this.dcChain.getDcNodeWebrtcDirectAddr(
-          peerId.toString()
+          peerId.toString(),
         );
       }
 
@@ -175,13 +175,13 @@ export class Network implements Net {
         this.context.publicKey.string(),
         (payload: Uint8Array): Promise<Uint8Array> => {
           return this.sign(payload);
-        }
+        },
       );
       if (!token) {
         if (cachedFlag) {
           let _: PeerStatus | null = null;
           [peerAddr, _] = await this.dcChain.getDcNodeWebrtcDirectAddr(
-            peerId.toString()
+            peerId.toString(),
           );
           delete this.cachePeers[peerId.toString()];
           if (!peerAddr) {
@@ -192,14 +192,14 @@ export class Network implements Net {
             this.libp2p,
             this.bstore,
             addr,
-            dc_protocol
+            dc_protocol,
           );
           const token = await client.GetToken(
             this.context.appInfo.appId || "",
             this.context.publicKey.string(),
             (payload: Uint8Array) => {
               return this.sign(payload);
-            }
+            },
           );
           if (token) {
             this.cachePeers[peerId.toString()] = peerAddr;
@@ -248,7 +248,7 @@ export class Network implements Net {
       token: ThreadToken;
       logKey?: Ed25519PrivKey | Ed25519PubKey;
       threadKey?: ThreadKey;
-    }
+    },
   ): Promise<ThreadInfo> {
     if (!this.context.publicKey) {
       throw new Error("Identity creation failed.");
@@ -279,7 +279,7 @@ export class Network implements Net {
       token?: ThreadToken | undefined;
       logKey?: Ed25519PrivKey | Ed25519PubKey | undefined;
       threadKey?: ThreadKey | undefined;
-    } = {}
+    } = {},
   ): Promise<ThreadInfo> {
     try {
       // 从多地址提取threaddb ID
@@ -339,7 +339,7 @@ export class Network implements Net {
       throw new Error(
         `Failed to add thread: ${
           err instanceof Error ? err.message : String(err)
-        }`
+        }`,
       );
     }
   }
@@ -355,7 +355,7 @@ export class Network implements Net {
    */
   async getThread(
     id: ThreadID,
-    options: { token?: ThreadToken } = {}
+    options: { token?: ThreadToken } = {},
   ): Promise<ThreadInfo> {
     try {
       // 验证threaddb ID和令牌
@@ -367,7 +367,7 @@ export class Network implements Net {
       throw new Error(
         `Error getting thread ${id.toString()}: ${
           err instanceof Error ? err.message : String(err)
-        }`
+        }`,
       );
     }
   }
@@ -383,7 +383,7 @@ export class Network implements Net {
   async getThreadFromPeer(
     id: ThreadID,
     peerId: PeerId,
-    options: { token?: ThreadToken } = {}
+    options: { token?: ThreadToken } = {},
   ): Promise<ThreadInfo> {
     try {
       const [client, _] = await this.getClient(peerId);
@@ -400,14 +400,14 @@ export class Network implements Net {
         throw new Error(
           `Error getting thread from peer: ${
             err instanceof Error ? err.message : String(err)
-          }`
+          }`,
         );
       }
     } catch (err) {
       throw new Error(
         `Error getting thread from peer: ${
           err instanceof Error ? err.message : String(err)
-        }`
+        }`,
       );
     }
   }
@@ -422,7 +422,7 @@ export class Network implements Net {
    */
   async deleteThread(
     id: ThreadID,
-    options: { token?: ThreadToken; apiToken?: Token } = {}
+    options: { token?: ThreadToken; apiToken?: Token } = {},
   ): Promise<void> {
     try {
       // 验证线程ID和令牌
@@ -447,7 +447,7 @@ export class Network implements Net {
       throw new Error(
         `Failed to delete thread: ${
           err instanceof Error ? err.message : String(err)
-        }`
+        }`,
       );
     }
   }
@@ -457,7 +457,7 @@ export class Network implements Net {
    */
   async validate(
     id: ThreadID,
-    token?: ThreadToken
+    token?: ThreadToken,
   ): Promise<Ed25519PubKey | undefined> {
     if (!validateIDData(id.toBytes())) {
       throw new Error("Invalid thread ID.");
@@ -475,7 +475,7 @@ export class Network implements Net {
   async ensureUniqueLog(
     id: ThreadID,
     key?: Ed25519PrivKey | Ed25519PubKey,
-    identity?: PublicKey
+    identity?: PublicKey,
   ): Promise<void> {
     try {
       const thrd = await this.logstore.getThread(id);
@@ -501,7 +501,7 @@ export class Network implements Net {
         try {
           const lidb = await this.logstore.metadata.getBytes(
             id,
-            identity.toString()
+            identity.toString(),
           );
           if (!lidb || lidb.length === 0) {
             // 检查是否有旧式"own"（未索引）日志
@@ -554,7 +554,7 @@ export class Network implements Net {
       // Encapsulate each address with peer and thread components
       for (const addr of hostAddrs) {
         const withPeerId = addr.encapsulate(
-          `/p2p/${this.libp2p.peerId.toString()}`
+          `/p2p/${this.libp2p.peerId.toString()}`,
         );
         const threadMultiaddr = new ThreadMuliaddr(withPeerId as any, tinfo.id);
         resultAddrs.push(threadMultiaddr);
@@ -566,13 +566,12 @@ export class Network implements Net {
     }
   }
 
-
   /**
    * Process pulled records
    */
   private async _processPulledRecords(
     id: ThreadID,
-    recs: Record<string, PeerRecords>
+    recs: Record<string, PeerRecords>,
   ): Promise<void> {
     const [connector, appConnected] = this.getConnector(id);
 
@@ -613,9 +612,8 @@ export class Network implements Net {
 
                 const tRecord = newRecord(r, id, lid);
                 const counter = indexCounter + index;
-                const createtime = await connector!.getNetRecordCreateTime(
-                  tRecord
-                );
+                const createtime =
+                  await connector!.getNetRecordCreateTime(tRecord);
 
                 tRecords.push({
                   record: r,
@@ -627,7 +625,7 @@ export class Network implements Net {
               new Promise((_, reject) => {
                 timeoutId = setTimeout(
                   () => reject(new Error("Process Timeout")),
-                  900000
+                  900000,
                 );
               }),
             ]);
@@ -718,7 +716,7 @@ export class Network implements Net {
     options: {
       token?: ThreadToken | undefined;
       multiPeersFlag?: boolean | undefined;
-    }
+    },
   ): Promise<void> {
     try {
       try {
@@ -731,7 +729,7 @@ export class Network implements Net {
         throw new Error(
           `Error pulling thread ${id.toString()}: ${
             err instanceof Error ? err.message : String(err)
-          }`
+          }`,
         );
       }
     } catch (err) {
@@ -749,7 +747,7 @@ export class Network implements Net {
    */
   async pullThreadDeal(
     tid: ThreadID,
-    multiPeersFlag: boolean = false
+    multiPeersFlag: boolean = false,
   ): Promise<Record<string, PeerRecords>> {
     try {
       let [offsets, peers] = await this.threadOffsets(tid);
@@ -762,7 +760,7 @@ export class Network implements Net {
         console.error(
           `Error getting peers for thread ${tid}: ${
             err instanceof Error ? err.message : String(err)
-          }`
+          }`,
         );
         // Ignore getPeers errors
       }
@@ -778,7 +776,7 @@ export class Network implements Net {
       // Definition of the sync logic for a single peer
       const syncPeer = async (
         peer: PeerId,
-        offsetsToUpdate: Record<string, any>
+        offsetsToUpdate: Record<string, any>,
       ) => {
         let success = false;
         while (true) {
@@ -788,7 +786,7 @@ export class Network implements Net {
               tid,
               offsetsToUpdate,
               netPullingLimit,
-              false
+              false,
             );
 
             if (Object.keys(recs).length === 0) {
@@ -872,7 +870,7 @@ export class Network implements Net {
   async createLog(
     id: ThreadID,
     key?: Ed25519PrivKey | Ed25519PubKey,
-    identity?: PublicKey
+    identity?: PublicKey,
   ): Promise<IThreadLogInfo> {
     let privKey: PrivateKey | undefined;
     let pubKey: PublicKey;
@@ -910,7 +908,7 @@ export class Network implements Net {
     await this.logstore.metadata.putString(
       id,
       "local_log_no_record_flag",
-      `${peerId.toString()}`
+      `${peerId.toString()}`,
     );
     // 将日志添加到threaddb存储
     await this.logstore.addLog(id, logInfo);
@@ -918,7 +916,7 @@ export class Network implements Net {
     await this.logstore.metadata.putBytes(
       id,
       identity?.toString() || "",
-      logIDBytes
+      logIDBytes,
     );
     return logInfo;
   }
@@ -949,7 +947,7 @@ export class Network implements Net {
    * Get thread offsets and peers
    */
   async threadOffsets(
-    tid: ThreadID
+    tid: ThreadID,
   ): Promise<[Record<string, Head>, PeerId[]]> {
     const info = await this.logstore.getThread(tid);
 
@@ -994,7 +992,7 @@ export class Network implements Net {
       throw new Error(
         `Getting records for thread ${tid} failed: ${
           err instanceof Error ? err.message : String(err)
-        }`
+        }`,
       );
     }
   }
@@ -1009,7 +1007,7 @@ export class Network implements Net {
   async updateRecordsFromPeer(
     tid: ThreadID,
     peerId: PeerId | null,
-    client?: DBClient
+    client?: DBClient,
   ): Promise<void> {
     try {
       // 获取threaddb 偏移量
@@ -1019,7 +1017,7 @@ export class Network implements Net {
       const { req, serviceKey } = await this.buildGetRecordsRequest(
         tid,
         offsets,
-        netPullingLimit
+        netPullingLimit,
       );
       let recs: Record<string, PeerRecords> = {};
       if (client) {
@@ -1041,14 +1039,14 @@ export class Network implements Net {
 
           // 将记录添加到本地存储
           await this.putRecords(tid, lid, rs.records, rs.counter);
-          
+
           // 每处理一个日志后让出控制权
           await new Promise((resolve) => setTimeout(resolve, 0));
         } catch (err) {
           throw new Error(
             `Putting records from log ${lidStr} (thread ${tid}) failed: ${
               err instanceof Error ? err.message : String(err)
-            }`
+            }`,
           );
         }
       }
@@ -1071,7 +1069,7 @@ export class Network implements Net {
           console.warn(
             `Error checking head for log ${lidStr}: ${
               err instanceof Error ? err.message : String(err)
-            }`
+            }`,
           );
         }
       }
@@ -1079,7 +1077,7 @@ export class Network implements Net {
       throw new Error(
         `Getting records for thread ${tid} failed: ${
           err instanceof Error ? err.message : String(err)
-        }`
+        }`,
       );
     }
   }
@@ -1091,7 +1089,7 @@ export class Network implements Net {
   async getRecordsFromPeer(
     peerId: PeerId,
     req: any,
-    serviceKey: SymKey
+    serviceKey: SymKey,
   ): Promise<Record<string, PeerRecords>> {
     try {
       const [client, _] = await this.getClient(peerId);
@@ -1110,7 +1108,7 @@ export class Network implements Net {
   async getRecordsWithDbClient(
     dbClient: DBClient,
     req: any,
-    serviceKey: SymKey
+    serviceKey: SymKey,
   ): Promise<Record<string, PeerRecords>> {
     try {
       const recs = await dbClient.getRecordsFromPeer(req, serviceKey);
@@ -1128,7 +1126,7 @@ export class Network implements Net {
     tid: ThreadID,
     lid: PeerId,
     recs: IRecord[],
-    counter: number
+    counter: number,
   ): Promise<void> {
     // 确保日志在线程信息中存在（自愈逻辑）
     // 即使 loadRecords 认为记录已存在（chain为空），我们也需要确保 threadInfo 包含该日志
@@ -1139,61 +1137,60 @@ export class Network implements Net {
         if (!this.knownLogs.has(cacheKey)) {
           const info = await this.logstore.getThread(tid);
           const exists = info.logs.find(
-            (l) => l.id.toString() === lid.toString()
+            (l) => l.id.toString() === lid.toString(),
           );
           if (!exists) {
             let shouldAddLog = false;
-              // 尝试从 lid 中提取 pubkey 并验证
-              try {
-                const extractedPubKey = await extractPublicKeyFromPeerId(lid);
-                if (extractedPubKey) {
-                  const ed25519ExtractedKey = new Ed25519PubKey(
-                    extractedPubKey.bytes instanceof Uint8Array 
-                      ? extractedPubKey.bytes 
-                      : (extractedPubKey as any).bytes()
-                  );
+            // 尝试从 lid 中提取 pubkey 并验证
+            try {
+              const extractedPubKey = await extractPublicKeyFromPeerId(lid);
+              if (extractedPubKey) {
+                const ed25519ExtractedKey = new Ed25519PubKey(
+                  extractedPubKey.bytes instanceof Uint8Array
+                    ? extractedPubKey.bytes
+                    : (extractedPubKey as any).bytes(),
+                );
 
-                  const rec = recs[0]!;
-                  let payload: Uint8Array;
-                  if (rec.prevID()) {
-                    const blockBytes = rec.blockID().bytes;
-                    const prevBytes = rec.prevID()!.bytes;
-                    payload = new Uint8Array(
-                      blockBytes.length + prevBytes.length
-                    );
-                    payload.set(blockBytes);
-                    payload.set(prevBytes, blockBytes.length);
-                  } else {
-                    payload = rec.pubKey();
-                  }
-
-                  const verified = await ed25519ExtractedKey.verify(
-                    payload,
-                    rec.sig()
+                const rec = recs[0]!;
+                let payload: Uint8Array;
+                if (rec.prevID()) {
+                  const blockBytes = rec.blockID().bytes;
+                  const prevBytes = rec.prevID()!.bytes;
+                  payload = new Uint8Array(
+                    blockBytes.length + prevBytes.length,
                   );
-                  if (verified) {
-                    await this.logstore.addLog(tid, {
-                      id: lid,
-                      pubKey: ed25519ExtractedKey,
-                      addrs: [],
-                      managed: false, // Adding required property
-                    } as unknown as IThreadLogInfo);
-                     this.knownLogs.add(cacheKey);
-                  }
+                  payload.set(blockBytes);
+                  payload.set(prevBytes, blockBytes.length);
+                } else {
+                  payload = rec.pubKey();
                 }
-              } catch (e) {
-                // ignore error
+
+                const verified = await ed25519ExtractedKey.verify(
+                  payload,
+                  rec.sig(),
+                );
+                if (verified) {
+                  await this.logstore.addLog(tid, {
+                    id: lid,
+                    pubKey: ed25519ExtractedKey,
+                    addrs: [],
+                    managed: false, // Adding required property
+                  } as unknown as IThreadLogInfo);
+                  this.knownLogs.add(cacheKey);
+                }
               }
+            } catch (e) {
+              // ignore error
+            }
           } else {
-             this.knownLogs.add(cacheKey);
+            this.knownLogs.add(cacheKey);
           }
-         
         }
       } catch (err) {
         // 仅记录警告，不中断流程
         console.warn(
           `[putRecords] Failed to ensure log existence for ${lid.toString()}:`,
-          err
+          err,
         );
         return;
       }
@@ -1245,11 +1242,11 @@ export class Network implements Net {
           validate = true;
         }
       }
-      
+
       // 处理记录链，每3条记录让出一次控制权
       for (let recordIndex = 0; recordIndex < chain.length; recordIndex++) {
         const record = chain[recordIndex]!;
-        
+
         if (validate) {
           // Validate the record
           const block = await record.value().getBlock(this.bstore);
@@ -1263,11 +1260,11 @@ export class Network implements Net {
 
           const dbody = await event.getBody(
             this.bstore,
-            readKey ? readKey : undefined
+            readKey ? readKey : undefined,
           );
 
           identity = await KeyConverter.publicFromBytes<Ed25519PubKey>(
-            record.value().pubKey()
+            record.value().pubKey(),
           );
 
           try {
@@ -1283,7 +1280,7 @@ export class Network implements Net {
 
         // Update head counter
         updatedCounter++;
-        
+
         const rCid = record.value().cid();
         if (rCid) {
           // Set new head for the log
@@ -1293,14 +1290,11 @@ export class Network implements Net {
           });
 
           // Set checkpoint for log
-          await this.setThreadLogPoint(
-            tid,
-            lid,
-            updatedCounter,
-            rCid
-          );
+          await this.setThreadLogPoint(tid, lid, updatedCounter, rCid);
         } else {
-          console.warn(`[putRecords] Record CID undefined, skipping head update. Log: ${lid.toString()}, Counter: ${updatedCounter}`);
+          console.warn(
+            `[putRecords] Record CID undefined, skipping head update. Log: ${lid.toString()}, Counter: ${updatedCounter}`,
+          );
         }
 
         // Handle record in app connector
@@ -1315,7 +1309,7 @@ export class Network implements Net {
 
         // Add record to blockstore
         await this.bstore.put(record.value().cid(), record.value().data());
-        
+
         // 每处理2条记录让出主线程，进一步提高响应性
         if (recordIndex % 2 === 0 && recordIndex > 0) {
           await new Promise((resolve) => setTimeout(resolve, 0));
@@ -1333,7 +1327,7 @@ export class Network implements Net {
     tid: ThreadID,
     lid: PeerId,
     recs: IRecord[],
-    counter: number
+    counter: number,
   ): Promise<[IThreadRecord[], Head]> {
     if (recs.length === 0) {
       throw new Error("Cannot load empty record chain");
@@ -1444,7 +1438,7 @@ export class Network implements Net {
     tid: ThreadID,
     lid: PeerId,
     counter: number,
-    rcid: CID
+    rcid: CID,
   ): Promise<void> {
     // Only store checkpoints at multiples of 10000
     if (counter % 10000 !== 0) {
@@ -1518,21 +1512,23 @@ export class Network implements Net {
     tid: ThreadID,
     offsets: Record<string, { id?: CID; counter: number }>,
     limit: number,
-    multiPeersFlag: boolean = false
+    multiPeersFlag: boolean = false,
   ): Promise<Record<string, PeerRecords>> {
     try {
       // 构建请求
       const { req, serviceKey } = await this.buildGetRecordsRequest(
         tid,
         offsets,
-        limit
+        limit,
       );
 
       // 创建记录收集器
       const recordCollector = new RecordCollector();
       let successCount = 0;
 
-      console.log(`[getRecords] 开始同步，目标 Peer 数: ${peers.length}, 多点同步: ${multiPeersFlag}`);
+      console.log(
+        `[getRecords] 开始同步，目标 Peer 数: ${peers.length}, 多点同步: ${multiPeersFlag}`,
+      );
 
       const MAX_CONCURRENCY = 3;
       const peerQueue = [...peers];
@@ -1540,65 +1536,67 @@ export class Network implements Net {
 
       const processPeer = async (peerId: PeerId) => {
         if (stopProcessing) return;
-        
+
         // 这里的 try-catch 去掉，让错误向上传递给 worker 用于重试
         await new Promise<void>((resolve, reject) => {
-            const timeout = setTimeout(() => {
-              reject(new Error(`Timeout getting records from peer ${peerId}`));
-            }, 900000);
+          const timeout = setTimeout(() => {
+            reject(new Error(`Timeout getting records from peer ${peerId}`));
+          }, 900000);
 
-            (async () => {
-              try {
-                //连接到指定peerId,返回一个Client
-                const [client, err] = await this.getClient(peerId);
-                if (!client) {
-                   // 抛出错误以便重试
-                   throw new Error(`Connection failed: ${err instanceof Error ? err.message : String(err)}`);
-                }
-                const dbClient = new DBClient(
-                  client,
-                  this.dc,
-                  this,
-                  this.logstore
+          (async () => {
+            try {
+              //连接到指定peerId,返回一个Client
+              const [client, err] = await this.getClient(peerId);
+              if (!client) {
+                // 抛出错误以便重试
+                throw new Error(
+                  `Connection failed: ${err instanceof Error ? err.message : String(err)}`,
                 );
-                const startTime = Date.now();
-                const records = await dbClient.getRecordsFromPeer(
-                  req,
-                  serviceKey
-                );
-                
-                successCount++;
-
-                let recCount = 0;
-                if (records) {
-                  for (const [logId, rs] of Object.entries(records)) {
-                    recCount += rs.records.length;
-                  }
-                }
-
-                // 合并日志，减少输出次数
-                const pidStr = peerId.toString();
-                // 仅在有数据时打印，减少日志噪音
-                if (recCount > 0) {
-                    console.log(
-                      `[记录同步] 从 ${pidStr.slice(0, 8)}...${pidStr.slice(-4)} 获取 ${recCount} 条记录 (耗时: ${
-                        Date.now() - startTime
-                      }ms)`
-                    );
-                }
-
-                if (records) {
-                  for (const [logId, rs] of Object.entries(records)) {
-                    await recordCollector.batchUpdate(logId, rs);
-                  }
-                }
-              } catch (err) {
-                throw err;
               }
-            })()
-              .then(() => resolve())
-              .catch((err) => reject(err))
-              .finally(() => clearTimeout(timeout));
+              const dbClient = new DBClient(
+                client,
+                this.dc,
+                this,
+                this.logstore,
+              );
+              const startTime = Date.now();
+              const records = await dbClient.getRecordsFromPeer(
+                req,
+                serviceKey,
+              );
+
+              successCount++;
+
+              let recCount = 0;
+              if (records) {
+                for (const [logId, rs] of Object.entries(records)) {
+                  recCount += rs.records.length;
+                }
+              }
+
+              // 合并日志，减少输出次数
+              const pidStr = peerId.toString();
+              // 仅在有数据时打印，减少日志噪音
+              if (recCount > 0) {
+                console.log(
+                  `[记录同步] 从 ${pidStr.slice(0, 8)}...${pidStr.slice(-4)} 获取 ${recCount} 条记录 (耗时: ${
+                    Date.now() - startTime
+                  }ms)`,
+                );
+              }
+
+              if (records) {
+                for (const [logId, rs] of Object.entries(records)) {
+                  await recordCollector.batchUpdate(logId, rs);
+                }
+              }
+            } catch (err) {
+              throw err;
+            }
+          })()
+            .then(() => resolve())
+            .catch((err) => reject(err))
+            .finally(() => clearTimeout(timeout));
         });
 
         if (!multiPeersFlag) {
@@ -1606,7 +1604,7 @@ export class Network implements Net {
         }
       };
 
-      // 启动并发工作线程    
+      // 启动并发工作线程
       const workers = Array(Math.min(peers.length, MAX_CONCURRENCY))
         .fill(null)
         .map(async () => {
@@ -1617,8 +1615,11 @@ export class Network implements Net {
               try {
                 await processPeer(peerId);
               } catch (err) {
-                 const pidStr = peerId.toString().slice(0, 8);
-                 console.warn(`[getRecords] Peer ${pidStr} 失败，跳过不重试:`, err);
+                const pidStr = peerId.toString().slice(0, 8);
+                console.warn(
+                  `[getRecords] Peer ${pidStr} 失败，跳过不重试:`,
+                  err,
+                );
               }
 
               // 每个任务完成后让出控制权
@@ -1636,7 +1637,6 @@ export class Network implements Net {
 
       return recordCollector.list();
     } catch (err) {
-      console.error("getRecords error:", err);
       throw err;
     }
   }
@@ -1647,7 +1647,7 @@ export class Network implements Net {
   async buildGetRecordsRequest(
     tid: ThreadID,
     offsets: Record<string, Head>,
-    limit: number
+    limit: number,
   ): Promise<{ req: net_pb.pb.IGetRecordsRequest; serviceKey: SymKey }> {
     try {
       // 从存储中获取服务密钥
@@ -1707,7 +1707,7 @@ export class Network implements Net {
       throw new Error(
         `Error getting thread ${id.toString()}: ${
           err instanceof Error ? err.message : String(err)
-        }`
+        }`,
       );
     }
 
@@ -1719,7 +1719,7 @@ export class Network implements Net {
       throw new Error(
         `Error making connector ${id.toString()}: ${
           err instanceof Error ? err.message : String(err)
-        }`
+        }`,
       );
     }
 
@@ -1753,7 +1753,7 @@ export class Network implements Net {
       throw new Error(
         `Failed to get logs for thread ${tid}: ${
           err instanceof Error ? err.message : String(err)
-        }`
+        }`,
       );
     }
   }
@@ -1780,7 +1780,7 @@ export class Network implements Net {
       throw new Error(
         `Failed to preload logs: ${
           err instanceof Error ? err.message : String(err)
-        }`
+        }`,
       );
     }
   }
@@ -1795,7 +1795,7 @@ export class Network implements Net {
    */
   async createExternalLogsIfNotExist(
     tid: ThreadID,
-    logs: IThreadLogInfo[]
+    logs: IThreadLogInfo[],
   ): Promise<void> {
     const mutex = this.getMutexForThread(tid.toString());
     await mutex.acquire();
@@ -1819,7 +1819,7 @@ export class Network implements Net {
               tid,
               log.id,
               log.addrs,
-              PermanentAddrTTL
+              PermanentAddrTTL,
             );
           }
         } catch (err) {
@@ -1840,7 +1840,7 @@ export class Network implements Net {
    */
   async createExternalLogsIfNotExistForPreload(
     tid: ThreadID,
-    logs: IThreadLogInfo[]
+    logs: IThreadLogInfo[],
   ): Promise<void> {
     const mutex = this.getMutexForThread(tid.toString());
     await mutex.acquire();
@@ -1855,7 +1855,7 @@ export class Network implements Net {
               tid,
               log.id,
               log.addrs,
-              PermanentAddrTTL
+              PermanentAddrTTL,
             );
           }
         } catch (err) {
@@ -1878,7 +1878,7 @@ export class Network implements Net {
   async createRecord(
     id: ThreadID,
     body: IPLDNode,
-    options: { token?: ThreadToken; apiToken?: Token } = {}
+    options: { token?: ThreadToken; apiToken?: Token } = {},
   ): Promise<IThreadRecord> {
     try {
       if (this.context.publicKey === undefined) {
@@ -1922,11 +1922,11 @@ export class Network implements Net {
         id,
         lg.id,
         lg.head?.counter + 1,
-        tr.value().cid()
+        tr.value().cid(),
       );
 
       console.debug(
-        `Created record ${tr.value().cid()} (thread=${id}, log=${lg.id})`
+        `Created record ${tr.value().cid()} (thread=${id}, log=${lg.id})`,
       );
 
       // 推送记录到节点
@@ -1945,7 +1945,7 @@ export class Network implements Net {
    */
   async getOrCreateLog(
     id: ThreadID,
-    identity: PublicKey
+    identity: PublicKey,
   ): Promise<IThreadLogInfo> {
     // 默认使用当前主机身份，如果未提供
     if (!identity) {
@@ -1980,7 +1980,7 @@ export class Network implements Net {
     id: ThreadID,
     lg: IThreadLogInfo,
     body: IPLDNode,
-    identity: PublicKey
+    identity: PublicKey,
   ): Promise<IRecord> {
     // 获取threaddb 服务密钥
     const serviceKey = await this.logstore.keyBook.serviceKey(id);
@@ -2016,7 +2016,6 @@ export class Network implements Net {
     return rec;
   }
 
-
   // 启动队列处理任务（只需调用一次）
   private startPushWorker() {
     if (this.pushWorkerStarted) return;
@@ -2044,7 +2043,7 @@ export class Network implements Net {
               await this.logstore.metadata.putString(
                 item.tid,
                 "local_log_no_record_flag",
-                ""
+                "",
               );
               haveRecordFlag = true;
             }
@@ -2052,7 +2051,7 @@ export class Network implements Net {
               item.tid,
               item.lid,
               item.rec,
-              item.counter
+              item.counter,
             );
           } catch (err) {
             console.error("pushRecord failed:", err);
@@ -2079,7 +2078,7 @@ export class Network implements Net {
     tid: ThreadID,
     lid: PeerId,
     rec: IRecord,
-    counter: number
+    counter: number,
   ): Promise<void> {
     try {
       const addrs: TMultiaddr[] = [];
@@ -2113,7 +2112,7 @@ export class Network implements Net {
               if (err) {
                 console.error(
                   "Failed to push log after adding to thread:",
-                  err
+                  err,
                 );
               } else {
                 await dbClient.pushRecordToPeer(tid, lid, rec, counter);
@@ -2122,7 +2121,7 @@ export class Network implements Net {
             } catch (err) {
               console.error(
                 "Failed to create transfer stream for pushing log:",
-                err
+                err,
               );
             }
           }
@@ -2132,7 +2131,7 @@ export class Network implements Net {
       throw new Error(
         `Failed to push record: ${
           err instanceof Error ? err.message : String(err)
-        }`
+        }`,
       );
     }
   }
@@ -2148,7 +2147,7 @@ export class Network implements Net {
     tid: ThreadID,
     lid: PeerId,
     rec: IRecord,
-    counter: number
+    counter: number,
   ): Promise<void> {
     this.pushQueue.push({ tid, lid, rec, counter });
     this.startPushWorker();
@@ -2186,7 +2185,7 @@ export class Network implements Net {
       }
     } catch (err) {
       throw new Error(
-        `Exchange failed: ${err instanceof Error ? err.message : String(err)}`
+        `Exchange failed: ${err instanceof Error ? err.message : String(err)}`,
       );
     }
   }
@@ -2219,7 +2218,7 @@ export class Network implements Net {
    */
   getConnectorProtected(
     id: ThreadID,
-    token?: Token
+    token?: Token,
   ): [Connector | undefined, boolean] {
     const [conn, exists] = this.getConnector(id);
 
@@ -2313,7 +2312,10 @@ class RecordCollector {
         logRecords!.set(key, record);
 
         // 每处理 10 条记录或者时间片耗尽让出一次主线程
-        if ((i > 0 && i % 10 === 0) || Date.now() - lastYieldTime > TIME_SLICE) {
+        if (
+          (i > 0 && i % 10 === 0) ||
+          Date.now() - lastYieldTime > TIME_SLICE
+        ) {
           await new Promise((resolve) => setTimeout(resolve, 0));
           lastYieldTime = Date.now();
         }
