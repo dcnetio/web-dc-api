@@ -472,11 +472,14 @@ export class FileManager {
         );
         if (!fileErr && fileNodes) {
           // 排除 dc_ownuser 标志文件
-          fileCount = fileNodes.filter((n) => n.Type === 0 && n.Name !== "dc_ownuser").length;
+          fileCount = fileNodes.filter(
+            (n) => n.Type === 0 && n.Name !== "dc_ownuser",
+          ).length;
         }
       } catch (e) {
         fileCount = 0;
       }
+      fileCount++;
 
       // Get final node and CID
       const finalCid = rootCID.toString();
