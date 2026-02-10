@@ -1,6 +1,6 @@
 {
   "name": "web-dc-api",
-  "version": "0.1.67",
+  "version": "0.1.68",
   "description": "一个革命性的去中心化 Web 开发 SDK，让您无需任何服务器即可构建完整的互联网应用",
   "type": "module",
   "sideEffects": false,
@@ -66,6 +66,7 @@
     "lru-cache": "^11.1.0",
     "multiformats": "^13.3.2",
     "protobufjs": "^7.5.0",
+    "tweetnacl": "^1.0.3",
     "uint8arrays": "^5.1.0",
     "ulid": "^2.3.0"
   },
