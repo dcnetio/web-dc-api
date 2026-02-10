@@ -1100,7 +1100,7 @@ export class Network implements Net {
       const recs = await dbClient.getRecordsFromPeer(req, serviceKey);
       return recs;
     } catch (err) {
-      console.error("getRecordsFromPeer error:", err);
+      console.warn("getRecordsFromPeer error:", err);
       throw err;
     }
   }
@@ -1114,7 +1114,7 @@ export class Network implements Net {
       const recs = await dbClient.getRecordsFromPeer(req, serviceKey);
       return recs;
     } catch (err) {
-      console.error("getRecordsFromPeer error:", err);
+      console.warn("getRecordsFromPeer error:", err);
       throw err;
     }
   }

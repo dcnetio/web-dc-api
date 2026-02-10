@@ -82,13 +82,13 @@ export class DBGrpcClient {
         this.client.p2pNode,
         this.peerAddr,
         this.client.token,
-        this.client.protocol
+        this.client.protocol,
       );
 
       const responseData = await grpcClient.unaryCall(
         "/dcnet.pb.Service/RequestThreadID",
         messageBytes,
-        30000
+        30000,
       );
       const decoded = dcnet_proto.pb.ThreadIDReply.decode(responseData);
       return uint8ArrayToString(decoded.threadID);
@@ -123,13 +123,13 @@ export class DBGrpcClient {
         this.client.p2pNode,
         this.peerAddr,
         this.client.token,
-        this.client.protocol
+        this.client.protocol,
       );
 
       const responseData = await grpcClient.unaryCall(
         "/dcnet.pb.Service/CreateThread",
         messageBytes,
-        30000
+        30000,
       );
       const reply = dcnet_proto.pb.ThreadInfoReply.decode(responseData);
       const threadInfo = await this.threadInfoFromProto(reply);
@@ -143,7 +143,7 @@ export class DBGrpcClient {
   async addLogToThread(
     tid: string,
     lid: string,
-    opts: NewThreadOptions
+    opts: NewThreadOptions,
   ): Promise<void> {
     try {
       if (this.client.p2pNode == null) {
@@ -153,7 +153,7 @@ export class DBGrpcClient {
         this.client.p2pNode,
         this.peerAddr,
         this.client.token,
-        this.client.protocol
+        this.client.protocol,
       );
 
       const serverPeerId = grpcClient.node.peerId;
@@ -169,7 +169,7 @@ export class DBGrpcClient {
       await grpcClient.unaryCall(
         "/dcnet.pb.Service/AddLogToThread",
         messageBytes,
-        30000
+        30000,
       );
     } catch (err: any) {
       if (err.message.includes("log has binded to thread")) {
@@ -180,21 +180,21 @@ export class DBGrpcClient {
   }
 
   async threadInfoFromProto(
-    reply: dcnet_proto.pb.IThreadInfoReply
+    reply: dcnet_proto.pb.IThreadInfoReply,
   ): Promise<ThreadInfo> {
     if (!reply.threadID) {
       throw new Error("Missing required field: threadID");
     }
 
     const threadID = ThreadID.fromString(
-      new TextDecoder().decode(reply.threadID)
+      new TextDecoder().decode(reply.threadID),
     );
     const logs: IThreadLogInfo[] = reply.logs
       ? await Promise.all(
           reply.logs.map(async (lg) => {
             if (!lg.ID || !lg.pubKey) {
               throw new Error(
-                "Missing required fields in LogInfo: id or pubKey"
+                "Missing required fields in LogInfo: id or pubKey",
               );
             }
             const id = PeerIDConverter.fromBytes(lg.ID);
@@ -213,7 +213,11 @@ export class DBGrpcClient {
 
             let counter = -1;
             if (lg.counter && lg.counter.length > 0) {
-              const view = new DataView(lg.counter.buffer, lg.counter.byteOffset, lg.counter.byteLength);
+              const view = new DataView(
+                lg.counter.buffer,
+                lg.counter.byteOffset,
+                lg.counter.byteLength,
+              );
               counter = Number(view.getBigUint64(0, false)); // false = big-endian
             }
             return {
@@ -227,7 +231,7 @@ export class DBGrpcClient {
                 counter,
               },
             };
-          })
+          }),
         )
       : [];
 
@@ -289,7 +293,7 @@ export class DBGrpcClient {
       return 0;
     } else {
       const size = varint.decode(
-        addr instanceof Uint8Array ? addr : Uint8Array.from(addr)
+        addr instanceof Uint8Array ? addr : Uint8Array.from(addr),
       );
       return size + varint.encodingLength(size);
     }
@@ -297,7 +301,7 @@ export class DBGrpcClient {
 
   async getThreadKeys(
     sPubkey: Ed25519PubKey,
-    args: { threadKey: ThreadKey; logKey?: PrivateKey | PublicKey | undefined }
+    args: { threadKey: ThreadKey; logKey?: PrivateKey | PublicKey | undefined },
   ): Promise<dcnet_proto.pb.Keys> {
     try {
       const threadKeyEncrypt = await sPubkey.encrypt(args.threadKey.toBytes());
@@ -305,11 +309,11 @@ export class DBGrpcClient {
       if (args.logKey) {
         if (args.logKey instanceof Ed25519PrivKey) {
           logKeyEncrpt = await sPubkey.encrypt(
-            Ed25519PubKey.publicKeyToProto(args.logKey.publicKey)
+            Ed25519PubKey.publicKeyToProto(args.logKey.publicKey),
           );
         } else if (args.logKey instanceof Ed25519PubKey) {
           logKeyEncrpt = await sPubkey.encrypt(
-            Ed25519PubKey.publicKeyToProto(args.logKey)
+            Ed25519PubKey.publicKeyToProto(args.logKey),
           );
         } else {
           logKeyEncrpt = await sPubkey.encrypt(args.logKey.raw);
@@ -334,7 +338,7 @@ export class DBGrpcClient {
    */
   async getRecordsFromPeer(
     req: any,
-    serviceKey: SymmetricKey
+    serviceKey: SymmetricKey,
   ): Promise<Record<string, PeerRecords>> {
     try {
       // 编码请求消息
@@ -344,7 +348,7 @@ export class DBGrpcClient {
         this.client.p2pNode,
         this.peerAddr,
         this.client.token,
-        this.client.protocol
+        this.client.protocol,
       );
       // 调用 gRPC 方法
       let responseData: Uint8Array;
@@ -352,13 +356,16 @@ export class DBGrpcClient {
         responseData = await grpcClient.unaryCall(
           "/net.pb.Service/GetRecords",
           messageBytes,
-          120000
+          120000,
         );
       } catch (err: any) {
         // 如果是 AggregateError，意味着所有尝试都失败了（libp2p 连接问题）
-        if (err.name === "AggregateError" || err.message.includes("All promises were rejected")) {
-           // 转换为更明确的不可用错误，以便上层 net.ts 可以捕获并跳过该节点
-           throw new Error("UNAVAILABLE: All connection attempts failed");
+        if (
+          err.name === "AggregateError" ||
+          err.message.includes("All promises were rejected")
+        ) {
+          // 转换为更明确的不可用错误，以便上层 net.ts 可以捕获并跳过该节点
+          throw new Error("UNAVAILABLE: All connection attempts failed");
         }
         throw err;
       }
@@ -392,10 +399,10 @@ export class DBGrpcClient {
             promises.push(
               RecordFromProto(
                 rawRecords[j] as net_pb.pb.Log.Record,
-                serviceKey
+                serviceKey,
               ).then((record) => {
                 unsortedRecords[j] = record;
-              })
+              }),
             );
           }
 
@@ -419,7 +426,6 @@ export class DBGrpcClient {
 
       return result;
     } catch (err) {
-      console.error(`getRecordsFromPeer error:`, err);
       throw err;
     }
   }
@@ -442,7 +448,7 @@ export class DBGrpcClient {
     for (const record of records) {
       const blockId = record.blockID().toString();
       recordMap.set(blockId, record);
-      
+
       const prevId = record.prevID();
       if (prevId) {
         prevToRecordMap.set(prevId.toString(), record);
@@ -486,7 +492,7 @@ export class DBGrpcClient {
 
       // 使用反向索引快速查找下一个记录（O(1) 而不是 O(n)）
       const nextRecord = prevToRecordMap.get(currentBlockId);
-      
+
       // 如果找到了下一个记录且未处理过，继续
       if (nextRecord && !processed.has(nextRecord.blockID().toString())) {
         currentRecord = nextRecord;
@@ -499,7 +505,7 @@ export class DBGrpcClient {
     if (sorted.length !== records.length) {
       console.warn(
         `Chain sorting incomplete: sorted ${sorted.length}/${records.length} records. ` +
-          "Some records may not form a continuous chain."
+          "Some records may not form a continuous chain.",
       );
 
       // 将未处理的记录追加到末尾
@@ -518,7 +524,7 @@ export class DBGrpcClient {
     lid: PeerId,
     rec: IRecord,
     counter: number,
-    logstore: ILogstore
+    logstore: ILogstore,
   ): Promise<void> {
     const body = new net_pb.pb.PushRecordRequest.Body();
     body.threadID = ThreadIDConverter.toBytes(tid.toString());
@@ -533,20 +539,20 @@ export class DBGrpcClient {
       this.client.p2pNode,
       this.peerAddr,
       this.client.token,
-      this.client.protocol
+      this.client.protocol,
     );
     // 调用gRPC方法
     await grpcClient.unaryCall(
       "/net.pb.Service/PushRecord",
       messageBytes,
-      30000 // 30秒超时
+      30000, // 30秒超时
     );
   }
 
   async pushLogToPeer(
     tid: ThreadID,
     lid: PeerId,
-    logstore: ILogstore
+    logstore: ILogstore,
   ): Promise<void> {
     try {
       const timeout = setTimeout(() => {
@@ -569,24 +575,24 @@ export class DBGrpcClient {
         this.client.p2pNode,
         this.peerAddr,
         this.client.token,
-        this.client.protocol
+        this.client.protocol,
       );
       await grpcClient.unaryCall(
         "/net.pb.Service/PushLog",
         logMessageBytes,
-        30000
+        30000,
       );
     } catch (logErr) {
       throw new Error(
         `Error pushing missing log: ${
           logErr instanceof Error ? logErr.message : String(logErr)
-        }`
+        }`,
       );
     }
   }
 
   async exchangeEdges(
-    req: net_pb.pb.ExchangeEdgesRequest
+    req: net_pb.pb.ExchangeEdgesRequest,
   ): Promise<net_pb.pb.ExchangeEdgesReply> {
     try {
       const messageBytes = net_pb.pb.ExchangeEdgesRequest.encode(req).finish();
@@ -594,17 +600,16 @@ export class DBGrpcClient {
         this.client.p2pNode,
         this.peerAddr,
         this.client.token,
-        this.client.protocol
+        this.client.protocol,
       );
       // 调用 gRPC 方法
       const response = await grpcClient.unaryCall(
         "/net.pb.Service/ExchangeEdges",
         messageBytes,
-        30000
+        30000,
       );
       // 解码响应
-      return  net_pb.pb.ExchangeEdgesReply.decode(response);
-
+      return net_pb.pb.ExchangeEdgesReply.decode(response);
     } catch (err) {
       throw err;
     }
@@ -617,7 +622,7 @@ export class DBGrpcClient {
    */
   async getLogs(
     tid: ThreadID,
-    sk: Uint8Array
+    sk: Uint8Array,
   ): Promise<net_pb.pb.GetLogsReply> {
     try {
       const body = new net_pb.pb.GetLogsRequest.Body();
@@ -632,14 +637,14 @@ export class DBGrpcClient {
         this.client.p2pNode,
         this.peerAddr,
         this.client.token,
-        this.client.protocol
+        this.client.protocol,
       );
 
       // 调用 gRPC 方法
       const response = await grpcClient.unaryCall(
         "/net.pb.Service/GetLogs",
         messageBytes,
-        30000 // 设置超时时间为30秒
+        30000, // 设置超时时间为30秒
       );
       // 解码响应
       const reply = net_pb.pb.GetLogsReply.decode(response);
@@ -647,7 +652,7 @@ export class DBGrpcClient {
     } catch (err) {
       console.error(
         `getLogs error for peer ${this.client.peerAddr.toString()}:`,
-        err
+        err,
       );
       throw err;
     }
@@ -664,14 +669,14 @@ export class DBGrpcClient {
         this.client.p2pNode,
         this.peerAddr,
         this.client.token,
-        this.client.protocol
+        this.client.protocol,
       );
 
       // 调用 gRPC 方法
       const response = await grpcClient.unaryCall(
         "/dcnet.pb.Service/GetThread",
         messageBytes,
-        30000 // 设置超时时间为30秒
+        30000, // 设置超时时间为30秒
       );
       // 解码响应
       const reply = dcnet.pb.ThreadInfoReply.decode(response);
@@ -680,7 +685,7 @@ export class DBGrpcClient {
     } catch (err) {
       console.error(
         `getThreadFromPeer error for peer ${this.peerAddr.toString()}:`,
-        err
+        err,
       );
       throw err;
     }
@@ -689,7 +694,7 @@ export class DBGrpcClient {
   async addThreadSpace(
     tid: ThreadID,
     space: number,
-    opts: NewThreadOptions
+    opts: NewThreadOptions,
   ): Promise<void> {
     try {
       const message = new dcnet_proto.pb.AddThreadSpaceRequest({});
@@ -707,13 +712,13 @@ export class DBGrpcClient {
         this.client.p2pNode,
         this.peerAddr,
         this.client.token,
-        this.client.protocol
+        this.client.protocol,
       );
 
       await grpcClient.unaryCall(
         "/dcnet.pb.Service/AddThreadSpace",
         messageBytes,
-        30000
+        30000,
       );
     } catch (err) {
       console.error("AddThreadSpace error:", err);
@@ -736,13 +741,13 @@ export class DBGrpcClient {
         this.client.p2pNode,
         this.peerAddr,
         this.client.token,
-        this.client.protocol
+        this.client.protocol,
       );
 
       const response = await grpcClient.unaryCall(
         "/dcnet.pb.Service/GetThreadUsedSpace",
         messageBytes,
-        30000
+        30000,
       );
 
       const reply = dcnet_proto.pb.GetThreadUsedSpaceReply.decode(response);
