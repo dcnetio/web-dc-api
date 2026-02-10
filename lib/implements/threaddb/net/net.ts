@@ -4,6 +4,7 @@ import {
   peerIdFromMultihash,
   peerIdFromString,
 } from "@libp2p/peer-id";
+import { jwtDecode } from "jwt-decode";
 import { extractPublicKeyFromPeerId } from "../../../common/dc-key/keyManager";
 import { keys } from "@libp2p/crypto";
 import { Multiaddr as TMultiaddr, multiaddr } from "@multiformats/multiaddr"; // 多地址库
@@ -98,6 +99,8 @@ export class Network implements Net {
   private libp2p: Libp2p;
   private connectors: Record<string, Connector>;
   private cachePeers: Record<string, TMultiaddr> = {};
+  private tokenCache: Map<string, { token: string; expiresAt: number }> =
+    new Map();
   private threadMutexes: Record<string, AsyncMutex> = {};
   private knownLogs: Set<string> = new Set();
   private pushQueue: Array<{
@@ -170,13 +173,39 @@ export class Network implements Net {
       const addr = multiaddr(peerAddr);
       const client = new Client(this.libp2p, this.bstore, addr, dc_protocol);
       //获取token
-      const token = await client.GetToken(
-        this.context.appInfo.appId || "",
-        this.context.publicKey.string(),
-        (payload: Uint8Array): Promise<Uint8Array> => {
-          return this.sign(payload);
-        },
-      );
+      const appId = this.context.appInfo.appId || "";
+      const pubKeyStr = this.context.publicKey.string();
+      const cacheKey = peerId.toString() + appId + pubKeyStr;
+
+      let token = "";
+      const cachedToken = this.tokenCache.get(cacheKey);
+
+      if (cachedToken && cachedToken.expiresAt > Date.now() / 1000) {
+        token = cachedToken.token;
+        client.token = token;
+      } else {
+        token = await client.GetToken(
+          appId,
+          pubKeyStr,
+          (payload: Uint8Array): Promise<Uint8Array> => {
+            return this.sign(payload);
+          },
+        );
+        if (token) {
+          try {
+            const decoded: any = jwtDecode(token);
+            // 服务端有效时间1小时，这里设置50分钟过期，预留10分钟
+            const iat = decoded.iat || Date.now() / 1000;
+            const expiresAt = iat + 50 * 60;
+            this.tokenCache.set(cacheKey, {
+              token,
+              expiresAt: expiresAt,
+            });
+          } catch (e) {
+            console.error("decode token error", e);
+          }
+        }
+      }
       if (!token) {
         if (cachedFlag) {
           let _: PeerStatus | null = null;
@@ -195,12 +224,26 @@ export class Network implements Net {
             dc_protocol,
           );
           const token = await client.GetToken(
-            this.context.appInfo.appId || "",
-            this.context.publicKey.string(),
+            appId,
+            pubKeyStr,
             (payload: Uint8Array) => {
               return this.sign(payload);
             },
           );
+          if (token) {
+            try {
+              const decoded: any = jwtDecode(token);
+              // 服务端有效时间1小时，这里设置50分钟过期，预留10分钟
+              const iat = decoded.iat || Date.now() / 1000;
+              const expiresAt = iat + 50 * 60;
+              this.tokenCache.set(cacheKey, {
+                token,
+                expiresAt: expiresAt,
+              });
+            } catch (e) {
+              console.error("decode token error", e);
+            }
+          }
           if (token) {
             this.cachePeers[peerId.toString()] = peerAddr;
             return [client, null];

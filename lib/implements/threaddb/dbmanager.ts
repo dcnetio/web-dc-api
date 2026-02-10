@@ -371,13 +371,7 @@ export class DBManager {
       .catch((err) =>
         console.error(`Error connecting to object nodes: ${err.message}`)
       );
-    const ctx = createContext(30000);
-    try {
-      await this.addLogToThreadStart(ctx, tID, lid);
-    } catch (err: any) {
-      console.warn(`Warning: could not add log to thread: ${err.message}`);
-    }
-
+   
     // Generate thread key
     let threadKey: ThreadKey;
     try {
@@ -480,7 +474,7 @@ export class DBManager {
       throw Errors.ErrNoDcNodeClient;
     }
     // Create context with extended timeout for file download
-    const tctx = createContext(PullTimeout * 30);
+    const tctx = createContext(PullTimeout * 60);
     const fileManager = new FileManager(
       this.dc,
       this.connectedDc,
@@ -1195,18 +1189,17 @@ export class DBManager {
     lid: PeerId
   ): Promise<void> {
     if (!ctx) {
-      ctx = createContext(30000);
+      ctx = createContext(60000);
     }
-    const abortController = new AbortController();
-    const signal = ctx?.signal || abortController.signal;
+
     const [storeUnit, err] = await this.chainUtil.objectState(id.toString());
     if (storeUnit && !err) {
       const userPubkey = this.context.getPublicKey();
       let findFlag = false;
       for (const user of storeUnit.users) {
         //移除0x前缀
-        const noPrefixUser = user.replace("0x", "");
-        if (noPrefixUser === userPubkey.toString()) {
+        const noPrefixUser = user.replace("0x", "").toLowerCase();
+        if (noPrefixUser === userPubkey.toString().toLowerCase()) {
           findFlag = true;
           break;
         }
@@ -1221,65 +1214,37 @@ export class DBManager {
       }
     }
 
-    // 处理超时
-    let timeoutId: ReturnType<typeof setTimeout> | null = null;
-    if (ctx.deadline) {
-      const timeout = ctx.deadline.getTime() - Date.now();
-      if (timeout > 0) {
-        timeoutId = setTimeout(() => {
-          abortController.abort();
-        }, timeout);
-      }
-    }
-    let count = 0;
-    const maxCount = 10;
-    let endFlag = false;
     try {
       await this.addLogToThread(ctx, id, lid);
     } catch (error) {
       //允许报错
     }
-    let stopped = false;
-    const tick = async () => {
-      if (signal.aborted || stopped) {
-        if (timeoutId) clearTimeout(timeoutId);
-        return;
-      }
 
-      if (await this.ifDbInitSuccess(id)) {
-        if (timeoutId) clearTimeout(timeoutId);
-        endFlag = true;
-        stopped = true;
-        return;
-      }
+    let count = 0;
+    const maxCount = 10;
 
+    while (true) {
+      if (ctx.signal?.aborted) return;
+      if (ctx.deadline && Date.now() > ctx.deadline.getTime()) return;
+
+      // Check success
+      try {
+        const [info, err] = await this.chainUtil.objectState(id.toString());
+        if (info && !err && info.logs.has(lid.toString())) {
+          return;
+        }
+      } catch (e) {}
+
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+
+      count++;
       if (count >= maxCount) {
+        count = 0;
         try {
           await this.addLogToThread(ctx, id, lid);
         } catch (error) {}
-        count = 0;
-      } else {
-        count++;
       }
-
-      setTimeout(tick, 1000); // 递归调度
-    };
-    tick();
-    await new Promise<void>((resolve) => {
-      // Add a resolving condition to the interval
-      const checkFlag = setInterval(() => {
-        if (endFlag) {
-          clearInterval(checkFlag);
-          resolve();
-        }
-      }, 1000);
-
-      // Also make sure the abort signal resolves the promise
-      signal.addEventListener("abort", () => {
-        clearInterval(checkFlag);
-        resolve();
-      });
-    });
+    }
   }
 
   async newDB(

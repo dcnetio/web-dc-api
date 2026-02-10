@@ -9,6 +9,7 @@ import { webRTC, webRTCDirect } from "@libp2p/webrtc";
 import { createHelia, Helia } from "helia";
 import { createLibp2p, Libp2p } from "libp2p";
 import { identify, identifyPush } from "@libp2p/identify";
+import { peerIdFromString } from "@libp2p/peer-id";
 
 import { yamux } from "@chainsafe/libp2p-yamux";
 import { noise } from "@chainsafe/libp2p-noise";
@@ -93,6 +94,21 @@ export class DcUtil {
         if (!peerListJson[i]) {
           return;
         }
+
+        // 检查是否已经连接
+        try {
+          const peerId = peerIdFromString(peerListJson[i]);
+          const connections = _this.dcNodeClient?.libp2p.getConnections(peerId);
+          if (connections && connections.length > 0) {
+            if (connections[0].status === "open") {
+              reslove(connections[0].remoteAddr);
+              return;
+            }
+          }
+        } catch (e) {
+          // console.error("check connection error", e);
+        }
+
         const [nodeAddr, _] = await _this.dcChain.getDcNodeWebrtcDirectAddr(
           peerListJson[i],
         );
@@ -120,6 +136,33 @@ export class DcUtil {
             }
           }
         } catch (error) {
+          // 如果出现 TooManyOutboundProtocolStreamsError，说明可能已经存在连接流，再次检查连接状态
+          if (
+            error &&
+            typeof error === "object" &&
+            "message" in error &&
+            ((error as any).message.includes(
+              "TooManyOutboundProtocolStreamsError",
+            ) ||
+              (error as any).message.includes("The operation was aborted"))
+          ) {
+            try {
+              const peerId = peerIdFromString(peerListJson[i]);
+              const connections =
+                _this.dcNodeClient?.libp2p.getConnections(peerId);
+              if (
+                connections &&
+                connections.length > 0 &&
+                connections[0].status === "open"
+              ) {
+                reslove(connections[0].remoteAddr);
+                return;
+              }
+            } catch (e) {
+              console.error("check connection error in catch", e);
+            }
+          }
+
           if (error && typeof error === "object" && "message" in error) {
             num++;
             if (num >= len) {
