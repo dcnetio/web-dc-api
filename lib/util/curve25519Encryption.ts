@@ -1,6 +1,5 @@
 import { randomBytes } from "@stablelib/random";
-import { x25519 } from '@noble/curves/ed25519';
-// import { webcrypto } from 'crypto';
+import nacl from 'tweetnacl';
 
 export class Encryption {
   private static readonly NONCE_LENGTH = 24;
@@ -136,17 +135,20 @@ export class Encryption {
       const curve25519PublicKey =
         Encryption.ed25519PublicKeyToCurve25519(recipientPublicKey);
       
-      // 生成临时密钥对 (使用 @noble/curves)
-      const ephemeralPrivateKey = randomBytes(32);
-      const ephemeralPublicKey = x25519.getPublicKey(ephemeralPrivateKey);
+      // 生成临时密钥对 (使用 tweetnacl)
+      const ephemeralKeyPair = nacl.box.keyPair();
+      const ephemeralPublicKey = ephemeralKeyPair.publicKey;
+      const ephemeralPrivateKey = ephemeralKeyPair.secretKey;
       
       const nonce = randomBytes(this.NONCE_LENGTH);
 
-      // 使用 x25519 计算共享密钥
-      const sharedSecret = x25519.getSharedSecret(ephemeralPrivateKey, curve25519PublicKey);
-      
-      // 使用 Web Crypto API 进行加密
-      const encrypted = await this.encryptWithSharedSecret(message, sharedSecret, nonce);
+      // 使用 NaCl Box 加密
+      const encrypted = nacl.box(
+        message,
+        nonce,
+        curve25519PublicKey,
+        ephemeralPrivateKey
+      );
 
       if (!encrypted) {
         throw new Error("Encryption failed");
@@ -169,63 +171,9 @@ export class Encryption {
     }
   }
 
-  // 使用 Web Crypto API 进行 ChaCha20-Poly1305 或 AES-GCM 加密
-  private static async encryptWithSharedSecret(
-    message: Uint8Array,
-    sharedSecret: Uint8Array,
-    nonce: Uint8Array
-  ): Promise<Uint8Array> {
-    // 导入密钥
-    const key = await crypto.subtle.importKey(
-      'raw',
-      sharedSecret.slice(0, 32),
-      { name: 'AES-GCM' },
-      false,
-      ['encrypt']
-    );
 
-    // 加密
-    const encrypted = await crypto.subtle.encrypt(
-      {
-        name: 'AES-GCM',
-        iv: nonce.slice(0, 12) as any,
-        tagLength: 128
-      },
-      key,
-      message as any
-    );
 
-    return new Uint8Array(encrypted);
-  }
 
-  // 使用 Web Crypto API 进行解密
-  private static async decryptWithSharedSecret(
-    ciphertext: Uint8Array,
-    sharedSecret: Uint8Array,
-    nonce: Uint8Array
-  ): Promise<Uint8Array> {
-    // 导入密钥
-    const key = await crypto.subtle.importKey(
-      'raw',
-      sharedSecret.slice(0, 32),
-      { name: 'AES-GCM' },
-      false,
-      ['decrypt']
-    );
-
-    // 解密
-    const decrypted = await crypto.subtle.decrypt(
-      {
-        name: 'AES-GCM',
-        iv: nonce.slice(0, 12) as any,
-        tagLength: 128
-      },
-      key,
-      ciphertext as any
-    );
-
-    return new Uint8Array(decrypted);
-  }
 
   static async encryptWithDebug(
     recipientPublicKey: Uint8Array,
@@ -250,8 +198,9 @@ export class Encryption {
       console.log("- Ed25519 Public Key:", this.toHex(recipientPublicKey));
       console.log("- Curve25519 Public Key:", this.toHex(curve25519PublicKey));
 
-      const ephemeralPrivateKey = randomBytes(32);
-      const ephemeralPublicKey = x25519.getPublicKey(ephemeralPrivateKey);
+      const ephemeralKeyPair = nacl.box.keyPair();
+      const ephemeralPublicKey = ephemeralKeyPair.publicKey;
+      const ephemeralPrivateKey = ephemeralKeyPair.secretKey;
       console.log("\nEphemeral Key Pair:");
       console.log("- Public Key:", this.toHex(ephemeralPublicKey));
       console.log("- Secret Key:", this.toHex(ephemeralPrivateKey));
@@ -261,8 +210,7 @@ export class Encryption {
       console.log("- Value:", this.toHex(nonce));
       console.log("- Length:", nonce.length);
 
-      const sharedSecret = x25519.getSharedSecret(ephemeralPrivateKey, curve25519PublicKey);
-      const encrypted = await this.encryptWithSharedSecret(message, sharedSecret, nonce);
+      const encrypted = nacl.box(message, nonce, curve25519PublicKey, ephemeralPrivateKey);
 
       if (!encrypted) {
         throw new Error("Encryption failed");
@@ -312,27 +260,9 @@ export class Encryption {
     }
   }
 
-  //使用 Web Crypto API 实现 SHA-512
+  //使用 tweetnacl 实现 SHA-512
   private static async sha512Hash(data: Uint8Array): Promise<Uint8Array> {
-    try {
-      // 优先使用 Web Crypto API
-      if (typeof window !== "undefined" && window.crypto) {
-        const buffer = await window.crypto.subtle.digest(
-          "SHA-512",
-          data as BufferSource
-        );
-        return new Uint8Array(buffer);
-      }
-      // // Node.js 环境
-      // else if (typeof webcrypto !== 'undefined') {
-      //     const buffer = await webcrypto.subtle.digest('SHA-512', data);
-      //     return new Uint8Array(buffer);
-      // }
-      throw new Error("No crypto implementation available");
-    } catch (error) {
-      console.error("SHA-512 hash failed:", error);
-      throw error;
-    }
+    return nacl.hash(data);
   }
 
   private static async ed25519PrivateKeyToCurve25519(
@@ -409,18 +339,16 @@ export class Encryption {
         );
       }
 
-      // 计算共享密钥 (使用 x25519)
-      const sharedSecret = x25519.getSharedSecret(curve25519PrivateKey, ephemeralPublicKey);
-
-      if (debug) {
-        console.log("\n--- Shared Key Computation ---");
-        console.log("Computed Shared Secret:", this.toHex(sharedSecret));
-      }
-
-      // 解密数据 (使用 Web Crypto API)
-      const decrypted = await this.decryptWithSharedSecret(ciphertext, sharedSecret, nonce);
+      // 解密数据 (使用 tweetnacl)
+      const decrypted = nacl.box.open(
+        ciphertext,
+        nonce,
+        ephemeralPublicKey,
+        curve25519PrivateKey
+      );
+      
       if (!decrypted) {
-        throw new Error("Decryption failed - invalid MAC");
+        throw new Error("Decryption failed - invalid MAC or key");
       }
 
       if (debug) {
