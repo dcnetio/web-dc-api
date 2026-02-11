@@ -1,4 +1,4 @@
 {
   "baseUrl": "",
-  "walletOrigin": "http://10.0.0.2:3000"
+  "walletOrigin": "https://localhost.baybird.cn:3001"
 }

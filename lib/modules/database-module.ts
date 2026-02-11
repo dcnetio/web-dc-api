@@ -29,6 +29,8 @@ export class DatabaseModule implements DCModule, IDatabaseOperations {
   readonly moduleName = CoreModuleName.DATABASE;
   private context!: DCContext;
   private initialized: boolean = false;
+  private dbLocation?: string;
+  private initQueue: Promise<Error | null> = Promise.resolve(null);
   
   /**
    * 初始化数据库模块
@@ -66,55 +68,68 @@ export class DatabaseModule implements DCModule, IDatabaseOperations {
    * 初始化数据库管理器
    */
   async initDBManager(): Promise<Error | null> {
-   
+    this.initQueue = this.initQueue.then(() => this.initDBManagerInternal());
+    return this.initQueue;
+  }
+
+  private async initDBManagerInternal(): Promise<Error | null> {
     try {
-       this.assertInitialized();
-    
-    if (this.context.dbManager) {
-      return null; // 已经初始化过
-    }
-    let location =  this.context.appInfo?.appId || "default_app";
-    const tdatastore = await createTxnDatastore(location);
-    const keyBook = await newKeyBook(tdatastore);
-    const addrBook = await newAddrBook(tdatastore);
-    const headBook = newHeadBook(tdatastore);
-    const threadMetadata = newThreadMetadata(tdatastore);
-    const logstore = newLogstore(keyBook, addrBook, headBook, threadMetadata);
-    const dagService = dagCbor(this.context.dcNodeClient);
+      this.assertInitialized();
       
-      if (!this.context.publicKey) {
-        throw new Error("公钥未初始化");
+      const location = this.context.appInfo?.appId || "default_app";
+      if (this.context.dbManager) {
+        if (this.dbLocation === location) {
+          return null; // 已经初始化过且 location 未变
+        }
+        try {
+          await this.context.dbManager.close();
+        } catch (err) {
+          logger.warn("数据库管理器关闭失败，继续重建:", err);
+        }
+        this.context.dbManager = undefined;
       }
-      
-      const net = new Network(
-        this.context.dcutil,
-        this.context.dcChain,
-        this.context.dcNodeClient.libp2p,
-        this.context.grpcServer,
-        logstore,
-        this.context.dcNodeClient.blockstore,
-        dagService,
-        this.context
-      );
-      
-      const dbmanager = new DBManager(
-        tdatastore,
-        net,
-        this.context.dcutil,
-        this.context.connectedDc,
-        {},
-        this.context.dcChain,
-        storagePrefix,
-        this.context
-      );
-      await dbmanager.loadDbs();// 加载现有数据库
-      this.context.dbManager = dbmanager;
-      logger.info("数据库管理器初始化成功");
-      return null;
-    } catch (error) {
-      logger.error("初始化数据库管理器失败:", error);
-      return error as Error;
-    }
+      const tdatastore = await createTxnDatastore(location);
+      const keyBook = await newKeyBook(tdatastore);
+      const addrBook = await newAddrBook(tdatastore);
+      const headBook = newHeadBook(tdatastore);
+      const threadMetadata = newThreadMetadata(tdatastore);
+      const logstore = newLogstore(keyBook, addrBook, headBook, threadMetadata);
+      const dagService = dagCbor(this.context.dcNodeClient);
+        
+        if (!this.context.publicKey) {
+          throw new Error("公钥未初始化");
+        }
+        
+        const net = new Network(
+          this.context.dcutil,
+          this.context.dcChain,
+          this.context.dcNodeClient.libp2p,
+          this.context.grpcServer,
+          logstore,
+          this.context.dcNodeClient.blockstore,
+          dagService,
+          this.context
+        );
+        
+        const dbmanager = new DBManager(
+          tdatastore,
+          net,
+          this.context.dcutil,
+          this.context.connectedDc,
+          {},
+          this.context.dcChain,
+          storagePrefix,
+          this.context
+        );
+        await dbmanager.loadDbs();// 加载现有数据库
+        this.context.dbManager = dbmanager;
+        this.dbLocation = location;
+        logger.info("数据库管理器初始化成功");
+        return null;
+      } catch (error) {
+        logger.error("初始化数据库管理器失败:", error);
+        return error as Error;
+      }
   }
 
 

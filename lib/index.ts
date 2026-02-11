@@ -10,6 +10,14 @@ declare global {
       reject: (reason?: any) => void;
     };
   }
+
+  interface AbortSignal {
+    throwIfAborted(): void;
+  }
+
+  interface AbortSignalConstructor {
+    timeout(milliseconds: number): AbortSignal;
+  }
 }
 
 if (typeof Promise !== 'undefined' && !Promise.withResolvers) {
@@ -21,6 +29,56 @@ if (typeof Promise !== 'undefined' && !Promise.withResolvers) {
       reject = rej;
     });
     return { promise, resolve, reject };
+  };
+}
+
+if (typeof AbortSignal !== 'undefined' && !AbortSignal.prototype.throwIfAborted) {
+  AbortSignal.prototype.throwIfAborted = function () {
+    if (!this.aborted) {
+      return;
+    }
+
+    const reason = (this as AbortSignal & { reason?: unknown }).reason;
+    if (reason instanceof Error) {
+      throw reason;
+    }
+
+    if (typeof DOMException !== 'undefined') {
+      throw new DOMException('Aborted', 'AbortError');
+    }
+
+    throw new Error('Aborted');
+  };
+}
+
+if (
+  typeof AbortSignal !== 'undefined' &&
+  typeof AbortController !== 'undefined' &&
+  !AbortSignal.timeout
+) {
+  AbortSignal.timeout = function (milliseconds: number): AbortSignal {
+    const controller = new AbortController();
+    const timerId = setTimeout(() => {
+      try {
+        controller.abort(new DOMException('Aborted', 'AbortError'));
+      } catch {
+        controller.abort();
+      }
+    }, milliseconds);
+
+    if (!controller.signal.aborted) {
+      controller.signal.addEventListener(
+        'abort',
+        () => {
+          clearTimeout(timerId);
+        },
+        { once: true },
+      );
+    } else {
+      clearTimeout(timerId);
+    }
+
+    return controller.signal;
   };
 }
 export { DC } from './dc';
