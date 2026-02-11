@@ -44,8 +44,10 @@ export class WalletManager {
   async init(): Promise<boolean> {
     console.log("========init walletManager", appOrigin, walletOrigin);
     // Check if we are in a browser environment with document access
-    if (typeof document === 'undefined') {
-      console.warn("WalletManager: document is undefined, skipping iframe initialization.");
+    if (typeof document === "undefined") {
+      console.warn(
+        "WalletManager: document is undefined, skipping iframe initialization.",
+      );
       return true; // or false, depending on if we want to signal failure or just skip
     }
 
@@ -141,7 +143,7 @@ export class WalletManager {
     if (typeof localStorage !== "undefined") {
       openerFlag = localStorage.getItem(localStorageKey_dcwallet_opener);
     }
-    
+
     let waitTimeCount = 1;
     if (openerFlag == "true") {
       waitTimeCount = 3;
@@ -260,10 +262,6 @@ export class WalletManager {
         console.error("openWallet error", error);
         resolve(false);
       };
-      iframe.setAttribute(
-        "sandbox",
-        "allow-scripts allow-forms allow-same-origin",
-      );
       iframe.allow =
         "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture;publickey-credentials-create; publickey-credentials-get";
 
