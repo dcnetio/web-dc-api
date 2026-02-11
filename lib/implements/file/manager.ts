@@ -454,7 +454,7 @@ export class FileManager {
       // 将文件路径与内容流映射
       const source = Array.from(files).map((file) => ({
         path: file.name === "dc_ownuser" ? ownerPath : file.webkitRelativePath, // 获取文件相对路径
-        content: this.fileToStream(file, enkey), // 使用文件流
+        content: this.streamToAsyncIterable(this.fileToStream(file, enkey)), // 使用兼容的内容流
       }));
 
       const results = fs.addAll(source);
@@ -625,11 +625,10 @@ export class FileManager {
       files.push(
         new File([ownerFileContent], "dc_ownuser", { type: "text/plain" }),
       );
-
       // 将文件路径与内容流映射
       const source = Array.from(files).map((file) => ({
         path: file.name === "dc_ownuser" ? ownerPath : file.webkitRelativePath, // 获取文件相对路径
-        content: this.fileToStream(file, enkey), // 使用文件流
+        content: this.streamToAsyncIterable(this.fileToStream(file, enkey)), // 使用兼容的内容流
       }));
 
       const results = fs.addAll(source);
