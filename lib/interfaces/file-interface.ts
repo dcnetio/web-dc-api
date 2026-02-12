@@ -150,6 +150,7 @@ export interface IFileOperations {
     cid: string,
     decryptKey: string,
     recursive: boolean,
+    peerAddr?: string,
   ): Promise<
     [
       Array<{

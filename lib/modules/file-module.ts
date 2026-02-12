@@ -382,6 +382,7 @@ export class FileModule implements DCModule, IFileOperations {
     cid: string,
     decryptKey: string,
     recursive: boolean = true,
+    peerAddr: string = "",
   ): Promise<
     [
       Array<{
@@ -399,6 +400,7 @@ export class FileModule implements DCModule, IFileOperations {
       cid,
       decryptKey,
       recursive,
+      peerAddr,
     );
     return [fileList, err];
   }

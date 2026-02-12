@@ -91,7 +91,7 @@ export class DC implements DCContext {
     this.dcChain = new ChainUtil();
     this.dcutil = new DcUtil(this.dcChain);
     // //todo 发布注释 remove
-     //this.dcutil.defaultPeerId = "12D3KooWEGzh4AcbJrfZMfQb63wncBUpscMEEyiMemSWzEnjVCPf";
+    //  this.dcutil.defaultPeerId = "12D3KooWEGzh4AcbJrfZMfQb63wncBUpscMEEyiMemSWzEnjVCPf";
     // //todo remove end
     this.appInfo = options.appInfo || ({} as APPInfo);
     this.accountInfo = {} as AccountInfo;
@@ -154,7 +154,7 @@ export class DC implements DCContext {
    * @returns 是否成功初始化
    */
   init = async (
-    backStep?: (step: number) => Promise<void>
+    backStep?: (step: number) => Promise<void>,
   ): Promise<boolean> => {
     if (this.initialized) {
       logger.warn("DC已经初始化，跳过重复初始化");
@@ -262,7 +262,7 @@ export class DC implements DCContext {
   async initUserDB(
     collections: ICollectionConfig[],
     verno?: number, //版本编码,当版本编码变化时，需要重构表结构
-    reset?: boolean
+    reset?: boolean,
   ): Promise<[IDBInfo | null, Error | null]> {
     const dbName = "user_threaddb";
     let userInfo: User | null = null;
@@ -310,7 +310,7 @@ export class DC implements DCContext {
                   //版本号不一致，需要升级表结构
                   const err = await this.db.upgradeCollections(
                     threadid,
-                    collections
+                    collections,
                   );
                   if (err) {
                     console.error("升级表结构失败", err);
@@ -324,8 +324,8 @@ export class DC implements DCContext {
               }
 
               // 后台异步刷新数据库，不阻塞登录流程
-              this.db.refreshDBFromDC(threadid).catch(err => {
-                console.warn('后台刷新数据库失败:', err);
+              this.db.refreshDBFromDC(threadid).catch((err) => {
+                console.warn("后台刷新数据库失败:", err);
               });
               //3秒后将本地数据库同步到DC
               setTimeout(() => {
@@ -346,14 +346,14 @@ export class DC implements DCContext {
                 rk,
                 sk,
                 true,
-                collections
+                collections,
               );
               const [dbinfo, error] = await this.db.getDBInfo(threadid);
               if (dbinfo != null && !error) {
                 this.dbThreadId = dbinfo.id;
                 // 后台异步刷新数据库，不阻塞登录流程
-                this.db.refreshDBFromDC(threadid).catch(err => {
-                  console.warn('后台刷新数据库失败:', err);
+                this.db.refreshDBFromDC(threadid).catch((err) => {
+                  console.warn("后台刷新数据库失败:", err);
                 });
                 // 自动扩容threaddb,当threaddb的可用空间小于10MB，自动扩容50MB,无需等待结果
                 this.autoExpandDBSpace(this, this.dbThreadId);
@@ -383,7 +383,7 @@ export class DC implements DCContext {
         dbName,
         rk.toString(),
         sk.toString(),
-        collections
+        collections,
       );
       if (newDBError || !threadId) {
         console.error("创建用户去中心化数据库失败", newDBError);
@@ -396,7 +396,7 @@ export class DC implements DCContext {
           this,
           threadId,
           rk.toString(),
-          sk.toString()
+          sk.toString(),
         );
         if (!setUserDefaultDBRes) {
           // 设置用户默认DB失败
@@ -426,7 +426,7 @@ export class DC implements DCContext {
   // 自动扩容
   private async autoExpandDBSpace(
     dc: DC,
-    DBThreadid: string
+    DBThreadid: string,
   ): Promise<boolean> {
     //获取当前DB的可用空间
     if (!dc.db) {
@@ -441,7 +441,7 @@ export class DC implements DCContext {
     DBThreadid: string,
     rk: string,
     sk: string,
-    remark?: string
+    remark?: string,
   ): Promise<boolean> {
     // 加到用户信息上
     try {
@@ -585,7 +585,7 @@ export class DC implements DCContext {
         this.dcNodeClient.libp2p,
         this.dcNodeClient.blockstore,
         nodeAddr,
-        dc_protocol
+        dc_protocol,
       );
       return dcClient;
     } catch (error) {
@@ -721,5 +721,5 @@ export class DC implements DCContext {
 
   get libp2p() {
     return this.dcNodeClient.libp2p;
-  } 
+  }
 }

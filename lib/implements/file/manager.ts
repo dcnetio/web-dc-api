@@ -15,7 +15,13 @@ import {
   getPeerIdString,
 } from "../../util/utils";
 
-import { unixfs, type ExtendedStatOptions, type ExtendedFileStats, type ExtendedDirectoryStats, type ExtendedRawStats } from "@helia/unixfs";
+import {
+  unixfs,
+  type ExtendedStatOptions,
+  type ExtendedFileStats,
+  type ExtendedDirectoryStats,
+  type ExtendedRawStats,
+} from "@helia/unixfs";
 import { SymmetricKey } from "../threaddb/common/key";
 import { CID, Version } from "multiformats/cid";
 import { BrowserType, DcUtil } from "../../common/dcutil";
@@ -247,7 +253,7 @@ export class FileManager {
         enkey && enkey.length > 0 ? SymmetricKey.fromString(enkey) : null;
       const fs = unixfs(this.dcNodeClient);
       const pubkeyBytes = this.context.getPubkeyRaw();
-      //const peerId = "12D3KooWEGzh4AcbJrfZMfQb63wncBUpscMEEyiMemSWzEnjVCPf";
+      // const peerId = "12D3KooWEGzh4AcbJrfZMfQb63wncBUpscMEEyiMemSWzEnjVCPf";
       let nodeAddr = await this.dc?._getNodeAddr(peerId);
       if (!nodeAddr) {
         return [null, Errors.ErrNoDcPeerConnected];
@@ -786,10 +792,9 @@ export class FileManager {
    * @param rootCID - The CID of the root directory
    * @returns Promise with the total block count
    */
-  async countDirectoryBlocks(rootCID: CID): Promise<[number,number]> {
+  async countDirectoryBlocks(rootCID: CID): Promise<[number, number]> {
     try {
       const fs = unixfs(this.dcNodeClient);
-
 
       // Get stats for the root directory itself
       const controller = new AbortController();
@@ -806,7 +811,6 @@ export class FileManager {
       } finally {
         clearTimeout(timeoutId);
       }
-
 
       const totalBlocks = rootStats.blocks ? Number(rootStats.blocks) : 0;
       const totalSize = rootStats.dagSize ? Number(rootStats.dagSize) : 0;
@@ -1092,6 +1096,7 @@ export class FileManager {
     cid: string,
     decryptKey: string,
     recursive: boolean = true,
+    peerAddr: string = "",
   ): Promise<
     [
       Array<{
@@ -1105,9 +1110,19 @@ export class FileManager {
       Error | null,
     ]
   > {
+    if (peerAddr) {
+      // 建立链接
+      const nodeAddr = multiaddr(peerAddr);
+      const conn = await this.dcNodeClient?.libp2p.dial(nodeAddr, {
+        signal: AbortSignal.timeout(1000),
+      });
+      if (!conn) {
+        return [null, Errors.ErrBuildServerConnect];
+      }
+    }
     const [fileList, err] = await this.getFolderFileList(
       cid,
-      cidNeedConnect.NEED,
+      cidNeedConnect.NOT_NEED,
       recursive,
     );
     if (err || !fileList) return [null, err];
@@ -1199,42 +1214,42 @@ export class FileManager {
             if (name === "." || name === ".." || name === "dc_ownuser") {
               continue; // 跳过当前目录和上级目录
             }
-          // 构建完整路径
-          const fullPath = currentPath ? `${currentPath}/${name}` : name;
+            // 构建完整路径
+            const fullPath = currentPath ? `${currentPath}/${name}` : name;
 
-          // 获取文件/目录的统计信息
-          const controller = new AbortController();
-          const timeoutId = setTimeout(() => {
-            controller.abort();
-          }, 15000);
-          let stats;
-          try {
-            // @ts-ignore
-            stats = await fs.stat(cid.toString(), {
-              signal: controller.signal,
-              extended: true,
-            });
-          } finally {
-            clearTimeout(timeoutId);
+            // 获取文件/目录的统计信息
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => {
+              controller.abort();
+            }, 60000);
+            let stats;
+            try {
+              // @ts-ignore
+              stats = await fs.stat(cid.toString(), {
+                signal: controller.signal,
+                extended: true,
+              });
+            } finally {
+              clearTimeout(timeoutId);
+            }
+
+            // 构造文件信息对象
+            const fileInfo = {
+              Name: name,
+              Type: type === "directory" ? 1 : 0, // 0-文件 1-目录
+              Size:
+                type === "directory" ? 0 : Number((stats as any).fileSize || 0),
+              Hash: cid.toString(),
+              Path: fullPath,
+            };
+
+            fileNodes.push(fileInfo);
+
+            // 如果是目录且需要递归，则继续遍历子目录
+            if (type === "directory" && recursive) {
+              await traverseDirectory(cid, fullPath);
+            }
           }
-
-          // 构造文件信息对象
-          const fileInfo = {
-            Name: name,
-            Type: type === "directory" ? 1 : 0, // 0-文件 1-目录
-            Size:
-              type === "directory" ? 0 : Number((stats as any).fileSize || 0),
-            Hash: cid.toString(),
-            Path: fullPath,
-          };
-
-          fileNodes.push(fileInfo);
-
-          // 如果是目录且需要递归，则继续遍历子目录
-          if (type === "directory" && recursive) {
-            await traverseDirectory(cid, fullPath);
-          }
-        }
         } finally {
           if (timeoutId) clearTimeout(timeoutId);
         }
@@ -1413,52 +1428,52 @@ export class FileManager {
           resetTimeout();
           waitBuffer = mergeUInt8Arrays(waitBuffer, chunk) as any;
 
-        // 1. 处理头部 (仅处理一次)
-        if (!headDealed && !folderFlag) {
-          if (waitBuffer.length >= headerLen) {
-            // 检查头部标识 $$dcfile$$
-            const isDcFile = compareByteArrays(
-              waitBuffer.subarray(0, 10),
-              new TextEncoder().encode("$$dcfile$$"),
-            );
+          // 1. 处理头部 (仅处理一次)
+          if (!headDealed && !folderFlag) {
+            if (waitBuffer.length >= headerLen) {
+              // 检查头部标识 $$dcfile$$
+              const isDcFile = compareByteArrays(
+                waitBuffer.subarray(0, 10),
+                new TextEncoder().encode("$$dcfile$$"),
+              );
 
-            if (isDcFile) {
-              // 是标准头部，移除32字节头部
-              waitBuffer = waitBuffer.subarray(headerLen);
+              if (isDcFile) {
+                // 是标准头部，移除32字节头部
+                waitBuffer = waitBuffer.subarray(headerLen);
+              }
+              // 标记头部已处理
+              headDealed = true;
+            } else {
+              // 数据不足以判断头部，继续读取下一块
+              continue;
             }
-            // 标记头部已处理
-            headDealed = true;
-          } else {
-            // 数据不足以判断头部，继续读取下一块
-            continue;
+          }
+
+          // 2. 处理内容分块解密
+          while (waitBuffer.length >= encryptextLen) {
+            const encryptBuffer = waitBuffer.subarray(0, encryptextLen);
+            waitBuffer = waitBuffer.subarray(encryptextLen);
+
+            if (decryptKey) {
+              const decrypted = await decryptContent(encryptBuffer, decryptKey);
+              fileContent = mergeUInt8Arrays(fileContent, decrypted) as any;
+            } else {
+              fileContent = mergeUInt8Arrays(fileContent, encryptBuffer) as any;
+            }
           }
         }
 
-        // 2. 处理内容分块解密
-        while (waitBuffer.length >= encryptextLen) {
-          const encryptBuffer = waitBuffer.subarray(0, encryptextLen);
-          waitBuffer = waitBuffer.subarray(encryptextLen);
-
+        // 3. 处理剩余数据
+        if (waitBuffer.length > 0) {
           if (decryptKey) {
-            const decrypted = await decryptContent(encryptBuffer, decryptKey);
+            const decrypted = await decryptContent(waitBuffer, decryptKey);
             fileContent = mergeUInt8Arrays(fileContent, decrypted) as any;
           } else {
-            fileContent = mergeUInt8Arrays(fileContent, encryptBuffer) as any;
+            fileContent = mergeUInt8Arrays(fileContent, waitBuffer) as any;
           }
         }
-      }
 
-      // 3. 处理剩余数据
-      if (waitBuffer.length > 0) {
-        if (decryptKey) {
-          const decrypted = await decryptContent(waitBuffer, decryptKey);
-          fileContent = mergeUInt8Arrays(fileContent, decrypted) as any;
-        } else {
-          fileContent = mergeUInt8Arrays(fileContent, waitBuffer) as any;
-        }
-      }
-
-      return fileContent;
+        return fileContent;
       } finally {
         if (timeoutId) clearTimeout(timeoutId);
       }
@@ -1638,7 +1653,10 @@ export class FileManager {
       let stats;
       try {
         // @ts-ignore
-        stats = await fs.stat(cid, { signal: controller.signal, extended: true });
+        stats = await fs.stat(cid, {
+          signal: controller.signal,
+          extended: true,
+        });
       } finally {
         clearTimeout(timeoutId);
       }
