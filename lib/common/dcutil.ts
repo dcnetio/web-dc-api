@@ -79,8 +79,74 @@ export class DcUtil {
     return [res, peers];
   };
 
-  connectToPeer = async (peerAddr: string): Promise<Multiaddr> => {
-    return await this._connectPeers([peerAddr]);
+
+
+  connectToPeerWithAddr = async (peerAddr: string): Promise<Multiaddr> => {
+    // 直接使用传入的地址拨号，不走链上查询
+    let addr: Multiaddr;
+    try {
+      addr = multiaddr(peerAddr);
+    } catch (error) {
+      throw new Error("peerAddr must be a valid multiaddr");
+    }
+
+    const peerIdStr = getPeerIdString(addr);
+    if (!peerIdStr) {
+      throw new Error("peerId not found in peerAddr");
+    }
+
+    // 检查是否已经连接
+    try {
+      const peerId = peerIdFromString(peerIdStr);
+      const connections = this.dcNodeClient?.libp2p.getConnections(peerId);
+      if (connections && connections.length > 0) {
+        if (connections[0].status === "open") {
+          return connections[0].remoteAddr;
+        }
+      }
+    } catch (e) {
+      // console.error("check connection error", e);
+    }
+
+    if (!this.dcNodeClient?.libp2p) {
+      throw new Error("dcNodeClient is not initialized");
+    }
+
+    const resCon = await this.dcNodeClient.libp2p.dial(addr, {
+      signal: AbortSignal.timeout(dial_timeout),
+    });
+    if (!resCon) {
+      throw new Error("dial peerAddr failed");
+    }
+
+    return addr;
+  };
+
+
+  connectToPeer = async (peerId: string): Promise<Multiaddr> => {
+    // 从 peerAddr 中提取 peerId；支持 multiaddr 或纯 peerId 字符串
+    let peerIdStr: string | undefined;
+
+    if (peerId.trim().startsWith("/")) {
+      try {
+        const addr = multiaddr(peerId);
+        peerIdStr = getPeerIdString(addr);
+      } catch (error) {
+        peerIdStr = undefined;
+      }
+    }
+
+    if (!peerIdStr) {
+      peerIdStr = peerId.trim();
+    }
+
+    try {
+      peerIdFromString(peerIdStr);
+    } catch (error) {
+      throw new Error("peerId not found in peerAddr");
+    }
+
+    return await this._connectPeers([peerIdStr]);
   };
 
   _connectPeers = (peerListJson: string[]): Promise<Multiaddr> => {
