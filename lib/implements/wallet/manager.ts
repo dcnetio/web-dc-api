@@ -368,7 +368,7 @@ export class WalletManager {
       const message = {
         type: "getLoginInfo",
       };
-      this.sendMessageToIframe(message, 10000)
+      this.sendMessageToIframe(message, 10000, false)
         .then((response) => {
           if (!response || !response.data || !response.data.data) {
             console.error("getLoginInfo response is null");
@@ -710,6 +710,7 @@ export class WalletManager {
   private async sendMessageToIframe(
     message: SendMessage<any>,
     timeout: number,
+    removeFlag: boolean = true,
   ): Promise<MessageEvent | null> {
     const iframe = document.getElementById(this.iframeId) as HTMLIFrameElement;
     // port2转移给iframe
@@ -718,7 +719,7 @@ export class WalletManager {
       // 等待钱包iframe返回,并关闭channel,超时时间timeout
       return new Promise((resolve, reject) => {
         const timer = setTimeout(() => {
-          if (isIframeOpen()) {
+          if (isIframeOpen() && removeFlag) {
             // 微信窗口
             this.removeWalletIframe();
           }
@@ -730,7 +731,8 @@ export class WalletManager {
           if (
             event.data &&
             event.data.type !== "initConfigResponse" &&
-            isIframeOpen()
+            isIframeOpen() &&
+            removeFlag
           ) {
             this.removeWalletIframe();
           }
@@ -744,7 +746,7 @@ export class WalletManager {
           console.error("sendMessageToIframe postMessage error", error);
           clearTimeout(timer);
           messageChannel.port1.close();
-          if (isIframeOpen()) {
+          if (isIframeOpen() && removeFlag) {
             // 微信窗口
             this.removeWalletIframe();
           }
