@@ -307,6 +307,7 @@ export class WalletManager {
         await this.initCommChannel();
       } catch (error) {
         reject(error);
+        return;
       }
       if (isIframeOpen()) {
         // 微信窗口
@@ -364,6 +365,7 @@ export class WalletManager {
         await this.initCommChannel();
       } catch (error) {
         reject(error);
+        return;
       }
       const message = {
         type: "getLoginInfo",
@@ -386,6 +388,7 @@ export class WalletManager {
         .catch((error) => {
           console.error("getLoginInfo error", error);
           reject(error);
+          return;
         });
     });
   }
@@ -512,6 +515,7 @@ export class WalletManager {
         await this.initCommChannel();
       } catch (error) {
         reject(error);
+        return;
       }
       if (isIframeOpen()) {
         // 微信窗口
@@ -526,7 +530,6 @@ export class WalletManager {
         const urlWithOrigin = walletUrl + "/home?origin=" + appOrigin;
         this.walletWindow = window.open(urlWithOrigin, walletWindowName);
       }
-      this.initCommChannel();
       // this.waitForWalletLoaded(this.walletWindow, timeout).then((flag) => {
       //   if (flag) {
       // 每100ms发送一次消息,直到钱包加载完成
@@ -573,6 +576,7 @@ export class WalletManager {
         await this.initCommChannel();
       } catch (error) {
         reject(error);
+        return;
       }
       if (isIframeOpen()) {
         // 微信窗口
@@ -587,7 +591,6 @@ export class WalletManager {
         const urlWithOrigin = walletUrl + "/home?origin=" + appOrigin;
         this.walletWindow = window.open(urlWithOrigin, walletWindowName);
       }
-      this.initCommChannel();
       // this.waitForWalletLoaded(this.walletWindow, timeout).then((flag) => {
       //   if (flag) {
       // port1 转移给iframe
