@@ -1113,7 +1113,7 @@ export class FileManager {
     if (peerAddr) {
       try {
         // 建立链接
-        const nodeAddr = await this.dc?.connectToPeer(peerAddr);
+        const nodeAddr = await this.dc?.connectToPeerWithAddr(peerAddr);
         if (!nodeAddr) {
           return [null, Errors.ErrBuildServerConnect];
         }
@@ -1320,7 +1320,7 @@ export class FileManager {
     try {
       // 建立链接
       try {
-        const nodeAddr = await this.dc?.connectToPeer(peerAddr);
+        const nodeAddr = await this.dc?.connectToPeerWithAddr(peerAddr);
         if (!nodeAddr) {
           return [null, Errors.ErrBuildServerConnect];
         }
