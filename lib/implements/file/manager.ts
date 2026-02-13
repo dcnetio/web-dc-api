@@ -1219,33 +1219,11 @@ export class FileManager {
             // 构建完整路径
             const fullPath = currentPath ? `${currentPath}/${name}` : name;
 
-            // 获取文件/目录的统计信息
-            let stats;
-            const statController = new AbortController();
-            const statTimeoutId = setTimeout(() => {
-              statController.abort();
-            }, 30000); // 调整为30秒，避免单个文件卡太久
-
-            try {
-              // @ts-ignore
-              stats = await fs.stat(cid.toString(), {
-                signal: statController.signal,
-                extended: true,
-              });
-            } catch (statErr) {
-              console.warn(`获取文件状态超时或失败: ${name}`, statErr);
-              // 失败降级：给默认值，保证文件列表能显示出来
-              stats = { fileSize: 0 };
-            } finally {
-              clearTimeout(statTimeoutId);
-            }
-
             // 构造文件信息对象
             const fileInfo = {
               Name: name,
               Type: type === "directory" ? 1 : 0, // 0-文件 1-目录
-              Size:
-                type === "directory" ? 0 : Number((stats as any).fileSize || 0),
+              Size: 0,
               Hash: cid.toString(),
               Path: fullPath,
             };
