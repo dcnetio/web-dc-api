@@ -1111,13 +1111,14 @@ export class FileManager {
     ]
   > {
     if (peerAddr) {
-      // 建立链接
-      const nodeAddr = multiaddr(peerAddr);
-      const conn = await this.dcNodeClient?.libp2p.dial(nodeAddr, {
-        signal: AbortSignal.timeout(1000),
-      });
-      if (!conn) {
-        return [null, Errors.ErrBuildServerConnect];
+      try {
+        // 建立链接
+        const nodeAddr = await this.dc?.connectToPeer(peerAddr);
+        if (!nodeAddr) {
+          return [null, Errors.ErrBuildServerConnect];
+        }
+      } catch (error) {
+        console.error("Error connecting to peer:", error);
       }
     }
     const [fileList, err] = await this.getFolderFileList(
@@ -1198,10 +1199,11 @@ export class FileManager {
       ) => {
         // 遍历当前目录内容
         const controller = new AbortController();
-        let timeoutId = setTimeout(() => controller.abort(), 15000);
+        // 增加默认超时时间到30s，适应移动端网络
+        let timeoutId = setTimeout(() => controller.abort(), 30000);
         const resetTimeout = () => {
           clearTimeout(timeoutId);
-          timeoutId = setTimeout(() => controller.abort(), 15000);
+          timeoutId = setTimeout(() => controller.abort(), 30000);
         };
 
         try {
@@ -1218,19 +1220,24 @@ export class FileManager {
             const fullPath = currentPath ? `${currentPath}/${name}` : name;
 
             // 获取文件/目录的统计信息
-            const controller = new AbortController();
-            const timeoutId = setTimeout(() => {
-              controller.abort();
-            }, 60000);
             let stats;
+            const statController = new AbortController();
+            const statTimeoutId = setTimeout(() => {
+              statController.abort();
+            }, 30000); // 调整为30秒，避免单个文件卡太久
+
             try {
               // @ts-ignore
               stats = await fs.stat(cid.toString(), {
-                signal: controller.signal,
+                signal: statController.signal,
                 extended: true,
               });
+            } catch (statErr) {
+              console.warn(`获取文件状态超时或失败: ${name}`, statErr);
+              // 失败降级：给默认值，保证文件列表能显示出来
+              stats = { fileSize: 0 };
             } finally {
-              clearTimeout(timeoutId);
+              clearTimeout(statTimeoutId);
             }
 
             // 构造文件信息对象
@@ -1312,12 +1319,13 @@ export class FileManager {
   ): Promise<[Uint8Array | null, Error | null]> => {
     try {
       // 建立链接
-      const nodeAddr = multiaddr(peerAddr);
-      const conn = await this.dcNodeClient?.libp2p.dial(nodeAddr, {
-        signal: AbortSignal.timeout(1000),
-      });
-      if (!conn) {
-        return [null, Errors.ErrBuildServerConnect];
+      try {
+        const nodeAddr = await this.dc?.connectToPeer(peerAddr);
+        if (!nodeAddr) {
+          return [null, Errors.ErrBuildServerConnect];
+        }
+      } catch (error) {
+        console.error("Error connecting to peer1:", error);
       }
       const fileContent = await this.getFileFromDcContent(
         cid,
