@@ -91,6 +91,45 @@ export class FileManager {
     this.dcNodeClient = dcNodeClient;
     this.context = context;
   }
+
+  private async createTransferStreamWithRetry(
+    nodeAddr: Multiaddr,
+    type: number,
+    oid: string,
+    maxRetries: number = 1,
+  ): Promise<void> {
+    let attempt = 0;
+    let lastError: unknown = null;
+
+    while (attempt <= maxRetries) {
+      try {
+        await this.dc.createTransferStream(
+          this.dcNodeClient.libp2p,
+          this.dcNodeClient.blockstore,
+          nodeAddr,
+          type,
+          oid,
+        );
+        return;
+      } catch (error) {
+        lastError = error;
+        attempt += 1;
+        if (attempt > maxRetries) {
+          break;
+        }
+
+        try {
+          await this.dc.connectToPeerWithAddr(nodeAddr.toString());
+        } catch (reconnectError) {
+          console.warn("createTransferStream reconnect failed:", reconnectError);
+        }
+      }
+    }
+
+    if (lastError) {
+      throw lastError;
+    }
+  }
   // 处理文件头
   async _processHeader(
     pubkeyBytes: Uint8Array,
@@ -326,13 +365,7 @@ export class FileManager {
         return [null, Errors.ErrNoNeedUpload];
       }
       //创建文件主动上报流
-      await this.dc.createTransferStream(
-        this.dcNodeClient.libp2p,
-        this.dcNodeClient.blockstore,
-        nodeAddr,
-        BrowserType.File,
-        resCid,
-      );
+      await this.createTransferStreamWithRetry(nodeAddr, BrowserType.File, resCid);
     } catch (error) {
       console.error("=========stream close", error);
       throw error;
@@ -581,13 +614,7 @@ export class FileManager {
         return [null, Errors.ErrNoNeedUpload];
       }
       //创建文件主动上报流
-      await this.dc.createTransferStream(
-        this.dcNodeClient.libp2p,
-        this.dcNodeClient.blockstore,
-        nodeAddr,
-        BrowserType.File,
-        finalCid,
-      );
+      await this.createTransferStreamWithRetry(nodeAddr, BrowserType.File, finalCid);
       return [finalCid, null];
     } catch (error) {
       console.error("Folder upload failed:", error);

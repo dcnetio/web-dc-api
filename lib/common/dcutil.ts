@@ -331,7 +331,7 @@ export class DcUtil {
         }
         const addrParts = peers[i].split(",");
         // // todo 临时测试，192.168.31.31改成10.0.0.2
-      //  addrParts[1] = addrParts[1].replace(/192.168.31.31/g, "10.0.0.2");
+        addrParts[1] = addrParts[1].replace(/192.168.31.31/g, "10.0.0.2");
         const nodeAddr = multiaddr(addrParts[1]);
 
         try {
@@ -562,9 +562,28 @@ export class DcUtil {
     type: number,
     oid: string,
   ) {
-    const nodeConn = await libp2p.dial(nodeAddr, {
-      signal: AbortSignal.timeout(dial_timeout),
-    });
+    let nodeConn: any;
+    const peerIdStr = getPeerIdString(nodeAddr);
+    if (peerIdStr) {
+      try {
+        const peerId = peerIdFromString(peerIdStr);
+        const connections = libp2p.getConnections(peerId);
+        if (connections && connections.length > 0) {
+          const openConn = connections.find((conn) => conn.status === "open");
+          if (openConn) {
+            nodeConn = openConn;
+          }
+        }
+      } catch (err) {
+        console.warn("createTransferStream: getConnections failed", err);
+      }
+    }
+
+    if (!nodeConn) {
+      nodeConn = await libp2p.dial(nodeAddr, {
+        signal: AbortSignal.timeout(dial_timeout),
+      });
+    }
     const stream = await nodeConn.newStream("/dc/transfer/1.0.0", {
       signal: AbortSignal.timeout(10000),
     });
