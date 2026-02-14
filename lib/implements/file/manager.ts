@@ -311,7 +311,7 @@ export class FileManager {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => {
         controller.abort();
-      }, 15000);
+      }, 60000);
       let stats;
       try {
         // @ts-ignore
@@ -827,7 +827,7 @@ export class FileManager {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => {
         controller.abort();
-      }, 15000);
+      }, 60000);
       let rootStats;
       try {
         // @ts-ignore
@@ -921,7 +921,7 @@ export class FileManager {
       (async () => {
         try {
           const controller = new AbortController();
-          const timeoutId = setTimeout(() => controller.abort(), 30000);
+          const timeoutId = setTimeout(() => controller.abort(), 60000);
           const file = await fetch(readPath, {
             signal: controller.signal,
           }).then((r) => {
@@ -1022,7 +1022,7 @@ export class FileManager {
     try {
       // Browser implementation example - replace with appropriate method
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 30000);
+      const timeoutId = setTimeout(() => controller.abort(), 60000);
       const response = await fetch(path, { signal: controller.signal });
       clearTimeout(timeoutId);
       return await response.blob();
@@ -1226,11 +1226,11 @@ export class FileManager {
       ) => {
         // 遍历当前目录内容
         const controller = new AbortController();
-        // 增加默认超时时间到30s，适应移动端网络
-        let timeoutId = setTimeout(() => controller.abort(), 30000);
+        // 增加默认超时时间到60s，适应移动端网络
+        let timeoutId = setTimeout(() => controller.abort(), 60000);
         const resetTimeout = () => {
           clearTimeout(timeoutId);
-          timeoutId = setTimeout(() => controller.abort(), 30000);
+          timeoutId = setTimeout(() => controller.abort(), 60000);
         };
 
         try {
@@ -1294,7 +1294,7 @@ export class FileManager {
       if (!peers) {
         try {
           const timeoutPromise = new Promise((resolve) =>
-            setTimeout(resolve, 5000, "Timeout"),
+            setTimeout(resolve, 60000, "Timeout"),
           );
           const getPromise = this.getFileFromDcContent(
             cid,
@@ -1409,7 +1409,7 @@ export class FileManager {
         timeoutId = setTimeout(() => {
           controller.abort();
           console.error("getFileFromDcContent: timeout fetching cid", cid);
-        }, 15000);
+        }, 60000);
       };
 
       try {
@@ -1517,7 +1517,7 @@ export class FileManager {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => {
       controller.abort();
-    }, 15000);
+    }, 60000);
 
     try {
       // 读取头信息
@@ -1579,10 +1579,10 @@ export class FileManager {
       for (const part of parts) {
         let found = false;
         const controller = new AbortController();
-        let timeoutId = setTimeout(() => controller.abort(), 15000);
+        let timeoutId = setTimeout(() => controller.abort(), 60000);
         const resetTimeout = () => {
           clearTimeout(timeoutId);
-          timeoutId = setTimeout(() => controller.abort(), 15000);
+          timeoutId = setTimeout(() => controller.abort(), 60000);
         };
         try {
           // @ts-ignore
@@ -1662,7 +1662,7 @@ export class FileManager {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => {
         controller.abort();
-      }, 15000);
+      }, 60000);
       let stats;
       try {
         // @ts-ignore
