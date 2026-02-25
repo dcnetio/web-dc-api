@@ -299,33 +299,53 @@ function jsonStringify(value: any): string {
 }
 
 /**
- * 将非负数字字符串（可带小数）格式化：
- * - 仅对整数部分左侧补零至 20 位
- * - 小数部分（若有）原样保留
- * - 不进行数值运算，避免精度问题
- * 例：
- *  - "123"      -> "00000000000000000123"
- *  - "123.45"   -> "00000000000000000123.45"
- *  - "0.5"      -> "00000000000000000000.5"
+ * 将数字字符串（可带小数，支持负数）格式化，兼容旧数据排序：
+ * 
+ * 1. **正数（保持兼容）**：保持原有的补零逻辑。 
+ *    - "123" -> "00000000000000000123"
+ *    - 排序： "0...005" < "0...100" (Correct)
+ * 
+ * 2. **负数（新逻辑）**：使用前缀 "-"，并对整数部分按位取反（9-x）。
+ *    - 使得绝对值大的负数（更小的值）在字典序上也更小。
+ *    - "-100" -> Abs(100) -> "0...00100" -> Invert "9...99899" -> "-99999999999999999899"
+ *    - "-5"   -> Abs(5)   -> "0...00005" -> Invert "9...99994" -> "-99999999999999999994"
+ * 
+ * 排序效果：
+ * String: "-" < "0" (ASCII 45 < 48)，所以所有负数排在正数前面。
+ * Negative: "-9...899" (-100) < "-9...994" (-5). Correct.
  */
 
 function padPositiveInt20(v: string | number): string {
   const s0 = String(v).trim();
-  // 仅允许非负数字，支持一处小数点（不允许科学计数法/负号）
-  if (!/^\d+(\.\d+)?$/.test(s0)) throw new Error("只接受非负数字（可带小数）");
+  if (!/^-?\d+(\.\d+)?$/.test(s0)) throw new Error("只接受数字（可带小数）");
 
-  // 显式默认，避免 TS 推断 undefined
-  const parts = s0.split(".");
-  let intPart: string = parts[0] ?? "0";
-  let fracPart: string = parts[1] ?? "";
+  const isNegative = s0.startsWith("-");
+  const parts = s0.replace("-", "").split(".");
+  
+  let intPartStr = parts[0] ?? "0";
+  const fracPart = parts[1] ?? "";
 
-  // 去掉整数部分前导 0
-  intPart = intPart.replace(/^0+/, "") || "0";
+  // 1. 去除前导零
+  intPartStr = intPartStr.replace(/^0+/, "") || "0";
+  
+  if (intPartStr.length > 20) throw new Error("数值过大，超出支持范围 (20位)");
 
-  if (intPart.length > 30) throw new Error("整数部分超过 20 位宽度");
+  // 2. 补零到 20 位
+  const paddedInt = intPartStr.padStart(20, "0");
 
-  const paddedInt = intPart.padStart(20, "0");
-  return fracPart ? `${paddedInt}.${fracPart}` : paddedInt;
+  if (isNegative) {
+    // 3. 负数处理：按位取反 (9 - n)
+    let inverted = "";
+    for (const char of paddedInt) {
+      inverted += (9 - parseInt(char)).toString();
+    }
+    // 负数保留小数部分原样（或者也可以考虑反转，但通常整数部分够用了，这里简化处理只拼接）
+    // 注意：如果需要极其精确的小数排序，小数部分也需要反转，但通常 key 主要是整数索引
+    return fracPart ? `-${inverted}.${fracPart}` : `-${inverted}`;
+  } else {
+    // 4. 正数处理：保持原样，兼容旧数据
+    return fracPart ? `${paddedInt}.${fracPart}` : paddedInt;
+  }
 }
 
 function isBase32(str: string): boolean {

@@ -630,6 +630,43 @@ if (allError) {
 
 //=====实际应用场景示例=====
 
+// 场景0：游戏应用排行榜（写入与读取）
+// 写入玩家分数（按 score 建索引，便于排行榜查询）
+const playerScore = {
+  userpubkey: dc.publicKey.string(),
+  name: "Alice",
+  score: 1280,
+  updatedAt: Date.now()
+};
+
+await dc.keyValue.set(
+  kvdb,
+  "ranking", // 统一 key，所有玩家写入同一个 key，依赖索引排序
+  JSON.stringify(playerScore),
+  JSON.stringify([{key:"index_score",type:"number",value:playerScore.score}])
+);
+
+// 读取排行榜（取分数最高的前 10 名）
+const [topList, topError] = await dc.keyValue.getWithIndex(
+  kvdb,
+  "index_score",
+  null,
+  {
+    type: "number",
+    limit: 10,
+    seekKey: "",
+    direction: 1, // 1=倒序，分数从高到低
+    offset: 0
+  }
+);
+
+if (topList && !topError) {
+  const rankings = JSON.parse(topList);
+  console.log("Top 10:", rankings);
+} else {
+  console.error("获取排行榜失败:", topError);
+}
+
 // 场景1：存储商品信息
 const product = {
     id: 'prod001',
