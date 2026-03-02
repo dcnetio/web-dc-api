@@ -1489,6 +1489,14 @@ export class FileManager {
         return fileContent;
       } finally {
         if (timeoutId) clearTimeout(timeoutId);
+        controller.abort();
+        if (stream && typeof stream.return === "function") {
+          try {
+            await stream.return();
+          } catch (closeError) {
+            console.warn("getFileFromDcContent: stream close failed", closeError);
+          }
+        }
       }
     } catch (error) {
       console.error("getFileFromDcContent error", error);

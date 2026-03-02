@@ -3,15 +3,9 @@ import type { IKeyValueOperations } from "../interfaces/keyvalue-interface";
 import type { KeyValueDB } from "../implements/keyvalue/manager";
 import { metadata } from "./decorator_factory";
 import { BaseEntity } from "./base_entity";
+import { extractRawValue } from "../common/dcutil";
 
 type Ctor<T> = new (...args: any[]) => T;
-
-const EXTRA_SEP = "$$$dckv_extra$$$";
-
-function extractRawValue(s: string): [string, string]  {
-  const i = s.indexOf(EXTRA_SEP);
-  return i >= 0 ? [s.slice(0, i), s.slice(i + EXTRA_SEP.length)] : [s, ""];
-}
 
 function safeParseJSON<T>(s: string | null): T | null {
   if (!s) return null;
@@ -429,7 +423,7 @@ export class EntityRepository<T extends BaseEntity> {
   // 保存实体并返回当前库中该实体类型的总数
   async saveWithCount(
     entity: T,
-    value: string, //value中可能包含valueFlag字段，表示是否需要合并entity.toJSON(),格式:{add:{"field1":10,"field2":5},sub:{"field2":5},allflag:true,countdate:"2020-01-01",yearFlag:true,monthFlag:true,valueFlag:true,value:"value"}  
+    value: string, //value中可能包含valueflag字段，表示是否需要合并entity.toJSON(),格式:{add:{"field1":10,"field2":5},sub:{"field2":5},allflag:true,countdate:"2020-01-01",yearflag:true,monthflag:true,valueflag:true,value:"value"}  
     indexs: string = "",
     vaccount?: string
   ): Promise<[boolean | null, number | null, Error | null]> {
@@ -450,9 +444,9 @@ export class EntityRepository<T extends BaseEntity> {
       return [null, null, new Error("entity primary key is empty")];
     }
 
-    // if valueFlag is true, merge entity.toJSON() into parsed.value and use entity-built indexes
+    // if valueflag is true, merge entity.toJSON() into parsed.value and use entity-built indexes
     let idxPayload = indexs && indexs !== "" ? indexs : "";
-    if (parsed && parsed.valueFlag) {
+    if (parsed && parsed.valueflag) {
       const entityJson = (entity as any).toJSON ? (entity as any).toJSON() : {};
       parsed.value = Object.assign({}, entityJson, parsed.value ?? {});
       idxPayload = buildIndexPayload(entity as object, this.entityCtor);
@@ -482,7 +476,13 @@ export class EntityRepository<T extends BaseEntity> {
       key = `global_${typeStr}`;
     }
     try {
-      return await this.ops.getDBCount(this.db, countType, typeStr, vaccount);
+      const [value, err] = await this.ops.getDBCount(this.db, countType, typeStr, vaccount);
+      if (err || !value) {
+        return [null, err];
+      }
+      const [rawValue , _] = extractRawValue(value);
+      return [rawValue, null];
+    
     } catch (error) {
       return [null, error instanceof Error ? error : new Error(String(error))];
     }

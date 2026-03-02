@@ -27,6 +27,13 @@ import { Blocks } from "@helia/interface";
 import { CID } from "multiformats/cid";
 import { concatenateUint8Arrays } from "../util/utils";
 
+export const EXTRA_SEP = "$$$dckv_extra$$$";
+
+export function extractRawValue(s: string): [string, string] {
+  const i = s.indexOf(EXTRA_SEP);
+  return i >= 0 ? [s.slice(0, i), s.slice(i + EXTRA_SEP.length)] : [s, ""];
+}
+
 // http2 type
 export class Http2_Type {
   static Handshake = 0x00;

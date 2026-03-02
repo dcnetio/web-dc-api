@@ -1,11 +1,8 @@
-import type { Multiaddr } from "@multiformats/multiaddr";
 import {
   AIProxyConfig,
-  DCConnectInfo,
   GetUserAIProxyAuthParams,
   OnStreamResponseType,
   ProxyCallConfig,
-  ThemeComment,
   UserProxyCallConfig,
 } from "../../common/types/types";
 import {
@@ -20,15 +17,12 @@ import { DcUtil } from "../../common/dcutil";
 import { Ed25519PubKey } from "../../common/dc-key/ed25519";
 import { sha256, uint32ToLittleEndianBytes } from "../../util/utils";
 import { base32 } from "multiformats/bases/base32";
-import { Client } from "../../common/dcapi";
 import { CommentType, Direction } from "../../common/define";
 import { DCContext } from "../../../lib/interfaces/DCContext";
 import { AIProxyClient } from "./client";
 import { FileManager } from "../file/manager";
 import { toString as uint8ArrayToString } from "uint8arrays/to-string";
 import { BrowserLineReader, readLine } from "../../util/BrowserLineReader";
-import { dcnet } from "../../proto/dcnet_proto";
-import { bytesToHex } from "@noble/curves/abstract/utils";
 import { KeyValueClient } from "../keyvalue/client";
 import { SymmetricKey } from "../threaddb/common/key";
 import { Libp2p } from "@libp2p/interface";
