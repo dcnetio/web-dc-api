@@ -95,11 +95,9 @@ export class UtilClient {
           );
           return;
         }
-        console.error("SetAppInfo error:", error);
         throw error;
       }
     } catch (error) {
-      console.error("设置APP信息失败:", error);
       throw error;
     }
   }

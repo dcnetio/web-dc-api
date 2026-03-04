@@ -84,7 +84,7 @@ export class KeyValueClient {
         console.log("ConfigThemeObjAuth decoded", decoded);
         return decoded.flag;
       }
-      console.error("ConfigThemeObjAuth error:", error);
+      console.warn("ConfigThemeObjAuth error:", error);
       throw error;
     }
   }
@@ -306,7 +306,7 @@ export class KeyValueClient {
         console.log("SetKeyValue decoded", decoded);
         return [decoded.flag, decoded.timestamp as number];
       }
-      console.error("SetKeyValue error:", error);
+      console.warn("SetKeyValue error:", error);
       throw error;
     }
   }
@@ -374,7 +374,7 @@ export class KeyValueClient {
         }
         return null;
       }
-      console.error("GetValueWithKey error:", error);
+      console.warn("GetValueWithKey error:", error);
       throw error;
     }
   }
@@ -442,7 +442,7 @@ export class KeyValueClient {
         }
         return null;
       }
-      console.error("GetValuesWithKeys error:", error);
+      console.warn("GetValuesWithKeys error:", error);
       throw error;
     }
   }
@@ -518,7 +518,7 @@ export class KeyValueClient {
         }
         return null;
       }
-      console.error("GetValuesWithIndex error:", error);
+      console.warn("GetValuesWithIndex error:", error);
       throw error;
     }
   }

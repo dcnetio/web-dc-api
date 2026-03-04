@@ -72,7 +72,7 @@ export class NewsComponent {
     }
 
     if (err || !db) {
-      console.error("NewsComponent initialize failed:", err);
+      console.warn("NewsComponent initialize failed:", err);
       return false;
     }
 
@@ -120,7 +120,7 @@ export class NewsComponent {
     );
 
     if (err || !success) {
-      console.error("Publish news failed:", err);
+      console.warn("Publish news failed:", err);
       return null;
     }
 
@@ -238,7 +238,7 @@ export class NewsComponent {
       }
       return newsList;
     } catch (e) {
-      console.error("Parse news list failed", e);
+      console.warn("Parse news list failed", e);
       return [];
     }
   }

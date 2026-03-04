@@ -136,9 +136,9 @@ function example(): void {
         cipher.decrypt(decrypted, dst);  
     } catch (error) {  
         if (error instanceof KeySizeError) {  
-            console.error('Invalid key size:', error.message);  
+            console.warn('Invalid key size:', error.message);  
         } else {  
-            console.error('Encryption error:', error);  
+            console.warn('Encryption error:', error);  
         }  
     }  
 }

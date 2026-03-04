@@ -75,7 +75,7 @@ export function createLogger(module: string): Logger {
     error(message: string, ...args: any[]): void {
       if (globalConfig.level <= LogLevel.ERROR) {
         const prefix = buildPrefix('ERROR', module);
-        console.error(prefix + message, ...args);
+        console.warn(prefix + message, ...args);
       }
     }
   };

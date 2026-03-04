@@ -116,7 +116,7 @@ export class Encryption {
 
       return littleEndianResult;
     } catch (error) {
-      console.error("Error during conversion:", error);
+      console.warn("Error during conversion:", error);
       throw error;
     }
   }
@@ -255,7 +255,7 @@ export class Encryption {
 
       return result;
     } catch (error: any) {
-      console.error("Encryption Debug Error:", error);
+      console.warn("Encryption Debug Error:", error);
       throw error;
     }
   }
@@ -364,7 +364,7 @@ export class Encryption {
 
       return decrypted;
     } catch (error: any) {
-      console.error("Decryption error:", error);
+      console.warn("Decryption error:", error);
       throw new Error(`Decryption failed: ${error.message}`);
     }
   }
@@ -409,7 +409,7 @@ export class Encryption {
       console.log("Conversion successful");
       console.log("Converted Key:", this.toHex(curve25519PrivateKey));
     } catch (error) {
-      console.error("Private key conversion failed:", error);
+      console.warn("Private key conversion failed:", error);
       return;
     }
 
@@ -431,7 +431,7 @@ export class Encryption {
         console.log("(Data is not valid UTF-8 text)");
       }
     } catch (error) {
-      console.error("Decryption failed:", error);
+      console.warn("Decryption failed:", error);
     }
   }
 }

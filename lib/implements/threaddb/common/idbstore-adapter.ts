@@ -132,7 +132,7 @@ class IDBDatastoreAdapter implements TxnDatastoreExtended {
             value  
           };  
         } catch (err) {  
-          console.error(`Error getting key ${key}:`, err);  
+          console.warn(`Error getting key ${key}:`, err);  
         }  
       }  
     }  

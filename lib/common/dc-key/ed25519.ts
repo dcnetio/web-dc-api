@@ -311,7 +311,7 @@ async function example() {
     const privKeyStr = privKey.toString();
     const recoveredPrivKey = Ed25519PrivKey.fromString(privKeyStr);
   } catch (error) {
-    console.error("Error:", error);
+    console.warn("Error:", error);
   }
 }
 

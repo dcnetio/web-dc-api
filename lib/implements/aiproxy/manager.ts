@@ -446,7 +446,7 @@ export class AIProxyManager {
     while (true) {
       const { line, error } = readLine(reader);
       if (error && error.message !== "EOF") {
-        console.error("读取错误:", error);
+        console.warn("读取错误:", error);
         break;
       } else if (line) {
         // 将Uint8Array转回字符串
@@ -466,12 +466,12 @@ export class AIProxyManager {
           try {
             const authContent = contentStr.split("$$auth$$:")[1];
             if (!authContent) {
-              console.error("无效的授权信息格式:", contentStr);
+              console.warn("无效的授权信息格式:", contentStr);
               continue; // 如果格式不正确，跳过
             }
             const parts = authContent.split(":");
             if (parts.length < 2) {
-              console.error("无效的授权信息格式:", authContent);
+              console.warn("无效的授权信息格式:", authContent);
               continue; // 如果格式不正确，跳过
             }
             //解析出userpubkey
@@ -488,14 +488,14 @@ export class AIProxyManager {
               authConfig: authConfig,
             });
           } catch (error) {
-            console.error("解析授权信息错误:", error);
+            console.warn("解析授权信息错误:", error);
           }
           continue;
         }
         //keyvalue中取出value
         const parts: string[] = contentStr.split(":");
         if (parts.length < 2) {
-          console.error("无效的内容格式:", contentStr);
+          console.warn("无效的内容格式:", contentStr);
           continue; // 如果格式不正确，跳过
         }
 
@@ -521,7 +521,7 @@ export class AIProxyManager {
           }
           allContent.push(content as AIProxyConfig);
         } catch (error) {
-          console.error("解析内容错误:", error);
+          console.warn("解析内容错误:", error);
         }
       }
     }

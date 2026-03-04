@@ -133,7 +133,7 @@ export class FileClient {
       // const decoded = dcnet.pb.StroeFileReply.decode(responseData);
       // return [decoded.cid, decoded.decryptKey, null];
     } catch (err) {
-      console.error("storeFile error:", err);
+      console.warn("storeFile error:", err);
       throw err;
     }
   }
@@ -219,7 +219,7 @@ async storeFolder(
         }
       
       } catch (error: any) {
-        console.error("Error decoding StoreFolderReply:", error);
+        console.warn("Error decoding StoreFolderReply:", error);
         if (onErrorCallback) {
           onErrorCallback(new Error("Failed to decode StoreFolderReply: " + error.message));
         }
@@ -242,7 +242,7 @@ async storeFolder(
     onDataCallback,
   );
 }catch (err) {
-  console.error("storeFolder error:", err);
+  console.warn("storeFolder error:", err);
   if (onErrorCallback) {
     onErrorCallback(new Error("StoreFolder failed: " + (err instanceof Error ? err.message : String(err))));
   }

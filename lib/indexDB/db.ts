@@ -40,7 +40,7 @@ async function _initializeDatabase() {
     console.log("数据库已打开:", dbInstance);
     return true;
   } catch (error) {
-    console.error("数据库初始化失败:", error);
+    console.warn("数据库初始化失败:", error);
     return false;
   }
 }

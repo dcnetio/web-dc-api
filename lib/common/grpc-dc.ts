@@ -150,7 +150,7 @@ export class DCGrpcClient {
 
       return true;
     } catch (error) {
-      console.error("Token validation failed:", error);
+      console.warn("Token validation failed:", error);
       return false;
     }
   }

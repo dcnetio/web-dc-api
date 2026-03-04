@@ -249,7 +249,7 @@ export class FileManager {
       return [null, Errors.ErrNoDcPeerConnected];
     }
     if (!this.connectedDc || !this.connectedDc.nodeAddr) {
-      console.error("=========Errors.ErrNoDcPeerConnected");
+      console.warn("=========Errors.ErrNoDcPeerConnected");
       return [null, Errors.ErrNoDcPeerConnected];
     }
 
@@ -367,7 +367,7 @@ export class FileManager {
       //创建文件主动上报流
       await this.createTransferStreamWithRetry(nodeAddr, BrowserType.File, resCid);
     } catch (error) {
-      console.error("=========stream close", error);
+      console.warn("=========stream close", error);
       throw error;
     }
     return [resCid, null];
@@ -423,7 +423,7 @@ export class FileManager {
       return [null, Errors.ErrNoDcPeerConnected];
     }
     if (!this.connectedDc || !this.connectedDc.nodeAddr) {
-      console.error("=========Errors.ErrNoDcPeerConnected");
+      console.warn("=========Errors.ErrNoDcPeerConnected");
       return [null, Errors.ErrNoDcPeerConnected];
     }
 
@@ -508,7 +508,7 @@ export class FileManager {
         }
       }
       if (!rootCID) {
-        console.error("Failed to find root directory CID");
+        console.warn("Failed to find root directory CID");
         return [null, new Error("Failed to find root directory CID")];
       }
       // 计算 rootCID 后的block数量
@@ -617,7 +617,7 @@ export class FileManager {
       await this.createTransferStreamWithRetry(nodeAddr, BrowserType.File, finalCid);
       return [finalCid, null];
     } catch (error) {
-      console.error("Folder upload failed:", error);
+      console.warn("Folder upload failed:", error);
       return [null, error instanceof Error ? error : new Error(String(error))];
     }
   }
@@ -676,7 +676,7 @@ export class FileManager {
         }
       }
       if (!rootCID) {
-        console.error("Failed to find root directory CID");
+        console.warn("Failed to find root directory CID");
         return [null, new Error("Failed to find root directory CID")];
       }
       return [rootCID.toString(), null];
@@ -803,14 +803,14 @@ export class FileManager {
           offset += chunkSize;
         }
       } catch (error) {
-        console.error("Error processing file:", error);
+        console.warn("Error processing file:", error);
       } finally {
         await writer.close();
       }
     };
     // Start processing the file
     processFile().catch((error) => {
-      console.error("Error in file processing:", error);
+      console.warn("Error in file processing:", error);
     });
     return readable;
   }
@@ -843,7 +843,7 @@ export class FileManager {
       const totalSize = rootStats.dagSize ? Number(rootStats.dagSize) : 0;
       return [totalBlocks, totalSize];
     } catch (error) {
-      console.error("Error counting directory blocks:", error);
+      console.warn("Error counting directory blocks:", error);
       throw error;
     }
   }
@@ -958,7 +958,7 @@ export class FileManager {
             offset += chunkSize;
           }
         } catch (error) {
-          console.error("Error processing file:", error);
+          console.warn("Error processing file:", error);
         } finally {
           await writer.close();
         }
@@ -1027,7 +1027,7 @@ export class FileManager {
       clearTimeout(timeoutId);
       return await response.blob();
     } catch (error) {
-      console.error("Error reading file:", error);
+      console.warn("Error reading file:", error);
       return null;
     }
   }
@@ -1050,7 +1050,7 @@ export class FileManager {
         const res = value instanceof Uint8ArrayList ? value.subarray() : value;
         yield res;
       } catch (err) {
-        console.error("chunkGenerator error:", err);
+        console.warn("chunkGenerator error:", err);
       }
     }
   }
@@ -1145,7 +1145,7 @@ export class FileManager {
           return [null, Errors.ErrBuildServerConnect];
         }
       } catch (error) {
-        console.error("Error connecting to peer:", error);
+        console.warn("Error connecting to peer:", error);
       }
     }
     const [fileList, err] = await this.getFolderFileList(
@@ -1271,7 +1271,7 @@ export class FileManager {
       await traverseDirectory(id);
       return [fileNodes, null];
     } catch (error) {
-      console.error("获取文件夹列表失败:", error);
+      console.warn("获取文件夹列表失败:", error);
       return [null, error instanceof Error ? error : new Error(String(error))];
     }
   }
@@ -1330,7 +1330,7 @@ export class FileManager {
           return [null, Errors.ErrBuildServerConnect];
         }
       } catch (error) {
-        console.error("Error connecting to peer1:", error);
+        console.warn("Error connecting to peer1:", error);
       }
       const fileContent = await this.getFileFromDcContent(
         cid,
@@ -1351,13 +1351,13 @@ export class FileManager {
     try {
       // 1. 验证 dcNodeClient
       if (!this.dcNodeClient) {
-        console.error("getFileFromDcContent: dcNodeClient is not initialized");
+        console.warn("getFileFromDcContent: dcNodeClient is not initialized");
         return null;
       }
 
       // 2. 验证 cid 参数
       if (!cid) {
-        console.error("getFileFromDcContent: cid is null or undefined");
+        console.warn("getFileFromDcContent: cid is null or undefined");
         return null;
       }
 
@@ -1372,14 +1372,14 @@ export class FileManager {
           // 清理字符串并解析
           const cleanCid = cid.trim();
           if (!cleanCid) {
-            console.error(
+            console.warn(
               "getFileFromDcContent: cid is empty string after trim",
             );
             return null;
           }
           cidObj = CID.parse(cleanCid);
         } else {
-          console.error(
+          console.warn(
             "getFileFromDcContent: invalid cid type",
             "type:",
             typeof cid,
@@ -1389,7 +1389,7 @@ export class FileManager {
           return null;
         }
       } catch (parseError) {
-        console.error(
+        console.warn(
           "getFileFromDcContent: CID parse failed",
           "error:",
           parseError,
@@ -1408,7 +1408,7 @@ export class FileManager {
         if (timeoutId) clearTimeout(timeoutId);
         timeoutId = setTimeout(() => {
           controller.abort();
-          console.error("getFileFromDcContent: timeout fetching cid", cid);
+          console.warn("getFileFromDcContent: timeout fetching cid", cid);
         }, 60000);
       };
 
@@ -1419,7 +1419,7 @@ export class FileManager {
         stream = fs.cat(cidObj.toString(), { signal: controller.signal });
       } catch (catError) {
         clearTimeout(timeoutId);
-        console.error(
+        console.warn(
           "getFileFromDcContent: fs.cat failed",
           "error:",
           catError,
@@ -1499,7 +1499,7 @@ export class FileManager {
         }
       }
     } catch (error) {
-      console.error("getFileFromDcContent error", error);
+      console.warn("getFileFromDcContent error", error);
       return null;
     }
   };
@@ -1566,7 +1566,7 @@ export class FileManager {
       });
     } catch (err) {
       clearTimeout(timeoutId);
-      console.error("Failed to create seekable file stream:", err);
+      console.warn("Failed to create seekable file stream:", err);
       return null;
     }
   }
@@ -1611,7 +1611,7 @@ export class FileManager {
       }
       return currentCid.toString();
     } catch (error) {
-      console.error("resolvePath error:", error);
+      console.warn("resolvePath error:", error);
       return null;
     }
   }
@@ -1688,7 +1688,7 @@ export class FileManager {
       }
       return "unknown";
     } catch (error) {
-      console.error("isFileOrDir error:", error);
+      console.warn("isFileOrDir error:", error);
       return "unknown";
     }
   }
@@ -1734,7 +1734,7 @@ export class FileManager {
         false,
       );
       if (err) {
-        console.error("getFileFromDir getFolderFileList error:", err);
+        console.warn("getFileFromDir getFolderFileList error:", err);
         return null;
       }
       return list;

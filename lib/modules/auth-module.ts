@@ -458,8 +458,8 @@ export class AuthModule implements DCModule, IAuthOperations {
     payload: Uint8Array,
   ): Promise<[Uint8Array | null, Error | null]> {
     try {
-      const signature = await this.decryptWith(payload);
-      return [signature, null];
+      const plain = await this.decryptWith(payload);
+      return [plain, null];
     } catch (error) {
       return [null, error as Error];
     }

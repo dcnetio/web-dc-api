@@ -79,7 +79,6 @@ export class DcUtil {
   ): Promise<[Multiaddr | null, string[] | null]> => {
     const peers = await this.dcChain.getObjNodes(cid);
     if (!peers) {
-      console.error("peers is null");
       return [null, null];
     }
     const res = await this._connectPeers(peers);
@@ -112,7 +111,6 @@ export class DcUtil {
         }
       }
     } catch (e) {
-      // console.error("check connection error", e);
     }
 
     if (!this.dcNodeClient?.libp2p) {
@@ -179,14 +177,12 @@ export class DcUtil {
             }
           }
         } catch (e) {
-          // console.error("check connection error", e);
         }
 
         const [nodeAddr, _] = await _this.dcChain.getDcNodeWebrtcDirectAddr(
           peerListJson[i],
         );
         if (!nodeAddr) {
-          console.error("no nodeAddr return");
           num++;
           if (num >= len) {
             reject("no nodeAddr return");
@@ -232,14 +228,14 @@ export class DcUtil {
                 return;
               }
             } catch (e) {
-              console.error("check connection error in catch", e);
+              console.warn("check connection error in catch", e);
             }
           }
 
           if (error && typeof error === "object" && "message" in error) {
             num++;
             if (num >= len) {
-              console.error(
+              console.warn(
                 "dial nodeAddr error,error:%s",
                 (error as any).message,
               );
@@ -248,7 +244,7 @@ export class DcUtil {
           } else {
             num++;
             if (num >= len) {
-              console.error("dial nodeAddr error,error:", error);
+              console.warn("dial nodeAddr error,error:", error);
               reject(error);
             }
           }
@@ -313,7 +309,7 @@ export class DcUtil {
           );
           clients.push(client);
         } catch (error) {
-          console.error("connectToUserAllDcPeers error", error);
+          console.warn("connectToUserAllDcPeers error", error);
         }
       }
     }
@@ -356,7 +352,7 @@ export class DcUtil {
             reslove(null);
           }
         } catch (error) {
-          console.error("nodeAddr catch return", error);
+          console.warn("nodeAddr catch return", error);
           num++;
           if (num >= len) {
             reslove(null);
@@ -474,7 +470,7 @@ export class DcUtil {
   _getNodeAddr = async (peerId: string): Promise<Multiaddr | undefined> => {
     let [nodeAddr, _] = await this.dcChain.getDcNodeWebrtcDirectAddr(peerId);
     if (!nodeAddr) {
-      console.error("no node address found for peer: ", peerId);
+      console.warn("no node address found for peer: ", peerId);
       return;
     }
     // if (isName(nodeAddr)) {
@@ -508,7 +504,7 @@ export class DcUtil {
     // 连接节点，得到最快的节点（随机取几个连接取最快，如果都没有连接上继续随机取）
     const nodeAddr = await this._getConnectDcNodeList(allNodeList);
     if (!nodeAddr) {
-      console.error("no node connected");
+      console.warn("no node connected");
       return;
     }
 
@@ -626,7 +622,7 @@ export class DcUtil {
           (err as Error).message !== "Stream closed" &&
           (err as Error).message !== "Stream aborted"
         ) {
-          console.error("Stream sink error:", err);
+          console.warn("Stream sink error:", err);
         }
         stream.abort(err as Error);
         throw err;
@@ -792,7 +788,7 @@ export class DcUtil {
                 blocksSent++;
                 bytesSent += responseData.length;
               } catch (error) {
-                console.error("Error retrieving/sending block:", error);
+                console.warn("Error retrieving/sending block:", error);
                 throw error;
               }
             }
@@ -806,7 +802,7 @@ export class DcUtil {
         }
       }
     } catch (err) {
-      console.error(
+      console.warn(
         "Transfer stream error:",
         err,
         `- Blocks sent: ${blocksSent}, Bytes sent: ${(bytesSent / 1024 / 1024).toFixed(2)}MB`,
@@ -832,7 +828,7 @@ export class DcUtil {
         const res = value instanceof Uint8ArrayList ? value.subarray() : value;
         yield res;
       } catch (err) {
-        console.error("Stream chunk error:", err);
+        console.warn("Stream chunk error:", err);
         break;
       }
     }

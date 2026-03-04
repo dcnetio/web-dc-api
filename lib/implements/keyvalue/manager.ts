@@ -185,12 +185,14 @@ export class KeyValueDB {
 
   //获取授权列表
   async getAuthList(
+    seekKey: string = "",
     vaccount?: string
   ): Promise<[ThemeAuthInfo[] | null, ThemeComment[] | null, Error | null]> {
     return this.manager.getAuthList(
       this.appId,
       this.themeAuthor,
       this.dbname,
+      seekKey,
       vaccount
     );
   }
@@ -565,6 +567,7 @@ export class KeyValueManager {
     appId: string,
     themeAuthor: string,
     theme: string,
+    seekKey: string = "",
     vaccount?: string
   ): Promise<[ThemeAuthInfo[] | null, ThemeComment[] | null, Error | null]> {
     if (!theme.startsWith("keyvalue_")) {
@@ -573,7 +576,7 @@ export class KeyValueManager {
     if (!theme.endsWith("_authlist")) {
       theme += "_authlist";
     }
-    let seekKey: string = "";
+    let currentSeekKey: string = seekKey || "";
     let originAuthList: ThemeComment[] = [];
     let authList: ThemeAuthInfo[] = [];
     try {
@@ -587,7 +590,7 @@ export class KeyValueManager {
           Direction.Forward,
           0,
           1000,
-          seekKey || "",
+          currentSeekKey,
           vaccount
         );
         if (res[0] && res[0].length == 0) {
@@ -624,18 +627,21 @@ export class KeyValueManager {
           const permission = parseInt(parts[1]!);
           let remarkStart = parts[0]!.length + parts[1]!.length + 2;
           const remark = content.length > remarkStart ? content.substring(remarkStart) : "";
+          currentSeekKey = `${resList[resList.length - 1]!.blockheight}/${
+            resList[resList.length - 1]!.commentCid
+           }`;
           authList.push({
             pubkey: authPubkeyStr,
             permission: permission,
             remark: remark,
+            key: currentSeekKey,
           });
         }
         if (resList.length < 1000) {
           break;
         }
-        seekKey = `${resList[resList.length - 1]!.blockheight}/${
-          resList[resList.length - 1]!.commentCid
-        }`;
+       
+        
       }
     } catch (error: any) {
       return [authList, originAuthList, error];

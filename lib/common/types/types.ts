@@ -73,6 +73,7 @@ export interface ThemeAuthInfo {
   pubkey: string; // 用户公钥
   permission: number; // 权限
   remark: string; // 预留配置
+  key?: string; // 预留配置，权限配置的唯一标识
 }
 export interface ThemeComment {
   theme: string;

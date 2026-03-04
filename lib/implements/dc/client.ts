@@ -44,7 +44,7 @@ export class DCClient {
       };
       return reply;
     } catch (err) {
-      console.error("getHostID error:", err);
+      console.warn("getHostID error:", err);
       throw err;
     }
   }

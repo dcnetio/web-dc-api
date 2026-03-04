@@ -127,6 +127,7 @@ export class KeyValueModule implements DCModule, IKeyValueOperations {
   }
    async getAuthList(
     kvdb: KeyValueDB,
+    seekKey: string = "",
     vaccount?: string
   ): Promise<[ThemeAuthInfo[]|null,ThemeComment[] | null, Error | null]> {
     const err = this.assertInitialized();
@@ -135,7 +136,7 @@ export class KeyValueModule implements DCModule, IKeyValueOperations {
     }
     
     try {
-      return await kvdb.getAuthList(vaccount);
+      return await kvdb.getAuthList(seekKey, vaccount);
     } catch (error) {
       return [null, null, error instanceof Error ? error : new Error(String(error))];
     }

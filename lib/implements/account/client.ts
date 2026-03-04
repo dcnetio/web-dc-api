@@ -217,7 +217,7 @@ async setUserDefaultDB(dbinfocrypto: Uint8Array,blockHeight: number,peerId: stri
       throw error;
     }
   } catch (error) {
-    console.error("设置用户默认数据库失败:", error);
+    console.warn("设置用户默认数据库失败:", error);
     throw error;
   }
 }

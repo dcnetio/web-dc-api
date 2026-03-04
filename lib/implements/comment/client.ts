@@ -80,7 +80,7 @@ export class CommentClient {
         const decoded = dcnet.pb.AddUserOffChainSpaceReply.decode(reply);
         return true;
       }
-      console.error("AddUserOffChainSpace error:", error);
+      console.warn("AddUserOffChainSpace error:", error);
       throw error;
     }
   }
@@ -322,7 +322,7 @@ export class CommentClient {
         console.log("DeleteThemeObj decoded", decoded);
         return decoded.flag;
       }
-      console.error("DeleteThemeObj error:", error);
+      console.warn("DeleteThemeObj error:", error);
       throw error;
     }
   }
@@ -388,7 +388,7 @@ export class CommentClient {
         console.log("AddThemeSpace decoded", decoded);
         return decoded.flag;
       }
-      console.error("AddThemeSpace error:", error);
+      console.warn("AddThemeSpace error:", error);
       throw error;
     }
   }
@@ -468,7 +468,7 @@ export class CommentClient {
         console.log("PublishCommentToTheme decoded", decoded);
         return decoded.flag;
       }
-      console.error("PublishCommentToTheme error:", error);
+      console.warn("PublishCommentToTheme error:", error);
       throw error;
     }
   }
@@ -541,7 +541,7 @@ export class CommentClient {
         console.log("ConfigThemeObjAuth decoded", decoded);
         return decoded.flag;
       }
-      console.error("ConfigThemeObjAuth error:", error);
+      console.warn("ConfigThemeObjAuth error:", error);
       throw error;
     }
   }
@@ -612,7 +612,7 @@ export class CommentClient {
         console.log("DeleteSelfComment decoded", decoded);
         return decoded.flag;
       }
-      console.error("DeleteSelfComment error:", error);
+      console.warn("DeleteSelfComment error:", error);
       throw error;
     }
   }
@@ -683,7 +683,7 @@ export class CommentClient {
         console.log("DeleteCommentToObj decoded", decoded);
         return decoded.flag;
       }
-      console.error("DeleteSelfComment error:", error);
+      console.warn("DeleteSelfComment error:", error);
       throw error;
     }
   }
@@ -720,7 +720,7 @@ export class CommentClient {
       }
       return false;
     } catch (error: any) {
-      console.error("IsThemeExist error:", error);
+      console.warn("IsThemeExist error:", error);
       throw error;
     }
   }
@@ -797,7 +797,7 @@ export class CommentClient {
           : "";
         return objsCid;
       }
-      console.error("GetThemeObj error:", error);
+      console.warn("GetThemeObj error:", error);
       throw error;
     }
   }
@@ -876,7 +876,7 @@ export class CommentClient {
           : "";
         return commentsCid;
       }
-      console.error("GetThemeComments error:", error);
+      console.warn("GetThemeComments error:", error);
       throw error;
     }
   }
@@ -949,7 +949,7 @@ export class CommentClient {
           : "";
         return commentsCid;
       }
-      console.error("GetUserComments error:", error);
+      console.warn("GetUserComments error:", error);
       throw error;
     }
   }

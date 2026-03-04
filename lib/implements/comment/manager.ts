@@ -113,7 +113,7 @@ export class CommentManager {
       );
       return [true, null];
     } catch (err) {
-      console.error("AddUserOffChainSpace error:", err);
+      console.warn("AddUserOffChainSpace error:", err);
       throw err;
     }
   }
@@ -274,7 +274,7 @@ export class CommentManager {
       }
       return [null, Errors.ErrDeleteThemeObj];
     } catch (err) {
-      console.error("deleteThemeObj error:", err);
+      console.warn("deleteThemeObj error:", err);
       throw err;
     }
   }
@@ -406,7 +406,7 @@ export class CommentManager {
         return [false, err as Error];
       }
     } catch (err) {
-      console.error("addUserOffChainOpTimes error:", err);
+      console.warn("addUserOffChainOpTimes error:", err);
       return [false, err as Error];
     }
   }
@@ -461,7 +461,7 @@ export class CommentManager {
       );
       return [res, null];
     } catch (err) {
-      console.error("addThemeSpace error:", err);
+      console.warn("addThemeSpace error:", err);
       throw err;
     }
   }
@@ -570,7 +570,7 @@ export class CommentManager {
       }
       return [null, Errors.ErrPublishCommentToTheme];
     } catch (err) {
-      console.error("publishCommentToTheme error:", err);
+      console.warn("publishCommentToTheme error:", err);
       throw err;
     }
   }
@@ -676,7 +676,7 @@ export class CommentManager {
       }
       return [0, null];
     } catch (err) {
-      console.error("deleteSelfComment error:", err);
+      console.warn("deleteSelfComment error:", err);
       throw err;
     }
   }
@@ -753,7 +753,7 @@ export class CommentManager {
       const allContent = await this.handleThemeObj(fileContentString);
       return [allContent, null];
     } catch (err) {
-      console.error("getThemeObj error:", err);
+      console.warn("getThemeObj error:", err);
       throw err;
     }
   }
@@ -841,7 +841,7 @@ export class CommentManager {
       );
       return [allContent || null, null];
     } catch (err) {
-      console.error("getThemeComments error:", err);
+      console.warn("getThemeComments error:", err);
       throw err;
     }
   }
@@ -1131,7 +1131,7 @@ export class CommentManager {
       );
       return [allContent || null, null];
     } catch (err) {
-      console.error("getUserComments error:", err);
+      console.warn("getUserComments error:", err);
       throw err;
     }
   }
@@ -1145,7 +1145,7 @@ export class CommentManager {
     while (true) {
       const { line, error } = readLine(reader);
       if (error && error.message !== "EOF") {
-        console.error("读取错误:", error);
+        console.warn("读取错误:", error);
         break;
       } else if (line) {
         // 将Uint8Array转回字符串
@@ -1191,7 +1191,7 @@ export class CommentManager {
     while (true) {
       const { line, error } = readLine(reader);
       if (error && error.message !== "EOF") {
-        console.error("读取错误:", error);
+        console.warn("读取错误:", error);
         break;
       } else if (line) {
         // 将Uint8Array转回字符串

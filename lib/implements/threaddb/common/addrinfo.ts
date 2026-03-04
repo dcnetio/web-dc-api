@@ -131,6 +131,6 @@ async function exampleUsage() {
     const filtered = merged.filter(ma => ma.toString().startsWith('/ip4/192'))  
     console.log(filtered.multiaddrs)  
   } catch (err) {  
-    console.error('Address validation failed:', err)  
+    console.warn('Address validation failed:', err)  
   }  
 }  

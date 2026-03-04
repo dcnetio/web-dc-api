@@ -285,7 +285,6 @@ export class DC implements DCContext {
         try {
           const [dbConfig, err] = await this.auth.decrypt(userInfo.dbConfigRaw);
           if (err || !dbConfig) {
-            console.error("解密dbConfig失败", err);
             return [null, err as unknown as Error];
           }
           const threadDBInfo = new TextDecoder().decode(dbConfig);
@@ -313,7 +312,6 @@ export class DC implements DCContext {
                     collections,
                   );
                   if (err) {
-                    console.error("升级表结构失败", err);
                     return [null, err];
                   }
                   // 更新本地版本号
@@ -365,7 +363,6 @@ export class DC implements DCContext {
             }
           }
         } catch (error: any) {
-          console.error("解密dbConfig失败", error);
           return [null, error];
         }
       }
@@ -386,7 +383,6 @@ export class DC implements DCContext {
         collections,
       );
       if (newDBError || !threadId) {
-        console.error("创建用户去中心化数据库失败", newDBError);
         return [null, newDBError];
       }
       if (threadId) {
@@ -400,7 +396,6 @@ export class DC implements DCContext {
         );
         if (!setUserDefaultDBRes) {
           // 设置用户默认DB失败
-          console.error("设置用户去中心DB失败");
           return [null, new Error("设置用户去中心DB失败")];
         }
       }
@@ -414,11 +409,9 @@ export class DC implements DCContext {
       } else {
         this.dbThreadId = "";
         // 获取DB失败
-        console.error("获取DB失败", error);
         return [null, error];
       }
     } catch (error: any) {
-      console.error("初始化用户DB失败", error);
       return [null, error];
     }
   }
@@ -450,7 +443,6 @@ export class DC implements DCContext {
       }
       await dc.auth.setUserDefaultDB(DBThreadid, rk, sk, remark || "");
     } catch (error) {
-      console.error("设置用户默认DB失败", error);
       return false;
     }
     // 循环获取用户信息，是否存在db,true成功

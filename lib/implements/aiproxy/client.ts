@@ -88,7 +88,7 @@ export class AIProxyClient {
         const aesKey = new TextDecoder().decode(decoded.aeskey);
         return [proxyConfigCid, aesKey, null];
       }
-      console.error("GetAIProxyConfig error:", error);
+      console.warn("GetAIProxyConfig error:", error);
       throw error;
     }
   }
@@ -263,7 +263,7 @@ export class AIProxyClient {
           );
         }
       } catch (error) {
-        console.error("DoAIProxyCall 解析数据失败:", error);
+        console.warn("DoAIProxyCall 解析数据失败:", error);
         if (onStreamResponse) {
           onStreamResponse(
             AIStreamResponseFlag.OTHER_ERROR,
@@ -349,7 +349,7 @@ export class AIProxyClient {
       isCompleted = true;
       clearTimeoutTimer();
 
-      console.error("DoAIProxyCall error:", error);
+      console.warn("DoAIProxyCall error:", error);
 
       // 如果是超时导致的错误，返回特定的错误码
       if (isAborted) {
@@ -396,7 +396,7 @@ export class AIProxyClient {
         );
         return 0;
       }
-      console.error("DoAIProxyCall error:", error);
+      console.warn("DoAIProxyCall error:", error);
       throw error;
     } finally {
       // 确保定时器被清理

@@ -141,7 +141,7 @@ export class DBManager {
           // Add to map of databases
           this.dbs.set(id.toString(), db);
         } catch (err) {
-          console.error(
+          console.warn(
             `Error loading database: ${
               err instanceof Error ? err.message : String(err)
             }`
@@ -149,7 +149,7 @@ export class DBManager {
         }
       }
     } catch (err) {
-      console.error(
+      console.warn(
         `Failed to load databases: ${
           err instanceof Error ? err.message : String(err)
         }`
@@ -306,7 +306,7 @@ export class DBManager {
         token: token,
       });
     } catch (err) {
-      console.error(`Error pulling thread ${id}:`, err);
+      console.warn(`Error pulling thread ${id}:`, err);
     }
   }
 
@@ -369,7 +369,7 @@ export class DBManager {
     await this.dc
       ._connectToObjNodes(tID.toString())
       .catch((err) =>
-        console.error(`Error connecting to object nodes: ${err.message}`)
+        console.warn(`Error connecting to object nodes: ${err.message}`)
       );
    
     // Generate thread key
@@ -433,7 +433,7 @@ export class DBManager {
       this.dc
         ._connectToObjNodes(tID.toString())
         .catch((err) =>
-          console.error(`Error connecting to object nodes: ${err.message}`)
+          console.warn(`Error connecting to object nodes: ${err.message}`)
         );
     }
 
@@ -1129,7 +1129,7 @@ export class DBManager {
         }
       }
     } catch (error) {
-      console.error(
+      console.warn(
         `Error getting records count for thread ${threadid}:`,
         error
       );
@@ -1593,7 +1593,7 @@ export class DBManager {
 
       await dbClient.addThreadSpace(tID, space, opts);
     } catch (err) {
-      console.error("addDBSpace error:", err);
+      console.warn("addDBSpace error:", err);
       throw err;
     }
   }
@@ -1642,7 +1642,7 @@ export class DBManager {
         usedSize,
       };
     } catch (err) {
-      console.error("getThreadDBSizeInfo error:", err);
+      console.warn("getThreadDBSizeInfo error:", err);
       throw err;
     }
   }
@@ -1657,7 +1657,7 @@ export class DBManager {
     try {
       sizeInfo = await this.getThreadDBSizeInfo(threadId);
     } catch (err) {
-      console.error("Failed to get DB size info:", err);
+      console.warn("Failed to get DB size info:", err);
       return false;
     }
 
@@ -1675,7 +1675,7 @@ export class DBManager {
       );
       return true;
     } catch (err) {
-      console.error("Failed to auto expand DB space:", err);
+      console.warn("Failed to auto expand DB space:", err);
       return false;
     }
   }
@@ -1742,7 +1742,7 @@ export class DBManager {
       // 返回实例ID
       return instanceID ? instanceID.toString() : "";
     } catch (err) {
-      console.error(
+      console.warn(
         `Failed to create instance: ${
           err instanceof Error ? err.message : String(err)
         }`
@@ -1778,7 +1778,7 @@ export class DBManager {
       // 删除实例
       await collection.delete(instanceID);
     } catch (err) {
-      console.error(
+      console.warn(
         `Failed to delete instance: ${
           err instanceof Error ? err.message : String(err)
         }`
@@ -1836,7 +1836,7 @@ export class DBManager {
       // 保存实例
       await collection.save(new TextEncoder().encode(instance));
     } catch (err) {
-      console.error(
+      console.warn(
         `Failed to save instance: ${
           err instanceof Error ? err.message : String(err)
         }`
@@ -1897,7 +1897,7 @@ export class DBManager {
         await collection.deleteMany(batchIds);
       }
     } catch (err) {
-      console.error(
+      console.warn(
         `Failed to delete instances: ${
           err instanceof Error ? err.message : String(err)
         }`
@@ -1934,7 +1934,7 @@ export class DBManager {
       // 检查实例是否存在
       return await collection.has(instanceID);
     } catch (err) {
-      console.error(
+      console.warn(
         `Failed to check instance existence: ${
           err instanceof Error ? err.message : String(err)
         }`
@@ -2017,7 +2017,7 @@ export class DBManager {
         return new TextDecoder().decode(joinedResult);
       }
     } catch (err) {
-      console.error(
+      console.warn(
         `Failed to find instances: ${
           err instanceof Error ? err.message : String(err)
         }`
@@ -2060,7 +2060,7 @@ export class DBManager {
         ? new TextDecoder().decode(result)
         : jsonStringify(result);
     } catch (err) {
-      console.error(
+      console.warn(
         `Failed to find instance by ID: ${
           err instanceof Error ? err.message : String(err)
         }`
@@ -2101,7 +2101,7 @@ export class DBManager {
       // 序列化并返回ID列表
       return JSON.stringify(ids);
     } catch (err) {
-      console.error(
+      console.warn(
         `Failed to get modified instances: ${
           err instanceof Error ? err.message : String(err)
         }`

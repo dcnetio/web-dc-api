@@ -1658,7 +1658,7 @@ function setModifiedTag(data: Uint8Array): { time: bigint, data: Uint8Array } {
     };
   } catch (err) {
     // 处理错误，但避免使用 log.Fatal 这样的致命错误
-    console.error(`修改标签设置错误: ${err instanceof Error ? err.message : String(err)}`);
+    console.warn(`修改标签设置错误: ${err instanceof Error ? err.message : String(err)}`);
     throw new Error(`设置 _mod 字段失败: ${err instanceof Error ? err.message : String(err)}`);
   }
 }

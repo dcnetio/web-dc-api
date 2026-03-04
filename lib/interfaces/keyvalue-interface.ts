@@ -52,6 +52,7 @@ export interface IKeyValueOperations {
    */
   getAuthList(
     kvdb: KeyValueDB,
+    seekKey?: string,
     vaccount?: string
   ): Promise<[ThemeAuthInfo[]|null,ThemeComment[] | null, Error | null]>;
 

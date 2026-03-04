@@ -83,7 +83,7 @@ export class MessageClient {
         console.log("SendMsgToUserBox decoded", decoded);
         return decoded.flag;
       }
-      console.error("SendMsgToUserBox error:", error);
+      console.warn("SendMsgToUserBox error:", error);
       throw error;
     }
   };
@@ -132,7 +132,7 @@ export class MessageClient {
         console.log("GetToUserBoxAuth decoded", decoded);
         return decoded.signature;
       }
-      console.error("GetToUserBoxAuth error:", error);
+      console.warn("GetToUserBoxAuth error:", error);
       throw error;
     }
   };
@@ -186,7 +186,7 @@ export class MessageClient {
       if(error.message.indexOf('datastore: key not found') != -1){
         return '';
       }
-      console.error("GetMaxKeyFromUserBox error:", error);
+      console.warn("GetMaxKeyFromUserBox error:", error);
       throw error;
     }
   }
@@ -244,7 +244,7 @@ export class MessageClient {
         const decoded = dcnet.pb.GetMsgFromUserBoxReply.decode(responseData);
         return decoded.toJSON();
       }
-      console.error("getMsgFromUserBox error:", error);
+      console.warn("getMsgFromUserBox error:", error);
       throw error;
     }
   }

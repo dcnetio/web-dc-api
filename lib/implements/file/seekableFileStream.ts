@@ -118,7 +118,7 @@ export class SeekableFileStream {
       return data;
     } catch (err) {
       clearTimeout(timeoutId);
-      console.error("Error reading plain data:", err);
+      console.warn("Error reading plain data:", err);
       return new Uint8Array(0);
     }
   }
@@ -201,7 +201,7 @@ private async readEncrypted(startPosition: number, length: number): Promise<Uint
     return result;
   } catch (err) {
     clearTimeout(timeoutId);
-    console.error("Error reading encrypted data:", err);
+    console.warn("Error reading encrypted data:", err);
     return new Uint8Array(0);
   }
 }
@@ -249,7 +249,7 @@ private async readEncrypted(startPosition: number, length: number): Promise<Uint
         streamBuffer = prefetchedData as any;
         streamBufferPosition = streamPosition;
       } catch (err) {
-        console.error("Error prefetching stream data:", err);
+        console.warn("Error prefetching stream data:", err);
         streamBuffer = new Uint8Array(0);
       }
     };
@@ -347,7 +347,7 @@ private async readEncrypted(startPosition: number, length: number): Promise<Uint
             }
           }
         } catch (err) {
-          console.error("Stream read error:", err);
+          console.warn("Stream read error:", err);
           controller.error(err);
         }
       },

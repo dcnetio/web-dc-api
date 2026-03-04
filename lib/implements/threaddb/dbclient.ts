@@ -51,7 +51,7 @@ export class DBClient {
       const tid = await grpcClient.requestThreadID();
       return tid;
     } catch (err: any) {
-      console.error("getHostID error:", err);
+      console.warn("getHostID error:", err);
       throw err;
     }
   }
@@ -68,7 +68,7 @@ export class DBClient {
       const threadInfo = await grpcClient.createThread(tid, opts);
       return tid;
     } catch (err: any) {
-      console.error("createThread error:", err);
+      console.warn("createThread error:", err);
       throw err;
     }
   }
@@ -165,7 +165,7 @@ export class DBClient {
             err.message !== "No address edge" &&
             err.message !== "No heads edge"
           ) {
-            console.error(`Getting local edges for ${tid} failed:`, err);
+            console.warn(`Getting local edges for ${tid} failed:`, err);
           } else {
             body.threads.push({
               threadID: tid.toBytes(),
@@ -219,7 +219,7 @@ export class DBClient {
               err.message !== "No address edge" &&
               err.message !== "No heads edge"
             ) {
-              console.error(
+              console.warn(
                 `Second retrieval of local edges for ${tid} failed:`,
                 err
               );
@@ -435,7 +435,7 @@ export class DBClient {
       req.body = body;
       return { req, serviceKey };
     } catch (err: any) {
-      console.error("buildGetRecordsRequest error:", err);
+      console.warn("buildGetRecordsRequest error:", err);
       throw err;
     }
   }

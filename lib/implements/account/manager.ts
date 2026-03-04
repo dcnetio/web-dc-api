@@ -50,15 +50,15 @@ export class AccountManager {
   // 获取用户备用节点
   getAccountNodeAddr = async (): Promise<[Multiaddr | null, Error | null]> => {
     if (!this.context.connectedDc.client) {
-      console.error("dcClient is null");
+      console.warn("dcClient is null");
       return [null, Errors.ErrNoDcPeerConnected];
     }
     if (!this.chainUtil) {
-      console.error("chainUtil is null");
+      console.warn("chainUtil is null");
       return [null, Errors.ErrChainUtilIsNull];
     }
     if (!this.context) {
-      console.error("context is null");
+      console.warn("context is null");
       return [null, Errors.ErrAccountPrivateSignIsNull];
     }
     const pubkeyRaw = this.context.getPubkeyRaw();
@@ -77,11 +77,11 @@ export class AccountManager {
     nftAccount: string
   ): Promise<[User | null, Error | null]> => {
     if (!this.context.connectedDc.client) {
-      console.error("dcClient is null");
+      console.warn("dcClient is null");
       return [null, Errors.ErrNoDcPeerConnected];
     }
     if (!this.chainUtil) {
-      console.error("chainUtil is null");
+      console.warn("chainUtil is null");
       return [null, Errors.ErrChainUtilIsNull];
     }
     // 从链上获取
@@ -92,20 +92,20 @@ export class AccountManager {
     peerAddr: Multiaddr
   ): Promise<[boolean | null, Error | null]> => {
     if (!this.context.connectedDc.client) {
-      console.error("dcClient is null");
+      console.warn("dcClient is null");
       return [false, Errors.ErrNoDcPeerConnected];
     }
     if (!this.chainUtil) {
-      console.error("chainUtil is null");
+      console.warn("chainUtil is null");
       return [null, Errors.ErrChainUtilIsNull];
     }
     if (!this.context) {
-      console.error("context is null");
+      console.warn("context is null");
       return [null, Errors.ErrAccountPrivateSignIsNull];
     }
     const peerId = getPeerIdString(peerAddr);
     if (!peerId) {
-      console.error("peerId is null");
+      console.warn("peerId is null");
       return [null, Errors.ErrNoAccountPeerConnected];
     }
     // 绑定节点
@@ -197,7 +197,7 @@ export class AccountManager {
           error instanceof Error ? error : new Error(errorMsg),
         ];
       } else {
-        console.error("NFT账号绑定失败:", error);
+        console.warn("NFT账号绑定失败:", error);
         return [
           NFTBindStatus.Error,
           error instanceof Error ? error : new Error(errorMsg),
@@ -408,7 +408,7 @@ export class AccountManager {
 
       return [req, NFTBindStatus.Success];
     } catch (error) {
-      console.error("生成账户请求失败:", error);
+      console.warn("生成账户请求失败:", error);
       return [null, NFTBindStatus.Error];
     }
   }
@@ -439,7 +439,7 @@ export class AccountManager {
         (pubKeyStr.indexOf("0x") === 0 ? pubKeyStr : "0x" + pubKeyStr)
       );
     } catch (error) {
-      console.error("检查NFT账号绑定状态失败:", error);
+      console.warn("检查NFT账号绑定状态失败:", error);
       return false;
     }
   }
@@ -464,7 +464,7 @@ export class AccountManager {
         return false;
       }
     } catch (error) {
-      console.error("检查NFT账号绑定状态失败:", error);
+      console.warn("检查NFT账号绑定状态失败:", error);
       return false;
     }
     return true;
@@ -607,7 +607,7 @@ export class AccountManager {
       // 返回编码后的私钥
       return [subPrivateKey.string(), null];
     } catch (error) {
-      console.error("Failed to generate app account:", error);
+      console.warn("Failed to generate app account:", error);
       return [null, error instanceof Error ? error : new Error(String(error))];
     }
   }
@@ -831,7 +831,7 @@ export class AccountManager {
         // 是的，只要成功一个就返回。
         return null;
       } catch (e) {
-        console.error(`Failed to modify password on peer ${peerIdStr}:`, e);
+        console.warn(`Failed to modify password on peer ${peerIdStr}:`, e);
         continue;
       }
     }

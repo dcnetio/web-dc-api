@@ -93,7 +93,7 @@ export class DBGrpcClient {
       const decoded = dcnet_proto.pb.ThreadIDReply.decode(responseData);
       return uint8ArrayToString(decoded.threadID);
     } catch (err) {
-      console.error("RequestThreadID error:", err);
+      console.warn("RequestThreadID error:", err);
       throw err;
     }
   }
@@ -135,7 +135,7 @@ export class DBGrpcClient {
       const threadInfo = await this.threadInfoFromProto(reply);
       return threadInfo;
     } catch (err) {
-      console.error("CreateThread error:", err);
+      console.warn("CreateThread error:", err);
       throw err;
     }
   }
@@ -327,7 +327,7 @@ export class DBGrpcClient {
       });
       return keys;
     } catch (err) {
-      console.error("getThreadKeys error:", err);
+      console.warn("getThreadKeys error:", err);
       throw err;
     }
   }
@@ -650,7 +650,7 @@ export class DBGrpcClient {
       const reply = net_pb.pb.GetLogsReply.decode(response);
       return reply;
     } catch (err) {
-      console.error(
+      console.warn(
         `getLogs error for peer ${this.client.peerAddr.toString()}:`,
         err,
       );
@@ -683,7 +683,7 @@ export class DBGrpcClient {
       const threadInfo = await this.threadInfoFromProto(reply);
       return threadInfo;
     } catch (err) {
-      console.error(
+      console.warn(
         `getThreadFromPeer error for peer ${this.peerAddr.toString()}:`,
         err,
       );
@@ -721,7 +721,7 @@ export class DBGrpcClient {
         30000,
       );
     } catch (err) {
-      console.error("AddThreadSpace error:", err);
+      console.warn("AddThreadSpace error:", err);
       throw err;
     }
   }
@@ -761,7 +761,7 @@ export class DBGrpcClient {
 
       return usedSize;
     } catch (err) {
-      console.error("GetThreadUsedSpace error:", err);
+      console.warn("GetThreadUsedSpace error:", err);
       throw err;
     }
   }

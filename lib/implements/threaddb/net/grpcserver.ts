@@ -36,7 +36,7 @@ export class DCGrpcServer {
           }
 
           if (!stream) {
-              console.error("Stream is undefined in handle callback", data);
+              console.warn("Stream is undefined in handle callback", data);
               return;
           }
           const hpack = new HPACK()
@@ -67,7 +67,7 @@ export class DCGrpcServer {
 
           http2Parser.processStream(source)
         } catch (err) {
-          console.error("Error handling request:", err);
+          console.warn("Error handling request:", err);
         }
       });
     }
@@ -111,12 +111,12 @@ export class DCGrpcServer {
         }
 
         if (!this.net) {
-            console.error("Network not set");
+            console.warn("Network not set");
             return;
        }
        
        if (!threadId) {
-            console.error("Thread ID missing");
+            console.warn("Thread ID missing");
             return;
        }
 

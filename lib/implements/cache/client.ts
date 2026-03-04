@@ -52,7 +52,7 @@ export class CacheClient {
       const encodedValue = uint8ArrayToString(decoded.value);
       return encodedValue;
     } catch (err) {
-      console.error("GetCacheValue error:", err);
+      console.warn("GetCacheValue error:", err);
       throw err;
     }
   }
@@ -96,7 +96,7 @@ export class CacheClient {
       }
       throw new Error("SetCacheKey failed,flag: " + decoded.flag);
     } catch (err) {
-      console.error("SetCacheKey error:", err);
+      console.warn("SetCacheKey error:", err);
       throw err;
     }
   }

@@ -202,7 +202,7 @@ export class Network implements Net {
               expiresAt: expiresAt,
             });
           } catch (e) {
-            console.error("decode token error", e);
+            console.warn("decode token error", e);
           }
         }
       }
@@ -241,7 +241,7 @@ export class Network implements Net {
                 expiresAt: expiresAt,
               });
             } catch (e) {
-              console.error("decode token error", e);
+              console.warn("decode token error", e);
             }
           }
           if (token) {
@@ -673,7 +673,7 @@ export class Network implements Net {
               }),
             ]);
           } catch (err) {
-            console.error(`处理记录 ${index + 1} 失败:`, err);
+            console.warn(`处理记录 ${index + 1} 失败:`, err);
             // 这里不 throw，让 Promise.all 能够继续处理其他记录，除非需要中断整个流程
             // throw err;
           } finally {
@@ -800,7 +800,7 @@ export class Network implements Net {
           peers = extPeers;
         }
       } catch (err) {
-        console.error(
+        console.warn(
           `Error getting peers for thread ${tid}: ${
             err instanceof Error ? err.message : String(err)
           }`,
@@ -1725,7 +1725,7 @@ export class Network implements Net {
       req.body = body;
       return { req, serviceKey };
     } catch (err) {
-      console.error("buildGetRecordsRequest error:", err);
+      console.warn("buildGetRecordsRequest error:", err);
       throw err;
     }
   }
@@ -2097,19 +2097,19 @@ export class Network implements Net {
               item.counter,
             );
           } catch (err) {
-            console.error("pushRecord failed:", err);
+            console.warn("pushRecord failed:", err);
             // 失败后简单等待一下
             await sleep(200);
           }
         } catch (err) {
-          console.error("push worker crashed:", err);
+          console.warn("push worker crashed:", err);
           await sleep(500);
         }
       }
     };
 
     loop().catch((err) => {
-      console.error("push worker stopped unexpectedly:", err);
+      console.warn("push worker stopped unexpectedly:", err);
       this.pushWorkerStarted = false;
       // 异常退出尝试重启
       this.startPushWorker();
@@ -2153,7 +2153,7 @@ export class Network implements Net {
               await this.context.dbManager?.addLogToThreadStart(null, tid, lid);
               const err = await dbClient.pushLogToPeer(tid, lid, rec); //推送本地log文件到对等节点,rec表示最新的记录
               if (err) {
-                console.error(
+                console.warn(
                   "Failed to push log after adding to thread:",
                   err,
                 );
@@ -2162,7 +2162,7 @@ export class Network implements Net {
                 break; // 推送成功，退出循环
               }
             } catch (err) {
-              console.error(
+              console.warn(
                 "Failed to create transfer stream for pushing log:",
                 err,
               );
