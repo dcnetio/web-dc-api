@@ -48,7 +48,7 @@ async function main() {
   // 2. 初始化 DC 实例 (连接节点、启动服务)
   const initSuccess = await dc.init();
   if (!initSuccess) {
-    console.error("DC 初始化失败");
+    console.warn("DC 初始化失败");
     return;
   }
   console.log("DC 初始化成功");
@@ -57,7 +57,7 @@ async function main() {
   const [accountInfo, loginError] = await dc.auth.accountLoginWithWallet();
   
   if (loginError || !accountInfo) {
-    console.error("登录失败:", loginError);
+    console.warn("登录失败:", loginError);
     return;
   }
   console.log("登录成功, 用户公钥:", dc.publicKey?.string());
@@ -79,7 +79,7 @@ async function main() {
   
   const [, dbError] = await dc.initUserDB(collections, "1.0.0", false);
   if (dbError) {
-    console.error("数据库初始化失败:", dbError);
+    console.warn("数据库初始化失败:", dbError);
     return;
   }
 
@@ -153,14 +153,14 @@ export const DCProvider = ({ children }: { children: ReactNode }) => {
       // 初始化 DC 实例
       const initSuccess = await dc.init();
       if (!initSuccess) {
-        console.error("DC 初始化失败");
+        console.warn("DC 初始化失败");
         return null;
       }
       
       setDcInstance(dc);
       return dc;
     } catch (error) {
-      console.error("DC init failed:", error);
+      console.warn("DC init failed:", error);
       return null;
     }
   }, [dcInstance]);
@@ -227,7 +227,7 @@ import { useDC } from "/src/contexts/DCContext.tsx";
 const {getDC} = useDC();
 const dc = await getDC();
 if (!dc) {
-  console.error("未获取到有效的DC实例或认证信息");
+  console.warn("未获取到有效的DC实例或认证信息");
   return;
 }
 ```
@@ -320,7 +320,7 @@ const collections = [
 const [, dbError] = await dc.initUserDB(collections);
 
 if (dbError) {
-  console.error('初始化失败:', dbError);
+  console.warn('初始化失败:', dbError);
   return;
 }
 console.log('初始化成功，ID:', dc.dbThreadId);
@@ -496,7 +496,7 @@ if (!kvdb) {
             console.log('公共数据存储创建成功！');
         }
     } else {
-        console.error('权限不足：只有应用管理员可以创建公共存储');
+        console.warn('权限不足：只有应用管理员可以创建公共存储');
         return;
     }
 }
@@ -572,7 +572,7 @@ const [value,error] = await dc.keyValue.get(
     writerPubkey //写入者动pubkey,可以省略。如果这里省略,或者输入空字符串,则获取针对该key所有用户写入的value中的最新值
 );
 if (error) {
-    console.error('获取应用设置失败:', error);
+    console.warn('获取应用设置失败:', error);
 } else {
     console.log('应用设置:', JSON.parse(value));
 }
@@ -623,7 +623,7 @@ const [allValues, allError] = await dc.keyValue.getValues(
     'prefs_user123' //所有用户的设置
 );
 if (allError) {
-    console.error('获取所有用户设置失败:', allError);
+    console.warn('获取所有用户设置失败:', allError);
 } else {
     console.log('所有用户设置:', JSON.parse(allValues));
 }
@@ -664,7 +664,7 @@ if (topList && !topError) {
   const rankings = JSON.parse(topList);
   console.log("Top 10:", rankings);
 } else {
-  console.error("获取排行榜失败:", topError);
+  console.warn("获取排行榜失败:", topError);
 }
 
 // 场景1：存储商品信息
@@ -831,7 +831,7 @@ if (comments && !commentsError) {
     console.log('发布时间: '+ new Date(comment.timestamp).toLocaleString()});
   });
 } else {
-  console.error('获取评论失败:', commentsError);
+  console.warn('获取评论失败:', commentsError);
 }
 
 //=====实际应用场景示例=====
@@ -922,7 +922,7 @@ const [status, sendError] = await dc.message.sendMsgToUserBox(
 if (status === 0) {
   console.log('消息发送成功');
 } else {
-  console.error('消息发送失败:', sendError);
+  console.warn('消息发送失败:', sendError);
 }
 
 // 发送复杂消息（JSON格式）
@@ -952,7 +952,7 @@ if (messages && !getError) {
     console.log('消息 ' + (index + 1) + ': 发送者=' + message.sender + ', 内容=' + message.content + ', 时间=' + new Date(message.timestamp).toLocaleString());
   });
 } else {
-  console.error('获取消息失败:', getError);
+  console.warn('获取消息失败:', getError);
 }
 
 //=====实际应用场景示例=====
@@ -1167,7 +1167,7 @@ const context = { signal: controller.signal };
 // flag: 0表示开始接收数据, 1:权限不足 2:获取失败 3:关闭连接 4: 其他错误   content: 接收到的数据
 const handleStreamResponse = (flag, content, error) => {
   if (error) {
-    console.error('流式响应错误:', error);
+    console.warn('流式响应错误:', error);
     return;
   }
 
@@ -1176,15 +1176,15 @@ const handleStreamResponse = (flag, content, error) => {
     return;
   }
   if (flag === 1) {
-    console.error('权限不足');
+    console.warn('权限不足');
     return;
   }
   if (flag === 2) {
-    console.error('获取AI服务失败:', content);
+    console.warn('获取AI服务失败:', content);
     return;
   }
   if (flag === 4) {
-    console.error('错误:', content);
+    console.warn('错误:', content);
     return;
   }
   document.getElementById('ai-response').innerHTML += content;
@@ -1208,7 +1208,7 @@ const [_, error] = await dc.aiproxy.DoAIProxyCall(
 );
 
 if (error) {
-  console.error('调用失败', error);
+  console.warn('调用失败', error);
 }
 ```
 

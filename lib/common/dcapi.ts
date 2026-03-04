@@ -51,7 +51,6 @@ export class Client {
       this.token = token;
       return token;
     } catch (err) {
-      console.error("GetToken error:", err);
       return "";
     }
   }

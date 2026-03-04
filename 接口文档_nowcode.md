@@ -1332,7 +1332,7 @@ const error = await dc.database.refreshDBFromDC('bafk3epa4rnnhworywhk6hsi7wafwgd
 if (error === null) {
   console.log('数据库刷新成功');
 } else {
-  console.error('刷新数据库时出错:', error.message);
+  console.warn('刷新数据库时出错:', error.message);
 }
 ```
 
@@ -1355,7 +1355,7 @@ const error = await dc.database.syncDBToDC('bafk3epa4rnnhworywhk6hsi7wafwgdt3fkg
 if (error === null) {
   console.log('数据库已同步到分布式网络');
 } else {
-  console.error('同步数据库时出错:', error.message);
+  console.warn('同步数据库时出错:', error.message);
 }
 ```
 
@@ -1839,7 +1839,7 @@ async function taskManagerExample() {
     if (syncError === null) {
       console.log('数据库已同步到分布式网络');
     } else {
-      console.error('同步数据库时出错:', syncError.message);
+      console.warn('同步数据库时出错:', syncError.message);
     }
     
     // 8. 关闭数据库
@@ -1847,7 +1847,7 @@ async function taskManagerExample() {
     console.log('数据库已关闭');
     
   } catch (error) {
-    console.error('数据库操作出错:', error);
+    console.warn('数据库操作出错:', error);
   }
 }
 
@@ -2029,7 +2029,7 @@ const [status, error] = await dc.aiproxy.configAuth(
 if (status === 0) {
   console.log('用户访问权限配置成功');
 } else {
-  console.error('配置失败:', error);
+  console.warn('配置失败:', error);
 }
 ```
 
@@ -2054,7 +2054,7 @@ const [userConfigs, aiConfigs, error] = await dc.aiproxy.GetAIProxyConfig(
   'ai-services'
 );
 if (error) {
-  console.error('获取AI代理配置失败:', error);
+  console.warn('获取AI代理配置失败:', error);
 } else {
   console.log('用户代理调用配置:', userConfigs);
   console.log('AI代理服务配置:', aiConfigs);
@@ -2082,7 +2082,7 @@ const [authConfig, error] = await dc.aiproxy.GetUserOwnAIProxyAuth(
   'ai-services'
 );
 if (error) {
-  console.error('获取用户AI代理授权配置失败:', error);
+  console.warn('获取用户AI代理授权配置失败:', error);
 } else {
   console.log('用户AI代理授权配置:', authConfig);
 }
@@ -2153,7 +2153,7 @@ await dc.init();
 // 2. 使用NFT账号登录
 const loginSuccess = await dc.auth.accountLogin('user-nft-account', 'password', '000000');
 if (!loginSuccess) {
-  console.error('登录失败');
+  console.warn('登录失败');
   return;
 }
 

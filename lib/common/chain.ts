@@ -81,7 +81,6 @@ export class ChainUtil {
       }
     });
     chainProvider.on("error", (err) => {
-      console.error("Chain connection error:", err);
       if (!this.isReconnecting) {
         this.reconnect();
       }
@@ -94,7 +93,6 @@ export class ChainUtil {
         throwOnUnknown: true,
       });
     } catch (e) {
-      console.error("dcchainapi init exception:", e);
       try {
         await chainProvider.disconnect();
       } catch (ignore) {}
@@ -102,7 +100,6 @@ export class ChainUtil {
     }
 
     if (!this.dcchainapi) {
-      console.error("dcchainapi init failed");
       return false;
     }
 
@@ -332,7 +329,6 @@ export class ChainUtil {
       return userInfo.peers;
 
     } catch (error) {
-      console.error("getAccountPeers error:", error);
       return null;
     }
   };
@@ -385,7 +381,6 @@ export class ChainUtil {
       typeof peerInfoJson !== "object" ||
       (peerInfoJson as { ipAddress: string }).ipAddress == ""
     ) {
-      console.error("no ip address found for peer: ", peerid);
       return [null, PeerStatus.PeerStatusOffline];
     }
     let nodeAddr = hexToUtf8(
@@ -409,7 +404,6 @@ export class ChainUtil {
     ).dcNode.onlineNodesAddress();
     const peerListJson = peerList?.toJSON();
     if (!peerListJson || typeof peerListJson !== "object") {
-      console.error("no peer list found");
       return [];
     }
     let peers: string[] = [];

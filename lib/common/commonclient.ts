@@ -124,7 +124,6 @@ export class CommonClient {
       const prikeyencrypt2 = decoded.prikeyencrypt2;
       return prikeyencrypt2;
     } catch (err) {
-      console.error("AccountLogin error:", err);
       throw err;
     }
   }

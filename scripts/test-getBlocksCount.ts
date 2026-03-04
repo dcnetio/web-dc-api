@@ -49,6 +49,6 @@ for (const [name, stats] of cases) {
     const v = getBlocksCountFromStats(stats);
     console.log(`${name}:`, v);
   } catch (e) {
-    console.error(`${name} error:`, e);
+    console.warn(`${name} error:`, e);
   }
 }

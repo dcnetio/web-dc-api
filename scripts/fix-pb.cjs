@@ -4,7 +4,7 @@ const path = require('path');
 const filePath = path.join(__dirname, '../lib/implements/threaddb/pb/net_pb.js');
 
 if (!fs.existsSync(filePath)) {
-  console.error('File not found:', filePath);
+  console.warn('File not found:', filePath);
   process.exit(1);
 }
 

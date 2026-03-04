@@ -19,11 +19,11 @@ async function testEncryption() {
     if (text === "Hello World") {
         console.log("SUCCESS: Roundtrip encryption/decryption worked.");
     } else {
-        console.error("FAILURE: Decrypted text mismatch:", text);
+        console.warn("FAILURE: Decrypted text mismatch:", text);
     }
 
   } catch (e) {
-    console.error("TEST FAILED with error:", e);
+    console.warn("TEST FAILED with error:", e);
   }
 }
 

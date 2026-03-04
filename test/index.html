@@ -72,7 +72,7 @@
 
     const insertDB = async () => {
       if (!dc) {
-        console.error("dc not init");
+        console.warn("dc not init");
         return;
       }
       const instance = {
@@ -87,7 +87,7 @@
 
     const findDB = async () => {
       if (!dc) {
-        console.error("dc not init");
+        console.warn("dc not init");
         return;
       }
       const condition = `{}`
@@ -98,13 +98,13 @@
     let fileCID = '';
     const uploadFile = async () => {
       if (!dc) {
-        console.error("dc not init");
+        console.warn("dc not init");
         return;
       }
       const fileInput = document.getElementById('fileInput');
       const file = fileInput.files?.[0];
       if (!file) {
-        console.error("file not found");
+        console.warn("file not found");
         return;
       }
       const res = await dc.file.addFile(file, "blgxhdql744v247fn53adtdjdji5dp7msui5tc24uzvjtxlr4edyq", onUpdateTransmitSize);
