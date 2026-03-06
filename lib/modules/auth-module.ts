@@ -376,8 +376,10 @@ export class AuthModule implements DCModule, IAuthOperations {
 
         // 定时维系token
         this.startDcPeerTokenKeepValidTask();
-
-        this.context.privateKey = null;
+        //todo 确认这里原来为什么会要 this.context.privateKey = null
+        // 对 accountLogin 场景保留会话私钥，后续 getToken/refreshToken 走本地签名，
+        // 避免钱包桥接签名链路偶发 bad signature / decrypt invalid MAC。
+        // 注意：该私钥仅驻留当前运行时内存，会在刷新页面后失效。
 
         this.context.userInfo = {
           account: this.context.publicKey.string(),
@@ -387,6 +389,18 @@ export class AuthModule implements DCModule, IAuthOperations {
           chainId: "", // 区块链ID
           chainName: "", // 区块链名称
         };
+        
+        // this.context.accountInfo = {
+        //   nftAccount, // NFT账号
+        //   account: this.context.publicKey.string(), // 应用专用账号公钥
+        //   name: "",
+        //   credentialId: "",
+        //   iv: new Uint8Array(),
+        //   mnemonic: new TextEncoder().encode(mnemonic).buffer,
+        //   timeStamp: 0,
+        //   type: "",
+        // }
+    
         return [mnemonic, null];
       }
       return ["", new Error("accountLogin failed")];
