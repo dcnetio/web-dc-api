@@ -313,7 +313,6 @@ export class CommentManager {
           this.context.sign
         );
       }
-      const aesKey = SymmetricKey.new(); // 生成aeskey文件加密密码
       const commentClient = new CommentClient(
         client,
         this.dcNodeClient,
@@ -755,7 +754,7 @@ export class CommentManager {
       const [fileContent, error] =  await fileManager.getFileFromDcWithPeerAddr(
         cid,
         "",
-        commentClient.client?.peerAddr?.toString(),
+        client.peerAddr?.toString(),
       );
       if(error){
         throw error;
@@ -1127,7 +1126,7 @@ export class CommentManager {
 
       const aesKey = SymmetricKey.new(); // 生成aeskey文件加密密码
       const commentClient = new CommentClient(
-        this.connectedDc.client,
+        client,
         this.dcNodeClient,
         this.context
       );
@@ -1152,12 +1151,14 @@ export class CommentManager {
         this.context
       );
       const cid = res;
-      const fileContent = await fileManager.getFileFromDc(
+      const [fileContent, error] = await fileManager.getFileFromDcWithPeerAddr(
         cid,
         "",
-        cidNeedConnect.NOT_NEED,
-        false
+        client?.peerAddr?.toString()
       );
+      if (error) {
+        throw error;
+      }
       if (!fileContent) {
         return [[], null];
       }
