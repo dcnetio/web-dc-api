@@ -1182,6 +1182,34 @@ export class CommentManager {
     if (!shouldCloseClient || !client?.peerAddr || !this.dcNodeClient?.libp2p) {
       return;
     }
+
+    const isSamePeer = (
+      left?: Multiaddr | null,
+      right?: Multiaddr | null
+    ): boolean => {
+      if (!left || !right) {
+        return false;
+      }
+      const leftPeerId = getPeerIdString(left);
+      const rightPeerId = getPeerIdString(right);
+      if (leftPeerId && rightPeerId) {
+        return leftPeerId === rightPeerId;
+      }
+      return left.toString() === right.toString();
+    };
+
+    const tempPeerAddr = client.peerAddr;
+    const connectedPeerAddr = this.connectedDc?.client?.peerAddr;
+    const backupPeerAddr = this.context.AccountBackupDc?.client?.peerAddr;
+
+    // If the temporary client resolves to a shared base peer, do not close it.
+    if (
+      isSamePeer(tempPeerAddr, connectedPeerAddr) ||
+      isSamePeer(tempPeerAddr, backupPeerAddr)
+    ) {
+      return;
+    }
+
     try {
       await this.dcNodeClient.libp2p.hangUp(client.peerAddr);
     } catch (error) {
