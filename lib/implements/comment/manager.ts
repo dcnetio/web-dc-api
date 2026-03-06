@@ -284,6 +284,8 @@ export class CommentManager {
     theme: string,
     themeAuthor: string
   ): Promise<[boolean | null, Error | null]> {
+    let client = this.context.AccountBackupDc.client;
+    let shouldCloseClient = false;
     try {
       if (!this.connectedDc?.client) {
         return [null, Errors.ErrNoDcPeerConnected];
@@ -291,7 +293,6 @@ export class CommentManager {
       if (!this.context.publicKey) {
         return [null, Errors.ErrPublicKeyIsNull];
       }
-      let client = this.context.AccountBackupDc.client;
       if (!client || themeAuthor != this.context.publicKey.string()) {
         //查询他人主题评论
         const authorPublicKey: Ed25519PubKey =
@@ -303,6 +304,7 @@ export class CommentManager {
           return [null, Errors.ErrNoPeerIdIsNull];
         }
         client = connectedClient;
+        shouldCloseClient = true;
       }
       if (client.token == "") {
         await client.GetToken(
@@ -321,6 +323,8 @@ export class CommentManager {
       return [res, null];
     } catch (err) {
       return [null, err as Error];
+    } finally {
+      await this.closeTemporaryClient(client, shouldCloseClient);
     }
   }
 
@@ -690,6 +694,8 @@ export class CommentManager {
     limit: number,
     seekKey: string
   ): Promise<[ThemeObj[] | null, Error | null]> {
+    let client = this.context.AccountBackupDc.client;
+    let shouldCloseClient = false;
     try {
       if (!this.connectedDc?.client) {
         return [null, Errors.ErrNoDcPeerConnected];
@@ -697,7 +703,6 @@ export class CommentManager {
       if (!this.context.publicKey) {
         return [null, Errors.ErrPublicKeyIsNull];
       }
-      let client = this.context.AccountBackupDc.client;
       if (!client || themeAuthor != this.context.publicKey.string()) {
         //查询他人主题评论
         const authorPublicKey: Ed25519PubKey =
@@ -709,6 +714,7 @@ export class CommentManager {
           return [null, Errors.ErrNoPeerIdIsNull];
         }
         client = connectedClient;
+        shouldCloseClient = true;
       }
       if (client.token == "") {
         await client.GetToken(
@@ -740,12 +746,21 @@ export class CommentManager {
         this.context
       );
       const cid = res;
-      const fileContent = await fileManager.getFileFromDc(
+      // const fileContent = await fileManager.getFileFromDc(
+      //   cid,
+      //   "",
+      //   cidNeedConnect.NOT_NEED,
+      //   false
+      // );
+      const [fileContent, error] =  await fileManager.getFileFromDcWithPeerAddr(
         cid,
         "",
-        cidNeedConnect.NOT_NEED,
-        false
+        commentClient.client?.peerAddr?.toString(),
       );
+      if(error){
+        throw error;
+      }
+
       if (!fileContent) {
         return [[], null];
       }
@@ -755,6 +770,8 @@ export class CommentManager {
     } catch (err) {
       console.warn("getThemeObj error:", err);
       throw err;
+    } finally {
+      await this.closeTemporaryClient(client, shouldCloseClient);
     }
   }
 
@@ -769,6 +786,8 @@ export class CommentManager {
     seekKey: string,
     vaccount?: string
   ): Promise<[ThemeComment[] | null, Error | null]> {
+    let client = this.context.AccountBackupDc.client;
+    let shouldCloseClient = false;
     try {
       if (!this.connectedDc?.client) {
         return [null, Errors.ErrNoDcPeerConnected];
@@ -776,7 +795,6 @@ export class CommentManager {
       if (!this.context.publicKey) {
         return [null, Errors.ErrPublicKeyIsNull];
       }
-      let client = this.context.AccountBackupDc.client;
       if (!client || themeAuthor != this.context.publicKey.string()) {
         //查询他人主题评论
         const authorPublicKey: Ed25519PubKey =
@@ -788,6 +806,7 @@ export class CommentManager {
           return [null, Errors.ErrNoPeerIdIsNull];
         }
         client = connectedClient;
+        shouldCloseClient = true;
       }
       if (client.token == "") {
         await client.GetToken(
@@ -825,12 +844,20 @@ export class CommentManager {
         this.context
       );
       const cid = res;
-      const fileContent = await fileManager.getFileFromDc(
+      // const fileContent = await fileManager.getFileFromDc(
+      //   cid,
+      //   "",
+      //   cidNeedConnect.NOT_NEED,
+      //   false
+      // );
+      const [fileContent, error] =  await fileManager.getFileFromDcWithPeerAddr(
         cid,
         "",
-        cidNeedConnect.NOT_NEED,
-        false
+        client?.peerAddr?.toString(),
       );
+      if(error){
+        throw error;
+      }
       if (!fileContent) {
         return [[], null];
       }
@@ -843,6 +870,8 @@ export class CommentManager {
     } catch (err) {
       console.warn("getThemeComments error:", err);
       throw err;
+    } finally {
+      await this.closeTemporaryClient(client, shouldCloseClient);
     }
   }
 
@@ -866,113 +895,119 @@ export class CommentManager {
     let userPubkeyStr = userPubkey.string();
 
     let client = this.context.AccountBackupDc.client;
-    if (themeAuthor != userPubkeyStr) {
-      //查询他人主题评论
-      const authorPublicKey: Ed25519PubKey =
+    let shouldCloseClient = false;
+    try {
+      if (themeAuthor != userPubkeyStr) {
+        //查询他人主题评论
+        const authorPublicKey: Ed25519PubKey =
+          Ed25519PubKey.edPubkeyFromStr(themeAuthor);
+        const connectedClient = await this.dc.connectToUserDcPeer(
+          authorPublicKey.raw
+        );
+        if (!connectedClient) {
+          return [null, Errors.ErrNoPeerIdIsNull];
+        }
+        client = connectedClient;
+        shouldCloseClient = true;
+      }
+      if (!client) {
+        return [null, new Error("ErrConnectToAccountPeersFail")];
+      }
+
+      if (client.peerAddr === null) {
+        return [null, new Error("ErrConnectToAccountPeersFail")];
+      }
+      if (client.token == "") {
+        await client.GetToken(
+          appId,
+          this.context.publicKey.string(),
+          this.context.sign
+        );
+      }
+      const themeAuthorPubkey: Ed25519PubKey =
         Ed25519PubKey.edPubkeyFromStr(themeAuthor);
-      const connectedClient = await this.dc.connectToUserDcPeer(
-        authorPublicKey.raw
-      );
-      if (!connectedClient) {
-        return [null, Errors.ErrNoPeerIdIsNull];
+
+      let forPubkeyHex: string;
+      try {
+        const forPubkey = Ed25519PubKey.edPubkeyFromStr(authPubkey);
+        forPubkeyHex = forPubkey.string();
+      } catch (error) {
+        forPubkeyHex = authPubkey;
       }
-      client = connectedClient;
-    }
-    if (!client) {
-      return [null, new Error("ErrConnectToAccountPeersFail")];
-    }
 
-    if (client.peerAddr === null) {
-      return [null, new Error("ErrConnectToAccountPeersFail")];
-    }
-    if (client.token == "") {
-      await client.GetToken(
-        appId,
-        this.context.publicKey.string(),
-        this.context.sign
-      );
-    }
-    const themeAuthorPubkey: Ed25519PubKey =
-      Ed25519PubKey.edPubkeyFromStr(themeAuthor);
+      const content = `${forPubkeyHex}:${permission}:${remark}`;
 
-    let forPubkeyHex: string;
-    try {
-      const forPubkey = Ed25519PubKey.edPubkeyFromStr(authPubkey);
-      forPubkeyHex = forPubkey.string();
-    } catch (error) {
-      forPubkeyHex = authPubkey;
-    }
+      // Generate contentCid (sha256 of content)
+      const commentUint8 = new TextEncoder().encode(content);
+      const contentHash = await sha256(commentUint8);
+      const contentCid = base32.encode(contentHash);
 
-    const content = `${forPubkeyHex}:${permission}:${remark}`;
-
-    // Generate contentCid (sha256 of content)
-    const commentUint8 = new TextEncoder().encode(content);
-    const contentHash = await sha256(commentUint8);
-    const contentCid = base32.encode(contentHash);
-
-    // Get blockchain height
-    let blockHeight: number;
-    try {
-      blockHeight = (await this.chainUtil.getBlockHeight()) || 0;
-    } catch (error) {
-      return [null, new Error("ErrGetBlockHeightFail")];
-    }
-
-    const contentSize = commentUint8.length;
-
-    // Create binary representation of blockHeight (little endian)
-    const hValue: Uint8Array = uint32ToLittleEndianBytes(
-      blockHeight ? blockHeight : 0
-    );
-    // Create binary representation of type (little endian)
-    const typeValue: Uint8Array = uint32ToLittleEndianBytes(
-      CommentType.Comment
-    );
-    // sign(Theme+appId+objAuthor+blockheight+contentCid)
-    const themeValue: Uint8Array = new TextEncoder().encode(theme);
-    const appIdValue: Uint8Array = new TextEncoder().encode(appId);
-    const themeAuthorValue: Uint8Array = new TextEncoder().encode(
-      themeAuthorPubkey.string()
-    );
-    const contentCidValue: Uint8Array = new TextEncoder().encode(contentCid);
-    let preSign = new Uint8Array([
-      ...themeValue,
-      ...appIdValue,
-      ...themeAuthorValue,
-      ...hValue,
-      ...contentCidValue,
-      ...typeValue,
-    ]);
-
-    const signature = await this.context.sign(preSign);
-
-    const commentClient = new CommentClient(
-      client,
-      this.dcNodeClient,
-      this.context
-    );
-    try {
-      const res = await commentClient.configThemeObjAuth(
-        theme,
-        appId,
-        themeAuthor,
-        blockHeight,
-        userPubkeyStr,
-        contentCid,
-        content,
-        contentSize,
-        CommentType.Comment,
-        signature,
-        vaccount
-      );
-
-      if (res !== 0) {
-        return [res, new Error(`configThemeObjAuth fail, resFlag: ${res}`)];
-      } else {
-        return [0, null];
+      // Get blockchain height
+      let blockHeight: number;
+      try {
+        blockHeight = (await this.chainUtil.getBlockHeight()) || 0;
+      } catch (error) {
+        return [null, new Error("ErrGetBlockHeightFail")];
       }
-    } catch (error: any) {
-      return [null, error];
+
+      const contentSize = commentUint8.length;
+
+      // Create binary representation of blockHeight (little endian)
+      const hValue: Uint8Array = uint32ToLittleEndianBytes(
+        blockHeight ? blockHeight : 0
+      );
+      // Create binary representation of type (little endian)
+      const typeValue: Uint8Array = uint32ToLittleEndianBytes(
+        CommentType.Comment
+      );
+      // sign(Theme+appId+objAuthor+blockheight+contentCid)
+      const themeValue: Uint8Array = new TextEncoder().encode(theme);
+      const appIdValue: Uint8Array = new TextEncoder().encode(appId);
+      const themeAuthorValue: Uint8Array = new TextEncoder().encode(
+        themeAuthorPubkey.string()
+      );
+      const contentCidValue: Uint8Array = new TextEncoder().encode(contentCid);
+      let preSign = new Uint8Array([
+        ...themeValue,
+        ...appIdValue,
+        ...themeAuthorValue,
+        ...hValue,
+        ...contentCidValue,
+        ...typeValue,
+      ]);
+
+      const signature = await this.context.sign(preSign);
+
+      const commentClient = new CommentClient(
+        client,
+        this.dcNodeClient,
+        this.context
+      );
+      try {
+        const res = await commentClient.configThemeObjAuth(
+          theme,
+          appId,
+          themeAuthor,
+          blockHeight,
+          userPubkeyStr,
+          contentCid,
+          content,
+          contentSize,
+          CommentType.Comment,
+          signature,
+          vaccount
+        );
+
+        if (res !== 0) {
+          return [res, new Error(`configThemeObjAuth fail, resFlag: ${res}`)];
+        } else {
+          return [0, null];
+        }
+      } catch (error: any) {
+        return [null, error];
+      }
+    } finally {
+      await this.closeTemporaryClient(client, shouldCloseClient);
     }
   }
 
@@ -1050,6 +1085,8 @@ export class CommentManager {
     limit: number,
     seekKey: string
   ): Promise<[ThemeComment[] | null, Error | null]> {
+    let client = this.context.AccountBackupDc.client;
+    let shouldCloseClient = false;
     try {
       if (!this.connectedDc?.client) {
         return [null, Errors.ErrNoDcPeerConnected];
@@ -1064,7 +1101,6 @@ export class CommentManager {
           this.context.sign
         );
       }
-      let client = this.context.AccountBackupDc.client;
       if (userPubkey != this.context.publicKey.string()) {
         //查询他人主题评论
         const userPublicKey: Ed25519PubKey =
@@ -1076,6 +1112,7 @@ export class CommentManager {
           return [null, Errors.ErrNoPeerIdIsNull];
         }
         client = connectedClient;
+        shouldCloseClient = true;
       }
       if (!client) {
         return [null, new Error("ErrConnectToAccountPeersFail")];
@@ -1133,8 +1170,25 @@ export class CommentManager {
     } catch (err) {
       console.warn("getUserComments error:", err);
       throw err;
+    } finally {
+      await this.closeTemporaryClient(client, shouldCloseClient);
     }
   }
+
+  private closeTemporaryClient = async (
+    client: { peerAddr?: Multiaddr | null } | null | undefined,
+    shouldCloseClient: boolean
+  ): Promise<void> => {
+    if (!shouldCloseClient || !client?.peerAddr || !this.dcNodeClient?.libp2p) {
+      return;
+    }
+    try {
+      await this.dcNodeClient.libp2p.hangUp(client.peerAddr);
+    } catch (error) {
+      console.warn("closeTemporaryClient hangUp error:", error);
+    }
+  };
+
   private handleThemeObj = async (
     fileContentString: string
   ): Promise<ThemeObj[]> => {
