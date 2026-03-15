@@ -129,11 +129,15 @@ export interface IPayOperations {
   ): Promise<IRenewPackageInfo[]>;
 
   getPackageInfo(
+
+
     packageCode: string,
     pkgType: PaymentPackageType,
     serviceAppid?: string,
     scene?: string
   ): Promise<IRenewPackageInfo>;
+  getRenewalDays(packageCode: string, targetType: PaymentPackageType, serviceAppid?: string, scene?: string): Promise<number>;
+
 
   /**
    * 应用开发者：申请创建/修改支付套餐（提交审核）

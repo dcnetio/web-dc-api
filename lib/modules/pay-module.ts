@@ -433,6 +433,17 @@ export class PayModule implements DCModule, IPayOperations {
     return normalized;
   }
 
+  async getRenewalDays(packageCode: string, targetType: PaymentPackageType, serviceAppid?: string, scene?: string): Promise<number> {
+    const list = await this.listRenewPackages(targetType, serviceAppid, scene);
+    const target = list.find((item) => item.packageCode === packageCode);
+    const days = Number(target?.durationDays || 0);
+    if (!Number.isFinite(days) || days <= 0) {
+      throw new Error("套餐有效期无效，请联系管理员配置");
+    }
+    return days;
+  }
+
+
   async getPackageInfo(
     packageCode: string,
     pkgType: PaymentPackageType,
