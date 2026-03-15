@@ -42,6 +42,7 @@ export enum CoreModuleName {
   CLIENT = "client",
   AIPROXY = "aiproxy",
   UTIL = "util",
+  PAY = "pay",
 }
 
 /**
@@ -104,6 +105,7 @@ export class ModuleSystem {
       CoreModuleName.CACHE, // 缓存模块
       CoreModuleName.AIPROXY, // AIProxy模块
       CoreModuleName.UTIL, // 工具模块
+      CoreModuleName.PAY, // 支付模块
     ];
 
     // 先初始化核心模块

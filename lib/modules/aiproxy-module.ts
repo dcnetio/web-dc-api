@@ -114,7 +114,7 @@ export class AIProxyModule implements DCModule, IAIProxyOperations {
     configTheme: string,
     authPubkey: string,
     permission: AIProxyUserPermission,
-    authConfig: ProxyCallConfig,
+    authConfig: ProxyCallConfig[],
     vaccount?: string
   ): Promise<[number | null, Error | null]> {
     try {

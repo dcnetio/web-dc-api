@@ -29,6 +29,7 @@ import {
   CacheModule,
   AIProxyModule,
   UtilModule,
+  PayModule,
 } from "./modules";
 import { Client } from "./common/dcapi";
 import { ICollectionConfig, IDBInfo } from "./implements/threaddb/core/core";
@@ -126,6 +127,7 @@ export class DC implements DCContext {
       // 注册核心功能模块
       this.moduleSystem.registerModule(new FileModule(this.swUrl || ""));
       this.moduleSystem.registerModule(new AuthModule());
+      this.moduleSystem.registerModule(new PayModule());
       this.moduleSystem.registerModule(new CommentModule());
       this.moduleSystem.registerModule(new DatabaseModule());
       this.moduleSystem.registerModule(new MessageModule());
@@ -637,6 +639,14 @@ export class DC implements DCContext {
    */
   get file() {
     return this.getModule<FileModule>(CoreModuleName.FILE);
+  }
+
+  /**
+   * 获取支付模块
+   * @returns 支付模块实例
+   */
+  get pay() {
+    return this.getModule<PayModule>(CoreModuleName.PAY);
   }
 
   /**
