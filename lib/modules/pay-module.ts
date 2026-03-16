@@ -584,15 +584,15 @@ export class PayModule implements DCModule, IPayOperations {
     }
     const target = new URL(this.hostedPayBaseUrl.replace(/\/+$/, "") + "/#/pay");
     target.searchParams.set("account", String(options.account || ""));
-    target.searchParams.set("pkgId", String(options.packageCode || ""));
-    target.searchParams.set("amountCents", String(options.amountCents || 0));
-    target.searchParams.set("returnUrl", encodeURIComponent(options.returnUrl || ""));
-    target.searchParams.set("title", encodeURIComponent(options.title || options.packageName));
+    target.searchParams.set("pkg_id", String(options.packageCode || ""));
+    target.searchParams.set("amount", String(options.amountCents || 0));
+    target.searchParams.set("return_url", options.returnUrl || "");
+    target.searchParams.set("title", options.title || options.packageName);
     if (options.attach) {
       target.searchParams.set("attach", String(options.attach));
     }
     if (options.outTradeNo) {
-      target.searchParams.set("outTradeNo", String(options.outTradeNo));
+      target.searchParams.set("out_trade_no", String(options.outTradeNo));
     }
     return target.toString();
   }
