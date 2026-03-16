@@ -582,7 +582,7 @@ export class PayModule implements DCModule, IPayOperations {
     if (!this.hostedPayBaseUrl) {
       throw new Error("缺少 hostedPayBaseUrl 配置");
     }
-    const target = new URL(this.hostedPayBaseUrl.replace(/\/+$/, "") + "/#/pay");
+    const target = new URL(this.hostedPayBaseUrl.replace(/\/+$/, ""));
     target.searchParams.set("account", String(options.account || ""));
     target.searchParams.set("pkg_id", String(options.packageCode || ""));
     target.searchParams.set("amount", String(options.amountCents || 0));
