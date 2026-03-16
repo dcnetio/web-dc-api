@@ -588,6 +588,7 @@ export class PayModule implements DCModule, IPayOperations {
     target.searchParams.set("amount", String(options.amountCents || 0));
     target.searchParams.set("return_url", options.returnUrl || "");
     target.searchParams.set("title", options.title || options.packageName);
+    target.searchParams.set("description", options.packageName || options.title || "-");
     if (options.attach) {
       target.searchParams.set("attach", String(options.attach));
     }
