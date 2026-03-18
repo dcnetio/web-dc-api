@@ -488,14 +488,14 @@ export class AIProxyManager {
               authConfig: authConfig,
             });
           } catch (error) {
-            console.warn("解析授权信息错误:", error);
+            console.warn("跳过无效授权信息:", error);
           }
           continue;
         }
         //keyvalue中取出value
         const parts: string[] = contentStr.split(":");
         if (parts.length < 2) {
-          console.warn("无效的内容格式:", contentStr);
+          console.warn("跳过无效内容格式:", contentStr);
           continue; // 如果格式不正确，跳过
         }
 

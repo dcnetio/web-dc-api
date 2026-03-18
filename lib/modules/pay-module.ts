@@ -404,9 +404,11 @@ export class PayModule implements DCModule, IPayOperations {
           aiAuthor: aiAuthor || undefined,
           aiTheme: aiTheme || undefined,
           aiModel: aiModel || undefined,
+          pkgRights: Object.keys(rights).length > 0 ? rights : undefined,
           bussdesc: String(item.bussdesc || ""),
           imglist: String(item.imglist || ""),
           checkStatus: Number(item.checkStatus || 0),
+          checkReason: String((item as any).checkReason || ""),
           checkTime: String(item.checkTime || ""),
           createTime: String(item.createTime || ""),
           chainPkgId: Number(item.chainPkgId || 0),
@@ -525,6 +527,36 @@ export class PayModule implements DCModule, IPayOperations {
       list: this.normalizePackages(rawList),
       total,
     };
+  }
+
+  async deleteBusinessPackage(packageId: string): Promise<boolean> {
+    this.assertInitialized();
+    const normalizedId = String(packageId || "").trim();
+    if (!normalizedId) {
+      throw new Error("缺少套餐ID，无法删除");
+    }
+
+    const targetUrl = `${this.getPayApiBaseUrl()}/package/${encodeURIComponent(normalizedId)}`;
+    const response = await fetch(targetUrl, {
+      method: "DELETE",
+      credentials: "omit",
+    });
+
+    const text = await response.text();
+    let payload: any = null;
+    try {
+      payload = text ? JSON.parse(text) : null;
+    } catch {
+      payload = null;
+    }
+
+    if (!response.ok) {
+      throw new Error(payload?.msg || payload?.error || `删除套餐失败(${response.status})`);
+    }
+    if (Number(payload?.code || 0) !== 0) {
+      throw new Error(payload?.msg || payload?.error || "删除套餐失败");
+    }
+    return true;
   }
 
   markCurrentUrlAsPayReturn(scene?: PaymentGatewayScene): string {

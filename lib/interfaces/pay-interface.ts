@@ -14,10 +14,12 @@ export interface IRenewPackageInfo {
   aiAuthor?: string;
   aiTheme?: string;
   aiModel?: string;
+  pkgRights?: Record<string, any> | string;
   // 管理端扩展字段
   bussdesc?: string;
   imglist?: string;
   checkStatus?: number; // 0=未审核/待审核 1=待审核 2=审核通过 3=审核被拒 (依后端定义而定)
+  checkReason?: string;
   checkTime?: string;
   createTime?: string;
   chainPkgId?: number;
@@ -148,6 +150,11 @@ export interface IPayOperations {
    * 应用开发者：查询自己应用下的所有套餐配置列表（含审核状态）
    */
   getAllPackagesConfig(filter: IPackageConfigFilter): Promise<IPackageConfigListResult>;
+
+  /**
+   * 应用开发者：删除自己应用下的支付套餐配置
+   */
+  deleteBusinessPackage(packageId: string): Promise<boolean>;
 
   markCurrentUrlAsPayReturn(scene?: PaymentGatewayScene): string;
 
