@@ -9,6 +9,44 @@ import { CID } from "multiformats/cid";
 import * as dagCBOR from "@ipld/dag-cbor";
 import { concat } from 'uint8arrays';
 
+function toUint8Array(value: any): Uint8Array | null {
+  if (!value) return null;
+  if (value instanceof Uint8Array) return value;
+  if (value instanceof ArrayBuffer) return new Uint8Array(value);
+  if (ArrayBuffer.isView(value)) return new Uint8Array(value.buffer, value.byteOffset, value.byteLength);
+  if (Array.isArray(value) && value.every(item => typeof item === "number")) return Uint8Array.from(value);
+  if (typeof value === "object" && value !== null && value.type === "Buffer" && Array.isArray(value.data)) return Uint8Array.from(value.data);
+  if (typeof value.length === "number") {
+    try { return Uint8Array.from(value); } catch { return null; }
+  }
+  return null;
+}
+
+async function readBlockBytes(maybe: any): Promise<Uint8Array> {
+  const resolved = await maybe;
+  const directBytes = toUint8Array(resolved);
+  if (directBytes) return directBytes;
+
+  if (!!resolved && typeof resolved[Symbol.asyncIterator] === "function") {
+    const chunks = [];
+    for await (const chunk of resolved) {
+      const u8 = toUint8Array(chunk);
+      if (u8) chunks.push(u8);
+    }
+    return concat(chunks);
+  }
+
+  if (!!resolved && typeof resolved[Symbol.iterator] === "function") {
+    const chunks = [];
+    for (const chunk of resolved) {
+      const u8 = toUint8Array(chunk);
+      if (u8) chunks.push(u8);
+    }
+    return concat(chunks);
+  }
+  return new Uint8Array();
+}
+
 import { encodeBlock, decodeBlock } from "./coding";
 import { Block, Node } from "./node";
 import * as cbornode from "./node";
@@ -109,9 +147,16 @@ export async function GetEvent(dag: DAGCBOR, id: CID): Promise<NetEvent> {
 export async function EventFromNode(eNode: Node): Promise<NetEvent> {
   try {
     //取出头部
-    const eventObj = eNode as unknown as EventObj;
-    const wrapedRnode = await cbornode.wrapObject(eventObj);
-    const event = new Event(wrapedRnode, eventObj);
+    const rawObj = (eNode as any)._obj as any;
+    const eventObj = {
+      header: rawObj.header || rawObj.Header,
+      body: rawObj.body || rawObj.Body
+    } as EventObj;
+    if (!eventObj || !eventObj.header) {
+      console.error("Invalid EventObj content:", rawObj);
+      throw new Error("Invalid EventObj: missing header");
+    }
+    const event = new Event(eNode, eventObj);
     return event;
   } catch (err) {
     throw new Error(
@@ -196,37 +241,21 @@ export class Event implements NetEvent {
 
   async getHeader(bstore: Blocks, key?: SymmetricKey): Promise<NetEventHeader> {
     if (!this._header) {
-      // `bstore.get` in newer helia may return an AsyncIterable of chunks.
-      // Consume it if necessary and concatenate into a single Uint8Array.
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const maybe = (bstore as any).get(this._obj.header);
-      let blockData: Uint8Array;
-      if (maybe && typeof maybe[Symbol.asyncIterator] === 'function') {
-        const chunks: Uint8Array[] = [];
-        // @ts-ignore
-        for await (const ch of maybe) {
-          chunks.push(ch);
-        }
-        blockData = concat(chunks);
-      } else {
-        blockData = await maybe;
-      }
+      const blockData = await readBlockBytes((bstore as any).get(this._obj.header));
 
-      const headerNode = await cbornode.wrapObject(blockData);
+      const headerNode = await cbornode.decode(blockData);
       this._header = new EventHeader(headerNode);
     }
     try {
       if (!this._header.isLoaded() && key) {
-        const decoded = dagCBOR.decode<Uint8Array>(this._header.node().data());
-        if (!decoded) {
-          throw new Error("Failed to decode block");
-        }
-        let encryptedData = decoded;
-        try {
-          encryptedData = dagCBOR.decode<Uint8Array>(decoded);
-        } catch (e) {}
-        const data: Uint8Array = await key.decrypt(encryptedData);
-        const header = dagCBOR.decode<EventHeaderObj>(data);
+        const headerBlock = this._header.node();
+        const decodedNode = await decodeBlock(headerBlock, key);
+        const data = decodedNode.rawData();
+        const rawHeader = dagCBOR.decode<any>(data);
+        const header: EventHeaderObj = {
+          key: rawHeader.key || rawHeader.Key
+        };
         this._header.setObj(header);
       }
     } catch (err) {
@@ -253,22 +282,10 @@ export class Event implements NetEvent {
     }
 
     if (!this._body) {
-      // Handle possible AsyncIterable from `bstore.get` as above
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const maybe = (bstore as any).get(this._obj.body);
-      let block: Uint8Array;
-      if (maybe && typeof maybe[Symbol.asyncIterator] === 'function') {
-        const chunks: Uint8Array[] = [];
-        // @ts-ignore
-        for await (const ch of maybe) {
-          chunks.push(ch);
-        }
-        block = concat(chunks);
-      } else {
-        block = await maybe;
-      }
+      const block = await readBlockBytes((bstore as any).get(this._obj.body));
 
-      this._body = await cbornode.wrapObject(block);
+      this._body = await cbornode.decode(block);
     }
 
     if (!k) {

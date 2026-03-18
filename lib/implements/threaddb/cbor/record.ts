@@ -374,11 +374,23 @@ export class Record implements IRecord {
       return this._block;
     }
     
+    let targetBlockCid = this._obj.block;
+    if (this._key && targetBlockCid.toString() === this._node.cid().toString()) {
+      try {
+        const encrypted = dagCBOR.decode<Uint8Array>(this._node.data());
+        const decrypted = await this._key.decrypt(encrypted);
+        const obj = dagCBOR.decode<RecordObj>(decrypted);
+        targetBlockCid = obj.block;
+      } catch (err) {
+        console.warn("Failed to decrypt true block CID, falling back:", err);
+      }
+    }
+
     // Support newer Helia/blockstore which returns an AsyncIterable of chunks
     // for `get`. If `bstore.get` returns an async iterable, consume it;
     // otherwise treat it as a single Uint8Array.
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const maybe = (bstore as any).get(this._obj.block);
+    const maybe = (bstore as any).get(targetBlockCid);
     let data: Uint8Array;
     if (maybe && typeof maybe[Symbol.asyncIterator] === 'function') {
       const chunks: Uint8Array[] = [];
@@ -393,7 +405,7 @@ export class Record implements IRecord {
       data = await maybe;
     }
 
-    this._block = await cbornode.wrapObject(data);
+    this._block = await cbornode.decode(data);
     return this._block;
   }
   
