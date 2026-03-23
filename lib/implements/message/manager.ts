@@ -149,6 +149,7 @@ export class MessageManager {
               }
             } catch (error) {
               console.log('messageClient.getMsgFromUserBox error', error)
+              throw error;
             }
           }
         }
