@@ -742,6 +742,7 @@ export class CommentClient {
     message.offset = offset;
     message.limit = limit;
     message.seekKey = new TextEncoder().encode(seekKey);
+    message.returnData = true;
     const messageBytes = dcnet.pb.GetThemeObjRequest.encode(message).finish();
 
     try {
@@ -760,10 +761,10 @@ export class CommentClient {
       const decoded = dcnet.pb.GetThemeObjReply.decode(reply);
       console.log("GetThemeObj decoded", decoded);
       console.log("GetThemeObj decoded.toJSON()", decoded.toJSON());
-      const objsCid = decoded.objsCid
-        ? uint8ArrayToString(decoded.objsCid)
+      const objsData = decoded.objsData
+        ? uint8ArrayToString(decoded.objsData)
         : "";
-      return objsCid;
+      return objsData;
     } catch (error: any) {
       if (error.message.indexOf(Errors.INVALID_TOKEN.message) != -1) {
         // try to get token
@@ -792,10 +793,10 @@ export class CommentClient {
         const decoded = dcnet.pb.GetThemeObjReply.decode(reply);
         console.log("GetThemeObj decoded", decoded);
         console.log("GetThemeObj decoded.toJSON()", decoded.toJSON());
-        const objsCid = decoded.objsCid
-          ? uint8ArrayToString(decoded.objsCid)
+        const objsData = decoded.objsData
+          ? uint8ArrayToString(decoded.objsData)
           : "";
-        return objsCid;
+        return objsData;
       }
       console.warn("GetThemeObj error:", error);
       throw error;
@@ -824,6 +825,7 @@ export class CommentClient {
     message.limit = limit;
     message.seekKey = new TextEncoder().encode(seekKey);
     message.aesKey = new TextEncoder().encode(aesKey);
+    message.returnCommentsData = true;
     if (vaccount) {
       message.vaccount = new TextEncoder().encode(vaccount);
     }
@@ -842,10 +844,10 @@ export class CommentClient {
         30000
       );
       const decoded = dcnet.pb.GetThemeCommentsReply.decode(reply);
-      const commentsCid = decoded.commentsCid
-        ? uint8ArrayToString(decoded.commentsCid)
+      const commentsData = decoded.commentsData
+        ? uint8ArrayToString(decoded.commentsData)
         : "";
-      return commentsCid;
+      return commentsData;
     } catch (error: any) {
       if (error.message.indexOf(Errors.INVALID_TOKEN.message) != -1) {
         // try to get token
@@ -871,10 +873,10 @@ export class CommentClient {
           30000
         );
         const decoded = dcnet.pb.GetThemeCommentsReply.decode(reply);
-        const commentsCid = decoded.commentsCid
-          ? uint8ArrayToString(decoded.commentsCid)
+        const commentsData = decoded.commentsData
+          ? uint8ArrayToString(decoded.commentsData)
           : "";
-        return commentsCid;
+        return commentsData;
       }
       console.warn("GetThemeComments error:", error);
       throw error;
@@ -900,6 +902,7 @@ export class CommentClient {
     message.limit = limit;
     message.seekKey = new TextEncoder().encode(seekKey);
     message.aesKey = new TextEncoder().encode(aesKey);
+    message.returnData = true;
     const messageBytes =
       dcnet.pb.GetUserCommentsRequest.encode(message).finish();
     const grpcClient = new Libp2pGrpcClient(
@@ -918,10 +921,10 @@ export class CommentClient {
       const decoded = dcnet.pb.GetUserCommentsReply.decode(reply);
       console.log("GetUserComments decoded", decoded);
       console.log("GetUserComments decoded.toJSON()", decoded.toJSON());
-      const commentsCid = decoded.commentsCid
-        ? uint8ArrayToString(decoded.commentsCid)
+      const commentsData = decoded.commentsData
+        ? uint8ArrayToString(decoded.commentsData)
         : "";
-      return commentsCid;
+      return commentsData;
     } catch (error: any) {
       if (error.message.indexOf(Errors.INVALID_TOKEN.message) != -1) {
         // try to get token
@@ -944,10 +947,10 @@ export class CommentClient {
         const decoded = dcnet.pb.GetUserCommentsReply.decode(reply);
         console.log("GetUserComments decoded", decoded);
         console.log("GetUserComments decoded.toJSON()", decoded.toJSON());
-        const commentsCid = decoded.commentsCid
-          ? uint8ArrayToString(decoded.commentsCid)
+        const commentsData = decoded.commentsData
+          ? uint8ArrayToString(decoded.commentsData)
           : "";
-        return commentsCid;
+        return commentsData;
       }
       console.warn("GetUserComments error:", error);
       throw error;

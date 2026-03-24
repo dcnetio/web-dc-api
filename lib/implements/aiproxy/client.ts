@@ -27,11 +27,12 @@ export class AIProxyClient {
     appId: string,
     themeAuthor: string,
     configTheme: string
-  ): Promise<[proxyConfigCid: string, aesKey: string, error: Error | null]> {
+  ): Promise<[configData: string, error: Error | null]> {
     const message = new dcnet.pb.GetAIProxyConfigRequest({});
     message.appId = new TextEncoder().encode(appId);
     message.themeAuthor = new TextEncoder().encode(themeAuthor);
     message.theme = new TextEncoder().encode(configTheme);
+    message.returnConfigData = true;
 
     const messageBytes =
       dcnet.pb.GetAIProxyConfigRequest.encode(message).finish();
@@ -51,9 +52,8 @@ export class AIProxyClient {
       if (decoded.flag != 0) {
         throw new Error(Errors.INVALID_TOKEN.message + " flag:" + decoded.flag);
       }
-      const proxyConfigCid = new TextDecoder().decode(decoded.proxyConfigCid);
-      const aesKey = new TextDecoder().decode(decoded.aeskey);
-      return [proxyConfigCid, aesKey, null];
+      const configData = new TextDecoder().decode(decoded.configData);
+      return [configData, null];
     } catch (error) {
       if (
         typeof error === "object" &&
@@ -84,9 +84,8 @@ export class AIProxyClient {
             Errors.INVALID_TOKEN.message + " flag:" + decoded.flag
           );
         }
-        const proxyConfigCid = new TextDecoder().decode(decoded.proxyConfigCid);
-        const aesKey = new TextDecoder().decode(decoded.aeskey);
-        return [proxyConfigCid, aesKey, null];
+        const configData = new TextDecoder().decode(decoded.configData);
+        return [configData, null];
       }
       console.warn("GetAIProxyConfig error:", error);
       throw error;

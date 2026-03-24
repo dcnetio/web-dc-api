@@ -16,19 +16,16 @@ import {
   getPeerIdString,
   parseUint32,
   sha256,
+  uint8ArrayToHex,
   uint32ToLittleEndianBytes,
 } from "../../util/utils";
-import { FileManager } from "../file/manager";
-import { cidNeedConnect } from "../../common/constants";
 import { toString as uint8ArrayToString } from "uint8arrays/to-string";
 import { BrowserLineReader, readLine } from "../../util/BrowserLineReader";
-import { bytesToHex } from "@noble/curves/abstract/utils";
 import { dcnet } from "../../proto/dcnet_proto";
 import { DCContext } from "../../../lib/interfaces/DCContext";
 import { publicKeyFromRaw } from "@libp2p/crypto/keys";
 import { Ed25519PubKey } from "../../common/dc-key/ed25519";
 import { CommentType, Direction } from "../../common/define";
-import { SymmetricKey } from "../threaddb/common/key";
 import { Libp2p } from "@libp2p/interface";
 
 // 创建一个可以取消的信号
@@ -737,34 +734,10 @@ export class CommentManager {
         limit || 0,
         seekKey || ""
       );
-      const fileManager = new FileManager(
-        this.dc,
-        this.connectedDc,
-        this.chainUtil,
-        this.dcNodeClient,
-        this.context
-      );
-      const cid = res;
-      // const fileContent = await fileManager.getFileFromDc(
-      //   cid,
-      //   "",
-      //   cidNeedConnect.NOT_NEED,
-      //   false
-      // );
-      const [fileContent, error] =  await fileManager.getFileFromDcWithPeerAddr(
-        cid,
-        "",
-        client.peerAddr?.toString(),
-      );
-      if(error){
-        throw error;
-      }
-
-      if (!fileContent) {
+      if (!res) {
         return [[], null];
       }
-      const fileContentString = uint8ArrayToString(fileContent);
-      const allContent = await this.handleThemeObj(fileContentString);
+      const allContent = await this.handleThemeObj(res);
       return [allContent, null];
     } catch (err) {
       console.warn("getThemeObj error:", err);
@@ -814,7 +787,6 @@ export class CommentManager {
           this.context.sign
         );
       }
-      const aesKey = SymmetricKey.new(); // 生成aeskey文件加密密码
       const commentClient = new CommentClient(
         client,
         this.dcNodeClient,
@@ -829,42 +801,13 @@ export class CommentManager {
         offset || 0,
         limit || 0,
         seekKey || "",
-        aesKey ? aesKey.toString() : "",
+        "",
         vaccount
       );
       if (!res) {
         return [[], null];
       }
-      const fileManager = new FileManager(
-        this.dc,
-        this.connectedDc,
-        this.chainUtil,
-        this.dcNodeClient,
-        this.context
-      );
-      const cid = res;
-      // const fileContent = await fileManager.getFileFromDc(
-      //   cid,
-      //   "",
-      //   cidNeedConnect.NOT_NEED,
-      //   false
-      // );
-      const [fileContent, error] =  await fileManager.getFileFromDcWithPeerAddr(
-        cid,
-        "",
-        client?.peerAddr?.toString(),
-      );
-      if(error){
-        throw error;
-      }
-      if (!fileContent) {
-        return [[], null];
-      }
-      const fileContentString = uint8ArrayToString(fileContent);
-      const allContent = await this.handleThemeComments(
-        fileContentString,
-        aesKey
-      );
+      const allContent = await this.handleThemeComments(res);
       return [allContent || null, null];
     } catch (err) {
       console.warn("getThemeComments error:", err);
@@ -1124,7 +1067,6 @@ export class CommentManager {
         );
       }
 
-      const aesKey = SymmetricKey.new(); // 生成aeskey文件加密密码
       const commentClient = new CommentClient(
         client,
         this.dcNodeClient,
@@ -1138,35 +1080,12 @@ export class CommentManager {
         offset || 0,
         limit || 0,
         seekKey || "",
-        aesKey ? aesKey.toString() : ""
+        ""
       );
       if (!res) {
         return [[], null];
       }
-      const fileManager = new FileManager(
-        this.dc,
-        this.connectedDc,
-        this.chainUtil,
-        this.dcNodeClient,
-        this.context
-      );
-      const cid = res;
-      const [fileContent, error] = await fileManager.getFileFromDcWithPeerAddr(
-        cid,
-        "",
-        client?.peerAddr?.toString()
-      );
-      if (error) {
-        throw error;
-      }
-      if (!fileContent) {
-        return [[], null];
-      }
-      const fileContentString = uint8ArrayToString(fileContent);
-      const allContent = await this.handleThemeComments(
-        fileContentString,
-        aesKey
-      );
+      const allContent = await this.handleThemeComments(res);
       return [allContent || null, null];
     } catch (err) {
       console.warn("getUserComments error:", err);
@@ -1237,32 +1156,16 @@ export class CommentManager {
         if (!lineString) {
           break;
         }
-        const fileContentUint8Array = base32.decode(lineString);
-        const content = dcnet.pb.AddThemeObjRequest.decode(
-          fileContentUint8Array
-        );
-        allContent.push({
-          theme: uint8ArrayToString(content.theme),
-          appId: uint8ArrayToString(content.appId),
-          blockheight: content.blockheight,
-          commentSpace: content.commentSpace,
-          allowSpace: content.allowSpace,
-          userPubkey: uint8ArrayToString(content.userPubkey),
-          openFlag: content.openFlag,
-          signature: bytesToHex(content.signature),
-          CCount: content.CCount,
-          UpCount: content.UpCount,
-          DownCount: content.DownCount,
-          TCount: content.TCount,
-          vaccount: uint8ArrayToString(content.vaccount),
-        });
+        const content = this.parseThemeObjLine(lineString);
+        if (content) {
+          allContent.push(content);
+        }
       }
     }
     return allContent;
   };
   private handleThemeComments = async (
-    fileContentString: string,
-    aesKey: SymmetricKey
+    fileContentString: string
   ): Promise<ThemeComment[]> => {
     const reader = new BrowserLineReader(fileContentString);
     let allContent: Array<ThemeComment> = [];
@@ -1283,32 +1186,100 @@ export class CommentManager {
         if (!lineString) {
           break;
         }
-        const lineContent = base32.decode(lineString);
-        const plainContent = await aesKey.decrypt(lineContent);
-        const content =
-          dcnet.pb.PublishCommentToThemeRequest.decode(plainContent);
-
-        allContent.push({
-          theme: uint8ArrayToString(content.theme),
-          appId: uint8ArrayToString(content.appId),
-          themeAuthor: uint8ArrayToString(content.themeAuthor),
-          blockheight: content.blockheight,
-          userPubkey: uint8ArrayToString(content.userPubkey),
-          commentCid: uint8ArrayToString(content.commentCid),
-          comment: uint8ArrayToString(content.comment),
-          commentSize: content.commentSize,
-          status: content.status,
-          refercommentkey: uint8ArrayToString(content.refercommentkey),
-          CCount: content.CCount,
-          UpCount: content.UpCount,
-          DownCount: content.DownCount,
-          TCount: content.TCount,
-          type: content.type,
-          signature: bytesToHex(content.signature),
-          vaccount: bytesToHex(content.vaccount),
-        });
+        const content = this.parseThemeCommentLine(lineString);
+        if (content) {
+          allContent.push(content);
+        }
       }
     }
     return allContent;
   };
+
+  private parseThemeObjLine(lineString: string): ThemeObj | null {
+    let decodedLine: Uint8Array;
+    try {
+      decodedLine = base32.decode(lineString);
+    } catch {
+      console.warn("skip invalid base32 theme obj line");
+      return null;
+    }
+
+    try {
+      return this.mapThemeObj(dcnet.pb.AddThemeObjRequest.decode(decodedLine));
+    } catch {
+      try {
+        const parsed = JSON.parse(new TextDecoder().decode(decodedLine)) as ThemeObj;
+        return parsed;
+      } catch {
+        console.warn("skip invalid theme obj line");
+        return null;
+      }
+    }
+  }
+
+  private parseThemeCommentLine(lineString: string): ThemeComment | null {
+    let decodedLine: Uint8Array;
+    try {
+      decodedLine = base32.decode(lineString);
+    } catch {
+      console.warn("skip invalid base32 theme comment line");
+      return null;
+    }
+
+    try {
+      return this.mapThemeComment(
+        dcnet.pb.PublishCommentToThemeRequest.decode(decodedLine)
+      );
+    } catch {
+      try {
+        const decodedText = new TextDecoder().decode(decodedLine);
+        return JSON.parse(decodedText) as ThemeComment;
+      } catch {
+        console.warn("skip invalid theme comment line");
+        return null;
+      }
+    }
+  }
+
+  private mapThemeObj(content: dcnet.pb.AddThemeObjRequest): ThemeObj {
+    return {
+      theme: uint8ArrayToString(content.theme),
+      appId: uint8ArrayToString(content.appId),
+      blockheight: content.blockheight,
+      commentSpace: content.commentSpace,
+      allowSpace: content.allowSpace,
+      userPubkey: uint8ArrayToString(content.userPubkey),
+      openFlag: content.openFlag,
+      signature: uint8ArrayToHex(content.signature),
+      CCount: content.CCount,
+      UpCount: content.UpCount,
+      DownCount: content.DownCount,
+      TCount: content.TCount,
+      vaccount: uint8ArrayToString(content.vaccount),
+    };
+  }
+
+  private mapThemeComment(
+    content: dcnet.pb.PublishCommentToThemeRequest
+  ): ThemeComment {
+    return {
+      theme: uint8ArrayToString(content.theme),
+      appId: uint8ArrayToString(content.appId),
+      themeAuthor: uint8ArrayToString(content.themeAuthor),
+      blockheight: content.blockheight,
+      userPubkey: uint8ArrayToString(content.userPubkey),
+      commentCid: uint8ArrayToString(content.commentCid),
+      comment: uint8ArrayToString(content.comment),
+      commentSize: content.commentSize,
+      status: content.status,
+      refercommentkey: uint8ArrayToString(content.refercommentkey),
+      CCount: content.CCount,
+      UpCount: content.UpCount,
+      DownCount: content.DownCount,
+      TCount: content.TCount,
+      type: content.type,
+      signature: uint8ArrayToHex(content.signature),
+      vaccount: uint8ArrayToHex(content.vaccount),
+    };
+  }
 }

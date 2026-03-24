@@ -7,7 +7,6 @@ import {
 } from "../../common/types/types";
 import {
   AIProxyUserPermission,
-  cidNeedConnect,
   OpenFlag,
 } from "../../common/constants";
 import { CommentManager } from "../comment/manager";
@@ -20,11 +19,8 @@ import { base32 } from "multiformats/bases/base32";
 import { CommentType, Direction } from "../../common/define";
 import { DCContext } from "../../../lib/interfaces/DCContext";
 import { AIProxyClient } from "./client";
-import { FileManager } from "../file/manager";
-import { toString as uint8ArrayToString } from "uint8arrays/to-string";
 import { BrowserLineReader, readLine } from "../../util/BrowserLineReader";
 import { KeyValueClient } from "../keyvalue/client";
-import { SymmetricKey } from "../threaddb/common/key";
 import { Libp2p } from "@libp2p/interface";
 
 // 错误定义
@@ -396,30 +392,18 @@ export class AIProxyManager {
     }
     try {
       const aiProxyClient = new AIProxyClient(client, this.context);
-      const [proxyConfigCid, aesKey, error] =
-        await aiProxyClient.GetAIProxyConfig(appId, themeAuthor, configTheme);
+      const [configData, error] = await aiProxyClient.GetAIProxyConfig(
+        appId,
+        themeAuthor,
+        configTheme
+      );
       if (error) {
         return [null, null, error];
       }
-      const fileManager = new FileManager(
-        this.dc,
-        this.context.AccountBackupDc,
-        this.chainUtil,
-        this.dcNodeClient,
-        this.context
-      );
-      const cid = proxyConfigCid;
-      const fileContent = await fileManager.getFileFromDc(
-        cid,
-        "",
-        cidNeedConnect.NOT_NEED,
-        false
-      );
-      if (!fileContent) {
+      if (!configData) {
         return [[], [], null];
       }
-      const fileContentString = uint8ArrayToString(fileContent);
-      const result = await this.handleAllConfig(fileContentString, aesKey);
+      const result = await this.handleAllConfig(configData);
       if (!result) {
         return [[], [], null];
       }
@@ -431,8 +415,7 @@ export class AIProxyManager {
   }
 
   private handleAllConfig = async (
-    fileContentString: string,
-    aesKey: string
+    fileContentString: string
   ): Promise<[UserProxyCallConfig[], AIProxyConfig[]] | null> => {
     const reader = new BrowserLineReader(fileContentString);
     let allContent: Array<AIProxyConfig> = [];
@@ -441,7 +424,6 @@ export class AIProxyManager {
     if (!this.context.getPublicKey()) {
       return null;
     }
-    const decryptKey = SymmetricKey.fromString(aesKey);
     // readLine 循环
     while (true) {
       const { line, error } = readLine(reader);
@@ -455,9 +437,7 @@ export class AIProxyManager {
         if (!lineString) {
           break;
         }
-        const lineContent = base32.decode(lineString);
-        const plainContent = await decryptKey.decrypt(lineContent);
-        const contentStr = new TextDecoder().decode(plainContent);
+        const contentStr = this.decodeConfigLine(lineString);
         if (!contentStr) {
           continue; // 如果内容为空，跳过
         }
@@ -530,6 +510,14 @@ export class AIProxyManager {
       Array<AIProxyConfig>
     ];
   };
+
+  private decodeConfigLine(lineString: string): string {
+    try {
+      return new TextDecoder().decode(base32.decode(lineString));
+    } catch {
+      return lineString;
+    }
+  }
 
   async GetUserOwnAIProxyAuth(
     appId: string,
