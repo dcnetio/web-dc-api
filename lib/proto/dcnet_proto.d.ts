@@ -1,5 +1,5 @@
 import * as $protobuf from "protobufjs";
-import type Long from "long";
+import Long = require("long");
 /** Namespace dcnet. */
 export namespace dcnet {
 
@@ -12938,6 +12938,9 @@ export namespace dcnet {
 
             /** GetThemeObjRequest vaccount */
             vaccount?: (Uint8Array|null);
+
+            /** GetThemeObjRequest returnData */
+            returnData?: (boolean|null);
         }
 
         /** Represents a GetThemeObjRequest. */
@@ -12972,6 +12975,9 @@ export namespace dcnet {
 
             /** GetThemeObjRequest vaccount. */
             public vaccount: Uint8Array;
+
+            /** GetThemeObjRequest returnData. */
+            public returnData: boolean;
 
             /**
              * Creates a new GetThemeObjRequest instance using the specified properties.
@@ -13059,6 +13065,9 @@ export namespace dcnet {
 
             /** GetThemeObjReply objsCid */
             objsCid?: (Uint8Array|null);
+
+            /** GetThemeObjReply objsData */
+            objsData?: (Uint8Array|null);
         }
 
         /** Represents a GetThemeObjReply. */
@@ -13075,6 +13084,9 @@ export namespace dcnet {
 
             /** GetThemeObjReply objsCid. */
             public objsCid: Uint8Array;
+
+            /** GetThemeObjReply objsData. */
+            public objsData: Uint8Array;
 
             /**
              * Creates a new GetThemeObjReply instance using the specified properties.
@@ -13398,6 +13410,9 @@ export namespace dcnet {
 
             /** GetThemeCommentsRequest aesKey */
             aesKey?: (Uint8Array|null);
+
+            /** GetThemeCommentsRequest returnCommentsData */
+            returnCommentsData?: (boolean|null);
         }
 
         /** Represents a GetThemeCommentsRequest. */
@@ -13438,6 +13453,9 @@ export namespace dcnet {
 
             /** GetThemeCommentsRequest aesKey. */
             public aesKey: Uint8Array;
+
+            /** GetThemeCommentsRequest returnCommentsData. */
+            public returnCommentsData: boolean;
 
             /**
              * Creates a new GetThemeCommentsRequest instance using the specified properties.
@@ -13525,6 +13543,9 @@ export namespace dcnet {
 
             /** GetThemeCommentsReply commentsCid */
             commentsCid?: (Uint8Array|null);
+
+            /** GetThemeCommentsReply commentsData */
+            commentsData?: (Uint8Array|null);
         }
 
         /** Represents a GetThemeCommentsReply. */
@@ -13541,6 +13562,9 @@ export namespace dcnet {
 
             /** GetThemeCommentsReply commentsCid. */
             public commentsCid: Uint8Array;
+
+            /** GetThemeCommentsReply commentsData. */
+            public commentsData: Uint8Array;
 
             /**
              * Creates a new GetThemeCommentsReply instance using the specified properties.
@@ -13909,6 +13933,9 @@ export namespace dcnet {
 
             /** GetThemeAuthListRequest vaccount */
             vaccount?: (Uint8Array|null);
+
+            /** GetThemeAuthListRequest returnData */
+            returnData?: (boolean|null);
         }
 
         /** Represents a GetThemeAuthListRequest. */
@@ -13946,6 +13973,9 @@ export namespace dcnet {
 
             /** GetThemeAuthListRequest vaccount. */
             public vaccount: Uint8Array;
+
+            /** GetThemeAuthListRequest returnData. */
+            public returnData: boolean;
 
             /**
              * Creates a new GetThemeAuthListRequest instance using the specified properties.
@@ -14033,6 +14063,9 @@ export namespace dcnet {
 
             /** GetThemeAuthListReply authListCid */
             authListCid?: (Uint8Array|null);
+
+            /** GetThemeAuthListReply authListData */
+            authListData?: (Uint8Array|null);
         }
 
         /** Represents a GetThemeAuthListReply. */
@@ -14049,6 +14082,9 @@ export namespace dcnet {
 
             /** GetThemeAuthListReply authListCid. */
             public authListCid: Uint8Array;
+
+            /** GetThemeAuthListReply authListData. */
+            public authListData: Uint8Array;
 
             /**
              * Creates a new GetThemeAuthListReply instance using the specified properties.
@@ -14157,6 +14193,9 @@ export namespace dcnet {
 
             /** GetUserCommentsRequest aesKey */
             aesKey?: (Uint8Array|null);
+
+            /** GetUserCommentsRequest returnData */
+            returnData?: (boolean|null);
         }
 
         /** Represents a GetUserCommentsRequest. */
@@ -14194,6 +14233,9 @@ export namespace dcnet {
 
             /** GetUserCommentsRequest aesKey. */
             public aesKey: Uint8Array;
+
+            /** GetUserCommentsRequest returnData. */
+            public returnData: boolean;
 
             /**
              * Creates a new GetUserCommentsRequest instance using the specified properties.
@@ -14281,6 +14323,9 @@ export namespace dcnet {
 
             /** GetUserCommentsReply commentsCid */
             commentsCid?: (Uint8Array|null);
+
+            /** GetUserCommentsReply commentsData */
+            commentsData?: (Uint8Array|null);
         }
 
         /** Represents a GetUserCommentsReply. */
@@ -14297,6 +14342,9 @@ export namespace dcnet {
 
             /** GetUserCommentsReply commentsCid. */
             public commentsCid: Uint8Array;
+
+            /** GetUserCommentsReply commentsData. */
+            public commentsData: Uint8Array;
 
             /**
              * Creates a new GetUserCommentsReply instance using the specified properties.
@@ -19224,6 +19272,9 @@ export namespace dcnet {
 
             /** GetAIProxyConfigRequest themeAuthor */
             themeAuthor?: (Uint8Array|null);
+
+            /** GetAIProxyConfigRequest returnConfigData */
+            returnConfigData?: (boolean|null);
         }
 
         /** Represents a GetAIProxyConfigRequest. */
@@ -19243,6 +19294,9 @@ export namespace dcnet {
 
             /** GetAIProxyConfigRequest themeAuthor. */
             public themeAuthor: Uint8Array;
+
+            /** GetAIProxyConfigRequest returnConfigData. */
+            public returnConfigData: boolean;
 
             /**
              * Creates a new GetAIProxyConfigRequest instance using the specified properties.
@@ -19333,6 +19387,9 @@ export namespace dcnet {
 
             /** GetAIProxyConfigReply aeskey */
             aeskey?: (Uint8Array|null);
+
+            /** GetAIProxyConfigReply configData */
+            configData?: (Uint8Array|null);
         }
 
         /** Represents a GetAIProxyConfigReply. */
@@ -19352,6 +19409,9 @@ export namespace dcnet {
 
             /** GetAIProxyConfigReply aeskey. */
             public aeskey: Uint8Array;
+
+            /** GetAIProxyConfigReply configData. */
+            public configData: Uint8Array;
 
             /**
              * Creates a new GetAIProxyConfigReply instance using the specified properties.

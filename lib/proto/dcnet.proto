@@ -827,6 +827,7 @@ message GetThemeObjRequest{
     uint32 limit = 6; //返回的记录条数，最多为1000
     bytes  seekKey = 7; //起始key，如果设置了seekKey，忽略startHeight seekKey格式： commentableobjcid  
     bytes vaccount = 8 ; //虚拟账号,可选,如果有虚拟账号
+    bool returnData = 9; //是否直接返回对象数据
 }
 
 
@@ -836,6 +837,7 @@ message GetThemeObjRequest{
 message GetThemeObjReply{
     uint32 flag = 1;//处理结果
     bytes objsCid = 2; //获取的评论列表结果集，存入ipfs网络中后反馈的cid，客户端再通过 getFile获取，结果集是每行一个AddThemeObjRequest通过json序列化后的字符串
+    bytes objsData = 3; //如果请求设置了returnData为true,则直接返回对象数据
 }
 
 
@@ -871,11 +873,13 @@ message GetThemeCommentsRequest{
     bytes  seekKey = 8; //起始key，如果设置了seekKey，忽略startHeight (seekKey格式 blockheight/commentcid）
     bytes vaccount = 9 ; //虚拟账号,可选,如果有虚拟账号
     bytes aesKey = 10; //aes加密的key,返回的记录用这个key加密,如果不传,服务侧将用请求节点pubkey加密
+    bool returnCommentsData = 11; //是否直接返回评论数据
 }
 
 message GetThemeCommentsReply{
     uint32 flag = 1;//获取结果
     bytes commentsCid = 2; //获取的评论列表结果集，存入ipfs网络中后反馈的cid，客户端再通过 getFile获取，结果集是PublishCommentToThemeRequest的数组 json序列化
+    bytes commentsData = 3; //直接返回的评论数据，格式同存入ipfs的内容，也是json序列化并加密的数据
 }
 
 
@@ -910,11 +914,13 @@ message GetThemeAuthListRequest{
     uint32 limit = 7; //返回的记录条数，最多为100
     bytes  seekKey = 8; //起始key，如果设置了seekKey，忽略startHeight (seekKey格式 blockheight/commentcid）
     bytes vaccount = 9 ; //虚拟账号,可选,如果有虚拟账号
+    bool returnData = 10; //是否直接返回列表数据
 }
 
 message GetThemeAuthListReply{
     uint32 flag = 1;//获取结果
     bytes authListCid = 2; //获取的授权列表结果集存入ipfs网络中后反馈的cid,客户端再通过 getFile获取，结果集是PublishCommentToThemeRequest的数组 json序列化
+    bytes authListData = 3; //如果请求设置了returnData为true,则直接返回列表数据
 }
 
 message GetUserCommentsRequest{
@@ -927,11 +933,13 @@ message GetUserCommentsRequest{
     bytes  seekKey = 7; //起始key，如果设置了seekKey，忽略startHeight  (seekKey格式 objcid/blockheight/commentcid）
     bytes vaccount = 8 ; //虚拟账号,可选,如果有虚拟账号
     bytes aesKey = 9; //aes加密的key,返回的记录用这个key加密,如果不传,服务侧将用请求节点pubkey加密
+    bool returnData = 10; //是否直接返回对象数据
 }
 
 message GetUserCommentsReply{
     uint32 flag = 1;//获取结果
     bytes commentsCid = 2; //获取的评论列表结果集，存入ipfs网络中后反馈的cid，客户端再通过 getFile获取，结果集是PublishCommentToThemeRequest的数组 json序列化
+    bytes commentsData = 3; //如果请求设置了returnData为true,则直接返回对象数据
 }
 
 
@@ -1248,12 +1256,14 @@ message GetAIProxyConfigRequest {
     bytes theme = 1; //状态汇聚对象CID
     bytes appId = 2; //应用标志
     bytes themeAuthor = 3;//发布状态汇聚对象的的pubkey
+    bool returnConfigData = 4; //是否直接返回配置数据
 }
 
 message GetAIProxyConfigReply {
    uint32 flag = 1;//获取结果 0:成功 1:权限不足 2:获取失败
    bytes proxyConfigCid = 2; //获取的配置结果集，存入ipfs网络中后反馈的cid，客户端再通过 getFile获取,包括了配置列表和所有用户的授权信息
    bytes aeskey = 3; //配置信息的aes加密key
+   bytes configData = 4; //直接返回的配置数据
 }
 
 message GetUserOwnAIProxyAuthRequest {
