@@ -43,6 +43,7 @@ export interface IPackageApplyRequest {
   themeAuthor?: string;
   themeAppid?: string;
   serviceAppid?: string;
+  replacesPkgId?: number;
   chainPkgId?: number;
   spaceSize?: number;
 }

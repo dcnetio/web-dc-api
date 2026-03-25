@@ -18,6 +18,7 @@ import {
 
 const logger = createLogger("PayModule");
 const dc_pay_protocol = "/dc/pay/1.0.0";
+const packageMutationTokenPrefix = "pkgsig.";
 
 export class PayModule implements DCModule, IPayOperations {
   readonly moduleName = CoreModuleName.PAY;
@@ -31,6 +32,97 @@ export class PayModule implements DCModule, IPayOperations {
   private readonly pendingPaymentKey = "dcapi_pending_gateway_payment";
   private readonly returnFlagKey = "pay_return";
   private readonly returnSceneKey = "pay_scene";
+
+  private getPackageMutationSignerPubkey(): string {
+    const signer = String(
+      this.dcContext?.publicKey?.string?.() ||
+      this.dcContext?.getPublicKey?.()?.string?.() ||
+      ""
+    ).trim();
+    if (!signer) {
+      throw new Error("当前账号公钥不可用，无法生成套餐变更签名");
+    }
+    return signer;
+  }
+
+  private encodeBase64Url(input: Uint8Array | string): string {
+    const bytes = typeof input === "string" ? new TextEncoder().encode(input) : input;
+    let binary = "";
+    for (let i = 0; i < bytes.length; i++) {
+      binary += String.fromCharCode(bytes[i]);
+    }
+    const base64 = globalThis.btoa(binary);
+    return base64.replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "");
+  }
+
+  private writeStringField(buffer: number[], value: string): void {
+    const bytes = new TextEncoder().encode(String(value || "").trim());
+    const length = bytes.length >>> 0;
+    buffer.push(length & 0xff, (length >>> 8) & 0xff, (length >>> 16) & 0xff, (length >>> 24) & 0xff);
+    buffer.push(...bytes);
+  }
+
+  private writeInt32Field(buffer: number[], value: number): void {
+    const intVal = Number(value || 0) | 0;
+    buffer.push(intVal & 0xff, (intVal >>> 8) & 0xff, (intVal >>> 16) & 0xff, (intVal >>> 24) & 0xff);
+  }
+
+  private writeInt64Field(buffer: number[], value: number): void {
+    const safeValue = Math.trunc(Number(value || 0));
+    const low = safeValue >>> 0;
+    const high = Math.floor(safeValue / 0x100000000) | 0;
+    buffer.push(low & 0xff, (low >>> 8) & 0xff, (low >>> 16) & 0xff, (low >>> 24) & 0xff);
+    buffer.push(high & 0xff, (high >>> 8) & 0xff, (high >>> 16) & 0xff, (high >>> 24) & 0xff);
+  }
+
+  private buildApplyPackageSignPayload(request: IPackageApplyRequest, timestampSec: number): Uint8Array {
+    const buffer: number[] = [];
+    this.writeStringField(buffer, "apply_buss_package");
+    this.writeInt32Field(buffer, Number(request.pkgType || 0));
+    this.writeStringField(buffer, String(request.scene || ""));
+    this.writeStringField(buffer, String(request.bussdesc || ""));
+    this.writeStringField(buffer, String(request.imglist || ""));
+    this.writeStringField(buffer, String(request.pkgName || ""));
+    this.writeStringField(buffer, String(request.lang || "zh"));
+    this.writeInt32Field(buffer, Number(request.amount || 0));
+    this.writeStringField(buffer, String(request.currency || "CNY"));
+    this.writeInt32Field(buffer, Number(request.validDays || 0));
+    const pkgRightsStr = request.pkgRights
+      ? (typeof request.pkgRights === "string" ? request.pkgRights : JSON.stringify(request.pkgRights))
+      : "";
+    this.writeStringField(buffer, pkgRightsStr);
+    this.writeStringField(buffer, String(request.theme || ""));
+    this.writeStringField(buffer, String(request.themeAuthor || ""));
+    this.writeStringField(buffer, String(request.themeAppid || ""));
+    this.writeStringField(buffer, String(request.serviceAppid || this.dcContext.appInfo.appId || ""));
+    // Current dcapi protobuf schema does not expose replacesPkgId; keep it as 0 to match server-side decoded request.
+    this.writeInt32Field(buffer, 0);
+    this.writeInt32Field(buffer, Number(request.chainPkgId || 0));
+    this.writeInt32Field(buffer, Number(request.spaceSize || 0));
+    this.writeInt64Field(buffer, timestampSec);
+    return new Uint8Array(buffer);
+  }
+
+  private buildDeletePackageSignPayload(pkgId: number, timestampSec: number): Uint8Array {
+    const buffer: number[] = [];
+    this.writeStringField(buffer, "delete_buss_package");
+    this.writeInt32Field(buffer, pkgId);
+    this.writeInt64Field(buffer, timestampSec);
+    return new Uint8Array(buffer);
+  }
+
+  private async buildPackageMutationAuthToken(payload: Uint8Array, timestampSec: number): Promise<string> {
+    const signerPubkey = this.getPackageMutationSignerPubkey();
+    const signature = await this.dcContext.sign(payload);
+    const tokenBody = {
+      ver: 1,
+      signer_pubkey: signerPubkey,
+      timestamp: timestampSec,
+      signature: this.encodeBase64Url(signature),
+    };
+    const encodedPayload = this.encodeBase64Url(JSON.stringify(tokenBody));
+    return `${packageMutationTokenPrefix}${encodedPayload}`;
+  }
 
   async initialize(context: DCContext): Promise<boolean> {
     this.dcContext = context;
@@ -242,7 +334,7 @@ export class PayModule implements DCModule, IPayOperations {
     return normalizedRecords.filter((item): item is IPaymentOrderRecord => item !== null);
   }
 
-  private async getPayGrpcClient(): Promise<Libp2pGrpcClient> {
+  private async getPayGrpcClient(authToken?: string): Promise<Libp2pGrpcClient> {
     this.assertInitialized();
     if (!this.payPeerUrl) {
       throw new Error("缺少支付网关 payPeerUrl 配置");
@@ -258,7 +350,7 @@ export class PayModule implements DCModule, IPayOperations {
     return new Libp2pGrpcClient(
       libp2pNode,
       peerAddr,
-      "",
+      authToken || "",
       dc_pay_protocol
     );
   }
@@ -464,7 +556,10 @@ export class PayModule implements DCModule, IPayOperations {
   }
 
   async applyBusinessPackage(request: IPackageApplyRequest): Promise<boolean> {
-    const grpcClient = await this.getPayGrpcClient();
+    const timestampSec = Math.floor(Date.now() / 1000);
+    const signPayload = this.buildApplyPackageSignPayload(request, timestampSec);
+    const authToken = await this.buildPackageMutationAuthToken(signPayload, timestampSec);
+    const grpcClient = await this.getPayGrpcClient(authToken);
     
     let pkgRightsStr = "";
     if (request.pkgRights) {
@@ -536,25 +631,25 @@ export class PayModule implements DCModule, IPayOperations {
       throw new Error("缺少套餐ID，无法删除");
     }
 
-    const targetUrl = `${this.getPayApiBaseUrl()}/package/${encodeURIComponent(normalizedId)}`;
-    const response = await fetch(targetUrl, {
-      method: "DELETE",
-      credentials: "omit",
+    const pkgId = Number(normalizedId);
+    if (!Number.isFinite(pkgId) || pkgId <= 0) {
+      throw new Error("套餐ID格式无效，无法删除");
+    }
+
+    const timestampSec = Math.floor(Date.now() / 1000);
+    const signPayload = this.buildDeletePackageSignPayload(pkgId, timestampSec);
+    const authToken = await this.buildPackageMutationAuthToken(signPayload, timestampSec);
+    const grpcClient = await this.getPayGrpcClient(authToken);
+
+    const pbReq = pb.PackageInfo.create({
+      pkgId,
     });
+    const requestBytes = pb.PackageInfo.encode(pbReq).finish();
+    const responseBytes = await grpcClient.unaryCall("/pb.PayService/DeleteBussPackage", requestBytes, 30000);
+    const response = pb.ApplyBussPackageResponse.decode(responseBytes);
 
-    const text = await response.text();
-    let payload: any = null;
-    try {
-      payload = text ? JSON.parse(text) : null;
-    } catch {
-      payload = null;
-    }
-
-    if (!response.ok) {
-      throw new Error(payload?.msg || payload?.error || `删除套餐失败(${response.status})`);
-    }
-    if (Number(payload?.code || 0) !== 0) {
-      throw new Error(payload?.msg || payload?.error || "删除套餐失败");
+    if (Number(response?.code || 0) !== 0) {
+      throw new Error(response?.msg || "删除套餐失败");
     }
     return true;
   }
