@@ -485,10 +485,10 @@ export class AIProxyManager {
         try {
           //解析出扩展信息(时间戳,用户公钥等)
           const valueParts = valueWithExtra.split("$$$dckv_extra$$$");
-          const value = valueParts[0] || "{}";
+          const value = this.extractLikelyJSON(valueParts[0] || "{}");
           const content = JSON.parse(value);
           if (valueParts.length > 1) {
-            const extraStr = valueParts[1] || "{}";
+            const extraStr = this.extractLikelyJSON(valueParts[1] || "{}");
             const extra = JSON.parse(extraStr);
             if (extra) {
               if (extra.dc_timestamp) {
@@ -517,6 +517,31 @@ export class AIProxyManager {
     } catch {
       return lineString;
     }
+  }
+
+  private extractLikelyJSON(raw: string): string {
+    const text = String(raw || "").trim();
+    if (!text) {
+      return "{}";
+    }
+
+    if ((text.startsWith("{") && text.endsWith("}")) || (text.startsWith("[") && text.endsWith("]"))) {
+      return text;
+    }
+
+    const objectStart = text.indexOf("{");
+    const objectEnd = text.lastIndexOf("}");
+    if (objectStart >= 0 && objectEnd > objectStart) {
+      return text.slice(objectStart, objectEnd + 1);
+    }
+
+    const arrayStart = text.indexOf("[");
+    const arrayEnd = text.lastIndexOf("]");
+    if (arrayStart >= 0 && arrayEnd > arrayStart) {
+      return text.slice(arrayStart, arrayEnd + 1);
+    }
+
+    return text;
   }
 
   async GetUserOwnAIProxyAuth(

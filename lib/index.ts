@@ -415,6 +415,15 @@ export { createLogger, configureLogger, LogLevel } from './util/logger';
 
 // 导出keyManager
 export { KeyManager } from './common/dc-key/keyManager';
+export {
+  AIProxyRealtimeVoiceSession,
+  createAliyunRealtimeVoiceProtocolAdapter,
+  createBrowserRealtimeVoiceInputAdapter,
+  createBrowserRealtimeVoiceOutputAdapter,
+  createWechatMiniProgramRealtimeSocketFactory,
+  createWechatMiniProgramVoiceInputAdapter,
+  resolveRealtimeVoiceRuntime,
+} from './implements/aiproxy/realtime-voice-session';
 
 // 导出Worker辅助函数
 export { exposeDC, wrapWorker } from './worker';

@@ -1,4 +1,5 @@
 export type {IAuthOperations} from './auth-interface';
+export type {IAIProxyOperations} from './aiproxy-interface';
 export type {IClientOperations} from './client-interface';
 export type {IDatabaseOperations} from './database-interface';
 export type {IFileOperations} from './file-interface';

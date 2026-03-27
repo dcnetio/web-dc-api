@@ -111,6 +111,108 @@ export interface UserProxyCallConfig {
   authConfig: ProxyCallConfig; //授权配置
 }
 
+export interface AIProxyRealtimeConnectionPreset {
+  protocol?: "WebSocket";
+  url?: string;
+  headers?: Record<string, string>;
+  query?: Record<string, string | number | boolean>;
+  protocols?: string[];
+  // bearer 依赖 WebSocket 握手头时，在浏览器原生 WebSocket 环境中通常不可直接使用。
+  // 如果选择 bearer，请优先确认服务端支持 query/token 方式，或通过 createWebSocket 注入自定义 socket factory。
+  authMode?: "token" | "apikey" | "bearer" | "none";
+  authQueryName?: string;
+}
+
+export interface AIProxyRealtimeResponsePreset {
+  customResponse?: boolean;
+  actualDataField?: string;
+  defaultExpiresIn?: number;
+  reconnectOnRefresh?: boolean;
+}
+
+export interface AIProxyRealtimeCredentialExchangePreset {
+  enabled?: boolean;
+  mode?: "fallback" | "prefer" | "required";
+  endpoint?: string;
+  method?: "GET" | "POST";
+  headers?: Record<string, string>;
+  query?: Record<string, string | number | boolean>;
+  body?: Record<string, unknown>;
+  appId?: string;
+  appKey?: string;
+  appSecret?: string;
+  appIdField?: string;
+  appKeyField?: string;
+  appSecretField?: string;
+  appIdLocation?: "query" | "body" | "header";
+  appKeyLocation?: "query" | "body" | "header";
+  appSecretLocation?: "query" | "body" | "header";
+  responseTokenField?: string;
+  responseTempTokenField?: string;
+  responseApiKeyField?: string;
+  responseTempApiKeyField?: string;
+  responseExpiresInField?: string;
+  responseExpiresAtField?: string;
+}
+
+export interface AIProxyRealtimeConfig {
+  enabled?: boolean;
+  connection?: AIProxyRealtimeConnectionPreset;
+  response?: AIProxyRealtimeResponsePreset;
+  credentialExchange?: AIProxyRealtimeCredentialExchangePreset;
+}
+
+// 动态签名相关接口定义
+export interface AIProxySignatureNodeInjectTimestamp {
+  key: string;
+  format: 'unix_s' | 'unix_ms' | 'iso8601'; // 时间戳格式
+}
+
+export interface AIProxySignatureNodeInjectNonce {
+  key: string;
+  length: number;
+}
+
+export interface AIProxySignatureNodeInject {
+  timestamp?: AIProxySignatureNodeInjectTimestamp;
+  nonce?: AIProxySignatureNodeInjectNonce;
+}
+
+export interface AIProxySignatureIncludes {
+  useBody?: boolean; // 是否包含请求体参数
+  useQuery?: boolean; // 是否包含URL查询参数
+  headers?: string[]; // 需要包含的特定Header列表
+  nodeInject?: AIProxySignatureNodeInject; // 节点自动注入的动态字段
+  fixedParams?: Record<string, string>; // 固定参与签名的参数
+}
+
+export interface AIProxySignatureAssembler {
+  sort: 'ascii_key_asc' | 'ascii_key_desc' | 'none'; // 参数排序方式
+  format: 'url_query' | 'json' | 'kv_concat'; // 参数拼装格式
+  encoding?: 'query_escape_plus' | 'percent_encode' | 'rfc3986' | 'raw'; // 参数编码策略
+}
+
+export interface AIProxySignatureSecretUsage {
+  type: 'hmac_key' | 'append_to_string' | 'prepend_to_string'; // 秘钥使用方式
+  keyName?: string; // 用于拼接模式下的Key名称
+}
+
+export interface AIProxySignatureOutput {
+  target: 'header' | 'query' | 'body'; // 签名输出位置
+  key: string; // 输出字段名, 如 "Authorization", "X-Sign"
+  prefix?: string; // 前缀, 如 "Signature ", "Bearer "
+  encoding: 'hex' | 'base64' | 'base64url'; // 签名编码方式
+}
+
+export interface AIProxySignatureConfig {
+  template?: 'tencent_tc3' | 'aliyun' | 'aliyun_concat' | string; // 云厂商签名模板
+  algorithm: 'HMAC-SHA256' | 'HMAC-SHA1' | 'MD5' | 'RSA-SHA256' | 'SHA256'; // 签名算法
+  includes?: AIProxySignatureIncludes; // 参与签名的参数收集规则
+  assembler?: AIProxySignatureAssembler; // 参数装配与排序规则
+  secretUsage?: AIProxySignatureSecretUsage; // 秘钥使用方式
+  output?: AIProxySignatureOutput; // 签名输出配置
+}
+
 export interface AIProxyConfig {
   service: string; // 服务名称
   isAIModel: number; // 0: AI模型 1: MCPServer
@@ -121,6 +223,8 @@ export interface AIProxyConfig {
   apiVersion: string; // api版本号
   modelConfig: ModelConfig; // 模型配置
   remark: string;
+  realtime?: AIProxyRealtimeConfig; // 实时调用扩展配置
+  signature?: AIProxySignatureConfig; // 动态签名配置
   blockheight?: number; // 可以不设置,由sdk自动设置
   timestamp?: number; // 设置时间戳,DC节点自动设置
   userPubkey?: string; // 设置配置用户公钥,DC节点自动设置
@@ -293,6 +397,376 @@ export interface IAICallConfig {
   headers?: Record<string, string>;
   path?: string;
   model?: string;
+}
+
+export type AIProxyRealtimeAudioWriteData =
+  | string
+  | Blob
+  | ArrayBuffer
+  | ArrayBufferView
+  | Record<string, unknown>;
+
+export interface AIProxyRealtimeAudioAuthInfo {
+  websocketUrl?: string;
+  url?: string;
+  endpoint?: string;
+  headers?: Record<string, string>;
+  query?: Record<string, string | number | boolean>;
+  protocols?: string[];
+  token?: string;
+  tempToken?: string;
+  apiKey?: string;
+  tempApiKey?: string;
+  // bearer 表示凭据语义在 Authorization 头中；在浏览器原生 WebSocket 环境下通常不能直接依赖该头发起握手。
+  // 若 authMode=bearer，通常需要 createWebSocket 提供自定义运行时，或改由服务端支持 query/token 透传。
+  authMode?: "token" | "apikey" | "bearer" | "none";
+  authQueryName?: string;
+  expiresAt?: number | string;
+  expiresIn?: number;
+  reconnectOnRefresh?: boolean;
+  metadata?: Record<string, unknown>;
+}
+
+export interface AIProxyRealtimeSocketMessageEvent {
+  data: string | ArrayBuffer | Blob;
+  type?: string;
+  [key: string]: unknown;
+}
+
+export interface AIProxyRealtimeSocketCloseEvent {
+  code?: number;
+  reason?: string;
+  wasClean?: boolean;
+  type?: string;
+  [key: string]: unknown;
+}
+
+export interface AIProxyRealtimeSocketErrorEvent {
+  error?: unknown;
+  message?: string;
+  type?: string;
+  [key: string]: unknown;
+}
+
+export interface AIProxyRealtimeAudioSocketLike {
+  readonly readyState: number;
+  binaryType?: BinaryType | string;
+  onmessage:
+    | ((event: MessageEvent | AIProxyRealtimeSocketMessageEvent) => void)
+    | null;
+  onclose:
+    | ((event: CloseEvent | AIProxyRealtimeSocketCloseEvent) => void)
+    | null;
+  onerror:
+    | ((event: Event | Error | AIProxyRealtimeSocketErrorEvent) => void)
+    | null;
+  addEventListener(
+    type: "open" | "message" | "error" | "close",
+    listener: (event: unknown) => void,
+    options?: { once?: boolean },
+  ): void;
+  removeEventListener(
+    type: "open" | "message" | "error" | "close",
+    listener: (event: unknown) => void,
+  ): void;
+  send(data: string | Blob | ArrayBuffer): void;
+  close(code?: number, reason?: string): void;
+}
+
+export interface AIProxyRealtimeAudioSocketFactoryOptions {
+  url: string;
+  protocols: string[];
+  // 仅在自定义 socket factory 可消费时有效；浏览器原生 WebSocket 构造函数不会直接接受这些 headers。
+  headers: Record<string, string>;
+  authInfo: AIProxyRealtimeAudioAuthInfo;
+}
+
+export interface IAIProxyRealtimeAudioSession {
+  readonly authInfo: AIProxyRealtimeAudioAuthInfo | null;
+  readonly isConnected: boolean;
+  readonly readyState: number;
+
+  connect(): Promise<void>;
+  write(data: AIProxyRealtimeAudioWriteData): Promise<void>;
+  refreshAuth(forceRefresh?: boolean): Promise<AIProxyRealtimeAudioAuthInfo>;
+  close(code?: number, reason?: string): void;
+}
+
+export interface AIProxyRealtimeAudioSessionOptions {
+  context?: { signal?: AbortSignal };
+  initRequestBody: string | Record<string, unknown>;
+  // 当 realtimeConfig.connection.authMode 为 bearer 时，浏览器原生 WebSocket 通常无法直接发送 Authorization 头。
+  // 这类场景应优先使用 query/token 模式，或通过 createWebSocket 接入支持自定义请求头的运行时实现。
+  realtimeConfig?: AIProxyRealtimeConfig;
+  forceRefresh?: boolean;
+  appId?: string;
+  themeAuthor?: string;
+  configTheme?: string;
+  serviceName?: string;
+  headers?: Record<string, string>;
+  path?: string;
+  model?: string;
+  autoReconnect?: boolean;
+  reconnectDelayMs?: number;
+  connectTimeoutMs?: number;
+  refreshBeforeMs?: number;
+  reconnectOnAuthRefresh?: boolean;
+  resolveAuthInfo?: (
+    payload: string,
+  ) => AIProxyRealtimeAudioAuthInfo;
+  // 如果需要在浏览器外或特殊运行时里透传 Authorization 等握手头，可使用自定义 socket factory。
+  createWebSocket?: (
+    options: AIProxyRealtimeAudioSocketFactoryOptions,
+  ) => AIProxyRealtimeAudioSocketLike;
+  onConnected?: (
+    session: IAIProxyRealtimeAudioSession,
+    authInfo: AIProxyRealtimeAudioAuthInfo,
+  ) => void;
+  onAuthRefreshed?: (authInfo: AIProxyRealtimeAudioAuthInfo) => void;
+  onMessage?: (
+    data: string | ArrayBuffer | Blob,
+    event: MessageEvent | AIProxyRealtimeSocketMessageEvent,
+  ) => void;
+  onJsonMessage?: (
+    data: unknown,
+    event: MessageEvent | AIProxyRealtimeSocketMessageEvent,
+  ) => void;
+  onError?: (error: Error | Event | AIProxyRealtimeSocketErrorEvent) => void;
+  onClose?: (event: CloseEvent | AIProxyRealtimeSocketCloseEvent) => void;
+}
+
+export interface AIProxyAliyunRealtimeAudioSessionOptions
+  extends Omit<AIProxyRealtimeAudioSessionOptions, "realtimeConfig"> {
+  // 阿里云 DashScope 实时接口的 WebSocket 基地址，默认会拼成 /api-ws/v1/inference 并附带 model query。
+  websocketBaseUrl?: string;
+  // 阿里云默认按 query 透传 api_key；只有在服务端或自定义 socket factory 明确支持时才建议改成其它模式。
+  authQueryName?: string;
+  // 自定义返回中真实下游数据挂载字段，默认 providerData。
+  actualDataField?: string;
+  // 鉴权返回未显式给出 expiresIn 时的默认秒数，默认 600。
+  defaultExpiresIn?: number;
+}
+
+export type AIProxyRealtimeVoiceRuntime =
+  | "auto"
+  | "browser"
+  | "wechat-browser"
+  | "mini-program"
+  | "custom";
+
+export interface AIProxyRealtimeVoiceInputFrame {
+  data: ArrayBuffer | ArrayBufferView | Blob;
+  format?: "pcm16" | "pcm-f32" | string;
+  sampleRate?: number;
+  channels?: number;
+  mimeType?: string;
+  sequence?: number;
+  timestamp?: number;
+  metadata?: Record<string, unknown>;
+}
+
+export interface AIProxyRealtimeVoiceOutputFrame {
+  data: string | ArrayBuffer | ArrayBufferView | Blob;
+  format?: "pcm16" | "pcm-f32" | string;
+  sampleRate?: number;
+  channels?: number;
+  mimeType?: string;
+  sequence?: number;
+  timestamp?: number;
+  metadata?: Record<string, unknown>;
+}
+
+export interface AIProxyRealtimeVoiceStopOptions {
+  commit?: boolean;
+  requestResponse?: boolean;
+  finishSession?: boolean;
+}
+
+export interface AIProxyRealtimeVoiceProtocolContext {
+  runtime: Exclude<AIProxyRealtimeVoiceRuntime, "auto">;
+  transport: IAIProxyRealtimeAudioSession;
+  authInfo: AIProxyRealtimeAudioAuthInfo | null;
+}
+
+export interface AIProxyRealtimeVoiceInputContext {
+  runtime: Exclude<AIProxyRealtimeVoiceRuntime, "auto">;
+  signal?: AbortSignal;
+  emitFrame: (frame: AIProxyRealtimeVoiceInputFrame) => void | Promise<void>;
+  emitError: (error: Error) => void;
+}
+
+export interface IAIProxyRealtimeVoiceInputAdapter {
+  start(context: AIProxyRealtimeVoiceInputContext): Promise<void> | void;
+  stop(): Promise<void> | void;
+  pause?(): Promise<void> | void;
+  resume?(): Promise<void> | void;
+}
+
+export interface IAIProxyRealtimeVoiceOutputAdapter {
+  start?(): Promise<void> | void;
+  play(frame: AIProxyRealtimeVoiceOutputFrame): Promise<void> | void;
+  stop(): Promise<void> | void;
+  clear?(): Promise<void> | void;
+}
+
+export interface AIProxyRealtimeVoiceProtocolAdapter {
+  buildConnectMessages?: (
+    context: AIProxyRealtimeVoiceProtocolContext,
+  ) =>
+    | AIProxyRealtimeAudioWriteData
+    | AIProxyRealtimeAudioWriteData[]
+    | Promise<AIProxyRealtimeAudioWriteData | AIProxyRealtimeAudioWriteData[] | null>
+    | null;
+  buildAudioInputMessages: (
+    frame: AIProxyRealtimeVoiceInputFrame,
+    context: AIProxyRealtimeVoiceProtocolContext,
+  ) =>
+    | AIProxyRealtimeAudioWriteData
+    | AIProxyRealtimeAudioWriteData[]
+    | Promise<AIProxyRealtimeAudioWriteData | AIProxyRealtimeAudioWriteData[] | null>
+    | null;
+  buildTextInputMessages?: (
+    text: string,
+    context: AIProxyRealtimeVoiceProtocolContext,
+  ) =>
+    | AIProxyRealtimeAudioWriteData
+    | AIProxyRealtimeAudioWriteData[]
+    | Promise<AIProxyRealtimeAudioWriteData | AIProxyRealtimeAudioWriteData[] | null>
+    | null;
+  buildCommitMessages?: (
+    context: AIProxyRealtimeVoiceProtocolContext,
+  ) =>
+    | AIProxyRealtimeAudioWriteData
+    | AIProxyRealtimeAudioWriteData[]
+    | Promise<AIProxyRealtimeAudioWriteData | AIProxyRealtimeAudioWriteData[] | null>
+    | null;
+  buildResponseCreateMessages?: (
+    context: AIProxyRealtimeVoiceProtocolContext,
+  ) =>
+    | AIProxyRealtimeAudioWriteData
+    | AIProxyRealtimeAudioWriteData[]
+    | Promise<AIProxyRealtimeAudioWriteData | AIProxyRealtimeAudioWriteData[] | null>
+    | null;
+  buildFinishMessages?: (
+    context: AIProxyRealtimeVoiceProtocolContext,
+  ) =>
+    | AIProxyRealtimeAudioWriteData
+    | AIProxyRealtimeAudioWriteData[]
+    | Promise<AIProxyRealtimeAudioWriteData | AIProxyRealtimeAudioWriteData[] | null>
+    | null;
+  extractOutputFrames?: (
+    message: unknown,
+    rawData: string | ArrayBuffer | Blob,
+    context: AIProxyRealtimeVoiceProtocolContext,
+  ) =>
+    | AIProxyRealtimeVoiceOutputFrame
+    | AIProxyRealtimeVoiceOutputFrame[]
+    | Promise<AIProxyRealtimeVoiceOutputFrame | AIProxyRealtimeVoiceOutputFrame[] | null>
+    | null;
+}
+
+export interface AIProxyRealtimeVoiceBrowserAdapterOptions {
+  sampleRate?: number;
+  channelCount?: number;
+  bufferSize?: number;
+  audioConstraints?: MediaTrackConstraints;
+}
+
+export interface AIProxyRealtimeVoiceAliyunProtocolOptions {
+  session?: Record<string, unknown>;
+  response?: Record<string, unknown>;
+  inputAudioFormat?: string;
+  outputAudioFormat?: string;
+  autoCommitOnStop?: boolean;
+  autoCreateResponseOnStop?: boolean;
+}
+
+export interface AIProxyWechatMiniProgramSocketTaskLike {
+  send(options: { data: string | ArrayBuffer }): void;
+  close(options?: { code?: number; reason?: string }): void;
+  onOpen(callback: (event: unknown) => void): void;
+  onMessage(callback: (event: { data: string | ArrayBuffer }) => void): void;
+  onError(callback: (event: unknown) => void): void;
+  onClose(
+    callback: (event: { code?: number; reason?: string }) => void,
+  ): void;
+}
+
+export interface AIProxyWechatMiniProgramRecorderLike {
+  start(options?: Record<string, unknown>): void;
+  stop(): void;
+  pause?(): void;
+  resume?(): void;
+  onFrameRecorded?(
+    callback: (event: { frameBuffer: ArrayBuffer; isLastFrame?: boolean }) => void,
+  ): void;
+  onError(callback: (event: unknown) => void): void;
+}
+
+export interface AIProxyWechatMiniProgramInnerAudioContextLike {
+  autoplay: boolean;
+  src: string;
+  play(): void;
+  stop(): void;
+  destroy?(): void;
+  onEnded?(callback: () => void): void;
+  onError?(callback: (event: unknown) => void): void;
+}
+
+export interface AIProxyWechatMiniProgramAPI {
+  connectSocket(options: {
+    url: string;
+    protocols?: string[];
+    header?: Record<string, string>;
+  }): AIProxyWechatMiniProgramSocketTaskLike;
+  getRecorderManager?(): AIProxyWechatMiniProgramRecorderLike;
+  createInnerAudioContext?(): AIProxyWechatMiniProgramInnerAudioContextLike;
+}
+
+export interface AIProxyRealtimeVoiceMiniProgramOptions {
+  wx?: AIProxyWechatMiniProgramAPI;
+  recorderOptions?: Record<string, unknown>;
+}
+
+export interface IAIProxyRealtimeVoiceSession {
+  readonly transport: IAIProxyRealtimeAudioSession | null;
+  readonly runtime: Exclude<AIProxyRealtimeVoiceRuntime, "auto">;
+  readonly isCapturing: boolean;
+  connect(): Promise<void>;
+  startVoiceInput(): Promise<void>;
+  stopVoiceInput(options?: AIProxyRealtimeVoiceStopOptions): Promise<void>;
+  sendText(text: string): Promise<void>;
+  sendEvent(data: AIProxyRealtimeAudioWriteData): Promise<void>;
+  commitInput(): Promise<void>;
+  requestResponse(): Promise<void>;
+  finishSession(): Promise<void>;
+  close(code?: number, reason?: string): Promise<void>;
+}
+
+export interface AIProxyRealtimeVoiceSessionOptions
+  extends AIProxyRealtimeAudioSessionOptions {
+  runtime?: AIProxyRealtimeVoiceRuntime;
+  protocolAdapter: AIProxyRealtimeVoiceProtocolAdapter;
+  inputAdapter?: IAIProxyRealtimeVoiceInputAdapter;
+  outputAdapter?: IAIProxyRealtimeVoiceOutputAdapter;
+  browserAdapterOptions?: AIProxyRealtimeVoiceBrowserAdapterOptions;
+  miniProgramOptions?: AIProxyRealtimeVoiceMiniProgramOptions;
+  autoStartInput?: boolean;
+  autoPlayOutput?: boolean;
+  stopVoiceInputOptions?: AIProxyRealtimeVoiceStopOptions;
+  onModelEvent?: (message: unknown) => void;
+  onVoiceInputFrame?: (frame: AIProxyRealtimeVoiceInputFrame) => void;
+  onVoiceOutputFrame?: (frame: AIProxyRealtimeVoiceOutputFrame) => void;
+  onVoiceError?: (error: Error) => void;
+}
+
+export interface AIProxyAliyunRealtimeVoiceSessionOptions
+  extends Omit<
+    AIProxyRealtimeVoiceSessionOptions,
+    "realtimeConfig" | "protocolAdapter"
+  >,
+    AIProxyAliyunRealtimeAudioSessionOptions {
+  aliyunProtocolOptions?: AIProxyRealtimeVoiceAliyunProtocolOptions;
 }
 
 export interface AIMessageMediaSource {

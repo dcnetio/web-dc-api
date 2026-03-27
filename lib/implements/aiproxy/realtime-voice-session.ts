@@ -1,0 +1,1021 @@
+import {
+  AIProxyRealtimeAudioAuthInfo,
+  AIProxyRealtimeAudioSocketFactoryOptions,
+  AIProxyRealtimeAudioSocketLike,
+  AIProxyRealtimeAudioWriteData,
+  AIProxyRealtimeSocketCloseEvent,
+  AIProxyRealtimeSocketErrorEvent,
+  AIProxyRealtimeSocketMessageEvent,
+  AIProxyRealtimeVoiceAliyunProtocolOptions,
+  AIProxyRealtimeVoiceBrowserAdapterOptions,
+  AIProxyRealtimeVoiceInputContext,
+  AIProxyRealtimeVoiceInputFrame,
+  AIProxyRealtimeVoiceMiniProgramOptions,
+  AIProxyRealtimeVoiceOutputFrame,
+  AIProxyRealtimeVoiceProtocolAdapter,
+  AIProxyRealtimeVoiceProtocolContext,
+  AIProxyRealtimeVoiceRuntime,
+  AIProxyRealtimeVoiceSessionOptions,
+  AIProxyRealtimeVoiceStopOptions,
+  AIProxyWechatMiniProgramAPI,
+  IAIProxyRealtimeAudioSession,
+  IAIProxyRealtimeVoiceInputAdapter,
+  IAIProxyRealtimeVoiceOutputAdapter,
+  IAIProxyRealtimeVoiceSession,
+} from "../../common/types/types";
+
+type SocketEventType = "open" | "message" | "error" | "close";
+type TimerHandle = ReturnType<typeof setTimeout>;
+
+interface VoiceTransportHooks {
+  onConnected?: (
+    session: IAIProxyRealtimeAudioSession,
+    authInfo: AIProxyRealtimeAudioAuthInfo,
+  ) => void;
+  onMessage?: (
+    data: string | ArrayBuffer | Blob,
+    event: MessageEvent | AIProxyRealtimeSocketMessageEvent,
+  ) => void;
+  onJsonMessage?: (
+    data: unknown,
+    event: MessageEvent | AIProxyRealtimeSocketMessageEvent,
+  ) => void;
+  onError?: (error: Error | Event | AIProxyRealtimeSocketErrorEvent) => void;
+  onClose?: (event: CloseEvent | AIProxyRealtimeSocketCloseEvent) => void;
+}
+
+type VoiceTransportFactory = (
+  hooks: VoiceTransportHooks,
+) => Promise<IAIProxyRealtimeAudioSession>;
+
+type ListenerEntry = {
+  original: (event: unknown) => void;
+  wrapped: (event: unknown) => void;
+};
+
+const SOCKET_CONNECTING = 0;
+const SOCKET_OPEN = 1;
+const SOCKET_CLOSING = 2;
+const SOCKET_CLOSED = 3;
+const DEFAULT_BROWSER_SAMPLE_RATE = 16000;
+const DEFAULT_OUTPUT_SAMPLE_RATE = 24000;
+
+export function resolveRealtimeVoiceRuntime(
+  runtime: AIProxyRealtimeVoiceRuntime = "auto",
+): Exclude<AIProxyRealtimeVoiceRuntime, "auto"> {
+  if (runtime !== "auto") {
+    return runtime;
+  }
+
+  const maybeWx = (globalThis as { wx?: unknown }).wx;
+  const userAgent = typeof navigator !== "undefined" ? navigator.userAgent || "" : "";
+  const isBrowser = typeof window !== "undefined" && typeof navigator !== "undefined";
+
+  if (maybeWx && !isBrowser) {
+    return "mini-program";
+  }
+  if (/MicroMessenger/i.test(userAgent)) {
+    return "wechat-browser";
+  }
+  if (isBrowser) {
+    return "browser";
+  }
+  return "custom";
+}
+
+class WechatMiniProgramSocketLike implements AIProxyRealtimeAudioSocketLike {
+  readyState = SOCKET_CONNECTING;
+  binaryType: BinaryType | string = "arraybuffer";
+  onmessage: ((event: MessageEvent | AIProxyRealtimeSocketMessageEvent) => void) | null = null;
+  onclose: ((event: CloseEvent | AIProxyRealtimeSocketCloseEvent) => void) | null = null;
+  onerror: ((event: Event | Error | AIProxyRealtimeSocketErrorEvent) => void) | null = null;
+  private readonly listeners: Record<SocketEventType, ListenerEntry[]> = {
+    open: [],
+    message: [],
+    error: [],
+    close: [],
+  };
+
+  constructor(
+    private readonly socketTask: ReturnType<AIProxyWechatMiniProgramAPI["connectSocket"]>,
+  ) {
+    this.socketTask.onOpen((event) => {
+      this.readyState = SOCKET_OPEN;
+      this.emit("open", event);
+    });
+
+    this.socketTask.onMessage((event) => {
+      const messageEvent: AIProxyRealtimeSocketMessageEvent = {
+        ...(event as Record<string, unknown>),
+        data: event.data,
+        type: "message",
+      };
+      this.onmessage?.(messageEvent);
+      this.emit("message", messageEvent);
+    });
+
+    this.socketTask.onError((event) => {
+      const errorEvent: AIProxyRealtimeSocketErrorEvent = {
+        ...(event as Record<string, unknown>),
+        type: "error",
+      };
+      this.onerror?.(errorEvent);
+      this.emit("error", errorEvent);
+    });
+
+    this.socketTask.onClose((event) => {
+      this.readyState = SOCKET_CLOSED;
+      const closeEvent: AIProxyRealtimeSocketCloseEvent = {
+        ...(event as Record<string, unknown>),
+        code: event.code,
+        reason: event.reason,
+        type: "close",
+      };
+      this.onclose?.(closeEvent);
+      this.emit("close", closeEvent);
+    });
+  }
+
+  addEventListener(
+    type: SocketEventType,
+    listener: (event: unknown) => void,
+    options?: { once?: boolean },
+  ): void {
+    const wrapped = (event: unknown) => {
+      if (options?.once) {
+        this.removeEventListener(type, listener);
+      }
+      listener(event);
+    };
+    this.listeners[type].push({ original: listener, wrapped });
+  }
+
+  removeEventListener(type: SocketEventType, listener: (event: unknown) => void): void {
+    this.listeners[type] = this.listeners[type].filter(
+      (entry) => entry.original !== listener,
+    );
+  }
+
+  send(data: string | Blob | ArrayBuffer): void {
+    if (data instanceof Blob) {
+      throw new Error("微信小程序 socket 默认工厂暂不支持直接发送 Blob，请先转换为 ArrayBuffer 或字符串");
+    }
+    this.socketTask.send({ data });
+  }
+
+  close(code?: number, reason?: string): void {
+    if (this.readyState === SOCKET_CLOSING || this.readyState === SOCKET_CLOSED) {
+      return;
+    }
+    this.readyState = SOCKET_CLOSING;
+    this.socketTask.close({ code, reason });
+  }
+
+  private emit(type: SocketEventType, event: unknown): void {
+    for (const entry of [...this.listeners[type]]) {
+      entry.wrapped(event);
+    }
+  }
+}
+
+export function createWechatMiniProgramRealtimeSocketFactory(
+  wxLike?: AIProxyWechatMiniProgramAPI,
+): (options: AIProxyRealtimeAudioSocketFactoryOptions) => AIProxyRealtimeAudioSocketLike {
+  const wxApi = resolveWechatMiniProgramAPI(wxLike);
+  return (options: AIProxyRealtimeAudioSocketFactoryOptions) => {
+    const socketTask = wxApi.connectSocket({
+      url: options.url,
+      protocols: options.protocols,
+      header: options.headers,
+    });
+    return new WechatMiniProgramSocketLike(socketTask);
+  };
+}
+
+export function createBrowserRealtimeVoiceInputAdapter(
+  options: AIProxyRealtimeVoiceBrowserAdapterOptions = {},
+): IAIProxyRealtimeVoiceInputAdapter {
+  let audioContext: AudioContext | null = null;
+  let stream: MediaStream | null = null;
+  let source: MediaStreamAudioSourceNode | null = null;
+  let processor: ScriptProcessorNode | null = null;
+  let silentGain: GainNode | null = null;
+  let stopped = false;
+  let sequence = 0;
+
+  return {
+    async start(context: AIProxyRealtimeVoiceInputContext): Promise<void> {
+      if (processor) {
+        return;
+      }
+      const mediaDevices = typeof navigator !== "undefined" ? navigator.mediaDevices : undefined;
+      if (!mediaDevices?.getUserMedia) {
+        throw new Error("当前环境不支持麦克风采集，请注入自定义 inputAdapter");
+      }
+
+      const AudioContextCtor = resolveAudioContextCtor();
+      if (!AudioContextCtor) {
+        throw new Error("当前环境不支持 AudioContext，请注入自定义 inputAdapter");
+      }
+
+      stopped = false;
+      const targetSampleRate = options.sampleRate ?? DEFAULT_BROWSER_SAMPLE_RATE;
+      stream = await mediaDevices.getUserMedia({
+        audio: options.audioConstraints || {
+          channelCount: options.channelCount ?? 1,
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: true,
+        },
+      });
+
+      audioContext = new AudioContextCtor();
+      await audioContext.resume();
+      source = audioContext.createMediaStreamSource(stream);
+      processor = audioContext.createScriptProcessor(options.bufferSize ?? 4096, 1, 1);
+      silentGain = audioContext.createGain();
+      silentGain.gain.value = 0;
+
+      processor.onaudioprocess = (event: AudioProcessingEvent) => {
+        if (stopped) {
+          return;
+        }
+        const inputBuffer = event.inputBuffer;
+        const mono = mixToMono(inputBuffer);
+        const pcm16 = convertFloat32ToPcm16(
+          mono,
+          inputBuffer.sampleRate,
+          targetSampleRate,
+        );
+        if (pcm16.length === 0) {
+          return;
+        }
+        const frame: AIProxyRealtimeVoiceInputFrame = {
+          data: pcm16,
+          format: "pcm16",
+          sampleRate: targetSampleRate,
+          channels: 1,
+          sequence: sequence++,
+          timestamp: Date.now(),
+        };
+        Promise.resolve(context.emitFrame(frame)).catch((error) => {
+          context.emitError(error instanceof Error ? error : new Error(String(error)));
+        });
+      };
+
+      source.connect(processor);
+      processor.connect(silentGain);
+      silentGain.connect(audioContext.destination);
+    },
+    async stop(): Promise<void> {
+      stopped = true;
+      processor?.disconnect();
+      source?.disconnect();
+      silentGain?.disconnect();
+      stream?.getTracks().forEach((track) => track.stop());
+      processor = null;
+      source = null;
+      silentGain = null;
+      stream = null;
+      if (audioContext) {
+        await audioContext.close();
+        audioContext = null;
+      }
+    },
+    async pause(): Promise<void> {
+      stopped = true;
+    },
+    async resume(): Promise<void> {
+      stopped = false;
+    },
+  };
+}
+
+export function createBrowserRealtimeVoiceOutputAdapter(): IAIProxyRealtimeVoiceOutputAdapter {
+  let audioContext: AudioContext | null = null;
+  let playheadTime = 0;
+  const activeAudios = new Set<HTMLAudioElement>();
+
+  const ensureContext = async (): Promise<AudioContext> => {
+    if (!audioContext) {
+      const AudioContextCtor = resolveAudioContextCtor();
+      if (!AudioContextCtor) {
+        throw new Error("当前环境不支持音频播放，请注入自定义 outputAdapter");
+      }
+      audioContext = new AudioContextCtor();
+    }
+    if (audioContext.state === "suspended") {
+      await audioContext.resume();
+    }
+    playheadTime = Math.max(playheadTime, audioContext.currentTime);
+    return audioContext;
+  };
+
+  return {
+    async start(): Promise<void> {
+      await ensureContext();
+    },
+    async play(frame: AIProxyRealtimeVoiceOutputFrame): Promise<void> {
+      if (typeof frame.data === "string") {
+        await playAudioUrl(frame.data, activeAudios);
+        return;
+      }
+
+      const context = await ensureContext();
+      if (frame.data instanceof Blob && frame.format !== "pcm16" && frame.format !== "pcm-f32") {
+        const arrayBuffer = await frame.data.arrayBuffer();
+        const decodedBuffer = await context.decodeAudioData(arrayBuffer.slice(0));
+        playheadTime = scheduleDecodedBuffer(context, decodedBuffer, playheadTime);
+        return;
+      }
+
+      const sampleRate = frame.sampleRate ?? DEFAULT_OUTPUT_SAMPLE_RATE;
+      const channels = Math.max(frame.channels ?? 1, 1);
+      const audioBuffer = createPcmAudioBuffer(context, frame, sampleRate, channels);
+      playheadTime = scheduleDecodedBuffer(context, audioBuffer, playheadTime);
+    },
+    async stop(): Promise<void> {
+      for (const audio of [...activeAudios]) {
+        audio.pause();
+        activeAudios.delete(audio);
+      }
+      playheadTime = 0;
+      if (audioContext) {
+        await audioContext.close();
+        audioContext = null;
+      }
+    },
+    async clear(): Promise<void> {
+      playheadTime = audioContext ? audioContext.currentTime : 0;
+    },
+  };
+}
+
+export function createWechatMiniProgramVoiceInputAdapter(
+  options: AIProxyRealtimeVoiceMiniProgramOptions = {},
+): IAIProxyRealtimeVoiceInputAdapter {
+  const wxApi = resolveWechatMiniProgramAPI(options.wx);
+  const recorderManager = wxApi.getRecorderManager?.();
+  if (!recorderManager) {
+    throw new Error("当前微信小程序环境未提供 RecorderManager，请注入自定义 inputAdapter");
+  }
+
+  let contextRef: AIProxyRealtimeVoiceInputContext | null = null;
+  let sequence = 0;
+
+  recorderManager.onError((event) => {
+    contextRef?.emitError(new Error(`微信小程序录音失败: ${JSON.stringify(event)}`));
+  });
+  recorderManager.onFrameRecorded?.((event) => {
+    const frame: AIProxyRealtimeVoiceInputFrame = {
+      data: event.frameBuffer,
+      format: "pcm16",
+      sequence: sequence++,
+      timestamp: Date.now(),
+    };
+    Promise.resolve(contextRef?.emitFrame(frame)).catch((error) => {
+      contextRef?.emitError(error instanceof Error ? error : new Error(String(error)));
+    });
+  });
+
+  return {
+    async start(context: AIProxyRealtimeVoiceInputContext): Promise<void> {
+      contextRef = context;
+      recorderManager.start({
+        format: "pcm",
+        frameSize: 2,
+        ...(options.recorderOptions || {}),
+      });
+    },
+    async stop(): Promise<void> {
+      recorderManager.stop();
+      contextRef = null;
+    },
+    async pause(): Promise<void> {
+      recorderManager.pause?.();
+    },
+    async resume(): Promise<void> {
+      recorderManager.resume?.();
+    },
+  };
+}
+
+export function createAliyunRealtimeVoiceProtocolAdapter(
+  options: AIProxyRealtimeVoiceAliyunProtocolOptions = {},
+): AIProxyRealtimeVoiceProtocolAdapter {
+  const inputAudioFormat = options.inputAudioFormat || "pcm16";
+  const outputAudioFormat = options.outputAudioFormat || "pcm16";
+
+  return {
+    buildConnectMessages() {
+      const session = {
+        input_audio_format: inputAudioFormat,
+        output_audio_format: outputAudioFormat,
+        ...(options.session || {}),
+      };
+      return {
+        event_id: createRealtimeEventId(),
+        type: "session.update",
+        session,
+      };
+    },
+    buildAudioInputMessages(frame) {
+      return {
+        event_id: createRealtimeEventId(),
+        type: "input_audio_buffer.append",
+        audio: encodeBase64(frame.data),
+      };
+    },
+    buildTextInputMessages(text) {
+      return [
+        {
+          event_id: createRealtimeEventId(),
+          type: "input_text_buffer.append",
+          text,
+        },
+        {
+          event_id: createRealtimeEventId(),
+          type: "input_text_buffer.commit",
+        },
+      ];
+    },
+    buildCommitMessages() {
+      return {
+        event_id: createRealtimeEventId(),
+        type: "input_audio_buffer.commit",
+      };
+    },
+    buildResponseCreateMessages() {
+      return {
+        event_id: createRealtimeEventId(),
+        type: "response.create",
+        ...(options.response ? { response: options.response } : {}),
+      };
+    },
+    buildFinishMessages() {
+      return {
+        event_id: createRealtimeEventId(),
+        type: "session.finish",
+      };
+    },
+    extractOutputFrames(message) {
+      if (!isPlainRecord(message)) {
+        return null;
+      }
+      if (message.type !== "response.audio.delta" || typeof message.delta !== "string") {
+        return null;
+      }
+      return {
+        data: decodeBase64(message.delta),
+        format: outputAudioFormat === "pcm" ? "pcm16" : outputAudioFormat,
+        sampleRate: readAliyunSampleRate(message, options),
+        channels: 1,
+        timestamp: Date.now(),
+        metadata: message,
+      };
+    },
+  };
+}
+
+export class AIProxyRealtimeVoiceSession implements IAIProxyRealtimeVoiceSession {
+  readonly runtime: Exclude<AIProxyRealtimeVoiceRuntime, "auto">;
+  private readonly options: AIProxyRealtimeVoiceSessionOptions;
+  private readonly transportFactory: VoiceTransportFactory;
+  private transportSession: IAIProxyRealtimeAudioSession | null = null;
+  private inputAdapter: IAIProxyRealtimeVoiceInputAdapter | null = null;
+  private outputAdapter: IAIProxyRealtimeVoiceOutputAdapter | null = null;
+  private connectPromise: Promise<void> | null = null;
+  private outputStarted = false;
+  private capturing = false;
+
+  constructor(
+    options: AIProxyRealtimeVoiceSessionOptions,
+    transportFactory: VoiceTransportFactory,
+  ) {
+    this.options = options;
+    this.transportFactory = transportFactory;
+    this.runtime = resolveRealtimeVoiceRuntime(options.runtime);
+  }
+
+  get transport(): IAIProxyRealtimeAudioSession | null {
+    return this.transportSession;
+  }
+
+  get isCapturing(): boolean {
+    return this.capturing;
+  }
+
+  async connect(): Promise<void> {
+    if (this.transportSession) {
+      return;
+    }
+    if (this.connectPromise) {
+      return this.connectPromise;
+    }
+
+    this.connectPromise = this.transportFactory({
+      onConnected: (session, authInfo) => {
+        this.transportSession = session;
+        void this.handleTransportConnected(session, authInfo);
+      },
+      onMessage: (data, event) => {
+        void this.handleTransportMessage(data, event);
+      },
+      onJsonMessage: (data, event) => {
+        void this.handleTransportJsonMessage(data, event);
+      },
+      onError: (error) => {
+        this.emitVoiceError(error instanceof Error ? error : new Error(String(error)));
+      },
+      onClose: () => {
+        if (this.capturing) {
+          void this.stopVoiceInput({ commit: false, requestResponse: false, finishSession: false });
+        }
+      },
+    }).then(async (transport) => {
+      this.transportSession = transport;
+      if (this.options.autoStartInput) {
+        await this.startVoiceInput();
+      }
+    }).finally(() => {
+      this.connectPromise = null;
+    });
+
+    return this.connectPromise;
+  }
+
+  async startVoiceInput(): Promise<void> {
+    await this.connect();
+    if (this.capturing) {
+      return;
+    }
+
+    const inputAdapter = this.resolveInputAdapter();
+    this.inputAdapter = inputAdapter;
+    await inputAdapter.start({
+      runtime: this.runtime,
+      signal: this.options.context?.signal,
+      emitFrame: async (frame) => {
+        this.options.onVoiceInputFrame?.(frame);
+        const context = this.requireProtocolContext();
+        const messages = await this.options.protocolAdapter.buildAudioInputMessages(
+          frame,
+          context,
+        );
+        await this.writeMessages(messages);
+      },
+      emitError: (error) => {
+        this.emitVoiceError(error);
+      },
+    });
+    this.capturing = true;
+  }
+
+  async stopVoiceInput(options?: AIProxyRealtimeVoiceStopOptions): Promise<void> {
+    const stopOptions = {
+      commit: true,
+      requestResponse: true,
+      finishSession: false,
+      ...(this.options.stopVoiceInputOptions || {}),
+      ...(options || {}),
+    };
+
+    if (this.inputAdapter && this.capturing) {
+      await this.inputAdapter.stop();
+    }
+    this.capturing = false;
+
+    if (stopOptions.commit) {
+      await this.commitInput();
+    }
+    if (stopOptions.requestResponse) {
+      await this.requestResponse();
+    }
+    if (stopOptions.finishSession) {
+      await this.finishSession();
+    }
+  }
+
+  async sendText(text: string): Promise<void> {
+    await this.connect();
+    const context = this.requireProtocolContext();
+    const messages = this.options.protocolAdapter.buildTextInputMessages
+      ? await this.options.protocolAdapter.buildTextInputMessages(text, context)
+      : text;
+    await this.writeMessages(messages);
+  }
+
+  async sendEvent(data: AIProxyRealtimeAudioWriteData): Promise<void> {
+    await this.connect();
+    await this.transportSession?.write(data);
+  }
+
+  async commitInput(): Promise<void> {
+    await this.connect();
+    const context = this.requireProtocolContext();
+    const messages = this.options.protocolAdapter.buildCommitMessages
+      ? await this.options.protocolAdapter.buildCommitMessages(context)
+      : null;
+    await this.writeMessages(messages);
+  }
+
+  async requestResponse(): Promise<void> {
+    await this.connect();
+    const context = this.requireProtocolContext();
+    const messages = this.options.protocolAdapter.buildResponseCreateMessages
+      ? await this.options.protocolAdapter.buildResponseCreateMessages(context)
+      : null;
+    await this.writeMessages(messages);
+  }
+
+  async finishSession(): Promise<void> {
+    await this.connect();
+    const context = this.requireProtocolContext();
+    const messages = this.options.protocolAdapter.buildFinishMessages
+      ? await this.options.protocolAdapter.buildFinishMessages(context)
+      : null;
+    await this.writeMessages(messages);
+  }
+
+  async close(code?: number, reason?: string): Promise<void> {
+    if (this.inputAdapter && this.capturing) {
+      await this.inputAdapter.stop();
+    }
+    if (this.outputAdapter) {
+      await this.outputAdapter.stop();
+    }
+    this.capturing = false;
+    this.transportSession?.close(code, reason);
+    this.transportSession = null;
+  }
+
+  private async handleTransportConnected(
+    session: IAIProxyRealtimeAudioSession,
+    authInfo: AIProxyRealtimeAudioAuthInfo,
+  ): Promise<void> {
+    const context = this.buildProtocolContext(session, authInfo);
+    const connectMessages = this.options.protocolAdapter.buildConnectMessages
+      ? await this.options.protocolAdapter.buildConnectMessages(context)
+      : null;
+    await this.writeMessages(connectMessages, session);
+  }
+
+  private async handleTransportMessage(
+    data: string | ArrayBuffer | Blob,
+    _event: MessageEvent | AIProxyRealtimeSocketMessageEvent,
+  ): Promise<void> {
+    if (typeof data === "string") {
+      return;
+    }
+    await this.consumeOutputFrames(null, data);
+  }
+
+  private async handleTransportJsonMessage(
+    message: unknown,
+    _event: MessageEvent | AIProxyRealtimeSocketMessageEvent,
+  ): Promise<void> {
+    this.options.onModelEvent?.(message);
+    await this.consumeOutputFrames(message, JSON.stringify(message));
+  }
+
+  private async consumeOutputFrames(
+    message: unknown,
+    rawData: string | ArrayBuffer | Blob,
+  ): Promise<void> {
+    if (!this.options.protocolAdapter.extractOutputFrames) {
+      return;
+    }
+
+    const frames = await this.options.protocolAdapter.extractOutputFrames(
+      message,
+      rawData,
+      this.requireProtocolContext(),
+    );
+    const normalizedFrames = normalizeArray(frames);
+    if (normalizedFrames.length === 0) {
+      return;
+    }
+
+    if (this.options.autoPlayOutput !== false) {
+      await this.ensureOutputAdapterStarted();
+    }
+
+    for (const frame of normalizedFrames) {
+      this.options.onVoiceOutputFrame?.(frame);
+      if (this.options.autoPlayOutput !== false && this.outputAdapter) {
+        await this.outputAdapter.play(frame);
+      }
+    }
+  }
+
+  private async ensureOutputAdapterStarted(): Promise<void> {
+    if (this.outputStarted) {
+      return;
+    }
+    const outputAdapter = this.resolveOutputAdapter();
+    if (!outputAdapter) {
+      return;
+    }
+    this.outputAdapter = outputAdapter;
+    if (outputAdapter.start) {
+      await outputAdapter.start();
+    }
+    this.outputStarted = true;
+  }
+
+  private resolveInputAdapter(): IAIProxyRealtimeVoiceInputAdapter {
+    if (this.inputAdapter) {
+      return this.inputAdapter;
+    }
+    if (this.options.inputAdapter) {
+      return this.options.inputAdapter;
+    }
+    if (this.runtime === "browser" || this.runtime === "wechat-browser") {
+      return createBrowserRealtimeVoiceInputAdapter(this.options.browserAdapterOptions);
+    }
+    if (this.runtime === "mini-program") {
+      return createWechatMiniProgramVoiceInputAdapter(
+        this.options.miniProgramOptions,
+      );
+    }
+    throw new Error("当前运行环境无法自动创建语音输入适配器，请显式传入 inputAdapter");
+  }
+
+  private resolveOutputAdapter(): IAIProxyRealtimeVoiceOutputAdapter | null {
+    if (this.outputAdapter) {
+      return this.outputAdapter;
+    }
+    if (this.options.outputAdapter) {
+      return this.options.outputAdapter;
+    }
+    if (this.runtime === "browser" || this.runtime === "wechat-browser") {
+      return createBrowserRealtimeVoiceOutputAdapter();
+    }
+    return null;
+  }
+
+  private buildProtocolContext(
+    transport: IAIProxyRealtimeAudioSession,
+    authInfo: AIProxyRealtimeAudioAuthInfo | null,
+  ): AIProxyRealtimeVoiceProtocolContext {
+    return {
+      runtime: this.runtime,
+      transport,
+      authInfo,
+    };
+  }
+
+  private requireProtocolContext(): AIProxyRealtimeVoiceProtocolContext {
+    if (!this.transportSession) {
+      throw new Error("实时语音会话尚未连接");
+    }
+    return this.buildProtocolContext(this.transportSession, this.transportSession.authInfo);
+  }
+
+  private async writeMessages(
+    messages: AIProxyRealtimeAudioWriteData | AIProxyRealtimeAudioWriteData[] | null | undefined,
+    transport: IAIProxyRealtimeAudioSession | null = this.transportSession,
+  ): Promise<void> {
+    if (!messages) {
+      return;
+    }
+    if (!transport) {
+      throw new Error("实时语音底层传输尚未建立");
+    }
+    for (const message of normalizeArray(messages)) {
+      await transport.write(message);
+    }
+  }
+
+  private emitVoiceError(error: Error): void {
+    this.options.onVoiceError?.(error);
+  }
+}
+
+function resolveWechatMiniProgramAPI(wxLike?: AIProxyWechatMiniProgramAPI): AIProxyWechatMiniProgramAPI {
+  const wxApi = wxLike || (globalThis as { wx?: AIProxyWechatMiniProgramAPI }).wx;
+  if (!wxApi) {
+    throw new Error("当前运行环境未检测到微信小程序 wx API，请显式传入 miniProgramOptions.wx");
+  }
+  return wxApi;
+}
+
+function resolveAudioContextCtor(): typeof AudioContext | null {
+  const candidate = (globalThis as {
+    AudioContext?: typeof AudioContext;
+    webkitAudioContext?: typeof AudioContext;
+  }).AudioContext ||
+    (globalThis as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+  return candidate || null;
+}
+
+function mixToMono(buffer: AudioBuffer): Float32Array {
+  const { length, numberOfChannels } = buffer;
+  const mixed = new Float32Array(length);
+  for (let channel = 0; channel < numberOfChannels; channel++) {
+    const channelData = buffer.getChannelData(channel);
+    for (let index = 0; index < length; index++) {
+      mixed[index] += channelData[index] / numberOfChannels;
+    }
+  }
+  return mixed;
+}
+
+function convertFloat32ToPcm16(
+  input: Float32Array,
+  inputSampleRate: number,
+  outputSampleRate: number,
+): Int16Array {
+  const resampled =
+    inputSampleRate === outputSampleRate
+      ? input
+      : resampleFloat32(input, inputSampleRate, outputSampleRate);
+  const output = new Int16Array(resampled.length);
+  for (let index = 0; index < resampled.length; index++) {
+    const sample = Math.max(-1, Math.min(1, resampled[index]));
+    output[index] = sample < 0 ? sample * 0x8000 : sample * 0x7fff;
+  }
+  return output;
+}
+
+function resampleFloat32(
+  input: Float32Array,
+  inputSampleRate: number,
+  outputSampleRate: number,
+): Float32Array {
+  if (input.length === 0 || inputSampleRate === outputSampleRate) {
+    return input;
+  }
+  const ratio = inputSampleRate / outputSampleRate;
+  const outputLength = Math.max(1, Math.round(input.length / ratio));
+  const output = new Float32Array(outputLength);
+  for (let index = 0; index < outputLength; index++) {
+    const start = Math.floor(index * ratio);
+    const end = Math.min(Math.floor((index + 1) * ratio), input.length);
+    if (end <= start) {
+      output[index] = input[Math.min(start, input.length - 1)] || 0;
+      continue;
+    }
+    let sum = 0;
+    for (let cursor = start; cursor < end; cursor++) {
+      sum += input[cursor];
+    }
+    output[index] = sum / (end - start);
+  }
+  return output;
+}
+
+function createPcmAudioBuffer(
+  context: AudioContext,
+  frame: AIProxyRealtimeVoiceOutputFrame,
+  sampleRate: number,
+  channels: number,
+): AudioBuffer {
+  const floatData = convertOutputFrameToFloat32(frame);
+  const frameCount = Math.max(1, Math.floor(floatData.length / channels));
+  const audioBuffer = context.createBuffer(channels, frameCount, sampleRate);
+
+  for (let channel = 0; channel < channels; channel++) {
+    const channelData = audioBuffer.getChannelData(channel);
+    for (let index = 0; index < frameCount; index++) {
+      channelData[index] = floatData[index * channels + channel] || 0;
+    }
+  }
+
+  return audioBuffer;
+}
+
+function convertOutputFrameToFloat32(
+  frame: AIProxyRealtimeVoiceOutputFrame,
+): Float32Array {
+  if (typeof frame.data === "string") {
+    throw new Error("字符串音频帧不能直接按 PCM 播放");
+  }
+
+  const data = toArrayBufferView(frame.data);
+  if (frame.format === "pcm-f32") {
+    return data instanceof Float32Array
+      ? data
+      : new Float32Array(data.buffer.slice(data.byteOffset, data.byteOffset + data.byteLength));
+  }
+
+  const int16 =
+    data instanceof Int16Array
+      ? data
+      : new Int16Array(data.buffer.slice(data.byteOffset, data.byteOffset + data.byteLength));
+  const output = new Float32Array(int16.length);
+  for (let index = 0; index < int16.length; index++) {
+    output[index] = int16[index] / 0x8000;
+  }
+  return output;
+}
+
+function toArrayBufferView(
+  data: ArrayBuffer | ArrayBufferView | Blob,
+): ArrayBufferView {
+  if (data instanceof Blob) {
+    throw new Error("Blob 音频帧请设置为可解码格式，避免直接按 PCM 处理");
+  }
+  if (ArrayBuffer.isView(data)) {
+    return data;
+  }
+  return new Uint8Array(data);
+}
+
+function scheduleDecodedBuffer(
+  context: AudioContext,
+  audioBuffer: AudioBuffer,
+  playheadTime: number,
+): number {
+  const source = context.createBufferSource();
+  source.buffer = audioBuffer;
+  source.connect(context.destination);
+  const startAt = Math.max(playheadTime, context.currentTime);
+  source.start(startAt);
+  return startAt + audioBuffer.duration;
+}
+
+async function playAudioUrl(
+  url: string,
+  activeAudios: Set<HTMLAudioElement>,
+): Promise<void> {
+  if (typeof Audio === "undefined") {
+    throw new Error("当前环境不支持 Audio 标签播放，请注入自定义 outputAdapter");
+  }
+  const audio = new Audio(url);
+  activeAudios.add(audio);
+  await audio.play();
+  audio.onended = () => {
+    activeAudios.delete(audio);
+  };
+}
+
+function normalizeArray<T>(
+  value: T | T[] | null | undefined,
+): T[] {
+  if (value == null) {
+    return [];
+  }
+  return Array.isArray(value) ? value : [value];
+}
+
+function isPlainRecord(value: unknown): value is Record<string, any> {
+  return !!value && typeof value === "object" && !Array.isArray(value);
+}
+
+function encodeBase64(data: ArrayBuffer | ArrayBufferView | Blob): string {
+  if (data instanceof Blob) {
+    throw new Error("当前默认协议适配器不支持直接将 Blob 编码为 base64，请先转换为 ArrayBuffer");
+  }
+  const bytes = data instanceof ArrayBuffer
+    ? new Uint8Array(data)
+    : new Uint8Array(data.buffer, data.byteOffset, data.byteLength);
+  let binary = "";
+  for (const byte of bytes) {
+    binary += String.fromCharCode(byte);
+  }
+  if (typeof btoa === "function") {
+    return btoa(binary);
+  }
+  const BufferCtor = (globalThis as { Buffer?: typeof Buffer }).Buffer;
+  if (BufferCtor) {
+    return BufferCtor.from(bytes).toString("base64");
+  }
+  throw new Error("当前环境缺少 base64 编码能力");
+}
+
+function decodeBase64(value: string): ArrayBuffer {
+  if (typeof atob === "function") {
+    const binary = atob(value);
+    const bytes = new Uint8Array(binary.length);
+    for (let index = 0; index < binary.length; index++) {
+      bytes[index] = binary.charCodeAt(index);
+    }
+    return bytes.buffer;
+  }
+  const BufferCtor = (globalThis as { Buffer?: typeof Buffer }).Buffer;
+  if (BufferCtor) {
+    const bytes = BufferCtor.from(value, "base64");
+    return bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength);
+  }
+  throw new Error("当前环境缺少 base64 解码能力");
+}
+
+function createRealtimeEventId(): string {
+  return `event_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
+}
+
+function readAliyunSampleRate(
+  message: Record<string, any>,
+  options: AIProxyRealtimeVoiceAliyunProtocolOptions,
+): number {
+  const sessionSampleRate = options.session?.sample_rate;
+  const responseSampleRate =
+    message.sample_rate ||
+    message.response?.sample_rate ||
+    message.audio?.sample_rate ||
+    sessionSampleRate;
+  return typeof responseSampleRate === "number"
+    ? responseSampleRate
+    : DEFAULT_OUTPUT_SAMPLE_RATE;
+}

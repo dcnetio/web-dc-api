@@ -1,7 +1,13 @@
 import {
+  AIProxyAliyunRealtimeAudioSessionOptions,
+  AIProxyAliyunRealtimeVoiceSessionOptions,
   AIProxyConfig,
+  AIProxyRealtimeAudioSessionOptions,
+  AIProxyRealtimeVoiceSessionOptions,
   GetUserAIProxyAuthParams,
   IAICallConfig,
+  IAIProxyRealtimeAudioSession,
+  IAIProxyRealtimeVoiceSession,
   OnStreamResponseType,
   ProxyCallConfig,
   UserProxyCallConfig,
@@ -162,4 +168,44 @@ export interface IAIProxyOperations {
   GetUserAIProxyAuth(
     params: GetUserAIProxyAuthParams
   ): Promise<[authConfigs: ProxyCallConfig[] | null, error: Error | null]>;
+
+  /**
+   * 创建一个基于 DoAIProxyCall 预取鉴权信息的实时音频会话
+   * 内部会负责凭据刷新、WebSocket 建连、音频数据转发和服务端消息回调
+   * 注意: 如果 realtimeConfig.connection.authMode 使用 bearer，浏览器原生 WebSocket 通常不能直接附带 Authorization 握手头。
+   * 这类场景请优先改用 query/token 形式，或通过 createWebSocket 提供支持自定义请求头的运行时实现。
+   */
+  CreateRealtimeAudioSession(
+    options: AIProxyRealtimeAudioSessionOptions
+  ): Promise<[IAIProxyRealtimeAudioSession | null, Error | null]>;
+
+  /**
+   * 创建阿里云 DashScope 实时音频会话
+   * 内部会自动补齐实时连接模板和定制返回解析配置
+   * 默认更适合 query 透传的 apikey 模式；若切换为 bearer，同样受浏览器原生 WebSocket 握手头限制影响。
+   * 默认会按阿里云 DashScope 的 WebSocket 接口地址和 query api_key 透传方式构造连接参数。
+   */
+  CreateAliyunRealtimeAudioSession(
+    options: AIProxyAliyunRealtimeAudioSessionOptions
+  ): Promise<[IAIProxyRealtimeAudioSession | null, Error | null]>;
+
+  /**
+   * 创建统一的实时语音输入输出会话。
+   * 该接口会在底层 realtime WebSocket 之上，再接管麦克风采集、音频帧发送、服务端语音帧解析和本地播放。
+   * PC 浏览器、移动 H5、微信浏览器可直接复用浏览器默认音频适配器；小程序环境建议注入 createWebSocket、inputAdapter、outputAdapter，
+   * 或至少通过 miniProgramOptions / 自定义适配器对接平台 API。
+   */
+  CreateRealtimeVoiceSession(
+    options: AIProxyRealtimeVoiceSessionOptions
+  ): Promise<[IAIProxyRealtimeVoiceSession | null, Error | null]>;
+
+  /**
+   * 创建阿里云 DashScope 的实时语音输入输出会话。
+   * 内部会自动补齐阿里云 realtime 连接模板，并提供 session.update / input_audio_buffer.append /
+   * input_audio_buffer.commit / response.create / response.audio.delta 的默认协议适配。
+   * 浏览器环境默认可直接采集和播放；小程序环境仍建议注入平台专用的 socket 与音频适配器。
+   */
+  CreateAliyunRealtimeVoiceSession(
+    options: AIProxyAliyunRealtimeVoiceSessionOptions
+  ): Promise<[IAIProxyRealtimeVoiceSession | null, Error | null]>;
 }
