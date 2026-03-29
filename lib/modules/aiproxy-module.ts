@@ -423,7 +423,7 @@ export class AIProxyModule implements DCModule, IAIProxyOperations {
         realtimeConfig,
         stopVoiceInputOptions,
         protocolAdapter: createAliyunRealtimeVoiceProtocolAdapter(
-          options.aliyunProtocolOptions,
+          { ...options.aliyunProtocolOptions, model: resolvedConfig.model },
         ),
       });
     } catch (error) {
@@ -559,6 +559,7 @@ export class AIProxyModule implements DCModule, IAIProxyOperations {
     let payloadText = "";
     let streamError: Error | null = null;
     const authHeaders = {
+      ...(options.realtimeConfig?.extend || {}),
       ...(options.headers || {}),
       [REALTIME_AUTH_MARKER_HEADER]: REALTIME_AUTH_MARKER_VALUE,
     };
@@ -585,7 +586,7 @@ export class AIProxyModule implements DCModule, IAIProxyOperations {
       resolvedConfig.serviceName,
       authHeaders,
       resolvedConfig.path,
-      resolvedConfig.model,
+      undefined,
     );
 
     if (error) {

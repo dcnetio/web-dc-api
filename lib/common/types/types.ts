@@ -160,12 +160,14 @@ export interface AIProxyRealtimeConfig {
   connection?: AIProxyRealtimeConnectionPreset;
   response?: AIProxyRealtimeResponsePreset;
   credentialExchange?: AIProxyRealtimeCredentialExchangePreset;
+  extend?: Record<string, string>;
 }
 
 // 动态签名相关接口定义
 export interface AIProxySignatureNodeInjectTimestamp {
   key: string;
-  format: 'unix_s' | 'unix_ms' | 'iso8601'; // 时间戳格式
+  format: 'unix_s' | 'unix_ms' | 'unix' | 'unix_us' | 'unix_ns' | 'iso8601' | 'iso8601_nano' | 'rfc3339' | 'rfc1123' | 'rfc822' | 'datetime' | 'compact' | 'date' | string; // 时间戳格式
+  offset?: number; // 时间戳偏移量（单位：秒）
 }
 
 export interface AIProxySignatureNodeInjectNonce {
@@ -188,12 +190,15 @@ export interface AIProxySignatureIncludes {
 
 export interface AIProxySignatureAssembler {
   sort: 'ascii_key_asc' | 'ascii_key_desc' | 'none'; // 参数排序方式
-  format: 'url_query' | 'json' | 'kv_concat'; // 参数拼装格式
+  format: 'url_query' | 'json' | 'json_pretty' | 'kv_concat' | 'kv_lines' | 'xml' | 'custom_delimiter' | 'pattern'; // 参数拼装格式
   encoding?: 'query_escape_plus' | 'percent_encode' | 'rfc3986' | 'raw'; // 参数编码策略
+  delimiter?: string; // 项与项的分隔符，用于 custom_delimiter 模式
+  kvDelimiter?: string; // 键值的分隔符，用于 custom_delimiter 模式
+  pattern?: string; // 拼接模板，用于 pattern 模式 (如 "{appId}{secret}{timestamp}")
 }
 
 export interface AIProxySignatureSecretUsage {
-  type: 'hmac_key' | 'append_to_string' | 'prepend_to_string'; // 秘钥使用方式
+  type: 'hmac_key' | 'append_to_string' | 'prepend_to_string' | 'pattern_inject' | 'none'; // 秘钥使用方式
   keyName?: string; // 用于拼接模式下的Key名称
 }
 
@@ -201,7 +206,7 @@ export interface AIProxySignatureOutput {
   target: 'header' | 'query' | 'body'; // 签名输出位置
   key: string; // 输出字段名, 如 "Authorization", "X-Sign"
   prefix?: string; // 前缀, 如 "Signature ", "Bearer "
-  encoding: 'hex' | 'base64' | 'base64url'; // 签名编码方式
+  encoding: 'hex' | 'hex_with_0x' | 'base64' | 'base64url'; // 签名编码方式
 }
 
 export interface AIProxySignatureConfig {
@@ -213,9 +218,15 @@ export interface AIProxySignatureConfig {
   output?: AIProxySignatureOutput; // 签名输出配置
 }
 
+export enum AIModelType {
+  ModelType_AI = 0,
+  ModelType_MCPServer = 1,
+  ModelType_SubTheme = 2
+}
+
 export interface AIProxyConfig {
   service: string; // 服务名称
-  isAIModel: number; // 0: AI模型 1: MCPServer
+  isAIModel: AIModelType; // 0: AI模型 1: MCPServer 2: subtopic
   apiType: number; // 当type 为0时起作用,表示模型的接口类型,如0:anthropic,1:openai 2:ollama 3:googleai 4:azureopenai
   authorization: string;
   endpoint: string;
@@ -679,6 +690,7 @@ export interface AIProxyRealtimeVoiceAliyunProtocolOptions {
   outputAudioFormat?: string;
   autoCommitOnStop?: boolean;
   autoCreateResponseOnStop?: boolean;
+  model?: string;
 }
 
 export interface AIProxyWechatMiniProgramSocketTaskLike {

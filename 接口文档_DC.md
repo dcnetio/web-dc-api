@@ -1976,6 +1976,17 @@ if (success) {
 }
 ```
 
+> **🔑 高级特性：动态签名与本地 Token 派发**
+> `AIProxyConfig` 参数支持极其强大的 `signature` (AIProxySignatureConfig) 配置，能够适应例如阿里云（如 RTC Token 签发：`sha256(appId+appKey+channelId+userId+nonce+timestamp)`）、腾讯云、火山引擎等各种复杂的 API 签名或 Token 生成策略（支持多种参数装配方式 `pattern`、`xml`、`custom_delimiter` 等）。支持动态注入带有偏移量（`offset`，用于生成过期时间）的时间戳，并且支持多种哈希编码输出格式 (如 `hex_with_0x`)。
+> **本地 Token 生成模式：** 当客户端**仅仅想要获取访问 Token**（而不是让节点代为转发 HTTP 请求）时，**只需将 `endpoint` 配置为空字符串**即可。如果这么做，被请求节点将跳过实际的代理请求，只在本地生成签名计算好 Token，并将生成的 Token、可能注入的随机数与时间戳组装成以下格式直接返回给客户端：
+> ```json
+> {
+>   "token": "<生成的最新签名/Token>",
+>   "nonce": "<如果有注入随机数>",
+>   "timestamp": "<如果有注入的时间戳值>"
+> }
+> ```
+
 <br>
 
 #### `configAuth(appId, configAuthor, configTheme, authPubkey, permission, authConfig, vaccount)`

@@ -406,73 +406,135 @@ export function createAliyunRealtimeVoiceProtocolAdapter(
   const inputAudioFormat = options.inputAudioFormat || "pcm16";
   const outputAudioFormat = options.outputAudioFormat || "pcm16";
 
+  let taskId = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+
+  const wrap = (action: "run-task" | "finish-task", inputPayload: any = {}) => {
+    let parameters: any = {
+      format: inputAudioFormat === 'pcm16' ? 'pcm' : inputAudioFormat,
+      sample_rate: options.model?.includes('8k') ? 8000 : (options.session?.sample_rate || 16000),
+      ...options.session,
+    };
+    
+    // paraformer / sensevoice are ASR only, no text instructions or voices.
+    if (options.model?.includes("paraformer") || options.model?.includes("sensevoice")) {
+      delete parameters.instructions;
+      delete parameters.voice;
+      delete parameters.input_audio_format;
+      delete parameters.output_audio_format;
+    }
+
+    return JSON.stringify({
+      header: {
+        action: action,
+        task_id: taskId,
+        streaming: "duplex",
+      },
+      payload: {
+        task_group: "audio",
+        task: "asr",
+        function: "recognition",
+        model: options.model || "paraformer-realtime-v2",
+        ...(action === "run-task" ? {
+          parameters
+        } : {}),
+        input: inputPayload,
+      }
+    });
+  };
+
   return {
     buildConnectMessages() {
+      taskId = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+      if (options.model?.includes("paraformer") || options.model?.includes("sensevoice")) {
+        return wrap("run-task", {});
+      }
+      
       const session = {
         input_audio_format: inputAudioFormat,
         output_audio_format: outputAudioFormat,
         ...(options.session || {}),
       };
-      return {
+      return wrap("run-task", {
         event_id: createRealtimeEventId(),
         type: "session.update",
         session,
-      };
+      });
     },
     buildAudioInputMessages(frame) {
-      return {
+      if (options.model?.includes("paraformer") || options.model?.includes("sensevoice")) {
+        return frame.data;
+      }
+      return wrap("run-task", {
         event_id: createRealtimeEventId(),
         type: "input_audio_buffer.append",
         audio: encodeBase64(frame.data),
-      };
+      });
     },
     buildTextInputMessages(text) {
       return [
-        {
+        wrap("run-task", {
           event_id: createRealtimeEventId(),
           type: "input_text_buffer.append",
           text,
-        },
-        {
+        }),
+        wrap("run-task", {
           event_id: createRealtimeEventId(),
           type: "input_text_buffer.commit",
-        },
+        }),
       ];
     },
     buildCommitMessages() {
-      return {
+      if (options.model?.includes("paraformer") || options.model?.includes("sensevoice")) {
+        return wrap("finish-task", {});
+      }
+      return wrap("run-task", {
         event_id: createRealtimeEventId(),
         type: "input_audio_buffer.commit",
-      };
+      });
     },
     buildResponseCreateMessages() {
-      return {
+      if (options.model?.includes("paraformer") || options.model?.includes("sensevoice")) {
+        return null;
+      }
+      return wrap("run-task", {
         event_id: createRealtimeEventId(),
         type: "response.create",
         ...(options.response ? { response: options.response } : {}),
-      };
+      });
     },
     buildFinishMessages() {
-      return {
-        event_id: createRealtimeEventId(),
-        type: "session.finish",
-      };
+      return wrap("finish-task", {});
     },
-    extractOutputFrames(message) {
+    extractOutputFrames(message, rawData) {
+      if (rawData instanceof ArrayBuffer || rawData instanceof Blob) {
+        return {
+          data: rawData instanceof Blob ? new ArrayBuffer(0) : rawData,
+          format: outputAudioFormat === "pcm" ? "pcm16" : outputAudioFormat,
+          sampleRate: 16000,
+          channels: 1,
+          timestamp: Date.now(),
+        };
+      }
+
       if (!isPlainRecord(message)) {
         return null;
       }
-      if (message.type !== "response.audio.delta" || typeof message.delta !== "string") {
-        return null;
+      
+      const header = isPlainRecord(message.header) ? message.header : {};
+      const payload = isPlainRecord(message.payload) ? message.payload : message;
+      
+      if (payload.type === "response.audio.delta" && typeof payload.delta === "string") {
+        return {
+          data: decodeBase64(payload.delta),
+          format: outputAudioFormat === "pcm" ? "pcm16" : outputAudioFormat,
+          sampleRate: readAliyunSampleRate(payload, options),
+          channels: 1,
+          timestamp: Date.now(),
+          metadata: message,
+        };
       }
-      return {
-        data: decodeBase64(message.delta),
-        format: outputAudioFormat === "pcm" ? "pcm16" : outputAudioFormat,
-        sampleRate: readAliyunSampleRate(message, options),
-        channels: 1,
-        timestamp: Date.now(),
-        metadata: message,
-      };
+      
+      return null;
     },
   };
 }
@@ -675,6 +737,19 @@ export class AIProxyRealtimeVoiceSession implements IAIProxyRealtimeVoiceSession
     _event: MessageEvent | AIProxyRealtimeSocketMessageEvent,
   ): Promise<void> {
     this.options.onModelEvent?.(message);
+
+    if (isPlainRecord(message) && isPlainRecord(message.header)) {
+      if (message.header.event === "task-failed") {
+        const payload = isPlainRecord(message.payload) ? message.payload : {};
+        const errorMsg = String(message.header.error_message || payload.error_message || "阿里云语音任务失败");
+        this.emitVoiceError(new Error(`[${message.header.error_code || "Unknown"}] ${errorMsg}`));
+        void this.stopVoiceInput({ commit: false, finishSession: false, requestResponse: false });
+        // continue consuming it so user plugins can log it
+      } else if (message.header.event === "task-finished") {
+        void this.stopVoiceInput({ commit: false, finishSession: false, requestResponse: false });
+      }
+    }
+
     await this.consumeOutputFrames(message, JSON.stringify(message));
   }
 
@@ -783,6 +858,12 @@ export class AIProxyRealtimeVoiceSession implements IAIProxyRealtimeVoiceSession
       throw new Error("实时语音底层传输尚未建立");
     }
     for (const message of normalizeArray(messages)) {
+      // 调试：打印发送的数据（不打印纯二进制音频数据，防止刷屏）
+      if (!(message instanceof ArrayBuffer) && !(message instanceof Blob) && !ArrayBuffer.isView(message)) {
+        const payloadStr = typeof message === "string" ? message : JSON.stringify(message, null, 2);
+        console.log("===> [WS 发送数据]:\n", payloadStr);
+        this.options.onModelEvent?.({ direction: "send", event: typeof message === "string" ? JSON.parse(message) : message });
+      }
       await transport.write(message);
     }
   }
