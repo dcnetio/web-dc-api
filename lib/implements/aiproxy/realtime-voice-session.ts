@@ -539,6 +539,94 @@ export function createAliyunRealtimeVoiceProtocolAdapter(
   };
 }
 
+export function createOpenAIRealtimeVoiceProtocolAdapter(
+  options: AIProxyRealtimeVoiceAliyunProtocolOptions = {},
+): AIProxyRealtimeVoiceProtocolAdapter {
+  const inputAudioFormat = options.inputAudioFormat || "pcm16";
+  const outputAudioFormat = options.outputAudioFormat || "pcm16";
+
+  const wrap = (payload: any) => payload;
+
+  return {
+    buildConnectMessages() {
+      const session = {
+        input_audio_format: inputAudioFormat,
+        output_audio_format: outputAudioFormat,
+        ...(options.session || {}),
+      };
+      return wrap({
+        event_id: createRealtimeEventId(),
+        type: "session.update",
+        session,
+      });
+    },
+    buildAudioInputMessages(frame) {
+      return wrap({
+        event_id: createRealtimeEventId(),
+        type: "input_audio_buffer.append",
+        audio: encodeBase64(frame.data),
+      });
+    },
+    buildTextInputMessages(text) {
+      return [
+        wrap({
+          event_id: createRealtimeEventId(),
+          type: "input_text_buffer.append",
+          text,
+        }),
+        wrap({
+          event_id: createRealtimeEventId(),
+          type: "input_text_buffer.commit",
+        }),
+      ];
+    },
+    buildCommitMessages() {
+      return wrap({
+        event_id: createRealtimeEventId(),
+        type: "input_audio_buffer.commit",
+      });
+    },
+    buildResponseCreateMessages() {
+      return wrap({
+        event_id: createRealtimeEventId(),
+        type: "response.create",
+        ...(options.response ? { response: options.response } : {}),
+      });
+    },
+    buildFinishMessages() {
+      // Qwen / OpenAI doesn't have a specific finish-task message. We just close socket or optionally return null.
+      return null;
+    },
+    extractOutputFrames(message, rawData) {
+      if (rawData instanceof ArrayBuffer || rawData instanceof Blob) {
+        return {
+          data: rawData instanceof Blob ? new ArrayBuffer(0) : rawData,
+          format: outputAudioFormat === "pcm" ? "pcm16" : outputAudioFormat,
+          sampleRate: 16000,
+          channels: 1,
+          timestamp: Date.now(),
+        };
+      }
+
+      if (!isPlainRecord(message)) return null;
+      
+      if (message.type === "response.audio.delta" && typeof message.delta === "string") {
+        
+        console.log("===> [WS 提取音频帧]: data length", message.delta.length);
+        return {
+          data: decodeBase64(message.delta),
+          format: outputAudioFormat === "pcm" ? "pcm16" : outputAudioFormat,
+          sampleRate: 24000, // Typically Qwen-Omni uses 24000 depending on config.
+          channels: 1,
+          timestamp: Date.now(),
+          metadata: message,
+        };
+      }
+      return null;
+    },
+  };
+}
+
 export class AIProxyRealtimeVoiceSession implements IAIProxyRealtimeVoiceSession {
   readonly runtime: Exclude<AIProxyRealtimeVoiceRuntime, "auto">;
   private readonly options: AIProxyRealtimeVoiceSessionOptions;
@@ -861,7 +949,9 @@ export class AIProxyRealtimeVoiceSession implements IAIProxyRealtimeVoiceSession
       // 调试：打印发送的数据（不打印纯二进制音频数据，防止刷屏）
       if (!(message instanceof ArrayBuffer) && !(message instanceof Blob) && !ArrayBuffer.isView(message)) {
         const payloadStr = typeof message === "string" ? message : JSON.stringify(message, null, 2);
-        console.log("===> [WS 发送数据]:\n", payloadStr);
+        if (!payloadStr.includes("input_audio_buffer.append")) {
+          console.log("===> [WS 发送数据]:\n", payloadStr);
+        }
         this.options.onModelEvent?.({ direction: "send", event: typeof message === "string" ? JSON.parse(message) : message });
       }
       await transport.write(message);

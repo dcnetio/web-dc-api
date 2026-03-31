@@ -24,6 +24,7 @@ import { AIProxyRealtimeAudioSession } from "../implements/aiproxy/realtime-audi
 import {
   AIProxyRealtimeVoiceSession,
   createAliyunRealtimeVoiceProtocolAdapter,
+  createOpenAIRealtimeVoiceProtocolAdapter,
   createWechatMiniProgramRealtimeSocketFactory,
   resolveRealtimeVoiceRuntime,
 } from "../implements/aiproxy/realtime-voice-session";
@@ -258,7 +259,7 @@ export class AIProxyModule implements DCModule, IAIProxyOperations {
         options.serviceName,
         options.headers,
         options.path,
-        options.model,
+        undefined, // 实时鉴权获取时不需要附带具体的 model
       );
       const session = new AIProxyRealtimeAudioSession(
         options,
@@ -422,12 +423,98 @@ export class AIProxyModule implements DCModule, IAIProxyOperations {
         model: resolvedConfig.model,
         realtimeConfig,
         stopVoiceInputOptions,
-        protocolAdapter: createAliyunRealtimeVoiceProtocolAdapter(
-          { ...options.aliyunProtocolOptions, model: resolvedConfig.model },
-        ),
+        protocolAdapter: createAliyunRealtimeVoiceProtocolAdapter({ ...options.aliyunProtocolOptions, model: resolvedConfig.model }),
       });
     } catch (error) {
       logger.error("创建阿里云实时语音会话失败:", error);
+      return [
+        null,
+        error instanceof Error ? error : new Error(String(error)),
+      ];
+    }
+  }
+
+  async CreateOpenAIRealtimeVoiceSession(
+    options: AIProxyAliyunRealtimeVoiceSessionOptions,
+  ): Promise<[IAIProxyRealtimeVoiceSession | null, Error | null]> {
+    try {
+      this.assertInitialized();
+      const resolvedConfig = this.resolveAICallConfig(
+        options.appId,
+        options.themeAuthor,
+        options.configTheme,
+        options.serviceName,
+        options.headers,
+        options.path,
+        options.model,
+      );
+      // Explicitly set Qwen-Omni real-time endpoint if one wasn't provided
+      const qwenResolvedConfig = {
+        ...resolvedConfig,
+        path: resolvedConfig.path || "/api-ws/v1/realtime",
+      };
+      const realtimeConfig = this.buildAliyunRealtimeConfig(
+        qwenResolvedConfig,
+        options,
+      );
+      const stopVoiceInputOptions = {
+        commit: options.aliyunProtocolOptions?.autoCommitOnStop ?? true,
+        requestResponse:
+          options.aliyunProtocolOptions?.autoCreateResponseOnStop ?? true,
+        finishSession: false,
+        ...(options.stopVoiceInputOptions || {}),
+      };
+
+      return this.CreateRealtimeVoiceSession({
+        ...options,
+        appId: resolvedConfig.appId,
+        themeAuthor: resolvedConfig.themeAuthor,
+        configTheme: resolvedConfig.configTheme,
+        serviceName: resolvedConfig.serviceName,
+        path: resolvedConfig.path,
+        model: resolvedConfig.model,
+        realtimeConfig,
+        resolveAuthInfo: (payloadText: string) => {
+          const info = this.parseRealtimeAudioAuthInfoWithServiceConfig(
+            payloadText,
+            realtimeConfig,
+          );
+          // Force Qwen-Omni to use /realtime endpoint, ignoring any legacy /inference backend overrides
+          let finalUrl = info.url || info.websocketUrl;
+          if (!finalUrl || finalUrl.includes("dashscope.aliyuncs.com")) {
+            // For standard aliyun urls or missing urls, force the Qwen-Omni realtime endpoint
+            finalUrl = this.buildAliyunRealtimeWebSocketUrl(
+              options.websocketBaseUrl,
+              "/api-ws/v1/realtime",
+              resolvedConfig.model || "qwen-omni-turbo"
+            );
+          }
+          // Fix for Qwen browser Websocket api missing token natively
+          // If bearer but missing from url, Qwen actually expects api_key param
+          let updatedAuthMode = info.authMode;
+          let updatedQueryName = info.authQueryName;
+          const actualToken = info.apiKey || info.token || info.tempToken;
+          let updatedApiKey = info.apiKey;
+          if (actualToken && info.authMode === "bearer") {
+               updatedAuthMode = "apikey";
+               updatedQueryName = "api_key";
+               updatedApiKey = actualToken;
+          }
+          return {
+            ...info,
+            url: finalUrl,
+            websocketUrl: finalUrl,
+            endpoint: finalUrl,
+            authMode: updatedAuthMode,
+            authQueryName: updatedQueryName,
+            apiKey: updatedApiKey
+          };
+        },
+        stopVoiceInputOptions,
+        protocolAdapter: createOpenAIRealtimeVoiceProtocolAdapter({ ...options.aliyunProtocolOptions, model: resolvedConfig.model }),
+      });
+    } catch (error) {
+      logger.error("创建OpenAI/Qwen实时语音会话失败:", error);
       return [
         null,
         error instanceof Error ? error : new Error(String(error)),
@@ -676,8 +763,13 @@ export class AIProxyModule implements DCModule, IAIProxyOperations {
     realtimeConfig: AIProxyRealtimeConfig,
   ): AIProxyRealtimeAudioAuthInfo {
     const parsed = JSON.parse(payloadText) as Record<string, unknown>;
-    const responseConfig = realtimeConfig.response;
-    const connectionPreset = realtimeConfig.connection;
+    const proxyRealtime = parsed.realtime as AIProxyRealtimeConfig | undefined;
+    
+    const responseConfig = proxyRealtime?.response || realtimeConfig.response;
+    const connectionPreset = { 
+      ...realtimeConfig.connection,
+      ...(proxyRealtime?.connection || {})
+    } as Exclude<AIProxyRealtimeConfig["connection"], undefined>;
     const actualDataField = responseConfig?.actualDataField || "providerData";
     const customResponse = responseConfig?.customResponse === true;
 
@@ -690,13 +782,27 @@ export class AIProxyModule implements DCModule, IAIProxyOperations {
       ...(connectionPreset?.headers || {}),
       ...(responseConnection?.headers || {}),
     };
-      if (responseCredentials.authorization && !mergedHeaders.Authorization) {
-        mergedHeaders.Authorization = responseCredentials.authorization;
-      }
+    if (responseCredentials.authorization && !mergedHeaders.Authorization) {
+      mergedHeaders.Authorization = responseCredentials.authorization;
+    }
+
+    const extractedPresetUrlParams: Record<string, string> = {};
+    if (realtimeConfig.connection?.url) {
+      try {
+        const uString = realtimeConfig.connection.url.startsWith("http") || realtimeConfig.connection.url.startsWith("ws") ? realtimeConfig.connection.url : "ws://localhost" + realtimeConfig.connection.url;
+        const u = new URL(uString);
+        u.searchParams.forEach((val, key) => {
+          extractedPresetUrlParams[key] = val;
+        });
+      } catch {}
+    }
+
     const mergedQuery = {
+      ...extractedPresetUrlParams,
       ...(connectionPreset?.query || {}),
       ...(responseConnection?.query || {}),
     };
+
     const mergedProtocols = responseConnection?.protocols?.length
       ? responseConnection.protocols
       : connectionPreset?.protocols;
@@ -746,7 +852,11 @@ export class AIProxyModule implements DCModule, IAIProxyOperations {
     query?: Record<string, string | number | boolean>;
     protocols?: string[];
   } | null {
-    const connectionValue = parsed.connection;
+    let connectionValue = parsed.connection;
+    if (!connectionValue && parsed.realtime && typeof parsed.realtime === "object") {
+      connectionValue = (parsed.realtime as Record<string, unknown>).connection;
+    }
+    
     if (!connectionValue || typeof connectionValue !== "object" || Array.isArray(connectionValue)) {
       return null;
     }

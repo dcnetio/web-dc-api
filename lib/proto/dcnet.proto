@@ -1246,7 +1246,7 @@ message GetAIProxyConfigFromPeerRequest {
 
 message GetAIProxyConfigFromPeerReply {
    uint32 flag = 1;//获取结果 0:成功 1:权限不足 2:获取失败
-   bytes configInfo = 2; //获取的配置结果集，第一行用户权限,后面每行一个mcp服务工具配置信息或者AI模型配置信息
+   bytes configInfo = 2; //获取的配置结果集，第一行用户权限,后面每行一个通用服务工具配置信息或者AI模型配置信息
    bytes edges = 3; //当前主题的边缘信息,如果一致,则不需要重新获取配置
    
 }

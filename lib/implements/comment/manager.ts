@@ -287,10 +287,15 @@ export class CommentManager {
       if (!this.connectedDc?.client) {
         return [null, Errors.ErrNoDcPeerConnected];
       }
-      if (!this.context.publicKey) {
-        return [null, Errors.ErrPublicKeyIsNull];
+
+      let isFetchingOthersTheme = false;
+      if (this.context.publicKey) {
+        isFetchingOthersTheme = themeAuthor != this.context.publicKey.string();
+      } else {
+        isFetchingOthersTheme = true;
       }
-      if (!client || themeAuthor != this.context.publicKey.string()) {
+
+      if (!client || isFetchingOthersTheme) {
         //查询他人主题评论
         const authorPublicKey: Ed25519PubKey =
           Ed25519PubKey.edPubkeyFromStr(themeAuthor);
@@ -303,7 +308,8 @@ export class CommentManager {
         client = connectedClient;
         shouldCloseClient = true;
       }
-      if (client.token == "") {
+      
+      if (client.token == "" && this.context.publicKey) {
         await client.GetToken(
           appId,
           this.context.publicKey.string(),

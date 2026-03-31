@@ -418,6 +418,7 @@ export { KeyManager } from './common/dc-key/keyManager';
 export {
   AIProxyRealtimeVoiceSession,
   createAliyunRealtimeVoiceProtocolAdapter,
+  createOpenAIRealtimeVoiceProtocolAdapter,
   createBrowserRealtimeVoiceInputAdapter,
   createBrowserRealtimeVoiceOutputAdapter,
   createWechatMiniProgramRealtimeSocketFactory,

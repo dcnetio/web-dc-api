@@ -208,4 +208,12 @@ export interface IAIProxyOperations {
   CreateAliyunRealtimeVoiceSession(
     options: AIProxyAliyunRealtimeVoiceSessionOptions
   ): Promise<[IAIProxyRealtimeVoiceSession | null, Error | null]>;
+
+  /**
+   * 创建OpenAI/Qwen(通义千问全模态实时)兼容格式的实时语音输入输出会话。
+   */
+  CreateOpenAIRealtimeVoiceSession(
+    options: AIProxyAliyunRealtimeVoiceSessionOptions,
+  ): Promise<[IAIProxyRealtimeVoiceSession | null, Error | null]>;
+
 }
