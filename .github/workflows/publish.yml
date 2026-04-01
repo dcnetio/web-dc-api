@@ -68,7 +68,7 @@ jobs:
         if: steps.check.outputs.changed == 'true'
         run: npm publish --provenance
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NODE_AUTH_TOKEN: ${{ secrets.PACKAGE_TOKEN }}
 
       # ---------------------------------------------------
       # ⚠️ 建议：actions/create-release 已废弃多年且不稳定
