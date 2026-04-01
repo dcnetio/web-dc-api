@@ -552,6 +552,8 @@ export function createOpenAIRealtimeVoiceProtocolAdapter(
       const session = {
         input_audio_format: inputAudioFormat,
         output_audio_format: outputAudioFormat,
+        ...(options.modalities ? { modalities: options.modalities } : {}),
+        ...(options.model ? { model: options.model } : {}),
         ...(options.session || {}),
       };
       return wrap({
@@ -587,10 +589,14 @@ export function createOpenAIRealtimeVoiceProtocolAdapter(
       });
     },
     buildResponseCreateMessages() {
+      const responseOpts = {
+        ...(options.modalities ? { modalities: options.modalities } : {}),
+        ...(options.response || {})
+      };
       return wrap({
         event_id: createRealtimeEventId(),
         type: "response.create",
-        ...(options.response ? { response: options.response } : {}),
+        ...(Object.keys(responseOpts).length > 0 ? { response: responseOpts } : {}),
       });
     },
     buildFinishMessages() {

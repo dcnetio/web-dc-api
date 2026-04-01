@@ -966,10 +966,7 @@ export class AIProxyModule implements DCModule, IAIProxyOperations {
     options: AIProxyAliyunRealtimeAudioSessionOptions,
   ): AIProxyRealtimeConfig {
     const model = resolvedConfig.model;
-    if (!model) {
-      throw new Error("阿里云实时音频调用必须提供 model");
-    }
-
+    
     return {
       enabled: true,
       connection: {
@@ -994,7 +991,7 @@ export class AIProxyModule implements DCModule, IAIProxyOperations {
   private buildAliyunRealtimeWebSocketUrl(
     websocketBaseUrl: string | undefined,
     path: string | undefined,
-    model: string,
+    model: string | undefined,
   ): string {
     const defaultBaseUrl = websocketBaseUrl || "wss://dashscope.aliyuncs.com";
     const defaultPath = path || "/api-ws/v1/inference";
@@ -1007,7 +1004,7 @@ export class AIProxyModule implements DCModule, IAIProxyOperations {
         ? new URL(defaultPath)
         : new URL(defaultPath, defaultBaseUrl);
 
-    if (!url.searchParams.has("model")) {
+    if (model && !url.searchParams.has("model")) {
       url.searchParams.set("model", model);
     }
 

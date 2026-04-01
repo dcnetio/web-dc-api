@@ -691,6 +691,7 @@ export interface AIProxyRealtimeVoiceAliyunProtocolOptions {
   autoCommitOnStop?: boolean;
   autoCreateResponseOnStop?: boolean;
   model?: string;
+  modalities?: ("text" | "audio")[];
 }
 
 export interface AIProxyWechatMiniProgramSocketTaskLike {

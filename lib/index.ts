@@ -399,7 +399,7 @@ export { registerServiceWorker, isServiceWorkerActive, updateServiceWorker } fro
 export * from './common/types/types';
 export * from './interfaces';
 export * from './common/define';
-export {ThemePermission} from './common/constants';
+export { ThemePermission, QWEN_VOICE_OPTIONS } from './common/constants';
 export {KeyValueDB} from './implements/keyvalue/manager';
 
 // 导出模块系统

@@ -200,9 +200,8 @@ export interface IAIProxyOperations {
   ): Promise<[IAIProxyRealtimeVoiceSession | null, Error | null]>;
 
   /**
-   * 创建阿里云 DashScope 的实时语音输入输出会话。
-   * 内部会自动补齐阿里云 realtime 连接模板，并提供 session.update / input_audio_buffer.append /
-   * input_audio_buffer.commit / response.create / response.audio.delta 的默认协议适配。
+   * 创建阿里云 DashScope 原生的实时语音输入输出会话。主要用来实时语音识别/翻译服务的对接。适用于纯语音转写+翻译场景（如直播字幕、会议记录）
+   * 内部会自动补齐阿里云 realtime 连接模板，并提供阿里云原生协议的适配。
    * 浏览器环境默认可直接采集和播放；小程序环境仍建议注入平台专用的 socket 与音频适配器。
    */
   CreateAliyunRealtimeVoiceSession(
@@ -210,7 +209,9 @@ export interface IAIProxyOperations {
   ): Promise<[IAIProxyRealtimeVoiceSession | null, Error | null]>;
 
   /**
-   * 创建OpenAI/Qwen(通义千问全模态实时)兼容格式的实时语音输入输出会话。
+   * 创建OpenAI/Qwen(通义千问全模态实时)兼容格式的实时语音输入输出会话。集成了语音识别、翻译、大模型推理、语音合成等能力
+   * 内部提供 session.update / input_audio_buffer.append /
+   * input_audio_buffer.commit / response.create / response.audio.delta 的标准 OpenAI 协议适配。
    */
   CreateOpenAIRealtimeVoiceSession(
     options: AIProxyAliyunRealtimeVoiceSessionOptions,
