@@ -5,7 +5,7 @@ on:
     branches:
       - main
     paths:
-      - 'package.json'
+      - "package.json"
 
 concurrency:
   group: publish-${{ github.ref }}
@@ -26,11 +26,11 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: '22.x'
-          registry-url: 'https://registry.npmjs.org'
+          node-version: "22.x"
+          registry-url: "https://registry.npmjs.org"
 
       - name: Upgrade npm
-        run: npm install -g npm@10 
+        run: npm install -g npm@10
 
       - name: Upgrade npm
         run: |
@@ -68,7 +68,7 @@ jobs:
         if: steps.check.outputs.changed == 'true'
         run: npm publish --provenance
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.PACKAGE_TOKEN }}
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       # ---------------------------------------------------
       # ⚠️ 建议：actions/create-release 已废弃多年且不稳定
