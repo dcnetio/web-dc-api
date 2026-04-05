@@ -222,6 +222,9 @@ export class EntityRepository<T extends BaseEntity> {
 
   // 保存实体（写入并附带索引）
   async save(entity: T, vaccount?: string): Promise<number> {
+    const initErr = this.assertInitialized();
+    if (initErr) throw initErr;
+
     entity.validate();
     const key= (entity as any).getPrimaryKey();
     //移除dc_timestamp和dc_opuser字段，由dc节点自动维护
@@ -242,6 +245,9 @@ export class EntityRepository<T extends BaseEntity> {
   
 
   async deleteById(id: string, vaccount?: string): Promise<void> {
+    const initErr = this.assertInitialized();
+    if (initErr) throw initErr;
+
     const key = id;
     const [ok,_ ,err] = await this.ops.set(this.db, key, "","", vaccount); // 空值用于标记删除
     if (err) throw err;
@@ -250,9 +256,13 @@ export class EntityRepository<T extends BaseEntity> {
 
   // 局部更新（按 id 合并字段后保存）
   async update(id: string, patch: Partial<T>, vaccount?: string): Promise<T | null> {
+    const initErr = this.assertInitialized();
+    if (initErr) throw initErr;
+
     const key = id; 
      const [curr, err] = await this.ops.getValueSetByCurrentUser(this.db, key, vaccount);
-    if (err || !curr) return null;
+    if (err) throw err;
+    if (!curr) return null;
     const [json, extra] = extractRawValue(curr);
     const obj = safeParseJSON<any>(json);
     if (!obj) return null;
@@ -321,9 +331,13 @@ export class EntityRepository<T extends BaseEntity> {
 
   // 通过 id 获取
   async findById(id: string, writerPubkey?: string, vaccount?: string): Promise<T | null> {
+    const initErr = this.assertInitialized();
+    if (initErr) throw initErr;
+
     const key = id; 
     const [raw, err] = await this.ops.get(this.db, key, writerPubkey, vaccount);
-    if (err || !raw) return null;
+    if (err) throw err;
+    if (!raw) return null;
 
     const [json, extra] = extractRawValue(raw);
     const obj = safeParseJSON<any>(json);
@@ -344,6 +358,9 @@ export class EntityRepository<T extends BaseEntity> {
 
   // 通过索引查询（单字段：indexKey=字段名；复合：indexKey=索引名，indexValue=JSON数组字符串）
   async findByIndex(indexKey: string, indexValue: string, options: FindIndexOptions = {}): Promise<T[]> {
+    const initErr = this.assertInitialized();
+    if (initErr) throw initErr;
+
     const [raw, err] = await this.ops.getWithIndex(
       this.db,
       indexKey,
@@ -351,7 +368,8 @@ export class EntityRepository<T extends BaseEntity> {
       sanitizeGetWithIndexOptions(options),
       options.vaccount
     );
-    if (err || !raw) return [];
+    if (err) throw err;
+    if (!raw) return [];
 
     const values = parseIndexResultValues(raw);
     const out: T[] = [];
@@ -380,13 +398,17 @@ export class EntityRepository<T extends BaseEntity> {
 
   // 按键前缀遍历（用于分页场景）
   async getValues(keyPrefix: string, options: FindValuesOptions = {}): Promise<T[]> {
+    const initErr = this.assertInitialized();
+    if (initErr) throw initErr;
+
     const [raw, err] = await this.ops.getValues(
       this.db,
       keyPrefix,
       sanitizeGetValuesOptions(options),
       options.vaccount
     );
-    if (err || !raw) return [];
+    if (err) throw err;
+    if (!raw) return [];
 
     const list = safeParseJSON<string[]>(raw) ?? [];
     const out: T[] = [];
