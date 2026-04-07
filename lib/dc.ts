@@ -30,6 +30,8 @@ import {
   AIProxyModule,
   UtilModule,
   PayModule,
+  RTCModule,
+  RTMModule,
 } from "./modules";
 import { Client } from "./common/dcapi";
 import { ICollectionConfig, IDBInfo } from "./implements/threaddb/core/core";
@@ -136,6 +138,8 @@ export class DC implements DCContext {
       this.moduleSystem.registerModule(new CacheModule());
       this.moduleSystem.registerModule(new AIProxyModule());
       this.moduleSystem.registerModule(new UtilModule());
+      this.moduleSystem.registerModule(new RTCModule());
+      this.moduleSystem.registerModule(new RTMModule());
     }
 
     logger.info("核心模块注册完成");
@@ -639,6 +643,22 @@ export class DC implements DCContext {
    */
   get file() {
     return this.getModule<FileModule>(CoreModuleName.FILE);
+  }
+
+  /**
+   * 获取 RTC 模块
+   * @returns RTC 模块实例
+   */
+  get rtc() {
+    return this.getModule<RTCModule>(CoreModuleName.RTC);
+  }
+
+  /**
+   * 获取 RTM 模块
+   * @returns RTM 模块实例
+   */
+  get rtm() {
+    return this.getModule<RTMModule>(CoreModuleName.RTM);
   }
 
   /**

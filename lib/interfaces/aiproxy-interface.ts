@@ -143,6 +143,38 @@ export interface IAIProxyOperations {
   ): Promise<[number | null, Error | null]>;
 
   /**
+   * 获取阿里云V3的动态Token (通常用于 RTC / RTM 等场景)
+   * 对应后端 ai_proxy_handler.go 中 endpoint 为 aliyun_createtoken_v3 的处理逻辑
+   */
+  GetAliyunV3Token(params: {
+    /** 阿里云 RTC / RTM 会话使用的频道ID (Channel ID) */
+    channelId?: string;
+    /** 阿里云 RTC / RTM 会话使用的用户ID (User ID) */
+    userId?: string;
+    /**
+     * 附加请求控制参数（根据后端 aliyun_apptoken.go 解析规则）。
+     * @property expires_in - Token相对有效期(秒)，例如 3600，未指定则默认约12小时
+     * @property expires_at / expiredts / timestamp - 绝对的到期时间戳(秒)
+     * @property audio_publish - 是否允许发布音频，支持 "true", "1", "yes", "on" 或布尔值 true
+     * @property video_publish - 是否允许发布视频，支持 "true", "1", "yes", "on" 或布尔值 true
+     * @property screen_publish - 是否允许发布屏幕共享，支持 "true", "1", "yes", "on" 或布尔值 true
+     * @property privilege - 直接指定 Int32 的权限掩码值 (如果指定，会覆盖音频/视频/屏幕共享的快速配置)
+     * @property options - 高级配置结构，如 { engineOptions: { duration_per_channel: "3600", delay_close_per_channel: "300" } } (首层直接传 duration_per_channel 亦可)
+     */
+    reqBody?: Record<string, any>;
+    /** 是否强制发起网络请求取新Token（避免只取到缓存的短效Token） */
+    forceRefresh?: boolean;
+    /** 应用ID，为空时使用初始化上下文默认配置 */
+    appId?: string;
+    /** 主题作者的公钥，为空时使用初始化上下文默认配置 */
+    themeAuthor?: string;
+    /** 配置主题，为空时使用初始化上下文默认配置 */
+    configTheme?: string;
+    /** 服务名称，为空时使用初始化上下文默认配置 */
+    serviceName?: string;
+  }): Promise<[ { token: string, expiresAt?: number, expiresIn?: number } | null, Error | null ]>;
+
+  /**
    * 设置AI调用的配置
    * @param appId 应用ID
    * @param themeAuthor 主题作者的公钥

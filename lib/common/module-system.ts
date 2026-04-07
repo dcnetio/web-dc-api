@@ -43,6 +43,8 @@ export enum CoreModuleName {
   AIPROXY = "aiproxy",
   UTIL = "util",
   PAY = "pay",
+  RTC = "rtc",
+  RTM = "rtm",
 }
 
 /**
@@ -106,6 +108,8 @@ export class ModuleSystem {
       CoreModuleName.AIPROXY, // AIProxy模块
       CoreModuleName.UTIL, // 工具模块
       CoreModuleName.PAY, // 支付模块
+      CoreModuleName.RTC, // RTC 模块
+      CoreModuleName.RTM, // RTM 模块
     ];
 
     // 先初始化核心模块

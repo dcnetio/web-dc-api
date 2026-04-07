@@ -247,6 +247,95 @@ export class AIProxyModule implements DCModule, IAIProxyOperations {
       }
   }
 
+  async GetAliyunV3Token(params: {
+    channelId?: string;
+    userId?: string;
+    reqBody?: Record<string, any>;
+    forceRefresh?: boolean;
+    appId?: string;
+    themeAuthor?: string;
+    configTheme?: string;
+    serviceName?: string;
+  }): Promise<[ { token: string, expiresAt?: number, expiresIn?: number } | null, Error | null ]> {
+    try {
+      this.assertInitialized();
+
+      const resolvedConfig = this.resolveAICallConfig(
+        params.appId,
+        params.themeAuthor,
+        params.configTheme,
+        params.serviceName,
+        undefined,
+        undefined,
+        undefined
+      );
+
+      const requestBody = JSON.stringify({
+        ...(params.reqBody || {}),
+        channelId: params.channelId,
+        userId: params.userId,
+      });
+
+      let payloadText = "";
+      let streamError: Error | null = null;
+
+      const [status, error] = await this.DoAIProxyCall(
+        {}, // context
+        requestBody,
+        !!params.forceRefresh,
+        (flag, content, err) => {
+          if (content) {
+            payloadText += content;
+          }
+          if (err) {
+            streamError = new Error(err);
+            return;
+          }
+          // flag 2/3/7/88/99 are typically errors in stream processing
+          if (flag === 2 || flag === 3 || flag === 7 || flag === 88 || flag === 99) {
+            streamError = new Error(err || "获取阿里云V3 Token鉴权信息失败");
+          }
+        },
+        resolvedConfig.appId,
+        resolvedConfig.themeAuthor,
+        resolvedConfig.configTheme,
+        resolvedConfig.serviceName,
+        undefined, // headers
+        resolvedConfig.path,
+        undefined // model
+      );
+
+      if (error) {
+        throw error;
+      }
+      if (streamError) {
+        throw streamError;
+      }
+      if (status == null) {
+        throw new Error("获取阿里云V3 Token请求失败");
+      }
+      if (!payloadText.trim()) {
+        throw new Error("阿里云V3 Token返回为空");
+      }
+
+      const parsed = JSON.parse(payloadText) as Record<string, unknown>;
+      
+      if (typeof parsed.token !== "string" || !parsed.token) {
+        throw new Error("返回数据中未包含有效 token 字段");
+      }
+
+      return [{
+        token: parsed.token,
+        expiresAt: typeof parsed.expires_at === "number" ? parsed.expires_at : undefined,
+        expiresIn: typeof parsed.expires_in === "number" ? parsed.expires_in : undefined,
+      }, null];
+
+    } catch (e) {
+      logger.error("获取阿里云V3 Token发生异常:", e);
+      return [null, e instanceof Error ? e : new Error(String(e))];
+    }
+  }
+
   async CreateRealtimeAudioSession(
     options: AIProxyRealtimeAudioSessionOptions,
   ): Promise<[IAIProxyRealtimeAudioSession | null, Error | null]> {

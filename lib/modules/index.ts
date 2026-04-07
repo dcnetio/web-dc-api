@@ -10,4 +10,7 @@ export { KeyValueModule } from './keyvalue-module';
 export { ClientModule } from './client-module';
 export { CacheModule  } from './cache-module';
 export { AIProxyModule } from './aiproxy-module';
-export { UtilModule } from './util-module';export { PayModule } from './pay-module';
+export { UtilModule } from './util-module';
+export { PayModule } from './pay-module';
+export { RTCModule } from './rtc-module';
+export { RTMModule } from './rtm-module';

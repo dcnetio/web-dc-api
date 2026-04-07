@@ -58,6 +58,7 @@
     "blockstore-idb": "^3.0.1",
     "comlink": "^4.4.2",
     "datastore-idb": "^4.0.1",
+    "dingrtc": "^3.9.31",
     "grpc-libp2p-client": "^0.0.39",
     "helia": "^6.0.0",
     "jose": "^6.0.8",
