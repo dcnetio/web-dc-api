@@ -47,11 +47,11 @@ export class RTCModule implements DCModule, IRTCOperations {
     return this.rtcOps.muteLocalMic(mute);
   }
 
-  public async setDisplayRemoteVideo(userId: string, element: HTMLVideoElement | null, streamType: number = 1): Promise<void> {
+  public async setDisplayRemoteVideo(userId: string, element: HTMLElement | null, streamType: number = 1): Promise<void> {
     return this.rtcOps.setDisplayRemoteVideo(userId, element, streamType);
   }
 
-  public async setDisplayLocalVideo(element: HTMLVideoElement | null): Promise<void> {
+  public async setDisplayLocalVideo(element: HTMLElement | null): Promise<void> {
     return this.rtcOps.setDisplayLocalVideo(element);
   }
 

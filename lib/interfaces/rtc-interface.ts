@@ -54,12 +54,12 @@ export interface IRTCOperations {
   /**
    * 为远端用户设置挂载的视频 DOM 元素
    */
-  setDisplayRemoteVideo(userId: string, element: HTMLVideoElement | null, streamType?: number): Promise<void>;
+  setDisplayRemoteVideo(userId: string, element: HTMLElement | null, streamType?: number): Promise<void>;
 
   /**
    * 为本地用户设置挂载的视频 DOM 元素
    */
-  setDisplayLocalVideo(element: HTMLVideoElement | null): Promise<void>;
+  setDisplayLocalVideo(element: HTMLElement | null): Promise<void>;
 
   /**
    * RTM 消息发送：给用户发单聊消息

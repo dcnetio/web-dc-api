@@ -29,7 +29,11 @@ export class AliyunRTCOperations implements IRTCOperations {
     if (this.authInfo.fetchAuthInfo) {
       const res = await this.authInfo.fetchAuthInfo(forceRefresh);
       this.currentToken = res.token;
-      this.authExpiresAtMs = res.expiresAt || null;
+      if (res.expiresAt) {
+        this.authExpiresAtMs = res.expiresAt * 1000; // expiresAt 是秒级时间戳，转换为毫秒
+      } else {
+        this.authExpiresAtMs = null;
+      }
       this.scheduleRefresh();
       return this.currentToken;
     } else if (this.authInfo.token) {
@@ -101,15 +105,24 @@ export class AliyunRTCOperations implements IRTCOperations {
           try {
             RTM = require('@dingrtc/rtm').default || require('@dingrtc/rtm');
           } catch (e) {
-            RTM = (window as any).AliyunRTM;
+            RTM = (window as any).RTM?.default || (window as any).RTM || (window as any).AliyunRTM;
           }
         } else {
-          RTM = (window as any).AliyunRTM;
+          RTM = (window as any).RTM?.default || (window as any).RTM || (window as any).AliyunRTM;
         }
 
         if (RTM) {
           // 复用 RTC 连接来初始化 RTM Client
-          this.rtmClient = RTM.createClient({ rtcClient: this.rtcClient });
+          if (typeof RTM.createClient === 'function') {
+            this.rtmClient = RTM.createClient({ rtcClient: this.rtcClient });
+          } else {
+            this.rtmClient = new RTM({});
+            if (typeof this.rtcClient.register === 'function') {
+              this.rtcClient.register(this.rtmClient);
+            } else if (typeof this.rtmClient.attach === 'function') {
+              this.rtmClient.attach(this.rtcClient);
+            }
+          }
           this.registerRTMListeners();
         } else {
           console.warn('@dingrtc/rtm not found. RTM features will be disabled.');
@@ -146,8 +159,12 @@ export class AliyunRTCOperations implements IRTCOperations {
     // 如果开启了 RTM，则在加入 RTC 后订阅对应的话题（个人频道 + 公共频道）以接收消息
     if (this.rtmClient) {
       try {
-        await this.rtmClient.subscribe({ topic: userId });
-        await this.rtmClient.subscribe({ topic: channelId });
+        if (typeof this.rtmClient.subscribe === 'function') {
+          await this.rtmClient.subscribe({ topic: userId });
+          await this.rtmClient.subscribe({ topic: channelId });
+        } else if (typeof this.rtmClient.joinSession === 'function') {
+          await this.rtmClient.joinSession(channelId);
+        }
       } catch (err) {
         console.warn('Aliyun RTM: Failed to subscribe primary topics', err);
       }
@@ -179,8 +196,14 @@ export class AliyunRTCOperations implements IRTCOperations {
   public async leaveChannel(): Promise<void> {
     if (this.rtmClient && this.authInfo) {
       try {
-        await this.rtmClient.unsubscribe({ topic: this.authInfo.userId });
-        await this.rtmClient.unsubscribe({ topic: this.authInfo.channelId });
+        if (typeof this.rtmClient.unsubscribe === 'function') {
+          await this.rtmClient.unsubscribe({ topic: this.authInfo.userId });
+          await this.rtmClient.unsubscribe({ topic: this.authInfo.channelId });
+        } else if (typeof this.rtmClient.leaveSession === 'function') {
+          if (this.authInfo.channelId) {
+            await this.rtmClient.leaveSession(this.authInfo.channelId);
+          }
+        }
       } catch (err) {
         console.warn('Aliyun RTM: Failed to unsubscribe primary topics', err);
       }
@@ -206,6 +229,8 @@ export class AliyunRTCOperations implements IRTCOperations {
     if (this.rtmClient) {
       if (typeof this.rtmClient.logout === 'function') {
         this.rtmClient.logout().catch(() => {});
+      } else if (typeof this.rtmClient.leave === 'function') {
+        this.rtmClient.leave();
       }
       this.rtmClient = null;
     }
@@ -269,11 +294,11 @@ export class AliyunRTCOperations implements IRTCOperations {
     }
   }
 
-  public async setDisplayRemoteVideo(userId: string, element: HTMLVideoElement | null, streamType: number = 1): Promise<void> {
+  public async setDisplayRemoteVideo(userId: string, element: HTMLElement | null, videoStreamType: number = 1): Promise<void> {
     if (!this.rtcClient) return;
 
-    // 假设 streamType=1 为高清晰度 high/FHD，2为 low/LD。可以根据你的业务枚举约定调整这块映射。
-    const rtcStreamType = streamType === 1 ? 'high' : 'low';
+    // 假设 videoStreamType=1 为高清晰度 high/FHD，2为 low/LD。可以根据你的业务枚举约定调整这块映射。
+    const rtcStreamType = videoStreamType === 1 ? 'high' : 'low';
     try {
       if (typeof this.rtcClient.setRemoteVideoStreamType === 'function') {
         await this.rtcClient.setRemoteVideoStreamType(userId, rtcStreamType);
@@ -296,7 +321,7 @@ export class AliyunRTCOperations implements IRTCOperations {
     }
   }
 
-  public async setDisplayLocalVideo(element: HTMLVideoElement | null): Promise<void> {
+  public async setDisplayLocalVideo(element: HTMLElement | null): Promise<void> {
     if (!this.cameraTrack) return;
     if (element) {
       // 传入元素选择器或者 DOM 对象本身
@@ -316,11 +341,16 @@ export class AliyunRTCOperations implements IRTCOperations {
       console.warn('Message length exceeds 4KB, might fail to send via RTM.');
     }
     
-    await this.rtmClient.publish({
-      topic: userId,  // 业务侧可以约定用户 topic 为 userId
-      message: encodedMsg,
-      qos: requireAck ? 1 : 0,
-    });
+    if (typeof this.rtmClient.publish === 'function' && this.rtmClient.publish.length > 1) {
+      const sessionId = this.authInfo?.channelId || 'default';
+      this.rtmClient.publish(sessionId, encodedMsg, userId);
+    } else {
+      await this.rtmClient.publish({
+        topic: userId,  // 业务侧可以约定用户 topic 为 userId
+        message: encodedMsg,
+        qos: requireAck ? 1 : 0,
+      });
+    }
   }
 
   public async sendMessageToChannel(message: string): Promise<void> {
@@ -333,11 +363,16 @@ export class AliyunRTCOperations implements IRTCOperations {
     }
     
     // 我们假设共享同一房间的频道 ID 为 topic
-    await this.rtmClient.publish({
-      topic: this.authInfo.channelId,
-      message: encodedMsg,
-      qos: 0,
-    });
+    if (typeof this.rtmClient.publish === 'function' && this.rtmClient.publish.length > 1) {
+      const sessionId = this.authInfo?.channelId || 'default';
+      this.rtmClient.publish(sessionId, encodedMsg);
+    } else {
+      await this.rtmClient.publish({
+        topic: this.authInfo.channelId,
+        message: encodedMsg,
+        qos: 0,
+      });
+    }
   }
 
   public on(event: string, callback: (...args: any[]) => void): void {
@@ -359,23 +394,45 @@ export class AliyunRTCOperations implements IRTCOperations {
   private registerRTMListeners() {
     if (!this.rtmClient) return;
 
-    this.rtmClient.on('MessageReceived', (event: any) => {
-      let decodedMessage = '';
-      if (event.message instanceof Uint8Array || event.message instanceof ArrayBuffer) {
-        decodedMessage = this.textDecoder.decode(event.message);
-      } else {
-        decodedMessage = event.message;
-      }
-      this.emit('onMessageReceived', {
-        topic: event.topic,
-        message: decodedMessage,
-        publisher: event.publisher,
+    if (typeof this.rtmClient.on === 'function') {
+      // 旧版 API
+      this.rtmClient.on('MessageReceived', (event: any) => {
+        let decodedMessage = '';
+        if (event.message instanceof Uint8Array || event.message instanceof ArrayBuffer) {
+          decodedMessage = this.textDecoder.decode(event.message);
+        } else {
+          decodedMessage = event.message;
+        }
+        this.emit('onMessageReceived', {
+          topic: event.topic,
+          message: decodedMessage,
+          publisher: event.publisher,
+        });
       });
-    });
 
-    this.rtmClient.on('ConnectionStateChanged', (state: any, reason: any) => {
-      this.emit('onRTMConnectionStateChanged', { state, reason });
-    });
+      this.rtmClient.on('ConnectionStateChanged', (state: any, reason: any) => {
+        this.emit('onRTMConnectionStateChanged', { state, reason });
+      });
+
+      // 新版 API
+      this.rtmClient.on('message', (event: any) => {
+        let decodedMessage = '';
+        if (event.message instanceof Uint8Array || event.message instanceof ArrayBuffer) {
+          decodedMessage = this.textDecoder.decode(event.message);
+        } else {
+          decodedMessage = event.message;
+        }
+        this.emit('onMessageReceived', {
+          topic: event.sessionId,
+          message: decodedMessage,
+          publisher: event.uid,
+        });
+      });
+
+      this.rtmClient.on('connection-state-changed', (currState: any, prevState: any, reason: any) => {
+        this.emit('onRTMConnectionStateChanged', { state: currState, reason });
+      });
+    }
   }
 
   private registerSDKListeners() {

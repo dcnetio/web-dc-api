@@ -30,11 +30,11 @@ export class AliyunRTMOperations implements IRTMOperations {
         try {
           RTMManager = require('@dingrtc/rtm').default || require('@dingrtc/rtm');
         } catch (e) {
-          RTMManager = (window as any).RTM;
+          RTMManager = (window as any).RTM?.default || (window as any).RTM || (window as any).AliyunRTM;
         }
       } else {
-        DingRTC = (window as any).DingRTC;
-        RTMManager = (window as any).RTM;
+        DingRTC = (window as any).DingRTC?.default || (window as any).DingRTC;
+        RTMManager = (window as any).RTM?.default || (window as any).RTM || (window as any).AliyunRTM;
       }
       
       if (!RTMManager) {
