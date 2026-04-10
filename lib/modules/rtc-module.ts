@@ -180,7 +180,7 @@ export class RTCModule implements DCModule, IRTCOperations {
         console.warn('The RTC provider does not explicitly implement renewToken, hoping SDK accepts token in join()');
     }
     
-    return this.rtcOps.joinChannel();
+    return this.rtcOps.joinRoom(channelId);
   }
 
   public async joinChannel(): Promise<void> {

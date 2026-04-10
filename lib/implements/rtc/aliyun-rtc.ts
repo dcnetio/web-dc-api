@@ -20,6 +20,9 @@ export class AliyunRTCOperations implements IRTCOperations {
   private remoteVideoTracks: Map<string, any> = new Map();
   private mcuAudioTrack: any = null;
   private isRemoteAudioMuted: boolean = false;
+  private isLocalMicMuted: boolean = false;
+  private isLocalCameraMuted: boolean = false;
+  private currentCameraDeviceId: string = '';
   private eventListeners: Map<string, Array<(...args: any[]) => void>> = new Map();
   private pendingPings: Map<string, Set<(isOnline: boolean) => void>> = new Map();
   private pendingAcks: Map<string, Set<(success: boolean, err?: Error) => void>> = new Map();
@@ -106,6 +109,13 @@ export class AliyunRTCOperations implements IRTCOperations {
     if (this.authInfo) {
       this.authInfo.channelId = channelId;
     }
+    
+    // 初始化新房间状态，防止上次通话残留的静音/摄像头偏好导致 UI 和底层的时序不同步问题
+    this.isLocalCameraMuted = false;
+    this.isLocalMicMuted = false;
+    this.isRemoteAudioMuted = false;
+    this.currentCameraDeviceId = '';
+
     return this.joinChannel();
   }
 
@@ -152,13 +162,36 @@ export class AliyunRTCOperations implements IRTCOperations {
       frameRate: 15,
       dimension: 'VD_1280x720',
     });
+    // 如果之前设置过需要切换的摄像头（尤其是断连续命时），在此恢复指定设备
+    if (this.currentCameraDeviceId && typeof this.cameraTrack.setDevice === 'function') {
+      await this.cameraTrack.setDevice(this.currentCameraDeviceId).catch((e: Error) => console.warn(e));
+    }
+
     this.micTrack = await RTCEngine.createMicrophoneAudioTrack();
 
-    // 默认尝试发布音视频轨道
-    await this.rtcClient.publish([this.cameraTrack, this.micTrack]);
+    const tracksToPublish = [];
+    if (this.isLocalCameraMuted) {
+      if (typeof this.cameraTrack.setEnabled === 'function') {
+        await this.cameraTrack.setEnabled(false).catch(() => {});
+      }
+    } else {
+      tracksToPublish.push(this.cameraTrack);
+    }
+
+    if (this.isLocalMicMuted) {
+      if (typeof this.micTrack.setEnabled === 'function') {
+        await this.micTrack.setEnabled(false).catch(() => {});
+      }
+    } else {
+      tracksToPublish.push(this.micTrack);
+    }
+
+    if (tracksToPublish.length > 0) {
+      await this.rtcClient.publish(tracksToPublish).catch((e: Error) => console.warn(e));
+    }
 
     // 如果之前有绑定的本地视频容器，重新播放
-    if (this.localVideoElement) {
+    if (this.localVideoElement && !this.isLocalCameraMuted) {
       this.cameraTrack.play(this.localVideoElement);
     }
 
@@ -303,6 +336,7 @@ export class AliyunRTCOperations implements IRTCOperations {
   }
 
   public async muteLocalCamera(mute: boolean): Promise<void> {
+    this.isLocalCameraMuted = mute;
     if (!this.rtcClient || !this.cameraTrack) return;
     
     if (mute) {
@@ -320,6 +354,7 @@ export class AliyunRTCOperations implements IRTCOperations {
   }
 
   public async muteLocalMic(mute: boolean): Promise<void> {
+    this.isLocalMicMuted = mute;
     if (!this.rtcClient || !this.micTrack) return;
 
     if (mute) {
@@ -375,6 +410,7 @@ export class AliyunRTCOperations implements IRTCOperations {
   }
 
   public async switchCamera(deviceId: string): Promise<void> {
+    this.currentCameraDeviceId = deviceId;
     if (this.cameraTrack && typeof this.cameraTrack.setDevice === 'function') {
       await this.cameraTrack.setDevice(deviceId);
     } else {
