@@ -18,11 +18,13 @@ export class AliyunRTCOperations implements IRTCOperations {
   private localVideoElement: HTMLElement | null = null;
   private isMcuSubscribed: boolean = false;
   private remoteVideoTracks: Map<string, any> = new Map();
+  private remoteScreenTracks: Map<string, any> = new Map();
   private mcuAudioTrack: any = null;
   private isRemoteAudioMuted: boolean = false;
   private isLocalMicMuted: boolean = false;
   private isLocalCameraMuted: boolean = false;
   private currentCameraDeviceId: string = '';
+  private screenTrack: any = null;
   private eventListeners: Map<string, Array<(...args: any[]) => void>> = new Map();
   private pendingPings: Map<string, Set<(isOnline: boolean) => void>> = new Map();
   private pendingAcks: Map<string, Set<(success: boolean, err?: Error) => void>> = new Map();
@@ -257,6 +259,10 @@ export class AliyunRTCOperations implements IRTCOperations {
         if (typeof this.cameraTrack.close === 'function') this.cameraTrack.close();
         this.cameraTrack = null;
       }
+      if (this.screenTrack) {
+        if (typeof this.screenTrack.close === 'function') this.screenTrack.close();
+        this.screenTrack = null;
+      }
       if (this.micTrack) {
         if (typeof this.micTrack.close === 'function') this.micTrack.close();
         this.micTrack = null;
@@ -314,6 +320,10 @@ export class AliyunRTCOperations implements IRTCOperations {
       if (typeof this.cameraTrack.close === 'function') this.cameraTrack.close();
       this.cameraTrack = null;
     }
+    if (this.screenTrack) {
+      if (typeof this.screenTrack.close === 'function') this.screenTrack.close();
+      this.screenTrack = null;
+    }
     if (this.micTrack) {
       if (typeof this.micTrack.close === 'function') this.micTrack.close();
       this.micTrack = null;
@@ -324,6 +334,12 @@ export class AliyunRTCOperations implements IRTCOperations {
       else if (typeof track.stop === 'function') track.stop();
     }
     this.remoteVideoTracks.clear();
+
+    for (const track of this.remoteScreenTracks.values()) {
+      if (typeof track.stopPlay === 'function') track.stopPlay();
+      else if (typeof track.stop === 'function') track.stop();
+    }
+    this.remoteScreenTracks.clear();
     
     if (this.mcuAudioTrack) {
       if (typeof this.mcuAudioTrack.stopPlay === 'function') this.mcuAudioTrack.stopPlay();
@@ -415,6 +431,62 @@ export class AliyunRTCOperations implements IRTCOperations {
       await this.cameraTrack.setDevice(deviceId);
     } else {
       throw new Error("DingRTC SDK or current track does not support dynamic camera switching via setDevice");
+    }
+  }
+
+  public async startScreenShare(config?: any): Promise<void> {
+    if (!this.rtcClient) throw new Error('RTC client is not initialized');
+    
+    const RTCEngine = (DingRTC as any).default || DingRTC;
+    const defaultConfig = {
+      dimension: 'VD_1920x1080',
+      frameRate: 15,
+      ...config
+    };
+    
+    const result = await RTCEngine.createScreenVideoTrack(defaultConfig);
+    const screenTrack = Array.isArray(result) ? result[0] : result;
+    this.screenTrack = screenTrack;
+    
+    // Publish screen track
+    await this.rtcClient.publish([this.screenTrack]);
+    
+    // Listen for the track ended event (e.g. user clicks "Stop sharing" on system prompt)
+    if (this.screenTrack && typeof this.screenTrack.on === 'function') {
+      this.screenTrack.on('track-ended', async () => {
+        await this.stopScreenShare();
+      });
+    }
+  }
+
+  public async stopScreenShare(): Promise<void> {
+    if (!this.rtcClient || !this.screenTrack) return;
+    
+    try {
+      await this.rtcClient.unpublish([this.screenTrack]);
+      if (typeof this.screenTrack.close === 'function') {
+        this.screenTrack.close();
+      }
+    } catch (e) {
+      console.warn('Failed to stop screen share properly', e);
+    }
+    
+    this.screenTrack = null;
+    this.emit('onLocalScreenShareStopped');
+  }
+
+  public async setDisplayRemoteScreenShare(userId: string, element: HTMLElement | null): Promise<void> {
+    const track = this.remoteScreenTracks.get(userId);
+    if (!track) {
+      console.warn(`DingRTC: Could not find remote screen share track for userId ${userId}. Wait for subscription.`);
+      return;
+    }
+    
+    if (element) {
+      if (typeof track.play === 'function') track.play(element);
+    } else {
+      if (typeof track.stopPlay === 'function') track.stopPlay();
+      else if (typeof track.stop === 'function') track.stop();
     }
   }
 
@@ -785,12 +857,18 @@ export class AliyunRTCOperations implements IRTCOperations {
       this.emit('onPublisher', { user, mediaType, auxiliary });
 
       if (mediaType === 'video') {
-        this.rtcClient.subscribe(user.userId, mediaType, auxiliary).then((track: any) => {
-          this.remoteVideoTracks.set(user.userId, track);
-          
-          this.emit('onTrackSubscribed', { userId: user.userId, track, mediaType });
+        const isScreenShare = Boolean(auxiliary);
+        // 如果是屏幕共享，第三个参数(auxiliary)要传true
+        this.rtcClient.subscribe(user.userId, mediaType, isScreenShare).then((track: any) => {
+          if (isScreenShare) {
+            this.remoteScreenTracks.set(user.userId, track);
+            this.emit('onScreenShareSubscribed', { userId: user.userId, track });
+          } else {
+            this.remoteVideoTracks.set(user.userId, track);
+            this.emit('onTrackSubscribed', { userId: user.userId, track, mediaType });
+          }
         }).catch((err: any) => {
-          console.error(`Failed to subscribe ${mediaType} track for user ${user.userId}`, err);
+          console.error(`Failed to subscribe ${mediaType} track (auxiliary: ${isScreenShare}) for user ${user.userId}`, err);
         });
       } else if (!this.isMcuSubscribed) {
         this.isMcuSubscribed = true;
@@ -811,27 +889,52 @@ export class AliyunRTCOperations implements IRTCOperations {
     });
 
     // 监听远端取消发布
-    this.rtcClient.on('user-unpublished', (user: any, mediaType: string) => {
+    this.rtcClient.on('user-unpublished', async (user: any, mediaType: string, auxiliary: any) => {
+      const isScreenShare = Boolean(auxiliary);
       if (mediaType === 'video') {
-        const track = this.remoteVideoTracks.get(user.userId);
-        if (track) {
-          if (typeof track.stopPlay === 'function') track.stopPlay();
-          else if (typeof track.stop === 'function') track.stop();
+        if (isScreenShare) {
+          const track = this.remoteScreenTracks.get(user.userId);
+          if (track) {
+            if (typeof track.stopPlay === 'function') track.stopPlay();
+            else if (typeof track.stop === 'function') track.stop();
+          }
+          this.remoteScreenTracks.delete(user.userId);
+          try {
+            await this.rtcClient.unsubscribe(user.userId, mediaType, isScreenShare);
+          } catch(e) {}
+          this.emit('onScreenShareUnSubscribed', { userId: user.userId });
+        } else {
+          const track = this.remoteVideoTracks.get(user.userId);
+          if (track) {
+            if (typeof track.stopPlay === 'function') track.stopPlay();
+            else if (typeof track.stop === 'function') track.stop();
+          }
+          this.remoteVideoTracks.delete(user.userId);
+          try {
+            await this.rtcClient.unsubscribe(user.userId, mediaType);
+          } catch(e) {}
         }
-        this.remoteVideoTracks.delete(user.userId);
       }
-      this.emit('onUnPublisher', { user, mediaType });
+      this.emit('onUnPublisher', { user, mediaType, auxiliary: isScreenShare });
     });
 
     // 监听远端退出房间
     this.rtcClient.on('user-left', (user: any) => {
       // 当用户离开频道时，清理可能的视觉资源
-      const track = this.remoteVideoTracks.get(user.userId);
-      if (track) {
-        if (typeof track.stopPlay === 'function') track.stopPlay();
-        else if (typeof track.stop === 'function') track.stop();
+      const videoTrack = this.remoteVideoTracks.get(user.userId);
+      if (videoTrack) {
+        if (typeof videoTrack.stopPlay === 'function') videoTrack.stopPlay();
+        else if (typeof videoTrack.stop === 'function') videoTrack.stop();
       }
       this.remoteVideoTracks.delete(user.userId);
+
+      const screenTrack = this.remoteScreenTracks.get(user.userId);
+      if (screenTrack) {
+        if (typeof screenTrack.stopPlay === 'function') screenTrack.stopPlay();
+        else if (typeof screenTrack.stop === 'function') screenTrack.stop();
+      }
+      this.remoteScreenTracks.delete(user.userId);
+
       this.emit('onUserLeft', { user });
     });
   }

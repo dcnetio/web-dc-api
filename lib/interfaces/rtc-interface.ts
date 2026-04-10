@@ -98,6 +98,22 @@ export interface IRTCOperations {
   switchCamera(deviceId: string): Promise<void>;
 
   /**
+   * 开启屏幕共享
+   * @param config 可选的屏幕共享配置参数
+   */
+  startScreenShare(config?: any): Promise<void>;
+
+  /**
+   * 停止屏幕共享
+   */
+  stopScreenShare(): Promise<void>;
+
+  /**
+   * 为远端用户设置挂载的屏幕共享的视频 DOM 元素
+   */
+  setDisplayRemoteScreenShare(userId: string, element: HTMLElement | null): Promise<void>;
+
+  /**
    * 为远端用户设置挂载的视频 DOM 元素
    */
   setDisplayRemoteVideo(userId: string, element: HTMLElement | null, streamType?: number): Promise<void>;

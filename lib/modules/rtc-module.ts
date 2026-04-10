@@ -364,6 +364,24 @@ export class RTCModule implements DCModule, IRTCOperations {
     return this.rtcOps.switchCamera(deviceId);
   }
 
+  public async startScreenShare(config?: any): Promise<void> {
+    if (typeof (this.rtcOps as any).startScreenShare === 'function') {
+      return (this.rtcOps as any).startScreenShare(config);
+    }
+  }
+
+  public async stopScreenShare(): Promise<void> {
+    if (typeof (this.rtcOps as any).stopScreenShare === 'function') {
+      return (this.rtcOps as any).stopScreenShare();
+    }
+  }
+
+  public async setDisplayRemoteScreenShare(userId: string, element: HTMLElement | null): Promise<void> {
+    if (typeof (this.rtcOps as any).setDisplayRemoteScreenShare === 'function') {
+      return (this.rtcOps as any).setDisplayRemoteScreenShare(userId, element);
+    }
+  }
+
   public async setDisplayRemoteVideo(userId: string, element: HTMLElement | null, streamType: number = 1): Promise<void> {
     return this.rtcOps.setDisplayRemoteVideo(userId, element, streamType);
   }
