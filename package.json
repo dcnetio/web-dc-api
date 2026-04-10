@@ -74,7 +74,8 @@
     "vite-plugin-node-polyfills": "^0.26.0"
   },
   "directories": {
-    "lib": "lib"
+    "lib": "lib",
+    "test": "test"
   },
   "devDependencies": {
     "@babel/core": "^7.27.4",
@@ -106,5 +107,8 @@
     "vite": "^7.1.2",
     "vite-plugin-dts": "^4.5.4",
     "webpack-bundle-analyzer": "^4.10.2"
+  },
+  "bugs": {
+    "url": "https://github.com/dcnetio/web-dc-api/issues"
   }
 }

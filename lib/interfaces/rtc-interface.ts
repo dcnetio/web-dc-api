@@ -15,6 +15,9 @@ export interface IRTCAuthInfo {
   appId: string;
   rtcAppId?: string;
   userId: string;
+  themeAuthor?: string;
+  configTheme?: string;
+  serviceName?: string;
   // 通过回调由外部业务层按需获取或刷新 token（完全解耦架构）
   fetchAuthInfo?: (forceRefresh: boolean) => Promise<{ token: string, expiresAt?: number }>;
   // 配置是否在 RTC 初始化后自动集成 RTM
@@ -28,7 +31,13 @@ export interface IRTCOperations {
   init(authInfo: IRTCAuthInfo): Promise<void>;
 
   /**
-   * 加入特定频道
+   * 按指定的 channelId 主动加入聊天室/音视频会议
+   * 此方法会自动退出现有频道、申请该该频道的 Token，并进入新的通道
+   */
+  joinRoom(channelId: string): Promise<void>;
+
+  /**
+   * 加入频道（由当前配置 authInfo.channelId 决定）
    */
   joinChannel(): Promise<void>;
 
@@ -71,6 +80,22 @@ export interface IRTCOperations {
    * 开启或关闭本地麦克风
    */
   muteLocalMic(mute: boolean): Promise<void>;
+
+  /**
+   * 静音远端音频（本地扬声器）
+   */
+  muteRemoteAudio(mute: boolean): Promise<void>;
+
+  /**
+   * 获取所有可用的摄像头设备列表
+   */
+  getCameras(): Promise<any[]>;
+
+  /**
+   * 动态切换指定的摄像头
+   * @param deviceId 设备ID (可通过 getCameras 获得)
+   */
+  switchCamera(deviceId: string): Promise<void>;
 
   /**
    * 为远端用户设置挂载的视频 DOM 元素

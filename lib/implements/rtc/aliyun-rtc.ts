@@ -5,19 +5,21 @@ import RTM from '@dingrtc/rtm';
 export class AliyunRTCOperations implements IRTCOperations {
   private rtcClient: any = null;
   private rtmClient: any = null;
-  private userRtmInstance: any = null;
   private textEncoder: TextEncoder;
   private textDecoder: TextDecoder;
   private cameraTrack: any = null;
   private micTrack: any = null;
   private authInfo: IRTCAuthInfo | null = null;
   private currentToken: string = '';
-  private authExpiresAtMs: number | null = null;
-  private refreshTimer: NodeJS.Timeout | null = null;
+  private hasJoined: boolean = false; // Add joined status tracking
+  private isJoiningFlow: boolean = false;
+  private isLeavingFlow: boolean = false;
 
+  private localVideoElement: HTMLElement | null = null;
   private isMcuSubscribed: boolean = false;
   private remoteVideoTracks: Map<string, any> = new Map();
   private mcuAudioTrack: any = null;
+  private isRemoteAudioMuted: boolean = false;
   private eventListeners: Map<string, Array<(...args: any[]) => void>> = new Map();
   private pendingPings: Map<string, Set<(isOnline: boolean) => void>> = new Map();
   private pendingAcks: Map<string, Set<(success: boolean, err?: Error) => void>> = new Map();
@@ -28,53 +30,7 @@ export class AliyunRTCOperations implements IRTCOperations {
     this.textDecoder = new TextDecoder();
   }
 
-  private async fetchAndStoreAuthInfo(forceRefresh: boolean = false): Promise<string> {
-    if (!this.authInfo) throw new Error('Missing auth info');
 
-    if (this.authInfo.fetchAuthInfo) {
-      const res = await this.authInfo.fetchAuthInfo(forceRefresh);
-      this.currentToken = res.token;
-      if (res.expiresAt) {
-        this.authExpiresAtMs = res.expiresAt * 1000; // expiresAt 是秒级时间戳，转换为毫秒
-      } else {
-        this.authExpiresAtMs = null;
-      }
-      this.scheduleRefresh();
-      return this.currentToken;
-    } else if (this.authInfo.token) {
-      // 兼容旧的固定 token 传递方式
-      this.currentToken = this.authInfo.token;
-      return this.currentToken;
-    } else {
-      throw new Error('Neither token nor fetchAuthInfo is provided in authInfo');
-    }
-  }
-
-  private scheduleRefresh() {
-    if (!this.authExpiresAtMs) return;
-
-    if (this.refreshTimer) {
-      clearTimeout(this.refreshTimer);
-      this.refreshTimer = null;
-    }
-
-    const refreshBeforeMs = 30 * 1000; // 提前 30 秒刷新
-    const delayMs = Math.max(this.authExpiresAtMs - Date.now() - refreshBeforeMs, 1000);
-
-    this.refreshTimer = setTimeout(async () => {
-      try {
-        await this.fetchAndStoreAuthInfo(true);
-        // 如果房间仍在且 token 变化，部分 SDK 可能支持更新未过期的 token; 或需要断线重连，这取决于 DingRTC SDK 是否有 updateToken
-        if (this.rtcClient && this.currentToken) {
-          // 这个动作依据 SDK 是否存在更新 token 函数为主
-          // 例如可能存在 client.renewToken(this.currentToken) 等等，这里做下异常安全
-        }
-      } catch (err) {
-        console.error('Failed to auto refresh RTC token', err);
-        this.scheduleRefresh(); // 重试
-      }
-    }, delayMs);
-  }
 
   public async init(authInfo: IRTCAuthInfo): Promise<void> {
     if (typeof window === 'undefined') {
@@ -104,7 +60,7 @@ export class AliyunRTCOperations implements IRTCOperations {
           if (typeof RTMEngine.createClient === 'function') {
             this.rtmClient = RTMEngine.createClient({ rtcClient: this.rtcClient });
           } else {
-            this.rtmClient = new RTMEngine({});
+            this.rtmClient = new RTMEngine();
             if (typeof this.rtcClient.register === 'function') {
               this.rtcClient.register(this.rtmClient);
             } else if (typeof this.rtmClient.attach === 'function') {
@@ -124,58 +80,54 @@ export class AliyunRTCOperations implements IRTCOperations {
     }
   }
 
-  public async joinChannel(): Promise<void> {
-    if (!this.rtcClient || !this.authInfo) throw new Error('RTC instance or auth info is missing');
-    
-    // 如果存在动态 fetch 配置则先请求获取并更新 this.currentToken
-    if (this.authInfo.fetchAuthInfo) {
-      await this.fetchAndStoreAuthInfo();
-    } else {
-      this.currentToken = this.authInfo.token || '';
+
+
+  public renewToken(token: string): void {
+    this.currentToken = token;
+    if (this.authInfo) {
+      this.authInfo.token = token;
     }
 
-    const { channelId, userId,  rtcAppId } = this.authInfo;
+    if (!this.hasJoined) {
+      // 还没正式进入房间，仅更新缓存，别擅自拉起推流和重新进房
+      return;
+    }
+
+    // 原生不支持直接 renewToken，采用 leave 后重新 join 的方式刷新
+    this.leaveChannel().then(() => {
+      return this.joinChannel();
+    }).catch(err => {
+      console.error('Failed to renew token via leave and join:', err);
+    });
+  }
+
+  public async joinRoom(channelId: string): Promise<void> {
+    // leave logic handled by RTCModule before calling this
+    if (this.authInfo) {
+      this.authInfo.channelId = channelId;
+    }
+    return this.joinChannel();
+  }
+
+  public async joinChannel(): Promise<void> {
+    if (!this.rtcClient || !this.authInfo) throw new Error('RTC instance or auth info is missing');
+    if (this.isJoiningFlow || this.hasJoined) return;
     
-    const joinResponse = await this.rtcClient.join({
+    this.isJoiningFlow = true;
+    try {
+      this.currentToken = this.authInfo.token || '';
+
+      const { channelId, userId,  rtcAppId } = this.authInfo;
+      
+      const joinResponse = await this.rtcClient.join({
       appId: rtcAppId,
       userName: userId, 
       channel: channelId,
       uid: userId,
       token: this.currentToken,
     });
-
-    // 初始化负责监听自己信箱(userId)的额外单例:
-    if (this.authInfo.enableRTM) {
-      try {
-        const RTMEngine = (RTM as any).default || RTM;
-
-        if (RTMEngine && typeof RTMEngine === 'function') {
-            this.userRtmInstance = new RTMEngine();
-            try {
-              if (typeof this.userRtmInstance.leave === 'function') {
-                await this.userRtmInstance.leave();
-              }
-            } catch(e) {}
-            try {
-              await this.userRtmInstance.join({
-               rtcAppId, 
-               userName: userId, 
-               channel: userId, 
-               uid: userId, 
-               token: this.currentToken || '' 
-            });
-            } catch (err: any) {
-              if (!err?.message?.includes('already ready')) {
-                console.warn('RTC inner userRtmInstance join error', err);
-              }
-            }
-            this.registerRTMListeners(this.userRtmInstance); // 复用事件绑定以便监听信使消息
-        }
-      } catch(err) {
-          console.warn('Aliyun RTM: Failed to establish dedicated user instance for P2P', err);
-      }
-    } // match the enableRTM if
-
+    this.hasJoined = true;    
+    // 官方规范：通过 RTC 客户端统一加入频道，RTM 会自动复用 channel 此处无需再次 join
     // 如果开启了 RTM，则在加入 RTC 后订阅对应的话题（个人频道 + 公共频道）以接收消息
     if (this.rtmClient && this.authInfo.enableRTM) {
       try {
@@ -205,6 +157,11 @@ export class AliyunRTCOperations implements IRTCOperations {
     // 默认尝试发布音视频轨道
     await this.rtcClient.publish([this.cameraTrack, this.micTrack]);
 
+    // 如果之前有绑定的本地视频容器，重新播放
+    if (this.localVideoElement) {
+      this.cameraTrack.play(this.localVideoElement);
+    }
+
     // 处理当前刚进房间前已在房间里的用户
     const initialUsers = joinResponse?.remoteUsers || this.rtcClient.remoteUsers || [];
     if (initialUsers && Array.isArray(initialUsers)) {
@@ -220,41 +177,59 @@ export class AliyunRTCOperations implements IRTCOperations {
           this.rtcClient.subscribe('mcu', 'audio').then((track: any) => {
             this.mcuAudioTrack = track;
             this.emit('onTrackSubscribed', { userId: 'mcu', track, mediaType: 'audio' });
-            if (typeof track.play === 'function') track.play();
+            if (this.isRemoteAudioMuted) {
+              if (typeof track.setVolume === 'function') track.setVolume(0);
+              else if (typeof track.stopPlay === 'function') track.stopPlay();
+            } else {
+              if (typeof track.play === 'function') track.play();
+            }
           }).catch((err: any) => {
             this.isMcuSubscribed = false;
             console.error("Initial mcu audio subscribe fail", err);
           });
         }
+        }
       }
+    } finally {
+      this.isJoiningFlow = false;
     }
   }
 
+
   public async leaveChannel(): Promise<void> {
-    if (this.rtmClient && this.authInfo) {
-      try {
-        if (typeof this.rtmClient.unsubscribe === 'function') {
-          await this.rtmClient.unsubscribe({ topic: this.authInfo.userId });
-          await this.rtmClient.unsubscribe({ topic: this.authInfo.channelId });
-        } else if (typeof this.rtmClient.leaveSession === 'function') {
-          if (this.authInfo.channelId) {
-            await this.rtmClient.leaveSession(this.authInfo.channelId);
+    if (this.isLeavingFlow) return;
+    this.isLeavingFlow = true;
+
+    try {
+      this.hasJoined = false;
+
+      if (this.rtmClient && this.authInfo) {
+        try {
+          if (typeof this.rtmClient.unsubscribe === 'function') {
+            await this.rtmClient.unsubscribe({ topic: this.authInfo.userId });
+            await this.rtmClient.unsubscribe({ topic: this.authInfo.channelId });
+          } else if (typeof this.rtmClient.leaveSession === 'function') {
+            if (this.authInfo.channelId) {
+              await this.rtmClient.leaveSession(this.authInfo.channelId);
+            }
           }
+        } catch (err) {
+          console.warn('Aliyun RTM: Failed to unsubscribe primary topics', err);
         }
-      } catch (err) {
-        console.warn('Aliyun RTM: Failed to unsubscribe primary topics', err);
       }
-    }
-    if (this.rtcClient && typeof this.rtcClient.leave === 'function') {
-      await this.rtcClient.leave();
-    }
-    if (this.cameraTrack) {
-      if (typeof this.cameraTrack.close === 'function') this.cameraTrack.close();
-      this.cameraTrack = null;
-    }
-    if (this.micTrack) {
-      if (typeof this.micTrack.close === 'function') this.micTrack.close();
-      this.micTrack = null;
+      if (this.rtcClient && typeof this.rtcClient.leave === 'function') {
+        await this.rtcClient.leave();
+      }
+      if (this.cameraTrack) {
+        if (typeof this.cameraTrack.close === 'function') this.cameraTrack.close();
+        this.cameraTrack = null;
+      }
+      if (this.micTrack) {
+        if (typeof this.micTrack.close === 'function') this.micTrack.close();
+        this.micTrack = null;
+      }
+    } finally {
+      this.isLeavingFlow = false;
     }
   }
 
@@ -287,24 +262,13 @@ export class AliyunRTCOperations implements IRTCOperations {
   }
 
   public destroy(): void {
-    if (this.refreshTimer) {
-      clearTimeout(this.refreshTimer);
-      this.refreshTimer = null;
-    }
-    this.authExpiresAtMs = null;
-    
     if (this.rtcClient) {
       if (typeof this.rtcClient.leave === 'function') {
         this.rtcClient.leave().catch(() => {});
       }
       this.rtcClient = null;
     }
-    if (this.userRtmInstance) {
-      if (typeof this.userRtmInstance.leave === 'function') {
-        this.userRtmInstance.leave().catch(() => {});
-      }
-      this.userRtmInstance = null;
-    }
+    
     if (this.rtmClient) {
       if (typeof this.rtmClient.logout === 'function') {
         this.rtmClient.logout().catch(() => {});
@@ -342,18 +306,16 @@ export class AliyunRTCOperations implements IRTCOperations {
     if (!this.rtcClient || !this.cameraTrack) return;
     
     if (mute) {
-      // API中可以使用 setEnabled 禁用轨道或取消发布
+      // API中可以使用 setEnabled 禁用轨道，并使用 unpublish 停止推流告知远端，防止远端卡在最后一帧
+      await this.rtcClient.unpublish([this.cameraTrack]).catch(() => {});
       if (typeof this.cameraTrack.setEnabled === 'function') {
         await this.cameraTrack.setEnabled(false);
-      } else {
-        await this.rtcClient.unpublish([this.cameraTrack]);
       }
     } else {
       if (typeof this.cameraTrack.setEnabled === 'function') {
         await this.cameraTrack.setEnabled(true);
-      } else {
-        await this.rtcClient.publish([this.cameraTrack]);
       }
+      await this.rtcClient.publish([this.cameraTrack]).catch(() => {});
     }
   }
 
@@ -361,17 +323,62 @@ export class AliyunRTCOperations implements IRTCOperations {
     if (!this.rtcClient || !this.micTrack) return;
 
     if (mute) {
+      await this.rtcClient.unpublish([this.micTrack]).catch(() => {});
       if (typeof this.micTrack.setEnabled === 'function') {
         await this.micTrack.setEnabled(false);
-      } else {
-        await this.rtcClient.unpublish([this.micTrack]);
       }
     } else {
       if (typeof this.micTrack.setEnabled === 'function') {
         await this.micTrack.setEnabled(true);
-      } else {
-        await this.rtcClient.publish([this.micTrack]);
       }
+      await this.rtcClient.publish([this.micTrack]).catch(() => {});
+    }
+  }
+
+  public async muteRemoteAudio(mute: boolean): Promise<void> {
+    this.isRemoteAudioMuted = mute;
+    if (!this.mcuAudioTrack) {
+      return;
+    }
+    try {
+      if (mute) {
+        if (typeof this.mcuAudioTrack.setVolume === 'function') {
+          await this.mcuAudioTrack.setVolume(0);
+        } else if (typeof this.mcuAudioTrack.stopPlay === 'function') {
+          await this.mcuAudioTrack.stopPlay();
+        } else if (typeof this.mcuAudioTrack.stop === 'function') {
+          await this.mcuAudioTrack.stop();
+        }
+      } else {
+        if (typeof this.mcuAudioTrack.setVolume === 'function') {
+          await this.mcuAudioTrack.setVolume(100);
+        } else if (typeof this.mcuAudioTrack.play === 'function') {
+          await this.mcuAudioTrack.play();
+        }
+      }
+    } catch(e) {
+      console.warn("Failed to toggle remote audio mute", e);
+    }
+  }
+
+  public async getCameras(): Promise<any[]> {
+    const RTCEngine = (DingRTC as any).default || DingRTC;
+    if (RTCEngine && typeof RTCEngine.getCameras === 'function') {
+      return await RTCEngine.getCameras();
+    }
+    // Fallback logic
+    if (typeof navigator !== 'undefined' && navigator.mediaDevices && navigator.mediaDevices.enumerateDevices) {
+      const devices = await navigator.mediaDevices.enumerateDevices();
+      return devices.filter(d => d.kind === 'videoinput');
+    }
+    return [];
+  }
+
+  public async switchCamera(deviceId: string): Promise<void> {
+    if (this.cameraTrack && typeof this.cameraTrack.setDevice === 'function') {
+      await this.cameraTrack.setDevice(deviceId);
+    } else {
+      throw new Error("DingRTC SDK or current track does not support dynamic camera switching via setDevice");
     }
   }
 
@@ -404,6 +411,7 @@ export class AliyunRTCOperations implements IRTCOperations {
   }
 
   public async setDisplayLocalVideo(element: HTMLElement | null): Promise<void> {
+    this.localVideoElement = element;
     if (!this.cameraTrack) return;
     if (element) {
       this.cameraTrack.play(element);
@@ -464,11 +472,11 @@ export class AliyunRTCOperations implements IRTCOperations {
       }, 3000);
 
       try {
-        const clientToUse = this.userRtmInstance || this.rtmClient;
+        const clientToUse = this.rtmClient;
         if (clientToUse && typeof clientToUse.publish === 'function' && clientToUse.publish.length > 1) {
           await clientToUse.publish(this.authInfo!.userId, encodedMsg, userId);
         } else {
-          const clientToUse = this.userRtmInstance || this.rtmClient;
+          const clientToUse = this.rtmClient;
           if (clientToUse) {
              await clientToUse.publish({
                topic: userId,
@@ -495,10 +503,10 @@ export class AliyunRTCOperations implements IRTCOperations {
     // 我们假设共享同一房间的频道 ID 为 topic
     if (typeof this.rtmClient.publish === 'function' && this.rtmClient.publish.length > 1) {
       const channelId = this.authInfo?.channelId || 'default';
-      const clientToUse = this.userRtmInstance || this.rtmClient;
+      const clientToUse = this.rtmClient;
       if (clientToUse) clientToUse.publish(channelId, encodedMsg);
     } else {
-      const clientToUse = this.userRtmInstance || this.rtmClient;
+      const clientToUse = this.rtmClient;
       if (clientToUse) await clientToUse.publish({
         topic: this.authInfo.channelId,
         message: encodedMsg,
@@ -539,9 +547,9 @@ export class AliyunRTCOperations implements IRTCOperations {
       try {
         const encodedPing = this.textEncoder.encode('__DC_PING__');
         if (typeof this.rtmClient.publish === 'function' && this.rtmClient.publish.length > 1) {
-          await (this.userRtmInstance || this.rtmClient)?.publish(userId, encodedPing, userId);
+          await (this.rtmClient)?.publish(userId, encodedPing, userId);
         } else {
-          await (this.userRtmInstance || this.rtmClient)?.publish({
+          await (this.rtmClient)?.publish({
             topic: userId,
             message: encodedPing,
             qos: 0,
@@ -589,9 +597,9 @@ export class AliyunRTCOperations implements IRTCOperations {
             const encodedPong = this.textEncoder.encode('__DC_PONG__');
             if (typeof this.rtmClient.publish === 'function' && this.rtmClient.publish.length > 1) {
               const channelId = event.topic || this.authInfo?.channelId || 'default';
-              (this.userRtmInstance || this.rtmClient)?.publish(event.publisher || channelId, encodedPong, event.publisher).catch(() => {});
+              (this.rtmClient)?.publish(event.publisher || channelId, encodedPong, event.publisher).catch(() => {});
             } else {
-              (this.userRtmInstance || this.rtmClient)?.publish({
+              (this.rtmClient)?.publish({
                 topic: this.authInfo?.channelId || 'default',
                 uid: event.publisher,
                 message: encodedPong,
@@ -629,9 +637,9 @@ export class AliyunRTCOperations implements IRTCOperations {
               const encodedAck = this.textEncoder.encode(ackStr);
               if (typeof this.rtmClient.publish === 'function' && this.rtmClient.publish.length > 1) {
                 const channelId = event.topic || this.authInfo?.channelId || 'default';
-                (this.userRtmInstance || this.rtmClient)?.publish(event.publisher || channelId, encodedAck, event.publisher).catch(() => {});
+                (this.rtmClient)?.publish(event.publisher || channelId, encodedAck, event.publisher).catch(() => {});
               } else {
-                (this.userRtmInstance || this.rtmClient)?.publish({
+                (this.rtmClient)?.publish({
                   topic: this.authInfo?.channelId || 'default',
                   uid: event.publisher,
                   message: encodedAck,
@@ -668,9 +676,9 @@ export class AliyunRTCOperations implements IRTCOperations {
             const encodedPong = this.textEncoder.encode('__DC_PONG__');
             if (typeof this.rtmClient.publish === 'function' && this.rtmClient.publish.length > 1) {
               const channelId = event.channelId || this.authInfo?.channelId || 'default';
-              (this.userRtmInstance || this.rtmClient)?.publish(event.uid || channelId, encodedPong, event.uid).catch(() => {});
+              (this.rtmClient)?.publish(event.uid || channelId, encodedPong, event.uid).catch(() => {});
             } else {
-              (this.userRtmInstance || this.rtmClient)?.publish({
+              (this.rtmClient)?.publish({
                 topic: this.authInfo?.channelId || 'default',
                 uid: event.uid,
                 message: encodedPong,
@@ -708,9 +716,9 @@ export class AliyunRTCOperations implements IRTCOperations {
               const encodedAck = this.textEncoder.encode(ackStr);
               if (typeof this.rtmClient.publish === 'function' && this.rtmClient.publish.length > 1) {
                 const channelId = event.channelId || this.authInfo?.channelId || 'default';
-                (this.userRtmInstance || this.rtmClient)?.publish(event.uid || channelId, encodedAck, event.uid).catch(() => {});
+                (this.rtmClient)?.publish(event.uid || channelId, encodedAck, event.uid).catch(() => {});
               } else {
-                (this.userRtmInstance || this.rtmClient)?.publish({
+                (this.rtmClient)?.publish({
                   topic: this.authInfo?.channelId || 'default',
                   uid: event.uid,
                   message: encodedAck,
@@ -753,7 +761,12 @@ export class AliyunRTCOperations implements IRTCOperations {
         this.rtcClient.subscribe('mcu', 'audio').then((track: any) => {
           this.mcuAudioTrack = track;
           this.emit('onTrackSubscribed', { userId: 'mcu', track, mediaType: 'audio' });
-          if (typeof track.play === 'function') track.play(); // 全局混音音频直接播放
+          if (this.isRemoteAudioMuted) {
+            if (typeof track.setVolume === 'function') track.setVolume(0);
+            else if (typeof track.stopPlay === 'function') track.stopPlay();
+          } else {
+            if (typeof track.play === 'function') track.play(); // 全局混音音频直接播放
+          }
         }).catch((err: any) => {
           console.error(`Failed to subscribe mcu audio track`, err);
           this.isMcuSubscribed = false;
@@ -772,6 +785,18 @@ export class AliyunRTCOperations implements IRTCOperations {
         this.remoteVideoTracks.delete(user.userId);
       }
       this.emit('onUnPublisher', { user, mediaType });
+    });
+
+    // 监听远端退出房间
+    this.rtcClient.on('user-left', (user: any) => {
+      // 当用户离开频道时，清理可能的视觉资源
+      const track = this.remoteVideoTracks.get(user.userId);
+      if (track) {
+        if (typeof track.stopPlay === 'function') track.stopPlay();
+        else if (typeof track.stop === 'function') track.stop();
+      }
+      this.remoteVideoTracks.delete(user.userId);
+      this.emit('onUserLeft', { user });
     });
   }
 
