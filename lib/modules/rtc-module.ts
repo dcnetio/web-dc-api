@@ -112,7 +112,7 @@ export class RTCModule implements DCModule, IRTCOperations {
         inviteMsg.signature = "signature_placeholder";
       }
 
-      // 通过 RTM 的 P2P 离线消息分发
+      // 通过 RTM 的 P2P 消息分发
       await rtmModule.sendMessageToPeer(userId, JSON.stringify(inviteMsg), true, true);
     }
 

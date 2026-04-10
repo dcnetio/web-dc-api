@@ -1,4 +1,6 @@
 import { IRTCOperations, IRTCAuthInfo, IRTCMember, IRTCStreamConfig } from '../../interfaces/rtc-interface';
+import DingRTC from 'dingrtc';
+import RTM from '@dingrtc/rtm';
 
 export class AliyunRTCOperations implements IRTCOperations {
   private rtcClient: any = null;
@@ -83,23 +85,8 @@ export class AliyunRTCOperations implements IRTCOperations {
     try {
       this.authInfo = authInfo;
       
-      let DingRTC;
-      if (typeof require !== 'undefined') {
-        try {
-          DingRTC = require('dingrtc').default || require('dingrtc');
-        } catch (e) {
-          DingRTC = (window as any).DingRTC;
-        }
-      } else {
-        DingRTC = (window as any).DingRTC;
-      }
-      
-      if (!DingRTC) {
-        throw new Error('DingRTC SDK is not fully loaded. Ensure it is installed or included globally.');
-      }
-      
       // 创建客户端实例
-      const RTCEngine = DingRTC.default || DingRTC;
+      const RTCEngine = (DingRTC as any).default || DingRTC;
       
       if (typeof RTCEngine.checkSystemRequirements === 'function') {
         const supported = RTCEngine.checkSystemRequirements();
@@ -110,23 +97,14 @@ export class AliyunRTCOperations implements IRTCOperations {
       this.rtcClient = RTCEngine.createClient();
 
       if (this.authInfo?.enableRTM) {
-        let RTM;
-        if (typeof require !== 'undefined') {
-          try {
-            RTM = require('@dingrtc/rtm').default || require('@dingrtc/rtm');
-          } catch (e) {
-            RTM = (window as any).RTM?.default || (window as any).RTM || (window as any).AliyunRTM;
-          }
-        } else {
-          RTM = (window as any).RTM?.default || (window as any).RTM || (window as any).AliyunRTM;
-        }
+        const RTMEngine = (RTM as any).default || RTM;
 
-        if (RTM) {
+        if (RTMEngine) {
           // 复用 RTC 连接来初始化 RTM Client
-          if (typeof RTM.createClient === 'function') {
-            this.rtmClient = RTM.createClient({ rtcClient: this.rtcClient });
+          if (typeof RTMEngine.createClient === 'function') {
+            this.rtmClient = RTMEngine.createClient({ rtcClient: this.rtcClient });
           } else {
-            this.rtmClient = new RTM({});
+            this.rtmClient = new RTMEngine({});
             if (typeof this.rtcClient.register === 'function') {
               this.rtcClient.register(this.rtmClient);
             } else if (typeof this.rtmClient.attach === 'function') {
@@ -169,19 +147,10 @@ export class AliyunRTCOperations implements IRTCOperations {
     // 初始化负责监听自己信箱(userId)的额外单例:
     if (this.authInfo.enableRTM) {
       try {
-        let RTMManager;
-        if (typeof require !== 'undefined') {
-            try {
-                RTMManager = require('@dingrtc/rtm').default || require('@dingrtc/rtm');
-            } catch (e) {
-                RTMManager = (window as any).RTM?.default || (window as any).RTM || (window as any).AliyunRTM;
-            }
-        } else {
-            RTMManager = (window as any).RTM?.default || (window as any).RTM || (window as any).AliyunRTM;
-        }
+        const RTMEngine = (RTM as any).default || RTM;
 
-        if (RTMManager && typeof RTMManager === 'function') {
-            this.userRtmInstance = new RTMManager();
+        if (RTMEngine && typeof RTMEngine === 'function') {
+            this.userRtmInstance = new RTMEngine();
             try {
               if (typeof this.userRtmInstance.leave === 'function') {
                 await this.userRtmInstance.leave();
@@ -225,17 +194,7 @@ export class AliyunRTCOperations implements IRTCOperations {
     }
     
     // 创建音视频轨道 (只在加入前/后创建，由上层通过 Mute 控制是否真的发布)
-    let DingRTC;
-    if (typeof require !== 'undefined') {
-      try {
-        DingRTC = require('dingrtc').default || require('dingrtc');
-      } catch (e) {
-        DingRTC = (window as any).DingRTC;
-      }
-    } else {
-      DingRTC = (window as any).DingRTC;
-    }
-    const RTCEngine = DingRTC.default || DingRTC;
+    const RTCEngine = (DingRTC as any).default || DingRTC;
 
     this.cameraTrack = await RTCEngine.createCameraVideoTrack({
       frameRate: 15,

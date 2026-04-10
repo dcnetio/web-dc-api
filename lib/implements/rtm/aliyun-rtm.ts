@@ -1,4 +1,5 @@
 import { IRTMMetadata, IRTMAuthInfo } from '../../interfaces/rtm-interface';
+import RTM from '@dingrtc/rtm';
 
 export class AliyunRTMOperations {
   public client: any = null;
@@ -22,24 +23,17 @@ export class AliyunRTMOperations {
     this.sessionId = sessionId;
     this.channelId = sessionId;
     
-    let RTMManager = (window as any).RTM?.default || (window as any).RTM || (window as any).AliyunRTM;
-    if (!RTMManager && typeof globalThis !== 'undefined' && (globalThis as any).require) {
-      try {
-        const req = (globalThis as any).require;
-        RTMManager = req('@dingrtc/rtm').default || req('@dingrtc/rtm');
-      } catch (e) {}
-    }
+    const RTMEngine = (RTM as any).default || RTM;
     
-    if (!RTMManager) {
-      throw new Error('@dingrtc/rtm SDK is missing. Please ensure it is installed or available via window object.');
+    if (!RTMEngine) {
+      throw new Error('@dingrtc/rtm SDK is missing. Please ensure it is installed.');
     }
-    
     
     // 强制静态拦截所有 Logger
-    if (RTMManager.Logger) {
-       RTMManager.Logger.enableUpload = false;
-       if (typeof RTMManager.Logger.disableUpload === 'function') RTMManager.Logger.disableUpload();
-       if (typeof RTMManager.Logger.setLogLevel === 'function') RTMManager.Logger.setLogLevel('error');
+    if (RTMEngine.Logger) {
+       RTMEngine.Logger.enableUpload = false;
+       if (typeof RTMEngine.Logger.disableUpload === 'function') RTMEngine.Logger.disableUpload();
+       if (typeof RTMEngine.Logger.setLogLevel === 'function') RTMEngine.Logger.setLogLevel('error');
     }
 
     
@@ -56,11 +50,11 @@ export class AliyunRTMOperations {
              headers: { 'Content-Type': 'application/json' }
           });
         }
-        return originalFetch.apply(window, args);
+        return originalFetch.apply(window, args as any);
       };
     }
   
-    this.client = new RTMManager();
+    this.client = new RTMEngine();
     // 尝试禁用 Aliyun RTM 内部的强制日志上报，避免浏览器抛出跨域/拦截错误
     if (this.client.logger && typeof this.client.logger.disableUpload === 'function') {
       this.client.logger.disableUpload();
@@ -68,11 +62,11 @@ export class AliyunRTMOperations {
     if (this.client.setLogLevel) {
       this.client.setLogLevel('error');
     }
-    if (RTMManager.enableUploadLog) {
-      RTMManager.enableUploadLog = false;
+    if (RTMEngine.enableUploadLog) {
+      RTMEngine.enableUploadLog = false;
     }
-    if (RTMManager.Logger && typeof RTMManager.Logger.disableUpload === 'function') {
-      RTMManager.Logger.disableUpload();
+    if (RTMEngine.Logger && typeof RTMEngine.Logger.disableUpload === 'function') {
+      RTMEngine.Logger.disableUpload();
     }
     try {
       if (typeof this.client.leave === 'function') {
