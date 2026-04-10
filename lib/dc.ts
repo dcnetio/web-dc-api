@@ -32,6 +32,7 @@ import {
   PayModule,
   RTCModule,
   RTMModule,
+  WhiteboardModule,
 } from "./modules";
 import { Client } from "./common/dcapi";
 import { ICollectionConfig, IDBInfo } from "./implements/threaddb/core/core";
@@ -140,6 +141,7 @@ export class DC implements DCContext {
       this.moduleSystem.registerModule(new UtilModule());
       this.moduleSystem.registerModule(new RTCModule());
       this.moduleSystem.registerModule(new RTMModule());
+      this.moduleSystem.registerModule(new WhiteboardModule());
     }
 
     logger.info("核心模块注册完成");
@@ -659,6 +661,14 @@ export class DC implements DCContext {
    */
   get rtm() {
     return this.getModule<RTMModule>(CoreModuleName.RTM);
+  }
+
+  /**
+   * 获取 Whiteboard 模块
+   * @returns Whiteboard 模块实例
+   */
+  get whiteboard() {
+    return this.getModule<WhiteboardModule>(CoreModuleName.WHITEBOARD);
   }
 
   /**

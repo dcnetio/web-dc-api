@@ -256,7 +256,7 @@ export class AIProxyModule implements DCModule, IAIProxyOperations {
     themeAuthor?: string;
     configTheme?: string;
     serviceName?: string;
-  }): Promise<[ { token: string, expiresAt?: number, expiresIn?: number } | null, Error | null ]> {
+  }): Promise<[ { token: string,serviceAppId?: string, expiresAt?: number, expiresIn?: number } | null, Error | null ]> {
     try {
       this.assertInitialized();
 
@@ -326,6 +326,7 @@ export class AIProxyModule implements DCModule, IAIProxyOperations {
 
       return [{
         token: parsed.token,
+        serviceAppId: typeof parsed.app_id === "string" ? parsed.app_id : undefined,
         expiresAt: typeof parsed.expires_at === "number" ? parsed.expires_at : undefined,
         expiresIn: typeof parsed.expires_in === "number" ? parsed.expires_in : undefined,
       }, null];

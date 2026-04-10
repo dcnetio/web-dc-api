@@ -726,7 +726,7 @@ export class WalletManager {
             // 微信窗口
             this.removeWalletIframe();
           }
-          reject("timeout");
+          reject(new WalletError("timeout"));
         }, timeout);
         messageChannel.port1.onmessage = (event) => {
           clearTimeout(timer);

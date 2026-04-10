@@ -14,3 +14,4 @@ export { UtilModule } from './util-module';
 export { PayModule } from './pay-module';
 export { RTCModule } from './rtc-module';
 export { RTMModule } from './rtm-module';
+export { WhiteboardModule } from './whiteboard-module';

@@ -172,7 +172,7 @@ export interface IAIProxyOperations {
     configTheme?: string;
     /** 服务名称，为空时使用初始化上下文默认配置 */
     serviceName?: string;
-  }): Promise<[ { token: string, expiresAt?: number, expiresIn?: number } | null, Error | null ]>;
+  }): Promise<[ { token: string,serviceAppId?: string, expiresAt?: number, expiresIn?: number } | null, Error | null ]>;
 
   /**
    * 设置AI调用的配置

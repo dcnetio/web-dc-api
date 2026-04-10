@@ -1216,6 +1216,112 @@ if (error) {
 
 - [实时语音调用.md](实时语音调用.md)
 
+## 8. 实时消息 (RTM)
+
+RTM 模块提供了实时离线消息、在线状态查询、群聊以及点对点频道的创建和邀请能力。
+
+### RTM 使用示例
+
+#### 1. 创建端到端加密频道 (P2P Channel)
+
+此方法可用于创建安全私密的点对点通道：
+
+```typescript
+const { rtm } = dc;
+
+// 用户ID列表，当前仅支持两人或多人建立群聊
+const userIds = ["peerId_of_userB", "peerId_of_userC"]; 
+const description = "Private Chat Group";
+
+try {
+  // 这将生成随机通道ID，并向所有用户发送经过签名的加密邀请
+  const channelId = await rtm.createPeerChannel(userIds, description);
+  console.log("创建 RTM 频道成功:", channelId);
+} catch (error) {
+  console.error("创建失败:", error);
+}
+```
+
+#### 2. 接收与接受频道邀请
+
+当用户被邀请时，会收到含有 `channelId` 的离线或在线加密消息。接收端只需校验签名和解密内容并接受：
+
+```typescript
+// 假设 message 是从 RTM / Message 模块收到的 invite 消息
+const inviteMessage = {
+  isInvite: true,
+  appId: "app123",
+  sourceUserId: "peerId_of_inviter",
+  messageType: "P2P",
+  content: "encrypted_base64_content",
+  timestamp: 1718290000000,
+  signature: "base64_signature..."
+};
+
+try {
+  // 接受邀请，会自动验证签名、解密，并返回所属频道和加密通信密钥
+  const { channelId, channelDescription } = await rtm.acceptPeerChannelInvite(inviteMessage);
+  console.log("接受邀请成功，即将加入频道", channelId, channelDescription);
+  
+  // 主动订阅频道以接收该频道内其他人的消息
+  await rtm.subscribeChannel(channelId);
+} catch (error) {
+  console.error("处理邀请失败:", error);
+}
+```
+
+## 9. 实时音视频 (RTC)
+
+RTC 模块复用了 RTM 通道进行的信令发送，能够提供跨设备的音视频通话能力。这依赖于 RTM 模块发出的加密邀请机制。
+
+### RTC 使用示例
+
+#### 1. 创建音视频通话邀请
+
+用户可以通过 `createRTCChannel` 生成一个安全的 RTC 频道并对指定好友发出邀请。
+
+```typescript
+const { rtc } = dc;
+
+const rtcConfig = { video: true, audio: true };
+const userIds = ["peerId_of_userB"]; 
+
+try {
+  // 此操作会在内部调用 rtm 模块发送包含 channelId 的 RTC_INVITE 加密消息
+  const channelId = await rtc.createRTCChannel(userIds, "Video Call", rtcConfig);
+  console.log("RTC 音视频频道创建成功，ID:", channelId);
+  
+  // 接下来调用 rtc.init / rtc.joinChannel 等进行媒体流绑定
+} catch (error) {
+  console.error("RTC 频道创建失败:", error);
+}
+```
+
+#### 2. 接收与接受音视频通话邀请
+
+```typescript
+try {
+  // 解析由于 createRTCChannel 发送过来的 RTC_INVITE 消息
+  const rtcInviteMessage = {
+    isInvite: true,
+    messageType: "RTC_INVITE",
+    sourceUserId: "peerId_of_inviter",
+    content: "encrypted_base64_content",
+    signature: "base64_signature...",
+    timestamp: 1718290000000,
+    appId: "app123"
+  };
+
+  // 通过安全校验和解密，获取通话 channelId
+  const { channelId, channelDescription, rtcConfig } = await rtc.acceptRTCChannelInvite(rtcInviteMessage);
+  console.log("成功接收 RTC 邀请:", channelId, rtcConfig);
+  
+  // 后续使用该 channelId 初始化 RTC 实例，连接媒体流
+} catch(error) {
+  console.error("接受 RTC 邀请失败", error);
+}
+```
+
 ## 模块选择指南
 - **ThreadDB用户数据库(db)**: 个人数据，隐私数据，跨设备同步
 - **keyValue DB**: 多用户共享数据，应用配置，商品信息，排行榜

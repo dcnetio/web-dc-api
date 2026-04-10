@@ -9,7 +9,7 @@ export type {ICommentOperations} from './comment-interface';
 export type {ICacheOperations} from './cache-interface';
 export type {IPayOperations} from './pay-interface';
 export type {IRTCOperations, IRTCAuthInfo, IRTCMember, IRTCStreamConfig} from './rtc-interface';
-export type {IRTMOperations, IRTMAuthInfo, IRTMMetadata} from './rtm-interface';
+export type {IRTMOperations, IRTMAuthInfo, IRTMMetadata, IRTMStandardMessage} from './rtm-interface';
 export type {DCContext} from  './DCContext';
 export type {IUtilOperations} from './util-interface';
 export * from './pay-interface';

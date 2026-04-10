@@ -47,6 +47,7 @@ export interface FileTransmit {
 
 export interface APPInfo {
   appId: string;
+  rtcAppId?: string;
   appName: string;
   appIcon?: string;
   appUrl?: string;
@@ -56,6 +57,7 @@ export interface APPInfo {
 export interface ThemeObj {
   theme: string;
   appId: string;
+  rtcAppId?: string;
   blockheight: number;
   commentSpace: number;
   allowSpace: number;
@@ -78,6 +80,7 @@ export interface ThemeAuthInfo {
 export interface ThemeComment {
   theme: string;
   appId: string;
+  rtcAppId?: string;
   themeAuthor: string;
   blockheight: number;
   userPubkey: string;
@@ -402,6 +405,7 @@ export type ResponseMessage<T> = {
 
 export interface IAICallConfig {
   appId: string;
+  rtcAppId?: string;
   themeAuthor: string;
   theme: string;
   service: string;
@@ -805,6 +809,7 @@ export interface AIChatMessageRequest {
 
 export interface IAppInfo {
   appId: string;
+  rtcAppId?: string;
   domain: string;
   owner: string;
   rewarder: string;
@@ -825,7 +830,8 @@ export type AccountInfo = {
 
 export interface GetUserAIProxyAuthParams {
   theme: string; // 状态汇聚对象CID
-  appId: string; // 应用标志
+  appId: string;
+  rtcAppId?: string; // 应用标志
   themeAuthor: string; // 发布状态汇聚对象的的pubkey
   UserPubkey: string; // 申请访问配置的用户pubkey
   vaccount?: string | null; // 虚拟账号,可选,如果有虚拟账号

@@ -45,6 +45,7 @@ export enum CoreModuleName {
   PAY = "pay",
   RTC = "rtc",
   RTM = "rtm",
+  WHITEBOARD = "whiteboard"
 }
 
 /**
