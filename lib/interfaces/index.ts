@@ -10,6 +10,7 @@ export type {ICacheOperations} from './cache-interface';
 export type {IPayOperations} from './pay-interface';
 export type {IRTCOperations, IRTCAuthInfo, IRTCMember, IRTCStreamConfig} from './rtc-interface';
 export type {IRTMOperations, IRTMAuthInfo, IRTMMetadata, IRTMStandardMessage} from './rtm-interface';
+export * from './whiteboard-interface';
 export type {DCContext} from  './DCContext';
 export type {IUtilOperations} from './util-interface';
 export * from './pay-interface';

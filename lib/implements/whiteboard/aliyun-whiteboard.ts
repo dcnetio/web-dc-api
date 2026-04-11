@@ -1,4 +1,4 @@
-import { IWhiteboardOperations } from '../../interfaces/whiteboard-interface';
+import { IRtcWhiteboard, IWhiteboardOperations } from '../../interfaces/whiteboard-interface';
 import { createLogger } from '../../util/logger';
 
 const logger = createLogger("AliyunWhiteboard");
@@ -11,16 +11,21 @@ export class AliyunWhiteboardOperations implements IWhiteboardOperations {
     this.whiteboardManager = null;
   }
 
-  private _getManager(): any {
+  private async _getManager(): Promise<any> {
     if (this.whiteboardManager) return this.whiteboardManager;
     
     let Manager = null;
     if (typeof window !== 'undefined') {
       try {
-        const DingRTC = require('dingrtc');
-        Manager = DingRTC.WhiteboardManager;
+        const DingRTC = await import('@dingrtc/whiteboard');
+        Manager = (DingRTC as any).WhiteboardManager || (DingRTC as any).default?.WhiteboardManager || (DingRTC as any).default || DingRTC;
       } catch (e) {
-        Manager = (window as any).WhiteboardManager || (window as any).DingRTC?.WhiteboardManager;
+        try {
+            const DingRTC = require('dingrtc');
+            Manager = DingRTC.WhiteboardManager;
+        } catch (err) {
+            Manager = (window as any).WhiteboardManager || (window as any).DingRTC?.WhiteboardManager;
+        }
       }
     }
     
@@ -30,80 +35,98 @@ export class AliyunWhiteboardOperations implements IWhiteboardOperations {
        return null;
     }
     
-    this.whiteboardManager = Manager;
+    // 如果 Manager 是类，需要 new 出来
+    if (typeof Manager === 'function' && Manager.prototype && Manager.prototype.join) {
+        this.whiteboardManager = new Manager();
+    } else {
+        this.whiteboardManager = Manager;
+    }
+    
     return this.whiteboardManager;
   }
 
   public async init(authInfo: any): Promise<void> {
     this.authInfo = authInfo;
-    const manager = this._getManager();
+    const manager = await this._getManager();
     if (!manager) {
-      throw new Error("DingRTC WhiteboardManager is missing from window or dingrtc package. Please verify installation.");
+      throw new Error("DingRTC WhiteboardManager is missing from window or @dingrtc/whiteboard package. Please verify installation.");
     }
     // Typically Whiteboard initialization requires joining a session or setting auth info
   }
 
   public async joinChannel(joinInfo: any): Promise<void> {
-    const manager = this._getManager();
+    const manager = await this._getManager();
     if (!manager) throw new Error("WhiteboardManager disabled");
     if (typeof manager.join === 'function') {
       await manager.join(joinInfo);
     }
   }
 
-  public leaveChannel(): void {
-    const manager = this._getManager();
+  public async joinRoom(roomIdOrJoinInfo: string | any): Promise<void> {
+    const manager = await this._getManager();
+    if (!manager) throw new Error("WhiteboardManager disabled");
+    
+    // 若仅传入了 roomId(string)，为了兼容组装成 joinInfo 对象
+    const joinInfo = typeof roomIdOrJoinInfo === 'string' ? { roomId: roomIdOrJoinInfo } : roomIdOrJoinInfo;
+    
+    if (typeof manager.join === 'function') {
+      await manager.join(joinInfo);
+    }
+  }
+
+  public async leaveChannel(): Promise<void> {
+    const manager = await this._getManager();
     if (manager && typeof manager.leave === 'function') {
       manager.leave();
     }
   }
 
-  public clear(): void {
-    const manager = this._getManager();
+  public async clear(): Promise<void> {
+    const manager = await this._getManager();
     if (manager && typeof manager.clear === 'function') {
       manager.clear();
     }
   }
 
-  public getWhiteboard(whiteboardId: string): any {
-    const manager = this._getManager();
+  public async getWhiteboard(whiteboardId: string): Promise<IRtcWhiteboard> {
+    const manager = await this._getManager();
     if (manager && typeof manager.getWhiteboard === 'function') {
-      return manager.getWhiteboard(whiteboardId);
+      return manager.getWhiteboard(whiteboardId) as IRtcWhiteboard;
     }
-    return null;
+    return null as unknown as IRtcWhiteboard;
   }
 
-  public getAnnotation(annotationId: string, sourceType: 'video' | 'share' | 'external'): any {
-    const manager = this._getManager();
+  public async getAnnotation(annotationId: string, sourceType: 'video' | 'share' | 'external'): Promise<any> {
+    const manager = await this._getManager();
     if (manager && typeof manager.getAnnotation === 'function') {
       return manager.getAnnotation(annotationId, sourceType);
     }
     return null;
   }
 
-  public on(event: string, callback: (...args: any[]) => void): void {
-    const manager = this._getManager();
+  public async on(event: string, callback: (...args: any[]) => void): Promise<void> {
+    const manager = await this._getManager();
     if (manager && typeof manager.on === 'function') {
       manager.on(event, callback);
     }
   }
 
-  public once(event: string, callback: (...args: any[]) => void): void {
-    const manager = this._getManager();
+  public async once(event: string, callback: (...args: any[]) => void): Promise<void> {
+    const manager = await this._getManager();
     if (manager && typeof manager.once === 'function') {
       manager.once(event, callback);
     }
   }
 
-  public off(event: string, callback: (...args: any[]) => void): void {
-    const manager = this._getManager();
+  public async off(event: string, callback: (...args: any[]) => void): Promise<void> {
+    const manager = await this._getManager();
     if (manager && typeof manager.off === 'function') {
       manager.off(event, callback);
     }
   }
 
-  public removeAllListeners(event?: string): void {
-    const manager = this._getManager();
+  public async removeAllListeners(event?: string): Promise<void> {
+    const manager = await this._getManager();
     if (manager && typeof manager.removeAllListeners === 'function') {
       manager.removeAllListeners(event);
     }

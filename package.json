@@ -36,6 +36,7 @@
   "keywords": [],
   "dependencies": {
     "@dingrtc/rtm": "^1.1.14",
+    "@dingrtc/whiteboard": "^1.1.16",
     "@helia/block-brokers": "^5.0.0",
     "@helia/dag-cbor": "^5.0.0",
     "@helia/interface": "^6.0.0",

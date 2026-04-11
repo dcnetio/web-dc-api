@@ -2,7 +2,7 @@ export interface IRTMStandardMessage {
   appId: string;
   rtcAppId?: string;
   sourceUserId: string;
-  messageType: 'P2P' | 'BROADCAST' | 'RTC_INVITE';
+  messageType: 'P2P' | 'BROADCAST' | 'RTC_INVITE' | 'WHITEBOARD_INVITE' | string;
   content: string;
   timestamp: number;
   isEncrypted: boolean;
