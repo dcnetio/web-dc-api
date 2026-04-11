@@ -541,6 +541,39 @@ async has(threadId: string, collectionName: string, instanceID: string): Promise
     }
   }
 
+  /**
+   * 查询本地库指定集合是否已经建立了 _mod 字段索引
+   * @param threadId 线程ID
+   * @param collectionName 集合名称
+   * @returns 建立返回true, 未建立或数据库/集合不存在返回false
+   */
+  async rebuildIndex(threadId: string, collectionName: string, indexName?: string): Promise<void> {
+    this.assertInitialized();
+    await this.initDBManager();
+    
+    if (!this.context.dbManager) {
+      throw new Error("数据库管理器未初始化");
+    }
+    
+    await this.context.dbManager.rebuildIndex(threadId, collectionName, indexName);
+  }
+
+
+
+  async hasModIndex(threadId: string, collectionName: string): Promise<boolean> {
+    try {
+      this.assertInitialized();
+      await this.initDBManager();
+      
+      if (!this.context.dbManager) {
+        throw new Error("数据库管理器未初始化");
+      }
+      return await this.context.dbManager.hasModIndex(threadId, collectionName);
+    } catch (error) {
+      logger.error("检查 _mod 索引是否存在失败:", error);
+      return false;
+    }
+  }
 
   /**
  * Find finds instances by query

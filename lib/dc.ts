@@ -564,6 +564,167 @@ export class DC implements DCContext {
     throw new Error("公钥未初始化");
   }
 
+  /**
+   * 提供清除浏览器缓存接口
+   * 主要用于调试和重置数据环境，调用会清理 LocalStorage, SessionStorage 以及所有的 IndexedDB 和 CacheStorage
+   */
+  async clearBrowserCache(): Promise<void> {
+    try {
+      // 0. 尝试优雅停机并主动关闭资源，防止 IndexedDB 删除时被底层 P2P 节点和 DB 游标锁定导致死锁
+      if (this.dbManager && typeof this.dbManager.close === "function") {
+        try {
+          await this.dbManager.close();
+          logger.info("已成功关闭 dbManager 数据库连接");
+        } catch (e) {
+          logger.warn("关闭 dbManager 数据库连接时遇到异常:", e);
+        }
+      }
+
+      if (this.grpcServer && typeof this.grpcServer.stop === "function") {
+        try {
+          this.grpcServer.stop();
+          logger.info("已停止 grpcServer 监听");
+        } catch (e) {
+          logger.warn("停止 grpcServer 时释放失败:", e);
+        }
+      }
+
+      if (this.dcNodeClient && typeof this.dcNodeClient.stop === "function") {
+        try {
+          await this.dcNodeClient.stop();
+          logger.info("已成功停止 dcNodeClient(Helia) 底层节点，释放系统锁");
+        } catch (e) {
+          logger.warn("停止 dcNodeClient 时遇到异常:", e);
+        }
+      }
+
+      // 1. 清除所有的 Storage 缓存（已兼容多端）
+      const globalObj = typeof globalThis !== "undefined" ? globalThis : (typeof window !== "undefined" ? window : global) as any;
+      
+      if (typeof window !== "undefined") {
+        if (window.localStorage && typeof window.localStorage.clear === "function") {
+          try { window.localStorage.clear(); } catch (e) {}
+        }
+        if (window.sessionStorage && typeof window.sessionStorage.clear === "function") {
+          try { window.sessionStorage.clear(); } catch (e) {}
+        }
+      }
+      
+      // 兼容环境：微信小程序 / Taro 等
+      if (globalObj && globalObj.wx && typeof globalObj.wx.clearStorageSync === "function") {
+        try { globalObj.wx.clearStorageSync(); } catch (e) {}
+      }
+      // 兼容环境：UniApp 等
+      if (globalObj && globalObj.uni && typeof globalObj.uni.clearStorageSync === "function") {
+        try { globalObj.uni.clearStorageSync(); } catch (e) {}
+      }
+      
+      // 2. 清除所有的 IndexedDB (将原生回调事件包装成 Promise 实现优雅的串行等待)
+      if (typeof window !== "undefined" && window.indexedDB) {
+        if (typeof window.indexedDB.databases === "function") {
+          try {
+            const dbs = await window.indexedDB.databases();
+            const deletePromises = dbs.map(db => {
+              return new Promise<void>((resolve) => {
+                if (!db.name) {
+                  resolve();
+                  return;
+                }
+                try {
+                  const req = window.indexedDB.deleteDatabase(db.name);
+                  req.onsuccess = () => resolve();
+                  req.onerror = () => {
+                    logger.error(`删除 IndexedDB: ${db.name} 失败`);
+                    resolve();
+                  };
+                  req.onblocked = () => {
+                    logger.warn(`请注意：有其他标签页或连接正在占用数据库: ${db.name}`);
+                    resolve();
+                  };
+                } catch (e) {
+                  logger.error(`同步删除 IndexedDB ${db.name} 时报错:`, e);
+                  resolve();
+                }
+              });
+            });
+            await Promise.allSettled(deletePromises);
+          } catch (listErr) {
+            logger.warn("获取或清除 IndexedDB 列表时发生全局异常:", listErr);
+          }
+        } else {
+          logger.warn("当前浏览器不支持获取所有 IndexedDB 列表 (indexedDB.databases API)，无法一键清空");
+        }
+      }
+
+      // 3. 清除当前域下的所有 Service Worker Caches 缓存（如果存在缓存的音频头像配置等）
+      if (typeof window !== "undefined" && window.caches) {
+        try {
+          const cacheKeys = await window.caches.keys();
+          const cacheDeletePromises = cacheKeys.map(key => window.caches.delete(key));
+          await Promise.allSettled(cacheDeletePromises);
+        } catch (e) {
+          logger.warn("清空 Service Worker Cache API 时遇到异常:", e);
+        }
+      }
+
+      // 4. 清除并注销挂载的 ServiceWorker 拦截器 (避免旧版 SW 在后台驻留继续污染)
+      if (typeof navigator !== "undefined" && navigator.serviceWorker) {
+        try {
+          const registrations = await navigator.serviceWorker.getRegistrations();
+          for (const registration of registrations) {
+            await registration.unregister();
+          }
+          logger.info("已成功注销所有后台 Service Worker 注册");
+        } catch (e) {
+          logger.warn("注销 Service Worker 时失败:", e);
+        }
+      }
+
+      // 5. 尝试清除浏览器所有的 Cookies，有些遗留验证状态可能存储在这里
+      if (typeof document !== "undefined" && document.cookie) {
+        try {
+          document.cookie.split(";").forEach((c) => {
+            document.cookie = c
+              .replace(/^ +/, "")
+              .replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/");
+          });
+          logger.info("已清理浏览器 Cookie");
+        } catch (e) {
+          logger.warn("清理 Cookie 时报错:", e);
+        }
+      }
+
+      // 6. 原地解绑可能挂载在内存中的用户账号引用，防止逻辑逃逸
+      this.initialized = false;
+      this.dbThreadId = "";
+      this.ethAddress = "";
+      this.AccountBackupDc = {};
+      this.connectedDc = {};
+      this.userInfo = null;
+      this.accountInfo = {} as AccountInfo;
+      this.privateKey = null;
+      
+      logger.info("浏览器本地所有的环境数据 (Storage/IndexedDB/Caches/SW/Cookie/内存) 已被拔除清空，即将刷新页面重置系统状态...");
+
+      // 7. 立即刷新页面 / 重开小程序栈，让应用强制回到未登录的初始状态
+      setTimeout(() => {
+        if (typeof window !== "undefined" && window.location && typeof window.location.reload === "function") {
+          try { window.location.reload(); } catch (e) {}
+        } else {
+          // 小程序场景：清理完缓存后抛出一个强提示或让小程序回到主注册页，通常首页路径为 '/pages/index/index' 或 '/'
+          if (globalObj && globalObj.wx && typeof globalObj.wx.reLaunch === "function") {
+            try { globalObj.wx.reLaunch({ url: '/pages/index/index' }); } catch (e) {} // 微信小程序通用兜底策略
+          } else if (globalObj && globalObj.uni && typeof globalObj.uni.reLaunch === "function") {
+            try { globalObj.uni.reLaunch({ url: '/pages/index/index' }); } catch (e) {} // UniApp 通用兜底策略
+          }
+        }
+      }, 500); // 给予 500ms 的缓冲期让日志能够正常打印出来
+    } catch (error) {
+      logger.error("清除浏览器本地存储时发生意外终止:", error);
+      throw error;
+    }
+  }
+
   setParentPublicKey(parentPublicKey: Ed25519PubKey) {
     this.parentPublicKey = parentPublicKey;
   }

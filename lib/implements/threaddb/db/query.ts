@@ -490,17 +490,10 @@ export class ModifiedSinceHandler {
   ): Promise<InstanceID[]> {
     // Convert time to string for key operations
     const timestr = time.toString();
-    
-    // Create the query filter function
-    const collectionFilter = (item: any) => {
-      const key = new Key(item.key.toString());
-      return key.type() === collectionName;
-    };
 
     // Execute query
     const res = await txn.queryExtended({
       prefix: dsDispatcherPrefix.toString(),
-      filters: [collectionFilter],
       keysOnly: true,
       seekPrefix: dsDispatcherPrefix.child(new Key(timestr)).toString()
     });
@@ -515,6 +508,12 @@ export class ModifiedSinceHandler {
       }
       
       const key = new Key(entry.key);
+      
+      // Apply collection filter manually
+      if (key.type() !== collectionName) {
+        continue;
+      }
+      
       instanceIdSet.add(key.name() as InstanceID);
     }
     

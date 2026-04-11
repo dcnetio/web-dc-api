@@ -685,6 +685,59 @@ async addIndex( index: Index, token?: ThreadToken): Promise<void> {
     throw err;
   }
 }
+  /**
+   * Rebuilds indexes for the collection retroactively.
+   * If a path is provided, it only rebuilds the specified index.
+   * This is useful to backfill indexes for existing data when an index is added after-the-fact.
+   */
+  async rebuildIndex(path?: string): Promise<void> {
+    if (this.indexes.size === 0) return;
+
+    let targetIndexes = Array.from(this.indexes.entries());
+    if (path) {
+      const index = this.indexes.get(path);
+      if (!index) {
+        throw new Error(`Index not found for path: ${path}`);
+      }
+      targetIndexes = [[path, index]];
+    }
+
+    const txn = await this.db.datastore.newTransactionExtended(false);
+
+    try {
+      const q = txn.queryExtended({ prefix: this.baseKey().toString() });
+            for await (const entry of q) {
+        const keyString = entry.key.toString();
+        const key = new Key(keyString);
+
+        if (keyString.startsWith(indexPrefix.toString())) {
+          continue;
+        }
+
+        // 数据库中按实例前缀存的 value 已经是 pure JSON bytes，不需要 dagCBOR decode
+        const decoded = entry.value;
+
+        for (const [indexPath, index] of targetIndexes) {
+          try {
+            await this.indexUpdate(indexPath, index, txn, key, decoded, false);
+          } catch (err: any) {
+            if (err !== ErrNotIndexable) {
+              throw err;
+            }
+          }
+        }
+      }
+      
+
+      
+      await txn.commit();
+    } catch(err) {
+      txn.discard();
+      throw err;
+    }
+  }
+
+
 
 /**
  * 删除指定路径的索引

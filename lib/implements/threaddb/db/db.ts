@@ -262,6 +262,8 @@ export class DB implements App, IDB {
 
     // Add default _id index
     await collection.addIndex({ path: "_id", unique: true });
+    // Add internal _mod index for fast time-based sorting and pagination
+    await collection.addIndex({ path: "_mod", unique: false });
 
     // Add custom indexes
     for (const index of config.indexes || []) {

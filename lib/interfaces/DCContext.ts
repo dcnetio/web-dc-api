@@ -56,4 +56,10 @@ export interface DCContext {
   sign(payload: Uint8Array): Promise<Uint8Array>;
   getPubkeyRaw(): Uint8Array;
   getPublicKey(): Ed25519PubKey;
+  
+  /**
+   * 清除浏览器本地存储和缓存数据 (localStorage, IndexedDB 等)
+   * 方便在遇到问题时进行数据重置
+   */
+  clearBrowserCache(): Promise<void>;
 }

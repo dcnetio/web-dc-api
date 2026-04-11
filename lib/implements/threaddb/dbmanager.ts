@@ -1943,6 +1943,79 @@ export class DBManager {
     }
   }
 
+    /**
+     * 重建集合中的一个或所有索引。
+     * 只影响本地LevelStore。
+     * 适用于已存在数据但后来添加了索引的场景。
+     * @param threadId Thread ID string
+     * @param collectionName Collection name
+     * @param indexName Optional index path name. Rebuilds all indexes if undefined
+     */
+    async rebuildIndex(
+      threadId: string,
+      collectionName: string,
+      indexName?: string
+    ): Promise<void> {
+      try {
+        const tID = await this.decodeThreadId(threadId);
+
+        const threadDB = this.dbs.get(tID.toString());
+        if (!threadDB) {
+          throw new Error(`ThreadDB not found for id: ${threadId}`);
+        }
+
+        const collection = threadDB.collections.get(collectionName);
+        if (!collection) {
+          throw new Error(`Collection not found: ${collectionName}`);
+        }
+        
+        await collection.rebuildIndex(indexName);
+      } catch (err) {
+        console.warn(
+          `Failed to rebuild index for collection ${collectionName}: ${
+            err instanceof Error ? err.message : String(err)
+          }`
+        );
+        throw err;
+      }
+    }
+
+
+  /**
+   * 查询本地库指定集合是否有 _mod 字段的索引
+   * 注: 仅查询本地已加载或存在的DB状态，不进行网络同步
+   * @param threadId Thread ID string
+   * @param collectionName Collection name
+   */
+  async hasModIndex(
+    threadId: string,
+    collectionName: string
+  ): Promise<boolean> {
+    try {
+      const tID = await this.decodeThreadId(threadId);
+
+      const threadDB = this.dbs.get(tID.toString());
+      if (!threadDB) {
+        return false;
+      }
+
+      // 使用 collections.get 避免因 collection 不存在抛出异常污染日志
+      const collection = threadDB.collections.get(collectionName);
+      if (!collection) {
+        return false;
+      }
+      
+      return collection.indexes.has("_mod");
+    } catch (err) {
+      console.warn(
+        `Failed to check _mod index existence: ${
+          err instanceof Error ? err.message : String(err)
+        }`
+      );
+      return false;
+    }
+  }
+
   /**
    * Find finds instances by query
    * @param threadId Thread ID string
