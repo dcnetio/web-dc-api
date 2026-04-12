@@ -1602,6 +1602,10 @@ export async function newCollection(db: IDB, config: ICollectionConfig): Promise
  * Get schema type at a path
  */
 function getSchemaTypeAtPath(schema: any, path: string): { type: string } | null {
+  if (path === '_mod') {
+    return { type: 'integer' }; // 系统内置时间戳字段，不要求存在于用户定义的 Schema 中
+  }
+
   const parts = path.split('.');
   let current = schema;
   
@@ -1753,7 +1757,7 @@ class Iterator {
       };
       let ok = false;
       
-      for await (const res of this.iter.next()) {
+      for await (const res of this.iter) {
         try {
           const val = JSON.parse(new TextDecoder().decode(res.value));
           ok = this.query.match(val);

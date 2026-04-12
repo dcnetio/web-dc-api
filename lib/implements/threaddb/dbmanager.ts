@@ -364,14 +364,14 @@ export class DBManager {
     } catch (err) {
       throw err;
     }
-
-    // Begin connection in background
-    await this.dc
+    // Begin connection in background concurrently
+    const objNodeConnPromise = this.dc
       ._connectToObjNodes(tID.toString())
-      .catch((err) =>
-        console.warn(`Error connecting to object nodes: ${err.message}`)
-      );
-   
+      .catch((err) => {
+        console.warn(`Error connecting to object nodes: ${err.message}`);
+        return [null, null] as [TMultiaddr | null, string[] | null];
+      });
+
     // Generate thread key
     let threadKey: ThreadKey;
     try {
@@ -382,59 +382,37 @@ export class DBManager {
       throw err;
     }
 
-    let connectedPeerId: PeerId | undefined;
     let multiAddr: TMultiaddr | undefined;
 
     // Try to connect using provided dbAddr
-    let connectedFlag = false;
-    if (dbAddr.length > 10) {
+    let connectedConn: Connection | undefined;
+    if (dbAddr && dbAddr.length > 10) {
       try {
         // Try to parse address info and connect
         const peerAddrInfo = multiaddr(dbAddr);
+        connectedConn = await this.dc.dcNodeClient?.libp2p.dial(peerAddrInfo, {
+          signal: AbortSignal.timeout(3000),
+        });
 
-        try {
-          const conn = await this.dc.dcNodeClient?.libp2p.dial(peerAddrInfo, {
-            signal: AbortSignal.timeout(3000),
-          });
-
-          if (conn) {
-            connectedFlag = true;
-            multiAddr = multiaddr(dbAddr);
-          }
-        } catch (err) {
-          // Connection failed
+        if (connectedConn) {
+          multiAddr = connectedConn.remoteAddr as TMultiaddr;
         }
       } catch (err) {
-        // Invalid address
+        // Connection failed or invalid address
       }
     }
 
-    // If direct connection failed, connect through object nodes
-    if (!connectedFlag) {
+    // If direct connection failed, fallback to the background object nodes connection
+    if (!connectedConn) {
       try {
-        const [connectedAddr, peers] = await this.dc?._connectToObjNodes(
-          tID.toString()
-        );
-        if (!connectedAddr && peers) {
-          // 有peers但是没有connectedAddr
+        const [connectedAddr, _] = await objNodeConnPromise;
+        if (!connectedAddr) {
           throw Errors.ErrNoThreadOnDc;
         }
-
-        const conns =
-          this.dc.dcNodeClient?.libp2p.getConnections(connectedPeerId);
-        if (!conns || conns.length == 0) {
-          throw Errors.ErrNoThreadOnDc;
-        }
+        multiAddr = connectedAddr as TMultiaddr;
       } catch (err) {
         throw err;
       }
-    } else {
-      // Start connection in background
-      this.dc
-        ._connectToObjNodes(tID.toString())
-        .catch((err) =>
-          console.warn(`Error connecting to object nodes: ${err.message}`)
-        );
     }
 
     // Parse collection info
@@ -464,9 +442,14 @@ export class DBManager {
     // Delete existing database if it exists
     try {
       await this.deleteDB(tID, true);
-    } catch (err) {
+    } catch (err: any) {
       // Ignore specific errors
-      if (err !== Errors.ErrDBNotFound && err !== Errors.ErrThreadNotFound) {
+      if (
+        err !== Errors.ErrDBNotFound &&
+        err !== Errors.ErrThreadNotFound &&
+        err?.message !== Errors.ErrDBNotFound.message &&
+        err?.message !== Errors.ErrThreadNotFound.message
+      ) {
         throw err;
       }
     }
@@ -553,13 +536,17 @@ export class DBManager {
     try {
       const collections = opts.collections || [];
       const name = opts.name || "";
-      [store, dbOpts] = await this.wrapDB(
+      let wrapErr: Error | null;
+      [store, dbOpts, wrapErr] = await this.wrapDB(
         this.store,
         id,
         this.opts,
         name,
         collections
       );
+      if (wrapErr) {
+        throw wrapErr;
+      }
     } catch (err) {
       throw err;
     }
@@ -577,62 +564,56 @@ export class DBManager {
     this.dbs.set(id.toString(), db);
     // });
 
-    // 导入数据库状态
-    const readKey = key.read();
-    if (!readKey) {
-      throw new Error(`read key not found for thread ${id}`);
-    }
-
-    // 创建行读取器
-    const lineReader = new LineReader(ioReader);
-    const textDecoder = new TextDecoder();
-
-    // 读取第一行并更新线程信息的日志头
-    let stateValue = "";
     try {
+      // 导入数据库状态
+      const readKey = key.read();
+      if (!readKey) {
+        throw new Error(`read key not found for thread ${id}`);
+      }
+
+      // 创建行读取器
+      const lineReader = new LineReader(ioReader);
+
+      // 读取第一行并更新线程信息的日志头
       const value = await lineReader.readLine();
-      if (value) {
-        stateValue = value;
+      let stateValue = value || "";
+      if (stateValue == "") {
+        throw new Error(`empty state value for thread ${id}`);
       }
-    } catch (err) {
-      throw err;
-    }
-    if (stateValue == "") {
-      throw new Error(`empty state value for thread ${id}`);
-    }
-    // 移除头部32位hash
-    stateValue = stateValue.slice(32);
+      
+      // 移除头部32位hash
+      stateValue = stateValue.slice(32);
 
-    // 更新线程信息的日志头
-    const logs = stateValue.split(";");
-    const pbLogs: net_pb.pb.Log[] = [];
+      // 更新线程信息的日志头
+      const logs = stateValue.split(";");
+      const pbLogs: net_pb.pb.Log[] = [];
 
-    for (const log of logs) {
-      try {
-        // 解码 multibase 格式
-        const data = multibaseDecode(log);
-        // 解析 protobuf
-        const pbLog = net_pb.pb.Log.decode(data);
-        pbLogs.push(pbLog);
-      } catch (err) {
-        // 忽略错误，继续处理
-        continue;
+      for (const log of logs) {
+        try {
+          // 解码 multibase 格式
+          const data = multibaseDecode(log);
+          // 解析 protobuf
+          const pbLog = net_pb.pb.Log.decode(data);
+          pbLogs.push(pbLog);
+        } catch (err) {
+          // 忽略错误，继续处理
+          continue;
+        }
       }
-    }
 
-    // 预加载日志
-    try {
+      // 预加载日志
       await this.network.preLoadLogs(id, pbLogs);
-    } catch (err) {
-      await this.deleteDB(id, false);
-      throw err;
-    }
 
-    // 导入数据库状态
-    try {
+      // 导入数据库状态
       await this.importDBStateFromReader(id, lineReader, readKey);
+
     } catch (err) {
-      await this.deleteDB(id, false);
+      // 回滚数据库状态
+      try {
+        await this.deleteDB(id, false);
+      } catch (rollbackErr) {
+        console.warn(`Failed to rollback db ${id}: ${rollbackErr}`);
+      }
       throw err;
     }
   }
@@ -694,7 +675,7 @@ export class DBManager {
       const baseKey = new Key("/");
       const i = await newIterator(txn, baseKey, q);
 
-      for await (const res of i.iter.next()) {
+      for await (const res of i.iter) {
         if (res.error) {
           throw res.error;
         }
@@ -713,7 +694,7 @@ export class DBManager {
       }
 
       i.close();
-      txn.discard();
+      await txn.discard();
 
       // Create blob and trigger download
       const blob = new Blob([content], { type: "text/plain" });
@@ -736,7 +717,7 @@ export class DBManager {
 
       return threadInfo;
     } catch (err) {
-      txn.discard();
+      await txn.discard();
       throw err;
     }
   }
@@ -768,7 +749,6 @@ export class DBManager {
     const indexFunc = db.defaultIndexFunc();
 
     // 设置行读取
-    const textDecoder = new TextDecoder();
     let done = false;
     let line: string | null = "";
     while (true) {
@@ -790,7 +770,7 @@ export class DBManager {
         // 解析键值对
         const kv = line.split("|");
         if (kv.length !== 2) {
-          txn.discard();
+          await txn.discard();
           throw new Error("无效的记录格式");
         }
 
@@ -831,11 +811,11 @@ export class DBManager {
         try {
           const exists = await txn.has(setKey);
           if (exists) {
-            txn.discard();
+            await txn.discard();
             continue; // 跳过此记录
           }
         } catch (err) {
-          txn.discard();
+          await txn.discard();
           throw new Error(
             `检查键存在性失败: ${
               err instanceof Error ? err.message : String(err)
@@ -847,7 +827,7 @@ export class DBManager {
         try {
           await txn.put(setKey, decValue);
         } catch (err) {
-          txn.discard();
+          await txn.discard();
           throw new Error(
             `存储值失败: ${err instanceof Error ? err.message : String(err)}`
           );
@@ -856,17 +836,17 @@ export class DBManager {
         // 从键中提取集合名称（倒数第二个部分）
         const parts = key?.split("/");
         if (!parts || parts.length < 2) {
-          txn.discard();
+          await txn.discard();
           throw new Error("无效的键格式: 未找到集合名称");
         }
 
         const collection = parts[parts.length - 2] || "";
 
         // 应用索引
-        try {
-          await indexFunc(collection, setKey, txn, decValue);
-        } catch (err) {
-          txn.discard();
+          try {
+            await indexFunc(collection, setKey, txn, undefined, decValue);
+          } catch (err) {
+          await txn.discard();
           throw new Error(
             `应用索引失败: ${err instanceof Error ? err.message : String(err)}`
           );
@@ -876,7 +856,7 @@ export class DBManager {
         try {
           await txn.commit();
         } catch (err) {
-          txn.discard();
+          await txn.discard();
           throw new Error(
             `提交事务失败: ${err instanceof Error ? err.message : String(err)}`
           );
@@ -884,7 +864,7 @@ export class DBManager {
       } catch (err) {
         // 确保在任何失败时丢弃事务
         try {
-          txn.discard();
+          await txn.discard();
         } catch {
           // 忽略丢弃时的错误
         }
