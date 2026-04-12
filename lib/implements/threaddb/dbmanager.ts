@@ -1043,15 +1043,16 @@ export class DBManager {
                  console.log(`💡 [importDBStateFromReader] 注册免拉标记: lid=${logItem.lid} head=${cidStr} counter=${logItem.head.counter}`);
                  
                  // 1. 写入预加载的免拉标记
-                 await this.network.logstore.store.put(
-                   new Key(`/preloaded_head/${cidStr}`),
-                   new Uint8Array(0)
+                 await (this.network as any).logstore.metadata.putBool(
+                   id,
+                   `/preloaded_head/${cidStr}`,
+                   true
                  );
                }
             }
             await txn.discard();
             continue; // 跳过后续 DB 写入，直接读取下一行
-          } catch (e) {
+          } catch (e: any) {
             console.warn("⚠️ [importDBStateFromReader] 解析 loginfo JSON 失败: " + e.message);
             await txn.discard();
             continue;
@@ -2468,8 +2469,10 @@ class AsyncLock {
     while (this.locks.has(key)) {
       await this.locks.get(key);
     }
-    let resolve: () => void;
-    const promise = new Promise<void>((r) => (resolve = r));
+    let resolveFn!: () => void;
+    const promise = new Promise<void>((resolve) => {
+      resolveFn = resolve;
+    });
     this.locks.set(key, promise);
 
     try {
@@ -2480,7 +2483,7 @@ class AsyncLock {
       throw err;
     } finally {
       this.locks.delete(key);
-      resolve!();
+      if (resolveFn) resolveFn();
     }
   }
 }

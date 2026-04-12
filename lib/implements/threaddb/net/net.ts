@@ -1589,7 +1589,7 @@ export class Network implements Net {
       const recordCollector = new RecordCollector();
       let successCount = 0;
 
-      console.log(`[getRecords] 开始同步，目标 Peer 数: ${peers.length}, 多点同步: ${multiPeersFlag}. req length: ${req.logs?.length}`);
+      console.log(`[getRecords] 开始同步，目标 Peer 数: ${peers.length}, 多点同步: ${multiPeersFlag}. req length: ${req.body?.logs?.length}`);
 
       const MAX_CONCURRENCY = 3;
       const peerQueue = [...peers];
@@ -1914,9 +1914,10 @@ export class Network implements Net {
             await this.logstore.addLog(tid, log);
             // 写入预加载的免拉标记，避免全量重拉前面的区块历史
             if (log.head?.id) {
-              await this.logstore.store.put(
-                new Key(`/preloaded_head/${log.head.id.toString()}`),
-                new Uint8Array([1]),
+              await this.logstore.metadata.putBool(
+                tid,
+                `/preloaded_head/${log.head.id.toString()}`,
+                true
               );
             }
           } else {
