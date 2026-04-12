@@ -28,7 +28,7 @@ import {
 } from "../core/core";
 import { ThreadToken } from "../core/identity";
 import { ILogstore } from "../core/logstore";
-import { Datastore } from "interface-datastore";
+import { Datastore, Key } from "interface-datastore";
 import { Blocks } from "helia";
 import { DAGCBOR } from "@helia/dag-cbor"; // DAGService
 import * as dagCBOR from "@ipld/dag-cbor";
@@ -995,6 +995,7 @@ export class Network implements Net {
     const info = await this.logstore.getThread(tid);
 
     const offsets: Record<string, Head> = {};
+    console.log(`[threadOffsets] 准备检查 Logs, count: ${info.logs?.length}`);
     const addrs: TMultiaddr[] = [];
 
     // Process all logs in thread
@@ -1003,9 +1004,10 @@ export class Network implements Net {
       let has = false;
 
       if (lg.head?.id) {
-        has = await this.isKnown(lg.head.id);
+        has = await this.isKnown(lg.head.id, tid);
       }
 
+      console.log(`[threadOffsets] Log ${lg.id.toString()} head: ${lg.head?.id?.toString()} counter:${lg.head?.counter}, isKnown: ${has}`);
       if (has && lg.head) {
         offsets[lg.id.toString()] = lg.head;
         // Collect addresses
@@ -1057,6 +1059,7 @@ export class Network implements Net {
       const [offsets, peers] = await this.threadOffsets(tid);
 
       // 构建获取记录的请求
+      console.log(`[getRecords] 发起请求的参数 offsets:`, JSON.stringify(offsets, null, 2));
       const { req, serviceKey } = await this.buildGetRecordsRequest(
         tid,
         offsets,
@@ -1383,7 +1386,7 @@ export class Network implements Net {
 
     // If we don't have the counter, check if record exists
     if (counter === undefined) {
-      const exist = await this.isKnown(last.cid());
+      const exist = await this.isKnown(last.cid(), tid);
       if (exist || !(last.cid().toString() == "")) {
         return [[], head];
       }
@@ -1447,17 +1450,34 @@ export class Network implements Net {
   /**
    * Check if a record exists
    */
-  async isKnown(rec: CID): Promise<boolean> {
-    return await this.bstore.has(rec);
-  }
+      async isKnown(rec: CID, tid?: ThreadID): Promise<boolean> {
+      const has = await this.bstore.has(rec);
+      if (has) {
+        return true;
+      }
+      
+      if (tid) {
+        try {
+          const preKey = `/preloaded_head/${rec.toString()}`;
+          const isPreloaded = await this.logstore.metadata.getBool(tid, preKey);
+          if (isPreloaded) {
+            console.log(`[isKnown] Hit preloaded_head in metadata for ${preKey}`);
+            return true;
+          }
+        } catch (err) {
+          // ignore
+        }
+      }
+      return false;
+    }
 
-  /**
-   * 获取记录
-   * 从给定的threaddb 和CID获取记录
-   *
-   * @param ctx 上下文
-   * @param id threaddb ID
-   * @param rid 记录CID
+    /**
+     * 获取记录
+     * 从给定的threaddb 和CID获取记录
+     *
+     * @param ctx 上下文
+     * @param id threaddb ID
+     * @param rid 记录CID
    * @returns 检索到的记录
    * @throws 如果无法获取服务密钥或记录
    */
@@ -1569,9 +1589,7 @@ export class Network implements Net {
       const recordCollector = new RecordCollector();
       let successCount = 0;
 
-      console.log(
-        `[getRecords] 开始同步，目标 Peer 数: ${peers.length}, 多点同步: ${multiPeersFlag}`,
-      );
+      console.log(`[getRecords] 开始同步，目标 Peer 数: ${peers.length}, 多点同步: ${multiPeersFlag}. req length: ${req.logs?.length}`);
 
       const MAX_CONCURRENCY = 3;
       const peerQueue = [...peers];
@@ -1846,8 +1864,9 @@ export class Network implements Net {
       for (const log of logs) {
         try {
           const heads = await this.logstore.headBook.heads(tid, log.id);
+            console.log(`[createExternalLogsIfNotExistForPreload] ${log.id.toString()} existing heads length: ${heads.length}. Will set preloaded_head: ${log.head?.id?.toString() || 'none'}`);
 
-          if (heads.length === 0) {
+          if (heads.length === 0 || true) {  // FORCING true just in case heads was populated without preloaded_head
             log.head = await getHeadUndef();
             await this.logstore.addLog(tid, log);
           } else {
@@ -1893,6 +1912,13 @@ export class Network implements Net {
           const heads = await this.logstore.headBook.heads(tid, log.id);
           if (heads.length === 0) {
             await this.logstore.addLog(tid, log);
+            // 写入预加载的免拉标记，避免全量重拉前面的区块历史
+            if (log.head?.id) {
+              await this.logstore.store.put(
+                new Key(`/preloaded_head/${log.head.id.toString()}`),
+                new Uint8Array([1]),
+              );
+            }
           } else {
             await this.logstore.addrBook.addAddrs(
               tid,

@@ -100,7 +100,7 @@ export class SeekableFileStream {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => {
       controller.abort();
-    }, 15000);
+    }, 120000);
 
     try {
       // 计算实际文件中的偏移量（考虑文件头）
@@ -119,7 +119,7 @@ export class SeekableFileStream {
     } catch (err) {
       clearTimeout(timeoutId);
       console.warn("Error reading plain data:", err);
-      return new Uint8Array(0);
+      throw err;
     }
   }
   /**
@@ -151,7 +151,7 @@ private async readEncrypted(startPosition: number, length: number): Promise<Uint
   const controller = new AbortController();
   const timeoutId = setTimeout(() => {
     controller.abort();
-  }, 15000);
+  }, 120000);
 
   try {
     // 读取加密块
@@ -202,7 +202,7 @@ private async readEncrypted(startPosition: number, length: number): Promise<Uint
   } catch (err) {
     clearTimeout(timeoutId);
     console.warn("Error reading encrypted data:", err);
-    return new Uint8Array(0);
+    throw err;
   }
 }
   
@@ -232,7 +232,7 @@ private async readEncrypted(startPosition: number, length: number): Promise<Uint
      * 使用独立缓冲区
      */
     const prefetchStreamData = async (size: number): Promise<void> => {
-      const maxSize = Math.min(size, this.fileInfo.size - streamPosition);
+      const currentStreamPosition = streamPosition; const maxSize = Math.min(size, this.fileInfo.size - currentStreamPosition);
       
       if (maxSize <= 0) return;
       
@@ -318,13 +318,15 @@ private async readEncrypted(startPosition: number, length: number): Promise<Uint
             streamPosition += chunk.length;
             controller.enqueue(chunk);
             
-            // 如果接近缓冲区末尾，预读取更多数据
+            // 注释掉后台预读，防止与 pull 内部的 await prefetch() 发生并发争用导致 streamBuffer 脏写
+            /*
             const prefetchThreshold = chunkSize * 2;
             if (streamPosition + prefetchThreshold > streamBufferPosition + streamBuffer.length &&
                 streamPosition < end) {
               prefetchStreamData(bufferSize)
                 .catch(err => console.warn("Stream prefetch failed:", err));
             }
+            */
           } else {
             // 缓冲区中没有所需数据，直接读取并同时更新缓冲区
             await prefetchStreamData(Math.max(bufferSize, bytesToRead));

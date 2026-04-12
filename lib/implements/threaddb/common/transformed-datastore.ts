@@ -301,7 +301,7 @@ class PrefixTransform implements KeyTransform {
     const keyStr = key.toString()  
     const prefixStr = this.prefix.toString()  
     if (!keyStr.startsWith(prefixStr)) {  
-      throw new Error('Invalid prefix')  
+      throw new Error(`Invalid prefix: expected to start with ${prefixStr} but got ${keyStr}`)  
     }  
     return new Key(keyStr.slice(prefixStr.length))  
   }  

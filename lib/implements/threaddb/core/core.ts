@@ -83,6 +83,7 @@ export class NewOptions {
   logKey?: Ed25519PrivKey | Ed25519PubKey | undefined;
   block?: boolean | undefined;
   token?: ThreadToken | undefined; 
+  fid?: string | undefined;
 
   constructor(init?: Partial<NewOptions>) {  
       Object.assign(this, init);  

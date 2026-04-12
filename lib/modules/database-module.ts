@@ -147,7 +147,8 @@ export class DatabaseModule implements DCModule, IDatabaseOperations {
     name: string,
     b32Rk: string,
     b32Sk: string,
-    jsonCollections: ICollectionConfig[]
+    jsonCollections: ICollectionConfig[],
+    fid?: string
   ): Promise<[string| null, Error | null]> {
    
     
@@ -159,7 +160,7 @@ export class DatabaseModule implements DCModule, IDatabaseOperations {
       throw new Error("数据库管理器未初始化");
     }
       // 创建数据库
-      const [threadId, err] = await this.context.dbManager. newDB(name, b32Rk, b32Sk, jsonCollections);
+      const [threadId, err] = await this.context.dbManager. newDB(name, b32Rk, b32Sk, jsonCollections, fid);
       if (err) {
         logger.error("创建数据库失败:", err);
         throw err;
@@ -230,6 +231,7 @@ export class DatabaseModule implements DCModule, IDatabaseOperations {
    * @param b32Sk 写入密钥
    * @param block 是否阻塞
    * @param collectionInfos 集合配置
+   * @param fid 初始化数据库信息的文件ID
    */
   async syncDbFromDC(
     threadid: string,  
@@ -238,7 +240,8 @@ export class DatabaseModule implements DCModule, IDatabaseOperations {
     b32Rk: string,  
     b32Sk: string,  
     block: boolean,  
-    collectionInfos: ICollectionConfig[]  
+    collectionInfos: ICollectionConfig[],
+    fid?: string
   ): Promise<Error|null> {
    
     try {
@@ -249,8 +252,8 @@ export class DatabaseModule implements DCModule, IDatabaseOperations {
       throw new Error("数据库管理器未初始化");
     }
     
-      const ctx = createContext(60000);
-      await this.context.dbManager.syncDBFromDC(
+      const ctx = createContext(600000);
+      const syncErr = await this.context.dbManager.syncDBFromDC(
         ctx,
         threadid,
         dbname,
@@ -258,8 +261,13 @@ export class DatabaseModule implements DCModule, IDatabaseOperations {
         b32Rk,
         b32Sk,
         block,
-        collectionInfos
+        collectionInfos,
+        fid
       );
+      
+      if (syncErr) {
+        throw syncErr;
+      }
       
       logger.info(`从DC同步数据库 ${dbname} 成功`);
       return null;
@@ -270,6 +278,56 @@ export class DatabaseModule implements DCModule, IDatabaseOperations {
   }
 
 
+
+  async getDBRecordsCount(threadid: string): Promise<[number, Error | null]> {
+    try {
+      this.assertInitialized();
+      await this.initDBManager();
+      if (!this.context.dbManager) {
+        throw new Error("数据库管理器未初始化");
+      }
+      const count = await this.context.dbManager.getDBRecordsCount(threadid);
+      return [count, null];
+    } catch (error) {
+      logger.error(`获取数据库所有记录总数 ${threadid} 失败:`, error);
+      return [0, error as Error];
+    }
+  }
+
+  async exportDBToFile(
+    threadid: string,
+    fileName: string,
+    readKey?: string,
+    saveToFile: boolean = true
+  ): Promise<[any | null, Uint8Array | null, Error | null]> {
+    try {
+      this.assertInitialized();
+      await this.initDBManager();
+      if (!this.context.dbManager) {
+        throw new Error("数据库管理器未初始化");
+      }
+      
+      let symmetricKey: any;
+      if (readKey) {
+        const { SymmetricKey } = await import("../implements/threaddb/common/key");
+        symmetricKey = SymmetricKey.fromString(readKey);
+      }
+      
+      const { createContext } = await import("../implements/threaddb/dbmanager");
+      const { PullTimeout } = await import("../implements/threaddb/core/db");
+      const ctx = createContext(PullTimeout * 60);
+
+      // dbManager.exportDBToFile 会返回 [ThreadInfo, Uint8Array]
+      const res = await this.context.dbManager.exportDBToFile(ctx, threadid, fileName, symmetricKey, saveToFile);
+      if (Array.isArray(res) && res.length === 2) {
+        return [res[0], res[1], null];
+      }
+      return [res, null, null];
+    } catch (error) {
+      logger.error(`导出数据库文件 ${threadid} 失败:`, error);
+      return [null, null, error as Error];
+    }
+  }
 
   /**
    * 刷新数据库

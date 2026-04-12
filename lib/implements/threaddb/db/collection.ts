@@ -630,7 +630,7 @@ getIndexes(): Index[] {
  */
 async addIndex( index: Index, token?: ThreadToken): Promise<void> {
  
-
+     
   // 不允许覆盖默认索引
   if (index.path === idFieldName) {
     if (this.indexes.has(idFieldName)) {
@@ -773,10 +773,14 @@ async saveIndexes(): Promise<void> {
  * 向索引添加条目
  */
 async indexAdd(txn: any, key: Key, data: Uint8Array): Promise<void> {
+  // Try CBOR decoding for normal patch events, fallback to raw data for JSON imports
+  let decoded = data;
+  try {
+    decoded = dagCBOR.decode<Uint8Array>(data);
+  } catch (err) {}
+
   for (const [path, index] of this.indexes.entries()) {
     try {
-     
-      const decoded = dagCBOR.decode<Uint8Array>(data);
       await this.indexUpdate(path, index, txn, key, decoded, false);
     } catch (err) {
       throw err;
@@ -789,9 +793,15 @@ async indexAdd(txn: any, key: Key, data: Uint8Array): Promise<void> {
  * 确保传入的是旧记录的数据，而非新记录
  */
 async indexDelete(txn: any, key: Key, originalData: Uint8Array): Promise<void> {
+  // Try CBOR decoding for normal patch events, fallback to raw data for JSON imports
+  let decoded = originalData;
+  try {
+    decoded = dagCBOR.decode<Uint8Array>(originalData);
+  } catch (err) {}
+
   for (const [path, index] of this.indexes.entries()) {
     try {
-      await this.indexUpdate(path, index, txn, key, originalData, true);
+      await this.indexUpdate(path, index, txn, key, decoded, true);
     } catch (err) {
       throw err;
     }

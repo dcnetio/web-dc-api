@@ -23,13 +23,15 @@ export interface IDatabaseOperations {
    * @param b32Rk base32编码的读取密钥
    * @param b32Sk base32编码的服务密钥
    * @param jsonCollections 集合配置数组，定义数据库中的集合结构
+   * @param fid 预加载文件的内容CID(可选)
    * @returns 创建的线程ID和错误信息
    */
   newDB(
     name: string,
     b32Rk: string,
     b32Sk: string,
-    jsonCollections: ICollectionConfig[]
+    jsonCollections: ICollectionConfig[],
+    fid?: string
   ): Promise<[string| null, Error | null]>;
   
   /**
@@ -41,6 +43,7 @@ export interface IDatabaseOperations {
    * @param b32Sk base32编码的服务密钥  
    * @param block 是否阻塞等待同步完成
    * @param collectionInfos 集合配置数组，定义数据库中的集合结构
+   * @param fid 预加载文件的内容CID(可选)
    * @returns 错误信息或null表示成功
    */
   syncDbFromDC(
@@ -50,9 +53,27 @@ export interface IDatabaseOperations {
     b32Rk: string,  
     b32Sk: string,  
     block: boolean,  
-    collectionInfos: ICollectionConfig[]  
+    collectionInfos: ICollectionConfig[],
+    fid?: string
   ): Promise<Error| null>;
   
+  /**
+   * 获取数据库中所有集合的记录总数
+   * @param threadId 线程ID
+   * @returns [总记录数, 错误信息]
+   */
+  getDBRecordsCount(threadId: string): Promise<[number, Error | null]>;
+
+  /**
+   * 导出数据库到文件并返回数据
+   * @param threadId 线程ID
+   * @param fileName 文件名称
+   * @param readKey 解密密钥 (可选)
+   * @param saveToFile 是否触发下载 (默认true)
+   * @returns [ThreadInfo, 数据的Uint8Array, Error]
+   */
+  exportDBToFile(threadId: string, fileName: string, readKey?: string, saveToFile?: boolean): Promise<[any | null, Uint8Array | null, Error | null]>;
+
   /**
    * 刷新数据库，从分布式网络获取最新数据
    * @param threadid 数据库线程ID

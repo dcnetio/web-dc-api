@@ -302,7 +302,9 @@ export class DC implements DCContext {
             const rk = threadDBInfos[1] || "";
             const sk = threadDBInfos[2] || "";
             const fid = threadDBInfos[3] || ""; //预加载记录文件ID
-            const preCount = threadDBInfos[4] || 0; //预加载记录条数
+            const preCount = threadDBInfos[4] || 0; //预加载记录条数//todo 回复
+           // const preCount =  0; //预加载记录条数 //todo remove
+
             //判断本地是否存在数据库
             if (!this.db) {
               return [null, new Error("数据库模块不存在")];
@@ -328,9 +330,32 @@ export class DC implements DCContext {
                 // 需要升级表结构
                 await this.db.upgradeCollections(threadid, collections);
               }
-
               // 后台异步刷新数据库，不阻塞登录流程
-              this.db.refreshDBFromDC(threadid).catch((err) => {
+              this.db.refreshDBFromDC(threadid).then(async () => {
+                // 同步完成后判断 logs counts
+                try {
+                  const [counts, countErr] = await this.db!.getDBRecordsCount(threadid);
+                  if (!countErr && counts >= Number(preCount) + 1000) {
+                    // 当counts大于等于precount+1000时，导出本地数据库并存到 DC
+                    const [threadInfo, fileBytes, exportErr] = await this.db!.exportDBToFile(threadid, "db-export.txt", rk, false);
+                    if (!exportErr && fileBytes) {
+                      const file = new File([fileBytes as any], "db-export.txt", { type: "text/plain" });
+                      const fileMod = this.file;
+                      if (fileMod) {
+                        const [fileId, addErr] = await fileMod.addFile(file, "", () => {});
+                        if (!addErr && fileId) {
+                          // 导出后更新用户 dbConfig （包含 fid 和 counts）
+                          const remark = `${fileId}|${counts}`;
+                          await this.setUserDefaultDB(this, threadid, rk, sk, remark);
+                          logger.info("用户数据库已成功导出并更新至 DC, 最新文件ID: " + fileId);
+                        }
+                      }
+                    }
+                  }
+                } catch (e) {
+                  logger.warn("检查或导出本地数据库记录出错:", e);
+                }
+              }).catch((err) => {
                 console.warn("后台刷新数据库失败:", err);
               });
               //3秒后将本地数据库同步到DC
@@ -353,6 +378,7 @@ export class DC implements DCContext {
                 sk,
                 true,
                 collections,
+                fid
               );
               const [dbinfo, error] = await this.db.getDBInfo(threadid);
               if (dbinfo != null && !error) {

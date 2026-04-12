@@ -172,7 +172,7 @@ async  encrypt(
    * Decrypt uses key to perform AES-256 GCM decryption on ciphertext
    */
   async decrypt(encryptBuffer: Uint8Array): Promise<Uint8Array> {
-    if (encryptBuffer.length <= NonceBytes + TagBytes) {
+    if (encryptBuffer.length < NonceBytes + TagBytes) {
       return encryptBuffer;
     }
     
