@@ -200,6 +200,24 @@ export class AIProxyClient {
     let timeoutTimer: NodeJS.Timeout | null = null;
     let isCompleted = false;
     let isAborted = false;
+    let contentDecoder = new TextDecoder();
+    let errDecoder = new TextDecoder();
+
+    const decodeStreamChunk = (
+      decoder: TextDecoder,
+      chunk?: Uint8Array | null,
+      flush = false
+    ): string => {
+      if (flush) {
+        return decoder.decode();
+      }
+
+      if (!chunk || chunk.length === 0) {
+        return "";
+      }
+
+      return decoder.decode(chunk, { stream: true });
+    };
 
     // 清理定时器的函数
     const clearTimeoutTimer = () => {
@@ -207,6 +225,15 @@ export class AIProxyClient {
         clearTimeout(timeoutTimer);
         timeoutTimer = null;
       }
+    };
+
+    const resetAttemptState = () => {
+      hasStartedReceiving = false;
+      isCompleted = false;
+      isAborted = false;
+      contentDecoder = new TextDecoder();
+      errDecoder = new TextDecoder();
+      clearTimeoutTimer();
     };
 
     // 设置超时检测定时器
@@ -250,15 +277,19 @@ export class AIProxyClient {
 
       try {
         const decodedPayload = dcnet.pb.DoAIProxyCallReply.decode(payload);
+        let decodedContent = decodeStreamChunk(contentDecoder, decodedPayload.content);
+        let decodedErr = decodeStreamChunk(errDecoder, decodedPayload.err);
         if (decodedPayload.flag == AIStreamResponseFlag.CONNECTION_CLOSED) {
           isCompleted = true; // 如果不是流式响应，标记为完成
           clearTimeoutTimer();
+          decodedContent += decodeStreamChunk(contentDecoder, undefined, true);
+          decodedErr += decodeStreamChunk(errDecoder, undefined, true);
         }
         if (onStreamResponse) {
           onStreamResponse(
             decodedPayload.flag,
-            new TextDecoder().decode(decodedPayload.content),
-            new TextDecoder().decode(decodedPayload.err)
+            decodedContent,
+            decodedErr
           );
         }
       } catch (error) {
@@ -278,7 +309,11 @@ export class AIProxyClient {
       if (isAborted || checkAborted() || isCompleted) return;
       isCompleted = true;
       if (onStreamResponse) {
-        onStreamResponse(AIStreamResponseFlag.CONNECTION_CLOSED, "", "");
+        onStreamResponse(
+          AIStreamResponseFlag.CONNECTION_CLOSED,
+          decodeStreamChunk(contentDecoder, undefined, true),
+          decodeStreamChunk(errDecoder, undefined, true)
+        );
       }
     };
 
@@ -292,6 +327,23 @@ export class AIProxyClient {
           error instanceof Error ? error.message : String(error)
         );
       }
+    };
+
+    const executeStreamCall = async (client: Libp2pGrpcClient) => {
+      resetAttemptState();
+      setTimeoutTimer();
+
+      await client.Call(
+        "/dcnet.pb.Service/DoAIProxyCall",
+        messageBytes,
+        3600 * 1000,
+        "server-streaming",
+        onDataCallback,
+        undefined,
+        onEndCallback,
+        onErrorCallback,
+        context
+      );
     };
 
     // 监听外部中止信号 - 这不会拦截信号，只是添加监听器
@@ -327,25 +379,10 @@ export class AIProxyClient {
     }
 
     try {
-      // 开始调用前设置初始超时定时器（用于检测是否开始接收数据）
-      setTimeoutTimer();
-
-      // 将完整的 context 传递给 grpcClient.Call，让它自己处理中止信号
-      await grpcClient.Call(
-        "/dcnet.pb.Service/DoAIProxyCall",
-        messageBytes,
-        3600 * 1000,
-        "server-streaming",
-        onDataCallback,
-        undefined, // dataSourceCallback not needed for server-streaming
-        onEndCallback,
-        onErrorCallback,
-        context // 完整传递 context，包括 signal
-      );
+      await executeStreamCall(grpcClient);
 
       return 0;
     } catch (error) {
-      isCompleted = true;
       clearTimeoutTimer();
 
       console.warn("DoAIProxyCall error:", error);
@@ -378,23 +415,10 @@ export class AIProxyClient {
           this.client.token,
           this.client.protocol
         );
-        // 开始调用前设置初始超时定时器（用于检测是否开始接收数据）
-        setTimeoutTimer();
-
-        // 将完整的 context 传递给 grpcClient.Call，让它自己处理中止信号
-        await grpcClient.Call(
-          "/dcnet.pb.Service/DoAIProxyCall",
-          messageBytes,
-          3600 * 1000,
-          "server-streaming",
-          onDataCallback,
-          undefined, // dataSourceCallback not needed for server-streaming
-          onEndCallback,
-          onErrorCallback,
-          context // 完整传递 context，包括 signal
-        );
+        await executeStreamCall(grpcClient);
         return 0;
       }
+      isCompleted = true;
       console.warn("DoAIProxyCall error:", error);
       throw error;
     } finally {
