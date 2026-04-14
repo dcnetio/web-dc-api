@@ -25,6 +25,7 @@ import {
   AIProxyRealtimeVoiceSession,
   createAliyunRealtimeVoiceProtocolAdapter,
   createOpenAIRealtimeVoiceProtocolAdapter,
+  createQwenMultimodalDialogAdapter,
   createWechatMiniProgramRealtimeSocketFactory,
   resolveRealtimeVoiceRuntime,
 } from "../implements/aiproxy/realtime-voice-session";
@@ -45,6 +46,30 @@ type ResolvedAICallConfig = {
   headersStr: string;
   path?: string;
   model?: string;
+};
+
+const isAliyunOpenAIRealtimeModel = (model?: string): boolean => {
+  const normalizedModel = String(model || "").trim().toLowerCase();
+  if (!normalizedModel) {
+    return false;
+  }
+  if (
+    normalizedModel.includes("paraformer") ||
+    normalizedModel.includes("sensevoice") ||
+    normalizedModel.includes("cosyvoice") ||
+    normalizedModel.includes("sambert") ||
+    normalizedModel.includes("gummy")
+  ) {
+    return false;
+  }
+  return (
+    normalizedModel.includes("qwen-omni") ||
+    normalizedModel.includes("qwen3") ||
+    normalizedModel.includes("omni-plus-realtime") ||
+    normalizedModel.includes("tts-flash-realtime") ||
+    (normalizedModel.includes("omni") && normalizedModel.includes("realtime")) ||
+    (normalizedModel.includes("qwen") && normalizedModel.includes("realtime"))
+  );
 };
 
 /**
@@ -337,7 +362,7 @@ export class AIProxyModule implements DCModule, IAIProxyOperations {
     }
   }
 
-  async CreateRealtimeAudioSession(
+  async CreateAudioSocket(
     options: AIProxyRealtimeAudioSessionOptions,
   ): Promise<[IAIProxyRealtimeAudioSession | null, Error | null]> {
     try {
@@ -372,7 +397,7 @@ export class AIProxyModule implements DCModule, IAIProxyOperations {
     }
   }
 
-  async CreateAliyunRealtimeAudioSession(
+  async CreateAliyunAudioSocket(
     options: AIProxyAliyunRealtimeAudioSessionOptions,
   ): Promise<[IAIProxyRealtimeAudioSession | null, Error | null]> {
     try {
@@ -390,7 +415,7 @@ export class AIProxyModule implements DCModule, IAIProxyOperations {
         resolvedConfig,
         options,
       );
-      return this.CreateRealtimeAudioSession({
+      return this.CreateAudioSocket({
         ...options,
         appId: resolvedConfig.appId,
         themeAuthor: resolvedConfig.themeAuthor,
@@ -409,7 +434,7 @@ export class AIProxyModule implements DCModule, IAIProxyOperations {
     }
   }
 
-  async CreateRealtimeVoiceSession(
+  async CreateVoiceSession(
     options: AIProxyRealtimeVoiceSessionOptions,
   ): Promise<[IAIProxyRealtimeVoiceSession | null, Error | null]> {
     try {
@@ -435,7 +460,7 @@ export class AIProxyModule implements DCModule, IAIProxyOperations {
       const voiceSession = new AIProxyRealtimeVoiceSession(
         normalizedOptions,
         async (hooks) => {
-          const [transport, error] = await this.CreateRealtimeAudioSession({
+          const [transport, error] = await this.CreateAudioSocket({
             ...normalizedOptions,
             onConnected: (session, authInfo) => {
               hooks.onConnected?.(session, authInfo);
@@ -477,7 +502,7 @@ export class AIProxyModule implements DCModule, IAIProxyOperations {
     }
   }
 
-  async CreateAliyunRealtimeVoiceSession(
+  async CreateAliyunTranscriptionSession(
     options: AIProxyAliyunRealtimeVoiceSessionOptions,
   ): Promise<[IAIProxyRealtimeVoiceSession | null, Error | null]> {
     try {
@@ -491,8 +516,17 @@ export class AIProxyModule implements DCModule, IAIProxyOperations {
         options.path,
         options.model,
       );
+      const useOpenAIRealtimeProtocol = isAliyunOpenAIRealtimeModel(
+        resolvedConfig.model,
+      );
+      const effectiveResolvedConfig = useOpenAIRealtimeProtocol
+        ? {
+            ...resolvedConfig,
+            path: resolvedConfig.path || "/api-ws/v1/realtime",
+          }
+        : resolvedConfig;
       const realtimeConfig = this.buildAliyunRealtimeConfig(
-        resolvedConfig,
+        effectiveResolvedConfig,
         options,
       );
       const stopVoiceInputOptions = {
@@ -503,17 +537,68 @@ export class AIProxyModule implements DCModule, IAIProxyOperations {
         ...(options.stopVoiceInputOptions || {}),
       };
 
-      return this.CreateRealtimeVoiceSession({
+      const shouldUseMultimodalDialog = !useOpenAIRealtimeProtocol && (
+        effectiveResolvedConfig.model === "multimodal-dialog" ||
+        effectiveResolvedConfig.model?.includes("cosyvoice") ||
+        effectiveResolvedConfig.model?.includes("sambert") ||
+        effectiveResolvedConfig.model?.includes("gummy")
+      );
+
+      return this.CreateVoiceSession({
         ...options,
-        appId: resolvedConfig.appId,
-        themeAuthor: resolvedConfig.themeAuthor,
-        configTheme: resolvedConfig.configTheme,
-        serviceName: resolvedConfig.serviceName,
-        path: resolvedConfig.path,
-        model: resolvedConfig.model,
+        appId: effectiveResolvedConfig.appId,
+        themeAuthor: effectiveResolvedConfig.themeAuthor,
+        configTheme: effectiveResolvedConfig.configTheme,
+        serviceName: effectiveResolvedConfig.serviceName,
+        path: effectiveResolvedConfig.path,
+        model: effectiveResolvedConfig.model,
         realtimeConfig,
+        ...(useOpenAIRealtimeProtocol ? {
+          resolveAuthInfo: (payloadText: string) => {
+            const info = this.parseRealtimeAudioAuthInfoWithServiceConfig(
+              payloadText,
+              realtimeConfig,
+            );
+            const finalUrl = this.normalizeOpenAIRealtimeWebSocketUrl(
+              info.url || info.websocketUrl,
+              options.websocketBaseUrl,
+              effectiveResolvedConfig.model,
+            );
+            let updatedAuthMode = info.authMode;
+            let updatedQueryName = info.authQueryName;
+            const actualToken = info.apiKey || info.token || info.tempToken;
+            let updatedApiKey = info.apiKey;
+            if (actualToken && info.authMode === "bearer") {
+              updatedAuthMode = "apikey";
+              updatedQueryName = "api_key";
+              updatedApiKey = actualToken;
+            }
+            return {
+              ...info,
+              url: finalUrl,
+              websocketUrl: finalUrl,
+              endpoint: finalUrl,
+              authMode: updatedAuthMode,
+              authQueryName: updatedQueryName,
+              apiKey: updatedApiKey,
+            };
+          },
+        } : {}),
         stopVoiceInputOptions,
-        protocolAdapter: createAliyunRealtimeVoiceProtocolAdapter({ ...options.aliyunProtocolOptions, model: resolvedConfig.model }),
+        protocolAdapter: useOpenAIRealtimeProtocol
+          ? createOpenAIRealtimeVoiceProtocolAdapter({
+              ...options.aliyunProtocolOptions,
+              model: effectiveResolvedConfig.model,
+            })
+          : shouldUseMultimodalDialog
+            ? createQwenMultimodalDialogAdapter({
+                ...options.aliyunProtocolOptions,
+                model: effectiveResolvedConfig.model,
+              })
+            : createAliyunRealtimeVoiceProtocolAdapter({
+                ...options.aliyunProtocolOptions,
+                model: effectiveResolvedConfig.model,
+              }),
       });
     } catch (error) {
       logger.error("创建阿里云实时语音会话失败:", error);
@@ -524,7 +609,7 @@ export class AIProxyModule implements DCModule, IAIProxyOperations {
     }
   }
 
-  async CreateOpenAIRealtimeVoiceSession(
+  async CreateConversationalVoiceSession(
     options: AIProxyAliyunRealtimeVoiceSessionOptions,
   ): Promise<[IAIProxyRealtimeVoiceSession | null, Error | null]> {
     try {
@@ -555,7 +640,7 @@ export class AIProxyModule implements DCModule, IAIProxyOperations {
         ...(options.stopVoiceInputOptions || {}),
       };
 
-      return this.CreateRealtimeVoiceSession({
+      return this.CreateVoiceSession({
         ...options,
         appId: resolvedConfig.appId,
         themeAuthor: resolvedConfig.themeAuthor,
@@ -569,16 +654,11 @@ export class AIProxyModule implements DCModule, IAIProxyOperations {
             payloadText,
             realtimeConfig,
           );
-          // Force Qwen-Omni to use /realtime endpoint, ignoring any legacy /inference backend overrides
-          let finalUrl = info.url || info.websocketUrl;
-          if (!finalUrl || finalUrl.includes("dashscope.aliyuncs.com")) {
-            // For standard aliyun urls or missing urls, force the Qwen-Omni realtime endpoint
-            finalUrl = this.buildAliyunRealtimeWebSocketUrl(
-              options.websocketBaseUrl,
-              "/api-ws/v1/realtime",
-              resolvedConfig.model || "qwen-omni-turbo"
-            );
-          }
+          const finalUrl = this.normalizeOpenAIRealtimeWebSocketUrl(
+            info.url || info.websocketUrl,
+            options.websocketBaseUrl,
+            resolvedConfig.model,
+          );
           // Fix for Qwen browser Websocket api missing token natively
           // If bearer but missing from url, Qwen actually expects api_key param
           let updatedAuthMode = info.authMode;
@@ -1055,8 +1135,6 @@ export class AIProxyModule implements DCModule, IAIProxyOperations {
     resolvedConfig: ResolvedAICallConfig,
     options: AIProxyAliyunRealtimeAudioSessionOptions,
   ): AIProxyRealtimeConfig {
-    const model = resolvedConfig.model;
-    
     return {
       enabled: true,
       connection: {
@@ -1064,7 +1142,6 @@ export class AIProxyModule implements DCModule, IAIProxyOperations {
         url: this.buildAliyunRealtimeWebSocketUrl(
           options.websocketBaseUrl,
           resolvedConfig.path,
-          model,
         ),
         authMode: "apikey",
         authQueryName: options.authQueryName || "api_key",
@@ -1081,7 +1158,6 @@ export class AIProxyModule implements DCModule, IAIProxyOperations {
   private buildAliyunRealtimeWebSocketUrl(
     websocketBaseUrl: string | undefined,
     path: string | undefined,
-    model: string | undefined,
   ): string {
     const defaultBaseUrl = websocketBaseUrl || "wss://dashscope.aliyuncs.com";
     const defaultPath = path || "/api-ws/v1/inference";
@@ -1094,10 +1170,6 @@ export class AIProxyModule implements DCModule, IAIProxyOperations {
         ? new URL(defaultPath)
         : new URL(defaultPath, defaultBaseUrl);
 
-    if (model && !url.searchParams.has("model")) {
-      url.searchParams.set("model", model);
-    }
-
     if (url.protocol === "http:") {
       url.protocol = "ws:";
     } else if (url.protocol === "https:") {
@@ -1105,6 +1177,69 @@ export class AIProxyModule implements DCModule, IAIProxyOperations {
     }
 
     return url.toString();
+  }
+
+  private normalizeOpenAIRealtimeWebSocketUrl(
+    rawUrl: string | undefined,
+    websocketBaseUrl: string | undefined,
+    model: string | undefined,
+  ): string {
+    if (!rawUrl) {
+      return this.buildAliyunRealtimeWebSocketUrl(
+        websocketBaseUrl,
+        "/api-ws/v1/realtime",
+      );
+    }
+
+    try {
+      const parsed = new URL(rawUrl);
+      const pathname = parsed.pathname || "";
+      const isDashscopeHost = parsed.hostname.includes("dashscope.aliyuncs.com");
+      const isInferencePath = pathname.includes("/api-ws/v1/inference");
+      const isProxyDashscopeRealtimePath = pathname.includes("dashscope-realtime");
+
+      // For custom proxy domains, preserve the returned websocket path exactly as-is.
+      // The proxy service already knows how to route to the correct downstream realtime path.
+      // The legacy proxy path /dashscope-realtime still expects model in query.
+      if (!isDashscopeHost) {
+        if (isProxyDashscopeRealtimePath) {
+          if (model && !parsed.searchParams.has("model")) {
+            parsed.searchParams.set("model", model);
+          }
+        } else {
+          parsed.searchParams.delete("model");
+        }
+        return parsed.toString();
+      }
+
+      parsed.searchParams.delete("model");
+
+      if (!isInferencePath) {
+        return parsed.toString();
+      }
+
+      const normalizedUrl = this.buildAliyunRealtimeWebSocketUrl(
+        `${parsed.protocol}//${parsed.host}`,
+        "/api-ws/v1/realtime",
+      );
+      const rebuilt = new URL(normalizedUrl);
+
+      parsed.searchParams.forEach((value, key) => {
+        if (key === "model") {
+          return;
+        }
+        if (!rebuilt.searchParams.has(key)) {
+          rebuilt.searchParams.set(key, value);
+        }
+      });
+
+      return rebuilt.toString();
+    } catch {
+      return this.buildAliyunRealtimeWebSocketUrl(
+        websocketBaseUrl || rawUrl,
+        "/api-ws/v1/realtime",
+      );
+    }
   }
 
   private extractRealtimeAudioProxyResponse(

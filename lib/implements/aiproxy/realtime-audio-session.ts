@@ -15,12 +15,87 @@ interface RealtimeAudioConnectionOptions {
   headers: Record<string, string>;
 }
 
+function describeCloseEvent(event: unknown): string {
+  if (!event || typeof event !== "object") {
+    return "close";
+  }
+
+  const closeLike = event as {
+    code?: unknown;
+    reason?: unknown;
+    wasClean?: unknown;
+    type?: unknown;
+    target?: { url?: unknown; readyState?: unknown };
+    currentTarget?: { url?: unknown; readyState?: unknown };
+  };
+  const target = closeLike.target || closeLike.currentTarget;
+  const parts = [typeof closeLike.type === "string" ? closeLike.type : "close"];
+
+  if (typeof closeLike.code === "number") {
+    parts.push(`code=${closeLike.code}`);
+  }
+  if (typeof closeLike.reason === "string" && closeLike.reason) {
+    parts.push(`reason=${closeLike.reason}`);
+  }
+  if (typeof closeLike.wasClean === "boolean") {
+    parts.push(`wasClean=${closeLike.wasClean}`);
+  }
+  if (typeof target?.readyState === "number") {
+    parts.push(`readyState=${target.readyState}`);
+  }
+  if (typeof target?.url === "string" && target.url) {
+    parts.push(`url=${target.url}`);
+  }
+
+  return parts.join(", ");
+}
+
 const DEFAULT_CONNECT_TIMEOUT_MS = 15000;
 const DEFAULT_REFRESH_BEFORE_MS = 60000;
 const DEFAULT_RECONNECT_DELAY_MS = 1000;
 const SOCKET_OPEN = 1;
 const SOCKET_CLOSING = 2;
 const SOCKET_CLOSED = 3;
+
+function toRealtimeAudioError(
+  error: unknown,
+  fallbackMessage: string,
+): Error {
+  if (error instanceof Error) {
+    return error;
+  }
+
+  if (error && typeof error === "object") {
+    const eventLike = error as {
+      type?: unknown;
+      message?: unknown;
+      target?: { readyState?: unknown; url?: unknown };
+      currentTarget?: { readyState?: unknown; url?: unknown };
+    };
+    const target = eventLike.target || eventLike.currentTarget;
+    const typeText = typeof eventLike.type === "string" ? eventLike.type : "";
+    const readyStateText =
+      typeof target?.readyState === "number"
+        ? `, readyState=${target.readyState}`
+        : "";
+    const urlText =
+      typeof target?.url === "string" && target.url
+        ? `, url=${target.url}`
+        : "";
+    const messageText =
+      typeof eventLike.message === "string" && eventLike.message.trim()
+        ? `, message=${eventLike.message.trim()}`
+        : "";
+
+    if (typeText || readyStateText || urlText || messageText) {
+      return new Error(
+        `${fallbackMessage}: ${typeText || "event"}${readyStateText}${urlText}${messageText}`,
+      );
+    }
+  }
+
+  return new Error(fallbackMessage);
+}
 
 export class AIProxyRealtimeAudioSession
   implements IAIProxyRealtimeAudioSession
@@ -136,6 +211,7 @@ export class AIProxyRealtimeAudioSession
         }
         socket.removeEventListener("open", handleOpen);
         socket.removeEventListener("error", handleError);
+        socket.removeEventListener("close", handleCloseBeforeOpen);
       };
 
       const handleOpen = () => {
@@ -148,9 +224,16 @@ export class AIProxyRealtimeAudioSession
 
       const handleError = (event: Event) => {
         cleanup();
-        const error = new Error("实时音频 WebSocket 连接失败");
+        const error = toRealtimeAudioError(event, "实时音频 WebSocket 连接失败");
         this.options.onError?.(event);
         reject(error);
+      };
+
+      const handleCloseBeforeOpen = (event: unknown) => {
+        cleanup();
+        reject(
+          new Error(`实时音频 WebSocket 握手阶段被关闭: ${describeCloseEvent(event)}`),
+        );
       };
 
       timeoutHandle = setTimeout(() => {
@@ -165,6 +248,7 @@ export class AIProxyRealtimeAudioSession
 
       socket.addEventListener("open", handleOpen, { once: true });
       socket.addEventListener("error", handleError, { once: true });
+      socket.addEventListener("close", handleCloseBeforeOpen, { once: true });
     });
   }
 
@@ -321,7 +405,7 @@ export class AIProxyRealtimeAudioSession
 
     this.refreshTimer = setTimeout(() => {
       this.refreshAuth(true).catch((error) => {
-        this.options.onError?.(error instanceof Error ? error : new Error(String(error)));
+        this.options.onError?.(toRealtimeAudioError(error, "实时音频鉴权刷新失败"));
       });
     }, delayMs);
   }
@@ -353,7 +437,7 @@ export class AIProxyRealtimeAudioSession
     }
 
     void this.connect().catch((error) => {
-      this.options.onError?.(error instanceof Error ? error : new Error(String(error)));
+      this.options.onError?.(toRealtimeAudioError(error, "实时音频重连失败"));
     });
   }
 

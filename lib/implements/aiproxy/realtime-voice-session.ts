@@ -60,6 +60,41 @@ const SOCKET_CLOSED = 3;
 const DEFAULT_BROWSER_SAMPLE_RATE = 16000;
 const DEFAULT_OUTPUT_SAMPLE_RATE = 24000;
 
+function toRealtimeVoiceError(error: unknown): Error {
+  if (error instanceof Error) {
+    return error;
+  }
+
+  if (error && typeof error === "object") {
+    const eventLike = error as {
+      type?: unknown;
+      message?: unknown;
+      target?: { readyState?: unknown; url?: unknown };
+      currentTarget?: { readyState?: unknown; url?: unknown };
+    };
+    const target = eventLike.target || eventLike.currentTarget;
+    const typeText = typeof eventLike.type === "string" ? eventLike.type : "event";
+    const readyStateText =
+      typeof target?.readyState === "number"
+        ? `, readyState=${target.readyState}`
+        : "";
+    const urlText =
+      typeof target?.url === "string" && target.url
+        ? `, url=${target.url}`
+        : "";
+    const messageText =
+      typeof eventLike.message === "string" && eventLike.message.trim()
+        ? `, message=${eventLike.message.trim()}`
+        : "";
+
+    return new Error(
+      `实时语音事件异常: ${typeText}${readyStateText}${urlText}${messageText}`,
+    );
+  }
+
+  return new Error(String(error));
+}
+
 export function resolveRealtimeVoiceRuntime(
   runtime: AIProxyRealtimeVoiceRuntime = "auto",
 ): Exclude<AIProxyRealtimeVoiceRuntime, "auto"> {
@@ -405,18 +440,19 @@ export function createAliyunRealtimeVoiceProtocolAdapter(
 ): AIProxyRealtimeVoiceProtocolAdapter {
   const inputAudioFormat = options.inputAudioFormat || "pcm16";
   const outputAudioFormat = options.outputAudioFormat || "pcm16";
+  const actualModel = options.model || "paraformer-realtime-v2";
 
   let taskId = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
 
   const wrap = (action: "run-task" | "finish-task", inputPayload: any = {}) => {
     let parameters: any = {
       format: inputAudioFormat === 'pcm16' ? 'pcm' : inputAudioFormat,
-      sample_rate: options.model?.includes('8k') ? 8000 : (options.session?.sample_rate || 16000),
+      sample_rate: actualModel.includes('8k') ? 8000 : (options.session?.sample_rate || 16000),
       ...options.session,
     };
     
     // paraformer / sensevoice are ASR only, no text instructions or voices.
-    if (options.model?.includes("paraformer") || options.model?.includes("sensevoice")) {
+    if (actualModel.includes("paraformer") || actualModel.includes("sensevoice")) {
       delete parameters.instructions;
       delete parameters.voice;
       delete parameters.input_audio_format;
@@ -431,9 +467,9 @@ export function createAliyunRealtimeVoiceProtocolAdapter(
       },
       payload: {
         task_group: "audio",
-        task: "asr",
-        function: "recognition",
-        model: options.model || "paraformer-realtime-v2",
+        task: actualModel.includes("cosyvoice") || actualModel.includes("sambert") ? "tts" : "asr",
+        function: actualModel.includes("cosyvoice") || actualModel.includes("sambert") ? "synthesis" : "recognition",
+        model: actualModel,
         ...(action === "run-task" ? {
           parameters
         } : {}),
@@ -445,7 +481,7 @@ export function createAliyunRealtimeVoiceProtocolAdapter(
   return {
     buildConnectMessages() {
       taskId = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
-      if (options.model?.includes("paraformer") || options.model?.includes("sensevoice")) {
+      if (actualModel.includes("paraformer") || actualModel.includes("sensevoice")) {
         return wrap("run-task", {});
       }
       
@@ -461,7 +497,7 @@ export function createAliyunRealtimeVoiceProtocolAdapter(
       });
     },
     buildAudioInputMessages(frame) {
-      if (options.model?.includes("paraformer") || options.model?.includes("sensevoice")) {
+      if (actualModel.includes("paraformer") || actualModel.includes("sensevoice")) {
         return frame.data;
       }
       return wrap("run-task", {
@@ -471,6 +507,9 @@ export function createAliyunRealtimeVoiceProtocolAdapter(
       });
     },
     buildTextInputMessages(text) {
+      if (actualModel.includes("paraformer") || actualModel.includes("sensevoice")) {
+        return null;
+      }
       return [
         wrap("run-task", {
           event_id: createRealtimeEventId(),
@@ -484,7 +523,7 @@ export function createAliyunRealtimeVoiceProtocolAdapter(
       ];
     },
     buildCommitMessages() {
-      if (options.model?.includes("paraformer") || options.model?.includes("sensevoice")) {
+      if (actualModel.includes("paraformer") || actualModel.includes("sensevoice")) {
         return wrap("finish-task", {});
       }
       return wrap("run-task", {
@@ -493,7 +532,7 @@ export function createAliyunRealtimeVoiceProtocolAdapter(
       });
     },
     buildResponseCreateMessages() {
-      if (options.model?.includes("paraformer") || options.model?.includes("sensevoice")) {
+      if (actualModel.includes("paraformer") || actualModel.includes("sensevoice")) {
         return null;
       }
       return wrap("run-task", {
@@ -539,11 +578,127 @@ export function createAliyunRealtimeVoiceProtocolAdapter(
   };
 }
 
+
+export function createQwenMultimodalDialogAdapter(
+  options: AIProxyRealtimeVoiceAliyunProtocolOptions = {},
+): AIProxyRealtimeVoiceProtocolAdapter {
+  let taskId = Math.random().toString(36).substring(2, 15);
+  let dialogId = "";
+
+  const wrap = (action: string, inputPayload: any, isStart = false) => {
+    return JSON.stringify({
+      header: {
+        action: action,
+        task_id: taskId,
+        streaming: "duplex",
+      },
+      payload: {
+        ...(isStart ? {
+          task_group: "aigc",
+          task: "multimodal-generation",
+          function: "generation",
+          model: "multimodal-dialog"
+        } : {}),
+        input: inputPayload,
+        ...(isStart ? {
+          parameters: {
+            upstream: {
+              type: "AudioOnly",
+              mode: "duplex",
+              ...(options.session?.input_audio_format ? { audio_format: options.session.input_audio_format === "pcm16" ? "pcm" : options.session.input_audio_format } : {}),
+              ...(options.session?.sample_rate ? { sample_rate: options.session.sample_rate } : {})
+            },
+            downstream: {
+              sample_rate: options.session?.sample_rate || 24000,
+              ...(options.session?.output_audio_format ? { audio_format: options.session.output_audio_format === "pcm16" ? "pcm" : options.session.output_audio_format } : {}),
+              ...(options.session?.voice ? { voice: options.session.voice } : {})
+            },
+            client_info: {
+              user_id: "test",
+            },
+            ...(options.session?.instructions ? {
+                biz_params: {
+                    user_prompt_params: {
+                        prompt: options.session.instructions
+                    }
+                }
+            } : {})
+          }
+        } : {})
+      }
+    });
+  };
+
+  return {
+    buildConnectMessages() {
+      taskId = Math.random().toString(36).substring(2, 15);
+      return wrap("run-task", {
+        directive: "Start",
+        workspace_id: "default", // Assuming this works or gets overridden
+        app_id: options.session?.app_id || "", 
+      }, true);
+    },
+    buildAudioInputMessages(frame) {
+      // Audio is sent as pure binary stream for multimodal-dialog according to docs
+      // "当前二进制消息仅包含音频数据。上传音频时，将原始音频直接转为二进制流即可，无需额外处理。"
+      return frame.data;
+    },
+    buildTextInputMessages(text, _context, params) {
+      return [
+        wrap("continue-task", {
+          directive: "RequestToRespond",
+          dialog_id: dialogId || undefined,
+          type: params?.type || "prompt",
+          text: text,
+        })
+      ];
+    },
+    buildCommitMessages() {
+      return null; // Not needed
+    },
+    buildResponseCreateMessages() {
+      return null;
+    },
+    buildFinishMessages() {
+      return wrap("finish-task", {
+        directive: "Stop",
+      });
+    },
+    extractOutputFrames(message, rawData, _context) {
+      if (rawData instanceof ArrayBuffer || rawData instanceof Blob) {
+        return {
+          data: rawData instanceof Blob ? new ArrayBuffer(0) : rawData,
+          format: "pcm16",
+        };
+      }
+      try {
+        const msg = typeof message === "string" ? JSON.parse(message) : message;
+        if (msg.payload?.output?.event === "Started" || msg.payload?.output?.event === "DialogStateChanged") {
+          const did = msg.payload.output.dialog_id;
+          if (did) { dialogId = did; }
+          return null;
+        }
+        if (msg.payload?.output?.event === "SpeechContent" || msg.payload?.output?.event === "RespondingContent") {
+          return null;
+        }
+      } catch (e) { }
+      return null;
+    }
+  };
+}
+
 export function createOpenAIRealtimeVoiceProtocolAdapter(
   options: AIProxyRealtimeVoiceAliyunProtocolOptions = {},
 ): AIProxyRealtimeVoiceProtocolAdapter {
   const inputAudioFormat = options.inputAudioFormat || "pcm16";
   const outputAudioFormat = options.outputAudioFormat || "pcm16";
+  const normalizedModel = String(options.model || "").trim().toLowerCase();
+  const supportsTranscriptTextBuffer = normalizedModel.includes("tts");
+  const defaultModalities = Array.isArray(options.modalities)
+    ? options.modalities
+    : Array.isArray(options.response?.modalities)
+      ? options.response.modalities
+      : undefined;
 
   const wrap = (payload: any) => payload;
 
@@ -552,7 +707,7 @@ export function createOpenAIRealtimeVoiceProtocolAdapter(
       const session = {
         input_audio_format: inputAudioFormat,
         output_audio_format: outputAudioFormat,
-        ...(options.modalities ? { modalities: options.modalities } : {}),
+        ...(defaultModalities ? { modalities: defaultModalities } : {}),
         ...(options.model ? { model: options.model } : {}),
         ...(options.session || {}),
       };
@@ -569,16 +724,34 @@ export function createOpenAIRealtimeVoiceProtocolAdapter(
         audio: encodeBase64(frame.data),
       });
     },
-    buildTextInputMessages(text) {
+    buildTextInputMessages(text, context, params) {
+      if (params?.type === "transcript" && supportsTranscriptTextBuffer) {
+        return [
+          wrap({
+            event_id: createRealtimeEventId(),
+            type: "input_text_buffer.append",
+            text,
+          }),
+          wrap({
+            event_id: createRealtimeEventId(),
+            type: "input_text_buffer.commit",
+          }),
+        ];
+      }
+
       return [
         wrap({
           event_id: createRealtimeEventId(),
-          type: "input_text_buffer.append",
-          text,
+          type: "conversation.item.create",
+          item: {
+            type: "message",
+            role: "user",
+            content: [{ type: "input_text", text }]
+          }
         }),
         wrap({
           event_id: createRealtimeEventId(),
-          type: "input_text_buffer.commit",
+          type: "response.create",
         }),
       ];
     },
@@ -590,7 +763,7 @@ export function createOpenAIRealtimeVoiceProtocolAdapter(
     },
     buildResponseCreateMessages() {
       const responseOpts = {
-        ...(options.modalities ? { modalities: options.modalities } : {}),
+        ...(defaultModalities ? { modalities: defaultModalities } : {}),
         ...(options.response || {})
       };
       return wrap({
@@ -681,7 +854,7 @@ export class AIProxyRealtimeVoiceSession implements IAIProxyRealtimeVoiceSession
         void this.handleTransportJsonMessage(data, event);
       },
       onError: (error) => {
-        this.emitVoiceError(error instanceof Error ? error : new Error(String(error)));
+          this.emitVoiceError(toRealtimeVoiceError(error));
       },
       onClose: () => {
         if (this.capturing) {
@@ -752,12 +925,15 @@ export class AIProxyRealtimeVoiceSession implements IAIProxyRealtimeVoiceSession
     }
   }
 
-  async sendText(text: string): Promise<void> {
+  async sendText(text: string, options?: any): Promise<void> {
     await this.connect();
     const context = this.requireProtocolContext();
     const messages = this.options.protocolAdapter.buildTextInputMessages
-      ? await this.options.protocolAdapter.buildTextInputMessages(text, context)
+      ? await this.options.protocolAdapter.buildTextInputMessages(text, context, options)
       : text;
+    if (!messages || (Array.isArray(messages) && messages.length === 0)) {
+      throw new Error("当前会话不支持文本补发或纯文本语音合成，请检查服务配置是否使用了 TTS / 多模态实时模型");
+    }
     await this.writeMessages(messages);
   }
 

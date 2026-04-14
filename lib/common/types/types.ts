@@ -643,6 +643,7 @@ export interface AIProxyRealtimeVoiceProtocolAdapter {
   buildTextInputMessages?: (
     text: string,
     context: AIProxyRealtimeVoiceProtocolContext,
+    params?: { type?: 'prompt' | 'transcript' },
   ) =>
     | AIProxyRealtimeAudioWriteData
     | AIProxyRealtimeAudioWriteData[]
@@ -752,7 +753,7 @@ export interface IAIProxyRealtimeVoiceSession {
   connect(): Promise<void>;
   startVoiceInput(): Promise<void>;
   stopVoiceInput(options?: AIProxyRealtimeVoiceStopOptions): Promise<void>;
-  sendText(text: string): Promise<void>;
+  sendText(text: string, options?: { type?: 'prompt' | 'transcript' }): Promise<void>;
   sendEvent(data: AIProxyRealtimeAudioWriteData): Promise<void>;
   commitInput(): Promise<void>;
   requestResponse(): Promise<void>;

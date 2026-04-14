@@ -207,7 +207,7 @@ export interface IAIProxyOperations {
    * 注意: 如果 realtimeConfig.connection.authMode 使用 bearer，浏览器原生 WebSocket 通常不能直接附带 Authorization 握手头。
    * 这类场景请优先改用 query/token 形式，或通过 createWebSocket 提供支持自定义请求头的运行时实现。
    */
-  CreateRealtimeAudioSession(
+  CreateAudioSocket(
     options: AIProxyRealtimeAudioSessionOptions
   ): Promise<[IAIProxyRealtimeAudioSession | null, Error | null]>;
 
@@ -217,7 +217,7 @@ export interface IAIProxyOperations {
    * 默认更适合 query 透传的 apikey 模式；若切换为 bearer，同样受浏览器原生 WebSocket 握手头限制影响。
    * 默认会按阿里云 DashScope 的 WebSocket 接口地址和 query api_key 透传方式构造连接参数。
    */
-  CreateAliyunRealtimeAudioSession(
+  CreateAliyunAudioSocket(
     options: AIProxyAliyunRealtimeAudioSessionOptions
   ): Promise<[IAIProxyRealtimeAudioSession | null, Error | null]>;
 
@@ -227,7 +227,7 @@ export interface IAIProxyOperations {
    * PC 浏览器、移动 H5、微信浏览器可直接复用浏览器默认音频适配器；小程序环境建议注入 createWebSocket、inputAdapter、outputAdapter，
    * 或至少通过 miniProgramOptions / 自定义适配器对接平台 API。
    */
-  CreateRealtimeVoiceSession(
+  CreateVoiceSession(
     options: AIProxyRealtimeVoiceSessionOptions
   ): Promise<[IAIProxyRealtimeVoiceSession | null, Error | null]>;
 
@@ -236,7 +236,7 @@ export interface IAIProxyOperations {
    * 内部会自动补齐阿里云 realtime 连接模板，并提供阿里云原生协议的适配。
    * 浏览器环境默认可直接采集和播放；小程序环境仍建议注入平台专用的 socket 与音频适配器。
    */
-  CreateAliyunRealtimeVoiceSession(
+  CreateAliyunTranscriptionSession(
     options: AIProxyAliyunRealtimeVoiceSessionOptions
   ): Promise<[IAIProxyRealtimeVoiceSession | null, Error | null]>;
 
@@ -245,7 +245,7 @@ export interface IAIProxyOperations {
    * 内部提供 session.update / input_audio_buffer.append /
    * input_audio_buffer.commit / response.create / response.audio.delta 的标准 OpenAI 协议适配。
    */
-  CreateOpenAIRealtimeVoiceSession(
+  CreateConversationalVoiceSession(
     options: AIProxyAliyunRealtimeVoiceSessionOptions,
   ): Promise<[IAIProxyRealtimeVoiceSession | null, Error | null]>;
 
