@@ -280,6 +280,13 @@ export function createBrowserRealtimeVoiceInputAdapter(
         }
         const inputBuffer = event.inputBuffer;
         const mono = mixToMono(inputBuffer);
+        const noiseGateThreshold =
+          typeof options.noiseGateThreshold === "number" && options.noiseGateThreshold > 0
+            ? options.noiseGateThreshold
+            : 0;
+        if (noiseGateThreshold > 0 && calculateRms(mono) < noiseGateThreshold) {
+          return;
+        }
         const pcm16 = convertFloat32ToPcm16(
           mono,
           inputBuffer.sampleRate,
@@ -1236,6 +1243,18 @@ function mixToMono(buffer: AudioBuffer): Float32Array {
     }
   }
   return mixed;
+}
+
+function calculateRms(input: Float32Array): number {
+  if (input.length === 0) {
+    return 0;
+  }
+  let sumSquares = 0;
+  for (let index = 0; index < input.length; index++) {
+    const sample = input[index];
+    sumSquares += sample * sample;
+  }
+  return Math.sqrt(sumSquares / input.length);
 }
 
 function convertFloat32ToPcm16(

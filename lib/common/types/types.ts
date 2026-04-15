@@ -685,6 +685,7 @@ export interface AIProxyRealtimeVoiceBrowserAdapterOptions {
   sampleRate?: number;
   channelCount?: number;
   bufferSize?: number;
+  noiseGateThreshold?: number;
   audioConstraints?: MediaTrackConstraints;
 }
 
