@@ -465,21 +465,34 @@ export class AIProxyRealtimeAudioSession
     const url = new URL(this.normalizeWebSocketUrl(rawUrl));
     const headers = { ...(authInfo.headers || {}) };
     const protocols = [...(authInfo.protocols || [])];
+    const authQueryName = authInfo.authQueryName;
+    const supportsHandshakeHeaders = !!this.options.createWebSocket;
 
     for (const [key, value] of Object.entries(authInfo.query || {})) {
       url.searchParams.set(key, String(value));
     }
 
+    const authorizationHeader = headers.Authorization || headers.authorization;
+    const bearerCredential = this.extractBearerCredential(authorizationHeader);
     const credentialValue =
-      authInfo.tempToken || authInfo.token || authInfo.tempApiKey || authInfo.apiKey;
+      authInfo.tempToken ||
+      authInfo.token ||
+      authInfo.tempApiKey ||
+      authInfo.apiKey ||
+      bearerCredential;
+
     if (authInfo.authMode === "bearer" && credentialValue && !headers.Authorization) {
       headers.Authorization = `Bearer ${credentialValue}`;
     }
     if (credentialValue) {
-      const authQueryName = authInfo.authQueryName;
       if (authQueryName) {
         url.searchParams.set(authQueryName, credentialValue);
       }
+    }
+
+    if (!supportsHandshakeHeaders && authQueryName && credentialValue) {
+      delete headers.Authorization;
+      delete headers.authorization;
     }
 
     return {

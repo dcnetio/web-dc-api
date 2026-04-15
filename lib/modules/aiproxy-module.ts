@@ -583,6 +583,52 @@ export class AIProxyModule implements DCModule, IAIProxyOperations {
               apiKey: updatedApiKey,
             };
           },
+        } : shouldUseMultimodalDialog ? {
+          resolveAuthInfo: (payloadText: string) => {
+            const info = this.parseRealtimeAudioAuthInfoWithServiceConfig(
+              payloadText,
+              realtimeConfig,
+            );
+            const finalUrl = info.url || info.websocketUrl || this.buildAliyunRealtimeWebSocketUrl(
+              options.websocketBaseUrl,
+              effectiveResolvedConfig.path,
+            );
+            const infoHeaders = { ...(info.headers || {}) };
+            let updatedAuthMode = info.authMode;
+            let updatedQueryName = info.authQueryName || "api_key";
+            const actualToken =
+              info.apiKey ||
+              info.tempApiKey ||
+              info.token ||
+              info.tempToken ||
+              this.extractBearerCredential(
+                info.headers?.Authorization || info.headers?.authorization,
+              );
+            let updatedApiKey = info.apiKey || info.tempApiKey;
+
+            if (actualToken && (info.authMode === "bearer" || info.authMode === "token" || !info.authMode)) {
+              updatedAuthMode = "apikey";
+              updatedQueryName = "api_key";
+              updatedApiKey = actualToken;
+            }
+
+            if (updatedQueryName && updatedApiKey) {
+              delete infoHeaders.Authorization;
+              delete infoHeaders.authorization;
+            }
+
+            return {
+              ...info,
+              url: finalUrl,
+              websocketUrl: finalUrl,
+              endpoint: finalUrl,
+              authMode: updatedAuthMode,
+              authQueryName: updatedQueryName,
+              apiKey: updatedApiKey,
+              tempApiKey: updatedApiKey,
+              headers: Object.keys(infoHeaders).length > 0 ? infoHeaders : undefined,
+            };
+          },
         } : {}),
         stopVoiceInputOptions,
         protocolAdapter: useOpenAIRealtimeProtocol
@@ -942,11 +988,29 @@ export class AIProxyModule implements DCModule, IAIProxyOperations {
     } as Exclude<AIProxyRealtimeConfig["connection"], undefined>;
     const actualDataField = responseConfig?.actualDataField || "providerData";
     const customResponse = responseConfig?.customResponse === true;
+    const providerData = this.extractActualRealtimePayload(parsed, actualDataField);
+    const providerDataRecord =
+      providerData && typeof providerData === "object" && !Array.isArray(providerData)
+        ? (providerData as Record<string, unknown>)
+        : undefined;
 
     const responseConnection = this.extractRealtimeConnectionFromPayload(parsed);
-    const responseCredentials = customResponse
+    const parsedCredentials = customResponse
       ? this.extractRealtimeCredentialsFromPayload(parsed)
       : this.extractRealtimeCredentialsFromPayload(parsed, parsed);
+    const providerCredentials = providerDataRecord
+      ? this.extractRealtimeCredentialsFromPayload(providerDataRecord, providerDataRecord)
+      : {};
+    const responseCredentials = {
+      authorization: parsedCredentials.authorization || providerCredentials.authorization,
+      token: parsedCredentials.token || providerCredentials.token,
+      tempToken: parsedCredentials.tempToken || providerCredentials.tempToken,
+      apiKey: parsedCredentials.apiKey || providerCredentials.apiKey,
+      tempApiKey: parsedCredentials.tempApiKey || providerCredentials.tempApiKey,
+      expiresAt: parsedCredentials.expiresAt || providerCredentials.expiresAt,
+      expiresIn: parsedCredentials.expiresIn || providerCredentials.expiresIn,
+      authMode: parsedCredentials.authMode || providerCredentials.authMode,
+    };
 
     const mergedHeaders = {
       ...(connectionPreset?.headers || {}),
@@ -983,9 +1047,24 @@ export class AIProxyModule implements DCModule, IAIProxyOperations {
       throw new Error("实时调用服务配置缺少 connection.url");
     }
 
-    const providerData = this.extractActualRealtimePayload(parsed, actualDataField);
     const expiresIn =
       responseCredentials.expiresIn || responseConfig?.defaultExpiresIn;
+
+    if (
+      !responseCredentials.authorization &&
+      !responseCredentials.token &&
+      !responseCredentials.tempToken &&
+      !responseCredentials.apiKey &&
+      !responseCredentials.tempApiKey
+    ) {
+      logger.warn("实时鉴权响应未解析到凭证字段", {
+        actualDataField,
+        hasTopLevelCredentials: Object.prototype.hasOwnProperty.call(parsed, "credentials"),
+        topLevelKeys: Object.keys(parsed).slice(0, 20),
+        providerDataType: providerData == null ? "null" : Array.isArray(providerData) ? "array" : typeof providerData,
+        providerDataKeys: providerDataRecord ? Object.keys(providerDataRecord).slice(0, 20) : [],
+      });
+    }
 
     return {
       websocketUrl: mergedUrl,
@@ -1062,38 +1141,60 @@ export class AIProxyModule implements DCModule, IAIProxyOperations {
     expiresIn?: number;
       authMode?: "token" | "apikey" | "bearer" | "none";
   } {
-    const credentialsValue = parsed.credentials;
+    const parsedRecord = this.toLooseRecord(parsed);
+    const fallbackRecord = this.toLooseRecord(fallbackSource);
+    const credentialsValue = parsedRecord?.credentials;
+    const credentialsRecord = this.toLooseRecord(credentialsValue);
     const credentialSource =
-      credentialsValue &&
-      typeof credentialsValue === "object" &&
-      !Array.isArray(credentialsValue)
-        ? (credentialsValue as Record<string, unknown>)
-        : fallbackSource || parsed;
+      credentialsRecord ||
+      parsedRecord ||
+      fallbackRecord ||
+      parsed;
 
-    const authorization = this.toOptionalString(
-      (credentialSource.Authorization ||
-        credentialSource.authorization) as unknown,
-    );
-    const tempToken = this.toOptionalString(
-      credentialSource.tempToken || credentialSource.token,
-    );
-    const tempApiKey = this.toOptionalString(
-      credentialSource.tempApiKey || credentialSource.apiKey,
-    );
+    const authorization =
+      this.readStringField(credentialSource, ["Authorization", "authorization"]) ||
+      this.readStringField(parsedRecord, ["Authorization", "authorization"]) ||
+      this.readStringField(fallbackRecord, ["Authorization", "authorization"]);
+    const token =
+      this.readStringField(credentialSource, ["token", "access_token", "accessToken"]) ||
+      this.readStringField(parsedRecord, ["token", "access_token", "accessToken"]) ||
+      this.readStringField(fallbackRecord, ["token", "access_token", "accessToken"]);
+    const tempToken =
+      this.readStringField(credentialSource, ["tempToken", "temp_token"]) ||
+      this.readStringField(parsedRecord, ["tempToken", "temp_token"]) ||
+      this.readStringField(fallbackRecord, ["tempToken", "temp_token"]) ||
+      token;
+    const apiKey =
+      this.readStringField(credentialSource, ["apiKey", "api_key"]) ||
+      this.readStringField(parsedRecord, ["apiKey", "api_key"]) ||
+      this.readStringField(fallbackRecord, ["apiKey", "api_key"]);
+    const tempApiKey =
+      this.readStringField(credentialSource, ["tempApiKey", "temp_api_key"]) ||
+      this.readStringField(parsedRecord, ["tempApiKey", "temp_api_key"]) ||
+      this.readStringField(fallbackRecord, ["tempApiKey", "temp_api_key"]) ||
+      apiKey;
+    const expiresAt =
+      this.readNumberOrStringField(credentialSource, ["expiresAt", "expires_at"]) ||
+      this.readNumberOrStringField(parsedRecord, ["expiresAt", "expires_at"]) ||
+      this.readNumberOrStringField(fallbackRecord, ["expiresAt", "expires_at"]);
+    const expiresIn =
+      this.readNumberField(credentialSource, ["expiresIn", "expires_in"]) ||
+      this.readNumberField(parsedRecord, ["expiresIn", "expires_in"]) ||
+      this.readNumberField(fallbackRecord, ["expiresIn", "expires_in"]);
+    const authMode =
+      this.readStringField(credentialSource, ["authMode", "auth_mode"]) ||
+      this.readStringField(parsedRecord, ["authMode", "auth_mode"]) ||
+      this.readStringField(fallbackRecord, ["authMode", "auth_mode"]);
 
     return {
       authorization,
-      token: this.toOptionalString(credentialSource.token),
+      token,
       tempToken,
-      apiKey: this.toOptionalString(credentialSource.apiKey),
+      apiKey,
       tempApiKey,
-      expiresAt:
-        this.toNumberOrString(credentialSource.expiresAt) ||
-        this.toNumberOrString(credentialSource.expires_at),
-      expiresIn:
-        this.toOptionalNumber(credentialSource.expiresIn) ||
-        this.toOptionalNumber(credentialSource.expires_in),
-      authMode: this.toOptionalString(credentialSource.authMode) as
+      expiresAt,
+      expiresIn,
+      authMode: authMode as
         | "token"
         | "apikey"
         | "bearer"
@@ -1129,6 +1230,78 @@ export class AIProxyModule implements DCModule, IAIProxyOperations {
       return "apikey";
     }
     return "none";
+  }
+
+  private toLooseRecord(value: unknown): Record<string, unknown> | undefined {
+    if (!value) {
+      return undefined;
+    }
+    if (typeof value === "object" && !Array.isArray(value)) {
+      return value as Record<string, unknown>;
+    }
+    if (typeof value === "string") {
+      const trimmed = value.trim();
+      if (!trimmed) {
+        return undefined;
+      }
+      try {
+        const parsed = JSON.parse(trimmed) as unknown;
+        if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+          return parsed as Record<string, unknown>;
+        }
+      } catch {
+        return undefined;
+      }
+    }
+    return undefined;
+  }
+
+  private readStringField(
+    record: Record<string, unknown> | undefined,
+    keys: string[],
+  ): string | undefined {
+    if (!record) {
+      return undefined;
+    }
+    for (const key of keys) {
+      const value = this.toOptionalString(record[key]);
+      if (value) {
+        return value;
+      }
+    }
+    return undefined;
+  }
+
+  private readNumberField(
+    record: Record<string, unknown> | undefined,
+    keys: string[],
+  ): number | undefined {
+    if (!record) {
+      return undefined;
+    }
+    for (const key of keys) {
+      const value = this.toOptionalNumber(record[key]);
+      if (value != null) {
+        return value;
+      }
+    }
+    return undefined;
+  }
+
+  private readNumberOrStringField(
+    record: Record<string, unknown> | undefined,
+    keys: string[],
+  ): number | string | undefined {
+    if (!record) {
+      return undefined;
+    }
+    for (const key of keys) {
+      const value = this.toNumberOrString(record[key]);
+      if (value != null) {
+        return value;
+      }
+    }
+    return undefined;
   }
 
   private buildAliyunRealtimeConfig(

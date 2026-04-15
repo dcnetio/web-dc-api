@@ -15,8 +15,11 @@ import {
   AIProxyRealtimeVoiceProtocolAdapter,
   AIProxyRealtimeVoiceProtocolContext,
   AIProxyRealtimeVoiceRuntime,
+  AIProxyRealtimeVoiceImageInput,
+  AIProxyRealtimeVoiceImagePromptOptions,
   AIProxyRealtimeVoiceSessionOptions,
   AIProxyRealtimeVoiceStopOptions,
+  AIProxyRealtimeVoiceTextInputOptions,
   AIProxyWechatMiniProgramAPI,
   IAIProxyRealtimeAudioSession,
   IAIProxyRealtimeVoiceInputAdapter,
@@ -584,8 +587,22 @@ export function createQwenMultimodalDialogAdapter(
 ): AIProxyRealtimeVoiceProtocolAdapter {
   let taskId = Math.random().toString(36).substring(2, 15);
   let dialogId = "";
+  let listeningDialogId = "";
+  const resolvedSampleRate = toOptionalSampleRate(options.session?.sample_rate) || 24000;
+  const resolvedModalities = Array.isArray(options.modalities) && options.modalities.length > 0
+    ? options.modalities
+    : ["audio", "text"];
+  const resolvedResponse = {
+    ...(isPlainRecord(options.response) ? options.response : {}),
+    modalities: resolvedModalities,
+  };
 
-  const wrap = (action: string, inputPayload: any, isStart = false) => {
+  const wrap = (
+    action: string,
+    inputPayload: any,
+    isStart = false,
+    payloadOverrides?: Record<string, unknown>,
+  ) => {
     return JSON.stringify({
       header: {
         action: action,
@@ -602,14 +619,15 @@ export function createQwenMultimodalDialogAdapter(
         input: inputPayload,
         ...(isStart ? {
           parameters: {
+            modalities: resolvedModalities,
             upstream: {
               type: "AudioOnly",
               mode: "duplex",
               ...(options.session?.input_audio_format ? { audio_format: options.session.input_audio_format === "pcm16" ? "pcm" : options.session.input_audio_format } : {}),
-              ...(options.session?.sample_rate ? { sample_rate: options.session.sample_rate } : {})
+              ...(resolvedSampleRate ? { sample_rate: resolvedSampleRate } : {})
             },
             downstream: {
-              sample_rate: options.session?.sample_rate || 24000,
+              sample_rate: resolvedSampleRate,
               ...(options.session?.output_audio_format ? { audio_format: options.session.output_audio_format === "pcm16" ? "pcm" : options.session.output_audio_format } : {}),
               ...(options.session?.voice ? { voice: options.session.voice } : {})
             },
@@ -624,19 +642,26 @@ export function createQwenMultimodalDialogAdapter(
                 }
             } : {})
           }
-        } : {})
-      }
+        } : {}),
+        ...(payloadOverrides || {})
+      },
+      ...(Object.keys(resolvedResponse).length > 0 ? { response: resolvedResponse } : {})
     });
   };
 
   return {
     buildConnectMessages() {
       taskId = Math.random().toString(36).substring(2, 15);
-      return wrap("run-task", {
+      const startInput: Record<string, unknown> = {
         directive: "Start",
-        workspace_id: "default", // Assuming this works or gets overridden
         app_id: options.session?.app_id || "", 
-      }, true);
+      };
+
+      if (typeof options.session?.workspace_id === "string" && options.session.workspace_id.trim()) {
+        startInput.workspace_id = options.session.workspace_id.trim();
+      }
+
+      return wrap("run-task", startInput, true);
     },
     buildAudioInputMessages(frame) {
       // Audio is sent as pure binary stream for multimodal-dialog according to docs
@@ -644,12 +669,28 @@ export function createQwenMultimodalDialogAdapter(
       return frame.data;
     },
     buildTextInputMessages(text, _context, params) {
+      const requestPayload = buildQwenMultimodalDialogRequestPayload(
+        text,
+        params,
+        params?.images?.length ? listeningDialogId || dialogId : dialogId,
+      );
+      const mergedParameters = {
+        modalities: resolvedModalities,
+        ...(isPlainRecord(requestPayload.payloadOverrides?.parameters)
+          ? requestPayload.payloadOverrides?.parameters
+          : {}),
+      };
+      const mergedResponse = {
+        ...resolvedResponse,
+        ...(isPlainRecord(requestPayload.payloadOverrides?.response)
+          ? requestPayload.payloadOverrides?.response
+          : {}),
+      };
       return [
-        wrap("continue-task", {
-          directive: "RequestToRespond",
-          dialog_id: dialogId || undefined,
-          type: params?.type || "prompt",
-          text: text,
+        wrap("continue-task", requestPayload.input, false, {
+          ...(requestPayload.payloadOverrides || {}),
+          parameters: mergedParameters,
+          response: mergedResponse,
         })
       ];
     },
@@ -664,22 +705,34 @@ export function createQwenMultimodalDialogAdapter(
         directive: "Stop",
       });
     },
-    extractOutputFrames(message, rawData, _context) {
+    async extractOutputFrames(message, rawData, _context) {
       if (rawData instanceof ArrayBuffer || rawData instanceof Blob) {
         return {
-          data: rawData instanceof Blob ? new ArrayBuffer(0) : rawData,
+          data: rawData instanceof Blob ? await rawData.arrayBuffer() : rawData,
           format: "pcm16",
+          sampleRate: resolvedSampleRate,
+          channels: 1,
+          timestamp: Date.now(),
         };
       }
       try {
         const msg = typeof message === "string" ? JSON.parse(message) : message;
-        if (msg.payload?.output?.event === "Started" || msg.payload?.output?.event === "DialogStateChanged") {
-          const did = msg.payload.output.dialog_id;
+        const output = isPlainRecord(msg?.payload?.output) ? msg.payload.output : null;
+        if (output?.event === "Started" || output?.event === "DialogStateChanged") {
+          const did = output.dialog_id;
           if (did) { dialogId = did; }
+          if (output?.event === "DialogStateChanged" && output?.state === "Listening" && did) {
+            listeningDialogId = did;
+          }
           return null;
         }
-        if (msg.payload?.output?.event === "SpeechContent" || msg.payload?.output?.event === "RespondingContent") {
-          return null;
+
+        const audioFrame = extractQwenDialogAudioFrame(
+          output,
+          resolvedSampleRate,
+        );
+        if (audioFrame) {
+          return audioFrame;
         }
       } catch (e) { }
       return null;
@@ -925,7 +978,7 @@ export class AIProxyRealtimeVoiceSession implements IAIProxyRealtimeVoiceSession
     }
   }
 
-  async sendText(text: string, options?: any): Promise<void> {
+  async sendText(text: string, options?: AIProxyRealtimeVoiceTextInputOptions): Promise<void> {
     await this.connect();
     const context = this.requireProtocolContext();
     const messages = this.options.protocolAdapter.buildTextInputMessages
@@ -935,6 +988,17 @@ export class AIProxyRealtimeVoiceSession implements IAIProxyRealtimeVoiceSession
       throw new Error("当前会话不支持文本补发或纯文本语音合成，请检查服务配置是否使用了 TTS / 多模态实时模型");
     }
     await this.writeMessages(messages);
+  }
+
+  async sendImagePrompt(
+    text: string,
+    image: string | AIProxyRealtimeVoiceImageInput,
+    options?: AIProxyRealtimeVoiceImagePromptOptions,
+  ): Promise<void> {
+    await this.sendText(text, {
+      ...(options || {}),
+      images: [image],
+    });
   }
 
   async sendEvent(data: AIProxyRealtimeAudioWriteData): Promise<void> {
@@ -1314,6 +1378,266 @@ function normalizeArray<T>(
 
 function isPlainRecord(value: unknown): value is Record<string, any> {
   return !!value && typeof value === "object" && !Array.isArray(value);
+}
+
+type QwenMultimodalDialogImageParameter = {
+  type: "url" | "base64";
+  value: string;
+};
+
+function normalizeRealtimeVoiceImageInputs(
+  images?: AIProxyRealtimeVoiceTextInputOptions["images"],
+): QwenMultimodalDialogImageParameter[] {
+  if (!Array.isArray(images)) {
+    return [];
+  }
+
+  return images
+    .map((image) => {
+      if (typeof image === "string") {
+        const trimmed = image.trim();
+        return trimmed ? { type: "url", value: trimmed } : null;
+      }
+
+      if (!isPlainRecord(image)) {
+        return null;
+      }
+
+      const type = image.type === "base64" || image.type === "url" ? image.type : undefined;
+      const value = typeof image.value === "string" ? image.value.trim() : "";
+      const url = typeof image.url === "string" ? image.url.trim() : "";
+      const data = typeof image.data === "string" ? image.data.trim() : "";
+      const normalizedType = type || (value ? "url" : data ? "base64" : url ? "url" : undefined);
+      const normalizedValue = value || data || url;
+
+      if (!normalizedType || !normalizedValue) {
+        return null;
+      }
+
+      return {
+        type: normalizedType,
+        value: normalizedValue,
+      };
+    })
+    .filter((image): image is QwenMultimodalDialogImageParameter => !!image);
+}
+
+function buildQwenMultimodalDialogRequestPayload(
+  text: string,
+  params?: AIProxyRealtimeVoiceTextInputOptions,
+  dialogId?: string,
+): {
+  input: Record<string, unknown>;
+  payloadOverrides?: Record<string, unknown>;
+} {
+  const inputPayload = isPlainRecord(params?.input) ? { ...params.input } : {};
+  const parameters = isPlainRecord(params?.parameters) ? { ...params.parameters } : {};
+  const normalizedText = typeof text === "string" ? text.trim() : "";
+  const images = normalizeRealtimeVoiceImageInputs(params?.images);
+
+  if (typeof inputPayload.directive !== "string") {
+    inputPayload.directive = "RequestToRespond";
+  }
+  const directive = inputPayload.directive;
+  if (dialogId && inputPayload.dialog_id == null) {
+    inputPayload.dialog_id = dialogId;
+  }
+
+  if (directive === "RequestToRespond") {
+    const shouldPopulateTextFields =
+      normalizedText.length > 0 ||
+      images.length > 0 ||
+      typeof params?.type === "string" ||
+      typeof inputPayload.type === "string" ||
+      typeof inputPayload.text === "string";
+
+    if (shouldPopulateTextFields) {
+      if (typeof inputPayload.type !== "string") {
+        inputPayload.type = params?.type || "prompt";
+      }
+      if (typeof inputPayload.text !== "string") {
+        inputPayload.text = text;
+      }
+    }
+  }
+
+  if (images.length > 0 && !Array.isArray(parameters.images)) {
+    parameters.images = images.slice(0, 1);
+  }
+
+  return Object.keys(parameters).length > 0
+    ? { input: inputPayload, payloadOverrides: { parameters } }
+    : { input: inputPayload };
+}
+
+function extractQwenDialogAudioFrame(
+  output: Record<string, any> | null,
+  sampleRate: number,
+): AIProxyRealtimeVoiceOutputFrame | null {
+  if (!output) {
+    return null;
+  }
+
+  const audioCandidate = findQwenDialogAudioCandidate(output);
+  if (audioCandidate?.kind === "base64") {
+    return {
+      data: decodeBase64(audioCandidate.value),
+      format: "pcm16",
+      sampleRate,
+      channels: 1,
+      timestamp: Date.now(),
+      metadata: output,
+    };
+  }
+
+  if (audioCandidate?.kind === "url") {
+    return {
+      data: audioCandidate.value,
+      format: "pcm16",
+      sampleRate,
+      channels: 1,
+      timestamp: Date.now(),
+      metadata: output,
+    };
+  }
+
+  return null;
+}
+
+function findQwenDialogAudioCandidate(
+  value: unknown,
+): { kind: "base64" | "url"; value: string } | null {
+  const visited = new WeakSet<object>();
+  const looksLikeAudioContext = (record: Record<string, unknown>, parentKey: string): boolean => {
+    const normalizedParentKey = parentKey.toLowerCase();
+    if (normalizedParentKey.includes("audio")) {
+      return true;
+    }
+
+    const audioHints = [
+      readOptionalString(record.type),
+      readOptionalString(record.mimeType),
+      readOptionalString(record.mime_type),
+      readOptionalString(record.mediaType),
+      readOptionalString(record.media_type),
+      readOptionalString(record.event),
+      readOptionalString(record.kind),
+      readOptionalString(record.modality),
+      readOptionalString(record.modalities),
+      readOptionalString(record.content_type),
+      readOptionalString(record.format),
+    ]
+      .filter((item): item is string => Boolean(item))
+      .map((item) => item.toLowerCase());
+
+    return audioHints.some((item) =>
+      item.includes("audio") ||
+      item.includes("speech") ||
+      item.includes("pcm") ||
+      item.includes("wav") ||
+      item.includes("mp3") ||
+      item.includes("opus")
+    );
+  };
+
+  const walk = (current: unknown, parentKey = ""): { kind: "base64" | "url"; value: string } | null => {
+    if (!current) {
+      return null;
+    }
+
+    if (typeof current === "string") {
+      const trimmed = current.trim();
+      if (!trimmed) {
+        return null;
+      }
+      if (looksLikeAudioUrl(trimmed) && parentKey.toLowerCase().includes("audio")) {
+        return { kind: "url", value: trimmed };
+      }
+      if (looksLikeBase64Payload(trimmed) && parentKey.toLowerCase().includes("audio")) {
+        return { kind: "base64", value: trimmed };
+      }
+      return null;
+    }
+
+    if (Array.isArray(current)) {
+      for (const item of current) {
+        const found = walk(item, parentKey);
+        if (found) {
+          return found;
+        }
+      }
+      return null;
+    }
+
+    if (!isPlainRecord(current)) {
+      return null;
+    }
+    if (visited.has(current)) {
+      return null;
+    }
+    visited.add(current);
+
+    const audioContext = looksLikeAudioContext(current, parentKey);
+    if (audioContext) {
+      const directCandidates = ["audio", "audio_url", "audioUrl", "delta", "data", "url", "value"];
+      for (const key of directCandidates) {
+        const candidate = current[key];
+        if (typeof candidate !== "string") {
+          continue;
+        }
+        const trimmed = candidate.trim();
+        if (!trimmed) {
+          continue;
+        }
+        if (looksLikeAudioUrl(trimmed)) {
+          return { kind: "url", value: trimmed };
+        }
+        if (looksLikeBase64Payload(trimmed)) {
+          return { kind: "base64", value: trimmed };
+        }
+      }
+    }
+
+    const prioritizedKeys = ["audio", "audio_url", "audioUrl", "delta", "data", "url", "value"];
+    for (const key of prioritizedKeys) {
+      if (key in current) {
+        const found = walk(current[key], audioContext ? `audio:${key}` : key);
+        if (found) {
+          return found;
+        }
+      }
+    }
+
+    for (const [key, nested] of Object.entries(current)) {
+      const found = walk(nested, key);
+      if (found) {
+        return found;
+      }
+    }
+
+    return null;
+  };
+
+  return walk(value);
+}
+
+function readOptionalString(value: unknown): string | null {
+  return typeof value === "string" && value.trim() ? value.trim() : null;
+}
+
+function looksLikeBase64Payload(value: string): boolean {
+  if (!value || value.startsWith("http://") || value.startsWith("https://")) {
+    return false;
+  }
+  return value.length > 24 && !/\s/.test(value);
+}
+
+function looksLikeAudioUrl(value: string): boolean {
+  return /^https?:\/\//i.test(value) || /^blob:/i.test(value) || /^data:audio\//i.test(value);
+}
+
+function toOptionalSampleRate(value: unknown): number | undefined {
+  return typeof value === "number" && Number.isFinite(value) ? value : undefined;
 }
 
 function encodeBase64(data: ArrayBuffer | ArrayBufferView | Blob): string {

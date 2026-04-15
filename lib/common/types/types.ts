@@ -643,7 +643,7 @@ export interface AIProxyRealtimeVoiceProtocolAdapter {
   buildTextInputMessages?: (
     text: string,
     context: AIProxyRealtimeVoiceProtocolContext,
-    params?: { type?: 'prompt' | 'transcript' },
+    params?: AIProxyRealtimeVoiceTextInputOptions,
   ) =>
     | AIProxyRealtimeAudioWriteData
     | AIProxyRealtimeAudioWriteData[]
@@ -746,6 +746,28 @@ export interface AIProxyRealtimeVoiceMiniProgramOptions {
   recorderOptions?: Record<string, unknown>;
 }
 
+export interface AIProxyRealtimeVoiceImageInput {
+  type?: 'url' | 'base64';
+  value?: string;
+  url?: string;
+  data?: string;
+  mediaType?: string;
+  name?: string;
+  [key: string]: unknown;
+}
+
+export interface AIProxyRealtimeVoiceTextInputOptions {
+  type?: 'prompt' | 'transcript';
+  images?: Array<string | AIProxyRealtimeVoiceImageInput>;
+  input?: Record<string, unknown>;
+  parameters?: Record<string, unknown>;
+}
+
+export type AIProxyRealtimeVoiceImagePromptOptions = Omit<
+  AIProxyRealtimeVoiceTextInputOptions,
+  'images'
+>;
+
 export interface IAIProxyRealtimeVoiceSession {
   readonly transport: IAIProxyRealtimeAudioSession | null;
   readonly runtime: Exclude<AIProxyRealtimeVoiceRuntime, "auto">;
@@ -753,7 +775,12 @@ export interface IAIProxyRealtimeVoiceSession {
   connect(): Promise<void>;
   startVoiceInput(): Promise<void>;
   stopVoiceInput(options?: AIProxyRealtimeVoiceStopOptions): Promise<void>;
-  sendText(text: string, options?: { type?: 'prompt' | 'transcript' }): Promise<void>;
+  sendText(text: string, options?: AIProxyRealtimeVoiceTextInputOptions): Promise<void>;
+  sendImagePrompt(
+    text: string,
+    image: string | AIProxyRealtimeVoiceImageInput,
+    options?: AIProxyRealtimeVoiceImagePromptOptions,
+  ): Promise<void>;
   sendEvent(data: AIProxyRealtimeAudioWriteData): Promise<void>;
   commitInput(): Promise<void>;
   requestResponse(): Promise<void>;
