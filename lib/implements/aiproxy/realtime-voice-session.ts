@@ -284,11 +284,16 @@ export function createBrowserRealtimeVoiceInputAdapter(
           typeof options.noiseGateThreshold === "number" && options.noiseGateThreshold > 0
             ? options.noiseGateThreshold
             : 0;
-        if (noiseGateThreshold > 0 && calculateRms(mono) < noiseGateThreshold) {
+        const shouldEmitSilenceOnNoiseGate = options.emitSilenceOnNoiseGate === true;
+        const gatedMono =
+          noiseGateThreshold > 0 && calculateRms(mono) < noiseGateThreshold
+            ? (shouldEmitSilenceOnNoiseGate ? new Float32Array(mono.length) : null)
+            : mono;
+        if (!gatedMono) {
           return;
         }
         const pcm16 = convertFloat32ToPcm16(
-          mono,
+          gatedMono,
           inputBuffer.sampleRate,
           targetSampleRate,
         );
@@ -595,6 +600,15 @@ export function createQwenMultimodalDialogAdapter(
   let taskId = Math.random().toString(36).substring(2, 15);
   let dialogId = "";
   let listeningDialogId = "";
+  const sessionRecord = isPlainRecord(options.session) ? options.session : {};
+  const sessionClientInfo = isPlainRecord(sessionRecord.client_info)
+    ? sessionRecord.client_info
+    : null;
+  const resolvedUserId = typeof sessionRecord.user_id === "string" && sessionRecord.user_id.trim()
+    ? sessionRecord.user_id.trim()
+    : typeof sessionClientInfo?.user_id === "string" && sessionClientInfo.user_id.trim()
+      ? sessionClientInfo.user_id.trim()
+      : "anonymous";
   const resolvedSampleRate = toOptionalSampleRate(options.session?.sample_rate) || 24000;
   const resolvedModalities = Array.isArray(options.modalities) && options.modalities.length > 0
     ? options.modalities
@@ -639,7 +653,7 @@ export function createQwenMultimodalDialogAdapter(
               ...(options.session?.voice ? { voice: options.session.voice } : {})
             },
             client_info: {
-              user_id: "test",
+              user_id: resolvedUserId,
             },
             ...(options.session?.instructions ? {
                 biz_params: {
@@ -702,7 +716,10 @@ export function createQwenMultimodalDialogAdapter(
       ];
     },
     buildCommitMessages() {
-      return null; // Not needed
+      return wrap("continue-task", {
+        directive: "Stop",
+        ...(listeningDialogId || dialogId ? { dialog_id: listeningDialogId || dialogId } : {}),
+      });
     },
     buildResponseCreateMessages() {
       return null;
@@ -876,6 +893,7 @@ export class AIProxyRealtimeVoiceSession implements IAIProxyRealtimeVoiceSession
   private connectPromise: Promise<void> | null = null;
   private outputStarted = false;
   private capturing = false;
+  private inputPaused = false;
 
   constructor(
     options: AIProxyRealtimeVoiceSessionOptions,
@@ -934,6 +952,10 @@ export class AIProxyRealtimeVoiceSession implements IAIProxyRealtimeVoiceSession
   }
 
   async startVoiceInput(): Promise<void> {
+    await this.resumeVoiceInput();
+  }
+
+  async resumeVoiceInput(): Promise<void> {
     await this.connect();
     if (this.capturing) {
       return;
@@ -941,6 +963,14 @@ export class AIProxyRealtimeVoiceSession implements IAIProxyRealtimeVoiceSession
 
     const inputAdapter = this.resolveInputAdapter();
     this.inputAdapter = inputAdapter;
+
+    if (this.inputPaused && inputAdapter.resume) {
+      await inputAdapter.resume();
+      this.inputPaused = false;
+      this.capturing = true;
+      return;
+    }
+
     await inputAdapter.start({
       runtime: this.runtime,
       signal: this.options.context?.signal,
@@ -957,7 +987,24 @@ export class AIProxyRealtimeVoiceSession implements IAIProxyRealtimeVoiceSession
         this.emitVoiceError(error);
       },
     });
+    this.inputPaused = false;
     this.capturing = true;
+  }
+
+  async pauseVoiceInput(): Promise<void> {
+    await this.connect();
+    if (!this.inputAdapter || !this.capturing) {
+      return;
+    }
+
+    if (this.inputAdapter.pause) {
+      await this.inputAdapter.pause();
+      this.inputPaused = true;
+    } else {
+      await this.inputAdapter.stop();
+      this.inputPaused = false;
+    }
+    this.capturing = false;
   }
 
   async stopVoiceInput(options?: AIProxyRealtimeVoiceStopOptions): Promise<void> {
@@ -972,6 +1019,7 @@ export class AIProxyRealtimeVoiceSession implements IAIProxyRealtimeVoiceSession
     if (this.inputAdapter && this.capturing) {
       await this.inputAdapter.stop();
     }
+    this.inputPaused = false;
     this.capturing = false;
 
     if (stopOptions.commit) {
@@ -1044,6 +1092,7 @@ export class AIProxyRealtimeVoiceSession implements IAIProxyRealtimeVoiceSession
     if (this.inputAdapter && this.capturing) {
       await this.inputAdapter.stop();
     }
+    this.inputPaused = false;
     if (this.outputAdapter) {
       await this.outputAdapter.stop();
     }
@@ -1463,17 +1512,24 @@ function buildQwenMultimodalDialogRequestPayload(
   }
 
   if (directive === "RequestToRespond") {
-    const shouldPopulateTextFields =
+    const shouldPopulateTypeField =
       normalizedText.length > 0 ||
       images.length > 0 ||
       typeof params?.type === "string" ||
-      typeof inputPayload.type === "string" ||
+      typeof inputPayload.type === "string";
+
+    const shouldPopulateTextField =
+      normalizedText.length > 0 ||
+      images.length > 0 ||
       typeof inputPayload.text === "string";
 
-    if (shouldPopulateTextFields) {
+    if (shouldPopulateTypeField) {
       if (typeof inputPayload.type !== "string") {
         inputPayload.type = params?.type || "prompt";
       }
+    }
+
+    if (shouldPopulateTextField) {
       if (typeof inputPayload.text !== "string") {
         inputPayload.text = text;
       }

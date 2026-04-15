@@ -686,6 +686,7 @@ export interface AIProxyRealtimeVoiceBrowserAdapterOptions {
   channelCount?: number;
   bufferSize?: number;
   noiseGateThreshold?: number;
+  emitSilenceOnNoiseGate?: boolean;
   audioConstraints?: MediaTrackConstraints;
 }
 
@@ -775,6 +776,8 @@ export interface IAIProxyRealtimeVoiceSession {
   readonly isCapturing: boolean;
   connect(): Promise<void>;
   startVoiceInput(): Promise<void>;
+  pauseVoiceInput(): Promise<void>;
+  resumeVoiceInput(): Promise<void>;
   stopVoiceInput(options?: AIProxyRealtimeVoiceStopOptions): Promise<void>;
   sendText(text: string, options?: AIProxyRealtimeVoiceTextInputOptions): Promise<void>;
   sendImagePrompt(
