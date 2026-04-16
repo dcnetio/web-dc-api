@@ -610,6 +610,9 @@ export function createQwenMultimodalDialogAdapter(
       ? sessionClientInfo.user_id.trim()
       : "anonymous";
   const resolvedSampleRate = toOptionalSampleRate(options.session?.sample_rate) || 24000;
+  const resolvedUpstreamMode = typeof options.session?.mode === "string" && options.session.mode.trim()
+    ? options.session.mode.trim()
+    : "duplex";
   const resolvedModalities = Array.isArray(options.modalities) && options.modalities.length > 0
     ? options.modalities
     : ["audio", "text"];
@@ -643,7 +646,7 @@ export function createQwenMultimodalDialogAdapter(
             modalities: resolvedModalities,
             upstream: {
               type: "AudioOnly",
-              mode: "duplex",
+              mode: resolvedUpstreamMode,
               ...(options.session?.input_audio_format ? { audio_format: options.session.input_audio_format === "pcm16" ? "pcm" : options.session.input_audio_format } : {}),
               ...(resolvedSampleRate ? { sample_rate: resolvedSampleRate } : {})
             },
