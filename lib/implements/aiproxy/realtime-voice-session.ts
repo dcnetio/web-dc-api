@@ -240,6 +240,7 @@ export function createBrowserRealtimeVoiceInputAdapter(
   let silentGain: GainNode | null = null;
   let stopped = false;
   let sequence = 0;
+  let currentHoldFrames = 0;
 
   return {
     async start(context: AIProxyRealtimeVoiceInputContext): Promise<void> {
@@ -285,10 +286,21 @@ export function createBrowserRealtimeVoiceInputAdapter(
             ? options.noiseGateThreshold
             : 0;
         const shouldEmitSilenceOnNoiseGate = options.emitSilenceOnNoiseGate === true;
-        const gatedMono =
-          noiseGateThreshold > 0 && calculateRms(mono) < noiseGateThreshold
+
+        if (noiseGateThreshold > 0) {
+          const currentRms = calculateRms(mono);
+          if (currentRms >= noiseGateThreshold) {
+            currentHoldFrames = 10; // ~1 second hold time at 4096 buffer/48kHz
+          } else if (currentHoldFrames > 0) {
+            currentHoldFrames--;
+          }
+        }
+
+        const isGated = noiseGateThreshold > 0 && currentHoldFrames === 0;
+        const gatedMono = isGated
             ? (shouldEmitSilenceOnNoiseGate ? new Float32Array(mono.length) : null)
             : mono;
+
         if (!gatedMono) {
           return;
         }
@@ -345,6 +357,7 @@ export function createBrowserRealtimeVoiceOutputAdapter(): IAIProxyRealtimeVoice
   let audioContext: AudioContext | null = null;
   let playheadTime = 0;
   const activeAudios = new Set<HTMLAudioElement>();
+  const activeSources = new Set<AudioBufferSourceNode>();
 
   const ensureContext = async (): Promise<AudioContext> => {
     if (!audioContext) {
@@ -375,19 +388,23 @@ export function createBrowserRealtimeVoiceOutputAdapter(): IAIProxyRealtimeVoice
       if (frame.data instanceof Blob && frame.format !== "pcm16" && frame.format !== "pcm-f32") {
         const arrayBuffer = await frame.data.arrayBuffer();
         const decodedBuffer = await context.decodeAudioData(arrayBuffer.slice(0));
-        playheadTime = scheduleDecodedBuffer(context, decodedBuffer, playheadTime);
+        playheadTime = scheduleDecodedBuffer(context, decodedBuffer, playheadTime, activeSources);
         return;
       }
 
       const sampleRate = frame.sampleRate ?? DEFAULT_OUTPUT_SAMPLE_RATE;
       const channels = Math.max(frame.channels ?? 1, 1);
       const audioBuffer = createPcmAudioBuffer(context, frame, sampleRate, channels);
-      playheadTime = scheduleDecodedBuffer(context, audioBuffer, playheadTime);
+      playheadTime = scheduleDecodedBuffer(context, audioBuffer, playheadTime, activeSources);
     },
     async stop(): Promise<void> {
       for (const audio of [...activeAudios]) {
         audio.pause();
         activeAudios.delete(audio);
+      }
+      for (const source of [...activeSources]) {
+        source.stop();
+        activeSources.delete(source);
       }
       playheadTime = 0;
       if (audioContext) {
@@ -396,6 +413,14 @@ export function createBrowserRealtimeVoiceOutputAdapter(): IAIProxyRealtimeVoice
       }
     },
     async clear(): Promise<void> {
+      for (const audio of [...activeAudios]) {
+        audio.pause();
+        activeAudios.delete(audio);
+      }
+      for (const source of [...activeSources]) {
+        source.stop();
+        activeSources.delete(source);
+      }
       playheadTime = audioContext ? audioContext.currentTime : 0;
     },
   };
@@ -1036,6 +1061,12 @@ export class AIProxyRealtimeVoiceSession implements IAIProxyRealtimeVoiceSession
     }
   }
 
+  async clearOutput(): Promise<void> {
+    if (this.outputAdapter?.clear) {
+      await this.outputAdapter.clear();
+    }
+  }
+
   async sendText(text: string, options?: AIProxyRealtimeVoiceTextInputOptions): Promise<void> {
     await this.connect();
     const context = this.requireProtocolContext();
@@ -1414,12 +1445,21 @@ function scheduleDecodedBuffer(
   context: AudioContext,
   audioBuffer: AudioBuffer,
   playheadTime: number,
+  activeSources?: Set<AudioBufferSourceNode>,
 ): number {
   const source = context.createBufferSource();
   source.buffer = audioBuffer;
   source.connect(context.destination);
   const startAt = Math.max(playheadTime, context.currentTime);
   source.start(startAt);
+  
+  if (activeSources) {
+    activeSources.add(source);
+    source.onended = () => {
+      activeSources.delete(source);
+    };
+  }
+  
   return startAt + audioBuffer.duration;
 }
 

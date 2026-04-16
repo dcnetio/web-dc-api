@@ -779,6 +779,7 @@ export interface IAIProxyRealtimeVoiceSession {
   pauseVoiceInput(): Promise<void>;
   resumeVoiceInput(): Promise<void>;
   stopVoiceInput(options?: AIProxyRealtimeVoiceStopOptions): Promise<void>;
+  clearOutput(): Promise<void>;
   sendText(text: string, options?: AIProxyRealtimeVoiceTextInputOptions): Promise<void>;
   sendImagePrompt(
     text: string,
