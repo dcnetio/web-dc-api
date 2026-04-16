@@ -19,6 +19,9 @@ const pkg = JSON.parse(
 
 // 外部依赖（这些将不会被打包进最终文件）
 const external = [
+  "html2canvas",
+  "dompurify",
+  "canvg",
   ...Object.keys(pkg.dependencies || {}),
   ...Object.keys(pkg.devDependencies || {}),
   ...Object.keys(pkg.peerDependencies || {}),
