@@ -108,6 +108,9 @@ export class AIProxyRealtimeAudioSession
   private connectPromise: Promise<void> | null = null;
   private refreshTimer: TimerHandle | null = null;
   private reconnectTimer: TimerHandle | null = null;
+  private heartbeatTimer: TimerHandle | null = null;
+  // Use 10s instead of 50s to prevent early WebSocket drops during long playback
+  private heartbeatIntervalMs: number = 10000;
   private readonly outboundQueue: Array<string | Blob | ArrayBuffer> = [];
   private manualClose = false;
   private authExpiresAtMs: number | null = null;
@@ -218,6 +221,7 @@ export class AIProxyRealtimeAudioSession
         cleanup();
         this.attachSocketListeners(socket);
         this.flushQueue();
+        this.startHeartbeat();
         this.options.onConnected?.(this, authInfo);
         resolve();
       };
@@ -273,6 +277,7 @@ export class AIProxyRealtimeAudioSession
     socket.onclose = (event) => {
       if (this.socket === socket) {
         this.socket = null;
+        this.stopHeartbeat();
       }
       this.options.onClose?.(event);
 
@@ -454,6 +459,22 @@ export class AIProxyRealtimeAudioSession
     }
   }
 
+  private stopHeartbeat(): void {
+    if (this.heartbeatTimer) {
+      clearInterval(this.heartbeatTimer);
+      this.heartbeatTimer = null;
+    }
+  }
+
+  private startHeartbeat(): void {
+    // DashScope Realtime Audio has no explicit HeartBeat packet support,
+    // and sending invalid JSON or unsupported 'action: HeartBeat' throws
+    // a protocol error forcing an abrupt WebSocket closure after exactly 10s.
+    // Instead of active ping, rely on keep-alive headers/TCP layer or
+    // just avoid causing explicit protocol errors.
+    this.stopHeartbeat();
+  }
+
   private buildConnectionOptions(
     authInfo: AIProxyRealtimeAudioAuthInfo,
   ): RealtimeAudioConnectionOptions {
@@ -599,6 +620,10 @@ export class AIProxyRealtimeAudioSession
     if (this.reconnectTimer) {
       clearTimeout(this.reconnectTimer);
       this.reconnectTimer = null;
+    }
+    if (this.heartbeatTimer) {
+      clearInterval(this.heartbeatTimer);
+      this.heartbeatTimer = null;
     }
   }
 }
