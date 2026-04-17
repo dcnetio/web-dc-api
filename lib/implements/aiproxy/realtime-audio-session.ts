@@ -113,6 +113,7 @@ export class AIProxyRealtimeAudioSession
   private heartbeatIntervalMs: number = 10000;
   private readonly outboundQueue: Array<string | Blob | ArrayBuffer> = [];
   private manualClose = false;
+  private terminated = false;
   private authExpiresAtMs: number | null = null;
   private currentAuthInfo: AIProxyRealtimeAudioAuthInfo | null = null;
   private abortListener: (() => void) | null = null;
@@ -139,6 +140,9 @@ export class AIProxyRealtimeAudioSession
   }
 
   async connect(): Promise<void> {
+    if (this.manualClose || this.terminated) {
+      throw new Error("实时音频会话已关闭");
+    }
     if (this.connectPromise) {
       return this.connectPromise;
     }
@@ -152,6 +156,10 @@ export class AIProxyRealtimeAudioSession
   }
 
   async write(data: AIProxyRealtimeAudioWriteData): Promise<void> {
+    if (this.manualClose || this.terminated) {
+      throw new Error("实时音频会话已关闭");
+    }
+
     const payload = this.normalizeWriteData(data);
     if (this.isConnected && this.socket) {
       this.socket.send(payload);
@@ -180,8 +188,10 @@ export class AIProxyRealtimeAudioSession
 
   close(code?: number, reason?: string): void {
     this.manualClose = true;
+    this.terminated = true;
     this.clearTimers();
     this.removeAbortSignal();
+    this.outboundQueue.length = 0;
 
     const currentSocket = this.socket;
     this.socket = null;
@@ -195,6 +205,7 @@ export class AIProxyRealtimeAudioSession
   }
 
   private async connectInternal(): Promise<void> {
+    console.trace("[Trace] connectInternal called!");
     this.options.context?.signal?.throwIfAborted();
     const authInfo = await this.ensureAuthInfo();
     const connectionOptions = this.buildConnectionOptions(authInfo);
@@ -228,6 +239,9 @@ export class AIProxyRealtimeAudioSession
 
       const handleError = (event: Event) => {
         cleanup();
+        if (this.socket === socket) {
+          this.socket = null;
+        }
         const error = toRealtimeAudioError(event, "实时音频 WebSocket 连接失败");
         this.options.onError?.(event);
         reject(error);
@@ -235,6 +249,12 @@ export class AIProxyRealtimeAudioSession
 
       const handleCloseBeforeOpen = (event: unknown) => {
         cleanup();
+        if (this.socket === socket) {
+          this.socket = null;
+        }
+        if (this.options.autoReconnect === false) {
+          this.terminated = true;
+        }
         reject(
           new Error(`实时音频 WebSocket 握手阶段被关闭: ${describeCloseEvent(event)}`),
         );
@@ -278,6 +298,9 @@ export class AIProxyRealtimeAudioSession
       if (this.socket === socket) {
         this.socket = null;
         this.stopHeartbeat();
+      }
+      if (this.options.autoReconnect === false) {
+        this.terminated = true;
       }
       this.options.onClose?.(event);
 

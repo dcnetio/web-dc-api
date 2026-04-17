@@ -963,6 +963,8 @@ export class AIProxyRealtimeVoiceSession implements IAIProxyRealtimeVoiceSession
           this.emitVoiceError(toRealtimeVoiceError(error));
       },
       onClose: () => {
+        this.transportSession = null;
+        this.outputStarted = false;
         if (this.capturing) {
           void this.stopVoiceInput({ commit: false, requestResponse: false, finishSession: false });
         }
@@ -1131,6 +1133,7 @@ export class AIProxyRealtimeVoiceSession implements IAIProxyRealtimeVoiceSession
       await this.outputAdapter.stop();
     }
     this.capturing = false;
+    this.outputStarted = false;
     this.transportSession?.close(code, reason);
     this.transportSession = null;
   }
