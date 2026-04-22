@@ -1159,6 +1159,11 @@ const requestBody = JSON.stringify({
   ]
 });
 
+// MCP 通用服务流式调用时，需要显式打开 Dc-Stream
+const headers = {
+  "Dc-Stream": "true"
+};
+
 
 const controller = new AbortController();
 const context = { signal: controller.signal };
@@ -1202,7 +1207,7 @@ const [_, error] = await dc.aiproxy.DoAIProxyCall(
   undefined,              // themeAuthor
   undefined,              // configTheme
   undefined,              // serviceName
-  undefined,              // headers
+  headers,                // headers (MCP 流式返回时请设置 Dc-Stream: true)
   undefined,              // path
   undefined               // model
 );
@@ -1313,7 +1318,7 @@ try {
   };
 
   // 通过安全校验和解密，获取通话 channelId
-  const { channelId, channelDescription, rtcConfig } = await rtc.acceptRTCChannelInvite(rtcInviteMessage);
+  const { channelId, channelDescription, rtcConfig } = await rtc.parseRTCChannelInvite(rtcInviteMessage);
   console.log("成功接收 RTC 邀请:", channelId, rtcConfig);
   
   // 后续使用该 channelId 初始化 RTC 实例，连接媒体流

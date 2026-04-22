@@ -1,12 +1,17 @@
-import { IRTMMetadata, IRTMAuthInfo } from '../../interfaces/rtm-interface';
+import { IRTMMetadata, IRTMAuthInfo, RTMEventName, RTMEventPayloadMap, RTMGenericEventCallback, IRTMMessageReceivedPayload } from '../../interfaces/rtm-interface';
 import RTM from '@dingrtc/rtm';
+
+type InternalRTMEventName = RTMEventName | '__RTM_BUBBLE_MSG';
+type InternalRTMEventPayloadMap = RTMEventPayloadMap & {
+  __RTM_BUBBLE_MSG: IRTMMessageReceivedPayload;
+};
 
 export class AliyunRTMOperations {
   public client: any = null;
   public authInfo: IRTMAuthInfo | null = null;
   public sessionId: string | null = null;
   public channelId: string | null = null;
-  private eventListeners: Map<string, Array<(...args: any[]) => void>> = new Map();
+  private eventListeners: Map<string, Array<RTMGenericEventCallback>> = new Map();
   public sessionUsersMap: Map<string, Set<string>> = new Map();
 
   constructor() {
@@ -178,14 +183,18 @@ export class AliyunRTMOperations {
     }
   }
 
-  public on(event: string, callback: (...args: any[]) => void): void {
+  public on<E extends InternalRTMEventName>(event: E, callback: (payload: InternalRTMEventPayloadMap[E]) => void): void;
+  public on(event: string, callback: RTMGenericEventCallback): void;
+  public on(event: string, callback: RTMGenericEventCallback): void {
     if (!this.eventListeners.has(event)) {
       this.eventListeners.set(event, []);
     }
     this.eventListeners.get(event)?.push(callback);
   }
 
-  public off(event: string, callback: (...args: any[]) => void): void {
+  public off<E extends InternalRTMEventName>(event: E, callback: (payload: InternalRTMEventPayloadMap[E]) => void): void;
+  public off(event: string, callback: RTMGenericEventCallback): void;
+  public off(event: string, callback: RTMGenericEventCallback): void {
     const callbacks = this.eventListeners.get(event);
     if (!callbacks) return;
     const idx = callbacks.indexOf(callback);
@@ -270,10 +279,10 @@ export class AliyunRTMOperations {
     });
   }
 
-  public emit(event: string, ...args: any[]) {
+  public emit<E extends InternalRTMEventName>(event: E, payload: InternalRTMEventPayloadMap[E]) {
     const callbacks = this.eventListeners.get(event);
     if (callbacks) {
-      callbacks.forEach(cb => cb(...args));
+      callbacks.forEach(cb => cb(payload));
     }
   }
 }

@@ -1,6 +1,6 @@
 import { DCModule, CoreModuleName } from '../common/module-system';
 import { DCContext } from '../interfaces/DCContext';
-import { IRTMAuthInfo, IRTMOperations, IRTMStandardMessage } from '../interfaces/rtm-interface';
+import { IRTMAuthInfo, IRTMOperations, IRTMStandardMessage, RTMEventName, RTMEventPayloadMap, RTMGenericEventCallback, IRTMMessageReceivedPayload } from '../interfaces/rtm-interface';
 import { AliyunRTMOperations } from '../implements/rtm/aliyun-rtm';
 import { Encryption } from '../util/curve25519Encryption';
 import { Ed25519PubKey } from "../common/dc-key/ed25519";
@@ -19,7 +19,7 @@ export class RTMModule implements DCModule, IRTMOperations {
   // shared state map
   private pendingPings: Map<string, Set<(isOnline: boolean) => void>> = new Map();
   private pendingAcks: Map<string, Set<(success: boolean, err?: Error) => void>> = new Map();
-  private _proxyListeners: Map<string, Set<(...args: any[]) => void>> = new Map();
+  private _proxyListeners: Map<string, Set<RTMGenericEventCallback>> = new Map();
 
   constructor() {}
 
@@ -60,7 +60,7 @@ export class RTMModule implements DCModule, IRTMOperations {
         }
         
         this.authInfo.token = authRes.token;
-        this.mainTokenExpireAt = authRes.expiresAt || (Date.now() + 24 * 60 * 60 * 1000);
+        this.mainTokenExpireAt = authRes.expiresAt ? authRes.expiresAt * 1000 : (Date.now() + 24 * 60 * 60 * 1000);
         if (authRes.serviceAppId) this.authInfo.rtcAppId = authRes.serviceAppId;
       } catch (e: any) {
         throw new Error(`[RTM] Auto-fetch main auth info for user ${this.authInfo.userId} failed: ${e.message}`);
@@ -95,12 +95,13 @@ export class RTMModule implements DCModule, IRTMOperations {
   }
 
   private registerOpListeners(op: AliyunRTMOperations) {
-    op.on('onMessageReceived', (msg: any) => this.handleMessage(op, msg));
+    op.on('onMessageReceived', (msg) => this.handleMessage(op, msg));
   }
 
-  private async handleMessage(op: AliyunRTMOperations, data: any) {
+  private async handleMessage(op: AliyunRTMOperations, data: IRTMMessageReceivedPayload) {
     const messageStr = data.message;
-    let uid = data.userId;
+    let uid = data.userId || data.publisher;
+    if (!uid) return;
 
     if (uid && uid.includes('_')) {
         uid = uid.split('_')[0];
@@ -133,7 +134,7 @@ export class RTMModule implements DCModule, IRTMOperations {
       const ackKey = `${uid}_${hashId}`;
       const set = this.pendingAcks.get(ackKey);
       if (set) {
-         set.forEach((cb: any) => cb(true));
+        set.forEach((cb) => cb(true));
       }
       return;
     }
@@ -180,7 +181,7 @@ export class RTMModule implements DCModule, IRTMOperations {
           if (!err && authRes && authRes.token) {
             this.authInfo!.token = authRes.token;
             if (authRes.serviceAppId) this.authInfo!.rtcAppId = authRes.serviceAppId;
-            this.mainTokenExpireAt = authRes.expiresAt || (Date.now() + 24 * 60 * 60 * 1000);
+            this.mainTokenExpireAt = authRes.expiresAt ? authRes.expiresAt * 1000 : (Date.now() + 24 * 60 * 60 * 1000);
             await this.userBoxOps.reconnect(this.authInfo!);
           }
         } catch(e) {}
@@ -240,7 +241,7 @@ export class RTMModule implements DCModule, IRTMOperations {
           ackPromise = new Promise<boolean>((resolve) => {
               let done = false;
               const timeout = setTimeout(() => { done = true; resolve(false); }, 3000);
-              tempOp.on('onMessageReceived', (msg: any) => {
+            tempOp.on('onMessageReceived', (msg) => {
                   if (done) return;
                   if (msg.message === `__DC_ACK__:${waitAckHash}` && msg.publisher == targetUserId) {
                       done = true;
@@ -371,7 +372,9 @@ export class RTMModule implements DCModule, IRTMOperations {
     });
   }
 
-  public on(event: string, callback: (...args: any[]) => void): void {
+  public on<E extends RTMEventName>(event: E, callback: (payload: RTMEventPayloadMap[E]) => void): void;
+  public on(event: string, callback: RTMGenericEventCallback): void;
+  public on(event: string, callback: RTMGenericEventCallback): void {
     const targetEvent = event === 'onMessageReceived' ? '__RTM_BUBBLE_MSG' : event;
     if (!this._proxyListeners) this._proxyListeners = new Map();
     if (!this._proxyListeners.has(targetEvent)) this._proxyListeners.set(targetEvent, new Set());
@@ -382,7 +385,9 @@ export class RTMModule implements DCModule, IRTMOperations {
     }
   }
 
-  public off(event: string, callback: (...args: any[]) => void): void {
+  public off<E extends RTMEventName>(event: E, callback: (payload: RTMEventPayloadMap[E]) => void): void;
+  public off(event: string, callback: RTMGenericEventCallback): void;
+  public off(event: string, callback: RTMGenericEventCallback): void {
     const targetEvent = event === 'onMessageReceived' ? '__RTM_BUBBLE_MSG' : event;
     if (this._proxyListeners && this._proxyListeners.has(targetEvent)) {
       this._proxyListeners.get(targetEvent)!.delete(callback);

@@ -281,6 +281,7 @@ export class AIProxyModule implements DCModule, IAIProxyOperations {
     themeAuthor?: string;
     configTheme?: string;
     serviceName?: string;
+    headers?: Record<string, string>;
   }): Promise<[ { token: string,serviceAppId?: string, expiresAt?: number, expiresIn?: number } | null, Error | null ]> {
     try {
       this.assertInitialized();
@@ -290,7 +291,7 @@ export class AIProxyModule implements DCModule, IAIProxyOperations {
         params.themeAuthor,
         params.configTheme,
         params.serviceName,
-        undefined,
+        params.headers,
         undefined,
         undefined
       );
@@ -325,7 +326,7 @@ export class AIProxyModule implements DCModule, IAIProxyOperations {
         resolvedConfig.themeAuthor,
         resolvedConfig.configTheme,
         resolvedConfig.serviceName,
-        undefined, // headers
+        params.headers, // headers
         resolvedConfig.path,
         undefined // model
       );

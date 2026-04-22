@@ -51,7 +51,7 @@ function describeCloseEvent(event: unknown): string {
 }
 
 const DEFAULT_CONNECT_TIMEOUT_MS = 15000;
-const DEFAULT_REFRESH_BEFORE_MS = 60000;
+const DEFAULT_REFRESH_BEFORE_MS = 30000;
 const DEFAULT_RECONNECT_DELAY_MS = 1000;
 const SOCKET_OPEN = 1;
 const SOCKET_CLOSING = 2;

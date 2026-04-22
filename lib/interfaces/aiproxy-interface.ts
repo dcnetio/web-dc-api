@@ -123,7 +123,8 @@ export interface IAIProxyOperations {
    * @param themeAuthor(可选) 主题作者的公钥,为空时使用默认的调用配置中的themeAuthor
    * @param configTheme(可选) 配置主题,为空时使用默认的调用配置中的configTheme
    * @param serviceName(可选) 服务器名称,为空时使用默认的调用配置中的serviceName
-   * @param headers 请求头(可选),为空时使用默认的调用配置中的headers
+  * @param headers 请求头(可选),为空时使用默认的调用配置中的headers
+  *                如调用 MCP 通用服务并希望流式返回，请在 headers 中设置 Dc-Stream: true
    * @param path 请求路径(可选),为空时使用默认的调用配置中的path
    * @param model 模型名称(可选),为空时使用默认的调用配置中的model
    * @returns 调用状态码
@@ -172,6 +173,8 @@ export interface IAIProxyOperations {
     configTheme?: string;
     /** 服务名称，为空时使用初始化上下文默认配置 */
     serviceName?: string;
+    /** 额外请求头，可用于传递计价相关能力声明（如 audio_publish/video_publish/screen_publish） */
+    headers?: Record<string, string>;
   }): Promise<[ { token: string,serviceAppId?: string, expiresAt?: number, expiresIn?: number } | null, Error | null ]>;
 
   /**
@@ -232,18 +235,30 @@ export interface IAIProxyOperations {
   ): Promise<[IAIProxyRealtimeVoiceSession | null, Error | null]>;
 
   /**
-   * 创建阿里云 DashScope 原生的实时语音输入输出会话。主要用来实时语音识别/翻译服务的对接。适用于纯语音转写+翻译场景（如直播字幕、会议记录）
-   * 内部会自动补齐阿里云 realtime 连接模板，并提供阿里云原生协议的适配。
-   * 浏览器环境默认可直接采集和播放；小程序环境仍建议注入平台专用的 socket 与音频适配器。
+   * 创建多态兼容的阿里云实时语音/转写会话。
+   * 这是一个通用的工厂方法，内部会根据传入的 `model` 名称动态选择底层协议适配器：
+   * 1. 纯语音转写与翻译模型：自动分配阿里云原生协议适配器。
+   * 2. 多模态对话模型 (如 multimodal-dialog, cosyvoice 等)：自动分配多模态对话适配器，包含特殊临时 Token 处理逻辑。
+   * 3. OpenAI Realtime 兼容模型 (如 qwen-omni)：自动分配 OpenAI Realtime 协议适配器。
+   * 
+   * 推荐在动态切换多种语聊模型或主要用于实时转写场景下使用。
+   * 浏览器环境默认可直接采集和播放；小程序环境建议注入平台专用的 socket 与音频适配器。
    */
   CreateAliyunTranscriptionSession(
     options: AIProxyAliyunRealtimeVoiceSessionOptions
   ): Promise<[IAIProxyRealtimeVoiceSession | null, Error | null]>;
 
   /**
-   * 创建OpenAI/Qwen(通义千问全模态实时)兼容格式的实时语音输入输出会话。集成了语音识别、翻译、大模型推理、语音合成等能力
-   * 内部提供 session.update / input_audio_buffer.append /
-   * input_audio_buffer.commit / response.create / response.audio.delta 的标准 OpenAI 协议适配。
+   * 创建纯会话型大模型（遵循 OpenAI Realtime 协议）的专用实时语音交互会话。
+   * 主要针对如 Qwen-Omni (通义千问全模态实时) 此类端到端交互模型。
+   * 
+   * 与 CreateAliyunTranscriptionSession 相比，该方法具备以下专项优化：
+   * 1. 协议独占：强制使用 OpenAI Realtime 协议适配器，提供完整的 session.update / input_audio_buffer.append / 等标准操作。
+   * 2. 路径指定：在未提供特定请求路径时，默认显式映射至 `/api-ws/v1/realtime` 端点。
+   * 3. 鉴权兼容：包含针对浏览器 WebSocket 鉴权限制的专项修复。当发现 AuthMode 为 bearer 时，
+   *    会主动转换为 URL Query 上的 `api_key` 模式传递，从而突破浏览器 WebSocket 无法设置自定义 Header 的环境限制。
+   * 
+   * 提示：如果确定业务上明确使用兼容 OpenAI Realtime 协议端点的大模型对话，直接调用此接口最为稳妥。
    */
   CreateConversationalVoiceSession(
     options: AIProxyAliyunRealtimeVoiceSessionOptions,

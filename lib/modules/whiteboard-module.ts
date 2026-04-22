@@ -18,6 +18,28 @@ export class WhiteboardModule implements DCModule, IWhiteboardOperations {
 
   private authInfo: any = null;
   private mainTokenExpireAt: number = 0;
+  private tokenRefreshTimer: any = null;
+  private tokenRefreshInFlightByChannel: Map<string, Promise<void>> = new Map();
+  private activeChannelId: string = '';
+  private refreshLoopEpoch: number = 0;
+  private tokenRefreshFailureCount: number = 0;
+
+  private static readonly CUSTOM_EVENTS: ReadonlySet<string> = new Set<string>([
+    'onCallRequest',
+    'onCallAccept',
+    'onCallReject',
+    'onCallEnd',
+    'onInviteRequest',
+    'onTokenRefreshError',
+  ]);
+
+  private static readonly RTM_SIGNAL_EVENTS: ReadonlySet<string> = new Set<string>([
+    'onCallRequest',
+    'onCallAccept',
+    'onCallReject',
+    'onCallEnd',
+    'onInviteRequest',
+  ]);
 
   constructor() {
     this.whiteboardOps = new AliyunWhiteboardOperations();
@@ -33,6 +55,7 @@ export class WhiteboardModule implements DCModule, IWhiteboardOperations {
   }
   
   public async shutdown(): Promise<void> {
+    this.stopTokenRefreshLoop();
     if (this.context) {
       const rtmModule = (this.context as any)?.getModule(CoreModuleName.RTM);
       if (rtmModule && this.rtmListenerAttached) {
@@ -41,7 +64,7 @@ export class WhiteboardModule implements DCModule, IWhiteboardOperations {
     }
     this.rtmListenerAttached = false;
     this.customEventListeners.clear();
-    this.whiteboardOps.clear();
+    await this.whiteboardOps.clear();
   }
 
   public async init(authInfo: any): Promise<void> {
@@ -61,26 +84,21 @@ export class WhiteboardModule implements DCModule, IWhiteboardOperations {
 
     const joinInfo = typeof roomIdOrJoinInfo === 'string' ? { roomId: roomIdOrJoinInfo } : roomIdOrJoinInfo;
     const channelId = joinInfo.roomId || joinInfo.channelId;
+    if (!channelId) {
+      throw new Error('joinRoom requires roomId or channelId');
+    }
+
+    this.stopTokenRefreshLoop();
+    this.authInfo.channelId = channelId;
     
     // Auto-fetch token for new room if native proxy config exists
     if (!joinInfo.token && (this.context as any)?.aiproxy && this.authInfo.themeAuthor) {
       try {
-        const [authRes, err] = await (this.context as any).aiproxy.GetAliyunV3Token({
-           channelId: channelId,
-           userId: this.authInfo.userId,
-           appId: this.authInfo.appId,
-           themeAuthor: this.authInfo.themeAuthor,
-           configTheme: this.authInfo.configTheme,
-           serviceName: this.authInfo.serviceName,
-           forceRefresh: true
-        });
-        if (!err && authRes && authRes.token) {
-           joinInfo.token = authRes.token;
-           if (authRes.serviceAppId) joinInfo.appId = authRes.serviceAppId;
-        } else {
-           throw err || new Error("Failed to fetch token for whiteboard room");
-        }
+        await this.refreshWhiteboardAuthToken(channelId, true);
+        joinInfo.token = this.authInfo.token;
+        if (this.authInfo.appId) joinInfo.appId = this.authInfo.appId;
       } catch (e: any) {
+        this.notifyTokenRefreshError(channelId, e, 'initial');
         throw new Error(`[Whiteboard] Auto-fetch auth info failed: ${e.message}`);
       }
     }
@@ -98,12 +116,16 @@ export class WhiteboardModule implements DCModule, IWhiteboardOperations {
     };
 
     if (typeof (this.whiteboardOps as any).joinRoom === 'function') {
-      return (this.whiteboardOps as any).joinRoom(finalJoinInfo);
+      await (this.whiteboardOps as any).joinRoom(finalJoinInfo);
+    } else {
+      await this.whiteboardOps.joinChannel(finalJoinInfo);
     }
-    return this.whiteboardOps.joinChannel(finalJoinInfo);
+
+    this.startTokenRefreshLoop(channelId);
   }
 
   public async leaveChannel(): Promise<void> {
+    this.stopTokenRefreshLoop();
     return this.whiteboardOps.leaveChannel();
   }
 
@@ -120,8 +142,10 @@ export class WhiteboardModule implements DCModule, IWhiteboardOperations {
   }
 
   public async on(event: string, callback: (...args: any[]) => void): Promise<void> {
-    if (['onCallRequest', 'onCallAccept', 'onCallReject', 'onCallEnd', 'onInviteRequest'].includes(event)) {
-      this.ensureRTMListener();
+    if (WhiteboardModule.CUSTOM_EVENTS.has(event)) {
+      if (WhiteboardModule.RTM_SIGNAL_EVENTS.has(event)) {
+        this.ensureRTMListener();
+      }
       if (!this.customEventListeners.has(event)) {
         this.customEventListeners.set(event, []);
       }
@@ -132,7 +156,7 @@ export class WhiteboardModule implements DCModule, IWhiteboardOperations {
   }
 
   public async off(event: string, callback: (...args: any[]) => void): Promise<void> {
-    if (['onCallRequest', 'onCallAccept', 'onCallReject', 'onCallEnd', 'onInviteRequest'].includes(event)) {
+    if (WhiteboardModule.CUSTOM_EVENTS.has(event)) {
       const callbacks = this.customEventListeners.get(event);
       if (callbacks) {
         const idx = callbacks.indexOf(callback);
@@ -148,7 +172,7 @@ export class WhiteboardModule implements DCModule, IWhiteboardOperations {
   }
 
   public async removeAllListeners(event?: string): Promise<void> {
-    if (event && ['onCallRequest', 'onCallAccept', 'onCallReject', 'onCallEnd', 'onInviteRequest'].includes(event)) {
+    if (event && WhiteboardModule.CUSTOM_EVENTS.has(event)) {
       this.customEventListeners.delete(event);
     } else if (!event) {
       this.customEventListeners.clear();
@@ -391,5 +415,107 @@ export class WhiteboardModule implements DCModule, IWhiteboardOperations {
     if (list) {
       list.forEach(cb => cb(...args));
     }
+  }
+
+  private hasAliyunTokenProvider(): boolean {
+    return !!((this.context as any)?.aiproxy && this.authInfo?.themeAuthor);
+  }
+
+  private async refreshWhiteboardAuthToken(channelId: string, forceRefresh: boolean): Promise<void> {
+    if (!this.authInfo || !this.hasAliyunTokenProvider()) {
+      return;
+    }
+
+    const inFlight = this.tokenRefreshInFlightByChannel.get(channelId);
+    if (inFlight) {
+      return inFlight;
+    }
+
+    const epochAtStart = this.refreshLoopEpoch;
+
+    const refreshPromise = (async () => {
+      const [authRes, err] = await (this.context as any).aiproxy.GetAliyunV3Token({
+        channelId,
+        userId: this.authInfo.userId,
+        appId: this.authInfo.appId,
+        themeAuthor: this.authInfo.themeAuthor,
+        configTheme: this.authInfo.configTheme,
+        serviceName: this.authInfo.serviceName,
+        forceRefresh,
+      });
+
+      if (err || !authRes || !authRes.token) {
+        throw err || new Error('Failed to fetch token for whiteboard room');
+      }
+
+      // Prevent stale responses from previous room/loop from overwriting current auth state.
+      if (epochAtStart !== this.refreshLoopEpoch || this.authInfo?.channelId !== channelId) {
+        return;
+      }
+
+      this.authInfo.token = authRes.token;
+      if (authRes.serviceAppId) this.authInfo.appId = authRes.serviceAppId;
+      this.mainTokenExpireAt = authRes.expiresAt ? authRes.expiresAt * 1000 : (Date.now() + 24 * 60 * 60 * 1000);
+      this.tokenRefreshFailureCount = 0;
+    })();
+
+    this.tokenRefreshInFlightByChannel.set(channelId, refreshPromise);
+
+    try {
+      await refreshPromise;
+    } finally {
+      if (this.tokenRefreshInFlightByChannel.get(channelId) === refreshPromise) {
+        this.tokenRefreshInFlightByChannel.delete(channelId);
+      }
+    }
+  }
+
+  private startTokenRefreshLoop(channelId: string) {
+    this.stopTokenRefreshLoop();
+    if (!channelId || !this.hasAliyunTokenProvider()) return;
+
+    this.activeChannelId = channelId;
+    this.tokenRefreshFailureCount = 0;
+    const loopEpoch = this.refreshLoopEpoch;
+    const loopChannelId = channelId;
+    this.tokenRefreshTimer = setInterval(async () => {
+      if (!this.activeChannelId) return;
+      if (this.refreshLoopEpoch !== loopEpoch) return;
+      if (this.activeChannelId !== loopChannelId) return;
+      try {
+        await this.refreshWhiteboardAuthToken(loopChannelId, true);
+      } catch (e) {
+        this.notifyTokenRefreshError(loopChannelId, e, 'periodic');
+        // Keep loop alive; join/leave lifecycle controls stop/start.
+      }
+    }, 60 * 1000);
+  }
+
+  private stopTokenRefreshLoop() {
+    this.refreshLoopEpoch += 1;
+    if (this.tokenRefreshTimer) {
+      clearInterval(this.tokenRefreshTimer);
+      this.tokenRefreshTimer = null;
+    }
+    this.activeChannelId = '';
+    this.tokenRefreshInFlightByChannel.clear();
+    this.tokenRefreshFailureCount = 0;
+  }
+
+  private notifyTokenRefreshError(channelId: string, error: any, phase: 'initial' | 'periodic') {
+    this.tokenRefreshFailureCount += 1;
+    const now = Date.now();
+    const normalizedError = error instanceof Error ? error : new Error(String(error || 'Unknown token refresh error'));
+
+    this.emitCustomEvent('onTokenRefreshError', {
+      channelId,
+      phase,
+      error: normalizedError,
+      message: normalizedError.message,
+      failureCount: this.tokenRefreshFailureCount,
+      retryInMs: 60 * 1000,
+      nextRetryAt: now + 60 * 1000,
+      timestamp: now,
+    });
   }
 }

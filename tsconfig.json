@@ -43,6 +43,7 @@
     "checkJs": false, // 不检查 JS 文件类型
     "downlevelIteration": true, // 支持旧版本迭代器
     "importHelpers": true, // 使用 tslib 辅助函数
+    "ignoreDeprecations": "6.0",
     // 🚀 路径映射（保持不变）
     "baseUrl": ".",
     "paths": {

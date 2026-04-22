@@ -1,10 +1,10 @@
 import { DCModule, CoreModuleName } from '../common/module-system';
 import { DCContext } from '../interfaces/DCContext';
-import { IRTCOperations, IRTCAuthInfo, IRTCMember, IRTCStreamConfig } from '../interfaces/rtc-interface';
+import { IRTCOperations, IRTCAuthInfo, IRTCJoinRoomOptions, IRTCStreamConfig, CallSignalEvent, CallSignalEventPayloadMap, IRTCCameraDevice, IRTCScreenShareConfig, RTCGenericEventCallback } from '../interfaces/rtc-interface';
+import { RTCChannelInviteMessage } from '../interfaces/rtc-interface';
 import { AliyunRTCOperations } from '../implements/rtc/aliyun-rtc';
 import { Encryption } from '../util/curve25519Encryption';
 import { Ed25519PubKey } from "../common/dc-key/ed25519";
-import { extractPublicKeyFromPeerId } from "../common/dc-key/keyManager";
 import { toString as uint8ArrayToString } from "uint8arrays/to-string";
 import { fromString as uint8ArrayFromString } from "uint8arrays/from-string";
 import { IRTMStandardMessage } from '../interfaces/rtm-interface';
@@ -14,8 +14,16 @@ export class RTCModule implements DCModule, IRTCOperations {
   private readonly rtcOps: AliyunRTCOperations;
 
   private context?: DCContext;
-  private customEventListeners: Map<string, Array<(...args: any[]) => void>> = new Map();
+  private customEventListeners: Map<CallSignalEvent, Array<(payload: CallSignalEventPayloadMap[CallSignalEvent]) => void>> = new Map();
   private rtmListenerAttached: boolean = false;
+  private static readonly CALL_SIGNAL_EVENTS: ReadonlySet<CallSignalEvent> = new Set<CallSignalEvent>([
+    'onCallRequest',
+    'onCallAccept',
+    'onCallReject',
+    'onCallEnd',
+    'onPersistentSessionRequest',
+    'onPersistentSessionAccept'
+  ]);
 
   constructor() {
     this.rtcOps = new AliyunRTCOperations();
@@ -37,8 +45,137 @@ export class RTCModule implements DCModule, IRTCOperations {
 
   private authInfo: IRTCAuthInfo | null = null;
   private maintainTimer: any = null;
+  private activeMediaRefreshTimer: any = null;
   private mainTokenExpireAt: number = 0;
+  private tokenRefreshInFlight: Promise<void> | null = null;
+  private hasJoinedChannel: boolean = false;
+  private shouldPublishAudio: boolean = true;
+  private shouldPublishVideo: boolean = true;
+  private isScreenSharing: boolean = false;
+  private rtcStateListenerAttached: boolean = false;
 
+  private handleLocalScreenShareStopped = () => {
+    this.isScreenSharing = false;
+    this.syncActiveMediaRefreshTask();
+  };
+
+  private ensureRTCStateListener() {
+    if (this.rtcStateListenerAttached) return;
+    this.rtcStateListenerAttached = true;
+    this.rtcOps.on('onLocalScreenShareStopped', this.handleLocalScreenShareStopped);
+  }
+
+  private detachRTCStateListener() {
+    if (!this.rtcStateListenerAttached) return;
+    this.rtcStateListenerAttached = false;
+    this.rtcOps.off('onLocalScreenShareStopped', this.handleLocalScreenShareStopped);
+  }
+
+  private buildAliyunTokenRefreshHeaders(): Record<string, string> | undefined {
+    if (!this.hasJoinedChannel) {
+      return undefined;
+    }
+
+    const headers: Record<string, string> = {};
+    headers.rtc_token = 'true'; //表明是 RTC 的鉴权请求，后端可以据此做特殊处理
+    if (this.shouldPublishAudio) headers.audio_publish = 'true';
+    if (this.shouldPublishVideo) headers.video_publish = 'true';
+    if (this.isScreenSharing) headers.screen_publish = 'true';
+    return Object.keys(headers).length > 0 ? headers : undefined;
+  }
+
+  private isMediaPublishingActive(): boolean {
+    return this.hasJoinedChannel && (this.shouldPublishAudio || this.shouldPublishVideo || this.isScreenSharing);
+  }
+
+  private async refreshRTCAuthToken(forceRefresh: boolean): Promise<void> {
+    if (!this.authInfo) return;
+
+    if (this.tokenRefreshInFlight) {
+      return this.tokenRefreshInFlight;
+    }
+
+    this.tokenRefreshInFlight = (async () => {
+      let newToken = "";
+      let newExpireAt = Date.now() + 60000;
+      let newRtcAppId = this.authInfo!.rtcAppId;
+
+      if (this.authInfo!.fetchAuthInfo) {
+        const res = await this.authInfo!.fetchAuthInfo(forceRefresh);
+        newToken = res.token;
+        if (res.expiresAt) newExpireAt = res.expiresAt * 1000;
+      } else if ((this.context as any)?.aiproxy && this.authInfo!.themeAuthor) {
+        const refreshHeaders = this.buildAliyunTokenRefreshHeaders();
+        const [authRes, err] = await (this.context as any).aiproxy.GetAliyunV3Token({
+          channelId: this.authInfo!.channelId || this.authInfo!.userId,
+          userId: this.authInfo!.userId,
+          appId: this.authInfo!.appId,
+          themeAuthor: this.authInfo!.themeAuthor,
+          configTheme: this.authInfo!.configTheme,
+          serviceName: this.authInfo!.serviceName,
+          headers: refreshHeaders,
+          forceRefresh,
+        });
+        if (!err && authRes && authRes.token) {
+          newToken = authRes.token;
+          if (authRes.serviceAppId) newRtcAppId = authRes.serviceAppId;
+          newExpireAt = authRes.expiresAt ? authRes.expiresAt * 1000 : (Date.now() + 24 * 60 * 60 * 1000);
+        }
+      }
+
+      if (!newToken) return;
+
+      this.authInfo!.token = newToken;
+      this.authInfo!.rtcAppId = newRtcAppId;
+      this.mainTokenExpireAt = newExpireAt;
+      if (typeof (this.rtcOps as any).renewToken === 'function') {
+        (this.rtcOps as any).renewToken(this.authInfo!.token);
+      } else {
+        console.warn('The underlying RTC SDK driver does not support dynamic token renewal via renewToken');
+      }
+    })();
+
+    try {
+      await this.tokenRefreshInFlight;
+    } finally {
+      this.tokenRefreshInFlight = null;
+    }
+  }
+
+  private syncActiveMediaRefreshTask() {
+    const shouldRun = this.isMediaPublishingActive();
+    if (!shouldRun) {
+      if (this.activeMediaRefreshTimer) {
+        clearInterval(this.activeMediaRefreshTimer);
+        this.activeMediaRefreshTimer = null;
+      }
+      return;
+    }
+
+    if (this.activeMediaRefreshTimer) {
+      return;
+    }
+
+    this.activeMediaRefreshTimer = setInterval(async () => {
+      if (!this.isMediaPublishingActive()) {
+        this.syncActiveMediaRefreshTask();
+        return;
+      }
+      try {
+        await this.refreshRTCAuthToken(true);
+      } catch (e) {}
+    },  60 * 1000);
+  }
+
+  /**
+   * 初始化 RTC。
+   *
+   * 注意：本方法【不会】自动初始化全局 RTM 模块。
+   * - 所有信令（callPeer / createPersistentSession 等）依赖全局 RTM 模块（CoreModuleName.RTM）收发消息，
+   *   请确保在调用任何信令相关方法前，全局 RTM 已通过 dc.rtm.init() 完成初始化。
+   * - 若传入 authInfo.enableRTM = true，底层 provider 会尝试复用 RTC 连接创建一个内置 RTM client
+   *   用于实现 sendMessageToPeer / sendMessageToSession，与全局 RTM 模块是独立的两套机制。
+   */
   public async init(authInfo: IRTCAuthInfo): Promise<void> {
     this.authInfo = {
       ...authInfo,
@@ -54,6 +191,7 @@ export class RTCModule implements DCModule, IRTCOperations {
 
     if (!this.authInfo.token && (this.context as any)?.aiproxy && this.authInfo.themeAuthor) {
       try {
+        const headers = this.buildAliyunTokenRefreshHeaders();
         const [authRes, err] = await (this.context as any).aiproxy.GetAliyunV3Token({
           channelId: this.authInfo.channelId || this.authInfo.userId, 
           userId: this.authInfo.userId,
@@ -61,6 +199,7 @@ export class RTCModule implements DCModule, IRTCOperations {
           themeAuthor: this.authInfo.themeAuthor,
           configTheme: this.authInfo.configTheme,
           serviceName: this.authInfo.serviceName,
+          headers,
           forceRefresh: true
         });
         if (err || !authRes || !authRes.token) {
@@ -77,7 +216,14 @@ export class RTCModule implements DCModule, IRTCOperations {
 
     if (!this.mainTokenExpireAt) this.mainTokenExpireAt = Date.now() + 24 * 60 * 60 * 1000;
 
+    // 默认按 RTC 行为，入房后会推音视频；屏幕共享默认关闭。
+    this.hasJoinedChannel = false;
+    this.shouldPublishAudio = true;
+    this.shouldPublishVideo = true;
+    this.isScreenSharing = false;
+
     await this.rtcOps.init(this.authInfo);
+    this.ensureRTCStateListener();
     this.startMaintainTask();
   }
 
@@ -90,44 +236,11 @@ export class RTCModule implements DCModule, IRTCOperations {
       if (this.authInfo && this.mainTokenExpireAt && (this.mainTokenExpireAt - now <= threshold)) {
         this.mainTokenExpireAt = now + 60000; // prevent overlapping fetch
         try {
-          let newToken = "";
-          let newExpireAt = now + 60000;
-          let newRtcAppId = this.authInfo.rtcAppId;
-
-          if (this.authInfo.fetchAuthInfo) {
-             const res = await this.authInfo.fetchAuthInfo(true);
-             newToken = res.token;
-             if (res.expiresAt) newExpireAt = res.expiresAt * 1000;
-          } else if ((this.context as any)?.aiproxy && this.authInfo.themeAuthor) {
-             const [authRes, err] = await (this.context as any).aiproxy.GetAliyunV3Token({
-               channelId: this.authInfo.channelId || this.authInfo.userId,
-               userId: this.authInfo.userId,
-               appId: this.authInfo.appId,
-               themeAuthor: this.authInfo.themeAuthor,
-               configTheme: this.authInfo.configTheme,
-               serviceName: this.authInfo.serviceName,
-               forceRefresh: true
-             });
-             if (!err && authRes && authRes.token) {
-                newToken = authRes.token;
-                if (authRes.serviceAppId) newRtcAppId = authRes.serviceAppId;
-                newExpireAt = authRes.expiresAt ? authRes.expiresAt * 1000 : (Date.now() + 24 * 60 * 60 * 1000);
-             }
-          }
-
-          if (newToken) {
-             this.authInfo.token = newToken;
-             this.authInfo.rtcAppId = newRtcAppId;
-             this.mainTokenExpireAt = newExpireAt;
-             if (typeof (this.rtcOps as any).renewToken === 'function') {
-                (this.rtcOps as any).renewToken(this.authInfo.token);
-             } else {
-                console.warn('The underlying RTC SDK driver does not support dynamic token renewal via renewToken');
-             }
-          }
+          await this.refreshRTCAuthToken(true);
         } catch(e) {}
       }
     }, 5000);
+    this.syncActiveMediaRefreshTask();
   }
 
   private stopMaintainTask() {
@@ -135,16 +248,31 @@ export class RTCModule implements DCModule, IRTCOperations {
       clearInterval(this.maintainTimer);
       this.maintainTimer = null;
     }
+    if (this.activeMediaRefreshTimer) {
+      clearInterval(this.activeMediaRefreshTimer);
+      this.activeMediaRefreshTimer = null;
+    }
   }
 
 
-  public async joinRoom(channelId: string): Promise<void> {
+  public async joinRoom(channelId: string, options?: IRTCJoinRoomOptions): Promise<void> {
     if (!this.authInfo) throw new Error('Not initialized');
+
+    const nextAudioPublish = options?.audioPublish ?? true;
+    const nextVideoPublish = options?.videoPublish ?? true;
+    const nextScreenPublish = options?.screenPublish ?? false;
+
+    // 在取 token 前先更新本地发布意图，确保本次 joinRoom 的鉴权请求可带上正确能力声明。
+    this.shouldPublishAudio = nextAudioPublish;
+    this.shouldPublishVideo = nextVideoPublish;
+    this.isScreenSharing = nextScreenPublish;
     
     // If already in a channel, leave it first
     if (this.rtcOps) {
        await this.rtcOps.leaveChannel().catch(() => {});
     }
+     this.hasJoinedChannel = false;
+     this.syncActiveMediaRefreshTask();
     
     this.authInfo.channelId = channelId;
     this.authInfo.token = undefined; // force refresh
@@ -156,6 +284,7 @@ export class RTCModule implements DCModule, IRTCOperations {
       this.authInfo.token = res.token;
       this.mainTokenExpireAt = res.expiresAt ? res.expiresAt * 1000 : (Date.now() + 24 * 60 * 60 * 1000);
     } else if ((this.context as any)?.aiproxy && this.authInfo.themeAuthor) {
+      const headers = this.buildAliyunTokenRefreshHeaders();
       const [authRes, err] = await (this.context as any).aiproxy.GetAliyunV3Token({
          channelId: this.authInfo.channelId,
          userId: this.authInfo.userId,
@@ -163,6 +292,7 @@ export class RTCModule implements DCModule, IRTCOperations {
          themeAuthor: this.authInfo.themeAuthor,
          configTheme: this.authInfo.configTheme,
          serviceName: this.authInfo.serviceName,
+         headers: headers,
          forceRefresh: true
       });
       if (!err && authRes && authRes.token) {
@@ -179,19 +309,41 @@ export class RTCModule implements DCModule, IRTCOperations {
     } else if (this.rtcOps) {
         console.warn('The RTC provider does not explicitly implement renewToken, hoping SDK accepts token in join()');
     }
-    
-    return this.rtcOps.joinRoom(channelId);
+
+    await this.rtcOps.joinRoom(channelId, options);
+    this.hasJoinedChannel = true;
+
+    // provider joinRoom 默认会开麦开摄像头，这里按调用方指定能力回调到目标状态。
+    if (!nextAudioPublish) {
+      await this.rtcOps.muteLocalMic(true);
+    }
+    if (!nextVideoPublish) {
+      await this.rtcOps.muteLocalCamera(true);
+    }
+
+    this.shouldPublishAudio = nextAudioPublish;
+    this.shouldPublishVideo = nextVideoPublish;
+    this.isScreenSharing = nextScreenPublish;
+    this.syncActiveMediaRefreshTask();
   }
 
   public async joinChannel(): Promise<void> {
-    return this.rtcOps.joinChannel();
+    await this.rtcOps.joinChannel();
+    this.hasJoinedChannel = true;
+    this.syncActiveMediaRefreshTask();
   }
 
   public async leaveChannel(): Promise<void> {
-    return this.rtcOps.leaveChannel();
+    try {
+      await this.rtcOps.leaveChannel();
+    } finally {
+      this.hasJoinedChannel = false;
+      this.isScreenSharing = false;
+      this.syncActiveMediaRefreshTask();
+    }
   }
 
-  public async createRTCChannel(userIds: string[], channelDescription?: string, rtcConfig?: any): Promise<string> {
+  public async createRTCChannel(userIds: string[], channelDescription?: string, rtcConfig?: IRTCStreamConfig): Promise<string> {
     const rtmModule = (this.context as any).getModule(CoreModuleName.RTM);
     if (!this.context || !rtmModule) {
       throw new Error("RTM module is required for creating an RTC channel");
@@ -266,7 +418,7 @@ export class RTCModule implements DCModule, IRTCOperations {
     return channelId;
   }
 
-  public async acceptRTCChannelInvite(inviteMsg: IRTMStandardMessage | string): Promise<{ channelId: string; channelDescription?: string; rtcConfig?: any }> {
+  public async parseRTCChannelInvite(inviteMsg: RTCChannelInviteMessage): Promise<{ channelId: string; channelDescription?: string; rtcConfig?: IRTCStreamConfig }> {
     if (typeof inviteMsg === 'string') {
       try {
         inviteMsg = JSON.parse(inviteMsg) as IRTMStandardMessage;
@@ -274,21 +426,21 @@ export class RTCModule implements DCModule, IRTCOperations {
         throw new Error("Failed to parse invite message");
       }
     }
-
+  
     if (!inviteMsg.isInvite || !inviteMsg.sourceUserId || !inviteMsg.signature || !inviteMsg.content || inviteMsg.messageType !== 'RTC_INVITE') {
       throw new Error("Invalid RTC invite message format");
     }
-
+  
     // 1. 提取发送者的公钥
     const senderPubKey = Ed25519PubKey.edPubkeyFromStr(inviteMsg.sourceUserId);
-
+  
     // 2. 验证签名
     const appIdValue = new TextEncoder().encode(inviteMsg.appId || 'unknown');
     const messageTypeValue = new TextEncoder().encode(inviteMsg.messageType);
     const contentValue = new TextEncoder().encode(inviteMsg.content);
     const isEncryptedValue = new TextEncoder().encode(String(inviteMsg.isEncrypted));
     const timestampValue = new TextEncoder().encode(String(inviteMsg.timestamp));
-
+  
     const preSign = new Uint8Array([
       ...appIdValue,
       ...messageTypeValue,
@@ -296,14 +448,14 @@ export class RTCModule implements DCModule, IRTCOperations {
       ...isEncryptedValue,
       ...timestampValue,
     ]);
-
+  
     const signatureBytes = uint8ArrayFromString(inviteMsg.signature, 'base64');
-
+  
     const isValid = senderPubKey.verify(preSign, signatureBytes);
     if (!isValid) {
       throw new Error("Invalid signature on RTC invite message");
     }
-
+  
     // 3. 解密内容
     const encryptedBytes = uint8ArrayFromString(inviteMsg.content, 'base64');
     let decryptedBytes: Uint8Array;
@@ -318,11 +470,11 @@ export class RTCModule implements DCModule, IRTCOperations {
     
     const decryptedString = new TextDecoder().decode(decryptedBytes);
     const payload = JSON.parse(decryptedString);
-
+  
     if (!payload.channelId) {
       throw new Error("Invalid decrypted RTC invite payload");
     }
-
+  
     return { 
       channelId: payload.channelId, 
       channelDescription: payload.channelDescription,
@@ -338,16 +490,28 @@ export class RTCModule implements DCModule, IRTCOperations {
       }
     }
     this.rtmListenerAttached = false;
+    this.detachRTCStateListener();
+    this.hasJoinedChannel = false;
+    this.shouldPublishAudio = false;
+    this.shouldPublishVideo = false;
+    this.isScreenSharing = false;
+    this.syncActiveMediaRefreshTask();
     this.customEventListeners.clear();
     return this.rtcOps.destroy();
   }
 
   public async muteLocalCamera(mute: boolean): Promise<void> {
-    return this.rtcOps.muteLocalCamera(mute);
+    const nextShouldPublishVideo = !mute;
+    await this.rtcOps.muteLocalCamera(mute);
+    this.shouldPublishVideo = nextShouldPublishVideo;
+    this.syncActiveMediaRefreshTask();
   }
 
   public async muteLocalMic(mute: boolean): Promise<void> {
-    return this.rtcOps.muteLocalMic(mute);
+    const nextShouldPublishAudio = !mute;
+    await this.rtcOps.muteLocalMic(mute);
+    this.shouldPublishAudio = nextShouldPublishAudio;
+    this.syncActiveMediaRefreshTask();
   }
 
   public async muteRemoteAudio(mute: boolean): Promise<void> {
@@ -356,7 +520,7 @@ export class RTCModule implements DCModule, IRTCOperations {
     }
   }
 
-  public async getCameras(): Promise<any[]> {
+  public async getCameras(): Promise<IRTCCameraDevice[]> {
     return this.rtcOps.getCameras();
   }
 
@@ -364,15 +528,22 @@ export class RTCModule implements DCModule, IRTCOperations {
     return this.rtcOps.switchCamera(deviceId);
   }
 
-  public async startScreenShare(config?: any): Promise<void> {
+  public async startScreenShare(config?: IRTCScreenShareConfig): Promise<void> {
     if (typeof (this.rtcOps as any).startScreenShare === 'function') {
-      return (this.rtcOps as any).startScreenShare(config);
+      await (this.rtcOps as any).startScreenShare(config);
+      this.isScreenSharing = true;
+      this.syncActiveMediaRefreshTask();
     }
   }
 
   public async stopScreenShare(): Promise<void> {
     if (typeof (this.rtcOps as any).stopScreenShare === 'function') {
-      return (this.rtcOps as any).stopScreenShare();
+      try {
+        await (this.rtcOps as any).stopScreenShare();
+      } finally {
+        this.isScreenSharing = false;
+        this.syncActiveMediaRefreshTask();
+      }
     }
   }
 
@@ -391,6 +562,9 @@ export class RTCModule implements DCModule, IRTCOperations {
   }
 
   // --- P2P 呼叫与信令处理 ---
+  // 以下所有信令方法（callPeer / acceptCall / rejectCall / endCall /
+  // createPersistentSession / acceptPersistentSession）均通过全局 RTM 模块
+  //（CoreModuleName.RTM）发送信令消息，使用前必须确保全局 RTM 已初始化。
   public async callPeer(targetUserId: string, mediaType: 'video' | 'audio' | 'mixed' = 'video'): Promise<string> {
     const channelId = this.generateChannelId();
     const rtmModule = (this.context as any).getModule(CoreModuleName.RTM);
@@ -432,6 +606,7 @@ export class RTCModule implements DCModule, IRTCOperations {
     }
   }
 
+  // 游戏邀请握手信令：同样依赖全局 RTM 模块，使用前确保 dc.rtm.init() 已完成。
   public async createPersistentSession(targetUserId: string, sessionDescription?: string): Promise<string> {
     const channelId = this.generateChannelId();
     const rtmModule = (this.context as any).getModule(CoreModuleName.RTM);
@@ -516,28 +691,36 @@ export class RTCModule implements DCModule, IRTCOperations {
     return this.rtcOps.getChannelUsers(channelId);
   }
 
-  public on(event: string, callback: (...args: any[]) => void): void {
-    if (['onCallRequest', 'onCallAccept', 'onCallReject', 'onCallEnd', 'onPersistentSessionRequest', 'onPersistentSessionAccept'].includes(event)) {
+  public on<E extends CallSignalEvent>(event: E, callback: (payload: CallSignalEventPayloadMap[E]) => void): void;
+  public on(event: string, callback: RTCGenericEventCallback): void;
+  public on(event: string, callback: RTCGenericEventCallback): void {
+    if (this.isCallSignalEvent(event)) {
       this.ensureRTMListener();
       if (!this.customEventListeners.has(event)) {
         this.customEventListeners.set(event, []);
       }
-      this.customEventListeners.get(event)!.push(callback);
+      this.customEventListeners.get(event)!.push(callback as (payload: CallSignalEventPayloadMap[CallSignalEvent]) => void);
     } else {
       this.rtcOps.on(event, callback);
     }
   }
 
-  public off(event: string, callback: (...args: any[]) => void): void {
-    if (['onCallRequest', 'onCallAccept', 'onCallReject', 'onCallEnd', 'onPersistentSessionRequest', 'onPersistentSessionAccept'].includes(event)) {
+  public off<E extends CallSignalEvent>(event: E, callback: (payload: CallSignalEventPayloadMap[E]) => void): void;
+  public off(event: string, callback: RTCGenericEventCallback): void;
+  public off(event: string, callback: RTCGenericEventCallback): void {
+    if (this.isCallSignalEvent(event)) {
       const callbacks = this.customEventListeners.get(event);
       if (callbacks) {
-        const idx = callbacks.indexOf(callback);
+        const idx = callbacks.indexOf(callback as (payload: CallSignalEventPayloadMap[CallSignalEvent]) => void);
         if (idx > -1) callbacks.splice(idx, 1);
       }
     } else {
       this.rtcOps.off(event, callback);
     }
+  }
+
+  private isCallSignalEvent(event: string): event is CallSignalEvent {
+    return RTCModule.CALL_SIGNAL_EVENTS.has(event as CallSignalEvent);
   }
 
   private processedSignals = new Set<string>();
@@ -607,10 +790,10 @@ export class RTCModule implements DCModule, IRTCOperations {
     }, 100);
   }
 
-  private emitCustomEvent(event: string, ...args: any[]) {
+  private emitCustomEvent<E extends CallSignalEvent>(event: E, payload: CallSignalEventPayloadMap[E]) {
     const list = this.customEventListeners.get(event);
     if (list) {
-      list.forEach(cb => cb(...args));
+      list.forEach(cb => cb(payload));
     }
   }
 }

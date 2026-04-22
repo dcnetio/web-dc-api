@@ -383,6 +383,7 @@ export class AIProxyClient {
 
       return 0;
     } catch (error) {
+
       clearTimeoutTimer();
 
       console.warn("DoAIProxyCall error:", error);
