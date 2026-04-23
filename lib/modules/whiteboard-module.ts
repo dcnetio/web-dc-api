@@ -1,6 +1,6 @@
 import { DCModule, CoreModuleName } from '../common/module-system';
 import { DCContext } from '../interfaces/DCContext';
-import { IWhiteboardOperations, IRtcWhiteboard } from '../interfaces/whiteboard-interface';
+import { IWhiteboardOperations, IRtcWhiteboard, IWhiteboardAuthInfo, IWhiteboardJoinInfo } from '../interfaces/whiteboard-interface';
 import { AliyunWhiteboardOperations } from '../implements/whiteboard/aliyun-whiteboard';
 import { IRTMStandardMessage } from '../interfaces/rtm-interface';
 import { Encryption } from '../util/curve25519Encryption';
@@ -16,9 +16,9 @@ export class WhiteboardModule implements DCModule, IWhiteboardOperations {
   private rtmListenerAttached: boolean = false;
   private processedSignals = new Set<string>();
 
-  private authInfo: any = null;
+  private authInfo: IWhiteboardAuthInfo | null = null;
   private mainTokenExpireAt: number = 0;
-  private tokenRefreshTimer: any = null;
+  private tokenRefreshTimer: ReturnType<typeof setInterval> | null = null;
   private tokenRefreshInFlightByChannel: Map<string, Promise<void>> = new Map();
   private activeChannelId: string = '';
   private refreshLoopEpoch: number = 0;
@@ -67,7 +67,7 @@ export class WhiteboardModule implements DCModule, IWhiteboardOperations {
     await this.whiteboardOps.clear();
   }
 
-  public async init(authInfo: any): Promise<void> {
+  public async init(authInfo: IWhiteboardAuthInfo): Promise<void> {
     this.authInfo = {
       ...authInfo,
       appId: authInfo.appId || this.context?.appInfo?.appId || ""
@@ -75,11 +75,11 @@ export class WhiteboardModule implements DCModule, IWhiteboardOperations {
     return this.whiteboardOps.init(this.authInfo);
   }
 
-  public async joinChannel(joinInfo: any): Promise<void> {
+  public async joinChannel(joinInfo: IWhiteboardJoinInfo): Promise<void> {
     return this.joinRoom(joinInfo);
   }
 
-  public async joinRoom(roomIdOrJoinInfo: string | any): Promise<void> {
+  public async joinRoom(roomIdOrJoinInfo: string | IWhiteboardJoinInfo): Promise<void> {
     if (!this.authInfo) throw new Error('Whiteboard Not initialized');
 
     const joinInfo = typeof roomIdOrJoinInfo === 'string' ? { roomId: roomIdOrJoinInfo } : roomIdOrJoinInfo;
@@ -239,6 +239,9 @@ export class WhiteboardModule implements DCModule, IWhiteboardOperations {
     if (!this.context || !rtmModule) {
       throw new Error("RTM module is required for creating a whiteboard session");
     }
+    if (typeof this.context.sign !== 'function') {
+      throw new Error("Context sign capability is required for creating a whiteboard session invite");
+    }
 
     for (const userId of userIds) {
       let targetPubKeyBytes;
@@ -261,21 +264,17 @@ export class WhiteboardModule implements DCModule, IWhiteboardOperations {
       const encryptedBytes = await Encryption.encrypt(targetPubKeyBytes.bytes(), payloadBytes);
       const encryptedContent = uint8ArrayToString(encryptedBytes, 'base64');
 
-      const inviteMsg: any = {
-        appId: this.context.appInfo?.appId || 'unknown',
-        sourceUserId: (this.context as any).accountInfo?.uid || (this.context.publicKey ? this.context.publicKey.string() : ''),
-        messageType: 'WHITEBOARD_INVITE',
-        content: encryptedContent,
-        timestamp: Date.now(),
-        isEncrypted: true,
-        isInvite: true
-      };
+      const appId = this.context.appInfo?.appId || 'unknown';
+      const sourceUserId = (this.context as any).accountInfo?.uid || (this.context.publicKey ? this.context.publicKey.string() : '');
+      const messageType = 'WHITEBOARD_INVITE';
+      const timestamp = Date.now();
+      const isEncrypted = true;
 
-      const appIdValue = new TextEncoder().encode(inviteMsg.appId);
-      const messageTypeValue = new TextEncoder().encode(inviteMsg.messageType);
-      const contentValue = new TextEncoder().encode(inviteMsg.content);
-      const isEncryptedValue = new TextEncoder().encode(String(inviteMsg.isEncrypted));
-      const timestampValue = new TextEncoder().encode(String(inviteMsg.timestamp));
+      const appIdValue = new TextEncoder().encode(appId);
+      const messageTypeValue = new TextEncoder().encode(messageType);
+      const contentValue = new TextEncoder().encode(encryptedContent);
+      const isEncryptedValue = new TextEncoder().encode(String(isEncrypted));
+      const timestampValue = new TextEncoder().encode(String(timestamp));
 
       const preSign = new Uint8Array([
         ...appIdValue,
@@ -285,12 +284,19 @@ export class WhiteboardModule implements DCModule, IWhiteboardOperations {
         ...timestampValue,
       ]);
 
-      if (this.context.sign) {
-        const signatureBytes = await this.context.sign(preSign);
-        inviteMsg.signature = uint8ArrayToString(signatureBytes, 'base64');
-      } else {
-        inviteMsg.signature = "signature_placeholder";
-      }
+      const signatureBytes = await this.context.sign(preSign);
+      const signature = uint8ArrayToString(signatureBytes, 'base64');
+
+      const inviteMsg: IRTMStandardMessage = {
+        appId,
+        sourceUserId,
+        messageType,
+        content: encryptedContent,
+        timestamp,
+        isEncrypted,
+        isInvite: true,
+        signature
+      };
 
       await rtmModule.sendMessageToPeer(userId, JSON.stringify(inviteMsg), true, true);
     }
@@ -426,6 +432,8 @@ export class WhiteboardModule implements DCModule, IWhiteboardOperations {
       return;
     }
 
+    const authInfo = this.authInfo;
+
     const inFlight = this.tokenRefreshInFlightByChannel.get(channelId);
     if (inFlight) {
       return inFlight;
@@ -436,11 +444,11 @@ export class WhiteboardModule implements DCModule, IWhiteboardOperations {
     const refreshPromise = (async () => {
       const [authRes, err] = await (this.context as any).aiproxy.GetAliyunV3Token({
         channelId,
-        userId: this.authInfo.userId,
-        appId: this.authInfo.appId,
-        themeAuthor: this.authInfo.themeAuthor,
-        configTheme: this.authInfo.configTheme,
-        serviceName: this.authInfo.serviceName,
+        userId: authInfo.userId,
+        appId: authInfo.appId,
+        themeAuthor: authInfo.themeAuthor,
+        configTheme: authInfo.configTheme,
+        serviceName: authInfo.serviceName,
         forceRefresh,
       });
 

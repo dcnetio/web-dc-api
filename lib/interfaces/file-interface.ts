@@ -118,6 +118,19 @@ export interface IFileOperations {
   ): Promise<[string | null, Error | null]>;
 
   /**
+   * 添加文件夹
+   */
+   addFolder(
+    files: FileList,
+    enkey: string,
+    onUpdateTransmitCount: (
+      status: number,
+      total: number,
+      process: number,
+    ) => void,
+  ): Promise<[string | null, Error | null]> ;
+
+  /**
    * 添加文件到本地存储
    * @param file 要上传的文件对象
    * @param enkey 加密密钥

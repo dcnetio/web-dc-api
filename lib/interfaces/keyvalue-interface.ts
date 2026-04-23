@@ -119,6 +119,19 @@ export interface IKeyValueOperations {
   ): Promise<[boolean | null, number | null, Error | null]>;
 
 
+
+   /**
+   * 与setWithCount功能完全一样,主要为了兼容性
+   */
+  saveWithCount(
+    kvdb: KeyValueDB,
+    key: string,
+    value: string,
+    indexs: string,
+    vaccount?: string
+  ): Promise<[boolean | null, number | null, Error | null]>;
+
+
   /**  获取DB全局的统计数据,即所有key设置操作累计的的统计数据汇总
    * @param kvdb: KeyValueDB,
    * @param countType 统计类型,0:总计数,1:按天统计,2:按月统计,3:按年统计

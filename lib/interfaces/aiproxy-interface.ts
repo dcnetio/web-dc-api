@@ -249,6 +249,20 @@ export interface IAIProxyOperations {
   ): Promise<[IAIProxyRealtimeVoiceSession | null, Error | null]>;
 
   /**
+   * 创建多态兼容的阿里云实时语音/转写会话（四元组直传版）。
+   */
+  CreateAliyunTranscriptionSessionByTheme(
+    appId: string,
+    themeAuthor: string,
+    configTheme: string,
+    serviceName: string,
+    options?: Omit<
+      AIProxyAliyunRealtimeVoiceSessionOptions,
+      "appId" | "themeAuthor" | "configTheme" | "serviceName"
+    >
+  ): Promise<[IAIProxyRealtimeVoiceSession | null, Error | null]>;
+
+  /**
    * 创建纯会话型大模型（遵循 OpenAI Realtime 协议）的专用实时语音交互会话。
    * 主要针对如 Qwen-Omni (通义千问全模态实时) 此类端到端交互模型。
    * 
@@ -262,6 +276,26 @@ export interface IAIProxyOperations {
    */
   CreateConversationalVoiceSession(
     options: AIProxyAliyunRealtimeVoiceSessionOptions,
+  ): Promise<[IAIProxyRealtimeVoiceSession | null, Error | null]>;
+
+  /**
+   * 创建“傻瓜版”实时语音会话。
+   * 业务侧只需传入主题四元组（appId、themeAuthor、theme、service），其余参数走内置默认值。
+   * mode=auto 时会根据 model/theme/service 自动选择 transcription 或 conversation 工厂。
+   */
+  CreateSimpleRealtimeVoiceSession(
+    appId: string,
+    themeAuthor: string,
+    configTheme: string,
+    serviceName: string,
+    options?: Omit<
+      AIProxyAliyunRealtimeVoiceSessionOptions,
+      "appId" | "themeAuthor" | "configTheme" | "serviceName"
+    > & {
+      mode?: "auto" | "transcription" | "conversation";
+      scene?: string;
+      userId?: string;
+    },
   ): Promise<[IAIProxyRealtimeVoiceSession | null, Error | null]>;
 
 }

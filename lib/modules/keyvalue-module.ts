@@ -270,6 +270,16 @@ export class KeyValueModule implements DCModule, IKeyValueOperations {
     return await this.set(kvdb, key, "value_count:"+ value, indexs, vaccount); //添加前缀"value_count:",在DB中区分普通的keyvalue设置和需要统计功能的keyvalue设置
   }
 
+  async saveWithCount(
+    kvdb: KeyValueDB,
+    key: string,
+    value: string,
+    indexs: string,
+    vaccount?: string
+  ): Promise<[boolean | null, number | null, Error | null]>{
+    return  await this.setWithCount(kvdb, key, value, indexs, vaccount);
+  }
+
 
   /**  获取DB全局的统计数据,即所有key设置操作累计的的统计数据汇总
    * @param kvdb: KeyValueDB,

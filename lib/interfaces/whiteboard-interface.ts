@@ -1,3 +1,6 @@
+import { IRTCAuthInfo } from './rtc-interface';
+import type { IRTMStandardMessage } from './rtm-interface';
+
 export type ShapeType = string | number; // simplified based on standard SDK tool types
 export enum WBToolType {
   Click = 'click',
@@ -35,6 +38,24 @@ export interface IWhiteboardTokenRefreshErrorEvent {
   nextRetryAt: number;
   timestamp: number;
 }
+
+// Keep wbAuth aligned with rtcAuth shape.
+export type IWhiteboardAuthInfo = IRTCAuthInfo;
+
+export interface IWhiteboardJoinInfo {
+  roomId?: string;
+  channelId?: string;
+  channel?: string;
+  token?: string;
+  appId?: string;
+  uid?: string;
+  userId?: string;
+  userName?: string;
+  role?: WBRoleType | string;
+  roleType?: WBRoleType | string;
+  [key: string]: any;
+}
+
 export enum WBRoleType {
   Admin = 'Admin',
   Attendee = 'Attendee',
@@ -184,14 +205,14 @@ export interface IWhiteboardOperations {
    * 初始化 SDK 和认证信息
    * @param authInfo 初始化参数（如 appId/userId/themeAuthor/configTheme/serviceName 等）
    */
-  init(authInfo: any): Promise<void>;
+  init(authInfo: IWhiteboardAuthInfo): Promise<void>;
 
   /**
    * 加入频道，独立使用白板时使用
     * 通常等价于 joinRoom(joinInfo)
     * @param joinInfo 入会参数（至少需包含 roomId 或 channelId）
    */
-  joinChannel(joinInfo: any): Promise<void>;
+  joinChannel(joinInfo: IWhiteboardJoinInfo): Promise<void>;
 
   /**
    * 加入房间，用于支持指定房间号允许多人加入白板
@@ -199,7 +220,7 @@ export interface IWhiteboardOperations {
     * 当 joinInfo 不含 token 且已配置 aiproxy 时，SDK 可自动尝试获取 token。
     * @param roomIdOrJoinInfo 房间ID或入会参数
    */
-  joinRoom?(roomIdOrJoinInfo: string | any): Promise<void>;
+  joinRoom?(roomIdOrJoinInfo: string | IWhiteboardJoinInfo): Promise<void>;
 
   /**
    * 离开频道，独立使用白板时使用
@@ -296,5 +317,5 @@ export interface IWhiteboardOperations {
    * @param inviteMsg 邀请消息对象或字符串
    * @returns 解包后的会话信息（sessionId/sessionDescription/config）
    */
-  acceptWhiteboardInvite?(inviteMsg: any): Promise<{ sessionId: string; sessionDescription?: string; config?: any }>;
+  acceptWhiteboardInvite?(inviteMsg: IRTMStandardMessage | string): Promise<{ sessionId: string; sessionDescription?: string; config?: any }>;
 }

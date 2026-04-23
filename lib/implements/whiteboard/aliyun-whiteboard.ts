@@ -1,11 +1,11 @@
-import { IRtcWhiteboard, IWhiteboardOperations } from '../../interfaces/whiteboard-interface';
+import { IRtcWhiteboard, IWhiteboardOperations, IWhiteboardAuthInfo, IWhiteboardJoinInfo } from '../../interfaces/whiteboard-interface';
 import { createLogger } from '../../util/logger';
 
 const logger = createLogger("AliyunWhiteboard");
 
 export class AliyunWhiteboardOperations implements IWhiteboardOperations {
   private whiteboardManager: any = null;
-  private authInfo: any = null;
+  private authInfo: IWhiteboardAuthInfo | null = null;
 
   constructor() {
     this.whiteboardManager = null;
@@ -45,7 +45,7 @@ export class AliyunWhiteboardOperations implements IWhiteboardOperations {
     return this.whiteboardManager;
   }
 
-  public async init(authInfo: any): Promise<void> {
+  public async init(authInfo: IWhiteboardAuthInfo): Promise<void> {
     this.authInfo = authInfo;
     const manager = await this._getManager();
     if (!manager) {
@@ -54,7 +54,7 @@ export class AliyunWhiteboardOperations implements IWhiteboardOperations {
     // Typically Whiteboard initialization requires joining a session or setting auth info
   }
 
-  public async joinChannel(joinInfo: any): Promise<void> {
+  public async joinChannel(joinInfo: IWhiteboardJoinInfo): Promise<void> {
     const manager = await this._getManager();
     if (!manager) throw new Error("WhiteboardManager disabled");
     if (typeof manager.join === 'function') {
@@ -62,7 +62,7 @@ export class AliyunWhiteboardOperations implements IWhiteboardOperations {
     }
   }
 
-  public async joinRoom(roomIdOrJoinInfo: string | any): Promise<void> {
+  public async joinRoom(roomIdOrJoinInfo: string | IWhiteboardJoinInfo): Promise<void> {
     const manager = await this._getManager();
     if (!manager) throw new Error("WhiteboardManager disabled");
     
