@@ -547,12 +547,39 @@ export class AIProxyModule implements DCModule, IAIProxyOperations {
         effectiveResolvedConfig,
         normalizedOptions,
       );
+      const inputMode = normalizedOptions.inputMode;
+      const resolvedCommit =
+        inputMode === "manual"
+          ? false
+          : normalizedOptions.aliyunProtocolOptions?.autoCommitOnStop ?? true;
+      const resolvedRequestResponse =
+        inputMode === "manual"
+          ? false
+          : normalizedOptions.aliyunProtocolOptions?.autoCreateResponseOnStop ?? true;
+
+      const existingSession =
+        (normalizedOptions.aliyunProtocolOptions?.session as Record<string, unknown> | undefined) ||
+        undefined;
+      const nextSession = {
+        ...(existingSession || {}),
+      } as Record<string, unknown>;
+      if (inputMode === "manual") {
+        nextSession.turn_detection = null;
+      } else if (inputMode === "auto-vad" && typeof nextSession.turn_detection === "undefined") {
+        nextSession.turn_detection = { type: "server_vad" };
+      }
+      const normalizedAliyunProtocolOptions = inputMode
+        ? {
+            ...(normalizedOptions.aliyunProtocolOptions || {}),
+            session: nextSession,
+          }
+        : normalizedOptions.aliyunProtocolOptions;
+
       const stopVoiceInputOptions = {
-        commit: normalizedOptions.aliyunProtocolOptions?.autoCommitOnStop ?? true,
-        requestResponse:
-          normalizedOptions.aliyunProtocolOptions?.autoCreateResponseOnStop ?? true,
         finishSession: false,
         ...(normalizedOptions.stopVoiceInputOptions || {}),
+        commit: resolvedCommit,
+        requestResponse: resolvedRequestResponse,
       };
 
       const shouldUseMultimodalDialog = !useOpenAIRealtimeProtocol && (
@@ -651,16 +678,16 @@ export class AIProxyModule implements DCModule, IAIProxyOperations {
         stopVoiceInputOptions,
         protocolAdapter: useOpenAIRealtimeProtocol
           ? createOpenAIRealtimeVoiceProtocolAdapter({
-              ...normalizedOptions.aliyunProtocolOptions,
+              ...normalizedAliyunProtocolOptions,
               model: effectiveResolvedConfig.model,
             })
           : shouldUseMultimodalDialog
             ? createQwenMultimodalDialogAdapter({
-                ...normalizedOptions.aliyunProtocolOptions,
+                ...normalizedAliyunProtocolOptions,
                 model: effectiveResolvedConfig.model,
               })
             : createAliyunRealtimeVoiceProtocolAdapter({
-                ...normalizedOptions.aliyunProtocolOptions,
+                ...normalizedAliyunProtocolOptions,
                 model: effectiveResolvedConfig.model,
               }),
       });
@@ -678,23 +705,40 @@ export class AIProxyModule implements DCModule, IAIProxyOperations {
     themeAuthor: string,
     configTheme: string,
     serviceName: string,
-    options?: Omit<
-      AIProxyAliyunRealtimeVoiceSessionOptions,
-      "appId" | "themeAuthor" | "configTheme" | "serviceName"
-    >,
+    onModelEvent?: (message: unknown) => void,
   ): Promise<[IAIProxyRealtimeVoiceSession | null, Error | null]> {
     const normalizedAppId = String(appId || "").trim();
     const normalizedThemeAuthor = String(themeAuthor || "").trim();
     const normalizedConfigTheme = String(configTheme || "").trim();
     const normalizedServiceName = String(serviceName || "").trim();
 
-    return this.CreateAliyunTranscriptionSession({
-      ...((options || {}) as NonNullable<typeof options>),
+    const mergedOptions = {
+      inputMode: "auto-vad",
+      runtime: "browser",
+      initRequestBody: {
+        scene: "voice-chat",
+        user_id: "anonymous",
+      },
+      aliyunProtocolOptions: {
+        session: {
+          turn_detection: { type: "server_vad" },
+        },
+      },
       appId: normalizedAppId,
       themeAuthor: normalizedThemeAuthor,
       configTheme: normalizedConfigTheme,
       serviceName: normalizedServiceName,
-    });
+      autoStartInput: true,
+      autoPlayOutput: true,
+      onModelEvent,
+      stopVoiceInputOptions: {
+        finishSession: false,
+        commit: true,
+        requestResponse: true,
+      },
+    } as AIProxyAliyunRealtimeVoiceSessionOptions;
+
+    return this.CreateAliyunTranscriptionSession(mergedOptions);
   }
 
   async CreateConversationalVoiceSession(
@@ -720,12 +764,39 @@ export class AIProxyModule implements DCModule, IAIProxyOperations {
         qwenResolvedConfig,
         options,
       );
+      const inputMode = options.inputMode;
+      const resolvedCommit =
+        inputMode === "manual"
+          ? false
+          : options.aliyunProtocolOptions?.autoCommitOnStop ?? true;
+      const resolvedRequestResponse =
+        inputMode === "manual"
+          ? false
+          : options.aliyunProtocolOptions?.autoCreateResponseOnStop ?? true;
+
+      const existingSession =
+        (options.aliyunProtocolOptions?.session as Record<string, unknown> | undefined) ||
+        undefined;
+      const nextSession = {
+        ...(existingSession || {}),
+      } as Record<string, unknown>;
+      if (inputMode === "manual") {
+        nextSession.turn_detection = null;
+      } else if (inputMode === "auto-vad" && typeof nextSession.turn_detection === "undefined") {
+        nextSession.turn_detection = { type: "server_vad" };
+      }
+      const normalizedAliyunProtocolOptions = inputMode
+        ? {
+            ...(options.aliyunProtocolOptions || {}),
+            session: nextSession,
+          }
+        : options.aliyunProtocolOptions;
+
       const stopVoiceInputOptions = {
-        commit: options.aliyunProtocolOptions?.autoCommitOnStop ?? true,
-        requestResponse:
-          options.aliyunProtocolOptions?.autoCreateResponseOnStop ?? true,
         finishSession: false,
         ...(options.stopVoiceInputOptions || {}),
+        commit: resolvedCommit,
+        requestResponse: resolvedRequestResponse,
       };
 
       return this.CreateVoiceSession({
@@ -769,7 +840,7 @@ export class AIProxyModule implements DCModule, IAIProxyOperations {
           };
         },
         stopVoiceInputOptions,
-        protocolAdapter: createOpenAIRealtimeVoiceProtocolAdapter({ ...options.aliyunProtocolOptions, model: resolvedConfig.model }),
+        protocolAdapter: createOpenAIRealtimeVoiceProtocolAdapter({ ...normalizedAliyunProtocolOptions, model: resolvedConfig.model }),
       });
     } catch (error) {
       logger.error("创建OpenAI/Qwen实时语音会话失败:", error);
@@ -785,26 +856,14 @@ export class AIProxyModule implements DCModule, IAIProxyOperations {
     themeAuthor: string,
     configTheme: string,
     serviceName: string,
-    options?: Omit<
-      AIProxyAliyunRealtimeVoiceSessionOptions,
-      "appId" | "themeAuthor" | "configTheme" | "serviceName"
-    > & {
-      mode?: "auto" | "transcription" | "conversation";
-      scene?: string;
-      userId?: string;
-    },
+     manualFlag?: boolean,
   ): Promise<[IAIProxyRealtimeVoiceSession | null, Error | null]> {
     try {
       this.assertInitialized();
 
-      const safeOptions =
-        (options || {}) as NonNullable<typeof options>;
-      const {
-        mode = "auto",
-        scene,
-        userId,
-        ...restOptions
-      } = safeOptions;
+      const isManual = manualFlag === true;
+      const resolvedCommit = !isManual;
+      const resolvedRequestResponse = !isManual;
 
       const normalizedAppId = String(appId || "").trim();
       const normalizedThemeAuthor = String(themeAuthor || "").trim();
@@ -816,54 +875,45 @@ export class AIProxyModule implements DCModule, IAIProxyOperations {
 
       const loweredTheme = normalizedConfigTheme.toLowerCase();
       const loweredService = normalizedServiceName.toLowerCase();
-      const modelHint = String(restOptions.model || "").trim();
       const shouldUseConversation =
-        isAliyunOpenAIRealtimeModel(modelHint) ||
         loweredTheme.includes("qwen-omni") ||
         loweredService.includes("qwen-omni") ||
         (loweredTheme.includes("omni") && loweredTheme.includes("realtime")) ||
         (loweredService.includes("omni") && loweredService.includes("realtime"));
 
-      const effectiveMode =
-        mode === "auto" ? (shouldUseConversation ? "conversation" : "transcription") : mode;
+      const normalizedAliyunProtocolOptions = {
+        session: {
+          turn_detection: isManual ? null : { type: "server_vad" },
+        },
+      };
 
       const normalizedOptions: AIProxyAliyunRealtimeVoiceSessionOptions = {
-        ...restOptions,
         appId: normalizedAppId,
         themeAuthor: normalizedThemeAuthor,
         configTheme: normalizedConfigTheme,
         serviceName: normalizedServiceName,
-        runtime: restOptions.runtime || "browser",
-        initRequestBody:
-          restOptions.initRequestBody || {
-            scene: String(scene || "voice-chat"),
-            user_id: String(userId || "anonymous"),
-          },
-        autoStartInput: restOptions.autoStartInput ?? false,
-        autoPlayOutput: restOptions.autoPlayOutput ?? true,
+        runtime: "browser",
+        initRequestBody: {
+          scene: "voice-chat",
+          user_id: "anonymous",
+        },
+        aliyunProtocolOptions: normalizedAliyunProtocolOptions,
+        // 默认启用自动音频采集和播放
+        autoStartInput: true,
+        autoPlayOutput: true,
+        // 根据顶层参数设置 stopVoiceInputOptions
+        stopVoiceInputOptions: {
+          finishSession: false,
+          commit: resolvedCommit,
+          requestResponse: resolvedRequestResponse,
+        },
       };
 
-      if (effectiveMode === "conversation") {
+      if (shouldUseConversation) {
         return this.CreateConversationalVoiceSession(normalizedOptions);
       }
 
-      const transcriptionOptions = {
-        ...normalizedOptions,
-      } as Omit<
-        AIProxyAliyunRealtimeVoiceSessionOptions,
-        "appId" | "themeAuthor" | "configTheme" | "serviceName"
-      >;
-      delete (transcriptionOptions as any).appId;
-      delete (transcriptionOptions as any).themeAuthor;
-      delete (transcriptionOptions as any).configTheme;
-      delete (transcriptionOptions as any).serviceName;
-      return this.CreateAliyunTranscriptionSessionByTheme(
-        normalizedAppId,
-        normalizedThemeAuthor,
-        normalizedConfigTheme,
-        normalizedServiceName,
-        transcriptionOptions,
-      );
+      return this.CreateAliyunTranscriptionSession(normalizedOptions);
     } catch (error) {
       logger.error("创建傻瓜版实时语音会话失败:", error);
       return [

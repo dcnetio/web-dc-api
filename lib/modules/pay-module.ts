@@ -134,6 +134,10 @@ export class PayModule implements DCModule, IPayOperations {
     this.initialized = false;
   }
 
+  /**
+   * 配置支付相关服务地址。
+   * @param options 支付网关及支付能力相关地址配置
+   */
   config(options: {
     payPeerUrl?: string;
     hostedPayBaseUrl?: string;
@@ -235,6 +239,11 @@ export class PayModule implements DCModule, IPayOperations {
     return payStatus === 2 ? "支付成功" : this.mapPayStatusText(payStatus);
   }
 
+  /**
+   * 查询支付订单列表。
+   * @param options 查询条件
+   * @returns 订单记录数组
+   */
   async listPaymentOrders(options: {
     account: string;
     dappid?: string;
@@ -380,6 +389,11 @@ export class PayModule implements DCModule, IPayOperations {
     return list;
   }
 
+  /**
+   * 创建支付订单。
+   * @param options 下单参数
+   * @returns 商户订单号 outTradeNo
+   */
   async createPayOrder(options: {
     account: string;
     packageId: string;
@@ -419,6 +433,11 @@ export class PayModule implements DCModule, IPayOperations {
     return outTradeNo;
   }
 
+  /**
+   * 获取 NATIVE 支付二维码链接。
+   * @param outTradeNo 商户订单号
+   * @returns 支付链接（通常可用于生成二维码）
+   */
   async getNativePrepayCodeUrl(outTradeNo: string): Promise<string> {
     if (!outTradeNo) {
       throw new Error("缺少订单号，无法获取二维码");
@@ -438,6 +457,11 @@ export class PayModule implements DCModule, IPayOperations {
     return codeUrl;
   }
 
+  /**
+   * 查询订单支付结果。
+   * @param outTradeNo 商户订单号
+   * @returns 是否支付成功
+   */
   async queryPaymentResult(outTradeNo: string): Promise<boolean> {
     if (!outTradeNo) {
       return false;
@@ -510,6 +534,12 @@ export class PayModule implements DCModule, IPayOperations {
       .filter((item: IRenewPackageInfo) => !!item.packageId);
   }
 
+  /**
+   * 拉取续费/购买套餐列表。
+   * @param pkgType 套餐类型
+   * @param serviceAppid 服务应用 AppID（可选）
+   * @param scene 业务场景（可选）
+   */
   async listRenewPackages(
     pkgType: PaymentPackageType,
     serviceAppid?: string,
@@ -527,6 +557,13 @@ export class PayModule implements DCModule, IPayOperations {
     return normalized;
   }
 
+  /**
+   * 获取指定套餐续费时长（天）。
+   * @param packageCode 套餐编码
+   * @param targetType 套餐类型
+   * @param serviceAppid 服务应用 AppID（可选）
+   * @param scene 业务场景（可选）
+   */
   async getRenewalDays(packageCode: string, targetType: PaymentPackageType, serviceAppid?: string, scene?: string): Promise<number> {
     const list = await this.listRenewPackages(targetType, serviceAppid, scene);
     const target = list.find((item) => item.packageCode === packageCode);
@@ -538,6 +575,13 @@ export class PayModule implements DCModule, IPayOperations {
   }
 
 
+  /**
+   * 按编码获取指定套餐信息。
+   * @param packageCode 套餐编码
+   * @param pkgType 套餐类型
+   * @param serviceAppid 服务应用 AppID（可选）
+   * @param scene 业务场景（可选）
+   */
   async getPackageInfo(
     packageCode: string,
     pkgType: PaymentPackageType,
@@ -555,6 +599,10 @@ export class PayModule implements DCModule, IPayOperations {
     return target;
   }
 
+  /**
+   * 应用开发者：申请创建/修改支付套餐（提交审核）。
+   * @param request 套餐申请内容
+   */
   async applyBusinessPackage(request: IPackageApplyRequest): Promise<boolean> {
     const timestampSec = Math.floor(Date.now() / 1000);
     const signPayload = this.buildApplyPackageSignPayload(request, timestampSec);
@@ -597,6 +645,10 @@ export class PayModule implements DCModule, IPayOperations {
     return true;
   }
 
+  /**
+   * 应用开发者：查询自己应用下的所有套餐配置列表（含审核状态）。
+   * @param filter 查询过滤条件
+   */
   async getAllPackagesConfig(filter: IPackageConfigFilter): Promise<IPackageConfigListResult> {
     const grpcClient = await this.getPayGrpcClient();
     const pbReq = pb.GetAllPackagesConfigRequest.create({
@@ -624,6 +676,10 @@ export class PayModule implements DCModule, IPayOperations {
     };
   }
 
+  /**
+   * 应用开发者：删除自己应用下的支付套餐配置。
+   * @param packageId 套餐ID
+   */
   async deleteBusinessPackage(packageId: string): Promise<boolean> {
     this.assertInitialized();
     const normalizedId = String(packageId || "").trim();
@@ -654,6 +710,11 @@ export class PayModule implements DCModule, IPayOperations {
     return true;
   }
 
+  /**
+   * 将当前页面标记为支付回跳页。
+   * @param scene 支付场景
+   * @returns 标记后的 URL
+   */
   markCurrentUrlAsPayReturn(scene?: PaymentGatewayScene): string {
     const url = new URL(globalThis.window.location.href);
     url.searchParams.set(this.returnFlagKey, "1");
@@ -664,6 +725,10 @@ export class PayModule implements DCModule, IPayOperations {
     return url.toString();
   }
 
+  /**
+   * 判断当前 URL 是否为支付回跳页。
+   * @param scene 支付场景
+   */
   isPayReturnUrl(scene?: PaymentGatewayScene): boolean {
     try {
       const url = new URL(globalThis.window.location.href);
@@ -678,6 +743,9 @@ export class PayModule implements DCModule, IPayOperations {
     }
   }
 
+  /**
+   * 清理 URL 中支付回跳相关参数。
+   */
   clearPayReturnUrlParams(): void {
     try {
       const url = new URL(globalThis.window.location.href);
@@ -696,6 +764,11 @@ export class PayModule implements DCModule, IPayOperations {
     }
   }
 
+  /**
+   * 构建托管收银台 URL。
+   * @param options 收银台参数
+   * @returns 可直接跳转的支付 URL
+   */
   buildHostedCheckoutUrl(options: {
     account: string;
     packageCode: string;
@@ -725,6 +798,9 @@ export class PayModule implements DCModule, IPayOperations {
     return target.toString();
   }
 
+  /**
+   * 暂存待支付信息。
+   */
   markPendingGatewayPayment(info: IPendingGatewayPayment): void {
     try {
       localStorage.setItem(this.pendingPaymentKey, JSON.stringify(info));
@@ -733,6 +809,9 @@ export class PayModule implements DCModule, IPayOperations {
     }
   }
 
+  /**
+   * 获取暂存的待支付信息。
+   */
   getPendingGatewayPayment(): IPendingGatewayPayment | null {
     try {
       const value = localStorage.getItem(this.pendingPaymentKey);
@@ -747,6 +826,9 @@ export class PayModule implements DCModule, IPayOperations {
     }
   }
 
+  /**
+   * 清除暂存的待支付信息。
+   */
   clearPendingGatewayPayment(): void {
     try {
       localStorage.removeItem(this.pendingPaymentKey);

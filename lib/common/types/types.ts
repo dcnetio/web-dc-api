@@ -597,6 +597,8 @@ export interface AIProxyRealtimeVoiceStopOptions {
   finishSession?: boolean;
 }
 
+export type AIProxyRealtimeVoiceInputMode = "manual" | "auto-vad";
+
 export interface AIProxyRealtimeVoiceProtocolContext {
   runtime: Exclude<AIProxyRealtimeVoiceRuntime, "auto">;
   transport: IAIProxyRealtimeAudioSession;
@@ -803,6 +805,12 @@ export interface AIProxyRealtimeVoiceSessionOptions
   miniProgramOptions?: AIProxyRealtimeVoiceMiniProgramOptions;
   autoStartInput?: boolean;
   autoPlayOutput?: boolean;
+  /**
+   * 输入模式：
+   * - manual: 持续收音，但不自动触发模型回复，需要业务侧手动调用 commitInput + requestResponse
+   * - auto-vad: 使用语音断句自动触发模型回复（默认）
+   */
+  inputMode?: AIProxyRealtimeVoiceInputMode;
   stopVoiceInputOptions?: AIProxyRealtimeVoiceStopOptions;
   onModelEvent?: (message: unknown) => void;
   onVoiceInputFrame?: (frame: AIProxyRealtimeVoiceInputFrame) => void;

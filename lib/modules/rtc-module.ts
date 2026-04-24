@@ -48,6 +48,7 @@ export class RTCModule implements DCModule, IRTCOperations {
   private activeMediaRefreshTimer: any = null;
   private mainTokenExpireAt: number = 0;
   private tokenRefreshInFlight: Promise<void> | null = null;
+  private joinRoomInFlight: Promise<void> | null = null;
   private hasJoinedChannel: boolean = false;
   private shouldPublishAudio: boolean = true;
   private shouldPublishVideo: boolean = true;
@@ -256,58 +257,72 @@ export class RTCModule implements DCModule, IRTCOperations {
 
 
   public async joinRoom(channelId: string, options?: IRTCJoinRoomOptions): Promise<void> {
+    // Deduplicate concurrent calls: subsequent callers piggyback on the in-flight join.
+    if (this.joinRoomInFlight) return this.joinRoomInFlight;
+    this.joinRoomInFlight = this._doJoinRoom(channelId, options).finally(() => {
+      this.joinRoomInFlight = null;
+    });
+    return this.joinRoomInFlight;
+  }
+
+  private async _doJoinRoom(channelId: string, options?: IRTCJoinRoomOptions): Promise<void> {
     if (!this.authInfo) throw new Error('Not initialized');
 
     const nextAudioPublish = options?.audioPublish ?? true;
     const nextVideoPublish = options?.videoPublish ?? true;
     const nextScreenPublish = options?.screenPublish ?? false;
 
-    // 在取 token 前先更新本地发布意图，确保本次 joinRoom 的鉴权请求可带上正确能力声明。
+    // 在取 token 前先更新本地发布意图，确保本次入会的鉴权请求可带上正确能力声明。
     this.shouldPublishAudio = nextAudioPublish;
     this.shouldPublishVideo = nextVideoPublish;
     this.isScreenSharing = nextScreenPublish;
-    
+
     // If already in a channel, leave it first
     if (this.rtcOps) {
-       await this.rtcOps.leaveChannel().catch(() => {});
+      await this.rtcOps.leaveChannel().catch(() => {});
     }
-     this.hasJoinedChannel = false;
-     this.syncActiveMediaRefreshTask();
-    
+    this.hasJoinedChannel = false;
+    this.syncActiveMediaRefreshTask();
+
     this.authInfo.channelId = channelId;
     this.authInfo.token = undefined; // force refresh
     this.mainTokenExpireAt = 0;
-    
+
     // refetch token for the new channel
     if (this.authInfo.fetchAuthInfo) {
       const res = await this.authInfo.fetchAuthInfo(true);
       this.authInfo.token = res.token;
       this.mainTokenExpireAt = res.expiresAt ? res.expiresAt * 1000 : (Date.now() + 24 * 60 * 60 * 1000);
     } else if ((this.context as any)?.aiproxy && this.authInfo.themeAuthor) {
-      const headers = this.buildAliyunTokenRefreshHeaders();
+      // 入会时直接声明能力，不经 buildAliyunTokenRefreshHeaders（后者仅用于续期场景，
+      // 因 hasJoinedChannel=false 时会短路返回 undefined，导致能力头丢失）。
+      const headers: Record<string, string> = { rtc_token: 'true' };
+      if (nextAudioPublish) headers.audio_publish = 'true';
+      if (nextVideoPublish) headers.video_publish = 'true';
+      if (nextScreenPublish) headers.screen_publish = 'true';
       const [authRes, err] = await (this.context as any).aiproxy.GetAliyunV3Token({
-         channelId: this.authInfo.channelId,
-         userId: this.authInfo.userId,
-         appId: this.authInfo.appId,
-         themeAuthor: this.authInfo.themeAuthor,
-         configTheme: this.authInfo.configTheme,
-         serviceName: this.authInfo.serviceName,
-         headers: headers,
-         forceRefresh: true
+        channelId: this.authInfo.channelId,
+        userId: this.authInfo.userId,
+        appId: this.authInfo.appId,
+        themeAuthor: this.authInfo.themeAuthor,
+        configTheme: this.authInfo.configTheme,
+        serviceName: this.authInfo.serviceName,
+        headers,
+        forceRefresh: true
       });
       if (!err && authRes && authRes.token) {
-         this.authInfo.token = authRes.token;
-         if (authRes.serviceAppId) this.authInfo.rtcAppId = authRes.serviceAppId;
-         this.mainTokenExpireAt = authRes.expiresAt ? authRes.expiresAt * 1000 : (Date.now() + 24 * 60 * 60 * 1000);
+        this.authInfo.token = authRes.token;
+        if (authRes.serviceAppId) this.authInfo.rtcAppId = authRes.serviceAppId;
+        this.mainTokenExpireAt = authRes.expiresAt ? authRes.expiresAt * 1000 : (Date.now() + 24 * 60 * 60 * 1000);
       } else {
-         throw new Error("Failed to fetch token for new room");
+        throw new Error('Failed to fetch token for new room');
       }
     }
-    
+
     if (this.rtcOps && typeof (this.rtcOps as any).renewToken === 'function' && this.authInfo.token) {
-        (this.rtcOps as any).renewToken(this.authInfo.token);
+      (this.rtcOps as any).renewToken(this.authInfo.token);
     } else if (this.rtcOps) {
-        console.warn('The RTC provider does not explicitly implement renewToken, hoping SDK accepts token in join()');
+      console.warn('The RTC provider does not explicitly implement renewToken, hoping SDK accepts token in join()');
     }
 
     await this.rtcOps.joinRoom(channelId, options);
@@ -334,6 +349,7 @@ export class RTCModule implements DCModule, IRTCOperations {
   }
 
   public async leaveChannel(): Promise<void> {
+    this.joinRoomInFlight = null; // 取消任何待执行的入会 piggyback
     try {
       await this.rtcOps.leaveChannel();
     } finally {
@@ -483,6 +499,7 @@ export class RTCModule implements DCModule, IRTCOperations {
   }
 
   public destroy(): void {
+    this.joinRoomInFlight = null;
     if (this.context) {
       const rtmModule = (this.context as any)?.getModule(CoreModuleName.RTM);
       if (rtmModule && this.rtmListenerAttached) {

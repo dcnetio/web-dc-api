@@ -57,6 +57,24 @@ export class AliyunRTCOperations implements IRTCOperations {
   private isLeavingFlow: boolean = false;
 
   private localVideoElement: HTMLElement | null = null;
+
+  private isRenderableElement(element: HTMLElement | null): element is HTMLElement {
+    if (!element) return false;
+    if (typeof element.isConnected === 'boolean' && !element.isConnected) return false;
+    if (typeof document !== 'undefined' && document.contains && !document.contains(element)) return false;
+    return true;
+  }
+
+  private safePlayTrack(track: any, element: HTMLElement, tag: string): boolean {
+    if (!track || typeof track.play !== 'function') return false;
+    try {
+      track.play(element);
+      return true;
+    } catch (e) {
+      console.warn(`[AliyunRTC] Failed to play ${tag}, wrapper may be invalid.`, e);
+      return false;
+    }
+  }
   private isMcuSubscribed: boolean = false;
   private remoteVideoTracks: Map<string, any> = new Map();
   private remoteScreenTracks: Map<string, any> = new Map();
@@ -240,7 +258,9 @@ export class AliyunRTCOperations implements IRTCOperations {
 
     // 如果之前有绑定的本地视频容器，重新播放
     if (this.localVideoElement && !this.isLocalCameraMuted) {
-      this.cameraTrack.play(this.localVideoElement);
+      if (!this.isRenderableElement(this.localVideoElement) || !this.safePlayTrack(this.cameraTrack, this.localVideoElement, 'local video')) {
+        this.localVideoElement = null;
+      }
     }
 
     // 处理当前刚进房间前已在房间里的用户
@@ -277,11 +297,21 @@ export class AliyunRTCOperations implements IRTCOperations {
   }
 
 
+  private leavingFlowPromise: Promise<void> | null = null;
+
   public async leaveChannel(): Promise<void> {
+    // If already leaving, wait for that leave to complete instead of returning early.
+    if (this.leavingFlowPromise) return this.leavingFlowPromise;
     if (this.isLeavingFlow) return;
     this.isLeavingFlow = true;
+    this.leavingFlowPromise = this._doLeaveChannel().finally(() => {
+      this.isLeavingFlow = false;
+      this.leavingFlowPromise = null;
+    });
+    return this.leavingFlowPromise;
+  }
 
-    try {
+  private async _doLeaveChannel(): Promise<void> {
       this.hasJoined = false;
 
       if (this.rtmClient && this.authInfo) {
@@ -313,9 +343,24 @@ export class AliyunRTCOperations implements IRTCOperations {
         if (typeof this.micTrack.close === 'function') this.micTrack.close();
         this.micTrack = null;
       }
-    } finally {
-      this.isLeavingFlow = false;
-    }
+      // 清理远端轨道缓存：不清理会导致重新加入后旧 track 仍滞留，
+      // 且 isMcuSubscribed=true 会使重入后 mcu 音频无法重新订阅。
+      for (const track of this.remoteVideoTracks.values()) {
+        if (typeof track.stopPlay === 'function') track.stopPlay();
+        else if (typeof track.stop === 'function') track.stop();
+      }
+      this.remoteVideoTracks.clear();
+      for (const track of this.remoteScreenTracks.values()) {
+        if (typeof track.stopPlay === 'function') track.stopPlay();
+        else if (typeof track.stop === 'function') track.stop();
+      }
+      this.remoteScreenTracks.clear();
+      if (this.mcuAudioTrack) {
+        if (typeof this.mcuAudioTrack.stopPlay === 'function') this.mcuAudioTrack.stopPlay();
+        else if (typeof this.mcuAudioTrack.stop === 'function') this.mcuAudioTrack.stop();
+        this.mcuAudioTrack = null;
+      }
+      this.isMcuSubscribed = false;
   }
 
   public async createRTCChannel(userIds: string[], channelDescription?: string, rtcConfig?: IRTCStreamConfig): Promise<string> {
@@ -553,7 +598,11 @@ export class AliyunRTCOperations implements IRTCOperations {
     }
     
     if (element) {
-      if (typeof track.play === 'function') track.play(element);
+      if (!this.isRenderableElement(element)) {
+        console.warn(`DingRTC: remote screen wrapper is invalid for userId ${userId}.`);
+        return;
+      }
+      this.safePlayTrack(track, element, 'remote screen share');
     } else {
       if (typeof track.stopPlay === 'function') track.stopPlay();
       else if (typeof track.stop === 'function') track.stop();
@@ -581,7 +630,11 @@ export class AliyunRTCOperations implements IRTCOperations {
     }
     
     if (element) {
-      if (typeof track.play === 'function') track.play(element);
+      if (!this.isRenderableElement(element)) {
+        console.warn(`DingRTC: remote video wrapper is invalid for userId ${userId}.`);
+        return;
+      }
+      this.safePlayTrack(track, element, 'remote video');
     } else {
       if (typeof track.stopPlay === 'function') track.stopPlay();
       else if (typeof track.stop === 'function') track.stop();
@@ -592,7 +645,14 @@ export class AliyunRTCOperations implements IRTCOperations {
     this.localVideoElement = element;
     if (!this.cameraTrack) return;
     if (element) {
-      this.cameraTrack.play(element);
+      if (!this.isRenderableElement(element)) {
+        this.localVideoElement = null;
+        console.warn('DingRTC: local video wrapper is invalid, skip play.');
+        return;
+      }
+      if (!this.safePlayTrack(this.cameraTrack, element, 'local video')) {
+        this.localVideoElement = null;
+      }
     } else {
       if (typeof this.cameraTrack.stopPlay === 'function') {
         this.cameraTrack.stopPlay();

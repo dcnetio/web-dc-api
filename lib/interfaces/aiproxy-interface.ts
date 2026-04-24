@@ -243,23 +243,95 @@ export interface IAIProxyOperations {
    * 
    * 推荐在动态切换多种语聊模型或主要用于实时转写场景下使用。
    * 浏览器环境默认可直接采集和播放；小程序环境建议注入平台专用的 socket 与音频适配器。
+  *
+  * 自动触发模式（VAD）：
+  * ```
+  * const [session] = await aiproxy.CreateAliyunTranscriptionSession({
+  *   appId, themeAuthor, configTheme, serviceName,
+  *   inputMode: "auto-vad",
+  * });
+  * await session?.connect();
+  * ```
+  *
+  * 手工触发模式（持续收音）：
+  * ```
+  * const [session] = await aiproxy.CreateAliyunTranscriptionSession({
+  *   appId, themeAuthor, configTheme, serviceName,
+  *   inputMode: "manual",
+  * });
+  * await session?.connect();
+  * // 用户持续说话时 SDK 持续收音；点击发送时手动触发
+  * await session?.commitInput();
+  * await session?.requestResponse();
+  * ```
+  *
+   * 可通过 options.inputMode 指定输入模式：
+   * - manual: 持续收音，手动触发 commitInput + requestResponse
+   * - auto-vad: 语音间断自动触发（默认）
    */
   CreateAliyunTranscriptionSession(
     options: AIProxyAliyunRealtimeVoiceSessionOptions
   ): Promise<[IAIProxyRealtimeVoiceSession | null, Error | null]>;
 
   /**
-   * 创建多态兼容的阿里云实时语音/转写会话（四元组直传版）。
+   * 创建多态兼容的阿里云实时语音/转写会话（四元组直传版）
+   * 
+   * 该方法已完整封装音频采集和播放的全生命周期：
+   * - autoStartInput 默认为 true，连接后自动启动麦克风采集
+   * - autoPlayOutput 默认为 true，自动播放服务器返回的语音
+   * 
+   * 自动模式（正常环境）：
+   * ```
+   * const [session] = await aiproxy.CreateAliyunTranscriptionSessionByTheme(
+   *   appId, themeAuthor, configTheme, serviceName
+   * );
+   * if (session) {
+   *   await session.connect();
+   *   // 自动收音 → 自动识别 → 自动提交 → 自动播音
+   * }
+   * ```
+  *
+  * 使用 paraformer-realtime-v2 做实时语音识别时，建议在 `onModelEvent` 中按 `sentence_end` 判句：
+  * - 事件通常为 `result-generated`
+  * - 识别结果常位于 `payload.output.sentence`
+  * - 当 `sentence_end === true`：当前 `text` 为该句最终识别结果，可写入最终输出
+  * - 当 `sentence_end === false`：当前 `text` 为中间结果，仅建议用于临时字幕，不建议写入最终输出
+  *
+  * 典型处理示例：
+  * ```ts
+  * const [session] = await aiproxy.CreateAliyunTranscriptionSessionByTheme(
+  *   appId,
+  *   themeAuthor,
+  *   configTheme,
+  *   serviceName,
+  *   (message) => {
+  *     const output = (message as any)?.payload?.output;
+  *     const sentence = output?.sentence;
+  *     const text = sentence?.text;
+  *     const sentenceEnd = sentence?.sentence_end === true;
+  *
+  *     if (!text) return;
+  *     if (sentenceEnd) {
+  *       // 采纳最终句
+  *     } else {
+  *       // 仅做临时预览
+  *     }
+  *   },
+  * );
+  * ```
+   * 
+   * @param appId 应用ID
+   * @param themeAuthor 主题作者的公钥
+   * @param configTheme 配置主题
+   * @param serviceName 服务名称
+  * @param onModelEvent 模型事件回调(可选)，可用于实时文本回显与 `sentence_end` 断句处理
    */
   CreateAliyunTranscriptionSessionByTheme(
     appId: string,
     themeAuthor: string,
     configTheme: string,
     serviceName: string,
-    options?: Omit<
-      AIProxyAliyunRealtimeVoiceSessionOptions,
-      "appId" | "themeAuthor" | "configTheme" | "serviceName"
-    >
+    onModelEvent?: (message: unknown) => void,
   ): Promise<[IAIProxyRealtimeVoiceSession | null, Error | null]>;
 
   /**
@@ -269,8 +341,26 @@ export interface IAIProxyOperations {
    * 与 CreateAliyunTranscriptionSession 相比，该方法具备以下专项优化：
    * 1. 协议独占：强制使用 OpenAI Realtime 协议适配器，提供完整的 session.update / input_audio_buffer.append / 等标准操作。
    * 2. 路径指定：在未提供特定请求路径时，默认显式映射至 `/api-ws/v1/realtime` 端点。
-   * 3. 鉴权兼容：包含针对浏览器 WebSocket 鉴权限制的专项修复。当发现 AuthMode 为 bearer 时，
+  * 3. 鉴权兼容：包含针对浏览器 WebSocket 鉴权限制的专项修复。当发现 AuthMode 为 bearer 时，
    *    会主动转换为 URL Query 上的 `api_key` 模式传递，从而突破浏览器 WebSocket 无法设置自定义 Header 的环境限制。
+  * 4. 输入模式：支持 options.inputMode（manual / auto-vad）控制“手动触发”或“自动断句触发”。
+  *
+  * 示例：
+  * ```
+  * // 自动触发（VAD）
+  * const [autoSession] = await aiproxy.CreateConversationalVoiceSession({
+  *   appId, themeAuthor, configTheme, serviceName,
+  *   inputMode: "auto-vad",
+  * });
+  *
+  * // 手工触发
+  * const [manualSession] = await aiproxy.CreateConversationalVoiceSession({
+  *   appId, themeAuthor, configTheme, serviceName,
+  *   inputMode: "manual",
+  * });
+  * await manualSession?.commitInput();
+  * await manualSession?.requestResponse();
+  * ```
    * 
    * 提示：如果确定业务上明确使用兼容 OpenAI Realtime 协议端点的大模型对话，直接调用此接口最为稳妥。
    */
@@ -281,21 +371,34 @@ export interface IAIProxyOperations {
   /**
    * 创建“傻瓜版”实时语音会话。
    * 业务侧只需传入主题四元组（appId、themeAuthor、theme、service），其余参数走内置默认值。
-   * mode=auto 时会根据 model/theme/service 自动选择 transcription 或 conversation 工厂。
-   */
+   * mode=auto 时会根据 model/theme/service 自动选择 transcription 或 conversation 工厂。   * 
+   * 已完整封装音频采集和播放的全生命周期：
+   * - autoStartInput 默认为 true，连接后自动启动麦克风采集
+   * - autoPlayOutput 默认为 true，自动播放服务器返回的语音
+   * 
+   * 使用方式超级简单：
+   * ```
+   * const [session] = await aiproxy.CreateSimpleRealtimeVoiceSession(
+   *   appId, themeAuthor, configTheme, serviceName
+   * );
+   * if (session) {
+   *   await session.connect();
+   *   // 自动开始实时收音和播音
+   * }
+   * ```
+   * 
+   * @param appId 应用ID
+   * @param themeAuthor 主题作者的公钥
+  * @param configTheme 配置主题
+  * @param serviceName 服务名称
+   * @param manualFlag 是否手动提交：true=手动（不自动提交/不自动请求回复），false=自动
+  */
   CreateSimpleRealtimeVoiceSession(
     appId: string,
     themeAuthor: string,
     configTheme: string,
     serviceName: string,
-    options?: Omit<
-      AIProxyAliyunRealtimeVoiceSessionOptions,
-      "appId" | "themeAuthor" | "configTheme" | "serviceName"
-    > & {
-      mode?: "auto" | "transcription" | "conversation";
-      scene?: string;
-      userId?: string;
-    },
+    manualFlag?: boolean,
   ): Promise<[IAIProxyRealtimeVoiceSession | null, Error | null]>;
 
 }
