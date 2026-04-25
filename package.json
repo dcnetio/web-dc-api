@@ -63,7 +63,7 @@
     "datastore-idb": "^4.0.1",
     "dingrtc": "^3.9.31",
     "dompurify": "^3.4.0",
-    "grpc-libp2p-client": "^0.0.39",
+    "grpc-libp2p-client": "^0.0.40",
     "helia": "^6.0.0",
     "html2canvas": "^1.4.1",
     "jose": "^6.0.8",
