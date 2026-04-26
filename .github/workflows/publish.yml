@@ -41,18 +41,20 @@ jobs:
         id: check
         run: |
           set -e
-          PREV_VERSION=""
-          if git rev-parse --verify HEAD^ >/dev/null 2>&1; then
-            PREV_VERSION=$(git show HEAD^:package.json | node -pe "JSON.parse(require('fs').readFileSync(0,'utf8')).version")
-          fi
           CUR_VERSION=$(node -pe "JSON.parse(require('fs').readFileSync('package.json','utf8')).version")
-          echo "Previous version: $PREV_VERSION"
-          echo "Current version: $CUR_VERSION"
-          if [ "$PREV_VERSION" != "$CUR_VERSION" ]; then
-            echo "changed=true" >> $GITHUB_OUTPUT
-          else
-            echo "changed=false" >> $GITHUB_OUTPUT
-          fi
+          PUBLISHED_VERSION=$(npm view web-dc-api version 2>/dev/null || echo "0.0.0")
+          echo "Published version: $PUBLISHED_VERSION"
+          echo "Current version:   $CUR_VERSION"
+          IS_GREATER=$(node -e "
+            const [a, b] = [process.argv[1], process.argv[2]].map(v => v.split('.').map(Number));
+            for (let i = 0; i < 3; i++) {
+              if ((a[i]||0) > (b[i]||0)) { process.stdout.write('true'); process.exit(); }
+              if ((a[i]||0) < (b[i]||0)) { process.stdout.write('false'); process.exit(); }
+            }
+            process.stdout.write('false');
+          " "$CUR_VERSION" "$PUBLISHED_VERSION")
+          echo "Is greater: $IS_GREATER"
+          echo "changed=$IS_GREATER" >> $GITHUB_OUTPUT
           echo "version=$CUR_VERSION" >> $GITHUB_OUTPUT
 
       - name: Install deps and build
