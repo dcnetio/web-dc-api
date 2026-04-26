@@ -1,6 +1,6 @@
 {
   "name": "web-dc-api",
-  "version": "0.2.21",
+  "version": "0.2.22",
   "description": "一个革命性的去中心化 Web 开发 SDK，让您无需任何服务器即可构建完整的互联网应用",
   "type": "module",
   "sideEffects": false,
@@ -63,7 +63,7 @@
     "datastore-idb": "^4.0.1",
     "dingrtc": "^3.9.31",
     "dompurify": "^3.4.0",
-    "grpc-libp2p-client": "^0.0.40",
+    "grpc-libp2p-client": "^0.0.41",
     "helia": "^6.0.0",
     "html2canvas": "^1.4.1",
     "jose": "^6.0.8",
