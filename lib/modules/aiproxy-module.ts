@@ -250,7 +250,7 @@ export class AIProxyModule implements DCModule, IAIProxyOperations {
           path,
           model,
         );
-        console.debug("开始调用AI代理: themeAuthor=", themeAuthor, " configTheme=", configTheme, " serviceName=", serviceName);
+        console.debug("开始调用AI代理: themeAuthor=", resolvedConfig.themeAuthor, " configTheme=", resolvedConfig.configTheme, " serviceName=", resolvedConfig.serviceName);
 
         const res = await this.aiProxyManager.DoAIProxyCall(
           context,
