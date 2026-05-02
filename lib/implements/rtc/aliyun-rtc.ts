@@ -582,9 +582,16 @@ export class AliyunRTCOperations implements IRTCOperations {
     const result = await RTCEngine.createScreenVideoTrack(defaultConfig);
     const screenTrack = Array.isArray(result) ? result[0] : result;
     this.screenTrack = screenTrack;
-    
-    // Publish screen track
-    await this.rtcClient.publish([this.screenTrack]);
+    console.log('[DingRTC] screenTrack created:', screenTrack, 'trackId:', screenTrack?.id, 'type:', (screenTrack as any)?._trackType || (screenTrack as any)?.sourceType);
+
+    // Publish screen track - DingRTC 会自动识别 createScreenVideoTrack 创建的 track 为 auxiliary
+    try {
+      await this.rtcClient.publish([this.screenTrack]);
+      console.log('[DingRTC] screen track published successfully');
+    } catch (pubErr) {
+      console.error('[DingRTC] screen track publish FAILED:', pubErr);
+      throw pubErr;
+    }
     
     // Listen for the track ended event (e.g. user clicks "Stop sharing" on system prompt)
     if (this.screenTrack && typeof this.screenTrack.on === 'function') {
@@ -1013,12 +1020,17 @@ export class AliyunRTCOperations implements IRTCOperations {
 
     // 监听远端用户发布通知
     rtcClient.on('user-published', (user: any, mediaType: string, auxiliary: any) => {
+      console.log(`[DingRTC] user-published: userId=${user?.userId}, mediaType=${mediaType}, auxiliary=`, auxiliary);
       this.emit('onPublisher', { user, mediaType, auxiliary });
 
+      // DingRTC: mediaType='video' + auxiliary=true 表示屏幕共享
+      const isScreenShare = Boolean(auxiliary);
+
       if (mediaType === 'video') {
-        const isScreenShare = Boolean(auxiliary);
-        // 如果是屏幕共享，第三个参数(auxiliary)要传true
-        rtcClient.subscribe(user.userId, mediaType, isScreenShare).then((track: any) => {
+        console.log(`[DingRTC] subscribing: userId=${user.userId}, mediaType=video, auxiliary(isScreen)=${isScreenShare}`);
+        // 第三个参数传 isScreenShare(true/false)，告诉 SDK 订阅辅流(屏幕)还是主流(摄像头)
+        rtcClient.subscribe(user.userId, 'video', isScreenShare).then((track: any) => {
+          console.log(`[DingRTC] subscribe success: userId=${user.userId}, isScreenShare=${isScreenShare}, track=`, track);
           if (isScreenShare) {
             this.remoteScreenTracks.set(user.userId, track);
             this.emit('onScreenShareSubscribed', { userId: user.userId, track });
@@ -1027,9 +1039,9 @@ export class AliyunRTCOperations implements IRTCOperations {
             this.emit('onTrackSubscribed', { userId: user.userId, track, mediaType });
           }
         }).catch((err: any) => {
-          console.error(`Failed to subscribe ${mediaType} track (auxiliary: ${isScreenShare}) for user ${user.userId}`, err);
+          console.error(`Failed to subscribe video(auxiliary=${isScreenShare}) track for user ${user.userId}`, err);
         });
-      } else if (!this.isMcuSubscribed) {
+      } else if (mediaType === 'audio' && !this.isMcuSubscribed) {
         this.isMcuSubscribed = true;
         rtcClient.subscribe('mcu', 'audio').then((track: any) => {
           this.mcuAudioTrack = track;
@@ -1050,29 +1062,23 @@ export class AliyunRTCOperations implements IRTCOperations {
     // 监听远端取消发布
     rtcClient.on('user-unpublished', async (user: any, mediaType: string, auxiliary: any) => {
       const isScreenShare = Boolean(auxiliary);
-      if (mediaType === 'video') {
-        if (isScreenShare) {
-          const track = this.remoteScreenTracks.get(user.userId);
-          if (track) {
-            if (typeof track.stopPlay === 'function') track.stopPlay();
-            else if (typeof track.stop === 'function') track.stop();
-          }
-          this.remoteScreenTracks.delete(user.userId);
-          try {
-            await rtcClient.unsubscribe(user.userId, mediaType, isScreenShare);
-          } catch(e) {}
-          this.emit('onScreenShareUnSubscribed', { userId: user.userId });
-        } else {
-          const track = this.remoteVideoTracks.get(user.userId);
-          if (track) {
-            if (typeof track.stopPlay === 'function') track.stopPlay();
-            else if (typeof track.stop === 'function') track.stop();
-          }
-          this.remoteVideoTracks.delete(user.userId);
-          try {
-            await rtcClient.unsubscribe(user.userId, mediaType);
-          } catch(e) {}
+      if (mediaType === 'video' && isScreenShare) {
+        const track = this.remoteScreenTracks.get(user.userId);
+        if (track) {
+          if (typeof track.stopPlay === 'function') track.stopPlay();
+          else if (typeof track.stop === 'function') track.stop();
         }
+        this.remoteScreenTracks.delete(user.userId);
+        try { await rtcClient.unsubscribe(user.userId, 'video', true); } catch(e) {}
+        this.emit('onScreenShareUnSubscribed', { userId: user.userId });
+      } else if (mediaType === 'video' && !isScreenShare) {
+        const track = this.remoteVideoTracks.get(user.userId);
+        if (track) {
+          if (typeof track.stopPlay === 'function') track.stopPlay();
+          else if (typeof track.stop === 'function') track.stop();
+        }
+        this.remoteVideoTracks.delete(user.userId);
+        try { await rtcClient.unsubscribe(user.userId, mediaType); } catch(e) {}
       }
       this.emit('onUnPublisher', { user, mediaType, auxiliary: isScreenShare });
     });

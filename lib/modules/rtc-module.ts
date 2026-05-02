@@ -270,7 +270,8 @@ export class RTCModule implements DCModule, IRTCOperations {
 
     const nextAudioPublish = options?.audioPublish ?? true;
     const nextVideoPublish = options?.videoPublish ?? true;
-    const nextScreenPublish = options?.screenPublish ?? false;
+    // screenPublish 默认 true：预先在 Token 里申请屏幕共享权限，避免用户临时开启共享时因权限缺失导致服务端拒绝转发辅流
+    const nextScreenPublish = options?.screenPublish ?? true;
 
     // 在取 token 前先更新本地发布意图，确保本次入会的鉴权请求可带上正确能力声明。
     this.shouldPublishAudio = nextAudioPublish;
@@ -299,7 +300,8 @@ export class RTCModule implements DCModule, IRTCOperations {
       const headers: Record<string, string> = { rtc_token: 'true' };
       if (nextAudioPublish) headers.audio_publish = 'true';
       if (nextVideoPublish) headers.video_publish = 'true';
-      if (nextScreenPublish) headers.screen_publish = 'true';
+      // 始终在 Token 里声明屏幕权限（即使当前不共享），保证用户随时可以发起共享
+      headers.screen_publish = 'true';
       const [authRes, err] = await (this.context as any).aiproxy.GetAliyunV3Token({
         channelId: this.authInfo.channelId,
         userId: this.authInfo.userId,
