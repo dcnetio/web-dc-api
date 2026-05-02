@@ -69,6 +69,126 @@ function newGrpcClient(client: Client, net: Net): DBGrpcClient {
 }
 
 // 管理器类
+
+// Helper: format and parse protobuf Text Format used by Go SDK for Log compatibility
+function escapeBytes(buf: Uint8Array): string {
+    let result = '';
+    for (let i = 0; i < buf.length; i++) {
+        const b = buf[i];
+        if (b === 10) result += '\\n';
+        else if (b === 13) result += '\\r';
+        else if (b === 9) result += '\\t';
+        else if (b === 34) result += '\\"';
+        else if (b === 92) result += '\\\\';
+        else if (b >= 32 && b <= 126) {
+            result += String.fromCharCode(b);
+        } else {
+            result += '\\' + b.toString(8).padStart(3, '0');
+        }
+    }
+    return result;
+}
+
+function textFormatLog(log: any): string {
+    const parts: string[] = [];
+    if (log.ID && log.ID.length > 0) parts.push(`ID:"${escapeBytes(log.ID)}"`);
+    if (log.pubKey && log.pubKey.length > 0) parts.push(`pubKey:"${escapeBytes(log.pubKey)}"`);
+    if (log.addrs && log.addrs.length > 0) {
+        for (const addr of log.addrs) {
+            if (addr && addr.length > 0) parts.push(`addrs:"${escapeBytes(addr)}"`);
+        }
+    }
+    if (log.head && log.head.length > 0) parts.push(`head:"${escapeBytes(log.head)}"`);
+    let counterVal: number | string = log.counter;
+    if (log.counter && typeof log.counter === 'object' && typeof log.counter.toNumber === 'function') {
+        counterVal = log.counter.toNumber();
+    }
+    if (counterVal && counterVal !== 0 && counterVal !== "0") {
+        parts.push(`counter:${counterVal}`);
+    }
+    const res = parts.join(' ') + (parts.length > 0 ? ' ' : '');
+    return res;
+}
+
+function unescapeBytes(str: string): Uint8Array {
+    const bytes: number[] = [];
+    let i = 0;
+    while (i < str.length) {
+        if (str[i] === '\\') {
+            const next = str[i+1];
+            if (next === 'n') { bytes.push(10); i += 2; }
+            else if (next === 'r') { bytes.push(13); i += 2; }
+            else if (next === 't') { bytes.push(9); i += 2; }
+            else if (next === '"') { bytes.push(34); i += 2; }
+            else if (next === '\\') { bytes.push(92); i += 2; }
+            else {
+                const octalStr = str.substring(i + 1, i + 4);
+                if (/^[0-7]{1,3}$/.test(octalStr)) {
+                    bytes.push(parseInt(octalStr, 8));
+                    i += 1 + octalStr.length;
+                } else {
+                    bytes.push(92);
+                    i++;
+                }
+            }
+        } else {
+            bytes.push(str.charCodeAt(i));
+            i++;
+        }
+    }
+    return new Uint8Array(bytes);
+}
+
+function parseTextFormatLog(text: string): any {
+    const obj: any = {};
+    let i = 0;
+    while (i < text.length) {
+        while (i < text.length && /\s/.test(text[i])) i++;
+        if (i >= text.length) break;
+        let colon = text.indexOf(':', i);
+        if (colon === -1) break;
+        const key = text.substring(i, colon);
+        i = colon + 1;
+        if (text[i] === '"') {
+            i++;
+            let start = i;
+            let valStr = "";
+            while (i < text.length) {
+                if (text[i] === '\\') {
+                    if (i + 1 < text.length) {
+                       valStr += text[i] + text[i+1];
+                       i += 2;
+                       if (/[0-7]/.test(text[i-1])) {
+                           if (i < text.length && /[0-7]/.test(text[i])) { valStr += text[i]; i++; }
+                           if (i < text.length && /[0-7]/.test(text[i])) { valStr += text[i]; i++; }
+                       }
+                    } else i++;
+                } else if (text[i] === '"') {
+                    break;
+                } else {
+                    valStr += text[i];
+                    i++;
+                }
+            }
+            const buf = unescapeBytes(valStr);
+            if (key === 'addrs') {
+                if (!obj[key]) obj[key] = [];
+                obj[key].push(buf);
+            } else {
+                obj[key] = buf;
+            }
+            i++; 
+        } else {
+            let space = text.indexOf(' ', i);
+            if (space === -1) space = text.length;
+            const val = text.substring(i, space);
+            obj[key] = parseInt(val, 10);
+            i = space;
+        }
+    }
+    return obj;
+}
+
 export class DBManager {
   private store: TxnDatastoreExtended;
   private network: Net;
@@ -140,7 +260,8 @@ export class DBManager {
           const db = await ThreadDb.newDB(store, this.network, id, opts);
           // Add to map of databases
           this.dbs.set(id.toString(), db);
-        } catch (err) {
+        } catch (err: any) {
+      console.error(`🚨 Fatal error during database preload: ${err instanceof Error ? err.message : err}`);
           console.warn(
             `Error loading database: ${
               err instanceof Error ? err.message : String(err)
@@ -148,7 +269,8 @@ export class DBManager {
           );
         }
       }
-    } catch (err) {
+    } catch (err: any) {
+      console.error(`🚨 Fatal error during database preload: ${err instanceof Error ? err.message : err}`);
       console.warn(
         `Failed to load databases: ${
           err instanceof Error ? err.message : String(err)
@@ -203,7 +325,8 @@ export class DBManager {
       // 获取私钥
       const privateKey = new Ed25519PrivKey(keyPair.raw);
       return privateKey;
-    } catch (err) {
+    } catch (err: any) {
+      console.error(`🚨 Fatal error during database preload: ${err instanceof Error ? err.message : err}`);
       throw new Error(`Failed to generate log key: ${err}`);
     }
   }
@@ -219,7 +342,11 @@ export class DBManager {
       // 获取协议值
       const parts = addr.toString().split("/");
       const index = parts.indexOf(Protocol.name);
-      if (index === -1 || index === parts.length - 1) {
+      // 如果没有协议前缀，当做裸的 ThreadID 字符串解析
+      if (index === -1) {
+        return ThreadID.fromString(addr.toString());
+      }
+      if (index === parts.length - 1) {
         throw new Error("thread protocol not found in multiaddr");
       }
 
@@ -265,6 +392,49 @@ export class DBManager {
       throw Errors.ErrThreadReadKeyRequired;
     }
 
+    if (opts.fid && opts.fid.trim().length > 0) {
+      if (this.dc.dcNodeClient == null) {
+        throw Errors.ErrNoDcNodeClient;
+      }
+      const tctx = createContext(PullTimeout * 60);
+      const fileManager = new FileManager(
+        this.dc,
+        this.connectedDc,
+        this.chainUtil,
+        this.dc.dcNodeClient,
+        this.context
+      );
+      const fileStream = await fileManager.createSeekableFileStream(opts.fid, "");
+
+      if (fileStream == null) {
+        throw Errors.ErrFileNotFound;
+      }
+
+      await this.preloadDBFromReader(
+        tctx,
+        fileStream.createReadableStream(),
+        addr,
+        key,
+        opts
+      );
+
+      const db = this.dbs.get(id.toString());
+      if (!db) {
+        throw new Error("DB preload failed to register");
+      }
+
+      if (opts.block) {
+        await this.network.pullThread(id, pullThreadBackgroundTimeout, {
+          token: opts.token,
+        });
+      } else {
+        // Background pull
+        this.pullThreadBackground(id, opts.token);
+      }
+
+      return db;
+    }
+
     await this.network.addThread(addr, {
       token: opts.token,
       logKey: opts.logKey,
@@ -305,7 +475,8 @@ export class DBManager {
       await this.network.pullThread(id, pullThreadBackgroundTimeout, {
         token: token,
       });
-    } catch (err) {
+    } catch (err: any) {
+      console.error(`🚨 Fatal error during database preload: ${err instanceof Error ? err.message : err}`);
       console.warn(`Error pulling thread ${id}:`, err);
     }
   }
@@ -345,7 +516,8 @@ export class DBManager {
     let tID: ThreadID;
     try {
       tID = await this.decodeThreadId(threadid);
-    } catch (err) {
+    } catch (err: any) {
+      console.error(`🚨 Fatal error during database preload: ${err instanceof Error ? err.message : err}`);
       throw err;
     }
 
@@ -353,7 +525,8 @@ export class DBManager {
     let logKey: Ed25519PrivKey;
     try {
       logKey = await this.getLogKey(tID);
-    } catch (err) {
+    } catch (err: any) {
+      console.error(`🚨 Fatal error during database preload: ${err instanceof Error ? err.message : err}`);
       throw err;
     }
 
@@ -361,7 +534,8 @@ export class DBManager {
     let lid: PeerId;
     try {
       lid = peerIdFromPrivateKey(logKey);
-    } catch (err) {
+    } catch (err: any) {
+      console.error(`🚨 Fatal error during database preload: ${err instanceof Error ? err.message : err}`);
       throw err;
     }
     // Begin connection in background concurrently
@@ -378,7 +552,8 @@ export class DBManager {
       const sk = SymmetricKey.fromString(b32Sk);
       const rk = SymmetricKey.fromString(b32Rk);
       threadKey = new ThreadKey(sk, rk);
-    } catch (err) {
+    } catch (err: any) {
+      console.error(`🚨 Fatal error during database preload: ${err instanceof Error ? err.message : err}`);
       throw err;
     }
 
@@ -397,7 +572,8 @@ export class DBManager {
         if (connectedConn) {
           multiAddr = connectedConn.remoteAddr as TMultiaddr;
         }
-      } catch (err) {
+      } catch (err: any) {
+      console.error(`🚨 Fatal error during database preload: ${err instanceof Error ? err.message : err}`);
         // Connection failed or invalid address
       }
     }
@@ -410,7 +586,8 @@ export class DBManager {
           throw Errors.ErrNoThreadOnDc;
         }
         multiAddr = connectedAddr as TMultiaddr;
-      } catch (err) {
+      } catch (err: any) {
+      console.error(`🚨 Fatal error during database preload: ${err instanceof Error ? err.message : err}`);
         throw err;
       }
     }
@@ -419,7 +596,8 @@ export class DBManager {
     let collectionInfos: ICollectionConfig[] = [];
     try {
       collectionInfos = JSON.parse(jsonCollections);
-    } catch (err) {
+    } catch (err: any) {
+      console.error(`🚨 Fatal error during database preload: ${err instanceof Error ? err.message : err}`);
       throw err;
     }
 
@@ -500,8 +678,9 @@ export class DBManager {
     console.debug("manager: preloading db from reader");
     let id: ThreadID;
     try {
-      id = DBManager.fromAddr(addr.addr);
-    } catch (err) {
+      id = addr.id ? addr.id : DBManager.fromAddr(addr.addr);
+    } catch (err: any) {
+      console.error(`🚨 Fatal error during database preload: ${err instanceof Error ? err.message : err}`);
       throw err;
     }
     // 检查数据库是否已存在
@@ -525,8 +704,30 @@ export class DBManager {
         logKey: opts.logKey,
         token: opts.token,
       });
-    } catch (err) {
-      throw err;
+    } catch (err: any) {
+      if (err.message && (err.message.includes("Log exists") || err.message.includes("thread already exists"))) {
+        console.warn("manager: thread log already exists, safely clearing local states first...");
+        try {
+          await this.network.deleteThread(id);
+        } catch (delNetErr) {
+          console.warn(`Failed to delete thread from network: ${delNetErr}`);
+        }
+        try {
+          await this.deleteThreadNamespace(id);
+        } catch (delNamespaceErr) {
+          console.warn(`Failed to clear thread namespace: ${delNamespaceErr}`);
+        }
+        
+        // 清理完成后重试添加
+        console.debug(`manager: re-adding thread to net ${id}`);
+        await this.network.addThread(addr, {
+          threadKey: key,
+          logKey: opts.logKey,
+          token: opts.token,
+        });
+      } else {
+        throw err;
+      }
     }
     console.debug(`manager: added thread to net ${id}`);
 
@@ -547,7 +748,8 @@ export class DBManager {
       if (wrapErr) {
         throw wrapErr;
       }
-    } catch (err) {
+    } catch (err: any) {
+      console.error(`🚨 Fatal error during database preload: ${err instanceof Error ? err.message : err}`);
       throw err;
     }
 
@@ -555,7 +757,8 @@ export class DBManager {
     let db: ThreadDb;
     try {
       db = await ThreadDb.newDB(store, this.network, id, dbOpts);
-    } catch (err) {
+    } catch (err: any) {
+      console.error(`🚨 Fatal error during database preload: ${err instanceof Error ? err.message : err}`);
       throw err;
     }
 
@@ -592,9 +795,24 @@ export class DBManager {
           // 解码 multibase 格式
           const data = multibaseDecode(log);
           // 解析 protobuf
-          const pbLog = net_pb.pb.Log.decode(data);
+          const decodedText = new TextDecoder().decode(data);
+          // Go SDK 使用的是 proto.UnmarshalText，产出 TextFormat 字符串，因此需要手动解析兼容该格式
+          let pbLog: any;
+          try {
+            // 首先尝试用标准 Binary 解析（兼容纯TS导出的旧有DB格式情况）
+            pbLog = net_pb.pb.Log.decode(data);
+            // 如果成功解出 ID 字段且为正常类型，则沿用
+            if (!pbLog.ID || pbLog.ID.length === 0) {
+               throw new Error("fallback to text parse");
+            }
+          } catch (e) {
+            // 如果报错或是空，回退到 Go 专用的 TextFormat 兼容文本解析 
+            const parsedObj = parseTextFormatLog(decodedText);
+            pbLog = net_pb.pb.Log.create(parsedObj);
+          }
           pbLogs.push(pbLog);
-        } catch (err) {
+        } catch (err: any) {
+      console.error(`🚨 Fatal error during database preload: ${err instanceof Error ? err.message : err}`);
           // 忽略错误，继续处理
           continue;
         }
@@ -606,10 +824,11 @@ export class DBManager {
       // 导入数据库状态
       await this.importDBStateFromReader(id, lineReader, readKey);
 
-    } catch (err) {
-      // 回滚数据库状态
+    } catch (err: any) {
+      console.error(`🚨 Fatal error during database preload: ${err instanceof Error ? err.message : err}`);
+      // 回滚数据库状态: 若执行过程中发生数据导入失败，应当彻底清理残留的Thread记录（置为 true）
       try {
-        await this.deleteDB(id, false);
+        await this.deleteDB(id, true);
       } catch (rollbackErr) {
         console.warn(`Failed to rollback db ${id}: ${rollbackErr}`);
       }
@@ -627,18 +846,25 @@ export class DBManager {
    */
   async exportDBToFile(
     ctx: Context,
-    id: ThreadID,
+    id: string | ThreadID,
     fileName: string,
-    readKey?: SymmetricKey
-  ): Promise<ThreadInfo> {
-    console.debug(`manager: exporting db ${id.toString()} to file download`);
+    readKey?: SymmetricKey,
+    saveToFile: boolean = true
+  ): Promise<[ThreadInfo, Uint8Array]> {
+    let tId: ThreadID;
+    if (typeof id === "string") {
+      tId = ThreadID.fromString(id);
+    } else {
+      tId = id;
+    }
+    console.debug(`manager: exporting db ${tId.toString()} to file download`);
 
     // Get thread logs similar to original function
     let logState = "";
     let logs: net_pb.pb.ILog[];
     let threadInfo: ThreadInfo;
 
-    [logs, threadInfo] = await this.network.getPbLogs(id);
+    [logs, threadInfo] = await this.network.getPbLogs(tId);
 
     // Build log state string
     for (let i = 0; logs && i < logs.length; i++) {
@@ -646,7 +872,8 @@ export class DBManager {
         continue; // Skip undefined logs
       }
       const log = logs[i] as net_pb.pb.ILog;
-      const logBytes = net_pb.pb.Log.encode(log).finish();
+      const logText = textFormatLog(log);
+      const logBytes = new TextEncoder().encode(logText);
       const mbaseLog = multibase.encode("base64", logBytes);
 
       if (i === 0) {
@@ -660,7 +887,7 @@ export class DBManager {
     let content = logState + "\n";
 
     // Get database
-    const db = this.dbs.get(id.toString());
+    const db = this.dbs.get(tId.toString());
     if (!db) {
       throw Errors.ErrDBNotFound;
     }
@@ -669,53 +896,53 @@ export class DBManager {
     const txn = await db.datastore.newTransactionExtended(true);
 
     try {
-      // Similar query logic, but accumulating in memory
-      const q = new Query();
-      const baseKey = new Key("/");
-      const i = await newIterator(txn, baseKey, q);
+        // Accumulating db records in memory.
+        // 注意：这里必须与 Go 端保持一致，只导出业务文档数据集合（前缀为 /db/collection），
+        // 绝不能写 "/" 把底层索引 /_index/ 等缓存账本一起导出去。导入时会自动触发新建索引。
+        const iter = await txn.queryExtended({ prefix: "/db/collection" });
 
-      for await (const res of i.iter) {
-        if (res.error) {
-          throw res.error;
-        }
-
-        let line: string;
-        if (readKey) {
-          const encBytes = await readKey.encrypt(res.entry.value);
-          const mValue = multibase.encode("base64", encBytes);
-          line = `${res.entry.key}|${new TextDecoder().decode(mValue)}`;
-        } else {
-          const mValue = multibase.encode("base64", res.entry.value);
-          line = `${res.entry.key}|${new TextDecoder().decode(mValue)}`;
-        }
+        for await (const res of iter) {
+          let line: string;
+          if (readKey) {
+            const encBytes = await readKey.encrypt(res.value);
+            const mValue = multibase.encode("base64", encBytes);
+            line = `${res.key}|${new TextDecoder().decode(mValue)}`;
+          } else {
+            const mValue = multibase.encode("base64", res.value);
+            line = `${res.key}|${new TextDecoder().decode(mValue)}`;
+            }
 
         content += line + "\n";
       }
 
-      i.close();
+      
       await txn.discard();
 
-      // Create blob and trigger download
-      const blob = new Blob([content], { type: "text/plain" });
-      const url = URL.createObjectURL(blob);
+      if (saveToFile) {
+        // Create blob and trigger download
+        const blob = new Blob([content], { type: "text/plain" });
+        const url = URL.createObjectURL(blob);
 
-      // Create download link
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = fileName || `db-export-${id.toString().substring(0, 8)}.txt`;
+        // Create download link
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = fileName || `db-export-${tId.toString().substring(0, 8)}.txt`;
 
-      // Append to body, click and remove
-      document.body.appendChild(a);
-      a.click();
+        // Append to body, click and remove
+        document.body.appendChild(a);
+        a.click();
 
-      // Cleanup
-      setTimeout(() => {
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-      }, 100);
+        // Cleanup
+        setTimeout(() => {
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+        }, 100);
+      }
 
-      return threadInfo;
-    } catch (err) {
+      const fileBytes = new TextEncoder().encode(content);
+      return [threadInfo, fileBytes];
+    } catch (err: any) {
+      console.error(`🚨 Fatal error during database preload: ${err instanceof Error ? err.message : err}`);
       await txn.discard();
       throw err;
     }
@@ -752,14 +979,15 @@ export class DBManager {
     let line: string | null = "";
     while (true) {
       line = await lineReader.readLine();
-      if (!line) {
-        break;
-      }
+      if (!line) break;
+      line = line.trim();
+      if (!line) continue;
       // 创建事务
       let txn: Transaction;
       try {
         txn = await db.datastore.newTransactionExtended(false);
-      } catch (err) {
+      } catch (err: any) {
+      console.error(`🚨 Fatal error during database preload: ${err instanceof Error ? err.message : err}`);
         throw new Error(
           `创建事务错误: ${err instanceof Error ? err.message : String(err)}`
         );
@@ -781,7 +1009,8 @@ export class DBManager {
         try {
           const decoded = multibaseDecode(mValue);
           encValue = decoded;
-        } catch (err) {
+        } catch (err: any) {
+      console.error(`🚨 Fatal error during database preload: ${err instanceof Error ? err.message : err}`);
           await txn.discard();
           throw new Error(
             `multibase解码失败: ${
@@ -795,14 +1024,41 @@ export class DBManager {
         if (readKey) {
           try {
             decValue = await readKey.decrypt(encValue);
-          } catch (err) {
+          } catch (err: any) {
+      console.error(`🚨 Fatal error during database preload at decrypting value for key ${key}: ${err instanceof Error ? err.message : err}. key hex length: ${encValue.length}`);
+            console.error(`🚨 Decrypt failed for key ${key}. encValue length: ${encValue.length}. raw mValue: ${mValue}. Skipping this record.`);
             await txn.discard();
-            throw new Error(
-              `解密值失败: ${err instanceof Error ? err.message : String(err)}`
-            );
+            continue;
           }
         }
 
+        if (key === "loginfo" || key === "/loginfo") {
+          try {
+            const strLogInfo = new TextDecoder().decode(decValue);
+            console.log("💡 [importDBStateFromReader] 成功解析到 loginfo 标记:", strLogInfo);
+            const parsedLogs = JSON.parse(strLogInfo);
+            for (const logItem of parsedLogs) {
+               if (logItem.lid && logItem.head && logItem.head.id) {
+                 const cidStr = logItem.head.id;
+                 console.log(`💡 [importDBStateFromReader] 注册免拉标记: lid=${logItem.lid} head=${cidStr} counter=${logItem.head.counter}`);
+                 
+                 // 1. 写入预加载的免拉标记
+                 await (this.network as any).logstore.metadata.putBool(
+                   id,
+                   `/preloaded_head/${cidStr}`,
+                   true
+                 );
+               }
+            }
+            await txn.discard();
+            continue; // 跳过后续 DB 写入，直接读取下一行
+          } catch (e: any) {
+            console.warn("⚠️ [importDBStateFromReader] 解析 loginfo JSON 失败: " + e.message);
+            await txn.discard();
+            continue;
+          }
+        }
+        
         // 创建数据存储键
         const setKey = new Key(key || "");
 
@@ -813,7 +1069,8 @@ export class DBManager {
             await txn.discard();
             continue; // 跳过此记录
           }
-        } catch (err) {
+        } catch (err: any) {
+      console.error(`🚨 Fatal error during database preload: ${err instanceof Error ? err.message : err}`);
           await txn.discard();
           throw new Error(
             `检查键存在性失败: ${
@@ -825,42 +1082,52 @@ export class DBManager {
         // 存储值
         try {
           await txn.put(setKey, decValue);
-        } catch (err) {
+        } catch (err: any) {
+      console.error(`🚨 Fatal error during database preload: ${err instanceof Error ? err.message : err}`);
           await txn.discard();
           throw new Error(
             `存储值失败: ${err instanceof Error ? err.message : String(err)}`
           );
         }
 
-        // 从键中提取集合名称（倒数第二个部分）
+        // 解析键值对所属的集合名称（仅处理业务文档记录：/db/collection/<集合名>/<文档ID>）
         const parts = key?.split("/");
-        if (!parts || parts.length < 2) {
-          await txn.discard();
-          throw new Error("无效的键格式: 未找到集合名称");
+        
+        let collection: string | null = null;
+        // 过滤掉索引记录（_index开头）、系统变量（长度小于5）以及非业务集合的记录
+        if (parts && parts.length === 5 && parts[1] === "db" && parts[2] === "collection") {
+          collection = parts[3] || "";
         }
 
-        const collection = parts[parts.length - 2] || "";
-
-        // 应用索引
+        // 仅在找到了疑似集合名称时尝试应用索引
+        if (collection) {
           try {
             await indexFunc(collection, setKey, txn, undefined, decValue);
-          } catch (err) {
-          await txn.discard();
-          throw new Error(
-            `应用索引失败: ${err instanceof Error ? err.message : String(err)}`
-          );
+          } catch (err: any) {
+            // 如果是因为集合不存在（例如由于该键实际属于DB元数据或非文档记录），则安全跳过它，防止奔溃
+            if (err && err.message && (err.message.includes("not found") || err.message.toLowerCase().includes("collection"))) {
+              // 属于正常的内部索引记录或系统级变量，静默忽略以避免控制台日志刷屏
+            } else {
+              await txn.discard();
+              throw new Error(
+                `应用索引失败: ${err instanceof Error ? err.message : String(err)}`
+              );
+            }
+          }
         }
 
         // 提交事务
         try {
           await txn.commit();
-        } catch (err) {
+        } catch (err: any) {
+      console.error(`🚨 Fatal error during database preload: ${err instanceof Error ? err.message : err}`);
           await txn.discard();
           throw new Error(
             `提交事务失败: ${err instanceof Error ? err.message : String(err)}`
           );
         }
-      } catch (err) {
+      } catch (err: any) {
+      console.error(`🚨 Fatal error during database preload: ${err instanceof Error ? err.message : err}`);
         // 确保在任何失败时丢弃事务
         try {
           await txn.discard();
@@ -1006,7 +1273,8 @@ export class DBManager {
     b32Rk: string,
     b32Sk: string,
     block: boolean,
-    collectionInfos: ICollectionConfig[]
+    collectionInfos: ICollectionConfig[],
+    fid?: string
   ): Promise<Error | null> {
     try {
       const tID = await this.decodeThreadId(threadid);
@@ -1065,6 +1333,7 @@ export class DBManager {
         key: threadKey,
         logKey: logKey,
         block: block,
+        fid: fid,
       };
 
       // Delete existing database if present
@@ -1103,9 +1372,8 @@ export class DBManager {
         if (!logInfo.head) {
           continue;
         }
-        if (count < logInfo.head.counter) {
-          count = logInfo.head.counter;
-        }
+        count += logInfo.head.counter;
+        
       }
     } catch (error) {
       console.warn(
@@ -1120,7 +1388,8 @@ export class DBManager {
     let blockHeight: number;
     try {
       blockHeight = (await this.chainUtil.getBlockHeight()) || 0;
-    } catch (err) {
+    } catch (err: any) {
+      console.error(`🚨 Fatal error during database preload: ${err instanceof Error ? err.message : err}`);
       throw err;
     }
 
@@ -1146,7 +1415,8 @@ export class DBManager {
     let signature: Uint8Array;
     try {
       signature = await this.context.sign(preSign);
-    } catch (err) {
+    } catch (err: any) {
+      console.error(`🚨 Fatal error during database preload: ${err instanceof Error ? err.message : err}`);
       throw err;
     }
     if (!this.connectedDc?.client) {
@@ -1230,7 +1500,8 @@ export class DBManager {
     dbname: string,
     b32Rk: string,
     b32Sk: string,
-    collectionInfos: ICollectionConfig[]
+    collectionInfos: ICollectionConfig[],
+    fid?: string
   ): Promise<[string, Error | null]> {
     if (!this.connectedDc?.client) {
       return ["", Errors.ErrNoDcPeerConnected];
@@ -1295,6 +1566,7 @@ export class DBManager {
         key: threadKey,
         logKey: logKey,
         block: true,
+        fid: fid,
       };
 
       // Try creating database
@@ -1425,7 +1697,8 @@ export class DBManager {
       // Get thread from the network
       await this.network.getThread(id, { token: opts?.token });
       console.debug(`manager: got thread ${id} from net`);
-    } catch (err) {
+    } catch (err: any) {
+      console.error(`🚨 Fatal error during database preload: ${err instanceof Error ? err.message : err}`);
       throw err;
     }
 
@@ -1450,7 +1723,8 @@ export class DBManager {
       if (!dbInfo || dbInfo === null) {
         throw new Error(`No info available for db ${id}`);
       }
-    } catch (err) {
+    } catch (err: any) {
+      console.error(`🚨 Fatal error during database preload: ${err instanceof Error ? err.message : err}`);
       return [null, err as Error];
     }
     return [dbInfo, null];
@@ -1468,7 +1742,8 @@ export class DBManager {
     try {
       await this.network.getThread(id, { token: opts?.token });
       console.debug(`manager: got thread ${id} from net`);
-    } catch (err) {
+    } catch (err: any) {
+      console.error(`🚨 Fatal error during database preload: ${err instanceof Error ? err.message : err}`);
       throw err;
     }
 
@@ -1479,7 +1754,8 @@ export class DBManager {
 
     try {
       await db.close();
-    } catch (err) {
+    } catch (err: any) {
+      console.error(`🚨 Fatal error during database preload: ${err instanceof Error ? err.message : err}`);
       throw err;
     }
 
@@ -1491,14 +1767,16 @@ export class DBManager {
           apiToken: db.connector?.token,
         });
         console.debug(`manager: deleted thread ${id} from net`);
-      } catch (err) {
+      } catch (err: any) {
+      console.error(`🚨 Fatal error during database preload: ${err instanceof Error ? err.message : err}`);
         throw err;
       }
     }
 
     try {
       await this.deleteThreadNamespace(id);
-    } catch (err) {
+    } catch (err: any) {
+      console.error(`🚨 Fatal error during database preload: ${err instanceof Error ? err.message : err}`);
       throw err;
     }
     //   this.lock.acquire('dbs', async () => {
@@ -1529,7 +1807,8 @@ export class DBManager {
       let blockHeight: number;
       try {
         blockHeight = (await this.chainUtil.getBlockHeight()) || 0;
-      } catch (err) {
+      } catch (err: any) {
+      console.error(`🚨 Fatal error during database preload: ${err instanceof Error ? err.message : err}`);
         throw err;
       }
 
@@ -1551,7 +1830,8 @@ export class DBManager {
       let signature: Uint8Array;
       try {
         signature = await this.context.sign(preSign);
-      } catch (err) {
+      } catch (err: any) {
+      console.error(`🚨 Fatal error during database preload: ${err instanceof Error ? err.message : err}`);
         throw err;
       }
 
@@ -1571,7 +1851,8 @@ export class DBManager {
       const dbClient = newGrpcClient(this.connectedDc.client, this.network);
 
       await dbClient.addThreadSpace(tID, space, opts);
-    } catch (err) {
+    } catch (err: any) {
+      console.error(`🚨 Fatal error during database preload: ${err instanceof Error ? err.message : err}`);
       console.warn("addDBSpace error:", err);
       throw err;
     }
@@ -1620,7 +1901,8 @@ export class DBManager {
         allocatedSize,
         usedSize,
       };
-    } catch (err) {
+    } catch (err: any) {
+      console.error(`🚨 Fatal error during database preload: ${err instanceof Error ? err.message : err}`);
       console.warn("getThreadDBSizeInfo error:", err);
       throw err;
     }
@@ -1635,7 +1917,8 @@ export class DBManager {
     let sizeInfo;
     try {
       sizeInfo = await this.getThreadDBSizeInfo(threadId);
-    } catch (err) {
+    } catch (err: any) {
+      console.error(`🚨 Fatal error during database preload: ${err instanceof Error ? err.message : err}`);
       console.warn("Failed to get DB size info:", err);
       return false;
     }
@@ -1653,7 +1936,8 @@ export class DBManager {
         `Auto expanded DB space by ${expandSpace} bytes for thread ${threadId}`
       );
       return true;
-    } catch (err) {
+    } catch (err: any) {
+      console.error(`🚨 Fatal error during database preload: ${err instanceof Error ? err.message : err}`);
       console.warn("Failed to auto expand DB space:", err);
       return false;
     }
@@ -1698,7 +1982,8 @@ export class DBManager {
         delete instanceObj._mod;
         jsonInstance = JSON.stringify(instanceObj);
       }
-    } catch (err) {
+    } catch (err: any) {
+      console.error(`🚨 Fatal error during database preload: ${err instanceof Error ? err.message : err}`);
       // JSON解析失败，保持原字符串不变
       console.warn("Failed to parse instance JSON, keeping original:", err);
       throw new Error("Invalid instance JSON format");
@@ -1720,7 +2005,8 @@ export class DBManager {
       const instanceID = await collection.create(new TextEncoder().encode(jsonInstance));
       // 返回实例ID
       return instanceID ? instanceID.toString() : "";
-    } catch (err) {
+    } catch (err: any) {
+      console.error(`🚨 Fatal error during database preload: ${err instanceof Error ? err.message : err}`);
       console.warn(
         `Failed to create instance: ${
           err instanceof Error ? err.message : String(err)
@@ -1756,7 +2042,8 @@ export class DBManager {
       }
       // 删除实例
       await collection.delete(instanceID);
-    } catch (err) {
+    } catch (err: any) {
+      console.error(`🚨 Fatal error during database preload: ${err instanceof Error ? err.message : err}`);
       console.warn(
         `Failed to delete instance: ${
           err instanceof Error ? err.message : String(err)
@@ -1798,7 +2085,8 @@ export class DBManager {
           delete instanceObj._mod;
           instance = JSON.stringify(instanceObj);
         }
-      } catch (err) {
+      } catch (err: any) {
+      console.error(`🚨 Fatal error during database preload: ${err instanceof Error ? err.message : err}`);
         // JSON解析失败，保持原字符串不变
         console.warn("Failed to parse instance JSON, keeping original:", err);
         throw new Error("Invalid instance JSON format");
@@ -1814,7 +2102,8 @@ export class DBManager {
       }
       // 保存实例
       await collection.save(new TextEncoder().encode(instance));
-    } catch (err) {
+    } catch (err: any) {
+      console.error(`🚨 Fatal error during database preload: ${err instanceof Error ? err.message : err}`);
       console.warn(
         `Failed to save instance: ${
           err instanceof Error ? err.message : String(err)
@@ -1863,7 +2152,8 @@ export class DBManager {
         // JSON数组
         try {
           IDs = JSON.parse(instanceIDs);
-        } catch (err) {
+        } catch (err: any) {
+      console.error(`🚨 Fatal error during database preload: ${err instanceof Error ? err.message : err}`);
           // 解析失败时，将整个字符串作为一个ID
           IDs = [instanceIDs];
         }
@@ -1875,7 +2165,8 @@ export class DBManager {
         const batchIds = IDs.slice(i, Math.min(i + 100, idsLen));
         await collection.deleteMany(batchIds);
       }
-    } catch (err) {
+    } catch (err: any) {
+      console.error(`🚨 Fatal error during database preload: ${err instanceof Error ? err.message : err}`);
       console.warn(
         `Failed to delete instances: ${
           err instanceof Error ? err.message : String(err)
@@ -1912,7 +2203,8 @@ export class DBManager {
 
       // 检查实例是否存在
       return await collection.has(instanceID);
-    } catch (err) {
+    } catch (err: any) {
+      console.error(`🚨 Fatal error during database preload: ${err instanceof Error ? err.message : err}`);
       console.warn(
         `Failed to check instance existence: ${
           err instanceof Error ? err.message : String(err)
@@ -1949,7 +2241,8 @@ export class DBManager {
         }
         
         await collection.rebuildIndex(indexName);
-      } catch (err) {
+      } catch (err: any) {
+      console.error(`🚨 Fatal error during database preload: ${err instanceof Error ? err.message : err}`);
         console.warn(
           `Failed to rebuild index for collection ${collectionName}: ${
             err instanceof Error ? err.message : String(err)
@@ -1985,7 +2278,8 @@ export class DBManager {
       }
       
       return collection.indexes.has("_mod");
-    } catch (err) {
+    } catch (err: any) {
+      console.error(`🚨 Fatal error during database preload: ${err instanceof Error ? err.message : err}`);
       console.warn(
         `Failed to check _mod index existence: ${
           err instanceof Error ? err.message : String(err)
@@ -2068,7 +2362,8 @@ export class DBManager {
         ]);
         return new TextDecoder().decode(joinedResult);
       }
-    } catch (err) {
+    } catch (err: any) {
+      console.error(`🚨 Fatal error during database preload: ${err instanceof Error ? err.message : err}`);
       console.warn(
         `Failed to find instances: ${
           err instanceof Error ? err.message : String(err)
@@ -2111,7 +2406,8 @@ export class DBManager {
       return result instanceof Uint8Array
         ? new TextDecoder().decode(result)
         : jsonStringify(result);
-    } catch (err) {
+    } catch (err: any) {
+      console.error(`🚨 Fatal error during database preload: ${err instanceof Error ? err.message : err}`);
       console.warn(
         `Failed to find instance by ID: ${
           err instanceof Error ? err.message : String(err)
@@ -2152,7 +2448,8 @@ export class DBManager {
 
       // 序列化并返回ID列表
       return JSON.stringify(ids);
-    } catch (err) {
+    } catch (err: any) {
+      console.error(`🚨 Fatal error during database preload: ${err instanceof Error ? err.message : err}`);
       console.warn(
         `Failed to get modified instances: ${
           err instanceof Error ? err.message : String(err)
@@ -2172,8 +2469,10 @@ class AsyncLock {
     while (this.locks.has(key)) {
       await this.locks.get(key);
     }
-    let resolve: () => void;
-    const promise = new Promise<void>((r) => (resolve = r));
+    let resolveFn!: () => void;
+    const promise = new Promise<void>((resolve) => {
+      resolveFn = resolve;
+    });
     this.locks.set(key, promise);
 
     try {
@@ -2184,7 +2483,7 @@ class AsyncLock {
       throw err;
     } finally {
       this.locks.delete(key);
-      resolve!();
+      if (resolveFn) resolveFn();
     }
   }
 }
