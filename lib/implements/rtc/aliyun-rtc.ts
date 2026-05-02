@@ -170,15 +170,16 @@ export class AliyunRTCOperations implements IRTCOperations {
     });
   }
 
-  public async joinRoom(channelId: string, _options?: IRTCJoinRoomOptions): Promise<void> {
+  public async joinRoom(channelId: string, options?: IRTCJoinRoomOptions): Promise<void> {
     // leave logic handled by RTCModule before calling this
     if (this.authInfo) {
       this.authInfo.channelId = channelId;
     }
     
     // 初始化新房间状态，防止上次通话残留的静音/摄像头偏好导致 UI 和底层的时序不同步问题
-    this.isLocalCameraMuted = false;
-    this.isLocalMicMuted = false;
+    // audioPublish/videoPublish 默认 true，显式传 false 则跳过对应轨道创建
+    this.isLocalCameraMuted = options?.videoPublish === false;
+    this.isLocalMicMuted = options?.audioPublish === false;
     this.isRemoteAudioMuted = false;
     this.currentCameraDeviceId = '';
 
@@ -221,34 +222,25 @@ export class AliyunRTCOperations implements IRTCOperations {
       }
     }
     
-    // 创建音视频轨道 (只在加入前/后创建，由上层通过 Mute 控制是否真的发布)
+    // 按需创建本地音视频轨道：videoPublish/audioPublish 为 false 时不创建对应轨道，
+    // 避免在纯信令/仅订阅场景下请求设备权限或抛出 TypeError
     const RTCEngine = (DingRTC as any).default || DingRTC;
+    const tracksToPublish: any[] = [];
 
-    this.cameraTrack = await RTCEngine.createCameraVideoTrack({
-      frameRate: 15,
-      dimension: 'VD_1280x720',
-    });
-    // 如果之前设置过需要切换的摄像头（尤其是断连续命时），在此恢复指定设备
-    if (this.currentCameraDeviceId && typeof this.cameraTrack.setDevice === 'function') {
-      await this.cameraTrack.setDevice(this.currentCameraDeviceId).catch((e: Error) => console.warn(e));
-    }
-
-    this.micTrack = await RTCEngine.createMicrophoneAudioTrack();
-
-    const tracksToPublish = [];
-    if (this.isLocalCameraMuted) {
-      if (typeof this.cameraTrack.setEnabled === 'function') {
-        await this.cameraTrack.setEnabled(false).catch(() => {});
+    if (!this.isLocalCameraMuted) {
+      this.cameraTrack = await RTCEngine.createCameraVideoTrack({
+        frameRate: 15,
+        dimension: 'VD_1280x720',
+      });
+      // 如果之前设置过需要切换的摄像头（尤其是断连续命时），在此恢复指定设备
+      if (this.currentCameraDeviceId && typeof this.cameraTrack.setDevice === 'function') {
+        await this.cameraTrack.setDevice(this.currentCameraDeviceId).catch((e: Error) => console.warn(e));
       }
-    } else {
       tracksToPublish.push(this.cameraTrack);
     }
 
-    if (this.isLocalMicMuted) {
-      if (typeof this.micTrack.setEnabled === 'function') {
-        await this.micTrack.setEnabled(false).catch(() => {});
-      }
-    } else {
+    if (!this.isLocalMicMuted) {
+      this.micTrack = await RTCEngine.createMicrophoneAudioTrack();
       tracksToPublish.push(this.micTrack);
     }
 
@@ -256,8 +248,8 @@ export class AliyunRTCOperations implements IRTCOperations {
       await this.rtcClient.publish(tracksToPublish).catch((e: Error) => console.warn(e));
     }
 
-    // 如果之前有绑定的本地视频容器，重新播放
-    if (this.localVideoElement && !this.isLocalCameraMuted) {
+    // 如果之前有绑定的本地视频容器，且摄像头轨道已创建，重新播放
+    if (this.cameraTrack && this.localVideoElement) {
       if (!this.isRenderableElement(this.localVideoElement) || !this.safePlayTrack(this.cameraTrack, this.localVideoElement, 'local video')) {
         this.localVideoElement = null;
       }
@@ -468,15 +460,32 @@ export class AliyunRTCOperations implements IRTCOperations {
 
   public async muteLocalCamera(mute: boolean): Promise<void> {
     this.isLocalCameraMuted = mute;
-    if (!this.rtcClient || !this.cameraTrack) return;
-    
+    if (!this.rtcClient) return;
+
     if (mute) {
-      // API中可以使用 setEnabled 禁用轨道，并使用 unpublish 停止推流告知远端，防止远端卡在最后一帧
+      if (!this.cameraTrack) return;
+      // unpublish 通知远端停止渲染，再 setEnabled 节省编码资源
       await this.rtcClient.unpublish([this.cameraTrack]).catch(() => {});
       if (typeof this.cameraTrack.setEnabled === 'function') {
         await this.cameraTrack.setEnabled(false);
       }
     } else {
+      // 懒建轨道：纯信令模式下 joinRoom 未创建 cameraTrack，首次开启时创建
+      if (!this.cameraTrack) {
+        if (!this.hasJoined) return; // 还未入房，先等入房后由上层再调
+        const RTCEngine = (DingRTC as any).default || DingRTC;
+        this.cameraTrack = await RTCEngine.createCameraVideoTrack({
+          frameRate: 15,
+          dimension: 'VD_1280x720',
+        });
+        if (this.currentCameraDeviceId && typeof this.cameraTrack.setDevice === 'function') {
+          await this.cameraTrack.setDevice(this.currentCameraDeviceId).catch((e: Error) => console.warn(e));
+        }
+        // 恢复本地预览
+        if (this.localVideoElement && this.isRenderableElement(this.localVideoElement)) {
+          this.safePlayTrack(this.cameraTrack, this.localVideoElement, 'local video');
+        }
+      }
       if (typeof this.cameraTrack.setEnabled === 'function') {
         await this.cameraTrack.setEnabled(true);
       }
@@ -486,14 +495,21 @@ export class AliyunRTCOperations implements IRTCOperations {
 
   public async muteLocalMic(mute: boolean): Promise<void> {
     this.isLocalMicMuted = mute;
-    if (!this.rtcClient || !this.micTrack) return;
+    if (!this.rtcClient) return;
 
     if (mute) {
+      if (!this.micTrack) return;
       await this.rtcClient.unpublish([this.micTrack]).catch(() => {});
       if (typeof this.micTrack.setEnabled === 'function') {
         await this.micTrack.setEnabled(false);
       }
     } else {
+      // 懒建轨道：纯信令模式下 joinRoom 未创建 micTrack，首次开启时创建
+      if (!this.micTrack) {
+        if (!this.hasJoined) return;
+        const RTCEngine = (DingRTC as any).default || DingRTC;
+        this.micTrack = await RTCEngine.createMicrophoneAudioTrack();
+      }
       if (typeof this.micTrack.setEnabled === 'function') {
         await this.micTrack.setEnabled(true);
       }
@@ -542,7 +558,11 @@ export class AliyunRTCOperations implements IRTCOperations {
 
   public async switchCamera(deviceId: string): Promise<void> {
     this.currentCameraDeviceId = deviceId;
-    if (this.cameraTrack && typeof this.cameraTrack.setDevice === 'function') {
+    if (!this.cameraTrack) {
+      // 摄像头尚未创建（纯信令模式），偏好已记录，muteLocalCamera(false) 时会自动使用
+      return;
+    }
+    if (typeof this.cameraTrack.setDevice === 'function') {
       await this.cameraTrack.setDevice(deviceId);
     } else {
       throw new Error("DingRTC SDK or current track does not support dynamic camera switching via setDevice");
