@@ -1,6 +1,7 @@
 import { IRTCOperations, IRTCAuthInfo, IRTCJoinRoomOptions, IRTCMember, IRTCStreamConfig, RTCChannelInviteMessage, IRTCCameraDevice, IRTCScreenShareConfig, RTCGenericEventCallback } from '../../interfaces/rtc-interface';
 import DingRTC from 'dingrtc';
 import RTM from '@dingrtc/rtm';
+import { blockAliyunLogRequests } from '../util/aliyun-log-block';
 
 type RTCRemoteUserLike = {
   userId: string;
@@ -101,6 +102,8 @@ export class AliyunRTCOperations implements IRTCOperations {
       console.warn('RTC is only supported in browser environment.');
       return;
     }
+
+    blockAliyunLogRequests();
 
     try {
       this.authInfo = authInfo;

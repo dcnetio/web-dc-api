@@ -1,5 +1,6 @@
 import { IRtcWhiteboard, IWhiteboardOperations, IWhiteboardAuthInfo, IWhiteboardJoinInfo } from '../../interfaces/whiteboard-interface';
 import { createLogger } from '../../util/logger';
+import { blockAliyunLogRequests } from '../util/aliyun-log-block';
 
 const logger = createLogger("AliyunWhiteboard");
 
@@ -47,6 +48,7 @@ export class AliyunWhiteboardOperations implements IWhiteboardOperations {
 
   public async init(authInfo: IWhiteboardAuthInfo): Promise<void> {
     this.authInfo = authInfo;
+    blockAliyunLogRequests();
     const manager = await this._getManager();
     if (!manager) {
       throw new Error("DingRTC WhiteboardManager is missing from window or @dingrtc/whiteboard package. Please verify installation.");

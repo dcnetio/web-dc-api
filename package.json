@@ -13,7 +13,12 @@
       "import": "./dist/esm/index.js",
       "require": "./dist/cjs/index.cjs"
     },
-    "./package.json": "./package.json"
+    "./package.json": "./package.json",
+    "./patches": {
+      "types": "./dist/patches.d.ts",
+      "import": "./dist/esm/patches.js",
+      "require": "./dist/cjs/patches.cjs"
+    }
   },
   "repository": {
     "type": "git",

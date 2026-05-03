@@ -1,5 +1,6 @@
 import { IRTMMetadata, IRTMAuthInfo, RTMEventName, RTMEventPayloadMap, RTMGenericEventCallback, IRTMMessageReceivedPayload } from '../../interfaces/rtm-interface';
 import RTM from '@dingrtc/rtm';
+import { blockAliyunLogRequests } from '../util/aliyun-log-block';
 
 type InternalRTMEventName = RTMEventName | '__RTM_BUBBLE_MSG';
 type InternalRTMEventPayloadMap = RTMEventPayloadMap & {
@@ -42,22 +43,8 @@ export class AliyunRTMOperations {
     }
 
     
-    // 原生拦截对阿里云日志的拉取/推送请求
-    if (typeof window !== 'undefined' && !(window as any)._dc_rtm_patched) {
-      (window as any)._dc_rtm_patched = true;
-      const originalFetch = window.fetch;
-      window.fetch = async function(...args) {
-        const url = typeof args[0] === 'string' ? args[0] : (args[0] && (args[0] as any).url ? (args[0] as any).url : '');
-        if (url && (url.includes('log.aliyuncs.com/logstores') || url.includes('.aliyuncs.com'))) {
-          // Mock successful empty response to prevent errors
-          return new Response(JSON.stringify({}), {
-             status: 200, 
-             headers: { 'Content-Type': 'application/json' }
-          });
-        }
-        return originalFetch.apply(window, args as any);
-      };
-    }
+    // 原生拦截对阿里云日志的拉取/推送请求（fetch + XHR）
+    blockAliyunLogRequests();
   
     this.client = new RTMEngine();
     // 尝试禁用 Aliyun RTM 内部的强制日志上报，避免浏览器抛出跨域/拦截错误
