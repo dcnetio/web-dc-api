@@ -40,7 +40,25 @@ export function blockAliyunLogRequests(): void {
         this._xhrBlocked = true;
         return;
       }
-      return super.open(method, url, ...(rest as [boolean?, string?, string?]));
+      if (rest.length === 0) {
+        super.open(method, url);
+        return;
+      }
+      if (rest.length === 1) {
+        super.open(method, url, rest[0] as boolean);
+        return;
+      }
+      if (rest.length === 2) {
+        super.open(method, url, rest[0] as boolean, rest[1] as string);
+        return;
+      }
+      super.open(
+        method,
+        url,
+        rest[0] as boolean,
+        rest[1] as string,
+        rest[2] as string,
+      );
     }
 
     send(...args: any[]): void {

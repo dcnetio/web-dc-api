@@ -26,6 +26,7 @@ export class MessageManager {
   private context: DCContext;
   private chainUtil: ChainUtil;
   private dc: DcUtil;
+  private static readonly USER_BOX_CURSOR_PREFIX = "userBoxCursor_";
   constructor(
     dc: DcUtil,
     chainUtil: ChainUtil,
@@ -92,17 +93,19 @@ export class MessageManager {
         return [null, Errors.ErrNoAccountPeerConnected];
       }
       const publicKey = await this.context.getPublicKey();
-      const publickey = publicKey.string()
+      const publickey = publicKey.string();
 
       const clients = await this.dc.connectToUserAllDcPeers(publicKey.raw);
       if(!clients){
-        return [null, Errors.ErrNoDcPeerConnected]
+        return [null, Errors.ErrNoDcPeerConnected];
       }
       let allMsgs: dcnet.pb.IUserMsg[] = [];
+      const seenMessageIds = new Set<string>();
+      const safeLimit = limit > 0 ? limit : 100;
       for (const client of clients) {
         if (client) {
           const peerId = getPeerIdString(client.peerAddr) || "";
-          const publicKeyString = this.context.getPublicKey().string();
+          const publicKeyString = publickey;
           // 获取token
           if(!client.token) {
             const token = await client.GetToken(
@@ -118,47 +121,143 @@ export class MessageManager {
             client,
             this.context,
           );
-          let maxKey = await messageClient.getMaxKeyFromUserBox(appId);
-          const userBoxMaxKeyStr = localStorage.getItem('userBoxMaxKey_' + publicKeyString) || '';
-          let userBoxMaxKey = userBoxMaxKeyStr ? JSON.parse(userBoxMaxKeyStr) : {};
-          if(maxKey){
-            let preMaxKey = userBoxMaxKey[publickey] || {};
-            preMaxKey[peerId] = maxKey;
+          const maxKey = await messageClient.getMaxKeyFromUserBox(appId);
+          if (!maxKey) {
+            continue;
           }
-          let getFlag = true
-          while(getFlag){
+
+          const cursor = this.getUserBoxCursor(publicKeyString, appId);
+          const lastPeerCursor = cursor[peerId] || { ts: 0, maxKey: "", msgId: "" };
+
+          if (lastPeerCursor.maxKey && lastPeerCursor.maxKey === maxKey) {
+            continue;
+          }
+
+          let seekKey = lastPeerCursor.maxKey || "";
+          let hasMore = true;
+          let newestTs = lastPeerCursor.ts || 0;
+          let newestMsgId = lastPeerCursor.msgId || "";
+          
+          let loopCount = 0;
+          const MAX_PAGES = 10; // safeguard
+
+          while (hasMore && loopCount < MAX_PAGES) {
+            loopCount++;
             try {
-              // 获取的maxkey 不等于 之前保存的maxkey
               const res = await messageClient.getMsgFromUserBox(
                 appId,
-                maxKey,
-                limit
+                seekKey,
+                safeLimit
               );
-              const list = res && res["msgs"]? res["msgs"] : [];
-              console.log('messageClient.getMsgFromUserBox list', list)
-              list.map((item: dcnet.pb.IUserMsg) => {
-                if(item && item.messageId) {
-                  allMsgs.push(item)
+              const list: dcnet.pb.IUserMsg[] = res && res["msgs"] ? res["msgs"] : [];
+
+              for (const item of list) {
+                if (!item || !item.messageId) {
+                  continue;
                 }
-              })
-              if(list.length < limit){
-                if(maxKey) {
-                  localStorage.setItem('userBoxMaxKey_' + publicKeyString, JSON.stringify(userBoxMaxKey))
+                const messageId = this.toMessageIdString(item.messageId);
+                const blockheight = Number(item.blockheight || 0);
+
+                if (
+                  blockheight < (lastPeerCursor.ts || 0) ||
+                  (blockheight === (lastPeerCursor.ts || 0) && messageId <= (lastPeerCursor.msgId || ""))
+                ) {
+                  continue;
                 }
-                getFlag = false
+                if (seenMessageIds.has(messageId)) {
+                  continue;
+                }
+
+                seenMessageIds.add(messageId);
+                allMsgs.push(item);
+
+                if (
+                  blockheight > newestTs ||
+                  (blockheight === newestTs && messageId > newestMsgId)
+                ) {
+                  newestTs = blockheight;
+                  newestMsgId = messageId;
+                }
+              }
+
+              if (list.length < safeLimit) {
+                hasMore = false;
+              } else {
+                const lastItem = list[list.length - 1];
+                const lastMsgId = this.toMessageIdString(lastItem.messageId);
+                const lastBh = Number(lastItem.blockheight || 0);
+                seekKey = `${lastBh}/${lastMsgId}`;
               }
             } catch (error) {
-              console.log('messageClient.getMsgFromUserBox error', error)
-              throw error;
+              console.log('messageClient.getMsgFromUserBox loop error', error);
+              break;
             }
           }
+
+          let finalMaxKey = lastPeerCursor.maxKey || "";
+          if (newestMsgId !== "") {
+            finalMaxKey = `${newestTs}/${newestMsgId}`;
+          }
+          if (!hasMore && loopCount <= MAX_PAGES) {
+            finalMaxKey = maxKey;
+          }
+
+          cursor[peerId] = {
+            ts: newestTs,
+            maxKey: finalMaxKey,
+            msgId: newestMsgId,
+          };
+          this.setUserBoxCursor(publicKeyString, appId, cursor);
         }
       }
-      return [allMsgs, null]
+      allMsgs.sort((a, b) => Number(b.blockheight || 0) - Number(a.blockheight || 0));
+      return [allMsgs, null];
     } catch (error: any) {
-      return [null, error]
+      return [null, error];
     }
   };
+
+  private getUserBoxCursor(
+    publicKeyString: string,
+    appId: string
+  ): Record<string, { ts: number; maxKey: string; msgId: string }> {
+    if (typeof localStorage === "undefined") {
+      return {};
+    }
+    try {
+      const key = `${MessageManager.USER_BOX_CURSOR_PREFIX}${publicKeyString}_${appId}`;
+      const raw = localStorage.getItem(key);
+      return raw ? JSON.parse(raw) : {};
+    } catch {
+      return {};
+    }
+  }
+
+  private setUserBoxCursor(
+    publicKeyString: string,
+    appId: string,
+    cursor: Record<string, { ts: number; maxKey: string; msgId: string }>
+  ): void {
+    if (typeof localStorage === "undefined") {
+      return;
+    }
+    const key = `${MessageManager.USER_BOX_CURSOR_PREFIX}${publicKeyString}_${appId}`;
+    localStorage.setItem(key, JSON.stringify(cursor));
+  }
+
+  private toMessageIdString(messageId?: string | Uint8Array | null): string {
+    if (!messageId) return "";
+    if (typeof messageId === "string") {
+      return messageId;
+    }
+    try {
+      return new TextDecoder().decode(messageId);
+    } catch {
+      return Array.from(messageId)
+        .map((v) => v.toString(16).padStart(2, "0"))
+        .join("");
+    }
+  }
   private generateMsqBoxReq = async (
     appId: string,
     receiverPubkey: Ed25519PubKey, 
