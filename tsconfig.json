@@ -1,5 +1,6 @@
 {
   "compilerOptions": {
+    "ignoreDeprecations": "6.0",
     // 🔧 调整目标版本以提高兼容性
     "target": "ES2020", // 从 ES2022 降级，更好的第三方库兼容性
     "useDefineForClassFields": false, // 🔑 关键修复：使用传统类字段行为
@@ -41,10 +42,9 @@
     // 🔧 添加兼容性设置
     "allowJs": true, // 允许 JS 文件
     "checkJs": false, // 不检查 JS 文件类型
-    "downlevelIteration": true, // 支持旧版本迭代器
-    "importHelpers": true, // 使用 tslib 辅助函数
-    "ignoreDeprecations": "5.0",
-    // 🚀 路径映射（保持不变）
+    "downlevelIteration": true,
+        "importHelpers": true, // 使用 tslib 辅助函数
+        // 🚀 路径映射（保持不变）
     "baseUrl": ".",
     "paths": {
       "@/*": [

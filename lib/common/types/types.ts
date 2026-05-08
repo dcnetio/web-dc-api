@@ -230,13 +230,14 @@ export enum AIModelType {
 export interface AIProxyConfig {
   service: string; // 服务名称
   isAIModel: AIModelType; // 0: AI模型 1: MCPServer 2: subtopic
-  apiType: number; // 当type 为0时起作用,表示模型的接口类型,如0:anthropic,1:openai 2:ollama 3:googleai 4:azureopenai
+  apiType: number; // 当type 为0时起作用,表示模型的接口类型,如0:anthropic,1:openai 2:ollama 3:googleai 4:azureopenai 8:dashscope 9:dashscope_media
   authorization: string;
   endpoint: string;
   organization: string; // 组织名称或ID
   apiVersion: string; // api版本号
   modelConfig: ModelConfig; // 模型配置
   remark: string;
+  dataFormat?: string; // 模型数据格式的key
   realtime?: AIProxyRealtimeConfig; // 实时调用扩展配置
   signature?: AIProxySignatureConfig; // 动态签名配置
   blockheight?: number; // 可以不设置,由sdk自动设置
