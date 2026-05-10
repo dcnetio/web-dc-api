@@ -81,6 +81,7 @@
     "lib": "lib",
     "test": "test"
   },
+  
   "devDependencies": {
     "@babel/core": "^7.27.4",
     "@babel/parser": "^7.28.4",
