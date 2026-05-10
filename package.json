@@ -81,7 +81,7 @@
     "lib": "lib",
     "test": "test"
   },
-  
+
   "devDependencies": {
     "@babel/core": "^7.27.4",
     "@babel/parser": "^7.28.4",
@@ -107,7 +107,7 @@
     "nodemon": "^3.1.9",
     "process": "^0.11.10",
     "rollup": "^4.60.0",
-    "rollup-plugin-dts": "^6.2.1",
+    "rollup-plugin-dts": "^6.4.1",
     "typescript": "^6.0.3",
     "vite": "^7.1.2",
     "vite-plugin-dts": "^4.5.4",

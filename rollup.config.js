@@ -262,8 +262,6 @@ export default [
         tsconfig: "./tsconfig.json",
       }),
     ],
-    external,
-    onwarn,
   },
 
   // UMD格式
