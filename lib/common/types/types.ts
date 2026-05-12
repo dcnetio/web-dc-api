@@ -275,6 +275,8 @@ export interface AIProxyConfig {
   taskIdField?: string;
   cost?: number; // 每次调用从全局积分桶扣减的积分数，0或未配置时默认为1
   costRule?: string; // 动态计费规则JSON (CostRuleConfig)，配置后按请求体参数动态计算cost，覆盖cost字段
+  inputTokenRate?: number; // 按Token计费：每1000个输入Token消耗的积分数（配置后覆盖cost/costRule）
+  outputTokenRate?: number; // 按Token计费：每1000个输出Token消耗的积分数（配置后覆盖cost/costRule）
   realtime?: AIProxyRealtimeConfig; // 实时调用扩展配置
   signature?: AIProxySignatureConfig; // 动态签名配置
   blockheight?: number; // 可以不设置,由sdk自动设置
