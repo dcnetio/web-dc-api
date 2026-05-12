@@ -238,6 +238,10 @@ export interface AIProxyConfig {
   modelConfig: ModelConfig; // 模型配置
   remark: string;
   dataFormat?: string; // 模型数据格式的key
+  reqMethod?: string;
+  isAsync?: boolean;
+  pollServiceName?: string;
+  taskIdField?: string;
   realtime?: AIProxyRealtimeConfig; // 实时调用扩展配置
   signature?: AIProxySignatureConfig; // 动态签名配置
   blockheight?: number; // 可以不设置,由sdk自动设置
