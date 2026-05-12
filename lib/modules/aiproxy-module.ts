@@ -17,6 +17,7 @@ import {
   IAIProxyRealtimeVoiceSession,
   OnStreamResponseType,
   ProxyCallConfig,
+  UserAIProxyAuthResult,
   UserProxyCallConfig,
 } from "../common/types/types";
 import { AIProxyManager } from "../implements/aiproxy/manager";
@@ -1349,7 +1350,7 @@ export class AIProxyModule implements DCModule, IAIProxyOperations {
 
   async GetUserAIProxyAuth(
     params: GetUserAIProxyAuthParams
-  ): Promise<[authConfigs: ProxyCallConfig[] | null, error: Error | null]> {
+  ): Promise<[result: UserAIProxyAuthResult | null, error: Error | null]> {
     try {
       this.assertInitialized();
       return this.aiProxyManager.GetUserAIProxyAuth(params);

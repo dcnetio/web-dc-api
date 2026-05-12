@@ -10,6 +10,7 @@ import {
   IAIProxyRealtimeVoiceSession,
   OnStreamResponseType,
   ProxyCallConfig,
+  UserAIProxyAuthResult,
   UserProxyCallConfig,
 } from "../common/types/types";
 import { AIProxyUserPermission } from "../common/constants";
@@ -284,7 +285,7 @@ export interface IAIProxyOperations {
    */
   GetUserAIProxyAuth(
     params: GetUserAIProxyAuthParams
-  ): Promise<[authConfigs: ProxyCallConfig[] | null, error: Error | null]>;
+  ): Promise<[result: UserAIProxyAuthResult | null, error: Error | null]>;
 
   /**
    * 创建一个基于 DoAIProxyCall 预取鉴权信息的实时音频会话
