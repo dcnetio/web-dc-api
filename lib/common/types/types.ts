@@ -131,6 +131,13 @@ export interface AIProxyRealtimeResponsePreset {
   actualDataField?: string;
   defaultExpiresIn?: number;
   reconnectOnRefresh?: boolean;
+  // Custom field name mappings for parsing main service response credentials (supports dotted paths)
+  responseTokenField?: string;
+  responseTempTokenField?: string;
+  responseApiKeyField?: string;
+  responseTempApiKeyField?: string;
+  responseExpiresInField?: string;
+  responseExpiresAtField?: string;
 }
 
 export interface AIProxyRealtimeCredentialExchangePreset {
