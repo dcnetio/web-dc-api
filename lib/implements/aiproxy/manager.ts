@@ -462,11 +462,27 @@ export class AIProxyManager {
               userPubkey.length + permission.length + 2 // +2 for the colon and the next colon
             );
             //解析到ProxyCallConfig结构
-            const authConfig = JSON.parse(authContentStr);
+            const parsed = JSON.parse(authContentStr);
+            // 新格式：{ authConfig: string | array, usageServices: {...} }
+            let authConfig: any;
+            let usageServices: any = undefined;
+            if (parsed && typeof parsed.authConfig === 'string') {
+              // new format: authConfig is a JSON string
+              const inner = JSON.parse(parsed.authConfig);
+              authConfig = Array.isArray(inner) ? inner : (inner?.Exp ? [inner] : []);
+              usageServices = parsed.usageServices || undefined;
+            } else if (parsed && Array.isArray(parsed.authConfig)) {
+              authConfig = parsed.authConfig;
+              usageServices = parsed.usageServices || undefined;
+            } else {
+              // 旧格式：直接是 authConfig 内容
+              authConfig = parsed;
+            }
             allAuth.push({
               UserPubkey: userPubkey,
               permission: parseInt(permission), //转成数字
               authConfig: authConfig,
+              usageServices: usageServices,
             });
           } catch (error) {
             console.warn("跳过无效授权信息:", error);
