@@ -451,8 +451,14 @@ export class FileModule implements DCModule, IFileOperations {
   ): [FileList | null, Error | null] {
     try {
       this.assertInitialized();
-      // filesMap 判断
-      if (!filesMap || filesMap.size === 0) {
+      // filesMap 判断：兼容 Map 和普通对象
+      if (!filesMap) {
+        return [null, new Error("文件夹不能为空")];
+      }
+      const isEmpty = filesMap instanceof Map
+        ? filesMap.size === 0
+        : Object.keys(filesMap).length === 0;
+      if (isEmpty) {
         return [null, new Error("文件夹不能为空")];
       }
       const fileList = this.fileManager.createCustomFileList(

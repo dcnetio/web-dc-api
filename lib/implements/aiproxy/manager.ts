@@ -3,6 +3,7 @@ import {
   GetUserAIProxyAuthParams,
   OnStreamResponseType,
   ProxyCallConfig,
+  UserAIProxyAuthResult,
   UserProxyCallConfig,
 } from "../../common/types/types";
 import {
@@ -681,7 +682,7 @@ export class AIProxyManager {
 
   async GetUserAIProxyAuth(
     params: GetUserAIProxyAuthParams
-  ): Promise<[authConfigs: ProxyCallConfig[] | null, error: Error | null]> {
+  ): Promise<[result: UserAIProxyAuthResult | null, error: Error | null]> {
     if (!this.context.publicKey) {
       return [null, new Error("ErrConnectToAccountPeersFail")];
     }
@@ -721,18 +722,29 @@ export class AIProxyManager {
       return [null, error];
     }
     if (!authInfo) {
-      return [[], null];
+      return [{ authConfig: [] }, null];
     }
     try {
-      const authConfig = JSON.parse(authInfo);
-      // 判断是否是数组
-      if (!Array.isArray(authConfig)) {
-        if (!authConfig.Exp) {
-          return [[], null];
+      const parsed = JSON.parse(authInfo);
+      // 新格式：{ authConfig: string, usageServices: {...} }
+      if (parsed && typeof parsed.authConfig === 'string') {
+        const rawConfig = parsed.authConfig;
+        const usageServices = parsed.usageServices || undefined;
+        if (!rawConfig) {
+          return [{ authConfig: [], usageServices }, null];
         }
-        return [[authConfig], null];
+        const configs = JSON.parse(rawConfig);
+        const authConfig = Array.isArray(configs) ? configs : (configs.Exp ? [configs] : []);
+        return [{ authConfig: authConfig as ProxyCallConfig[], usageServices }, null];
       }
-      return [authConfig as ProxyCallConfig[], null];
+      // 旧格式兼容：直接是数组或单个对象
+      if (Array.isArray(parsed)) {
+        return [{ authConfig: parsed as ProxyCallConfig[] }, null];
+      }
+      if (!parsed.Exp) {
+        return [{ authConfig: [] }, null];
+      }
+      return [{ authConfig: [parsed as ProxyCallConfig] }, null];
     } catch (error: any) {
       return [null, error];
     }
