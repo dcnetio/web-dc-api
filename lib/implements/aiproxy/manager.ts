@@ -678,21 +678,29 @@ export class AIProxyManager {
       this.context.AccountBackupDc.client,
       this.context
     );
-    let res = await proxyClient.DoAIProxyCall(
-      context,
-      appId,
-      themeAuthor,
-      configTheme,
-      serviceName,
-      path || "",
-      headers || "",
-      reqBody,
-      model || "",
-      forceRefreshFlag,
-      blockHeight,
-      signature,
-      onStreamResponse
-    );
+    let res: number;
+    let callError: unknown;
+    try {
+      res = await proxyClient.DoAIProxyCall(
+        context,
+        appId,
+        themeAuthor,
+        configTheme,
+        serviceName,
+        path || "",
+        headers || "",
+        reqBody,
+        model || "",
+        forceRefreshFlag,
+        blockHeight,
+        signature,
+        onStreamResponse
+      );
+    } catch (e) {
+      callError = e;
+      res = -1;
+    }
+    if (callError !== undefined) throw callError;
     return res;
   }
 
