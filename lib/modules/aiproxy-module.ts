@@ -1582,12 +1582,22 @@ export class AIProxyModule implements DCModule, IAIProxyOperations {
         ? (providerData as Record<string, unknown>)
         : undefined;
 
+    // Build field mapping from response config (supports custom field names and dotted paths)
+    const fieldMapping = responseConfig ? {
+      tokenField: responseConfig.responseTokenField,
+      tempTokenField: responseConfig.responseTempTokenField,
+      apiKeyField: responseConfig.responseApiKeyField,
+      tempApiKeyField: responseConfig.responseTempApiKeyField,
+      expiresInField: responseConfig.responseExpiresInField,
+      expiresAtField: responseConfig.responseExpiresAtField,
+    } : undefined;
+
     const responseConnection = this.extractRealtimeConnectionFromPayload(parsed);
     const parsedCredentials = customResponse
-      ? this.extractRealtimeCredentialsFromPayload(parsed)
-      : this.extractRealtimeCredentialsFromPayload(parsed, parsed);
+      ? this.extractRealtimeCredentialsFromPayload(parsed, undefined, fieldMapping)
+      : this.extractRealtimeCredentialsFromPayload(parsed, parsed, fieldMapping);
     const providerCredentials = providerDataRecord
-      ? this.extractRealtimeCredentialsFromPayload(providerDataRecord, providerDataRecord)
+      ? this.extractRealtimeCredentialsFromPayload(providerDataRecord, providerDataRecord, fieldMapping)
       : {};
     const responseCredentials = {
       authorization: parsedCredentials.authorization || providerCredentials.authorization,
@@ -1719,6 +1729,14 @@ export class AIProxyModule implements DCModule, IAIProxyOperations {
   private extractRealtimeCredentialsFromPayload(
     parsed: Record<string, unknown>,
     fallbackSource?: Record<string, unknown>,
+    fieldMapping?: {
+      tokenField?: string;
+      tempTokenField?: string;
+      apiKeyField?: string;
+      tempApiKeyField?: string;
+      expiresInField?: string;
+      expiresAtField?: string;
+    },
   ): {
     token?: string;
     tempToken?: string;
@@ -1739,33 +1757,62 @@ export class AIProxyModule implements DCModule, IAIProxyOperations {
       fallbackRecord ||
       parsed;
 
+    // Custom field resolution with dotted-path support (e.g. "client_secret.value")
+    const resolveCustomStr = (path: string | undefined): string | undefined => {
+      if (!path) return undefined;
+      return this.readNestedStringValue(parsedRecord, path) ||
+             this.readNestedStringValue(fallbackRecord, path) ||
+             this.readNestedStringValue(credentialsRecord, path) ||
+             undefined;
+    };
+    const resolveCustomNum = (path: string | undefined): number | undefined => {
+      if (!path) return undefined;
+      return this.readNestedNumberValue(parsedRecord, path) ||
+             this.readNestedNumberValue(fallbackRecord, path) ||
+             undefined;
+    };
+    // For expiresAt: handles both numeric and string-encoded timestamps
+    const resolveCustomNumOrStr = (path: string | undefined): number | string | undefined => {
+      if (!path) return undefined;
+      return this.readNestedNumberOrStringValue(parsedRecord, path) ||
+             this.readNestedNumberOrStringValue(fallbackRecord, path) ||
+             this.readNestedNumberOrStringValue(credentialsRecord, path) ||
+             undefined;
+    };
+
     const authorization =
       this.readStringField(credentialSource, ["Authorization", "authorization"]) ||
       this.readStringField(parsedRecord, ["Authorization", "authorization"]) ||
       this.readStringField(fallbackRecord, ["Authorization", "authorization"]);
     const token =
+      resolveCustomStr(fieldMapping?.tokenField) ||
       this.readStringField(credentialSource, ["token", "access_token", "accessToken"]) ||
       this.readStringField(parsedRecord, ["token", "access_token", "accessToken"]) ||
       this.readStringField(fallbackRecord, ["token", "access_token", "accessToken"]);
     const tempToken =
+      resolveCustomStr(fieldMapping?.tempTokenField) ||
       this.readStringField(credentialSource, ["tempToken", "temp_token"]) ||
       this.readStringField(parsedRecord, ["tempToken", "temp_token"]) ||
       this.readStringField(fallbackRecord, ["tempToken", "temp_token"]) ||
       token;
     const apiKey =
+      resolveCustomStr(fieldMapping?.apiKeyField) ||
       this.readStringField(credentialSource, ["apiKey", "api_key"]) ||
       this.readStringField(parsedRecord, ["apiKey", "api_key"]) ||
       this.readStringField(fallbackRecord, ["apiKey", "api_key"]);
     const tempApiKey =
+      resolveCustomStr(fieldMapping?.tempApiKeyField) ||
       this.readStringField(credentialSource, ["tempApiKey", "temp_api_key"]) ||
       this.readStringField(parsedRecord, ["tempApiKey", "temp_api_key"]) ||
       this.readStringField(fallbackRecord, ["tempApiKey", "temp_api_key"]) ||
       apiKey;
     const expiresAt =
+      resolveCustomNumOrStr(fieldMapping?.expiresAtField) ||
       this.readNumberOrStringField(credentialSource, ["expiresAt", "expires_at"]) ||
       this.readNumberOrStringField(parsedRecord, ["expiresAt", "expires_at"]) ||
       this.readNumberOrStringField(fallbackRecord, ["expiresAt", "expires_at"]);
     const expiresIn =
+      resolveCustomNum(fieldMapping?.expiresInField) ||
       this.readNumberField(credentialSource, ["expiresIn", "expires_in"]) ||
       this.readNumberField(parsedRecord, ["expiresIn", "expires_in"]) ||
       this.readNumberField(fallbackRecord, ["expiresIn", "expires_in"]);
@@ -1840,6 +1887,62 @@ export class AIProxyModule implements DCModule, IAIProxyOperations {
       } catch {
         return undefined;
       }
+    }
+    return undefined;
+  }
+
+  // Reads a (possibly dotted-path) string field, e.g. "client_secret.value"
+  private readNestedStringValue(
+    record: Record<string, unknown> | undefined,
+    path: string,
+  ): string | undefined {
+    if (!record || !path) return undefined;
+    const dotIdx = path.indexOf('.');
+    if (dotIdx < 0) {
+      return this.toOptionalString(record[path]) || undefined;
+    }
+    const head = path.slice(0, dotIdx);
+    const tail = path.slice(dotIdx + 1);
+    const nested = record[head];
+    if (nested && typeof nested === 'object' && !Array.isArray(nested)) {
+      return this.readNestedStringValue(nested as Record<string, unknown>, tail);
+    }
+    return undefined;
+  }
+
+  private readNestedNumberValue(
+    record: Record<string, unknown> | undefined,
+    path: string,
+  ): number | undefined {
+    if (!record || !path) return undefined;
+    const dotIdx = path.indexOf('.');
+    if (dotIdx < 0) {
+      return this.toOptionalNumber(record[path]);
+    }
+    const head = path.slice(0, dotIdx);
+    const tail = path.slice(dotIdx + 1);
+    const nested = record[head];
+    if (nested && typeof nested === 'object' && !Array.isArray(nested)) {
+      return this.readNestedNumberValue(nested as Record<string, unknown>, tail);
+    }
+    return undefined;
+  }
+
+  // Like readNestedNumberValue but also handles string-encoded numbers (e.g. expiresAt as "1748246400")
+  private readNestedNumberOrStringValue(
+    record: Record<string, unknown> | undefined,
+    path: string,
+  ): number | string | undefined {
+    if (!record || !path) return undefined;
+    const dotIdx = path.indexOf('.');
+    if (dotIdx < 0) {
+      return this.toNumberOrString(record[path]);
+    }
+    const head = path.slice(0, dotIdx);
+    const tail = path.slice(dotIdx + 1);
+    const nested = record[head];
+    if (nested && typeof nested === 'object' && !Array.isArray(nested)) {
+      return this.readNestedNumberOrStringValue(nested as Record<string, unknown>, tail);
     }
     return undefined;
   }
