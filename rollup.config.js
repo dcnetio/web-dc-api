@@ -212,57 +212,6 @@ export default [
     onwarn,
   },
 
-  // patches 入口 — ESM（供宿主应用最早 import 以拦截阿里云日志上报）
-  {
-    input: "lib/patches.ts",
-    output: {
-      file: "dist/esm/patches.js",
-      format: "es",
-      sourcemap: true,
-    },
-    external,
-    plugins: [
-      resolve(getResolveConfig(true)),
-      commonjs(getCommonJSConfig()),
-      typescript({
-        tsconfig: "./tsconfig.json",
-        declaration: false,
-        declarationMap: false,
-        sourceMap: true,
-      }),
-      ...basePlugins,
-    ],
-    onwarn,
-  },
-
-  // patches 入口 — CJS
-  {
-    input: "lib/patches.ts",
-    output: {
-      file: "dist/cjs/patches.cjs",
-      format: "cjs",
-      sourcemap: true,
-      exports: "auto",
-    },
-    external,
-    plugins: [
-      inject({
-        process: ["process", "process"],
-        Buffer: ["buffer", "Buffer"],
-      }),
-      resolve(getResolveConfig(true)),
-      commonjs(getCommonJSConfig()),
-      typescript({
-        tsconfig: "./tsconfig.json",
-        declaration: false,
-        declarationMap: false,
-        sourceMap: true,
-      }),
-      ...basePlugins,
-    ],
-    onwarn,
-  },
-
   // CJS格式 - 单文件
   // ⚠️ 变更：开启 SourceMap，关闭压缩
   {
@@ -305,24 +254,6 @@ export default [
       file: pkg.types,
       format: "es",
       inlineDynamicImports: true,
-    },
-    external,
-    onwarn,
-    plugins: [
-      dts({
-        tsconfig: "./tsconfig.json",
-      }),
-    ],
-    external,
-    onwarn,
-  },
-
-  // patches 类型定义
-  {
-    input: "lib/patches.ts",
-    output: {
-      file: "dist/patches.d.ts",
-      format: "es",
     },
     external,
     onwarn,

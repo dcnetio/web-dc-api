@@ -10,6 +10,7 @@ import {
   IAIProxyRealtimeVoiceSession,
   OnStreamResponseType,
   ProxyCallConfig,
+  UserAIProxyAuthResult,
   UserProxyCallConfig,
 } from "../common/types/types";
 import { AIProxyUserPermission } from "../common/constants";
@@ -144,6 +145,88 @@ export interface IAIProxyOperations {
   ): Promise<[number | null, Error | null]>;
 
   /**
+   * 执行AI调用生成或编辑资源 (如图片生成、视频生成、PPT生成与编辑等)
+   * 
+   * 此方法在 DoAIProxyCall 的基础上，增加了资源结果统一解析功能。适用于需要提取富媒体资源（如图片、视频、文档）的场景。
+   * 方法内部不仅会将原本流式响应的内容进行拼接，还会在响应结束时，尝试将完整结果解析为 JSON。
+   * 然后遍历深度提取其中的 URL 链接，依据文件后缀或字段名自动归类至 imagelist, videolist, doclist 中，便于应用层直接渲染或下载。
+   * 
+   * @param context 控制调用的上下文，可传入 AbortSignal 取消请求
+   * @param reqBody 请求体 (通常为 JSON 字符串格式)
+   * @param forceRefresh 是否强制刷新 Token
+   * @param onStreamResponse 流式响应回调 (如果不需要关心过程流，可传空函数)。当有流式数据到达时触发。
+   * @param onResult 最终解析结果回调，会在底层完整响应结束 (如 CONNECTION_CLOSED 等) 时触发。
+   *        - flag: 最终的完成标识状态码（参考 AIStreamResponseFlag）
+   *        - result: 资源解析的完整对象。包括：
+   *           - `origin_result`: 原始返回的完整内容，如果能转化为 JSON 则为 JSON 对象，否则为拼接的字符串。
+   *           - `imagelist`: 提取到的图片链接列表。格式如: `[{"data.url": "https://..."}]`
+   *           - `videolist`: 提取到的视频链接列表。格式如: `[{"video_uri": "https://..."}]`
+   *           - `doclist`: 提取到的文档(PDF/PPT/TXT等)及其他链接列表。
+   *        - err: 错误信息字符串
+   * @param appId 应用ID(可选)
+   * @param themeAuthor 主题作者公钥(可选)
+   * @param configTheme 配置主题(可选)
+   * @param serviceName 服务名称(可选)
+   * @param headers 请求头(可选)
+   * @param path 请求路径(可选)
+   * @param model 模型名称(可选)
+
+  /**
+   * 提交生成类任务或流式输出，内置状态轮询生命周期钩子（通用大模型API、绘图等异
+步任务封装）
+   * @param context DC上下文
+   * @param reqBody 请求体/Prompt
+   * @param forceRefresh 是否强制刷新
+   * @param options 参数与钩子回调配置
+   */
+  GenerateAndPollAIResource(
+    context: { signal?: AbortSignal },
+    reqBody: string,
+    forceRefresh: boolean,
+    options: {
+      appId?: string;
+      themeAuthor?: string;
+      configTheme?: string;
+      submitServiceName?: string;
+      submitHeaders?: Record<string, string>;
+      submitPath?: string;
+      submitModel?: string;
+      isAsync?: boolean;
+      pollServiceName?: string;
+      pollHeaders?: Record<string, string>;
+      pollPath?: string;
+      pollModel?: string;
+      pollIntervalMs?: number;    // 轮询间隔 (默认 3000ms)
+      pollTimeoutMs?: number;     // 轮询超时总时间 (默认 180000ms -> 3分钟)
+      taskIdField?: string;       // 明确指定任务 ID 在 JSON 中的字段名
+      existingTaskId?: string;    // 从外部直接传入已有的 task_id (跳过提交，直接进行轮询)
+      buildPollReqBody?: (taskId: string) => string;
+      buildPollPath?: (taskId: string) => string;
+      onTaskSubmitted?: (taskId: string, initialResult: any) => void;
+      onPollTick?: (pollResult: any) => void; 
+    }
+  ): Promise<[any, Error | null]>;
+
+  /**
+   * 单次任务轮询查询（提供给内建轮询调度使用，也可手动调用）
+   * @param context DC上下文
+   */
+  PollAITaskResult(
+    context: any,
+    reqBody: string,
+    forceRefresh?: boolean,
+    appId?: string,
+    themeAuthor?: string,
+    configTheme?: string,
+    serviceName?: string,
+    headers?: Record<string, string>,
+    path?: string,
+    model?: string,
+    taskIdField?: string
+  ): Promise<[any, Error | null]>;
+
+
+  /**
    * 获取阿里云V3的动态Token (通常用于 RTC / RTM 等场景)
    * 对应后端 ai_proxy_handler.go 中 endpoint 为 aliyun_createtoken_v3 的处理逻辑
    */
@@ -202,7 +285,7 @@ export interface IAIProxyOperations {
    */
   GetUserAIProxyAuth(
     params: GetUserAIProxyAuthParams
-  ): Promise<[authConfigs: ProxyCallConfig[] | null, error: Error | null]>;
+  ): Promise<[result: UserAIProxyAuthResult | null, error: Error | null]>;
 
   /**
    * 创建一个基于 DoAIProxyCall 预取鉴权信息的实时音频会话

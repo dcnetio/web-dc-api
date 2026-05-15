@@ -1,6 +1,6 @@
 {
   "name": "web-dc-api",
-  "version": "0.2.26",
+  "version": "0.2.27",
   "description": "一个革命性的去中心化 Web 开发 SDK，让您无需任何服务器即可构建完整的互联网应用",
   "type": "module",
   "sideEffects": false,
@@ -13,12 +13,7 @@
       "import": "./dist/esm/index.js",
       "require": "./dist/cjs/index.cjs"
     },
-    "./package.json": "./package.json",
-    "./patches": {
-      "types": "./dist/patches.d.ts",
-      "import": "./dist/esm/patches.js",
-      "require": "./dist/cjs/patches.cjs"
-    }
+    "./package.json": "./package.json"
   },
   "repository": {
     "type": "git",
@@ -86,6 +81,7 @@
     "lib": "lib",
     "test": "test"
   },
+
   "devDependencies": {
     "@babel/core": "^7.27.4",
     "@babel/parser": "^7.28.4",
@@ -111,8 +107,8 @@
     "nodemon": "^3.1.9",
     "process": "^0.11.10",
     "rollup": "^4.60.0",
-    "rollup-plugin-dts": "^6.2.1",
-    "typescript": "^5.8.3",
+    "rollup-plugin-dts": "^6.4.1",
+    "typescript": "^6.0.3",
     "vite": "^7.1.2",
     "vite-plugin-dts": "^4.5.4",
     "webpack-bundle-analyzer": "^4.10.2"

@@ -1217,6 +1217,7 @@ message DeductUserAIProxyOpTimesRequest {
      bytes appId = 2; //应用标志
     bytes themeAuthor = 3;//发布状态汇聚对象的的pubkey
     bytes theme = 4; //状态汇聚对象
+    bytes service = 5; //服务名
 }
 
 message DeductUserAIProxyOpTimesReply {

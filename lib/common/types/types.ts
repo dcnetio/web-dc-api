@@ -98,20 +98,51 @@ export interface ThemeComment {
   vaccount: string;
 }
 
+export interface AIServiceLimits {
+  Tlim?: number; //总积分限制
+  Dlim?: number; //日积分限制
+  Wlim?: number; //周积分限制
+  Mlim?: number; //月积分限制
+  Ylim?: number; //年积分限制
+}
+
+/** 单个服务的使用统计（只读，来自服务端 usageServices 字段） */
+export interface AIServiceUsage {
+  used?: number;     //总累计消耗积分
+  dayused?: number;  //当日消耗积分
+  weekused?: number; //本周消耗积分
+  monthused?: number;//本月消耗积分
+  yearused?: number; //本年消耗积分
+  count?: number;    //调用次数（每100次重置）
+  tlim?: number;     //总积分上限（全局桶用）
+  dlim?: number;     //日积分上限（全局桶用）
+  wlim?: number;     //周积分上限（全局桶用）
+  mlim?: number;     //月积分上限（全局桶用）
+  ylim?: number;     //年积分上限（全局桶用）
+}
+
+/** GetUserAIProxyAuth 返回值 */
+export interface UserAIProxyAuthResult {
+  authConfig: ProxyCallConfig[];                   //订阅配置列表
+  usageServices?: Record<string, AIServiceUsage>;  //各服务使用统计；key "" = 全局积分桶
+}
+
 export interface ProxyCallConfig {
   No: number; //订阅序号,每次调用都必须在上次的基础上进行加1
-  Tlim?: number; //总访问次数限制
-  Dlim?: number; //日访问次数限制
-  Wlim?: number; //周访问次数限制
-  Mlim?: number; //月访问次数限制
-  Ylim?: number; //年访问次数限制
+  Tlim?: number; //全局总积分限制（兼容旧格式，推荐使用 services[""]）
+  Dlim?: number; //全局日积分限制（兼容旧格式）
+  Wlim?: number; //全局周积分限制（兼容旧格式）
+  Mlim?: number; //全局月积分限制（兼容旧格式）
+  Ylim?: number; //全局年积分限制（兼容旧格式）
   Exp?: number; //过期区块高度
+  services?: Record<string, AIServiceLimits>; //积分桶配置，key 为 "" 表示全局积分桶
 }
 
 export interface UserProxyCallConfig {
   UserPubkey: string; //用户公钥
   permission: number; //权限
   authConfig: ProxyCallConfig; //授权配置
+  usageServices?: Record<string, AIServiceUsage>; //各服务使用统计（运行时附加）
 }
 
 export interface AIProxyRealtimeConnectionPreset {
@@ -237,13 +268,22 @@ export enum AIModelType {
 export interface AIProxyConfig {
   service: string; // 服务名称
   isAIModel: AIModelType; // 0: AI模型 1: MCPServer 2: subtopic
-  apiType: number; // 当type 为0时起作用,表示模型的接口类型,如0:anthropic,1:openai 2:ollama 3:googleai 4:azureopenai
+  apiType: number; // 当type 为0时起作用,表示模型的接口类型,如0:anthropic,1:openai 2:ollama 3:googleai 4:azureopenai 8:dashscope 9:dashscope_media
   authorization: string;
   endpoint: string;
   organization: string; // 组织名称或ID
   apiVersion: string; // api版本号
   modelConfig: ModelConfig; // 模型配置
   remark: string;
+  dataFormat?: string; // 模型数据格式的key
+  reqMethod?: string;
+  isAsync?: boolean;
+  pollServiceName?: string;
+  taskIdField?: string;
+  cost?: number; // 每次调用从全局积分桶扣减的积分数，0或未配置时默认为1
+  costRule?: string; // 动态计费规则JSON (CostRuleConfig)，配置后按请求体参数动态计算cost，覆盖cost字段
+  inputTokenRate?: number; // 按Token计费：每1000个输入Token消耗的积分数（配置后覆盖cost/costRule）
+  outputTokenRate?: number; // 按Token计费：每1000个输出Token消耗的积分数（配置后覆盖cost/costRule）
   realtime?: AIProxyRealtimeConfig; // 实时调用扩展配置
   signature?: AIProxySignatureConfig; // 签名规则配置
   blockheight?: number; // 可以不设置,由sdk自动设置

@@ -1,5 +1,5 @@
-// modules/keyvalue-module.ts
-// 键值存储功能模块
+// modules/aiproxy-module.ts
+// AI代理功能模块
 
 import { DCContext } from "../../lib/interfaces/DCContext";
 import { DCModule, CoreModuleName } from "../common/module-system";
@@ -17,6 +17,7 @@ import {
   IAIProxyRealtimeVoiceSession,
   OnStreamResponseType,
   ProxyCallConfig,
+  UserAIProxyAuthResult,
   UserProxyCallConfig,
 } from "../common/types/types";
 import { AIProxyManager } from "../implements/aiproxy/manager";
@@ -271,6 +272,408 @@ export class AIProxyModule implements DCModule, IAIProxyOperations {
         return [null, error instanceof Error ? error : new Error(String(error))];
       }
   }
+
+  /**
+   * 统一的 AI 代理响应 JSON 提取工具
+   * 将深层 AST 遍历抽取媒体 URL 和 task_id 的逻辑抽离，保证所有返回一致
+   */
+  public ExtractAIResourceResult(payloadText: string, taskIdField?: string, expectedMediaType?: 'image' | 'video' | 'audio' | 'doc') {
+    const result = {
+      origin_result: payloadText as any,
+      task_id: undefined as string | undefined, // 初始化为空
+      imagelist: [] as { [key: string]: string }[],
+      videolist: [] as { [key: string]: string }[],
+      audiolist: [] as { [key: string]: string }[],
+      doclist: [] as { [key: string]: string }[]
+    };
+
+    let parsedObj;
+    try {
+      parsedObj = JSON.parse(payloadText);
+      result.origin_result = parsedObj;
+      
+      if (parsedObj !== null && typeof parsedObj === 'object') {
+        const extractId = (obj: any) => {
+          if (taskIdField && obj[taskIdField] != null) return obj[taskIdField];
+          return obj.task_id ?? obj.taskId ?? obj.taskid ?? obj.job_id ?? obj.jobId ?? obj.id;
+        };
+
+        let possibleTaskId = extractId(parsedObj);
+        // 依次尝试常见的包装字段: data / result / items[0]
+        if (possibleTaskId == null && parsedObj.data != null && typeof parsedObj.data === 'object') {
+            possibleTaskId = extractId(parsedObj.data);
+        }
+        if (possibleTaskId == null && parsedObj.result != null && typeof parsedObj.result === 'object') {
+            possibleTaskId = extractId(parsedObj.result);
+        }
+        if (possibleTaskId == null && Array.isArray(parsedObj.items) && parsedObj.items.length > 0 && typeof parsedObj.items[0] === 'object') {
+            possibleTaskId = extractId(parsedObj.items[0]);
+        }
+
+        if (possibleTaskId != null && (typeof possibleTaskId === 'string' || typeof possibleTaskId === 'number')) {
+            result.task_id = String(possibleTaskId);
+        }
+      }
+    } catch (e) {
+      return result; // 解析失败直接返回原始文本结构
+    }
+    
+    const imgExts = /\.(png|jpg|jpeg|gif|webp|bmp|svg)([\?#].*)?$/i;
+    const vidExts = /\.(mp4|webm|avi|mov|mkv|flv|ts|m3u8|m4v|3gp)([\?#].*)?$/i;
+    const audioExts = /\.(mp3|wav|ogg|aac|flac|m4a|opus|wma)([\?#].*)?$/i;
+    const docExts = /\.(pdf|doc|docx|xls|xlsx|ppt|pptx|txt|md|csv)([\?#].*)?$/i;
+    const visited = new Set<any>();
+
+    const traverse = (node: any, pathStr: string) => {
+      if (node !== null && typeof node === 'object') {
+        if (visited.has(node)) return;
+        visited.add(node);
+      }
+
+      if (typeof node === 'string') {
+        const isUrl = /^(https?:\/\/|data:(image|video|audio|application)\/)/i.test(node);
+        if (isUrl) {
+            const lowerNode = node.toLowerCase();
+            const lowerPath = pathStr.toLowerCase();
+            const isImg = imgExts.test(node) || lowerNode.startsWith('data:image/');
+            const isVid = vidExts.test(node) || lowerNode.startsWith('data:video/');
+            const isAudio = audioExts.test(node) || lowerNode.startsWith('data:audio/');
+            const isDoc = docExts.test(node) || lowerNode.startsWith('data:application/');
+
+            if (isImg) {
+                result.imagelist.push({ [pathStr || "url"]: node });
+            } else if (isVid) {
+                result.videolist.push({ [pathStr || "url"]: node });
+            } else if (isAudio) {
+                result.audiolist.push({ [pathStr || "url"]: node });
+            } else if (isDoc) {
+                result.doclist.push({ [pathStr || "url"]: node });
+            } else {
+                // 扩展名无法判断时，依次按路径关键词 → expectedMediaType → 默认 doclist
+                if (/image|pic|cover|avatar|logo|thumbnail/.test(lowerPath)) {
+                    result.imagelist.push({ [pathStr || "url"]: node });
+                } else if (/video|media/.test(lowerPath)) {
+                    result.videolist.push({ [pathStr || "url"]: node });
+                } else if (/audio|voice|speech|sound/.test(lowerPath)) {
+                    result.audiolist.push({ [pathStr || "url"]: node });
+                } else if (expectedMediaType === 'image') {
+                    result.imagelist.push({ [pathStr || "url"]: node });
+                } else if (expectedMediaType === 'video') {
+                    result.videolist.push({ [pathStr || "url"]: node });
+                } else if (expectedMediaType === 'audio') {
+                    result.audiolist.push({ [pathStr || "url"]: node });
+                } else if (expectedMediaType === 'doc') {
+                    result.doclist.push({ [pathStr || "url"]: node });
+                } else {
+                    result.doclist.push({ [pathStr || "url"]: node });
+                }
+            }
+        }
+      } else if (Array.isArray(node)) {
+        node.forEach((item, index) => traverse(item, `${pathStr}[${index}]`));
+      } else if (node !== null && typeof node === 'object') {
+        for (const key of Object.keys(node)) {
+          traverse(node[key], pathStr ? `${pathStr}.${key}` : key);
+        }
+      }
+    };
+
+    if (parsedObj !== undefined) {
+        traverse(parsedObj, '');
+    }
+
+    return result;
+  }
+
+  /**
+   * 轮询获取异步任务的生成结果
+   */
+  async PollAITaskResult(
+    context: { signal?: AbortSignal },
+    reqBody: string, // 主要是传入 { "task_id": "xxx", "action": "poll" } 等服务商需要的查询报文
+    forceRefresh: boolean,
+    appId?: string,
+    themeAuthor?: string,
+    configTheme?: string,
+    serviceName?: string,
+    headers?: Record<string, string>,
+    path?: string,
+    model?: string,
+    taskIdField?: string,
+    expectedMediaType?: 'image' | 'video' | 'audio' | 'doc'
+  ): Promise<[ReturnType<typeof this.ExtractAIResourceResult> | null, Error | null]> {
+    return new Promise(async (resolve) => {
+      let payloadText = "";
+      
+      const wrappedOnStreamResponse: OnStreamResponseType = (flag, content, err) => {
+        if (content && flag !== 1) {
+          payloadText += content;
+        }
+
+        if (flag === 2 || flag === 3 || flag === 4 || flag === 7 || flag === 88 || flag === 99) { 
+          if (err && (!payloadText || payloadText.trim() === '')) {
+             resolve([null, new Error(err)]);
+             return;
+          }
+          const stdResult = this.ExtractAIResourceResult(payloadText, taskIdField, expectedMediaType);
+          resolve([stdResult, null]);
+        }
+      };
+
+      const [res, error] = await this.DoAIProxyCall(
+        context, reqBody, forceRefresh, wrappedOnStreamResponse,
+        appId, themeAuthor, configTheme, serviceName, headers, path, model
+      );
+
+      // 如果代理调用本身瞬间异常
+      if (error) resolve([null, error]);
+    });
+  }
+
+  /**
+   * ✨ 完备化生成与轮询通用接口
+   * 实现了同步执行与异步任务（提交 + 提取 task_id + 循环轮询 + 收取媒体资源）的高度一体化和解耦。
+   */
+  async GenerateAndPollAIResource(
+    context: { signal?: AbortSignal },
+    reqBody: string,
+    forceRefresh: boolean,
+    options: {
+      appId?: string;
+      themeAuthor?: string;
+      configTheme?: string;
+      
+      // ===================
+      // 第1阶段：任务提交服务
+      // ===================
+      submitServiceName?: string; 
+      submitHeaders?: Record<string, string>;
+      submitPath?: string;
+      submitModel?: string;
+
+      // ===================
+      // 第2阶段：任务轮询服务 (若为异步任务)
+      // ===================
+      isAsync?: boolean;
+      pollServiceName?: string;
+      pollHeaders?: Record<string, string>;
+      pollPath?: string;
+      pollModel?: string;
+      
+      // ===================
+      // 参数与策略控制
+      // ===================
+      pollIntervalMs?: number;    // 轮询间隔 (默认 3000ms)
+      pollTimeoutMs?: number;     // 轮询超时总时间 (默认 180000ms -> 3分钟)
+      taskIdField?: string;       // 明确指定任务 ID 在 JSON 中的字段名
+      existingTaskId?: string;    // 从外部直接传入已有的 task_id (跳过提交，直接进行轮询)
+      expectedMediaType?: 'image' | 'video' | 'audio' | 'doc'; // 当 URL 无扩展名且路径无媒体关键词时，用于兜底分类
+      
+      // 构造轮询报文的自定义方法（服务商接口大多不同，需要外部根据 taskId 动态生成 query payload）
+      buildPollReqBody?: (taskId: string) => string;
+      // 动态构造轮询路径的方法（目前很多主流大模型会将 taskId 拼接到 URL 路径中如 /tasks/{task_id} ）
+      buildPollPath?: (taskId: string) => string;
+      
+      // ===================
+      // 生命周期 Hooks
+      // ===================
+      onTaskSubmitted?: (taskId: string, initialResult: any) => void;
+      onPollTick?: (pollResult: any) => void; 
+    }
+  ): Promise<[ReturnType<typeof this.ExtractAIResourceResult> | null, Error | null]> {
+    return new Promise((resolve) => {
+      let payloadText = "";
+      let isSubmitFired = false;
+      let isResolved = false;
+      const safeResolve: typeof resolve = (v) => { if (!isResolved) { isResolved = true; resolve(v); } };
+      
+      const startPolling = (taskId: string, initialResult?: any) => {
+          if (!options.pollServiceName) {
+            safeResolve([initialResult || null, new Error("若开启 isAsync 或使用了 existingTaskId，必须配置 pollServiceName")]);
+            return;
+          }
+
+          const pollInterval = Math.max(1000, options.pollIntervalMs || 3000); 
+          const pollTimeout = options.pollTimeoutMs || 900000;
+          const startTime = Date.now();
+          let isPollingNow = false;
+
+          const timer = setInterval(async () => {
+             // 1. 中止或超时拦截
+             if (context.signal?.aborted) {
+                 clearInterval(timer);
+                 safeResolve([null, new Error("轮询被安全中止")]);
+                 return;
+             }
+             if (Date.now() - startTime > pollTimeout) {
+                 clearInterval(timer);
+                 safeResolve([null, new Error(`轮询超时，已超过 ${pollTimeout}ms`)]);
+                 return;
+             }
+             if (isPollingNow) return; 
+             isPollingNow = true;
+
+             try {
+                // 动态构建发送给服务商查询节点的 JSON/Query
+                // 默认走 REST GET 风格：空 body + 路径末尾拼 taskId（即 GET /api/v1/tasks/{taskId}）
+                // 若需要 POST body 模式，显式传入 buildPollReqBody: (id) => JSON.stringify({ task_id: id })
+                const pollReqBody = options.buildPollReqBody
+                     ? options.buildPollReqBody(taskId)
+                     : "";
+                
+                // 动态判断路径：默认将 taskId 拼到路径末尾
+                let activePollPath: string;
+                if (options.buildPollPath) {
+                     activePollPath = options.buildPollPath(taskId);
+                } else {
+                     const base = options.pollPath || "";
+                     activePollPath = base ? `${base.replace(/\/$/, '')}/${taskId}` : `/${taskId}`;
+                }
+
+                // 调用封装好的单次轮询
+                const [pollResult, pollErr] = await this.PollAITaskResult(
+                     context,
+                     pollReqBody,
+                     forceRefresh,
+                     options.appId,
+                     options.themeAuthor,
+                     options.configTheme,
+                     options.pollServiceName,
+                     options.pollHeaders,
+                     activePollPath,
+                     options.pollModel,
+                     options.taskIdField,
+                     options.expectedMediaType
+                );
+
+                if (pollErr) {
+                     logger.warn(`轮询出现网络抖动(继续重试 | taskId: ${taskId}):`, pollErr);
+                } else if (pollResult) {
+                     // 触发每一次收到新信息的通知
+                     if (options.onPollTick) {
+                         options.onPollTick(pollResult.origin_result);
+                     }
+
+                     // 完成检测核心逻辑：一旦检测到图片、视频或文档资源被成功提取出，则视为完成
+                     const hasResource = 
+                          (pollResult.imagelist && pollResult.imagelist.length > 0) || 
+                          (pollResult.videolist && pollResult.videolist.length > 0) || 
+                          (pollResult.doclist && pollResult.doclist.length > 0);
+
+                     // 辅助保障：某些接口提取不出URL，但显式声明成功
+                     const origin = pollResult.origin_result;
+                     let isExplicitFinished = false;
+                     let isExplicitFailed = false;
+                     if (origin && typeof origin === 'object') {
+                          const statusFinishedRe = /"(?:status|state|task_status|job_status)"\s*:\s*"(?:success|succeeded|finished|completed|done)"/;
+                          const statusFailedRe = /"(?:status|state|task_status|job_status)"\s*:\s*"(?:failed|failure|error|fail|canceled|cancelled|timeout|unknown)"/;
+                          const statusPendingRe = /"(?:status|state|task_status|job_status)"\s*:\s*"(?:pending|queued|processing|running|in_progress|submitted)"/;
+                          // 若响应是 items 数组，需要全部 item 都完成才算完成（避免批量接口部分完成误判）
+                          const items = Array.isArray((origin as any).items) ? (origin as any).items : null;
+                          if (items && items.length > 0) {
+                               const allDone = items.every((item: any) => statusFinishedRe.test(JSON.stringify(item).toLowerCase()));
+                               const anyFailed = items.some((item: any) => statusFailedRe.test(JSON.stringify(item).toLowerCase()));
+                               const anyPending = items.some((item: any) => statusPendingRe.test(JSON.stringify(item).toLowerCase()));
+                               isExplicitFinished = allDone;
+                               isExplicitFailed = !allDone && anyFailed && !anyPending;
+                          } else {
+                               const statusStr = JSON.stringify(origin).toLowerCase();
+                               if (statusFinishedRe.test(statusStr)) {
+                                    isExplicitFinished = true;
+                               } else if (statusFailedRe.test(statusStr) || 
+                                          statusStr.includes('"code":-1') || statusStr.includes('"code":500')) {
+                                    isExplicitFailed = true;
+                               }
+                          }
+                     }
+
+                     if (hasResource || isExplicitFinished) {
+                          clearInterval(timer);
+                          safeResolve([pollResult, null]);
+                     } else if (isExplicitFailed) {
+                          clearInterval(timer);
+                          // 尽量从原始响应中提取失败原因，方便前端展示
+                          let failReason = "任务执行失败";
+                          try {
+                               const o = pollResult.origin_result as any;
+                               const msg = o?.output?.message || o?.output?.task_metrics?.FAILED_MSG
+                                    || o?.message || o?.error?.message || o?.error_message || o?.msg || o?.errmsg;
+                               if (msg && typeof msg === "string") failReason = msg;
+                          } catch (_) {}
+                          const failErr = new Error(failReason);
+                          (failErr as any).isTaskFailed = true;
+                          safeResolve([pollResult, failErr]);
+                     }
+                }
+             } catch (e) {
+                logger.error("轮询处理逻辑异常:", e);
+             } finally {
+                isPollingNow = false;
+             }
+          }, pollInterval);
+      };
+
+      // == 优先处理 existingTaskId 情况 ==
+      if (options.existingTaskId) {
+        // 如果存在 existingTaskId，直接复用轮询逻辑，跳过 DoAIProxyCall
+        startPolling(options.existingTaskId);
+        return;
+      }
+
+      const submitStreamResponse: OnStreamResponseType = async (flag, content, err) => {
+        if (content && flag !== 1) {
+          payloadText += content;
+        }
+
+        // 监听结束态
+        if (!isSubmitFired && (flag === 2 || flag === 3 || flag === 4 || flag === 7 || flag === 88 || flag === 99)) {
+          isSubmitFired = true;
+          
+          if (err && !payloadText) {
+            safeResolve([null, new Error(err)]);
+            return;
+          }
+          
+          const stdResult = this.ExtractAIResourceResult(payloadText, options.taskIdField, options.expectedMediaType);
+          
+          // 若为同步任务配置，或者虽为异步但提取不到taskId（极大可能是报错/限流响应），则直接返回结束
+          if (!options.isAsync || !stdResult.task_id) {
+            safeResolve([stdResult, null]);
+            return;
+          }
+
+          // ===== 以下进入异步长轮询分支 =====
+          const taskId = stdResult.task_id;
+          
+          // 触发“已成功提交”的回调，让前端可以拿到状态和进度
+          if (options.onTaskSubmitted) {
+            options.onTaskSubmitted(taskId, stdResult.origin_result);
+          }
+
+          startPolling(taskId, stdResult);
+        }
+      };
+
+      // 触发初始长连接或同步提交
+      this.DoAIProxyCall(
+        context,
+        reqBody,
+        forceRefresh,
+        submitStreamResponse,
+        options.appId,
+        options.themeAuthor,
+        options.configTheme,
+        options.submitServiceName,
+        options.submitHeaders,
+        options.submitPath,
+        options.submitModel
+      ).then(([res, err]) => {
+         if (err) safeResolve([null, err]); // 立刻挂掉
+      });
+    });
+  }
+
+  /* 已删除 DoAIResourceGenerateAndEdit 接口 */
 
   async GetAliyunV3Token(params: {
     channelId?: string;
@@ -947,7 +1350,7 @@ export class AIProxyModule implements DCModule, IAIProxyOperations {
 
   async GetUserAIProxyAuth(
     params: GetUserAIProxyAuthParams
-  ): Promise<[authConfigs: ProxyCallConfig[] | null, error: Error | null]> {
+  ): Promise<[result: UserAIProxyAuthResult | null, error: Error | null]> {
     try {
       this.assertInitialized();
       return this.aiProxyManager.GetUserAIProxyAuth(params);
