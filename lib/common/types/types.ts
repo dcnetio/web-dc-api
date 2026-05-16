@@ -286,6 +286,7 @@ export interface AIProxyConfig {
   outputTokenRate?: number; // 按Token计费：每1000个输出Token消耗的积分数（配置后覆盖cost/costRule）
   realtime?: AIProxyRealtimeConfig; // 实时调用扩展配置
   signature?: AIProxySignatureConfig; // 签名规则配置
+  disableAllAccess?: boolean; // 为true时，禁止通过"all"通配权限访问此服务，仅允许被单独授权的用户访问
   blockheight?: number; // 可以不设置,由sdk自动设置
   timestamp?: number; // 设置时间戳,DC节点自动设置
   userPubkey?: string; // 设置配置用户公钥,DC节点自动设置
