@@ -265,6 +265,23 @@ export enum AIModelType {
   ModelType_SubTheme = 2
 }
 
+/**
+ * 动态计费规则配置，序列化为 JSON 字符串后存入 AIProxyConfig.costRule。
+ */
+export interface CostRuleConfig {
+  type: "lookup" | "linear" | "lookup_x_linear";
+  field: string;            // 主字段路径（"." 分隔多级）；后计费时从响应体取（除非配置了 responseField）
+  durationField?: string;   // lookup_x_linear：时长字段路径，单位秒
+  table?: Record<string, number>; // lookup / lookup_x_linear：字段值 → 积分(每秒单价) 映射
+  defaultCost?: number;     // 查表未命中时兜底积分/单价
+  rate?: number;            // linear：每单位对应积分数
+  min?: number;             // 结果最小积分（0 不限）
+  max?: number;             // 结果最大积分（0 不限）
+  postPaid?: boolean;       // true=后计费：请求时不扣费，响应返回后从响应体提取字段计算并扣除
+  responseField?: string;   // 后计费模式下响应体中的计费字段路径；为空则复用 field
+  minBalance?: number;      // 后计费模式下调用前要求用户剩余积分不低于此值；0 或未配置表示不检查
+}
+
 export interface AIProxyConfig {
   service: string; // 服务名称
   isAIModel: AIModelType; // 0: AI模型 1: MCPServer 2: subtopic
