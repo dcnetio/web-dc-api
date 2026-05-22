@@ -124,7 +124,8 @@ export interface AIServiceUsage {
 /** GetUserAIProxyAuth 返回值 */
 export interface UserAIProxyAuthResult {
   authConfig: ProxyCallConfig[];                   //订阅配置列表
-  usageServices?: Record<string, AIServiceUsage>;  //各服务使用统计；key "" = 全局积分桶
+  /** @deprecated 服务端已不再返回使用统计，保留字段仅供向后兼容，值始终为 undefined */
+  usageServices?: Record<string, AIServiceUsage>;
 }
 
 export interface ProxyCallConfig {
@@ -142,7 +143,8 @@ export interface UserProxyCallConfig {
   UserPubkey: string; //用户公钥
   permission: number; //权限
   authConfig: ProxyCallConfig; //授权配置
-  usageServices?: Record<string, AIServiceUsage>; //各服务使用统计（运行时附加）
+  /** @deprecated 服务端已不再返回使用统计，保留字段仅供向后兼容，值始终为 undefined */
+  usageServices?: Record<string, AIServiceUsage>;
 }
 
 export interface AIProxyRealtimeConnectionPreset {

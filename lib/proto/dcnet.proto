@@ -1218,10 +1218,13 @@ message DeductUserAIProxyOpTimesRequest {
     bytes themeAuthor = 3;//发布状态汇聚对象的的pubkey
     bytes theme = 4; //状态汇聚对象
     bytes service = 5; //服务名
+    uint32 cost = 6; //本次调用扣减的积分数（发起节点已算好，0表示接收方自行从配置读取）
+    bytes usedStats = 7; //发起节点扣费后的已用量快照（JSON编码的AIUserAccessCount），供接收节点双向对齐
 }
 
 message DeductUserAIProxyOpTimesReply {
     uint32 flag = 1; //0:成功 1:操作次数不足 2:其他失败
+    bytes usedStats = 2; //若接收节点已用量高于发起节点，回传自身快照（JSON编码的AIUserAccessCount），让发起节点同步
 }
 
 message NotifyUserAIProxyOpIncreaseRequest {
@@ -1311,6 +1314,7 @@ message DoAIProxyCallRequest {
     uint32 forceRefresh = 9; //强制刷新AI配置, 0:不刷新 1:刷新,如果为1,则扣除10倍的链下操作次数
     bytes  headers = 10; //请求头,当调用为mcp tool调用时,需要传入请求头
     bytes  signature = 11;
+    bytes  vaccount = 12; //虚拟账号,可选
 }
 
 
@@ -1337,6 +1341,7 @@ message CreateAIProxyCallTaskRequest {
     uint32 forceRefresh = 10; //强制刷新AI配置, 0:不刷新 1:刷新,如果为1,则扣除10倍的链下操作次数
     bytes  headers = 11; //请求头,当调用为mcp tool调用时,需要传入请求头
     bytes  signature = 12;
+    bytes  vaccount = 13; //虚拟账号,可选
 }
 
 message CreateAIProxyCallTaskReply{

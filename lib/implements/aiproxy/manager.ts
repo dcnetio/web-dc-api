@@ -1,5 +1,6 @@
 import {
   AIProxyConfig,
+  AIServiceUsage,
   GetUserAIProxyAuthParams,
   OnStreamResponseType,
   ProxyCallConfig,
@@ -463,26 +464,11 @@ export class AIProxyManager {
             );
             //解析到ProxyCallConfig结构
             const parsed = JSON.parse(authContentStr);
-            // 新格式：{ authConfig: string | array, usageServices: {...} }
-            let authConfig: any;
-            let usageServices: any = undefined;
-            if (parsed && typeof parsed.authConfig === 'string') {
-              // new format: authConfig is a JSON string
-              const inner = JSON.parse(parsed.authConfig);
-              authConfig = Array.isArray(inner) ? inner : (inner?.Exp ? [inner] : []);
-              usageServices = parsed.usageServices || undefined;
-            } else if (parsed && Array.isArray(parsed.authConfig)) {
-              authConfig = parsed.authConfig;
-              usageServices = parsed.usageServices || undefined;
-            } else {
-              // 旧格式：直接是 authConfig 内容
-              authConfig = parsed;
-            }
+            const authConfig = Array.isArray(parsed) ? parsed : (parsed?.Exp ? [parsed] : parsed);
             allAuth.push({
               UserPubkey: userPubkey,
               permission: parseInt(permission), //转成数字
               authConfig: authConfig,
-              usageServices: usageServices,
             });
           } catch (error) {
             console.warn("跳过无效授权信息:", error);
@@ -608,10 +594,69 @@ export class AIProxyManager {
       return [null, error];
     }
     try {
-      const authConfig = JSON.parse(authInfo);
-      return [authConfig, error];
-    } catch (error: any) {
+      const parsed = JSON.parse(this.extractLikelyJSON(authInfo));
+      // 新格式：{ authConfig: string, usageServices?: Record<string, AIServiceUsage> }
+      if (parsed && typeof parsed === "object" && "authConfig" in parsed) {
+        const innerConfig = parsed.authConfig ? JSON.parse(parsed.authConfig) : null;
+        return [innerConfig, null];
+      }
+      // 旧格式：直接是 ProxyCallConfig
+      return [parsed, null];
+    } catch (err: any) {
+      return [null, err];
+    }
+  }
+
+  /**
+   * 获取当前用户在其备份节点上的 AI 代理使用量统计
+   * 注意：该接口强制走 AccountBackupDc，不会切换到 themeAuthor 节点。
+   */
+  async GetUserOwnAIProxyUsage(
+    appId: string,
+    themeAuthor: string,
+    configTheme: string
+  ): Promise<[usageServices: Record<string, AIServiceUsage> | null, error: Error | null]> {
+    if (!this.context.publicKey) {
+      return [null, new Error("ErrConnectToAccountPeersFail")];
+    }
+    if (!configTheme.startsWith("keyvalue_")) {
+      configTheme = "keyvalue_" + configTheme;
+    }
+
+    const client = this.context.AccountBackupDc?.client || null;
+    if (client === null) {
+      return [null, new Error("ErrConnectToAccountPeersFail")];
+    }
+
+    if (client.peerAddr === null) {
+      return [null, new Error("ErrConnectToAccountPeersFail")];
+    }
+    if (client.token == "") {
+      await client.GetToken(
+        this.context.appInfo.appId || "",
+        this.context.publicKey.string(),
+        this.context.sign
+      );
+    }
+
+    const aiProxyClient = new AIProxyClient(client, this.context);
+    const [authInfo, error] = await aiProxyClient.GetUserOwnAIProxyAuth(
+      appId,
+      themeAuthor,
+      configTheme
+    );
+    if (error) {
       return [null, error];
+    }
+
+    try {
+      const parsed = JSON.parse(this.extractLikelyJSON(authInfo));
+      if (parsed && typeof parsed === "object" && "usageServices" in parsed) {
+        return [parsed.usageServices ?? {}, null];
+      }
+      return [{}, null];
+    } catch (err: any) {
+      return [null, err];
     }
   }
 
@@ -750,18 +795,6 @@ export class AIProxyManager {
     }
     try {
       const parsed = JSON.parse(authInfo);
-      // 新格式：{ authConfig: string, usageServices: {...} }
-      if (parsed && typeof parsed.authConfig === 'string') {
-        const rawConfig = parsed.authConfig;
-        const usageServices = parsed.usageServices || undefined;
-        if (!rawConfig) {
-          return [{ authConfig: [], usageServices }, null];
-        }
-        const configs = JSON.parse(rawConfig);
-        const authConfig = Array.isArray(configs) ? configs : (configs.Exp ? [configs] : []);
-        return [{ authConfig: authConfig as ProxyCallConfig[], usageServices }, null];
-      }
-      // 旧格式兼容：直接是数组或单个对象
       if (Array.isArray(parsed)) {
         return [{ authConfig: parsed as ProxyCallConfig[] }, null];
       }

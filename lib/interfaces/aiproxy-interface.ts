@@ -2,6 +2,7 @@ import {
   AIProxyAliyunRealtimeAudioSessionOptions,
   AIProxyAliyunRealtimeVoiceSessionOptions,
   AIProxyConfig,
+  AIServiceUsage,
   AIProxyRealtimeAudioSessionOptions,
   AIProxyRealtimeVoiceSessionOptions,
   GetUserAIProxyAuthParams,
@@ -113,6 +114,15 @@ export interface IAIProxyOperations {
     themeAuthor: string,
     configTheme: string
   ): Promise<[ProxyCallConfig | null, Error | null]>;
+
+  /**
+   * 获取当前用户在其备份节点上的使用量统计
+   */
+  GetUserOwnAIProxyUsage(
+    appId: string,
+    themeAuthor: string,
+    configTheme: string
+  ): Promise<[Record<string, AIServiceUsage> | null, Error | null]>;
 
   /**
    * 执行AI代理调用

@@ -9,6 +9,7 @@ import {
   AIProxyAliyunRealtimeVoiceSessionOptions,
   AIProxyConfig,
   AIProxyRealtimeConfig,
+  AIServiceUsage,
   AIProxyRealtimeAudioAuthInfo,
   AIProxyRealtimeAudioSessionOptions,
   AIProxyRealtimeVoiceSessionOptions,
@@ -217,6 +218,23 @@ export class AIProxyModule implements DCModule, IAIProxyOperations {
     try {
       this.assertInitialized();
       return this.aiProxyManager.GetUserOwnAIProxyAuth(
+        appId,
+        themeAuthor,
+        configTheme
+      );
+    } catch (error) {
+      return Promise.resolve([null, error as Error]);
+    }
+  }
+
+  async GetUserOwnAIProxyUsage(
+    appId: string,
+    themeAuthor: string,
+    configTheme: string
+  ): Promise<[usageServices: Record<string, AIServiceUsage> | null, error: Error | null]> {
+    try {
+      this.assertInitialized();
+      return this.aiProxyManager.GetUserOwnAIProxyUsage(
         appId,
         themeAuthor,
         configTheme
