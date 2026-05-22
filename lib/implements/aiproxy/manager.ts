@@ -640,7 +640,7 @@ export class AIProxyManager {
     }
 
     const aiProxyClient = new AIProxyClient(client, this.context);
-    const [authInfo, error] = await aiProxyClient.GetUserOwnAIProxyAuth(
+    const [usageInfo, error] = await aiProxyClient.GetUserOwnAIProxyUsage(
       appId,
       themeAuthor,
       configTheme
@@ -650,9 +650,12 @@ export class AIProxyManager {
     }
 
     try {
-      const parsed = JSON.parse(this.extractLikelyJSON(authInfo));
+      const parsed = JSON.parse(this.extractLikelyJSON(usageInfo));
       if (parsed && typeof parsed === "object" && "usageServices" in parsed) {
         return [parsed.usageServices ?? {}, null];
+      }
+      if (parsed && typeof parsed === "object") {
+        return [parsed as Record<string, AIServiceUsage>, null];
       }
       return [{}, null];
     } catch (err: any) {

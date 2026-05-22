@@ -159,6 +159,72 @@ export class AIProxyClient {
     }
   }
 
+  async GetUserOwnAIProxyUsage(
+    appId: string,
+    themeAuthor: string,
+    configTheme: string
+  ): Promise<[usageInfo: string, error: Error | null]> {
+    const message = new dcnet.pb.GetUserOwnAIProxyAuthRequest({});
+    message.appId = new TextEncoder().encode(appId);
+    message.themeAuthor = new TextEncoder().encode(themeAuthor);
+    message.theme = new TextEncoder().encode(configTheme);
+    const messageBytes =
+      dcnet.pb.GetUserOwnAIProxyAuthRequest.encode(message).finish();
+    const grpcClient = new Libp2pGrpcClient(
+      this.client.p2pNode,
+      this.client.peerAddr,
+      this.client.token,
+      this.client.protocol
+    );
+    try {
+      const reply = await grpcClient.unaryCall(
+        "/dcnet.pb.Service/GetUserOwnAIProxyUsage",
+        messageBytes,
+        30000
+      );
+      const decoded = dcnet.pb.GetUserOwnAIProxyAuthReply.decode(reply);
+      if (decoded.flag != 0) {
+        throw new Error(Errors.INVALID_TOKEN.message + " flag:" + decoded.flag);
+      }
+      const usageInfo = new TextDecoder().decode(decoded.authInfo);
+      return [usageInfo, null];
+    } catch (error) {
+      if (
+        typeof error === "object" &&
+        error !== null &&
+        "message" in error &&
+        typeof (error as any).message === "string" &&
+        (error as any).message.indexOf(Errors.INVALID_TOKEN.message) != -1
+      ) {
+        const token = await this.client.GetToken(
+          this.context.appInfo.appId || "",
+          this.context.getPublicKey().string(),
+          (payload: Uint8Array): Promise<Uint8Array> => {
+            return this.context.sign(payload);
+          }
+        );
+        if (!token) {
+          throw new Error(Errors.INVALID_TOKEN.message);
+        }
+        const reply = await grpcClient.unaryCall(
+          "/dcnet.pb.Service/GetUserOwnAIProxyUsage",
+          messageBytes,
+          30000
+        );
+        const decoded = dcnet.pb.GetUserOwnAIProxyAuthReply.decode(reply);
+        if (decoded.flag != 0) {
+          return [
+            "",
+            new Error(Errors.INVALID_TOKEN.message + " flag:" + decoded.flag),
+          ];
+        }
+        const usageInfo = new TextDecoder().decode(decoded.authInfo);
+        return [usageInfo, null];
+      }
+      return ["", error instanceof Error ? error : new Error(String(error))];
+    }
+  }
+
   async DoAIProxyCall(
     context: { signal?: AbortSignal },
     appId: string,

@@ -1255,6 +1255,18 @@ message GetAIProxyConfigFromPeerReply {
    
 }
 
+message GetAIProxyUsageFromPeerRequest {
+     bytes theme = 1;
+     bytes appId = 2;
+     bytes themeAuthor = 3;
+     bytes UserPubkey = 4;
+}
+
+message GetAIProxyUsageFromPeerReply {
+    uint32 flag = 1;
+    bytes usedStats = 2; //序列化后的 AIUserAccessCount，仅用于 MergeUsedStats
+}
+
 
 message GetAIProxyConfigRequest {
     bytes theme = 1; //状态汇聚对象CID
@@ -1658,11 +1670,17 @@ service Service {
     // 申请AI模型或者MCPServer的访问权限
     rpc GetAIProxyConfigFromPeer(GetAIProxyConfigFromPeerRequest) returns (GetAIProxyConfigFromPeerReply) {}
 
+    // 获取用户在指定 AI 代理主题下的已用统计（调用次数/周期统计）
+    rpc GetAIProxyUsageFromPeer(GetAIProxyUsageFromPeerRequest) returns (GetAIProxyUsageFromPeerReply) {}
+
     //获取AI模型或者MCPServer代理的配置信息
     rpc GetAIProxyConfig(GetAIProxyConfigRequest) returns (GetAIProxyConfigReply) {}
 
      //AI相关代理的调用,包括代理与AI的通信或者与MCPServer的通信
     rpc DoAIProxyCall(DoAIProxyCallRequest) returns (stream DoAIProxyCallReply) {}
+
+    // 获取当前用户在其备份节点上的 AI 代理使用量统计（与配置来源分离）
+    rpc GetUserOwnAIProxyUsage(GetUserOwnAIProxyAuthRequest) returns (GetUserOwnAIProxyAuthReply) {}
 
     //创建AI模型的调用任务,返回任务ID,任务ID可以用于后续获取任务结果
     rpc CreateAIProxyCallTask(CreateAIProxyCallTaskRequest) returns (CreateAIProxyCallTaskReply) {}

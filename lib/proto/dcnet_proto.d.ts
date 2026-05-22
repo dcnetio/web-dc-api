@@ -19285,6 +19285,224 @@ export namespace dcnet {
             public static getTypeUrl(typeUrlPrefix?: string): string;
         }
 
+        /** Properties of a GetAIProxyUsageFromPeerRequest. */
+        interface IGetAIProxyUsageFromPeerRequest {
+
+            /** GetAIProxyUsageFromPeerRequest theme */
+            theme?: (Uint8Array|null);
+
+            /** GetAIProxyUsageFromPeerRequest appId */
+            appId?: (Uint8Array|null);
+
+            /** GetAIProxyUsageFromPeerRequest themeAuthor */
+            themeAuthor?: (Uint8Array|null);
+
+            /** GetAIProxyUsageFromPeerRequest UserPubkey */
+            UserPubkey?: (Uint8Array|null);
+        }
+
+        /** Represents a GetAIProxyUsageFromPeerRequest. */
+        class GetAIProxyUsageFromPeerRequest implements IGetAIProxyUsageFromPeerRequest {
+
+            /**
+             * Constructs a new GetAIProxyUsageFromPeerRequest.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: dcnet.pb.IGetAIProxyUsageFromPeerRequest);
+
+            /** GetAIProxyUsageFromPeerRequest theme. */
+            public theme: Uint8Array;
+
+            /** GetAIProxyUsageFromPeerRequest appId. */
+            public appId: Uint8Array;
+
+            /** GetAIProxyUsageFromPeerRequest themeAuthor. */
+            public themeAuthor: Uint8Array;
+
+            /** GetAIProxyUsageFromPeerRequest UserPubkey. */
+            public UserPubkey: Uint8Array;
+
+            /**
+             * Creates a new GetAIProxyUsageFromPeerRequest instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns GetAIProxyUsageFromPeerRequest instance
+             */
+            public static create(properties?: dcnet.pb.IGetAIProxyUsageFromPeerRequest): dcnet.pb.GetAIProxyUsageFromPeerRequest;
+
+            /**
+             * Encodes the specified GetAIProxyUsageFromPeerRequest message. Does not implicitly {@link dcnet.pb.GetAIProxyUsageFromPeerRequest.verify|verify} messages.
+             * @param message GetAIProxyUsageFromPeerRequest message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: dcnet.pb.IGetAIProxyUsageFromPeerRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified GetAIProxyUsageFromPeerRequest message, length delimited. Does not implicitly {@link dcnet.pb.GetAIProxyUsageFromPeerRequest.verify|verify} messages.
+             * @param message GetAIProxyUsageFromPeerRequest message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: dcnet.pb.IGetAIProxyUsageFromPeerRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes a GetAIProxyUsageFromPeerRequest message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns GetAIProxyUsageFromPeerRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): dcnet.pb.GetAIProxyUsageFromPeerRequest;
+
+            /**
+             * Decodes a GetAIProxyUsageFromPeerRequest message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns GetAIProxyUsageFromPeerRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): dcnet.pb.GetAIProxyUsageFromPeerRequest;
+
+            /**
+             * Verifies a GetAIProxyUsageFromPeerRequest message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates a GetAIProxyUsageFromPeerRequest message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns GetAIProxyUsageFromPeerRequest
+             */
+            public static fromObject(object: { [k: string]: any }): dcnet.pb.GetAIProxyUsageFromPeerRequest;
+
+            /**
+             * Creates a plain object from a GetAIProxyUsageFromPeerRequest message. Also converts values to other types if specified.
+             * @param message GetAIProxyUsageFromPeerRequest
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: dcnet.pb.GetAIProxyUsageFromPeerRequest, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this GetAIProxyUsageFromPeerRequest to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for GetAIProxyUsageFromPeerRequest
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** Properties of a GetAIProxyUsageFromPeerReply. */
+        interface IGetAIProxyUsageFromPeerReply {
+
+            /** GetAIProxyUsageFromPeerReply flag */
+            flag?: (number|null);
+
+            /** GetAIProxyUsageFromPeerReply usedStats */
+            usedStats?: (Uint8Array|null);
+        }
+
+        /** Represents a GetAIProxyUsageFromPeerReply. */
+        class GetAIProxyUsageFromPeerReply implements IGetAIProxyUsageFromPeerReply {
+
+            /**
+             * Constructs a new GetAIProxyUsageFromPeerReply.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: dcnet.pb.IGetAIProxyUsageFromPeerReply);
+
+            /** GetAIProxyUsageFromPeerReply flag. */
+            public flag: number;
+
+            /** GetAIProxyUsageFromPeerReply usedStats. */
+            public usedStats: Uint8Array;
+
+            /**
+             * Creates a new GetAIProxyUsageFromPeerReply instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns GetAIProxyUsageFromPeerReply instance
+             */
+            public static create(properties?: dcnet.pb.IGetAIProxyUsageFromPeerReply): dcnet.pb.GetAIProxyUsageFromPeerReply;
+
+            /**
+             * Encodes the specified GetAIProxyUsageFromPeerReply message. Does not implicitly {@link dcnet.pb.GetAIProxyUsageFromPeerReply.verify|verify} messages.
+             * @param message GetAIProxyUsageFromPeerReply message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: dcnet.pb.IGetAIProxyUsageFromPeerReply, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified GetAIProxyUsageFromPeerReply message, length delimited. Does not implicitly {@link dcnet.pb.GetAIProxyUsageFromPeerReply.verify|verify} messages.
+             * @param message GetAIProxyUsageFromPeerReply message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: dcnet.pb.IGetAIProxyUsageFromPeerReply, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes a GetAIProxyUsageFromPeerReply message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns GetAIProxyUsageFromPeerReply
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): dcnet.pb.GetAIProxyUsageFromPeerReply;
+
+            /**
+             * Decodes a GetAIProxyUsageFromPeerReply message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns GetAIProxyUsageFromPeerReply
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): dcnet.pb.GetAIProxyUsageFromPeerReply;
+
+            /**
+             * Verifies a GetAIProxyUsageFromPeerReply message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates a GetAIProxyUsageFromPeerReply message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns GetAIProxyUsageFromPeerReply
+             */
+            public static fromObject(object: { [k: string]: any }): dcnet.pb.GetAIProxyUsageFromPeerReply;
+
+            /**
+             * Creates a plain object from a GetAIProxyUsageFromPeerReply message. Also converts values to other types if specified.
+             * @param message GetAIProxyUsageFromPeerReply
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: dcnet.pb.GetAIProxyUsageFromPeerReply, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this GetAIProxyUsageFromPeerReply to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for GetAIProxyUsageFromPeerReply
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
         /** Properties of a GetAIProxyConfigRequest. */
         interface IGetAIProxyConfigRequest {
 
@@ -23106,6 +23324,20 @@ export namespace dcnet {
             public getAIProxyConfigFromPeer(request: dcnet.pb.IGetAIProxyConfigFromPeerRequest): Promise<dcnet.pb.GetAIProxyConfigFromPeerReply>;
 
             /**
+             * Calls GetAIProxyUsageFromPeer.
+             * @param request GetAIProxyUsageFromPeerRequest message or plain object
+             * @param callback Node-style callback called with the error, if any, and GetAIProxyUsageFromPeerReply
+             */
+            public getAIProxyUsageFromPeer(request: dcnet.pb.IGetAIProxyUsageFromPeerRequest, callback: dcnet.pb.Service.GetAIProxyUsageFromPeerCallback): void;
+
+            /**
+             * Calls GetAIProxyUsageFromPeer.
+             * @param request GetAIProxyUsageFromPeerRequest message or plain object
+             * @returns Promise
+             */
+            public getAIProxyUsageFromPeer(request: dcnet.pb.IGetAIProxyUsageFromPeerRequest): Promise<dcnet.pb.GetAIProxyUsageFromPeerReply>;
+
+            /**
              * Calls GetAIProxyConfig.
              * @param request GetAIProxyConfigRequest message or plain object
              * @param callback Node-style callback called with the error, if any, and GetAIProxyConfigReply
@@ -23132,6 +23364,20 @@ export namespace dcnet {
              * @returns Promise
              */
             public doAIProxyCall(request: dcnet.pb.IDoAIProxyCallRequest): Promise<dcnet.pb.DoAIProxyCallReply>;
+
+            /**
+             * Calls GetUserOwnAIProxyUsage.
+             * @param request GetUserOwnAIProxyAuthRequest message or plain object
+             * @param callback Node-style callback called with the error, if any, and GetUserOwnAIProxyAuthReply
+             */
+            public getUserOwnAIProxyUsage(request: dcnet.pb.IGetUserOwnAIProxyAuthRequest, callback: dcnet.pb.Service.GetUserOwnAIProxyUsageCallback): void;
+
+            /**
+             * Calls GetUserOwnAIProxyUsage.
+             * @param request GetUserOwnAIProxyAuthRequest message or plain object
+             * @returns Promise
+             */
+            public getUserOwnAIProxyUsage(request: dcnet.pb.IGetUserOwnAIProxyAuthRequest): Promise<dcnet.pb.GetUserOwnAIProxyAuthReply>;
 
             /**
              * Calls CreateAIProxyCallTask.
@@ -23872,6 +24118,13 @@ export namespace dcnet {
             type GetAIProxyConfigFromPeerCallback = (error: (Error|null), response?: dcnet.pb.GetAIProxyConfigFromPeerReply) => void;
 
             /**
+             * Callback as used by {@link dcnet.pb.Service#getAIProxyUsageFromPeer}.
+             * @param error Error, if any
+             * @param [response] GetAIProxyUsageFromPeerReply
+             */
+            type GetAIProxyUsageFromPeerCallback = (error: (Error|null), response?: dcnet.pb.GetAIProxyUsageFromPeerReply) => void;
+
+            /**
              * Callback as used by {@link dcnet.pb.Service#getAIProxyConfig}.
              * @param error Error, if any
              * @param [response] GetAIProxyConfigReply
@@ -23884,6 +24137,13 @@ export namespace dcnet {
              * @param [response] DoAIProxyCallReply
              */
             type DoAIProxyCallCallback = (error: (Error|null), response?: dcnet.pb.DoAIProxyCallReply) => void;
+
+            /**
+             * Callback as used by {@link dcnet.pb.Service#getUserOwnAIProxyUsage}.
+             * @param error Error, if any
+             * @param [response] GetUserOwnAIProxyAuthReply
+             */
+            type GetUserOwnAIProxyUsageCallback = (error: (Error|null), response?: dcnet.pb.GetUserOwnAIProxyAuthReply) => void;
 
             /**
              * Callback as used by {@link dcnet.pb.Service#createAIProxyCallTask}.

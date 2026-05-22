@@ -27,6 +27,7 @@
     "build:w": "npx rollup -c -w",
     "build": "NODE_ENV=production npx rollup -c",
     "build:analyze": "npx rollup -c && npx webpack-bundle-analyzer dist/esm/chunks/*.js",
+    "gen:dcnet-proto": "bash scripts/generate-dcnet-proto.sh",
     "check:proto-sync": "bash scripts/check-proto-sync.sh",
     "fix:pb": "node scripts/fix-pb.cjs",
     "test": "echo \"Error: no test specified\" && exit 1",
