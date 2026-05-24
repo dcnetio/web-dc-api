@@ -113,7 +113,6 @@ export interface AIServiceUsage {
   weekused?: number; //本周消耗积分
   monthused?: number;//本月消耗积分
   yearused?: number; //本年消耗积分
-  count?: number;    //调用次数（每100次重置）
   tlim?: number;     //总积分上限（全局桶用）
   dlim?: number;     //日积分上限（全局桶用）
   wlim?: number;     //周积分上限（全局桶用）
@@ -305,6 +304,7 @@ export interface AIProxyConfig {
   outputTokenRate?: number; // 按Token计费：每1000个输出Token消耗的积分数（配置后覆盖cost/costRule）
   realtime?: AIProxyRealtimeConfig; // 实时调用扩展配置
   signature?: AIProxySignatureConfig; // 签名规则配置
+  extraHeaders?: Record<string, string>; // 每次转发请求时附加的静态 HTTP 请求头，如 x-acs-version、x-custom-token 等
   disableAllAccess?: boolean; // 为true时，禁止通过"all"通配权限访问此服务，仅允许被单独授权的用户访问
   blockheight?: number; // 可以不设置,由sdk自动设置
   timestamp?: number; // 设置时间戳,DC节点自动设置
