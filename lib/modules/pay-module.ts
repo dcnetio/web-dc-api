@@ -171,6 +171,7 @@ export class PayModule implements DCModule, IPayOperations {
     const response = await fetch(targetUrl, {
       method: "GET",
       credentials: "omit",
+      signal: AbortSignal.timeout(15000),
     });
 
     const text = await response.text();
@@ -273,7 +274,7 @@ export class PayModule implements DCModule, IPayOperations {
 
     const orderList = Array.isArray(orderPayload?.data?.list) ? orderPayload.data.list : [];
     
-    let billMap = new Map<string, any>();
+    const billMap = new Map<string, any>();
     if (!options.skipBillCheck) {
       const billList = await Promise.all(
         orderList.map(async (order: any) => {
@@ -527,8 +528,8 @@ export class PayModule implements DCModule, IPayOperations {
           checkReason: String((item as any).checkReason || ""),
           checkTime: String(item.checkTime || ""),
           createTime: String(item.createTime || ""),
-          chainPkgId: Number(item.chainPkgId || 0),
-          spaceSize: Number(item.spaceSize || 0),
+          chainPkgId: Number(item.chainPkgId) || undefined,
+          spaceSize: Number(item.spaceSize) || undefined,
         };
       })
       .filter((item: IRenewPackageInfo) => !!item.packageId);
@@ -782,7 +783,12 @@ export class PayModule implements DCModule, IPayOperations {
     if (!this.hostedPayBaseUrl) {
       throw new Error("缺少 hostedPayBaseUrl 配置");
     }
-    const target = new URL(this.hostedPayBaseUrl.replace(/\/+$/, ""));
+    let target: URL;
+    try {
+      target = new URL(this.hostedPayBaseUrl.replace(/\/+$/, ""));
+    } catch {
+      throw new Error(`hostedPayBaseUrl 格式无效：${this.hostedPayBaseUrl}`);
+    }
     target.searchParams.set("account", String(options.account || ""));
     target.searchParams.set("pkg_id", String(options.packageCode || ""));
     target.searchParams.set("amount", String(options.amountCents || 0));
