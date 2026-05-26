@@ -224,7 +224,7 @@ export class AIProxyRealtimeAudioSession
           timeoutHandle = null;
         }
         socket.removeEventListener("open", handleOpen);
-        socket.removeEventListener("error", handleError);
+        socket.removeEventListener("error", handleError as any);
         socket.removeEventListener("close", handleCloseBeforeOpen);
       };
 
@@ -271,7 +271,7 @@ export class AIProxyRealtimeAudioSession
       }, connectTimeoutMs);
 
       socket.addEventListener("open", handleOpen, { once: true });
-      socket.addEventListener("error", handleError, { once: true });
+      socket.addEventListener("error", handleError as any, { once: true });
       socket.addEventListener("close", handleCloseBeforeOpen, { once: true });
     });
   }
@@ -589,9 +589,9 @@ export class AIProxyRealtimeAudioSession
     }
 
     if (connectionOptions.protocols.length > 0) {
-      return new WebSocket(connectionOptions.url, connectionOptions.protocols);
+      return new WebSocket(connectionOptions.url, connectionOptions.protocols) as any;
     }
-    return new WebSocket(connectionOptions.url);
+    return new WebSocket(connectionOptions.url) as any;
   }
 
   private normalizeWriteData(

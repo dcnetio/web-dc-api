@@ -1022,7 +1022,7 @@ export class AliyunRTCOperations implements IRTCOperations {
     const rtcClient = this.rtcClient;
 
     // 监听远端用户发布通知
-    rtcClient.on('user-published', (user: any, mediaType: string, auxiliary: any) => {
+    rtcClient.on('user-published', (...args: any[]) => { const [user, mediaType, auxiliary] = args;
       console.log(`[DingRTC] user-published: userId=${user?.userId}, mediaType=${mediaType}, auxiliary=`, auxiliary);
       this.emit('onPublisher', { user, mediaType, auxiliary });
 
@@ -1063,7 +1063,7 @@ export class AliyunRTCOperations implements IRTCOperations {
     });
 
     // 监听远端取消发布
-    rtcClient.on('user-unpublished', async (user: any, mediaType: string, auxiliary: any) => {
+    rtcClient.on('user-unpublished', async (...args: any[]) => { const [user, mediaType, auxiliary] = args;
       const isScreenShare = Boolean(auxiliary);
       if (mediaType === 'video' && isScreenShare) {
         const track = this.remoteScreenTracks.get(user.userId);

@@ -48,11 +48,11 @@ declare global {
   }
 
   interface AggregateError extends Error {
-    errors: unknown[];
+    errors: any[];
   }
 
   var AggregateError: {
-    new (errors: unknown[], message?: string): AggregateError;
+    new (errors: any[], message?: string): AggregateError;
     prototype: AggregateError;
   };
 
@@ -73,7 +73,7 @@ if (typeof Promise !== 'undefined' && !Promise.withResolvers) {
 
 if (typeof AggregateError === 'undefined') {
   class AggregateErrorPolyfill extends Error {
-    errors: unknown[];
+    errors: any[];
 
     constructor(errors: unknown[], message?: string) {
       super(message ?? 'AggregateError');
