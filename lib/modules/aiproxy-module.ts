@@ -195,7 +195,7 @@ export class AIProxyModule implements DCModule, IAIProxyOperations {
     configTheme: string,
     vaccount?: string
   ): Promise<
-    [UserProxyCallConfig[] | null, AIProxyConfig[] | null, Error | null]
+    [UserProxyCallConfig[] | null, AIProxyConfig[] | null, number, Uint8Array | null, Error | null]
   > {
     try {
       this.assertInitialized();
@@ -206,7 +206,7 @@ export class AIProxyModule implements DCModule, IAIProxyOperations {
         vaccount
       );
     } catch (error) {
-      return Promise.resolve([null, null, error as Error]);
+      return Promise.resolve([null, null, 0, null, error as Error]);
     }
   }
 

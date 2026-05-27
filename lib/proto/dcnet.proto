@@ -1293,6 +1293,8 @@ message GetAIProxyConfigReply {
    bytes proxyConfigCid = 2; //获取的配置结果集，存入ipfs网络中后反馈的cid，客户端再通过 getFile获取,包括了配置列表和所有用户的授权信息
    bytes aeskey = 3; //配置信息的aes加密key
    bytes configData = 4; //直接返回的配置数据
+   int64 userCount = 5; //授权用户总数量
+   bytes nextSeekKey = 6; //下一页游标，非空表示还有更多授权用户，可用此key再次请求
 }
 
 message GetUserOwnAIProxyAuthRequest {

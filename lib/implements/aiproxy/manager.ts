@@ -359,10 +359,10 @@ export class AIProxyManager {
     configTheme: string,
     vaccount?: string
   ): Promise<
-    [UserProxyCallConfig[] | null, AIProxyConfig[] | null, Error | null]
+    [UserProxyCallConfig[] | null, AIProxyConfig[] | null, number, Uint8Array | null, Error | null]
   > {
     if (!this.context.publicKey) {
-      return [null, null, Errors.ErrAccountPublicKeyIsNull];
+      return [null, null, 0, null, Errors.ErrAccountPublicKeyIsNull];
     }
     if (!configTheme.startsWith("keyvalue_")) {
       configTheme = "keyvalue_" + configTheme;
@@ -375,15 +375,15 @@ export class AIProxyManager {
         Ed25519PubKey.edPubkeyFromStr(themeAuthor);
       client = await this.dc.connectToUserDcPeer(authorPublicKey.raw);
       if (!client) {
-        return [null, null, Errors.ErrNoDcPeerConnected];
+        return [null, null, 0, null, Errors.ErrNoDcPeerConnected];
       }
     }
     if (client === null) {
-      return [null, null, new Error("ErrConnectToAccountPeersFail")];
+      return [null, null, 0, null, new Error("ErrConnectToAccountPeersFail")];
     }
 
     if (client.peerAddr === null) {
-      return [null, null, new Error("ErrConnectToAccountPeersFail")];
+      return [null, null, 0, null, new Error("ErrConnectToAccountPeersFail")];
     }
     if (client.token == "") {
       await client.GetToken(
@@ -394,25 +394,25 @@ export class AIProxyManager {
     }
     try {
       const aiProxyClient = new AIProxyClient(client, this.context);
-      const [configData, error] = await aiProxyClient.GetAIProxyConfig(
+      const [configData, userCount, nextSeekKey, error] = await aiProxyClient.GetAIProxyConfig(
         appId,
         themeAuthor,
         configTheme
       );
       if (error) {
-        return [null, null, error];
+        return [null, null, 0, null, error];
       }
       if (!configData) {
-        return [[], [], null];
+        return [[], [], userCount, nextSeekKey, null];
       }
       const result = await this.handleAllConfig(configData);
       if (!result) {
-        return [[], [], null];
+        return [[], [], userCount, nextSeekKey, null];
       }
       const [allAuth, allContent] = result;
-      return [allAuth, allContent, null];
+      return [allAuth, allContent, userCount, nextSeekKey, null];
     } catch (error) {
-      return [null, null, error as Error];
+      return [null, null, 0, null, error as Error];
     }
   }
 

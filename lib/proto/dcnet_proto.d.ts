@@ -19850,6 +19850,12 @@ export namespace dcnet {
 
             /** GetAIProxyConfigReply configData */
             configData?: (Uint8Array|null);
+
+            /** GetAIProxyConfigReply userCount */
+            userCount?: (number|Long|null);
+
+            /** GetAIProxyConfigReply nextSeekKey */
+            nextSeekKey?: (Uint8Array|null);
         }
 
         /** Represents a GetAIProxyConfigReply. */
@@ -19872,6 +19878,12 @@ export namespace dcnet {
 
             /** GetAIProxyConfigReply configData. */
             public configData: Uint8Array;
+
+            /** GetAIProxyConfigReply userCount. */
+            public userCount: (number|Long);
+
+            /** GetAIProxyConfigReply nextSeekKey. */
+            public nextSeekKey: Uint8Array;
 
             /**
              * Creates a new GetAIProxyConfigReply instance using the specified properties.

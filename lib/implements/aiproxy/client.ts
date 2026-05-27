@@ -27,7 +27,7 @@ export class AIProxyClient {
     appId: string,
     themeAuthor: string,
     configTheme: string
-  ): Promise<[configData: string, error: Error | null]> {
+  ): Promise<[configData: string, userCount: number, nextSeekKey: Uint8Array | null, error: Error | null]> {
     const message = new dcnet.pb.GetAIProxyConfigRequest({});
     message.appId = new TextEncoder().encode(appId);
     message.themeAuthor = new TextEncoder().encode(themeAuthor);
@@ -42,18 +42,24 @@ export class AIProxyClient {
       this.client.token,
       this.client.protocol
     );
+    const decodeReply = (reply: Uint8Array): [string, number, Uint8Array | null] => {
+      const decoded = dcnet.pb.GetAIProxyConfigReply.decode(reply);
+      if (decoded.flag != 0) {
+        throw new Error(Errors.INVALID_TOKEN.message + " flag:" + decoded.flag);
+      }
+      const configData = new TextDecoder().decode(decoded.configData);
+      const userCount = decoded.userCount ? Number(decoded.userCount) : 0;
+      const nextSeekKey = decoded.nextSeekKey && decoded.nextSeekKey.length > 0 ? decoded.nextSeekKey : null;
+      return [configData, userCount, nextSeekKey];
+    };
     try {
       const reply = await grpcClient.unaryCall(
         "/dcnet.pb.Service/GetAIProxyConfig",
         messageBytes,
         30000
       );
-      const decoded = dcnet.pb.GetAIProxyConfigReply.decode(reply);
-      if (decoded.flag != 0) {
-        throw new Error(Errors.INVALID_TOKEN.message + " flag:" + decoded.flag);
-      }
-      const configData = new TextDecoder().decode(decoded.configData);
-      return [configData, null];
+      const [configData, userCount, nextSeekKey] = decodeReply(reply);
+      return [configData, userCount, nextSeekKey, null];
     } catch (error) {
       if (
         typeof error === "object" &&
@@ -78,14 +84,8 @@ export class AIProxyClient {
           messageBytes,
           30000
         );
-        const decoded = dcnet.pb.GetAIProxyConfigReply.decode(reply);
-        if (decoded.flag != 0) {
-          throw new Error(
-            Errors.INVALID_TOKEN.message + " flag:" + decoded.flag
-          );
-        }
-        const configData = new TextDecoder().decode(decoded.configData);
-        return [configData, null];
+        const [configData, userCount, nextSeekKey] = decodeReply(reply);
+        return [configData, userCount, nextSeekKey, null];
       }
       console.warn("GetAIProxyConfig error:", error);
       throw error;
