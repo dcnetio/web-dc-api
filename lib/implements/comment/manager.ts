@@ -1288,4 +1288,45 @@ export class CommentManager {
       vaccount: uint8ArrayToHex(content.vaccount),
     };
   }
+
+  async getAuthListUserCount(
+    appId: string,
+    themeAuthor: string,
+    theme: string,
+    vaccount?: string
+  ): Promise<[number | null, Error | null]> {
+    let client = this.context.AccountBackupDc.client;
+    let shouldCloseClient = false;
+    try {
+      if (!this.connectedDc?.client) {
+        return [null, Errors.ErrNoDcPeerConnected];
+      }
+      if (!this.context.publicKey) {
+        return [null, Errors.ErrPublicKeyIsNull];
+      }
+      if (!client || themeAuthor != this.context.publicKey.string()) {
+        const authorPublicKey: Ed25519PubKey = Ed25519PubKey.edPubkeyFromStr(themeAuthor);
+        const connectedClient = await this.dc.connectToUserDcPeer(authorPublicKey.raw);
+        if (!connectedClient) {
+          return [null, Errors.ErrNoPeerIdIsNull];
+        }
+        client = connectedClient;
+        shouldCloseClient = true;
+      }
+      if (client.token == "") {
+        await client.GetToken(appId, this.context.publicKey.string(), this.context.sign);
+      }
+      const commentClient = new CommentClient(client, this.dcNodeClient, this.context);
+      const [count, err] = await commentClient.getAuthListUserCount(appId, themeAuthor, theme, vaccount);
+      if (err) {
+        return [null, err];
+      }
+      return [count, null];
+    } catch (err) {
+      console.warn("getAuthListUserCount error:", err);
+      throw err;
+    } finally {
+      await this.closeTemporaryClient(client, shouldCloseClient);
+    }
+  }
 }

@@ -923,6 +923,19 @@ message GetThemeAuthListReply{
     bytes authListData = 3; //如果请求设置了returnData为true,则直接返回列表数据
 }
 
+// 获取授权列表的用户数量统计
+message GetAuthListUserCountRequest{
+    bytes theme = 1;      // 主题名称(带或不带 _authlist 后缀均可)
+    bytes appId = 2;      // 应用标志
+    bytes themeAuthor = 3;// 主题作者 pubkey
+    bytes vaccount = 4;   // 虚拟账号，可选
+}
+
+message GetAuthListUserCountReply{
+    uint32 flag = 1;  // 0:成功
+    int64 count = 2;  // 授权列表中的用户数量
+}
+
 message GetUserCommentsRequest{
     bytes appId = 1; //应用标志
     bytes UserPubkey = 2;//发布评论的用户pubkey
@@ -1590,6 +1603,8 @@ service Service {
      //获取指定已开通对象的权限列表(对GetThemeComments进行包装，增加权限判断)//ok
      rpc GetThemeAuthList(GetThemeAuthListRequest) returns (GetThemeAuthListReply){}
 
+    //获取授权列表的用户数量统计
+    rpc GetAuthListUserCount(GetAuthListUserCountRequest) returns (GetAuthListUserCountReply){}
 
        //获取用户自己在指定主题对象下的权限配置信息
     rpc GetUserOwnAuthInfo(GetUserOwnAuthInfoRequest) returns (GetUserOwnAuthInfoReply) {}

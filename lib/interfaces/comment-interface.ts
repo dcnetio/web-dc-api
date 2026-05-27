@@ -145,6 +145,18 @@ export interface ICommentOperations {
       vaccount?: string
     ): Promise<[ThemeAuthInfo[]|null,ThemeComment[] | null, Error | null]> 
      
+  /**
+   * 获取授权列表中的用户总数
+   * @param themeAuthor 主题作者公钥
+   * @param theme 主题名称
+   * @param vaccount 可选的虚拟账户
+   * @returns [用户总数, 错误信息]
+   */
+  getAuthListUserCount(
+    themeAuthor: string,
+    theme: string,
+    vaccount?: string
+  ): Promise<[number | null, Error | null]>;
 
   /**
    * 获取指定用户发布的评论列表,无法查询用户设置为私密的评论

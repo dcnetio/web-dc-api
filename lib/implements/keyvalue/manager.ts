@@ -925,4 +925,46 @@ export class KeyValueManager {
       return [null, error];
     }
   }
+
+  async getAuthListUserCount(
+    appId: string,
+    themeAuthor: string,
+    theme: string,
+    vaccount?: string
+  ): Promise<[number | null, Error | null]> {
+    if (!this.context.publicKey) {
+      return [null, Errors.ErrPublicKeyIsNull];
+    }
+    if (!theme.startsWith("keyvalue_")) {
+      theme = "keyvalue_" + theme;
+    }
+    let client = this.context.AccountBackupDc.client || null;
+    if (themeAuthor != this.context.publicKey.string()) {
+      const authorPublicKey = Ed25519PubKey.edPubkeyFromStr(themeAuthor);
+      client = await this.dc.connectToUserDcPeer(authorPublicKey.raw);
+      if (!client) {
+        return [null, Errors.ErrNoDcPeerConnected];
+      }
+      await client.GetToken(appId, this.context.publicKey.string(), this.context.sign);
+    }
+    if (client === null) {
+      return [null, new Error("ErrConnectToAccountPeersFail")];
+    }
+    if (client.peerAddr === null) {
+      return [null, new Error("ErrConnectToAccountPeersFail")];
+    }
+    if (client.token == "") {
+      await client.GetToken(appId, this.context.publicKey.string(), this.context.sign);
+    }
+    const keyValueClient = new KeyValueClient(client, this.context);
+    try {
+      const [count, err] = await keyValueClient.getAuthListUserCount(appId, themeAuthor, theme, vaccount);
+      if (err) {
+        return [null, err];
+      }
+      return [count, null];
+    } catch (error: any) {
+      return [null, error];
+    }
+  }
 }

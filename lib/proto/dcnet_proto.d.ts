@@ -14164,6 +14164,224 @@ export namespace dcnet {
             public static getTypeUrl(typeUrlPrefix?: string): string;
         }
 
+        /** Properties of a GetAuthListUserCountRequest. */
+        interface IGetAuthListUserCountRequest {
+
+            /** GetAuthListUserCountRequest theme */
+            theme?: (Uint8Array|null);
+
+            /** GetAuthListUserCountRequest appId */
+            appId?: (Uint8Array|null);
+
+            /** GetAuthListUserCountRequest themeAuthor */
+            themeAuthor?: (Uint8Array|null);
+
+            /** GetAuthListUserCountRequest vaccount */
+            vaccount?: (Uint8Array|null);
+        }
+
+        /** Represents a GetAuthListUserCountRequest. */
+        class GetAuthListUserCountRequest implements IGetAuthListUserCountRequest {
+
+            /**
+             * Constructs a new GetAuthListUserCountRequest.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: dcnet.pb.IGetAuthListUserCountRequest);
+
+            /** GetAuthListUserCountRequest theme. */
+            public theme: Uint8Array;
+
+            /** GetAuthListUserCountRequest appId. */
+            public appId: Uint8Array;
+
+            /** GetAuthListUserCountRequest themeAuthor. */
+            public themeAuthor: Uint8Array;
+
+            /** GetAuthListUserCountRequest vaccount. */
+            public vaccount: Uint8Array;
+
+            /**
+             * Creates a new GetAuthListUserCountRequest instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns GetAuthListUserCountRequest instance
+             */
+            public static create(properties?: dcnet.pb.IGetAuthListUserCountRequest): dcnet.pb.GetAuthListUserCountRequest;
+
+            /**
+             * Encodes the specified GetAuthListUserCountRequest message. Does not implicitly {@link dcnet.pb.GetAuthListUserCountRequest.verify|verify} messages.
+             * @param message GetAuthListUserCountRequest message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: dcnet.pb.IGetAuthListUserCountRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified GetAuthListUserCountRequest message, length delimited. Does not implicitly {@link dcnet.pb.GetAuthListUserCountRequest.verify|verify} messages.
+             * @param message GetAuthListUserCountRequest message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: dcnet.pb.IGetAuthListUserCountRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes a GetAuthListUserCountRequest message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns GetAuthListUserCountRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): dcnet.pb.GetAuthListUserCountRequest;
+
+            /**
+             * Decodes a GetAuthListUserCountRequest message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns GetAuthListUserCountRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): dcnet.pb.GetAuthListUserCountRequest;
+
+            /**
+             * Verifies a GetAuthListUserCountRequest message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates a GetAuthListUserCountRequest message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns GetAuthListUserCountRequest
+             */
+            public static fromObject(object: { [k: string]: any }): dcnet.pb.GetAuthListUserCountRequest;
+
+            /**
+             * Creates a plain object from a GetAuthListUserCountRequest message. Also converts values to other types if specified.
+             * @param message GetAuthListUserCountRequest
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: dcnet.pb.GetAuthListUserCountRequest, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this GetAuthListUserCountRequest to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for GetAuthListUserCountRequest
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** Properties of a GetAuthListUserCountReply. */
+        interface IGetAuthListUserCountReply {
+
+            /** GetAuthListUserCountReply flag */
+            flag?: (number|null);
+
+            /** GetAuthListUserCountReply count */
+            count?: (number|Long|null);
+        }
+
+        /** Represents a GetAuthListUserCountReply. */
+        class GetAuthListUserCountReply implements IGetAuthListUserCountReply {
+
+            /**
+             * Constructs a new GetAuthListUserCountReply.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: dcnet.pb.IGetAuthListUserCountReply);
+
+            /** GetAuthListUserCountReply flag. */
+            public flag: number;
+
+            /** GetAuthListUserCountReply count. */
+            public count: (number|Long);
+
+            /**
+             * Creates a new GetAuthListUserCountReply instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns GetAuthListUserCountReply instance
+             */
+            public static create(properties?: dcnet.pb.IGetAuthListUserCountReply): dcnet.pb.GetAuthListUserCountReply;
+
+            /**
+             * Encodes the specified GetAuthListUserCountReply message. Does not implicitly {@link dcnet.pb.GetAuthListUserCountReply.verify|verify} messages.
+             * @param message GetAuthListUserCountReply message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: dcnet.pb.IGetAuthListUserCountReply, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified GetAuthListUserCountReply message, length delimited. Does not implicitly {@link dcnet.pb.GetAuthListUserCountReply.verify|verify} messages.
+             * @param message GetAuthListUserCountReply message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: dcnet.pb.IGetAuthListUserCountReply, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes a GetAuthListUserCountReply message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns GetAuthListUserCountReply
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): dcnet.pb.GetAuthListUserCountReply;
+
+            /**
+             * Decodes a GetAuthListUserCountReply message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns GetAuthListUserCountReply
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): dcnet.pb.GetAuthListUserCountReply;
+
+            /**
+             * Verifies a GetAuthListUserCountReply message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates a GetAuthListUserCountReply message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns GetAuthListUserCountReply
+             */
+            public static fromObject(object: { [k: string]: any }): dcnet.pb.GetAuthListUserCountReply;
+
+            /**
+             * Creates a plain object from a GetAuthListUserCountReply message. Also converts values to other types if specified.
+             * @param message GetAuthListUserCountReply
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: dcnet.pb.GetAuthListUserCountReply, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this GetAuthListUserCountReply to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for GetAuthListUserCountReply
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
         /** Properties of a GetUserCommentsRequest. */
         interface IGetUserCommentsRequest {
 
@@ -22960,6 +23178,20 @@ export namespace dcnet {
             public getThemeAuthList(request: dcnet.pb.IGetThemeAuthListRequest): Promise<dcnet.pb.GetThemeAuthListReply>;
 
             /**
+             * Calls GetAuthListUserCount.
+             * @param request GetAuthListUserCountRequest message or plain object
+             * @param callback Node-style callback called with the error, if any, and GetAuthListUserCountReply
+             */
+            public getAuthListUserCount(request: dcnet.pb.IGetAuthListUserCountRequest, callback: dcnet.pb.Service.GetAuthListUserCountCallback): void;
+
+            /**
+             * Calls GetAuthListUserCount.
+             * @param request GetAuthListUserCountRequest message or plain object
+             * @returns Promise
+             */
+            public getAuthListUserCount(request: dcnet.pb.IGetAuthListUserCountRequest): Promise<dcnet.pb.GetAuthListUserCountReply>;
+
+            /**
              * Calls GetUserOwnAuthInfo.
              * @param request GetUserOwnAuthInfoRequest message or plain object
              * @param callback Node-style callback called with the error, if any, and GetUserOwnAuthInfoReply
@@ -23934,6 +24166,13 @@ export namespace dcnet {
              * @param [response] GetThemeAuthListReply
              */
             type GetThemeAuthListCallback = (error: (Error|null), response?: dcnet.pb.GetThemeAuthListReply) => void;
+
+            /**
+             * Callback as used by {@link dcnet.pb.Service#getAuthListUserCount}.
+             * @param error Error, if any
+             * @param [response] GetAuthListUserCountReply
+             */
+            type GetAuthListUserCountCallback = (error: (Error|null), response?: dcnet.pb.GetAuthListUserCountReply) => void;
 
             /**
              * Callback as used by {@link dcnet.pb.Service#getUserOwnAuthInfo}.

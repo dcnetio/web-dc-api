@@ -56,6 +56,17 @@ export interface IKeyValueOperations {
     vaccount?: string
   ): Promise<[ThemeAuthInfo[]|null,ThemeComment[] | null, Error | null]>;
 
+  /**
+   * 获取授权列表中的用户总数
+   * @param kvdb keyvalue数据库实例
+   * @param vaccount 可选的虚拟账户
+   * @returns [用户总数, 错误信息]
+   */
+  getAuthListUserCount(
+    kvdb: KeyValueDB,
+    vaccount?: string
+  ): Promise<[number | null, Error | null]>;
+
 
    /**
      * 获取当前用户自身的kevdb授权信息,用户自己调用
