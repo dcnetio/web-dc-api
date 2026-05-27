@@ -883,6 +883,77 @@ export class CommentClient {
     }
   }
 
+  async getThemeAuthList(
+    appId: string,
+    theme: string,
+    themeAuthor: string,
+    startHeight: number,
+    direction: number,
+    offset: number,
+    limit: number,
+    seekKey: string,
+    vaccount?: string
+  ): Promise<[string, number, string]> {
+    const message = new dcnet.pb.GetThemeAuthListRequest({});
+    message.appId = new TextEncoder().encode(appId);
+    message.theme = new TextEncoder().encode(theme);
+    message.themeAuthor = new TextEncoder().encode(themeAuthor);
+    message.startHeight = startHeight;
+    message.direction = direction;
+    message.offset = offset;
+    message.limit = limit;
+    message.seekKey = new TextEncoder().encode(seekKey);
+    message.returnData = true;
+    if (vaccount) {
+      message.vaccount = new TextEncoder().encode(vaccount);
+    }
+    const messageBytes =
+      dcnet.pb.GetThemeAuthListRequest.encode(message).finish();
+    const decodeReply = (reply: Uint8Array): [string, number, string] => {
+      const decoded = dcnet.pb.GetThemeAuthListReply.decode(reply);
+      const authListData = decoded.authListData
+        ? uint8ArrayToString(decoded.authListData)
+        : "";
+      const userCount = decoded.userCount ? Number(decoded.userCount) : 0;
+      const nextSeekKey = decoded.nextSeekKey
+        ? uint8ArrayToString(decoded.nextSeekKey)
+        : "";
+      return [authListData, userCount, nextSeekKey];
+    };
+    const callRpc = () => {
+      const grpcClient = new Libp2pGrpcClient(
+        this.client.p2pNode,
+        this.client.peerAddr,
+        this.client.token,
+        this.client.protocol
+      );
+      return grpcClient.unaryCall(
+        "/dcnet.pb.Service/GetThemeAuthList",
+        messageBytes,
+        30000
+      );
+    };
+    try {
+      return decodeReply(await callRpc());
+    } catch (error: any) {
+      if (error.message.indexOf(Errors.INVALID_TOKEN.message) != -1) {
+        const token = await this.client.GetToken(
+          appId || "",
+          this.context.getPublicKey().string(),
+          (payload: Uint8Array): Promise<Uint8Array> => {
+            return this.context.sign(payload);
+          }
+        );
+        if (!token) {
+          throw new Error(Errors.INVALID_TOKEN.message);
+        }
+        return decodeReply(await callRpc());
+      }
+      console.warn("GetThemeAuthList error:", error);
+      throw error;
+    }
+  }
+
   async getUserComments(
     appId: string,
     userPubkey: string,

@@ -141,6 +141,23 @@ export class KeyValueModule implements DCModule, IKeyValueOperations {
       return [null, null, error instanceof Error ? error : new Error(String(error))];
     }
   }
+
+  async getDbAuthList(
+    kvdb: KeyValueDB,
+    limit: number = 100,
+    seekKey: string = "",
+    vaccount?: string
+  ): Promise<[ThemeAuthInfo[] | null, number, string, Error | null]> {
+    const err = this.assertInitialized();
+    if (err) {
+      return [null, 0, "", err];
+    }
+    try {
+      return await kvdb.getDbAuthList(limit, seekKey, vaccount);
+    } catch (error) {
+      return [null, 0, "", error instanceof Error ? error : new Error(String(error))];
+    }
+  }
   
 
 

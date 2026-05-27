@@ -57,6 +57,21 @@ export interface IKeyValueOperations {
   ): Promise<[ThemeAuthInfo[]|null,ThemeComment[] | null, Error | null]>;
 
   /**
+   * 获取授权列表（含用户总数和分页游标）
+   * @param kvdb keyvalue数据库实例
+   * @param limit 每页数量，默认100
+   * @param seekKey 分页游标，默认从头
+   * @param vaccount 可选的虚拟账户
+   * @returns [授权列表, 用户总数, nextSeekKey, 错误信息]
+   */
+  getDbAuthList(
+    kvdb: KeyValueDB,
+    limit?: number,
+    seekKey?: string,
+    vaccount?: string
+  ): Promise<[ThemeAuthInfo[] | null, number, string, Error | null]>;
+
+  /**
    * 获取授权列表中的用户总数
    * @param kvdb keyvalue数据库实例
    * @param vaccount 可选的虚拟账户

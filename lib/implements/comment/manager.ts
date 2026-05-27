@@ -823,6 +823,75 @@ export class CommentManager {
     }
   }
 
+  async getThemeAuthList(
+    appId: string,
+    theme: string,
+    themeAuthor: string,
+    startHeight: number,
+    direction: number,
+    offset: number,
+    limit: number,
+    seekKey: string,
+    vaccount?: string
+  ): Promise<[ThemeComment[] | null, number, string, Error | null]> {
+    let client = this.context.AccountBackupDc.client;
+    let shouldCloseClient = false;
+    try {
+      if (!this.connectedDc?.client) {
+        return [null, 0, "", Errors.ErrNoDcPeerConnected];
+      }
+      if (!this.context.publicKey) {
+        return [null, 0, "", Errors.ErrPublicKeyIsNull];
+      }
+      if (!client || themeAuthor != this.context.publicKey.string()) {
+        const authorPublicKey: Ed25519PubKey =
+          Ed25519PubKey.edPubkeyFromStr(themeAuthor);
+        const connectedClient = await this.dc.connectToUserDcPeer(
+          authorPublicKey.raw
+        );
+        if (!connectedClient) {
+          return [null, 0, "", Errors.ErrNoPeerIdIsNull];
+        }
+        client = connectedClient;
+        shouldCloseClient = true;
+      }
+      if (client.token == "") {
+        await client.GetToken(
+          appId,
+          this.context.publicKey.string(),
+          this.context.sign
+        );
+      }
+      const commentClient = new CommentClient(
+        client,
+        this.dcNodeClient,
+        this.context
+      );
+      const [authListData, userCount, nextSeekKey] =
+        await commentClient.getThemeAuthList(
+          appId,
+          theme,
+          themeAuthor,
+          startHeight || 0,
+          direction || 0,
+          offset || 0,
+          limit || 0,
+          seekKey || "",
+          vaccount
+        );
+      if (!authListData) {
+        return [[], userCount, nextSeekKey, null];
+      }
+      const allContent = await this.handleThemeComments(authListData);
+      return [allContent || null, userCount, nextSeekKey, null];
+    } catch (err) {
+      console.warn("getThemeAuthList error:", err);
+      throw err;
+    } finally {
+      await this.closeTemporaryClient(client, shouldCloseClient);
+    }
+  }
+
   async configAuth(
     appId: string,
     themeAuthor: string,

@@ -14066,6 +14066,12 @@ export namespace dcnet {
 
             /** GetThemeAuthListReply authListData */
             authListData?: (Uint8Array|null);
+
+            /** GetThemeAuthListReply userCount */
+            userCount?: (number|Long|null);
+
+            /** GetThemeAuthListReply nextSeekKey */
+            nextSeekKey?: (Uint8Array|null);
         }
 
         /** Represents a GetThemeAuthListReply. */
@@ -14085,6 +14091,12 @@ export namespace dcnet {
 
             /** GetThemeAuthListReply authListData. */
             public authListData: Uint8Array;
+
+            /** GetThemeAuthListReply userCount. */
+            public userCount: (number|Long);
+
+            /** GetThemeAuthListReply nextSeekKey. */
+            public nextSeekKey: Uint8Array;
 
             /**
              * Creates a new GetThemeAuthListReply instance using the specified properties.

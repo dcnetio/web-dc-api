@@ -311,7 +311,43 @@ async addUserOffChainOpTimes(
       return [null, error as Error];
     }
   }
-  
+
+  /**
+   * 获取指定主题的权限列表（支持 seekKey / direction / limit 分页）
+   */
+  async getThemeAuthList(
+    theme: string,
+    themeAuthor: string,
+    startHeight?: number,
+    direction?: number,
+    offset?: number,
+    limit?: number,
+    seekKey?: string,
+    vaccount?: string
+  ): Promise<[ThemeComment[] | null, number, string, Error | null]> {
+    try {
+      this.assertInitialized();
+      const res = await this.commentManager.getThemeAuthList(
+        this.context.appInfo?.appId || "",
+        theme,
+        themeAuthor,
+        startHeight || 0,
+        direction || 0,
+        offset || 0,
+        limit || 100,
+        seekKey || "",
+        vaccount
+      );
+      if (!res[3]) {
+        logger.info(`获取主题 ${theme} 的权限列表成功`);
+      }
+      return res;
+    } catch (error) {
+      logger.error(`获取主题 ${theme} 的权限列表失败:`, error);
+      return [null, 0, "", error as Error];
+    }
+  }
+
   /**
      * 配置主题的授权信息
      * @param themeAuthor 主题作者的公钥

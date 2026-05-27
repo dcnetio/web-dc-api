@@ -3,7 +3,6 @@ import type { Multiaddr } from "@multiformats/multiaddr";
 import { dcnet } from "../proto/dcnet_proto";
 import { Libp2pGrpcClient } from "grpc-libp2p-client";
 import { DataSource } from "../proto/datasource";
-import { Ed25519PubKey } from "./dc-key/ed25519";
 import { jwtDecode, JwtPayload } from "jwt-decode";
 
 interface CustomJwtPayload extends JwtPayload {
@@ -31,61 +30,70 @@ export class DCGrpcClient {
     signCallback: (payload: Uint8Array) => Promise<Uint8Array>
   ): Promise<string> {
     let token: string = "";
-    try {
-      let error: Error | null = null;
-      const signatureDataSource = new DataSource();
-      const message = new dcnet.pb.GetTokenRequest({});
-      message.key = appId + "_" + pubkey;
-      const messageBytes = dcnet.pb.GetTokenRequest.encode(message).finish();
-      const onDataCallback = async (payload: Uint8Array) => {
-        const decodedPayload = dcnet.pb.GetTokenReply.decode(payload);
-        if (decodedPayload.challenge) {
-          const challenge = decodedPayload.challenge;
-          const signature = await signCallback(challenge);
+    let error: Error | null = null;
+    const signatureDataSource = new DataSource();
+    const message = new dcnet.pb.GetTokenRequest({});
+    message.key = appId + "_" + pubkey;
+    const messageBytes = dcnet.pb.GetTokenRequest.encode(message).finish();
+    const onDataCallback = (payload: Uint8Array) => {
+      const decodedPayload = dcnet.pb.GetTokenReply.decode(payload);
+      if (decodedPayload.challenge) {
+        const challenge = decodedPayload.challenge;
+        signCallback(challenge).then((signature) => {
+          // Stream may have already closed (e.g. timeout) while signature was computed;
+          // discard the result to avoid throwing "DataSource is closed" into the catch.
+          if (signatureDataSource.isClosed()) return;
           const message = new dcnet.pb.GetTokenRequest({});
-
           message.signature = signature;
           const messageBytes =
             dcnet.pb.GetTokenRequest.encode(message).finish();
           signatureDataSource.setData(messageBytes);
-        } else if (decodedPayload.token) {
-          //获取到token
-          console.log("GetToken success");
-          token = decodedPayload.token;
-          signatureDataSource.close(); //关闭数据源
-        }
-      };
-      // 使用方法
-      const dataSourceCallback = (): AsyncIterable<Uint8Array> => {
-        return signatureDataSource.getDataSource();
-      };
-      const onEndCallback = async () => {
+        }).catch((err: unknown) => {
+          // Preserve the first error (e.g. a timeout set by onErrorCallback),
+          // don't overwrite it with a secondary "DataSource is closed" error.
+          if (error === null) {
+            error = err instanceof Error ? err : new Error(String(err));
+          }
+          if (!signatureDataSource.isClosed()) {
+            signatureDataSource.close();
+          }
+        });
+      } else if (decodedPayload.token) {
+        console.log("GetToken success");
+        token = decodedPayload.token;
         signatureDataSource.close();
-      };
-      const onErrorCallback = async (err: unknown) => {
-        console.log("onErrorCallback", err);
-        error = err instanceof Error ? err : new Error(String(err));
-        signatureDataSource.close();
-      };
-      await this.grpcClient.Call(
-        "/dcnet.pb.Service/GetToken",
-        messageBytes,
-        30000,
-        "bidirectional",
-        onDataCallback,
-        dataSourceCallback,
-        onEndCallback,
-        onErrorCallback
-      );
-      if (error) {
-        throw error;
       }
-      this.token = token;
-      this.grpcClient.setToken(token);
-      return token;
-    } catch (err) {
-      throw err;
+    };
+    const dataSourceCallback = (): AsyncIterable<Uint8Array> => {
+      return signatureDataSource.getDataSource();
+    };
+    const onEndCallback = () => {
+      signatureDataSource.close();
+    };
+    const onErrorCallback = (err: unknown) => {
+      console.log("onErrorCallback", err);
+      error = err instanceof Error ? err : new Error(String(err));
+      signatureDataSource.close();
+    };
+    await this.grpcClient.Call(
+      "/dcnet.pb.Service/GetToken",
+      messageBytes,
+      30000,
+      "bidirectional",
+      onDataCallback,
+      dataSourceCallback,
+      onEndCallback,
+      onErrorCallback
+    );
+    if (error) {
+      throw error;
     }
+    if (!token) {
+      throw new Error("GetToken failed: server did not return a token");
+    }
+    this.token = token;
+    this.grpcClient.setToken(token);
+    return token;
   }
 
   async ValidToken(maxAge: number = 5900): Promise<boolean> {

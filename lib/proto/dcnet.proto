@@ -921,6 +921,8 @@ message GetThemeAuthListReply{
     uint32 flag = 1;//获取结果
     bytes authListCid = 2; //获取的授权列表结果集存入ipfs网络中后反馈的cid,客户端再通过 getFile获取，结果集是PublishCommentToThemeRequest的数组 json序列化
     bytes authListData = 3; //如果请求设置了returnData为true,则直接返回列表数据
+    int64 userCount = 4;   //授权列表中的用户总数
+    bytes nextSeekKey = 5; //下一页的起始key，格式为 blockheight/commentCid，为空表示没有更多数据
 }
 
 // 获取授权列表的用户数量统计

@@ -196,6 +196,22 @@ export class KeyValueDB {
       vaccount
     );
   }
+
+  //获取授权列表（含用户总数和分页游标）
+  async getDbAuthList(
+    limit: number = 100,
+    seekKey: string = "",
+    vaccount?: string
+  ): Promise<[ThemeAuthInfo[] | null, number, string, Error | null]> {
+    return this.manager.getDbAuthList(
+      this.appId,
+      this.themeAuthor,
+      this.dbname,
+      limit,
+      seekKey,
+      vaccount
+    );
+  }
 }
 
 export class KeyValueManager {
@@ -573,80 +589,114 @@ export class KeyValueManager {
     if (!theme.startsWith("keyvalue_")) {
       theme = "keyvalue_" + theme;
     }
-    if (!theme.endsWith("_authlist")) {
-      theme += "_authlist";
-    }
-    let currentSeekKey: string = seekKey || "";
-    let originAuthList: ThemeComment[] = [];
-    let authList: ThemeAuthInfo[] = [];
+    // _authlist suffix is handled internally by getThemeAuthList
+    const authList: ThemeAuthInfo[] = [];
+    const originAuthList: ThemeComment[] = [];
     try {
-      while (true) {
-        const commentManager = new CommentManager(this.context);
-        const res = await commentManager.getThemeComments(
-          appId,
-          theme,
-          themeAuthor,
-          0,
-          Direction.Forward,
-          0,
-          1000,
-          currentSeekKey,
-          vaccount
-        );
-        if (res[0] && res[0].length == 0) {
-          break;
-        }
-
-        const resList = res[0];
-        if(!resList || resList.length == 0){
-          break;
-        }
-        for (let i = 0; i < resList.length; i++) {
-          originAuthList.push(resList[i]!);
-          const content = resList[i]!.comment;
-          const parts = content.split(":");
-          if (parts.length < 2) {
-            continue;
-          }
-          const authPubkey = parts[0]!;
-          //转成带protobuf协议的base32格式
-          let forPubkey: Ed25519PubKey | null = null;
-          try {
-            if (authPubkey.startsWith("0x") || authPubkey.startsWith("0X")) {
-              forPubkey = Ed25519PubKey.edPubkeyFromStr(
-                authPubkey
-              );
-            } 
-          } catch (error) {
-            continue;
-          }
-          let authPubkeyStr = authPubkey;
-          if (forPubkey != null) {
-            authPubkeyStr = forPubkey.string();
-          }
-          const permission = parseInt(parts[1]!);
-          let remarkStart = parts[0]!.length + parts[1]!.length + 2;
-          const remark = content.length > remarkStart ? content.substring(remarkStart) : "";
-          currentSeekKey = `${resList[resList.length - 1]!.blockheight}/${
-            resList[resList.length - 1]!.commentCid
-           }`;
-          authList.push({
-            pubkey: authPubkeyStr,
-            permission: permission,
-            remark: remark,
-            key: currentSeekKey,
-          });
-        }
-        if (resList.length < 1000) {
-          break;
-        }
-       
-        
+      const commentManager = new CommentManager(this.context);
+      const [themeComments, _userCount, _nextKey, err] = await commentManager.getThemeAuthList(
+        appId,
+        theme,
+        themeAuthor,
+        0,
+        Direction.Forward,
+        0,
+        100,
+        seekKey,
+        vaccount
+      );
+      if (err) throw err;
+      if (!themeComments || themeComments.length === 0) {
+        return [[], [], null];
       }
+      for (const item of themeComments) {
+        originAuthList.push(item);
+        const content = item.comment;
+        const parts = content.split(":");
+        if (parts.length < 2) continue;
+        const authPubkey = parts[0]!;
+        let forPubkey: Ed25519PubKey | null = null;
+        try {
+          if (authPubkey.startsWith("0x") || authPubkey.startsWith("0X")) {
+            forPubkey = Ed25519PubKey.edPubkeyFromStr(authPubkey);
+          }
+        } catch (error) {
+          continue;
+        }
+        const authPubkeyStr = forPubkey != null ? forPubkey.string() : authPubkey;
+        const permission = parseInt(parts[1]!);
+        const remarkStart = parts[0]!.length + parts[1]!.length + 2;
+        const remark = content.length > remarkStart ? content.substring(remarkStart) : "";
+        authList.push({
+          pubkey: authPubkeyStr,
+          permission,
+          remark,
+          key: `${item.blockheight}/${item.commentCid}`,
+        });
+      }
+      return [authList, originAuthList, null];
     } catch (error: any) {
       return [authList, originAuthList, error];
     }
-    return [authList, originAuthList, null];
+  }
+
+  async getDbAuthList(
+    appId: string,
+    themeAuthor: string,
+    theme: string,
+    limit: number = 100,
+    seekKey: string = "",
+    vaccount?: string
+  ): Promise<[ThemeAuthInfo[] | null, number, string, Error | null]> {
+    if (!theme.startsWith("keyvalue_")) {
+      theme = "keyvalue_" + theme;
+    }
+    const authList: ThemeAuthInfo[] = [];
+    try {
+      const commentManager = new CommentManager(this.context);
+      const [themeComments, userCount, nextSeekKey, err] = await commentManager.getThemeAuthList(
+        appId,
+        theme,
+        themeAuthor,
+        0,
+        Direction.Forward,
+        0,
+        limit,
+        seekKey,
+        vaccount
+      );
+      if (err) throw err;
+      if (!themeComments || themeComments.length === 0) {
+        return [[], userCount ?? 0, nextSeekKey ?? "", null];
+      }
+      for (const item of themeComments) {
+        const content = item.comment;
+        const parts = content.split(":");
+        if (parts.length < 2) continue;
+        const authPubkey = parts[0]!;
+        let forPubkey: Ed25519PubKey | null = null;
+        try {
+          if (authPubkey.startsWith("0x") || authPubkey.startsWith("0X")) {
+            forPubkey = Ed25519PubKey.edPubkeyFromStr(authPubkey);
+          }
+        } catch (error) {
+          continue;
+        }
+        const authPubkeyStr = forPubkey != null ? forPubkey.string() : authPubkey;
+        const permission = parseInt(parts[1]!);
+        const remarkStart = parts[0]!.length + parts[1]!.length + 2;
+        const remark = content.length > remarkStart ? content.substring(remarkStart) : "";
+        authList.push({
+          pubkey: authPubkeyStr,
+          permission,
+          remark,
+          key: `${item.blockheight}/${item.commentCid}`,
+        });
+      }
+      return [authList, userCount ?? 0, nextSeekKey ?? "", null];
+    } catch (error: any) {
+      return [authList, 0, "", error];
+    }
   }
 
   async setKeyValue(

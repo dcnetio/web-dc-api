@@ -110,19 +110,41 @@ export interface ICommentOperations {
   ): Promise<[ThemeComment[] | null, Error | null]>;
 
 
-   /**
-     * 配置主题的授权信息
-     * @param appId 应用ID
-     * @param themeAuthor 主题作者的公钥
-     * @param theme 主题名称
-     * @param authPubkey 被授权者的公钥
-     * @param permission 权限级别
-     * @param remark 备注信息
-     * @param vaccount 可选的虚拟账户
-     * @returns [授权状态码, 错误信息]
-     */
-    configAuth(
-      themeAuthor: string,
+  /**
+   * 获取指定主题的权限列表（分页支持 seekKey / direction / limit 等）
+   * @param theme 主题名称（不含 _authlist 后缀，服务端自动补充）
+   * @param themeAuthor 主题作者的公钥
+   * @param startHeight 可选，查询起始高度
+   * @param direction 可选，查询方向 (0:正向 1:逆向)
+   * @param offset 可选，结果集偏移量
+   * @param limit 可选，最大返回数量，默认100
+   * @param seekKey 可选，分页游标，格式为 blockheight/commentCid
+   * @param vaccount 可选，虚拟账户
+   * @returns [授权记录列表, 用户总数, 下一页游标, 错误信息]
+   */
+  getThemeAuthList(
+    theme: string,
+    themeAuthor: string,
+    startHeight?: number,
+    direction?: number,
+    offset?: number,
+    limit?: number,
+    seekKey?: string,
+    vaccount?: string
+  ): Promise<[ThemeComment[] | null, number, string, Error | null]>;
+
+  /**
+   * 配置主题的授权信息
+   * @param themeAuthor 主题作者的公钥
+   * @param theme 主题名称
+   * @param authPubkey 被授权者的公钥
+   * @param permission 权限级别
+   * @param remark 备注信息
+   * @param vaccount 可选的虚拟账户
+   * @returns [授权状态码, 错误信息]
+   */
+  configAuth(
+    themeAuthor: string,
       theme: string,
       authPubkey: string,
       permission: ThemePermission,

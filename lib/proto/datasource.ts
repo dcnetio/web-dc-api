@@ -6,7 +6,6 @@ export class DataSource {
         reject: (error: Error) => void;  
     }> = [];  
     private closed = false;  
-    private abortController = new AbortController();  
 
     /**  
      * 设置要发送的数据,可以根据需要多次调用 
@@ -15,23 +14,24 @@ export class DataSource {
     setData(data: Uint8Array) {  
         if (this.closed) {  
             throw new Error('DataSource is closed');  
-        }   
-        const promises  = this.waitingPromises;
-        this.waitingPromises = []; 
-        // 通知所有等待的promise  
-        promises.forEach(({ resolve }) => resolve(data));  
+        }
+        // 快照并清空，确保 setData 期间新注册的 waitForData 不会收到同一块数据
+        const pending = this.waitingPromises;
+        this.waitingPromises = [];
+        pending.forEach(({ resolve }) => resolve(data));  
     }  
+
     /**  
      * 关闭数据源  
      */  
     close() {  
         if (this.closed) return;  
         this.closed = true;  
-        this.abortController.abort();  
-        // 拒绝所有等待的promise  
-        const error = new Error('DataSource has been closed');  
-        this.waitingPromises.forEach(({ reject }) => reject(error));  
-        this.waitingPromises = [];    
+        const error = new Error('DataSource has been closed');
+        // 快照并清空，然后逐一 reject，避免 reject 回调中再次调用 close 时的重入问题
+        const pending = this.waitingPromises;
+        this.waitingPromises = [];
+        pending.forEach(({ reject }) => reject(error));
     }  
 
     /**  
@@ -42,17 +42,9 @@ export class DataSource {
         if (this.closed) {  
             throw new Error('DataSource is closed');  
         }  
-        return new Promise<Uint8Array>((resolve, reject) => {  
-            // 如果在创建Promise时数据源已关闭，立即拒绝  
-            if (this.closed) {  
-                reject(new Error('DataSource is closed'));  
-                return;  
-            }  
+        return new Promise<Uint8Array>((resolve, reject) => {
+            // JS 单线程：此处与上方 closed 检查之间不存在并发，无需再次检查
             this.waitingPromises.push({ resolve, reject });  
-            // 设置中止信号处理  
-            this.abortController.signal.addEventListener('abort', () => {  
-                reject(new Error('DataSource has been closed'));  
-            });  
         });  
     }  
 
@@ -82,7 +74,7 @@ export class DataSource {
                             }  
                             const data = await this.waitForData();  
                             return { done: false, value: data };  
-                        } catch (error) {  
+                        } catch {  
                             return { done: true, value: undefined };  
                         }  
                     }  
