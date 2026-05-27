@@ -337,20 +337,32 @@ export class KeyValueManager {
     const userPubkey = this.context.getPublicKey();
     let userPubkeyStr = userPubkey.string();
 
-    let client = this.context.AccountBackupDc?.client || null;
-    if (!client){
-        client = await this.dc.connectToUserDcPeer(this.context.publicKey.raw);
-    }
-      
-    if (client === null) {
+    let clients: any[] = [];
+    let allClients = await this.dc.connectToUserAllDcPeers(this.context.publicKey.raw);
+    if (allClients && allClients.length > 0) {
+      clients = allClients;
+    } else if (this.context.AccountBackupDc?.client) {
+      clients = [this.context.AccountBackupDc.client];
+    } else {
       return [null, new Error("ErrConnectToAccountPeersFail")];
     }
 
-    if (client.peerAddr === null) {
-      return [null, new Error("ErrConnectToAccountPeersFail")];
+    let client = null;
+    for (const c of clients) {
+      if (!c || !c.peerAddr) continue;
+      try {
+        if (c.token == "") {
+          await c.GetToken(appId, this.context.publicKey.string(), this.context.sign);
+        }
+        client = c;
+        break; // found one working client
+      } catch (err) {
+         continue;
+      }
     }
-    if (client.token == "") {
-      await client.GetToken(appId, this.context.publicKey.string(), this.context.sign);
+    
+    if (!client) {
+      return [null, new Error("ErrConnectToAccountPeersFail")];
     }
     const themeAuthorPubkey: Ed25519PubKey =
       Ed25519PubKey.edPubkeyFromStr(themeAuthor);

@@ -634,30 +634,51 @@ export class AIProxyManager {
       configTheme = "keyvalue_" + configTheme;
     }
 
-    const client = this.context.AccountBackupDc?.client || null;
-    if (client === null) {
+    let clients: any[] = [];
+    const allClients = await this.dc.connectToUserAllDcPeers(this.context.publicKey.raw);
+    if (allClients && allClients.length > 0) {
+      clients = allClients;
+    } else if (this.context.AccountBackupDc?.client) {
+      clients = [this.context.AccountBackupDc.client];
+    } else {
       return [null, new Error("ErrConnectToAccountPeersFail")];
     }
 
-    if (client.peerAddr === null) {
-      return [null, new Error("ErrConnectToAccountPeersFail")];
-    }
-    if (client.token == "") {
-      await client.GetToken(
-        this.context.appInfo.appId || "",
-        this.context.publicKey.string(),
-        this.context.sign
-      );
+    let lastError: Error | null = null;
+    let usageInfo: any = null;
+
+    for (const client of clients) {
+      if (!client || !client.peerAddr) continue;
+      try {
+        if (client.token == "") {
+          await client.GetToken(
+            this.context.appInfo.appId || "",
+            this.context.publicKey.string(),
+            this.context.sign
+          );
+        }
+
+        const aiProxyClient = new AIProxyClient(client, this.context);
+        const [info, error] = await aiProxyClient.GetUserOwnAIProxyUsage(
+          appId,
+          themeAuthor,
+          configTheme
+        );
+        
+        if (error) {
+          lastError = error;
+          continue;
+        }
+        
+        usageInfo = info;
+        break; // Stop after first successful response
+      } catch (err: any) {
+        lastError = err instanceof Error ? err : new Error(String(err));
+      }
     }
 
-    const aiProxyClient = new AIProxyClient(client, this.context);
-    const [usageInfo, error] = await aiProxyClient.GetUserOwnAIProxyUsage(
-      appId,
-      themeAuthor,
-      configTheme
-    );
-    if (error) {
-      return [null, error];
+    if (!usageInfo) {
+      return [null, lastError || new Error("ErrConnectToAccountPeersFail")];
     }
 
     try {
@@ -773,51 +794,63 @@ export class AIProxyManager {
       params.theme = "keyvalue_" + params.theme;
     }
 
-    let client = this.context.AccountBackupDc?.client || null;
+    let clients: any[] = [];
     if (params.themeAuthor != this.context.publicKey.string()) {
-      //查询他人主题评论
       const authorPublicKey: Ed25519PubKey = Ed25519PubKey.edPubkeyFromStr(
         params.themeAuthor
       );
-      client = await this.dc.connectToUserDcPeer(authorPublicKey.raw);
-      if (!client) {
-        return [null, Errors.ErrNoDcPeerConnected];
+      const allClients = await this.dc.connectToUserAllDcPeers(authorPublicKey.raw);
+      if (allClients && allClients.length > 0) {
+        clients = allClients;
+      }
+    } else {
+      const allClients = await this.dc.connectToUserAllDcPeers(this.context.publicKey.raw);
+      if (allClients && allClients.length > 0) {
+        clients = allClients;
+      } else if (this.context.AccountBackupDc?.client) {
+        clients = [this.context.AccountBackupDc.client];
       }
     }
 
-    if (client === null) {
+    if (clients.length === 0) {
       return [null, new Error("ErrConnectToAccountPeersFail")];
     }
 
-    if (client.peerAddr === null) {
-      return [null, new Error("ErrConnectToAccountPeersFail")];
-    }
-    if (client.token == "") {
-      await client.GetToken(
-        this.context.appInfo.appId || "",
-        this.context.publicKey.string(),
-        this.context.sign
-      );
-    }
-    const aiProxyClient = new AIProxyClient(client, this.context);
-    const [authInfo, error] = await aiProxyClient.GetUserAIProxyAuth(params);
-    if (error) {
-      return [null, error];
-    }
-    if (!authInfo) {
-      return [{ authConfig: [] }, null];
-    }
-    try {
-      const parsed = JSON.parse(authInfo);
-      if (Array.isArray(parsed)) {
-        return [{ authConfig: parsed as ProxyCallConfig[] }, null];
+    let lastError: Error | null = null;
+    for (const client of clients) {
+      if (!client.peerAddr) continue;
+      try {
+        if (client.token == "") {
+          await client.GetToken(
+            this.context.appInfo.appId || "",
+            this.context.publicKey.string(),
+            this.context.sign
+          );
+        }
+        const aiProxyClient = new AIProxyClient(client, this.context);
+        const [authInfo, error] = await aiProxyClient.GetUserAIProxyAuth(params);
+        if (error) {
+          lastError = error;
+          continue;
+        }
+
+        if (!authInfo) {
+          return [{ authConfig: [] }, null];
+        }
+
+        const parsed = JSON.parse(authInfo);
+        if (Array.isArray(parsed)) {
+          return [{ authConfig: parsed as ProxyCallConfig[] }, null];
+        }
+        if (!parsed.Exp) {
+          return [{ authConfig: [] }, null];
+        }
+        return [{ authConfig: [parsed as ProxyCallConfig] }, null];
+      } catch (e: any) {
+        lastError = e instanceof Error ? e : new Error(String(e));
       }
-      if (!parsed.Exp) {
-        return [{ authConfig: [] }, null];
-      }
-      return [{ authConfig: [parsed as ProxyCallConfig] }, null];
-    } catch (error: any) {
-      return [null, error];
     }
+
+    return [null, lastError || new Error("ErrConnectToAccountPeersFail")];
   }
 }

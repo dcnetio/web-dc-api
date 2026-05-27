@@ -281,8 +281,7 @@ export class CommentManager {
     theme: string,
     themeAuthor: string
   ): Promise<[boolean | null, Error | null]> {
-    let client = this.context.AccountBackupDc.client;
-    let shouldCloseClient = false;
+    let clients: any[] = [];
     try {
       if (!this.connectedDc?.client) {
         return [null, Errors.ErrNoDcPeerConnected];
@@ -295,38 +294,50 @@ export class CommentManager {
         isFetchingOthersTheme = true;
       }
 
-      if (!client || isFetchingOthersTheme) {
-        //查询他人主题评论
-        const authorPublicKey: Ed25519PubKey =
-          Ed25519PubKey.edPubkeyFromStr(themeAuthor);
-        const connectedClient = await this.dc.connectToUserDcPeer(
-          authorPublicKey.raw
-        );
-        if (!connectedClient) {
+      if (!this.context.AccountBackupDc?.client || isFetchingOthersTheme) {
+        const authorPublicKey: Ed25519PubKey = Ed25519PubKey.edPubkeyFromStr(themeAuthor);
+        const allClients = await this.dc.connectToUserAllDcPeers(authorPublicKey.raw);
+        if (allClients && allClients.length > 0) {
+          clients = allClients;
+        } else {
           return [null, Errors.ErrNoPeerIdIsNull];
         }
-        client = connectedClient;
-        shouldCloseClient = true;
+      } else {
+        const allClients = await this.dc.connectToUserAllDcPeers(this.context.publicKey.raw);
+        if (allClients && allClients.length > 0) {
+          clients = allClients;
+        } else if (this.context.AccountBackupDc?.client) {
+          clients = [this.context.AccountBackupDc.client];
+        } else {
+          return [null, Errors.ErrNoPeerIdIsNull];
+        }
       }
       
-      if (client.token == "" && this.context.publicKey) {
-        await client.GetToken(
-          appId,
-          this.context.publicKey.string(),
-          this.context.sign
-        );
+      let lastError: Error | null = null;
+      for (const client of clients) {
+        if (!client || !client.peerAddr) continue;
+        try {
+          if (client.token == "" && this.context.publicKey) {
+            await client.GetToken(
+              appId,
+              this.context.publicKey.string(),
+              this.context.sign
+            );
+          }
+          const commentClient = new CommentClient(
+            client,
+            this.dcNodeClient,
+            this.context
+          );
+          const res = await commentClient.isThemeExist(appId, theme, themeAuthor);
+          return [res, null];
+        } catch (e: any) {
+          lastError = e instanceof Error ? e : new Error(String(e));
+        }
       }
-      const commentClient = new CommentClient(
-        client,
-        this.dcNodeClient,
-        this.context
-      );
-      const res = await commentClient.isThemeExist(appId, theme, themeAuthor);
-      return [res, null];
+      return [null, lastError || new Error("ErrConnectToAccountPeersFail")];
     } catch (err) {
       return [null, err as Error];
-    } finally {
-      await this.closeTemporaryClient(client, shouldCloseClient);
     }
   }
 
