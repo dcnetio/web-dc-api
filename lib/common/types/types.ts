@@ -142,6 +142,7 @@ export interface UserProxyCallConfig {
   UserPubkey: string; //用户公钥
   permission: number; //权限
   authConfig: ProxyCallConfig; //授权配置
+  commentKey?: string; //授权记录的key，格式为 blockheight/commentCid，可用于 GetThemeAuthList 分页查询
   /** @deprecated 服务端已不再返回使用统计，保留字段仅供向后兼容，值始终为 undefined */
   usageServices?: Record<string, AIServiceUsage>;
 }

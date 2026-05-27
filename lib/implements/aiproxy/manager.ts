@@ -451,23 +451,34 @@ export class AIProxyManager {
               console.warn("无效的授权信息格式:", contentStr);
               continue; // 如果格式不正确，跳过
             }
-            const parts = authContent.split(":");
-            if (parts.length < 2) {
-              console.warn("无效的授权信息格式:", authContent);
-              continue; // 如果格式不正确，跳过
+            // 格式: $$auth$$:<commentKey>:<userPubkey>:<authJSON>
+            // commentKey = "<blockheight>/<commentCid>"，不含冒号
+            // userPubkey = multibase 字符串，不含冒号
+            const firstColon = authContent.indexOf(":");
+            if (firstColon < 0) {
+              console.warn("无效的授权信息格式(缺少userPubkey):", authContent);
+              continue;
             }
-            //解析出userpubkey
-            const userPubkey = parts[0] || "";
-            const permission = parts[1] || "";
-            const authContentStr = authContent.substring(
-              userPubkey.length + permission.length + 2 // +2 for the colon and the next colon
-            );
+            const commentKey = authContent.substring(0, firstColon);
+            const rest = authContent.substring(firstColon + 1);
+            const secondColon = rest.indexOf(":");
+            if (secondColon < 0) {
+              console.warn("无效的授权信息格式(缺少authJSON):", authContent);
+              continue;
+            }
+            const userPubkey = rest.substring(0, secondColon);
+            const authContentStr = rest.substring(secondColon + 1);
+            if (!userPubkey) {
+              console.warn("授权信息userPubkey为空:", commentKey);
+              continue;
+            }
             //解析到ProxyCallConfig结构
             const parsed = JSON.parse(authContentStr);
             const authConfig = Array.isArray(parsed) ? parsed : (parsed?.Exp ? [parsed] : parsed);
             allAuth.push({
               UserPubkey: userPubkey,
-              permission: parseInt(permission), //转成数字
+              commentKey: commentKey,
+              permission: 1, // auth记录存在即表示有访问权限
               authConfig: authConfig,
             });
           } catch (error) {

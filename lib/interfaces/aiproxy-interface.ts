@@ -86,13 +86,12 @@ export interface IAIProxyOperations {
 
   /**
    * 获取AI代理的所有配置
-   * 包括服务与授权列表
+   * 包括服务与授权列表（始终返回前50条授权用户记录）
    * @param appId 应用ID
    * @param themeAuthor 主题作者的公钥
    * @param configTheme 配置主题
    * @param vaccount 虚拟账户(可选)
-   * @param seekKey 分页游标，可选，传入上次返回的nextSeekKey可获取下一页授权用户列表
-   * @returns [用户授权配置列表(前50条), AI代理配置列表, 授权用户总数, 下一页游标(非空表示还有更多), 错误信息]
+   * @returns [用户授权配置列表(前50条), AI代理配置列表, 授权用户总数, 下一页游标(非空时可传给 GetThemeAuthList 获取更多), 错误信息]
    */
   GetAIProxyConfig(
     appId: string,
