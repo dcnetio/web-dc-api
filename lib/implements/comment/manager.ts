@@ -303,7 +303,7 @@ export class CommentManager {
           return [null, Errors.ErrNoPeerIdIsNull];
         }
       } else {
-        const allClients = await this.dc.connectToUserAllDcPeers(this.context.publicKey.raw);
+        const allClients = await this.dc.connectToUserAllDcPeers(this.context.publicKey!.raw);
         if (allClients && allClients.length > 0) {
           clients = allClients;
         } else if (this.context.AccountBackupDc?.client) {
