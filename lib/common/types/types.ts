@@ -294,6 +294,7 @@ export interface AIProxyConfig {
   apiVersion: string; // api版本号
   modelConfig: ModelConfig; // 模型配置
   remark: string;
+  inputRequirements?: any[]; // 输入侧上传文件要求约束等
   dataFormat?: string; // 模型数据格式的key
   reqMethod?: string;
   isAsync?: boolean;
