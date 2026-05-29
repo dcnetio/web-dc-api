@@ -96,6 +96,10 @@ export interface IRenewPackageInfo {
    * 扩展空间大小（通常单位为 GB，具体以业务约定为准）。
    */
   spaceSize?: number;
+  /**
+   * 备注信息
+   */
+  remark?: string;
 }
 
 /**
@@ -202,6 +206,10 @@ export interface IPackageApplyRequest {
    * 扩展空间大小（通常用于存储类套餐）。
    */
   spaceSize?: number;
+  /**
+   * 备注信息
+   */
+  remark?: string;
 }
 
 /**

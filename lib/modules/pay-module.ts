@@ -530,6 +530,7 @@ export class PayModule implements DCModule, IPayOperations {
           createTime: String(item.createTime || ""),
           chainPkgId: Number(item.chainPkgId) || undefined,
           spaceSize: Number(item.spaceSize) || undefined,
+          remark: typeof (item as any).remark !== "undefined" ? String((item as any).remark) : undefined,
         };
       })
       .filter((item: IRenewPackageInfo) => !!item.packageId);
