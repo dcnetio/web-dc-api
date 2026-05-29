@@ -7,10 +7,7 @@ import {
   UserAIProxyAuthResult,
   UserProxyCallConfig,
 } from "../../common/types/types";
-import {
-  AIProxyUserPermission,
-  OpenFlag,
-} from "../../common/constants";
+import { AIProxyUserPermission, OpenFlag } from "../../common/constants";
 import { CommentManager } from "../comment/manager";
 import { Helia } from "helia";
 import { ChainUtil } from "../../common/chain";
@@ -41,7 +38,7 @@ export const Errors = {
   ErrChainUtilIsNull: new AIProxyError("chainUtil is null"),
   // account privatekey sign is null
   ErrAccountPrivateSignIsNull: new AIProxyError(
-    "account privatekey sign is null"
+    "account privatekey sign is null",
   ),
   // account publickey is null
   ErrAccountPublicKeyIsNull: new AIProxyError("account publickey is null"),
@@ -56,7 +53,7 @@ export class AIProxyManager {
     dc: DcUtil,
     dcNodeClient: Helia<Libp2p>,
     chainUtil: ChainUtil,
-    context: DCContext
+    context: DCContext,
   ) {
     this.dc = dc;
     this.dcNodeClient = dcNodeClient;
@@ -67,7 +64,7 @@ export class AIProxyManager {
   // 创建AI调用的Proxy配置
   async createProxyConfig(
     appId: string,
-    configTheme: string
+    configTheme: string,
   ): Promise<[number | null, Error | null]> {
     // Default group to "DCAPP" if empty
     if (appId === "") {
@@ -87,7 +84,7 @@ export class AIProxyManager {
         appId,
         configTheme,
         OpenFlag.AUTH,
-        space
+        space,
       );
       return res;
     } catch (error) {
@@ -98,7 +95,7 @@ export class AIProxyManager {
   // 删除AI调用的Proxy配置
   async deleteProxyConfig(
     appId: string,
-    configTheme: string
+    configTheme: string,
   ): Promise<[number | null, Error | null]> {
     // Default group to "DCAPP" if empty
     if (appId === "") {
@@ -126,7 +123,7 @@ export class AIProxyManager {
     configTheme: string,
     serviceName: string,
     serviceConfig?: AIProxyConfig,
-    vaccount?: string
+    vaccount?: string,
   ): Promise<[boolean | null, Error | null]> {
     if (!this.context.publicKey) {
       return [null, Errors.ErrNoDcPeerConnected];
@@ -149,7 +146,7 @@ export class AIProxyManager {
     await client.GetToken(
       this.context.appInfo.appId || "",
       this.context.publicKey.string(),
-      this.context.sign
+      this.context.sign,
     );
 
     if (client === null) {
@@ -159,7 +156,7 @@ export class AIProxyManager {
       await client.GetToken(
         this.context.appInfo.appId || "",
         this.context.publicKey.string(),
-        this.context.sign
+        this.context.sign,
       );
     }
 
@@ -179,16 +176,16 @@ export class AIProxyManager {
     const contentSize = contentUint8.length;
 
     const hValue: Uint8Array = uint32ToLittleEndianBytes(
-      blockHeight ? blockHeight : 0
+      blockHeight ? blockHeight : 0,
     );
     const themeValue: Uint8Array = new TextEncoder().encode(configTheme);
     const themeAuthorValue: Uint8Array = new TextEncoder().encode(configAuthor);
     const appIdValue: Uint8Array = new TextEncoder().encode(appId);
     const contentCidValue: Uint8Array = new TextEncoder().encode(
-      contentCidBase32
+      contentCidBase32,
     );
     const typeValue: Uint8Array = uint32ToLittleEndianBytes(
-      CommentType.KeyValue
+      CommentType.KeyValue,
     );
     const preSign = new Uint8Array([
       ...themeValue,
@@ -212,7 +209,7 @@ export class AIProxyManager {
         contentSize,
         CommentType.KeyValue,
         signature,
-        vaccount
+        vaccount,
       );
 
       if (resFlag !== 0) {
@@ -232,7 +229,7 @@ export class AIProxyManager {
     authPubkey: string,
     permission: AIProxyUserPermission,
     authConfig: ProxyCallConfig[],
-    vaccount?: string
+    vaccount?: string,
   ): Promise<[number | null, Error | null]> {
     if (!this.context.publicKey) {
       return [null, Errors.ErrAccountPublicKeyIsNull];
@@ -262,7 +259,7 @@ export class AIProxyManager {
       await client.GetToken(
         this.context.appInfo.appId || "",
         this.context.publicKey.string(),
-        this.context.sign
+        this.context.sign,
       );
     }
 
@@ -303,17 +300,17 @@ export class AIProxyManager {
 
     // Create binary representation of blockHeight (little endian)
     const hValue: Uint8Array = uint32ToLittleEndianBytes(
-      blockHeight ? blockHeight : 0
+      blockHeight ? blockHeight : 0,
     );
     // Create binary representation of type (little endian)
     const typeValue: Uint8Array = uint32ToLittleEndianBytes(
-      CommentType.Comment
+      CommentType.Comment,
     );
     // sign(Theme+appId+objAuthor+blockheight+contentCid)
     const themeValue: Uint8Array = new TextEncoder().encode(configTheme);
     const appIdValue: Uint8Array = new TextEncoder().encode(appId);
     const themeAuthorValue: Uint8Array = new TextEncoder().encode(
-      themeAuthorPubkey.string()
+      themeAuthorPubkey.string(),
     );
     const contentCidValue: Uint8Array = new TextEncoder().encode(contentCid);
     let preSign = new Uint8Array([
@@ -339,7 +336,7 @@ export class AIProxyManager {
         content,
         contentSize,
         CommentType.Comment,
-        signature
+        signature,
       );
 
       if (res !== 0) {
@@ -357,9 +354,15 @@ export class AIProxyManager {
     appId: string,
     themeAuthor: string,
     configTheme: string,
-    vaccount?: string
+    vaccount?: string,
   ): Promise<
-    [UserProxyCallConfig[] | null, AIProxyConfig[] | null, number, Uint8Array | null, Error | null]
+    [
+      UserProxyCallConfig[] | null,
+      AIProxyConfig[] | null,
+      number,
+      Uint8Array | null,
+      Error | null,
+    ]
   > {
     if (!this.context.publicKey) {
       return [null, null, 0, null, Errors.ErrAccountPublicKeyIsNull];
@@ -389,16 +392,13 @@ export class AIProxyManager {
       await client.GetToken(
         this.context.appInfo.appId || "",
         this.context.publicKey.string(),
-        this.context.sign
+        this.context.sign,
       );
     }
     try {
       const aiProxyClient = new AIProxyClient(client, this.context);
-      const [configData, userCount, nextSeekKey, error] = await aiProxyClient.GetAIProxyConfig(
-        appId,
-        themeAuthor,
-        configTheme
-      );
+      const [configData, userCount, nextSeekKey, error] =
+        await aiProxyClient.GetAIProxyConfig(appId, themeAuthor, configTheme);
       if (error) {
         return [null, null, 0, null, error];
       }
@@ -417,7 +417,7 @@ export class AIProxyManager {
   }
 
   private handleAllConfig = async (
-    fileContentString: string
+    fileContentString: string,
   ): Promise<[UserProxyCallConfig[], AIProxyConfig[]] | null> => {
     const reader = new BrowserLineReader(fileContentString);
     let allContent: Array<AIProxyConfig> = [];
@@ -466,19 +466,41 @@ export class AIProxyManager {
               console.warn("无效的授权信息格式(缺少authJSON):", authContent);
               continue;
             }
-            const userPubkey = rest.substring(0, secondColon);
+            const writerPubkey = rest.substring(0, secondColon);
             const authContentStr = rest.substring(secondColon + 1);
-            if (!userPubkey) {
+            if (!writerPubkey) {
               console.warn("授权信息userPubkey为空:", commentKey);
               continue;
             }
+            // authContentStr 格式: <authPubkey>:<permission>:<authConfigJSON>
+            const thirdColon = authContentStr.indexOf(":");
+            if (thirdColon < 0) {
+              console.warn(
+                "无效的授权信息格式(缺少permission):",
+                authContentStr,
+              );
+              continue;
+            }
+            const authPubkey = authContentStr.substring(0, thirdColon);
+            const authRest = authContentStr.substring(thirdColon + 1);
+            const fourthColon = authRest.indexOf(":");
+            if (fourthColon < 0) {
+              console.warn("无效的授权信息格式(缺少authConfigJSON):", authRest);
+              continue;
+            }
+            const permissionStr = authRest.substring(0, fourthColon);
+            const authConfigStr = authRest.substring(fourthColon + 1);
             //解析到ProxyCallConfig结构
-            const parsed = JSON.parse(authContentStr);
-            const authConfig = Array.isArray(parsed) ? parsed : (parsed?.Exp ? [parsed] : parsed);
+            const parsed = JSON.parse(authConfigStr);
+            const authConfig = Array.isArray(parsed)
+              ? parsed
+              : parsed?.Exp
+                ? [parsed]
+                : parsed;
             allAuth.push({
-              UserPubkey: userPubkey,
+              UserPubkey: authPubkey,
               commentKey: commentKey,
-              permission: 1, // auth记录存在即表示有访问权限
+              permission: parseInt(permissionStr, 10) || 1,
               authConfig: authConfig,
             });
           } catch (error) {
@@ -494,7 +516,7 @@ export class AIProxyManager {
         }
 
         const valueWithExtra = contentStr.substring(
-          (parts[0] || "").length + 1
+          (parts[0] || "").length + 1,
         );
         try {
           //解析出扩展信息(时间戳,用户公钥等)
@@ -521,7 +543,7 @@ export class AIProxyManager {
     }
     return [allAuth, allContent] as [
       Array<UserProxyCallConfig>,
-      Array<AIProxyConfig>
+      Array<AIProxyConfig>,
     ];
   };
 
@@ -539,7 +561,10 @@ export class AIProxyManager {
       return "{}";
     }
 
-    if ((text.startsWith("{") && text.endsWith("}")) || (text.startsWith("[") && text.endsWith("]"))) {
+    if (
+      (text.startsWith("{") && text.endsWith("}")) ||
+      (text.startsWith("[") && text.endsWith("]"))
+    ) {
       return text;
     }
 
@@ -561,7 +586,7 @@ export class AIProxyManager {
   async GetUserOwnAIProxyAuth(
     appId: string,
     themeAuthor: string,
-    configTheme: string
+    configTheme: string,
   ): Promise<[authConfig: ProxyCallConfig | null, error: Error | null]> {
     if (!this.context.publicKey) {
       return [null, new Error("ErrConnectToAccountPeersFail")];
@@ -592,14 +617,14 @@ export class AIProxyManager {
       await client.GetToken(
         this.context.appInfo.appId || "",
         this.context.publicKey.string(),
-        this.context.sign
+        this.context.sign,
       );
     }
     const aiProxyClient = new AIProxyClient(client, this.context);
     const [authInfo, error] = await aiProxyClient.GetUserOwnAIProxyAuth(
       appId,
       themeAuthor,
-      configTheme
+      configTheme,
     );
     if (error) {
       return [null, error];
@@ -608,7 +633,9 @@ export class AIProxyManager {
       const parsed = JSON.parse(this.extractLikelyJSON(authInfo));
       // 新格式：{ authConfig: string, usageServices?: Record<string, AIServiceUsage> }
       if (parsed && typeof parsed === "object" && "authConfig" in parsed) {
-        const innerConfig = parsed.authConfig ? JSON.parse(parsed.authConfig) : null;
+        const innerConfig = parsed.authConfig
+          ? JSON.parse(parsed.authConfig)
+          : null;
         return [innerConfig, null];
       }
       // 旧格式：直接是 ProxyCallConfig
@@ -625,8 +652,10 @@ export class AIProxyManager {
   async GetUserOwnAIProxyUsage(
     appId: string,
     themeAuthor: string,
-    configTheme: string
-  ): Promise<[usageServices: Record<string, AIServiceUsage> | null, error: Error | null]> {
+    configTheme: string,
+  ): Promise<
+    [usageServices: Record<string, AIServiceUsage> | null, error: Error | null]
+  > {
     if (!this.context.publicKey) {
       return [null, new Error("ErrConnectToAccountPeersFail")];
     }
@@ -635,7 +664,9 @@ export class AIProxyManager {
     }
 
     let clients: any[] = [];
-    const allClients = await this.dc.connectToUserAllDcPeers(this.context.publicKey.raw);
+    const allClients = await this.dc.connectToUserAllDcPeers(
+      this.context.publicKey.raw,
+    );
     if (allClients && allClients.length > 0) {
       clients = allClients;
     } else if (this.context.AccountBackupDc?.client) {
@@ -654,7 +685,7 @@ export class AIProxyManager {
           await client.GetToken(
             this.context.appInfo.appId || "",
             this.context.publicKey.string(),
-            this.context.sign
+            this.context.sign,
           );
         }
 
@@ -662,14 +693,14 @@ export class AIProxyManager {
         const [info, error] = await aiProxyClient.GetUserOwnAIProxyUsage(
           appId,
           themeAuthor,
-          configTheme
+          configTheme,
         );
-        
+
         if (error) {
           lastError = error;
           continue;
         }
-        
+
         usageInfo = info;
         break; // Stop after first successful response
       } catch (err: any) {
@@ -707,15 +738,13 @@ export class AIProxyManager {
     onStreamResponse: OnStreamResponseType | null = null,
     headers?: string,
     path?: string,
-    model?: string
+    model?: string,
   ): Promise<number> {
     if (!configTheme.startsWith("keyvalue_")) {
       configTheme = "keyvalue_" + configTheme;
     }
     const blockHeight = (await this.chainUtil.getBlockHeight()) || 0;
-    const hValue: Uint8Array = uint32ToLittleEndianBytes(
-      blockHeight || 0
-    );
+    const hValue: Uint8Array = uint32ToLittleEndianBytes(blockHeight || 0);
     const forceRefreshFlag = forceRefresh ? 1 : 0;
     const forceRefreshValue: Uint8Array =
       uint32ToLittleEndianBytes(forceRefreshFlag);
@@ -750,13 +779,13 @@ export class AIProxyManager {
       await this.context.AccountBackupDc.client.GetToken(
         this.context.appInfo.appId || "",
         this.context.publicKey.string(),
-        this.context.sign
+        this.context.sign,
       );
     }
     const signature = await this.context.sign(preSign);
     const proxyClient = new AIProxyClient(
       this.context.AccountBackupDc.client,
-      this.context
+      this.context,
     );
     let res: number;
     let callError: unknown;
@@ -774,7 +803,7 @@ export class AIProxyManager {
         forceRefreshFlag,
         blockHeight,
         signature,
-        onStreamResponse
+        onStreamResponse,
       );
     } catch (e) {
       callError = e;
@@ -785,7 +814,7 @@ export class AIProxyManager {
   }
 
   async GetUserAIProxyAuth(
-    params: GetUserAIProxyAuthParams
+    params: GetUserAIProxyAuthParams,
   ): Promise<[result: UserAIProxyAuthResult | null, error: Error | null]> {
     if (!this.context.publicKey) {
       return [null, new Error("ErrConnectToAccountPeersFail")];
@@ -797,14 +826,18 @@ export class AIProxyManager {
     let clients: any[] = [];
     if (params.themeAuthor != this.context.publicKey.string()) {
       const authorPublicKey: Ed25519PubKey = Ed25519PubKey.edPubkeyFromStr(
-        params.themeAuthor
+        params.themeAuthor,
       );
-      const allClients = await this.dc.connectToUserAllDcPeers(authorPublicKey.raw);
+      const allClients = await this.dc.connectToUserAllDcPeers(
+        authorPublicKey.raw,
+      );
       if (allClients && allClients.length > 0) {
         clients = allClients;
       }
     } else {
-      const allClients = await this.dc.connectToUserAllDcPeers(this.context.publicKey.raw);
+      const allClients = await this.dc.connectToUserAllDcPeers(
+        this.context.publicKey.raw,
+      );
       if (allClients && allClients.length > 0) {
         clients = allClients;
       } else if (this.context.AccountBackupDc?.client) {
@@ -824,11 +857,12 @@ export class AIProxyManager {
           await client.GetToken(
             this.context.appInfo.appId || "",
             this.context.publicKey.string(),
-            this.context.sign
+            this.context.sign,
           );
         }
         const aiProxyClient = new AIProxyClient(client, this.context);
-        const [authInfo, error] = await aiProxyClient.GetUserAIProxyAuth(params);
+        const [authInfo, error] =
+          await aiProxyClient.GetUserAIProxyAuth(params);
         if (error) {
           lastError = error;
           continue;
