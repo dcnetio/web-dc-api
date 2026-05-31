@@ -876,7 +876,32 @@ export class AIProxyManager {
         if (Array.isArray(parsed)) {
           return [{ authConfig: parsed as ProxyCallConfig[] }, null];
         }
-        if (!parsed.Exp) {
+        // 新格式：{ authConfig: "<rawJSON>", isAllPermission: true }
+        // dcnode GetUserAIProxyAuth 在 allflag=true 时返回此包装对象。
+        if (parsed.isAllPermission === true && typeof parsed.authConfig === "string") {
+          const innerRaw = parsed.authConfig;
+          if (!innerRaw) {
+            return [{ authConfig: [], isAllPermission: true }, null];
+          }
+          let innerCfg: ProxyCallConfig[];
+          try {
+            const inner = JSON.parse(innerRaw);
+            innerCfg = Array.isArray(inner) ? inner : [inner as ProxyCallConfig];
+          } catch {
+            innerCfg = [];
+          }
+          return [{ authConfig: innerCfg, isAllPermission: true }, null];
+        }
+        // Exp=0 表示永不过期（"all"通配权限条目或永久套餐均可能为 0），
+        // 不能用 !parsed.Exp 来判断无效；只有对象完全缺少任何配置字段时才视为无效。
+        const hasConfigFields =
+          parsed.Exp != null ||
+          parsed.services != null ||
+          parsed.Services != null ||
+          parsed.Tlim != null ||
+          parsed.Dlim != null ||
+          typeof parsed.No === "number";
+        if (!hasConfigFields) {
           return [{ authConfig: [] }, null];
         }
         return [{ authConfig: [parsed as ProxyCallConfig] }, null];

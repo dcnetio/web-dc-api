@@ -123,6 +123,8 @@ export interface AIServiceUsage {
 /** GetUserAIProxyAuth 返回值 */
 export interface UserAIProxyAuthResult {
   authConfig: ProxyCallConfig[];                   //订阅配置列表
+  /** true 表示该用户权限来自"all"通配授权而非个人套餐，计费不强制执行额度上限 */
+  isAllPermission?: boolean;
   /** @deprecated 服务端已不再返回使用统计，保留字段仅供向后兼容，值始终为 undefined */
   usageServices?: Record<string, AIServiceUsage>;
 }
