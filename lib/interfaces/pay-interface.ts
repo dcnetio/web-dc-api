@@ -453,6 +453,14 @@ export interface IPayOperations {
      * 应用ID（可选）。
      */
     dappid?: string;
+    /**
+     * 是否续费订单。
+     */
+    isRenew?: boolean;
+    /**
+     * 续费时指定的原订单 NO（仅续费时有效）。
+     */
+    oldNo?: number;
   }): Promise<string>;
 
   /**

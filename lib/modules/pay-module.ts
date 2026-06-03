@@ -402,6 +402,8 @@ export class PayModule implements DCModule, IPayOperations {
     amountCents: number;
     attach: string;
     dappid?: string;
+    isRenew?: boolean;
+    oldNo?: number;
   }): Promise<string> {
     const pkgId = Number(options.packageId || 0);
     if (!Number.isFinite(pkgId) || pkgId <= 0) {
@@ -419,6 +421,8 @@ export class PayModule implements DCModule, IPayOperations {
       timeExpire: this.buildOrderExpireTime(10),
       dappid: options.dappid || this.dcContext.appInfo.appId || "dianping",
       attach: String(options.attach || ""),
+      isRenew: options.isRenew === true,
+      oldNo: Number(options.oldNo || 0),
     });
     const requestBytes = pb.CreateOrderRequest.encode(request).finish();
     const responseBytes = await grpcClient.unaryCall("/pb.PayService/CreateOrder", requestBytes, 30000);

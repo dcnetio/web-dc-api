@@ -2014,6 +2014,12 @@ export namespace pb {
 
         /** CreateOrderRequest wechatAuthCode */
         wechatAuthCode?: (string|null);
+
+        /** CreateOrderRequest isRenew */
+        isRenew?: (boolean|null);
+
+        /** CreateOrderRequest oldNo */
+        oldNo?: (number|null);
     }
 
     /** Represents a CreateOrderRequest. */
@@ -2051,6 +2057,12 @@ export namespace pb {
 
         /** CreateOrderRequest wechatAuthCode. */
         public wechatAuthCode: string;
+
+        /** CreateOrderRequest isRenew. */
+        public isRenew: boolean;
+
+        /** CreateOrderRequest oldNo. */
+        public oldNo: number;
 
         /**
          * Creates a new CreateOrderRequest instance using the specified properties.
