@@ -850,6 +850,11 @@ export class AIProxyManager {
     }
 
     let lastError: Error | null = null;
+    // 记录 isAllPermission=true 的回退结果：某些备份节点可能尚未同步用户的个人订阅，
+    // 只有 "all" 通配权限。继续尝试其余节点，优先返回有个人订阅的节点的结果；
+    // 若所有节点均返回通配权限，才使用该回退结果。
+    let allPermFallback: UserAIProxyAuthResult | null = null;
+
     for (const client of clients) {
       if (!client.peerAddr) continue;
       try {
@@ -877,27 +882,29 @@ export class AIProxyManager {
           return [{ authConfig: parsed as ProxyCallConfig[] }, null];
         }
         // 新格式：{ authConfig: "<rawJSON>", isAllPermission: true }
-        // dcnode GetUserAIProxyAuth 在 allflag=true 时返回此包装对象。
+        // dcnode GetUserAIProxyAuth 在 allflag=true 时返回此包装对象，
+        // 说明该节点未找到用户的个人订阅，回退到 "all" 通配权限。
+        // 不能立即返回——继续尝试其余节点，有个人订阅的节点优先。
         if (parsed.isAllPermission === true && typeof parsed.authConfig === "string") {
-          const innerRaw = parsed.authConfig;
-          if (!innerRaw) {
-            return [{ authConfig: [], isAllPermission: true }, null];
+          if (allPermFallback === null) {
+            const innerRaw = parsed.authConfig;
+            let innerCfg: ProxyCallConfig[] = [];
+            if (innerRaw) {
+              try {
+                const inner = JSON.parse(innerRaw);
+                innerCfg = Array.isArray(inner) ? inner : [inner as ProxyCallConfig];
+              } catch {
+                innerCfg = [];
+              }
+            }
+            allPermFallback = { authConfig: innerCfg, isAllPermission: true };
           }
-          let innerCfg: ProxyCallConfig[];
-          try {
-            const inner = JSON.parse(innerRaw);
-            innerCfg = Array.isArray(inner) ? inner : [inner as ProxyCallConfig];
-          } catch {
-            innerCfg = [];
-          }
-          return [{ authConfig: innerCfg, isAllPermission: true }, null];
+          continue;
         }
         // Exp=0 表示永不过期（"all"通配权限条目或永久套餐均可能为 0），
         // 不能用 !parsed.Exp 来判断无效；只有对象完全缺少任何配置字段时才视为无效。
         const hasConfigFields =
           parsed.Exp != null ||
-          parsed.services != null ||
-          parsed.Services != null ||
           parsed.Tlim != null ||
           parsed.Dlim != null ||
           typeof parsed.No === "number";
@@ -908,6 +915,11 @@ export class AIProxyManager {
       } catch (e: any) {
         lastError = e instanceof Error ? e : new Error(String(e));
       }
+    }
+
+    // 所有节点均无个人订阅，使用 isAllPermission 回退结果（若有）
+    if (allPermFallback !== null) {
+      return [allPermFallback, null];
     }
 
     return [null, lastError || new Error("ErrConnectToAccountPeersFail")];

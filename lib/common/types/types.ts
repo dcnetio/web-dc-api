@@ -131,13 +131,14 @@ export interface UserAIProxyAuthResult {
 
 export interface ProxyCallConfig {
   No: number; //订阅序号,每次调用都必须在上次的基础上进行加1
-  Tlim?: number; //全局总积分限制（兼容旧格式，推荐使用 services[""]）
-  Dlim?: number; //全局日积分限制（兼容旧格式）
-  Wlim?: number; //全局周积分限制（兼容旧格式）
-  Mlim?: number; //全局月积分限制（兼容旧格式）
-  Ylim?: number; //全局年积分限制（兼容旧格式）
+  Tlim?: number; //总积分上限；0=不限
+  Dlim?: number; //日积分上限；0=不限
+  Wlim?: number; //周积分上限；0=不限
+  Mlim?: number; //月积分上限；0=不限
+  Ylim?: number; //年积分上限；0=不限
   Exp?: number; //过期区块高度
-  services?: Record<string, AIServiceLimits>; //积分桶配置，key 为 "" 表示全局积分桶
+  /** @deprecated dcnode 已改为平铺字段（Tlim/Dlim/Wlim/Mlim/Ylim），此字段不再被读取，仅保留用于兼容旧数据展示 */
+  services?: Record<string, AIServiceLimits>;
 }
 
 export interface UserProxyCallConfig {
