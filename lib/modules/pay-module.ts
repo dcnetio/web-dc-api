@@ -96,7 +96,7 @@ export class PayModule implements DCModule, IPayOperations {
     this.writeStringField(buffer, String(request.themeAppid || ""));
     this.writeStringField(buffer, String(request.serviceAppid || this.dcContext.appInfo.appId || ""));
     // Current dcapi protobuf schema does not expose replacesPkgId; keep it as 0 to match server-side decoded request.
-    this.writeInt32Field(buffer, 0);
+    this.writeInt32Field(buffer, Number(request.replacesPkgId || 0));
     this.writeInt32Field(buffer, Number(request.chainPkgId || 0));
     this.writeInt32Field(buffer, Number(request.spaceSize || 0));
     this.writeInt64Field(buffer, timestampSec);
@@ -637,6 +637,7 @@ export class PayModule implements DCModule, IPayOperations {
       themeAuthor: String(request.themeAuthor || ""),
       themeAppid: String(request.themeAppid || ""),
       serviceAppid: String(request.serviceAppid || this.dcContext.appInfo.appId || ""),
+      replacesPkgId: Number(request.replacesPkgId || 0),
       chainPkgId: Number(request.chainPkgId || 0),
       spaceSize: Number(request.spaceSize || 0),
     });
