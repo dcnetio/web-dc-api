@@ -81,6 +81,10 @@ export interface IRenewPackageInfo {
    */
   checkReason?: string;
   /**
+   * 被替换的旧套餐ID（修改套餐时使用）。
+   */
+  replacesPkgId?: number;
+  /**
    * 审核时间（服务端返回的时间字符串）。
    */
   checkTime?: string;
@@ -486,7 +490,7 @@ export interface IPayOperations {
   listRenewPackages(
     pkgType: PaymentPackageType,
     serviceAppid?: string,
-    scene?: string
+    scene?: string,
   ): Promise<IRenewPackageInfo[]>;
 
   /**
@@ -500,7 +504,7 @@ export interface IPayOperations {
     packageCode: string,
     pkgType: PaymentPackageType,
     serviceAppid?: string,
-    scene?: string
+    scene?: string,
   ): Promise<IRenewPackageInfo>;
 
   /**
@@ -510,8 +514,12 @@ export interface IPayOperations {
    * @param serviceAppid 服务应用 AppID（可选）
    * @param scene 业务场景（可选）
    */
-  getRenewalDays(packageCode: string, targetType: PaymentPackageType, serviceAppid?: string, scene?: string): Promise<number>;
-
+  getRenewalDays(
+    packageCode: string,
+    targetType: PaymentPackageType,
+    serviceAppid?: string,
+    scene?: string,
+  ): Promise<number>;
 
   /**
    * 应用开发者：申请创建/修改支付套餐（提交审核）
@@ -523,7 +531,9 @@ export interface IPayOperations {
    * 应用开发者：查询自己应用下的所有套餐配置列表（含审核状态）
    * @param filter 查询过滤条件
    */
-  getAllPackagesConfig(filter: IPackageConfigFilter): Promise<IPackageConfigListResult>;
+  getAllPackagesConfig(
+    filter: IPackageConfigFilter,
+  ): Promise<IPackageConfigListResult>;
 
   /**
    * 应用开发者：删除自己应用下的支付套餐配置
