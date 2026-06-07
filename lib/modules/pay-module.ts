@@ -640,6 +640,7 @@ export class PayModule implements DCModule, IPayOperations {
       replacesPkgId: Number(request.replacesPkgId || 0),
       chainPkgId: Number(request.chainPkgId || 0),
       spaceSize: Number(request.spaceSize || 0),
+      remark: String(request.remark || ""),
     });
 
     const requestBytes = pb.ApplyBussPackageRequest.encode(pbReq).finish();
