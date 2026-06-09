@@ -36,8 +36,8 @@ export class PayModule implements DCModule, IPayOperations {
   private getPackageMutationSignerPubkey(): string {
     const signer = String(
       this.dcContext?.publicKey?.string?.() ||
-      this.dcContext?.getPublicKey?.()?.string?.() ||
-      ""
+        this.dcContext?.getPublicKey?.()?.string?.() ||
+        "",
     ).trim();
     if (!signer) {
       throw new Error("当前账号公钥不可用，无法生成套餐变更签名");
@@ -46,7 +46,8 @@ export class PayModule implements DCModule, IPayOperations {
   }
 
   private encodeBase64Url(input: Uint8Array | string): string {
-    const bytes = typeof input === "string" ? new TextEncoder().encode(input) : input;
+    const bytes =
+      typeof input === "string" ? new TextEncoder().encode(input) : input;
     let binary = "";
     for (let i = 0; i < bytes.length; i++) {
       binary += String.fromCharCode(bytes[i]);
@@ -58,24 +59,47 @@ export class PayModule implements DCModule, IPayOperations {
   private writeStringField(buffer: number[], value: string): void {
     const bytes = new TextEncoder().encode(String(value || "").trim());
     const length = bytes.length >>> 0;
-    buffer.push(length & 0xff, (length >>> 8) & 0xff, (length >>> 16) & 0xff, (length >>> 24) & 0xff);
+    buffer.push(
+      length & 0xff,
+      (length >>> 8) & 0xff,
+      (length >>> 16) & 0xff,
+      (length >>> 24) & 0xff,
+    );
     buffer.push(...bytes);
   }
 
   private writeInt32Field(buffer: number[], value: number): void {
     const intVal = Number(value || 0) | 0;
-    buffer.push(intVal & 0xff, (intVal >>> 8) & 0xff, (intVal >>> 16) & 0xff, (intVal >>> 24) & 0xff);
+    buffer.push(
+      intVal & 0xff,
+      (intVal >>> 8) & 0xff,
+      (intVal >>> 16) & 0xff,
+      (intVal >>> 24) & 0xff,
+    );
   }
 
   private writeInt64Field(buffer: number[], value: number): void {
     const safeValue = Math.trunc(Number(value || 0));
     const low = safeValue >>> 0;
     const high = Math.floor(safeValue / 0x100000000) | 0;
-    buffer.push(low & 0xff, (low >>> 8) & 0xff, (low >>> 16) & 0xff, (low >>> 24) & 0xff);
-    buffer.push(high & 0xff, (high >>> 8) & 0xff, (high >>> 16) & 0xff, (high >>> 24) & 0xff);
+    buffer.push(
+      low & 0xff,
+      (low >>> 8) & 0xff,
+      (low >>> 16) & 0xff,
+      (low >>> 24) & 0xff,
+    );
+    buffer.push(
+      high & 0xff,
+      (high >>> 8) & 0xff,
+      (high >>> 16) & 0xff,
+      (high >>> 24) & 0xff,
+    );
   }
 
-  private buildApplyPackageSignPayload(request: IPackageApplyRequest, timestampSec: number): Uint8Array {
+  private buildApplyPackageSignPayload(
+    request: IPackageApplyRequest,
+    timestampSec: number,
+  ): Uint8Array {
     const buffer: number[] = [];
     this.writeStringField(buffer, "apply_buss_package");
     this.writeInt32Field(buffer, Number(request.pkgType || 0));
@@ -88,22 +112,31 @@ export class PayModule implements DCModule, IPayOperations {
     this.writeStringField(buffer, String(request.currency || "CNY"));
     this.writeInt32Field(buffer, Number(request.validDays || 0));
     const pkgRightsStr = request.pkgRights
-      ? (typeof request.pkgRights === "string" ? request.pkgRights : JSON.stringify(request.pkgRights))
+      ? typeof request.pkgRights === "string"
+        ? request.pkgRights
+        : JSON.stringify(request.pkgRights)
       : "";
     this.writeStringField(buffer, pkgRightsStr);
     this.writeStringField(buffer, String(request.theme || ""));
     this.writeStringField(buffer, String(request.themeAuthor || ""));
     this.writeStringField(buffer, String(request.themeAppid || ""));
-    this.writeStringField(buffer, String(request.serviceAppid || this.dcContext.appInfo.appId || ""));
+    this.writeStringField(
+      buffer,
+      String(request.serviceAppid || this.dcContext.appInfo.appId || ""),
+    );
     // Current dcapi protobuf schema does not expose replacesPkgId; keep it as 0 to match server-side decoded request.
     this.writeInt32Field(buffer, Number(request.replacesPkgId || 0));
     this.writeInt32Field(buffer, Number(request.chainPkgId || 0));
     this.writeInt32Field(buffer, Number(request.spaceSize || 0));
+    this.writeStringField(buffer, String(request.remark || ""));
     this.writeInt64Field(buffer, timestampSec);
     return new Uint8Array(buffer);
   }
 
-  private buildDeletePackageSignPayload(pkgId: number, timestampSec: number): Uint8Array {
+  private buildDeletePackageSignPayload(
+    pkgId: number,
+    timestampSec: number,
+  ): Uint8Array {
     const buffer: number[] = [];
     this.writeStringField(buffer, "delete_buss_package");
     this.writeInt32Field(buffer, pkgId);
@@ -111,7 +144,10 @@ export class PayModule implements DCModule, IPayOperations {
     return new Uint8Array(buffer);
   }
 
-  private async buildPackageMutationAuthToken(payload: Uint8Array, timestampSec: number): Promise<string> {
+  private async buildPackageMutationAuthToken(
+    payload: Uint8Array,
+    timestampSec: number,
+  ): Promise<string> {
     const signerPubkey = this.getPackageMutationSignerPubkey();
     const signature = await this.dcContext.sign(payload);
     const tokenBody = {
@@ -144,7 +180,8 @@ export class PayModule implements DCModule, IPayOperations {
     payApiBaseUrl?: string;
   }): void {
     if (options.payPeerUrl) this.payPeerUrl = options.payPeerUrl;
-    if (options.hostedPayBaseUrl) this.hostedPayBaseUrl = options.hostedPayBaseUrl;
+    if (options.hostedPayBaseUrl)
+      this.hostedPayBaseUrl = options.hostedPayBaseUrl;
     if (options.payApiBaseUrl) this.payApiBaseUrl = options.payApiBaseUrl;
   }
 
@@ -159,7 +196,9 @@ export class PayModule implements DCModule, IPayOperations {
       return this.payApiBaseUrl.replace(/\/+$/, "");
     }
     try {
-      const hosted = new URL(this.hostedPayBaseUrl || "https://bnpay.baybird.cn/pay");
+      const hosted = new URL(
+        this.hostedPayBaseUrl || "https://bnpay.baybird.cn/pay",
+      );
       return `${hosted.origin}/api/v1/wxpayments`;
     } catch {
       return "/api/v1/wxpayments";
@@ -183,7 +222,11 @@ export class PayModule implements DCModule, IPayOperations {
     }
 
     if (!response.ok) {
-      throw new Error(payload?.msg || payload?.error || `支付网关请求失败(${response.status})`);
+      throw new Error(
+        payload?.msg ||
+          payload?.error ||
+          `支付网关请求失败(${response.status})`,
+      );
     }
 
     return payload;
@@ -206,7 +249,9 @@ export class PayModule implements DCModule, IPayOperations {
     return `${year}-${month}-${day}T${hour}:${minute}:${second}${sign}${offsetHour}:${offsetMinute}`;
   }
 
-  private parseSceneFromAttach(attach: string): PaymentGatewayScene | "UNKNOWN" {
+  private parseSceneFromAttach(
+    attach: string,
+  ): PaymentGatewayScene | "UNKNOWN" {
     const normalized = String(attach || "").trim();
     if (normalized) {
       const parts = normalized.split(":");
@@ -257,7 +302,9 @@ export class PayModule implements DCModule, IPayOperations {
     if (!account) {
       return [];
     }
-    const dappid = String(options.dappid || this.dcContext.appInfo.appId || "dianping").trim();
+    const dappid = String(
+      options.dappid || this.dcContext.appInfo.appId || "dianping",
+    ).trim();
     const pageNum = Math.max(1, Number(options.pageNum || 1));
     const pageSize = Math.max(1, Math.min(100, Number(options.pageSize || 20)));
 
@@ -267,13 +314,17 @@ export class PayModule implements DCModule, IPayOperations {
     params.set("page_num", String(pageNum));
     params.set("page_size", String(pageSize));
 
-    const orderPayload = await this.requestPayApi(`/order/list?${params.toString()}`);
+    const orderPayload = await this.requestPayApi(
+      `/order/list?${params.toString()}`,
+    );
     if (Number(orderPayload?.code || 0) !== 0) {
       throw new Error(orderPayload?.msg || "订单列表查询失败");
     }
 
-    const orderList = Array.isArray(orderPayload?.data?.list) ? orderPayload.data.list : [];
-    
+    const orderList = Array.isArray(orderPayload?.data?.list)
+      ? orderPayload.data.list
+      : [];
+
     const billMap = new Map<string, any>();
     if (!options.skipBillCheck) {
       const billList = await Promise.all(
@@ -283,7 +334,9 @@ export class PayModule implements DCModule, IPayOperations {
             return null;
           }
           try {
-            const billPayload = await this.requestPayApi(`/pbill/getbytradeno?out_trade_no=${encodeURIComponent(outTradeNo)}`);
+            const billPayload = await this.requestPayApi(
+              `/pbill/getbytradeno?out_trade_no=${encodeURIComponent(outTradeNo)}`,
+            );
             if (Number(billPayload?.code || 0) !== 0) {
               return null;
             }
@@ -291,7 +344,7 @@ export class PayModule implements DCModule, IPayOperations {
           } catch {
             return null;
           }
-        })
+        }),
       );
       billList.forEach((bill: any) => {
         const outTradeNo = String(bill?.out_trade_no || "").trim();
@@ -301,8 +354,8 @@ export class PayModule implements DCModule, IPayOperations {
       });
     }
 
-    const normalizedRecords: Array<IPaymentOrderRecord | null> = orderList
-      .map((order: any) => {
+    const normalizedRecords: Array<IPaymentOrderRecord | null> = orderList.map(
+      (order: any) => {
         const outTradeNo = String(order?.out_trade_no || "").trim();
         if (!outTradeNo) return null;
 
@@ -318,7 +371,9 @@ export class PayModule implements DCModule, IPayOperations {
 
         const bill = billMap.get(outTradeNo) || {};
         const payStatus = Number(order?.pay_status || 0);
-        const tradeState = String(bill?.trade_state || "").trim().toUpperCase();
+        const tradeState = String(bill?.trade_state || "")
+          .trim()
+          .toUpperCase();
         const attach = String(reqText?.attach || "").trim();
 
         return {
@@ -326,25 +381,36 @@ export class PayModule implements DCModule, IPayOperations {
           account: String(order?.account || ""),
           dappid: String(order?.dappid || ""),
           packageId: String(order?.pkg_id || ""),
-          packageName: String(reqText?.description || `套餐#${String(order?.pkg_id || "-")}`),
-          packageCode: attach.split(":")[1] ? String(attach.split(":")[1]).trim() : String(order?.pkg_id || ""),
+          packageName: String(
+            reqText?.description || `套餐#${String(order?.pkg_id || "-")}`,
+          ),
+          packageCode: attach.split(":")[1]
+            ? String(attach.split(":")[1]).trim()
+            : String(order?.pkg_id || ""),
           amountCents: Number(order?.total || 0),
           payStatus,
           payStatusText: this.mapPayStatusText(payStatus),
           tradeState,
           tradeStateText: this.mapTradeStateText(tradeState, payStatus),
-          tradeType: String(bill?.trade_type || "").trim().toUpperCase(),
+          tradeType: String(bill?.trade_type || "")
+            .trim()
+            .toUpperCase(),
           transactionId: String(bill?.transaction_id || "").trim(),
           successTime: String(bill?.success_time || "").trim(),
           createdAt: String(order?.create_time || "").trim(),
           scene: this.parseSceneFromAttach(attach),
         } as IPaymentOrderRecord;
-      });
+      },
+    );
 
-    return normalizedRecords.filter((item): item is IPaymentOrderRecord => item !== null);
+    return normalizedRecords.filter(
+      (item): item is IPaymentOrderRecord => item !== null,
+    );
   }
 
-  private async getPayGrpcClient(authToken?: string): Promise<Libp2pGrpcClient> {
+  private async getPayGrpcClient(
+    authToken?: string,
+  ): Promise<Libp2pGrpcClient> {
     this.assertInitialized();
     if (!this.payPeerUrl) {
       throw new Error("缺少支付网关 payPeerUrl 配置");
@@ -361,11 +427,15 @@ export class PayModule implements DCModule, IPayOperations {
       libp2pNode,
       peerAddr,
       authToken || "",
-      dc_pay_protocol
+      dc_pay_protocol,
     );
   }
 
-  private async getPackagesFromPayPeer(pkgType: number, appid?: string, scene?: string): Promise<pb.PackageInfo[]> {
+  private async getPackagesFromPayPeer(
+    pkgType: number,
+    appid?: string,
+    scene?: string,
+  ): Promise<pb.PackageInfo[]> {
     const grpcClient = await this.getPayGrpcClient();
     const normalizedScene = String(scene || "").trim();
 
@@ -381,7 +451,11 @@ export class PayModule implements DCModule, IPayOperations {
 
     const request = pb.GetPackagesRequest.create(requestObj);
     const requestBytes = pb.GetPackagesRequest.encode(request).finish();
-    const responseBytes = await grpcClient.unaryCall("/pb.PayService/GetPackages", requestBytes, 30000);
+    const responseBytes = await grpcClient.unaryCall(
+      "/pb.PayService/GetPackages",
+      requestBytes,
+      30000,
+    );
     const response = pb.GetPackagesResponse.decode(responseBytes);
     const list = (response.data as pb.PackageInfo[]) || [];
     if (normalizedScene) {
@@ -425,7 +499,11 @@ export class PayModule implements DCModule, IPayOperations {
       oldNo: Number(options.oldNo || 0),
     });
     const requestBytes = pb.CreateOrderRequest.encode(request).finish();
-    const responseBytes = await grpcClient.unaryCall("/pb.PayService/CreateOrder", requestBytes, 30000);
+    const responseBytes = await grpcClient.unaryCall(
+      "/pb.PayService/CreateOrder",
+      requestBytes,
+      30000,
+    );
     const response = pb.CreateOrderResponse.decode(responseBytes);
     if (Number(response?.code || 0) !== 0) {
       throw new Error(response?.msg || "创建支付订单失败");
@@ -450,7 +528,11 @@ export class PayModule implements DCModule, IPayOperations {
     const grpcClient = await this.getPayGrpcClient();
     const request = pb.GetNativePrepayRequest.create({ outTradeNo });
     const requestBytes = pb.GetNativePrepayRequest.encode(request).finish();
-    const responseBytes = await grpcClient.unaryCall("/pb.PayService/GetNativePrepay", requestBytes, 30000);
+    const responseBytes = await grpcClient.unaryCall(
+      "/pb.PayService/GetNativePrepay",
+      requestBytes,
+      30000,
+    );
     const response = pb.GetNativePrepayResponse.decode(responseBytes);
     if (Number(response?.code || 0) !== 0) {
       throw new Error(response?.msg || "获取扫码支付二维码失败");
@@ -473,8 +555,13 @@ export class PayModule implements DCModule, IPayOperations {
     }
     const grpcClient = await this.getPayGrpcClient();
     const request = pb.GetStoragePurchaseStatusRequest.create({ outTradeNo });
-    const requestBytes = pb.GetStoragePurchaseStatusRequest.encode(request).finish();
-    const responseBytes = await grpcClient.unaryCall("/pb.PayService/GetStoragePurchaseStatus", requestBytes, 30000);
+    const requestBytes =
+      pb.GetStoragePurchaseStatusRequest.encode(request).finish();
+    const responseBytes = await grpcClient.unaryCall(
+      "/pb.PayService/GetStoragePurchaseStatus",
+      requestBytes,
+      30000,
+    );
     const response = pb.GetStoragePurchaseStatusResponse.decode(responseBytes);
     if (Number(response?.code || 0) !== 0) {
       throw new Error(response?.msg || "支付结果查询失败");
@@ -499,20 +586,21 @@ export class PayModule implements DCModule, IPayOperations {
         const packageCode = String(item.pkgId || "");
         const rights = parseRights(String((item as any).pkgRights || ""));
         const aiAppid = String(
-          rights.appid || rights.ai_appid || item.serviceAppid || ""
+          rights.appid || rights.ai_appid || item.serviceAppid || "",
         ).trim();
         const aiAuthor = String(
-          rights.author || rights.theme_author || rights.ai_author || ""
+          rights.author || rights.theme_author || rights.ai_author || "",
         ).trim();
         const aiTheme = String(
-          rights.theme || rights.ai_theme || item.theme || ""
+          rights.theme || rights.ai_theme || item.theme || "",
         ).trim();
         const aiModel = String(
-          rights.model || rights.ai_model || rights.model_name || ""
+          rights.model || rights.ai_model || rights.model_name || "",
         ).trim();
 
         return {
           packageId,
+          replacesPkgId: item.replacesPkgId || undefined,
           packageCode,
           pkgType: Number(item.pkgType || 0) || undefined,
           displayName: String(item.pkgName || packageCode || packageId || ""),
@@ -534,7 +622,10 @@ export class PayModule implements DCModule, IPayOperations {
           createTime: String(item.createTime || ""),
           chainPkgId: Number(item.chainPkgId) || undefined,
           spaceSize: Number(item.spaceSize) || undefined,
-          remark: typeof (item as any).remark !== "undefined" ? String((item as any).remark) : undefined,
+          remark:
+            typeof (item as any).remark !== "undefined"
+              ? String((item as any).remark)
+              : undefined,
         };
       })
       .filter((item: IRenewPackageInfo) => !!item.packageId);
@@ -549,11 +640,15 @@ export class PayModule implements DCModule, IPayOperations {
   async listRenewPackages(
     pkgType: PaymentPackageType,
     serviceAppid?: string,
-    scene?: string
+    scene?: string,
   ): Promise<IRenewPackageInfo[]> {
-    const list = await this.getPackagesFromPayPeer(pkgType, serviceAppid, scene);
+    const list = await this.getPackagesFromPayPeer(
+      pkgType,
+      serviceAppid,
+      scene,
+    );
     let normalized = this.normalizePackages(list);
-    
+
     if (serviceAppid) {
       normalized = normalized.filter((item: IRenewPackageInfo) => {
         const fromPackage = String(item.serviceAppid || "").trim();
@@ -570,7 +665,12 @@ export class PayModule implements DCModule, IPayOperations {
    * @param serviceAppid 服务应用 AppID（可选）
    * @param scene 业务场景（可选）
    */
-  async getRenewalDays(packageCode: string, targetType: PaymentPackageType, serviceAppid?: string, scene?: string): Promise<number> {
+  async getRenewalDays(
+    packageCode: string,
+    targetType: PaymentPackageType,
+    serviceAppid?: string,
+    scene?: string,
+  ): Promise<number> {
     const list = await this.listRenewPackages(targetType, serviceAppid, scene);
     const target = list.find((item) => item.packageCode === packageCode);
     const days = Number(target?.durationDays || 0);
@@ -579,7 +679,6 @@ export class PayModule implements DCModule, IPayOperations {
     }
     return days;
   }
-
 
   /**
    * 按编码获取指定套餐信息。
@@ -592,7 +691,7 @@ export class PayModule implements DCModule, IPayOperations {
     packageCode: string,
     pkgType: PaymentPackageType,
     serviceAppid?: string,
-    scene?: string
+    scene?: string,
   ): Promise<IRenewPackageInfo> {
     if (!packageCode) {
       throw new Error("缺少支付套餐信息，请重试");
@@ -611,15 +710,22 @@ export class PayModule implements DCModule, IPayOperations {
    */
   async applyBusinessPackage(request: IPackageApplyRequest): Promise<boolean> {
     const timestampSec = Math.floor(Date.now() / 1000);
-    const signPayload = this.buildApplyPackageSignPayload(request, timestampSec);
-    const authToken = await this.buildPackageMutationAuthToken(signPayload, timestampSec);
+    const signPayload = this.buildApplyPackageSignPayload(
+      request,
+      timestampSec,
+    );
+    const authToken = await this.buildPackageMutationAuthToken(
+      signPayload,
+      timestampSec,
+    );
     const grpcClient = await this.getPayGrpcClient(authToken);
-    
+
     let pkgRightsStr = "";
     if (request.pkgRights) {
-      pkgRightsStr = typeof request.pkgRights === "string" 
-        ? request.pkgRights 
-        : JSON.stringify(request.pkgRights);
+      pkgRightsStr =
+        typeof request.pkgRights === "string"
+          ? request.pkgRights
+          : JSON.stringify(request.pkgRights);
     }
 
     const pbReq = pb.ApplyBussPackageRequest.create({
@@ -636,7 +742,9 @@ export class PayModule implements DCModule, IPayOperations {
       theme: String(request.theme || ""),
       themeAuthor: String(request.themeAuthor || ""),
       themeAppid: String(request.themeAppid || ""),
-      serviceAppid: String(request.serviceAppid || this.dcContext.appInfo.appId || ""),
+      serviceAppid: String(
+        request.serviceAppid || this.dcContext.appInfo.appId || "",
+      ),
       replacesPkgId: Number(request.replacesPkgId || 0),
       chainPkgId: Number(request.chainPkgId || 0),
       spaceSize: Number(request.spaceSize || 0),
@@ -644,9 +752,13 @@ export class PayModule implements DCModule, IPayOperations {
     });
 
     const requestBytes = pb.ApplyBussPackageRequest.encode(pbReq).finish();
-    const responseBytes = await grpcClient.unaryCall("/pb.PayService/ApplyBussPackage", requestBytes, 30000);
+    const responseBytes = await grpcClient.unaryCall(
+      "/pb.PayService/ApplyBussPackage",
+      requestBytes,
+      30000,
+    );
     const response = pb.ApplyBussPackageResponse.decode(responseBytes);
-    
+
     if (Number(response?.code || 0) !== 0) {
       throw new Error(response?.msg || "申请业务套餐配置失败");
     }
@@ -657,7 +769,9 @@ export class PayModule implements DCModule, IPayOperations {
    * 应用开发者：查询自己应用下的所有套餐配置列表（含审核状态）。
    * @param filter 查询过滤条件
    */
-  async getAllPackagesConfig(filter: IPackageConfigFilter): Promise<IPackageConfigListResult> {
+  async getAllPackagesConfig(
+    filter: IPackageConfigFilter,
+  ): Promise<IPackageConfigListResult> {
     const grpcClient = await this.getPayGrpcClient();
     const pbReq = pb.GetAllPackagesConfigRequest.create({
       pageNum: filter.pageNum || 1,
@@ -668,9 +782,13 @@ export class PayModule implements DCModule, IPayOperations {
     });
 
     const requestBytes = pb.GetAllPackagesConfigRequest.encode(pbReq).finish();
-    const responseBytes = await grpcClient.unaryCall("/pb.PayService/GetAllPackagesConfig", requestBytes, 30000);
+    const responseBytes = await grpcClient.unaryCall(
+      "/pb.PayService/GetAllPackagesConfig",
+      requestBytes,
+      30000,
+    );
     const response = pb.GetAllPackagesConfigResponse.decode(responseBytes);
-    
+
     if (Number(response?.code || 0) !== 0) {
       throw new Error(response?.msg || "获取套餐配置列表失败");
     }
@@ -702,14 +820,21 @@ export class PayModule implements DCModule, IPayOperations {
 
     const timestampSec = Math.floor(Date.now() / 1000);
     const signPayload = this.buildDeletePackageSignPayload(pkgId, timestampSec);
-    const authToken = await this.buildPackageMutationAuthToken(signPayload, timestampSec);
+    const authToken = await this.buildPackageMutationAuthToken(
+      signPayload,
+      timestampSec,
+    );
     const grpcClient = await this.getPayGrpcClient(authToken);
 
     const pbReq = pb.PackageInfo.create({
       pkgId,
     });
     const requestBytes = pb.PackageInfo.encode(pbReq).finish();
-    const responseBytes = await grpcClient.unaryCall("/pb.PayService/DeleteBussPackage", requestBytes, 30000);
+    const responseBytes = await grpcClient.unaryCall(
+      "/pb.PayService/DeleteBussPackage",
+      requestBytes,
+      30000,
+    );
     const response = pb.ApplyBussPackageResponse.decode(responseBytes);
 
     if (Number(response?.code || 0) !== 0) {
@@ -801,7 +926,10 @@ export class PayModule implements DCModule, IPayOperations {
     target.searchParams.set("amount", String(options.amountCents || 0));
     target.searchParams.set("return_url", options.returnUrl || "");
     target.searchParams.set("title", options.title || options.packageName);
-    target.searchParams.set("description", options.packageName || options.title || "-");
+    target.searchParams.set(
+      "description",
+      options.packageName || options.title || "-",
+    );
     if (options.attach) {
       target.searchParams.set("attach", String(options.attach));
     }
