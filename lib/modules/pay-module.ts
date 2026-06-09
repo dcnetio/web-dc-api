@@ -600,7 +600,7 @@ export class PayModule implements DCModule, IPayOperations {
 
         return {
           packageId,
-          replacePkgId: item.replacesPkgId || undefined,
+          replacesPkgId: item.replacesPkgId || undefined,
           packageCode,
           pkgType: Number(item.pkgType || 0) || undefined,
           displayName: String(item.pkgName || packageCode || packageId || ""),
