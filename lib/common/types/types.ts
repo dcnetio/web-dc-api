@@ -137,6 +137,8 @@ export interface ProxyCallConfig {
   Mlim?: number; //月积分上限；0=不限
   Ylim?: number; //年积分上限；0=不限
   Exp?: number; //过期区块高度
+  Start?: number; //生效区块高度
+  Remark?: string; //备注信息,业务方自定义
   /** @deprecated dcnode 已改为平铺字段（Tlim/Dlim/Wlim/Mlim/Ylim），此字段不再被读取，仅保留用于兼容旧数据展示 */
   services?: Record<string, AIServiceLimits>;
 }
