@@ -15,9 +15,9 @@ import {
   IPackageConfigFilter,
   IPackageConfigListResult,
 } from "../interfaces/pay-interface";
+import { payProtocol } from "@/common/define";
 
 const logger = createLogger("PayModule");
-const dc_pay_protocol = "/dc/pay/1.0.0";
 const packageMutationTokenPrefix = "pkgsig.";
 
 export class PayModule implements DCModule, IPayOperations {
@@ -427,7 +427,7 @@ export class PayModule implements DCModule, IPayOperations {
       libp2pNode,
       peerAddr,
       authToken || "",
-      dc_pay_protocol,
+      payProtocol,
     );
   }
 

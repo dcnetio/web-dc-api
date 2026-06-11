@@ -1,4 +1,5 @@
 {
   "baseUrl": "",
-  "walletOrigin": "https://localhost.baybird.cn:3001"
+  "walletOrigin": "https://localhost.baybird.cn:3001",
+  "payProtocol": "/dc/pay/1.0.0"
 }

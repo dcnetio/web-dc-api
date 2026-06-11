@@ -39,7 +39,9 @@ declare global {
     at(index: number): string | undefined;
     replaceAll(
       searchValue: string | RegExp,
-      replaceValue: string | ((substring: string, ...args: unknown[]) => string),
+      replaceValue:
+        | string
+        | ((substring: string, ...args: unknown[]) => string),
     ): string;
   }
 
@@ -59,8 +61,8 @@ declare global {
   function queueMicrotask(callback: () => void): void;
 }
 
-if (typeof Promise !== 'undefined' && !Promise.withResolvers) {
-  Promise.withResolvers = function<T = any>() {
+if (typeof Promise !== "undefined" && !Promise.withResolvers) {
+  Promise.withResolvers = function <T = any>() {
     let resolve!: (value: T | PromiseLike<T>) => void;
     let reject!: (reason?: any) => void;
     const promise = new Promise<T>((res, rej) => {
@@ -71,37 +73,42 @@ if (typeof Promise !== 'undefined' && !Promise.withResolvers) {
   };
 }
 
-if (typeof AggregateError === 'undefined') {
+if (typeof AggregateError === "undefined") {
   class AggregateErrorPolyfill extends Error {
     errors: any[];
 
     constructor(errors: unknown[], message?: string) {
-      super(message ?? 'AggregateError');
-      this.name = 'AggregateError';
+      super(message ?? "AggregateError");
+      this.name = "AggregateError";
       this.errors = errors;
     }
   }
 
-  (globalThis as unknown as { AggregateError: typeof AggregateErrorPolyfill }).AggregateError =
-    AggregateErrorPolyfill;
+  (
+    globalThis as unknown as { AggregateError: typeof AggregateErrorPolyfill }
+  ).AggregateError = AggregateErrorPolyfill;
 }
 
-if (typeof Promise !== 'undefined' && !Promise.allSettled) {
+if (typeof Promise !== "undefined" && !Promise.allSettled) {
   Promise.allSettled = function <T>(
     values: Iterable<T | PromiseLike<T>>,
   ): Promise<Array<PromiseSettledResult<T>>> {
     return Promise.all(
       Array.from(values).map((value) =>
         Promise.resolve(value).then(
-          (result) => ({ status: 'fulfilled', value: result }) as PromiseFulfilledResult<T>,
-          (reason) => ({ status: 'rejected', reason }) as PromiseRejectedResult,
+          (result) =>
+            ({
+              status: "fulfilled",
+              value: result,
+            }) as PromiseFulfilledResult<T>,
+          (reason) => ({ status: "rejected", reason }) as PromiseRejectedResult,
         ),
       ),
     );
   };
 }
 
-if (typeof Promise !== 'undefined' && !Promise.any) {
+if (typeof Promise !== "undefined" && !Promise.any) {
   Promise.any = function <T>(values: Iterable<T | PromiseLike<T>>): Promise<T> {
     return new Promise<T>((resolve, reject) => {
       const errors: unknown[] = [];
@@ -122,20 +129,23 @@ if (typeof Promise !== 'undefined' && !Promise.any) {
             errors.push(reason);
             pending -= 1;
             if (pending === 0 && !settled) {
-              reject(new AggregateError(errors, 'All promises were rejected'));
+              reject(new AggregateError(errors, "All promises were rejected"));
             }
           },
         );
       }
 
       if (pending === 0) {
-        reject(new AggregateError([], 'All promises were rejected'));
+        reject(new AggregateError([], "All promises were rejected"));
       }
     });
   };
 }
 
-if (typeof AbortSignal !== 'undefined' && !AbortSignal.prototype.throwIfAborted) {
+if (
+  typeof AbortSignal !== "undefined" &&
+  !AbortSignal.prototype.throwIfAborted
+) {
   AbortSignal.prototype.throwIfAborted = function () {
     if (!this.aborted) {
       return;
@@ -146,24 +156,24 @@ if (typeof AbortSignal !== 'undefined' && !AbortSignal.prototype.throwIfAborted)
       throw reason;
     }
 
-    if (typeof DOMException !== 'undefined') {
-      throw new DOMException('Aborted', 'AbortError');
+    if (typeof DOMException !== "undefined") {
+      throw new DOMException("Aborted", "AbortError");
     }
 
-    throw new Error('Aborted');
+    throw new Error("Aborted");
   };
 }
 
 if (
-  typeof AbortSignal !== 'undefined' &&
-  typeof AbortController !== 'undefined' &&
+  typeof AbortSignal !== "undefined" &&
+  typeof AbortController !== "undefined" &&
   !AbortSignal.timeout
 ) {
   AbortSignal.timeout = function (milliseconds: number): AbortSignal {
     const controller = new AbortController();
     const timerId = setTimeout(() => {
       try {
-        controller.abort(new DOMException('Aborted', 'AbortError'));
+        controller.abort(new DOMException("Aborted", "AbortError"));
       } catch {
         controller.abort();
       }
@@ -171,7 +181,7 @@ if (
 
     if (!controller.signal.aborted) {
       controller.signal.addEventListener(
-        'abort',
+        "abort",
         () => {
           clearTimeout(timerId);
         },
@@ -215,10 +225,12 @@ if (!arrayProto.findLast) {
     thisArg?: unknown,
   ): T | undefined {
     if (this == null) {
-      throw new TypeError('Array.prototype.findLast called on null or undefined');
+      throw new TypeError(
+        "Array.prototype.findLast called on null or undefined",
+      );
     }
-    if (typeof predicate !== 'function') {
-      throw new TypeError('predicate must be a function');
+    if (typeof predicate !== "function") {
+      throw new TypeError("predicate must be a function");
     }
 
     for (let i = this.length - 1; i >= 0; i -= 1) {
@@ -234,7 +246,7 @@ if (!arrayProto.findLast) {
 if (!arrayProto.at) {
   arrayProto.at = function <T>(this: T[], index: number): T | undefined {
     if (this == null) {
-      throw new TypeError('Array.prototype.at called on null or undefined');
+      throw new TypeError("Array.prototype.at called on null or undefined");
     }
     const len = this.length;
     let relativeIndex = Math.trunc(index) || 0;
@@ -255,10 +267,12 @@ if (!arrayProto.findLastIndex) {
     thisArg?: unknown,
   ): number {
     if (this == null) {
-      throw new TypeError('Array.prototype.findLastIndex called on null or undefined');
+      throw new TypeError(
+        "Array.prototype.findLastIndex called on null or undefined",
+      );
     }
-    if (typeof predicate !== 'function') {
-      throw new TypeError('predicate must be a function');
+    if (typeof predicate !== "function") {
+      throw new TypeError("predicate must be a function");
     }
 
     for (let i = this.length - 1; i >= 0; i -= 1) {
@@ -276,7 +290,9 @@ if (!arrayProto.toSorted) {
     compareFn?: (a: T, b: T) => number,
   ): T[] {
     if (this == null) {
-      throw new TypeError('Array.prototype.toSorted called on null or undefined');
+      throw new TypeError(
+        "Array.prototype.toSorted called on null or undefined",
+      );
     }
     const copy = this.slice();
     return compareFn ? copy.sort(compareFn) : copy.sort();
@@ -286,7 +302,9 @@ if (!arrayProto.toSorted) {
 if (!arrayProto.toReversed) {
   arrayProto.toReversed = function <T>(this: T[]): T[] {
     if (this == null) {
-      throw new TypeError('Array.prototype.toReversed called on null or undefined');
+      throw new TypeError(
+        "Array.prototype.toReversed called on null or undefined",
+      );
     }
     return this.slice().reverse();
   };
@@ -300,7 +318,9 @@ if (!arrayProto.toSpliced) {
     ...items: T[]
   ): T[] {
     if (this == null) {
-      throw new TypeError('Array.prototype.toSpliced called on null or undefined');
+      throw new TypeError(
+        "Array.prototype.toSpliced called on null or undefined",
+      );
     }
     const copy = this.slice();
     if (deleteCount === undefined) {
@@ -315,12 +335,12 @@ if (!arrayProto.toSpliced) {
 if (!arrayProto.with) {
   arrayProto.with = function <T>(this: T[], index: number, value: T): T[] {
     if (this == null) {
-      throw new TypeError('Array.prototype.with called on null or undefined');
+      throw new TypeError("Array.prototype.with called on null or undefined");
     }
     const len = this.length;
     const actualIndex = index < 0 ? len + index : index;
     if (actualIndex < 0 || actualIndex >= len) {
-      throw new RangeError('Invalid index');
+      throw new RangeError("Invalid index");
     }
     const copy = this.slice();
     copy[actualIndex] = value;
@@ -331,7 +351,7 @@ if (!arrayProto.with) {
 if (!String.prototype.at) {
   String.prototype.at = function (index: number): string | undefined {
     if (this == null) {
-      throw new TypeError('String.prototype.at called on null or undefined');
+      throw new TypeError("String.prototype.at called on null or undefined");
     }
     const str = String(this);
     const len = str.length;
@@ -352,35 +372,39 @@ if (!String.prototype.replaceAll) {
     replaceValue: string | ((substring: string, ...args: unknown[]) => string),
   ): string {
     if (this == null) {
-      throw new TypeError('String.prototype.replaceAll called on null or undefined');
+      throw new TypeError(
+        "String.prototype.replaceAll called on null or undefined",
+      );
     }
     const str = String(this);
 
     if (searchValue instanceof RegExp) {
       if (!searchValue.global) {
-        throw new TypeError('String.prototype.replaceAll called with a non-global RegExp');
+        throw new TypeError(
+          "String.prototype.replaceAll called with a non-global RegExp",
+        );
       }
       return str.replace(searchValue, replaceValue as string);
     }
 
-    const escaped = String(searchValue).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    return str.replace(new RegExp(escaped, 'g'), replaceValue as string);
+    const escaped = String(searchValue).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    return str.replace(new RegExp(escaped, "g"), replaceValue as string);
   };
 }
 
 if (!Object.hasOwn) {
   Object.hasOwn = function (instance: object, prop: PropertyKey): boolean {
     if (instance == null) {
-      throw new TypeError('Object.hasOwn called on null or undefined');
+      throw new TypeError("Object.hasOwn called on null or undefined");
     }
     return Object.prototype.hasOwnProperty.call(Object(instance), prop);
   };
 }
 
-if (typeof queueMicrotask !== 'function') {
-  (globalThis as unknown as { queueMicrotask: (callback: () => void) => void }).queueMicrotask = (
-    callback,
-  ) => {
+if (typeof queueMicrotask !== "function") {
+  (
+    globalThis as unknown as { queueMicrotask: (callback: () => void) => void }
+  ).queueMicrotask = (callback) => {
     Promise.resolve()
       .then(callback)
       .catch((error) => {
@@ -390,31 +414,40 @@ if (typeof queueMicrotask !== 'function') {
       });
   };
 }
-export { DC } from './dc';
-export {BaseEntity} from './serverless/base_entity';
-export { EntityRepository,type FindIndexOptions, type FindValuesOptions,composeCompositeIndexValue} from './serverless/base_repository';
-export * from './serverless/decorator_factory';
+export { DC } from "./dc";
+export { pb } from "./proto/pay_server_proto";
+export { BaseEntity } from "./serverless/base_entity";
+export {
+  EntityRepository,
+  type FindIndexOptions,
+  type FindValuesOptions,
+  composeCompositeIndexValue,
+} from "./serverless/base_repository";
+export * from "./serverless/decorator_factory";
 // export * from './serverless/browser_schema_extractor'; // 文件不存在，已注释
-export { registerServiceWorker, isServiceWorkerActive, updateServiceWorker } from './common/service-worker';
-export * from './common/types/types';
-export * from './interfaces';
-export * from './common/define';
-export { ThemePermission, QWEN_VOICE_OPTIONS } from './common/constants';
-export {KeyValueDB} from './implements/keyvalue/manager';
+export {
+  registerServiceWorker,
+  isServiceWorkerActive,
+  updateServiceWorker,
+} from "./common/service-worker";
+export * from "./common/types/types";
+export * from "./interfaces";
+export * from "./common/define";
+export { ThemePermission, QWEN_VOICE_OPTIONS } from "./common/constants";
+export { KeyValueDB } from "./implements/keyvalue/manager";
 
 // 导出模块系统
-export { ModuleSystem, CoreModuleName } from './common/module-system';
-export type { DCModule } from './common/module-system';
- 
+export { ModuleSystem, CoreModuleName } from "./common/module-system";
+export type { DCModule } from "./common/module-system";
 
 // 导出核心模块
-export * from './modules';
+export * from "./modules";
 
 // 导出工具类
-export { createLogger, configureLogger, LogLevel } from './util/logger';
+export { createLogger, configureLogger, LogLevel } from "./util/logger";
 
 // 导出keyManager
-export { KeyManager } from './common/dc-key/keyManager';
+export { KeyManager } from "./common/dc-key/keyManager";
 export {
   AIProxyRealtimeVoiceSession,
   createAliyunRealtimeVoiceProtocolAdapter,
@@ -424,15 +457,13 @@ export {
   createWechatMiniProgramRealtimeSocketFactory,
   createWechatMiniProgramVoiceInputAdapter,
   resolveRealtimeVoiceRuntime,
-} from './implements/aiproxy/realtime-voice-session';
+} from "./implements/aiproxy/realtime-voice-session";
 
 // 导出Worker辅助函数
-export { exposeDC, wrapWorker } from './worker';
+export { exposeDC, wrapWorker } from "./worker";
 
 // 导出私钥
-export { Ed25519PrivKey, Ed25519PubKey } from './common/dc-key/ed25519';
+export { Ed25519PrivKey, Ed25519PubKey } from "./common/dc-key/ed25519";
 
 // 导出错误类型
-export { Errors } from './common/error';
-
-
+export { Errors } from "./common/error";
