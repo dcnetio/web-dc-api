@@ -108,21 +108,21 @@ export interface AIServiceLimits {
 
 /** 单个服务的使用统计（只读，来自服务端 usageServices 字段） */
 export interface AIServiceUsage {
-  used?: number;     //总累计消耗积分
-  dayused?: number;  //当日消耗积分
+  used?: number; //总累计消耗积分
+  dayused?: number; //当日消耗积分
   weekused?: number; //本周消耗积分
-  monthused?: number;//本月消耗积分
+  monthused?: number; //本月消耗积分
   yearused?: number; //本年消耗积分
-  tlim?: number;     //总积分上限（全局桶用）
-  dlim?: number;     //日积分上限（全局桶用）
-  wlim?: number;     //周积分上限（全局桶用）
-  mlim?: number;     //月积分上限（全局桶用）
-  ylim?: number;     //年积分上限（全局桶用）
+  tlim?: number; //总积分上限（全局桶用）
+  dlim?: number; //日积分上限（全局桶用）
+  wlim?: number; //周积分上限（全局桶用）
+  mlim?: number; //月积分上限（全局桶用）
+  ylim?: number; //年积分上限（全局桶用）
 }
 
 /** GetUserAIProxyAuth 返回值 */
 export interface UserAIProxyAuthResult {
-  authConfig: ProxyCallConfig[];                   //订阅配置列表
+  authConfig: ProxyCallConfig[]; //订阅配置列表
   /** true 表示该用户权限来自"all"通配授权而非个人套餐，计费不强制执行额度上限 */
   isAllPermission?: boolean;
   /** @deprecated 服务端已不再返回使用统计，保留字段仅供向后兼容，值始终为 undefined */
@@ -139,8 +139,8 @@ export interface ProxyCallConfig {
   Exp?: number; //过期区块高度
   Start?: number; //生效区块高度
   Remark?: string; //备注信息,业务方自定义
-  /** @deprecated dcnode 已改为平铺字段（Tlim/Dlim/Wlim/Mlim/Ylim），此字段不再被读取，仅保留用于兼容旧数据展示 */
-  services?: Record<string, AIServiceLimits>;
+  /**存储服务的访问次数 dcnode 已改为平铺字段（Tlim/Dlim/Wlim/Mlim/Ylim），此字段不再被读取，仅保留用于兼容旧数据展示 */
+  // services?: Record<string, AIServiceLimits>;
 }
 
 export interface UserProxyCallConfig {
@@ -214,7 +214,21 @@ export interface AIProxyRealtimeConfig {
 // 动态签名相关接口定义
 export interface AIProxySignatureNodeInjectTimestamp {
   key: string;
-  format: 'unix_s' | 'unix_ms' | 'unix' | 'unix_us' | 'unix_ns' | 'iso8601' | 'iso8601_nano' | 'rfc3339' | 'rfc1123' | 'rfc822' | 'datetime' | 'compact' | 'date' | string; // 时间戳格式
+  format:
+    | "unix_s"
+    | "unix_ms"
+    | "unix"
+    | "unix_us"
+    | "unix_ns"
+    | "iso8601"
+    | "iso8601_nano"
+    | "rfc3339"
+    | "rfc1123"
+    | "rfc822"
+    | "datetime"
+    | "compact"
+    | "date"
+    | string; // 时间戳格式
   offset?: number; // 时间戳偏移量（单位：秒）
 }
 
@@ -237,29 +251,42 @@ export interface AIProxySignatureIncludes {
 }
 
 export interface AIProxySignatureAssembler {
-  sort: 'ascii_key_asc' | 'ascii_key_desc' | 'none'; // 参数排序方式
-  format: 'url_query' | 'json' | 'json_pretty' | 'kv_concat' | 'kv_lines' | 'xml' | 'custom_delimiter' | 'pattern'; // 参数拼装格式
-  encoding?: 'query_escape_plus' | 'percent_encode' | 'rfc3986' | 'raw'; // 参数编码策略
+  sort: "ascii_key_asc" | "ascii_key_desc" | "none"; // 参数排序方式
+  format:
+    | "url_query"
+    | "json"
+    | "json_pretty"
+    | "kv_concat"
+    | "kv_lines"
+    | "xml"
+    | "custom_delimiter"
+    | "pattern"; // 参数拼装格式
+  encoding?: "query_escape_plus" | "percent_encode" | "rfc3986" | "raw"; // 参数编码策略
   delimiter?: string; // 项与项的分隔符，用于 custom_delimiter 模式
   kvDelimiter?: string; // 键值的分隔符，用于 custom_delimiter 模式
   pattern?: string; // 拼接模板，用于 pattern 模式 (如 "{appId}{secret}{timestamp}")
 }
 
 export interface AIProxySignatureSecretUsage {
-  type: 'hmac_key' | 'append_to_string' | 'prepend_to_string' | 'pattern_inject' | 'none'; // 秘钥使用方式
+  type:
+    | "hmac_key"
+    | "append_to_string"
+    | "prepend_to_string"
+    | "pattern_inject"
+    | "none"; // 秘钥使用方式
   keyName?: string; // 用于拼接模式下的Key名称
 }
 
 export interface AIProxySignatureOutput {
-  target: 'header' | 'query' | 'body'; // 签名输出位置
+  target: "header" | "query" | "body"; // 签名输出位置
   key: string; // 输出字段名, 如 "Authorization", "X-Sign"
   prefix?: string; // 前缀, 如 "Signature ", "Bearer "
-  encoding: 'hex' | 'hex_with_0x' | 'base64' | 'base64url'; // 签名编码方式
+  encoding: "hex" | "hex_with_0x" | "base64" | "base64url"; // 签名编码方式
 }
 
 export interface AIProxySignatureConfig {
-  template?: 'tencent_tc3' | 'aliyun' | 'aliyun_concat' | string; // 云厂商签名模板
-  algorithm: 'HMAC-SHA256' | 'HMAC-SHA1' | 'MD5' | 'RSA-SHA256' | 'SHA256'; // 签名算法
+  template?: "tencent_tc3" | "aliyun" | "aliyun_concat" | string; // 云厂商签名模板
+  algorithm: "HMAC-SHA256" | "HMAC-SHA1" | "MD5" | "RSA-SHA256" | "SHA256"; // 签名算法
   includes?: AIProxySignatureIncludes; // 参与签名的参数收集规则
   assembler?: AIProxySignatureAssembler; // 参数装配与排序规则
   secretUsage?: AIProxySignatureSecretUsage; // 秘钥使用方式
@@ -269,7 +296,7 @@ export interface AIProxySignatureConfig {
 export enum AIModelType {
   ModelType_AI = 0,
   ModelType_MCPServer = 1,
-  ModelType_SubTheme = 2
+  ModelType_SubTheme = 2,
 }
 
 /**
@@ -277,16 +304,16 @@ export enum AIModelType {
  */
 export interface CostRuleConfig {
   type: "lookup" | "linear" | "lookup_x_linear";
-  field: string;            // 主字段路径（"." 分隔多级）；后计费时从响应体取（除非配置了 responseField）
-  durationField?: string;   // lookup_x_linear：时长字段路径，单位秒
+  field: string; // 主字段路径（"." 分隔多级）；后计费时从响应体取（除非配置了 responseField）
+  durationField?: string; // lookup_x_linear：时长字段路径，单位秒
   table?: Record<string, number>; // lookup / lookup_x_linear：字段值 → 积分(每秒单价) 映射
-  defaultCost?: number;     // 查表未命中时兜底积分/单价
-  rate?: number;            // linear：每单位对应积分数
-  min?: number;             // 结果最小积分（0 不限）
-  max?: number;             // 结果最大积分（0 不限）
-  postPaid?: boolean;       // true=后计费：请求时不扣费，响应返回后从响应体提取字段计算并扣除
-  responseField?: string;   // 后计费模式下响应体中的计费字段路径；为空则复用 field
-  minBalance?: number;      // 后计费模式下调用前要求用户剩余积分不低于此值；0 或未配置表示不检查
+  defaultCost?: number; // 查表未命中时兜底积分/单价
+  rate?: number; // linear：每单位对应积分数
+  min?: number; // 结果最小积分（0 不限）
+  max?: number; // 结果最大积分（0 不限）
+  postPaid?: boolean; // true=后计费：请求时不扣费，响应返回后从响应体提取字段计算并扣除
+  responseField?: string; // 后计费模式下响应体中的计费字段路径；为空则复用 field
+  minBalance?: number; // 后计费模式下调用前要求用户剩余积分不低于此值；0 或未配置表示不检查
 }
 
 export interface AIProxyConfig {
@@ -600,9 +627,7 @@ export interface AIProxyRealtimeAudioSessionOptions {
   connectTimeoutMs?: number;
   refreshBeforeMs?: number;
   reconnectOnAuthRefresh?: boolean;
-  resolveAuthInfo?: (
-    payload: string,
-  ) => AIProxyRealtimeAudioAuthInfo;
+  resolveAuthInfo?: (payload: string) => AIProxyRealtimeAudioAuthInfo;
   // 如果需要在浏览器外或特殊运行时里透传 Authorization 等握手头，可使用自定义 socket factory。
   createWebSocket?: (
     options: AIProxyRealtimeAudioSocketFactoryOptions,
@@ -624,8 +649,10 @@ export interface AIProxyRealtimeAudioSessionOptions {
   onClose?: (event: CloseEvent | AIProxyRealtimeSocketCloseEvent) => void;
 }
 
-export interface AIProxyAliyunRealtimeAudioSessionOptions
-  extends Omit<AIProxyRealtimeAudioSessionOptions, "realtimeConfig"> {
+export interface AIProxyAliyunRealtimeAudioSessionOptions extends Omit<
+  AIProxyRealtimeAudioSessionOptions,
+  "realtimeConfig"
+> {
   // 阿里云 DashScope 实时接口的 WebSocket 基地址，默认会拼成 /api-ws/v1/inference 并附带 model query。
   websocketBaseUrl?: string;
   // 阿里云默认按 query 透传 api_key；只有在服务端或自定义 socket factory 明确支持时才建议改成其它模式。
@@ -706,7 +733,9 @@ export interface AIProxyRealtimeVoiceProtocolAdapter {
   ) =>
     | AIProxyRealtimeAudioWriteData
     | AIProxyRealtimeAudioWriteData[]
-    | Promise<AIProxyRealtimeAudioWriteData | AIProxyRealtimeAudioWriteData[] | null>
+    | Promise<
+        AIProxyRealtimeAudioWriteData | AIProxyRealtimeAudioWriteData[] | null
+      >
     | null;
   buildAudioInputMessages: (
     frame: AIProxyRealtimeVoiceInputFrame,
@@ -714,7 +743,9 @@ export interface AIProxyRealtimeVoiceProtocolAdapter {
   ) =>
     | AIProxyRealtimeAudioWriteData
     | AIProxyRealtimeAudioWriteData[]
-    | Promise<AIProxyRealtimeAudioWriteData | AIProxyRealtimeAudioWriteData[] | null>
+    | Promise<
+        AIProxyRealtimeAudioWriteData | AIProxyRealtimeAudioWriteData[] | null
+      >
     | null;
   buildTextInputMessages?: (
     text: string,
@@ -723,28 +754,36 @@ export interface AIProxyRealtimeVoiceProtocolAdapter {
   ) =>
     | AIProxyRealtimeAudioWriteData
     | AIProxyRealtimeAudioWriteData[]
-    | Promise<AIProxyRealtimeAudioWriteData | AIProxyRealtimeAudioWriteData[] | null>
+    | Promise<
+        AIProxyRealtimeAudioWriteData | AIProxyRealtimeAudioWriteData[] | null
+      >
     | null;
   buildCommitMessages?: (
     context: AIProxyRealtimeVoiceProtocolContext,
   ) =>
     | AIProxyRealtimeAudioWriteData
     | AIProxyRealtimeAudioWriteData[]
-    | Promise<AIProxyRealtimeAudioWriteData | AIProxyRealtimeAudioWriteData[] | null>
+    | Promise<
+        AIProxyRealtimeAudioWriteData | AIProxyRealtimeAudioWriteData[] | null
+      >
     | null;
   buildResponseCreateMessages?: (
     context: AIProxyRealtimeVoiceProtocolContext,
   ) =>
     | AIProxyRealtimeAudioWriteData
     | AIProxyRealtimeAudioWriteData[]
-    | Promise<AIProxyRealtimeAudioWriteData | AIProxyRealtimeAudioWriteData[] | null>
+    | Promise<
+        AIProxyRealtimeAudioWriteData | AIProxyRealtimeAudioWriteData[] | null
+      >
     | null;
   buildFinishMessages?: (
     context: AIProxyRealtimeVoiceProtocolContext,
   ) =>
     | AIProxyRealtimeAudioWriteData
     | AIProxyRealtimeAudioWriteData[]
-    | Promise<AIProxyRealtimeAudioWriteData | AIProxyRealtimeAudioWriteData[] | null>
+    | Promise<
+        AIProxyRealtimeAudioWriteData | AIProxyRealtimeAudioWriteData[] | null
+      >
     | null;
   extractOutputFrames?: (
     message: unknown,
@@ -753,7 +792,11 @@ export interface AIProxyRealtimeVoiceProtocolAdapter {
   ) =>
     | AIProxyRealtimeVoiceOutputFrame
     | AIProxyRealtimeVoiceOutputFrame[]
-    | Promise<AIProxyRealtimeVoiceOutputFrame | AIProxyRealtimeVoiceOutputFrame[] | null>
+    | Promise<
+        | AIProxyRealtimeVoiceOutputFrame
+        | AIProxyRealtimeVoiceOutputFrame[]
+        | null
+      >
     | null;
 }
 
@@ -783,9 +826,7 @@ export interface AIProxyWechatMiniProgramSocketTaskLike {
   onOpen(callback: (event: unknown) => void): void;
   onMessage(callback: (event: { data: string | ArrayBuffer }) => void): void;
   onError(callback: (event: unknown) => void): void;
-  onClose(
-    callback: (event: { code?: number; reason?: string }) => void,
-  ): void;
+  onClose(callback: (event: { code?: number; reason?: string }) => void): void;
 }
 
 export interface AIProxyWechatMiniProgramRecorderLike {
@@ -794,7 +835,10 @@ export interface AIProxyWechatMiniProgramRecorderLike {
   pause?(): void;
   resume?(): void;
   onFrameRecorded?(
-    callback: (event: { frameBuffer: ArrayBuffer; isLastFrame?: boolean }) => void,
+    callback: (event: {
+      frameBuffer: ArrayBuffer;
+      isLastFrame?: boolean;
+    }) => void,
   ): void;
   onError(callback: (event: unknown) => void): void;
 }
@@ -825,7 +869,7 @@ export interface AIProxyRealtimeVoiceMiniProgramOptions {
 }
 
 export interface AIProxyRealtimeVoiceImageInput {
-  type?: 'url' | 'base64';
+  type?: "url" | "base64";
   value?: string;
   url?: string;
   data?: string;
@@ -835,7 +879,7 @@ export interface AIProxyRealtimeVoiceImageInput {
 }
 
 export interface AIProxyRealtimeVoiceTextInputOptions {
-  type?: 'prompt' | 'transcript';
+  type?: "prompt" | "transcript";
   images?: Array<string | AIProxyRealtimeVoiceImageInput>;
   input?: Record<string, unknown>;
   parameters?: Record<string, unknown>;
@@ -843,7 +887,7 @@ export interface AIProxyRealtimeVoiceTextInputOptions {
 
 export type AIProxyRealtimeVoiceImagePromptOptions = Omit<
   AIProxyRealtimeVoiceTextInputOptions,
-  'images'
+  "images"
 >;
 
 export interface IAIProxyRealtimeVoiceSession {
@@ -856,7 +900,10 @@ export interface IAIProxyRealtimeVoiceSession {
   resumeVoiceInput(): Promise<void>;
   stopVoiceInput(options?: AIProxyRealtimeVoiceStopOptions): Promise<void>;
   clearOutput(): Promise<void>;
-  sendText(text: string, options?: AIProxyRealtimeVoiceTextInputOptions): Promise<void>;
+  sendText(
+    text: string,
+    options?: AIProxyRealtimeVoiceTextInputOptions,
+  ): Promise<void>;
   sendImagePrompt(
     text: string,
     image: string | AIProxyRealtimeVoiceImageInput,
@@ -869,8 +916,7 @@ export interface IAIProxyRealtimeVoiceSession {
   close(code?: number, reason?: string): Promise<void>;
 }
 
-export interface AIProxyRealtimeVoiceSessionOptions
-  extends AIProxyRealtimeAudioSessionOptions {
+export interface AIProxyRealtimeVoiceSessionOptions extends AIProxyRealtimeAudioSessionOptions {
   runtime?: AIProxyRealtimeVoiceRuntime;
   protocolAdapter: AIProxyRealtimeVoiceProtocolAdapter;
   inputAdapter?: IAIProxyRealtimeVoiceInputAdapter;
@@ -893,10 +939,11 @@ export interface AIProxyRealtimeVoiceSessionOptions
 }
 
 export interface AIProxyAliyunRealtimeVoiceSessionOptions
-  extends Omit<
-    AIProxyRealtimeVoiceSessionOptions,
-    "realtimeConfig" | "protocolAdapter"
-  >,
+  extends
+    Omit<
+      AIProxyRealtimeVoiceSessionOptions,
+      "realtimeConfig" | "protocolAdapter"
+    >,
     AIProxyAliyunRealtimeAudioSessionOptions {
   aliyunProtocolOptions?: AIProxyRealtimeVoiceAliyunProtocolOptions;
 }
