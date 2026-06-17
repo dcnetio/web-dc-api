@@ -1983,9 +1983,8 @@ export class DBManager {
         jsonInstance = JSON.stringify(instanceObj);
       }
     } catch (err: any) {
-      console.error(`🚨 Fatal error during database preload: ${err instanceof Error ? err.message : err}`);
-      // JSON解析失败，保持原字符串不变
-      console.warn("Failed to parse instance JSON, keeping original:", err);
+      // JSON 解析失败：实例不是合法 JSON，拒绝写入
+      console.warn("Failed to parse instance JSON:", err);
       throw new Error("Invalid instance JSON format");
     }
     try {
@@ -2086,9 +2085,8 @@ export class DBManager {
           instance = JSON.stringify(instanceObj);
         }
       } catch (err: any) {
-      console.error(`🚨 Fatal error during database preload: ${err instanceof Error ? err.message : err}`);
-        // JSON解析失败，保持原字符串不变
-        console.warn("Failed to parse instance JSON, keeping original:", err);
+        // JSON 解析失败：实例不是合法 JSON，拒绝写入
+        console.warn("Failed to parse instance JSON:", err);
         throw new Error("Invalid instance JSON format");
       }
 
