@@ -77,6 +77,9 @@ export class AliyunRTCOperations implements IRTCOperations {
     }
   }
   private isMcuSubscribed: boolean = false;
+  // 是否已成功向 RTM 订阅 topic / 加入 session。仅当为 true 时 _doLeaveChannel 才会去
+  // unsubscribe / leaveSession，避免「尚未进房就退房」时底层抛出「cannot find specified session」误报告警。
+  private isRtmSubscribed: boolean = false;
   private remoteVideoTracks: Map<string, any> = new Map();
   private remoteScreenTracks: Map<string, any> = new Map();
   private mcuAudioTrack: any = null;
@@ -212,13 +215,16 @@ export class AliyunRTCOperations implements IRTCOperations {
     if (this.rtmClient && this.authInfo.enableRTM) {
       try {
         if (typeof this.rtmClient.subscribe === 'function') {
-          // If we subscribe, we subscribe to both
-          try { await this.rtmClient.subscribe({ topic: userId }); } catch(e){}
+          // If we subscribe, we subscribe to both.
+          // 任一 topic 订阅成功即标记，确保后续 _doLeaveChannel 能正确退订（含个人 topic 已订阅但公共 topic 失败的部分订阅场景）。
+          try { await this.rtmClient.subscribe({ topic: userId }); this.isRtmSubscribed = true; } catch(e){}
 
           await this.rtmClient.subscribe({ topic: channelId });
+          this.isRtmSubscribed = true;
         } else if (typeof this.rtmClient.joinSession === 'function') {
           // Aliyun RTM V2: A client can only join one session at a time in joinSession() mode.
           await this.rtmClient.joinSession(channelId);
+          this.isRtmSubscribed = true;
         }
       } catch (err) {
         console.warn('Aliyun RTM: Failed to subscribe primary topics', err);
@@ -309,7 +315,8 @@ export class AliyunRTCOperations implements IRTCOperations {
   private async _doLeaveChannel(): Promise<void> {
       this.hasJoined = false;
 
-      if (this.rtmClient && this.authInfo) {
+      // 仅在确实订阅/加入过 RTM session 时才退订，避免未进房就退房触发底层「cannot find specified session」误报。
+      if (this.rtmClient && this.authInfo && this.isRtmSubscribed) {
         try {
           if (typeof this.rtmClient.unsubscribe === 'function') {
             await this.rtmClient.unsubscribe({ topic: this.authInfo.userId });
@@ -356,6 +363,7 @@ export class AliyunRTCOperations implements IRTCOperations {
         this.mcuAudioTrack = null;
       }
       this.isMcuSubscribed = false;
+      this.isRtmSubscribed = false;
   }
 
   public async createRTCChannel(userIds: string[], channelDescription?: string, rtcConfig?: IRTCStreamConfig): Promise<string> {
@@ -458,6 +466,7 @@ export class AliyunRTCOperations implements IRTCOperations {
     }
 
     this.isMcuSubscribed = false;
+    this.isRtmSubscribed = false;
     this.eventListeners.clear();
   }
 
