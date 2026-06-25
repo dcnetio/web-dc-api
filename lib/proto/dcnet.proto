@@ -895,7 +895,6 @@ message GetValuesWithIndexRequest{
     bytes indexKey = 9; //索引key
     bytes indexValue = 10; //索引值
     bytes vaccount = 11 ; //虚拟账号,可选,如果有虚拟账号
-   
 }
 
 

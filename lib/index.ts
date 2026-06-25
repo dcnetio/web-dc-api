@@ -435,6 +435,7 @@ export * from "./interfaces";
 export * from "./common/define";
 export { ThemePermission, QWEN_VOICE_OPTIONS } from "./common/constants";
 export { KeyValueDB } from "./implements/keyvalue/manager";
+export { SHARED_THEME_PREFIX, isSharedTheme, toSharedTheme } from "./implements/keyvalue/manager";
 
 // 导出模块系统
 export { ModuleSystem, CoreModuleName } from "./common/module-system";

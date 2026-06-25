@@ -6,17 +6,41 @@ import { KeyValueStoreType, KeyValueDB } from "../implements/keyvalue/manager";
 /**
  * 键值存储操作接口
  * 提供分布式键值存储的创建、权限管理和数据操作功能
+ *
+ * 主题分两类：普通主题(按用户分区，每个用户各存一份)与共享型主题(同一个 key 全局只保留唯一最新值)。
+ * 共享型主题通过 createSharedStore 创建，详见该方法说明。
  */
 export interface IKeyValueOperations {
   /**
    * 创建key-value存储库
    * @param appId 应用ID
-   * @param theme 库主题名称
+   * @param theme 库主题名称(普通主题按用户分区存储，每个用户各存一份)。
+   *              若需要"同一个 key 全局只保留唯一最新值"的共享语义，请改用 createSharedStore。
    * @param space 分配的存储空间大小（字节）
    * @param type 存储主题类型 1:鉴权主题(读写都需要鉴权) 2:公共主题(默认所有用户可读,写需要鉴权)
    * @returns 创建的keyvalue数据库实例和可能的错误信息
    */
   createStore(appId: string,theme: string, space: number, type: KeyValueStoreType): Promise<[KeyValueDB|null, Error | null]>;
+
+  /**
+   * 创建共享型 key-value 存储库：同一个 key 全局只保留唯一最新值，按时间戳后写覆盖。
+   * 内部自动把主题名规范化为 `keyvalue_shared_` 前缀，调用方无需关心命名约定。
+   *
+   * 适用场景：全局配置、计数器、状态标志等"所有人共用一份、只关心最新值"的数据。
+   * 与普通主题相比的行为差异：
+   * - set/setWithCount：不同用户写入同一 key 会相互覆盖，最终保留时间戳最大的一条
+   *   (同一微秒并发按内容确定性收敛，多节点结果一致)；vaccount 不再区分存储分区。
+   * - get(不传 writerPubkey)/getValues/getWithIndex/getWithTimeOrder：直接返回该 key 的唯一最新值，
+   *   时间排序索引天然去重，无需应用层再按用户去重。
+   * - 写入值里的 dc_opuser 会统一记为主题作者；若需记录"实际操作者"，请把用户标识写进 value 内容中。
+   *
+   * @param appId 应用ID
+   * @param theme 库主题名称(无需手动添加 shared_ 前缀，内部自动处理)
+   * @param space 分配的存储空间大小（字节）
+   * @param type 存储主题类型 1:鉴权主题(读写都需要鉴权) 2:公共主题(默认所有用户可读,写需要鉴权，需以 _pub 结尾)
+   * @returns 创建的keyvalue数据库实例和可能的错误信息
+   */
+  createSharedStore(appId: string, theme: string, space: number, type: KeyValueStoreType): Promise<[KeyValueDB|null, Error | null]>;
 
   /**
    * 获取指定主题的keyvalue数据库
@@ -111,7 +135,7 @@ export interface IKeyValueOperations {
    * 设置键值对，支持索引功能
    * @param kvdb: KeyValueDB,
    * @param key 键名
-   * @param value 值内容
+   * @param value 值内容。传空串表示删除该 key(及其关联索引)
    * @param indexs 索引列表，格式为json字符串:[{key:"indexkey1",type:"string",value:"value"},{key:"indexkey2",type:"number", value:12}],设置索引后,后续查询可以通过索引快速定位
    * @param vaccount 可选的虚拟账户
    * @returns [是否设置成功, 时间戳, 错误信息]

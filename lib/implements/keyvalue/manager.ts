@@ -19,6 +19,34 @@ export enum KeyValueStoreType { //存储主题类型 1:鉴权主题(读写都需
   Auth = 1,
   Public = 2,
 }
+
+// 共享型主题前缀：主题名以此前缀开头(如 keyvalue_shared_config)时，服务端忽略写入用户的区分，
+// 同一个 key 全局只保留唯一最新值(按时间戳后写覆盖)。详见 IKeyValueOperations 接口顶部说明。
+export const SHARED_THEME_PREFIX = "keyvalue_shared_";
+
+/** 判断给定主题(可不含 keyvalue_ 前缀)是否为共享型主题 */
+export function isSharedTheme(theme: string): boolean {
+  return theme.startsWith(SHARED_THEME_PREFIX) || theme.startsWith("shared_");
+}
+
+/**
+ * 将任意主题名规范化为共享型主题名(keyvalue_shared_xxx)。
+ * 兼容输入: "config" / "shared_config" / "keyvalue_config" / "keyvalue_shared_config"，
+ * 统一输出为 "keyvalue_shared_config"。已是共享型主题则原样返回。
+ */
+export function toSharedTheme(theme: string): string {
+  let t = theme;
+  if (t.startsWith(SHARED_THEME_PREFIX)) {
+    return t;
+  }
+  if (t.startsWith("keyvalue_")) {
+    t = t.slice("keyvalue_".length);
+  }
+  if (t.startsWith("shared_")) {
+    t = t.slice("shared_".length);
+  }
+  return SHARED_THEME_PREFIX + t;
+}
 // 错误定义
 export class KeyValueError extends Error {
   constructor(message: string) {
@@ -288,6 +316,24 @@ export class KeyValueManager {
     } catch (error) {
       return [null, error as Error];
     }
+  }
+
+  /**
+   * 创建共享型 Key-Value 存储(同一个 key 全局只保留唯一最新值，按时间戳后写覆盖)。
+   * 与 createStore 的唯一区别是内部会把主题名规范化为 keyvalue_shared_ 前缀，
+   * 调用方无需关心命名约定。其余行为(鉴权/公共类型、空间限制、_pub 后缀校验)与 createStore 完全一致。
+   * @param appId 应用ID
+   * @param theme 主题名称(无需手动加 shared_ 前缀，内部自动处理)
+   * @param space 分配的存储空间大小(字节)
+   * @param type 存储主题类型 1:鉴权主题 2:公共主题(公共型需以 _pub 结尾)
+   */
+  async createSharedStore(
+    appId: string,
+    theme: string,
+    space: number,
+    type: KeyValueStoreType
+  ): Promise<[KeyValueDB | null, Error | null]> {
+    return this.createStore(appId, toSharedTheme(theme), space, type);
   }
 
   async getKeyValueDB(
