@@ -582,4 +582,63 @@ export class KeyValueClient {
     }
   }
 
+  async getKeyValueRecordCount(
+    appId: string,
+    themeAuthor: string,
+    theme: string,
+    vaccount?: string
+  ): Promise<[number, Error | null]> {
+    const message = new dcnet.pb.GetKeyValueRecordCountRequest({});
+    message.appId = new TextEncoder().encode(appId);
+    message.themeAuthor = new TextEncoder().encode(themeAuthor);
+    message.theme = new TextEncoder().encode(theme);
+    if (vaccount) {
+      message.vaccount = new TextEncoder().encode(vaccount);
+    }
+    const messageBytes = dcnet.pb.GetKeyValueRecordCountRequest.encode(message).finish();
+    const grpcClient = new Libp2pGrpcClient(
+      this.client.p2pNode,
+      this.client.peerAddr,
+      this.client.token,
+      this.client.protocol
+    );
+    try {
+      const reply = await grpcClient.unaryCall(
+        "/dcnet.pb.Service/GetKeyValueRecordCount",
+        messageBytes,
+        30000
+      );
+      const decoded = dcnet.pb.GetKeyValueRecordCountReply.decode(reply);
+      if (decoded.flag == 0) {
+        return [decoded.count as number, null];
+      }
+      return [0, new Error("GetKeyValueRecordCount failed, flag: " + decoded.flag)];
+    } catch (error: any) {
+      if (error.message.indexOf(Errors.INVALID_TOKEN.message) != -1) {
+        const token = await this.client.GetToken(
+          appId,
+          this.context.getPublicKey().string(),
+          (payload: Uint8Array): Promise<Uint8Array> => {
+            return this.context.sign(payload);
+          }
+        );
+        if (!token) {
+          throw new Error(Errors.INVALID_TOKEN.message);
+        }
+        const reply = await grpcClient.unaryCall(
+          "/dcnet.pb.Service/GetKeyValueRecordCount",
+          messageBytes,
+          30000
+        );
+        const decoded = dcnet.pb.GetKeyValueRecordCountReply.decode(reply);
+        if (decoded.flag == 0) {
+          return [decoded.count as number, null];
+        }
+        return [0, new Error("GetKeyValueRecordCount failed, flag: " + decoded.flag)];
+      }
+      console.warn("GetKeyValueRecordCount error:", error);
+      throw error;
+    }
+  }
+
 }

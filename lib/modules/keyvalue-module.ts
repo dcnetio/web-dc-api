@@ -579,4 +579,30 @@ export class KeyValueModule implements DCModule, IKeyValueOperations {
       return [null, error instanceof Error ? error : new Error(String(error))];
     }
   }
+
+  /**
+   * 获取keyvalue数据库的记录总条数
+   * @param kvdb keyvalue数据库实例
+   * @param vaccount 可选的虚拟账户
+   * @returns [记录总条数, 错误信息]
+   */
+  async getRecordCount(
+    kvdb: KeyValueDB,
+    vaccount?: string
+  ): Promise<[number | null, Error | null]> {
+    const err = this.assertInitialized();
+    if (err) {
+      return [null, err];
+    }
+    try {
+      return await this.keyValueManager.getKeyValueRecordCount(
+        kvdb.getAppId(),
+        kvdb.getAuthor(),
+        kvdb.getName(),
+        vaccount
+      );
+    } catch (error) {
+      return [null, error instanceof Error ? error : new Error(String(error))];
+    }
+  }
 }

@@ -1132,6 +1132,42 @@ if (results) {
 
 <br>
 
+#### `getRecordCount(kvdb, vaccount)`
+
+获取keyvalue数据库的记录总条数（由节点自动维护的统计值）。新增一条全新记录时自动 +1，删除已存在记录时自动 -1。
+
+**说明:**
+
+- 统计为各节点本地自动维护，数据在多节点间最终收敛后计数也随之收敛。
+- value_count 数值累加类统计键不计入记录总条数。
+- 普通主题按 (写入用户, key) 维度计数；共享型主题（通过 `createSharedStore` 创建）按去重后的 key 计数。
+
+**参数:**
+
+- `kvdb`: KeyValueDB - keyvalue数据库实例
+- `vaccount`: string (可选) - 虚拟账户
+
+**返回:** Promise<[number | null, Error | null]> - 记录总条数和错误信息
+
+```typescript
+const store = await dc.keyvalue.getStore(
+  'myapp',
+  'my-app-settings',
+  'theme-author-pubkey'
+);
+
+const [count, error] = await dc.keyvalue.getRecordCount(
+  store,
+  'virtual-account-id' // 可选
+);
+
+if (error === null) {
+  console.log('记录总条数:', count);
+}
+```
+
+<br>
+
 ## 简化使用示例
 
 ```typescript

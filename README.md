@@ -525,7 +525,7 @@ const appSettings = {
 };
 
 //设置值,在设置时,为了后续不同纬度快速检索,可以同时设置索引信息,格式为json字符串,数据格式如下:[{key:"indexkey1",type:"string",value:"value"},{key:"indexkey2",type:"number", value:12}]
-const [setSuccess, setError] = await dc.keyValue.set(
+const [setSuccess, setTimestamp, setError] = await dc.keyValue.set(
     kvdb,
     'app_settings',                     // 数据的键名
     JSON.stringify(appSettings),        // 数据内容（JSON格式）
@@ -533,7 +533,7 @@ const [setSuccess, setError] = await dc.keyValue.set(
 );
 
 if (setSuccess) {
-    console.log('应用设置保存成功');
+    console.log('应用设置保存成功, 时间戳:', setTimestamp);
 }
 
 // 存储用户偏好设置
@@ -620,7 +620,13 @@ if (searchResults) {
 //方式4: 获取指定key下的所有值
 const [allValues, allError] = await dc.keyValue.getValues(
     kvdb,
-    'prefs_user123' //所有用户的设置
+    'prefs_user123', //所有用户针对该key设置的值
+    {
+      limit: 10,      // 最多返回10条
+      seekKey: '',    // 起始键(分页用)
+      direction: 0,   // 0-正序 1-倒序
+      offset: 0       // 起始位移
+    }
 );
 if (allError) {
     console.warn('获取所有用户设置失败:', allError);
@@ -696,6 +702,57 @@ const [electronics, _] = await dc.keyValue.getWithIndex(
 
 const productList = JSON.parse(electronics);
 console.log('电子产品列表:', productList);
+```
+
+### 共享型存储（createSharedStore）
+
+普通主题（`createStore`）按用户分区存储，同一个 key 不同用户各存一份；**共享型主题**则让同一个 key 全局只保留唯一最新值，按时间戳后写覆盖，适合全局配置、计数器、状态标志等"所有人共用一份、只关心最新值"的数据。
+
+主题名会被内部自动规范化为 `keyvalue_shared_` 前缀，调用方无需关心命名约定；行为差异：
+
+- `set`/`setWithCount`：不同用户写入同一 key 会相互覆盖，最终保留时间戳最大的一条（同一微秒并发按内容确定性收敛，多节点结果一致），vaccount 不再区分存储分区。
+- `get`（不传 writerPubkey）/`getValues`/`getWithIndex`/`getWithTimeOrder`：直接返回该 key 的唯一最新值，时间排序索引天然去重，无需应用层再按用户去重。
+- 写入值里的 `dc_opuser` 会统一记为主题作者；若需记录"实际操作者"，请把用户标识写进 value 内容中。
+
+```tsx
+// 创建共享型存储（无需手动加 shared_ 前缀，内部自动处理）
+let [kvdb, error] = await dc.keyValue.getStore(
+    dc.appInfo.appId,
+    'keyvalue_global_config_pub',
+    APPThemeConfig.appThemeAuthor
+);
+if (!kvdb && dc.publicKey.string() === APPThemeConfig.appThemeAuthor) {
+    [kvdb, error] = await dc.keyValue.createSharedStore(
+        dc.appInfo.appId,
+        'keyvalue_global_config_pub', // 公共共享存储,必须以"keyvalue_"开头、"_pub"结尾
+        50 * 1024 * 1024,             // 分配50MB存储空间
+        2                             // 2=公共（所有人可读，写入需授权）
+    );
+}
+
+// 任意被授权用户写入同一个 key，全局只保留最新一条
+await dc.keyValue.set(kvdb, 'site_notice', JSON.stringify({ text: '系统维护中', level: 'warn' }), '');
+
+// 读取该 key 的唯一最新值（无需传 writerPubkey）
+const [notice, noticeErr] = await dc.keyValue.get(kvdb, 'site_notice');
+if (!noticeErr) {
+    console.log('当前公告:', JSON.parse(notice));
+}
+```
+
+### 记录总条数统计（getRecordCount）
+
+`getRecordCount` 返回 keyValue 数据库的记录总条数，由节点自动维护：新增一条全新记录时自动 +1，删除已存在记录时自动 -1。
+
+- 统计为各节点本地自动维护，数据在多节点间最终收敛后计数也随之收敛。
+- `setWithCount`/`saveWithCount` 的数值累加类统计键不计入记录总条数。
+- 普通主题按 (写入用户, key) 维度计数；共享型主题按去重后的 key 计数。
+
+```tsx
+const [count, countErr] = await dc.keyValue.getRecordCount(kvdb);
+if (countErr === null) {
+    console.log('记录总条数:', count);
+}
 ```
 
 

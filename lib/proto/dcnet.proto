@@ -895,6 +895,7 @@ message GetValuesWithIndexRequest{
     bytes indexKey = 9; //索引key
     bytes indexValue = 10; //索引值
     bytes vaccount = 11 ; //虚拟账号,可选,如果有虚拟账号
+   
 }
 
 
@@ -935,6 +936,19 @@ message GetAuthListUserCountRequest{
 message GetAuthListUserCountReply{
     uint32 flag = 1;  // 0:成功
     int64 count = 2;  // 授权列表中的用户数量
+}
+
+// 获取keyvalue主题的记录总条数统计
+message GetKeyValueRecordCountRequest{
+    bytes theme = 1;      // 主题名称
+    bytes appId = 2;      // 应用标志
+    bytes themeAuthor = 3;// 主题作者 pubkey
+    bytes vaccount = 4;   // 虚拟账号，可选
+}
+
+message GetKeyValueRecordCountReply{
+    uint32 flag = 1;  // 0:成功
+    int64 count = 2;  // keyvalue主题的记录总条数
 }
 
 message GetUserCommentsRequest{
@@ -1608,6 +1622,9 @@ service Service {
 
     //获取授权列表的用户数量统计
     rpc GetAuthListUserCount(GetAuthListUserCountRequest) returns (GetAuthListUserCountReply){}
+
+    //获取keyvalue主题的记录总条数统计
+    rpc GetKeyValueRecordCount(GetKeyValueRecordCountRequest) returns (GetKeyValueRecordCountReply){}
 
        //获取用户自己在指定主题对象下的权限配置信息
     rpc GetUserOwnAuthInfo(GetUserOwnAuthInfoRequest) returns (GetUserOwnAuthInfoReply) {}

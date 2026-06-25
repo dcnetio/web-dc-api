@@ -14394,6 +14394,224 @@ export namespace dcnet {
             public static getTypeUrl(typeUrlPrefix?: string): string;
         }
 
+        /** Properties of a GetKeyValueRecordCountRequest. */
+        interface IGetKeyValueRecordCountRequest {
+
+            /** GetKeyValueRecordCountRequest theme */
+            theme?: (Uint8Array|null);
+
+            /** GetKeyValueRecordCountRequest appId */
+            appId?: (Uint8Array|null);
+
+            /** GetKeyValueRecordCountRequest themeAuthor */
+            themeAuthor?: (Uint8Array|null);
+
+            /** GetKeyValueRecordCountRequest vaccount */
+            vaccount?: (Uint8Array|null);
+        }
+
+        /** Represents a GetKeyValueRecordCountRequest. */
+        class GetKeyValueRecordCountRequest implements IGetKeyValueRecordCountRequest {
+
+            /**
+             * Constructs a new GetKeyValueRecordCountRequest.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: dcnet.pb.IGetKeyValueRecordCountRequest);
+
+            /** GetKeyValueRecordCountRequest theme. */
+            public theme: Uint8Array;
+
+            /** GetKeyValueRecordCountRequest appId. */
+            public appId: Uint8Array;
+
+            /** GetKeyValueRecordCountRequest themeAuthor. */
+            public themeAuthor: Uint8Array;
+
+            /** GetKeyValueRecordCountRequest vaccount. */
+            public vaccount: Uint8Array;
+
+            /**
+             * Creates a new GetKeyValueRecordCountRequest instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns GetKeyValueRecordCountRequest instance
+             */
+            public static create(properties?: dcnet.pb.IGetKeyValueRecordCountRequest): dcnet.pb.GetKeyValueRecordCountRequest;
+
+            /**
+             * Encodes the specified GetKeyValueRecordCountRequest message. Does not implicitly {@link dcnet.pb.GetKeyValueRecordCountRequest.verify|verify} messages.
+             * @param message GetKeyValueRecordCountRequest message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: dcnet.pb.IGetKeyValueRecordCountRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified GetKeyValueRecordCountRequest message, length delimited. Does not implicitly {@link dcnet.pb.GetKeyValueRecordCountRequest.verify|verify} messages.
+             * @param message GetKeyValueRecordCountRequest message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: dcnet.pb.IGetKeyValueRecordCountRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes a GetKeyValueRecordCountRequest message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns GetKeyValueRecordCountRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): dcnet.pb.GetKeyValueRecordCountRequest;
+
+            /**
+             * Decodes a GetKeyValueRecordCountRequest message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns GetKeyValueRecordCountRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): dcnet.pb.GetKeyValueRecordCountRequest;
+
+            /**
+             * Verifies a GetKeyValueRecordCountRequest message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates a GetKeyValueRecordCountRequest message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns GetKeyValueRecordCountRequest
+             */
+            public static fromObject(object: { [k: string]: any }): dcnet.pb.GetKeyValueRecordCountRequest;
+
+            /**
+             * Creates a plain object from a GetKeyValueRecordCountRequest message. Also converts values to other types if specified.
+             * @param message GetKeyValueRecordCountRequest
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: dcnet.pb.GetKeyValueRecordCountRequest, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this GetKeyValueRecordCountRequest to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for GetKeyValueRecordCountRequest
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** Properties of a GetKeyValueRecordCountReply. */
+        interface IGetKeyValueRecordCountReply {
+
+            /** GetKeyValueRecordCountReply flag */
+            flag?: (number|null);
+
+            /** GetKeyValueRecordCountReply count */
+            count?: (number|Long|null);
+        }
+
+        /** Represents a GetKeyValueRecordCountReply. */
+        class GetKeyValueRecordCountReply implements IGetKeyValueRecordCountReply {
+
+            /**
+             * Constructs a new GetKeyValueRecordCountReply.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: dcnet.pb.IGetKeyValueRecordCountReply);
+
+            /** GetKeyValueRecordCountReply flag. */
+            public flag: number;
+
+            /** GetKeyValueRecordCountReply count. */
+            public count: (number|Long);
+
+            /**
+             * Creates a new GetKeyValueRecordCountReply instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns GetKeyValueRecordCountReply instance
+             */
+            public static create(properties?: dcnet.pb.IGetKeyValueRecordCountReply): dcnet.pb.GetKeyValueRecordCountReply;
+
+            /**
+             * Encodes the specified GetKeyValueRecordCountReply message. Does not implicitly {@link dcnet.pb.GetKeyValueRecordCountReply.verify|verify} messages.
+             * @param message GetKeyValueRecordCountReply message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: dcnet.pb.IGetKeyValueRecordCountReply, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified GetKeyValueRecordCountReply message, length delimited. Does not implicitly {@link dcnet.pb.GetKeyValueRecordCountReply.verify|verify} messages.
+             * @param message GetKeyValueRecordCountReply message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: dcnet.pb.IGetKeyValueRecordCountReply, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes a GetKeyValueRecordCountReply message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns GetKeyValueRecordCountReply
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): dcnet.pb.GetKeyValueRecordCountReply;
+
+            /**
+             * Decodes a GetKeyValueRecordCountReply message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns GetKeyValueRecordCountReply
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): dcnet.pb.GetKeyValueRecordCountReply;
+
+            /**
+             * Verifies a GetKeyValueRecordCountReply message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates a GetKeyValueRecordCountReply message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns GetKeyValueRecordCountReply
+             */
+            public static fromObject(object: { [k: string]: any }): dcnet.pb.GetKeyValueRecordCountReply;
+
+            /**
+             * Creates a plain object from a GetKeyValueRecordCountReply message. Also converts values to other types if specified.
+             * @param message GetKeyValueRecordCountReply
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: dcnet.pb.GetKeyValueRecordCountReply, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this GetKeyValueRecordCountReply to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for GetKeyValueRecordCountReply
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
         /** Properties of a GetUserCommentsRequest. */
         interface IGetUserCommentsRequest {
 
@@ -23216,6 +23434,20 @@ export namespace dcnet {
             public getAuthListUserCount(request: dcnet.pb.IGetAuthListUserCountRequest): Promise<dcnet.pb.GetAuthListUserCountReply>;
 
             /**
+             * Calls GetKeyValueRecordCount.
+             * @param request GetKeyValueRecordCountRequest message or plain object
+             * @param callback Node-style callback called with the error, if any, and GetKeyValueRecordCountReply
+             */
+            public getKeyValueRecordCount(request: dcnet.pb.IGetKeyValueRecordCountRequest, callback: dcnet.pb.Service.GetKeyValueRecordCountCallback): void;
+
+            /**
+             * Calls GetKeyValueRecordCount.
+             * @param request GetKeyValueRecordCountRequest message or plain object
+             * @returns Promise
+             */
+            public getKeyValueRecordCount(request: dcnet.pb.IGetKeyValueRecordCountRequest): Promise<dcnet.pb.GetKeyValueRecordCountReply>;
+
+            /**
              * Calls GetUserOwnAuthInfo.
              * @param request GetUserOwnAuthInfoRequest message or plain object
              * @param callback Node-style callback called with the error, if any, and GetUserOwnAuthInfoReply
@@ -24197,6 +24429,13 @@ export namespace dcnet {
              * @param [response] GetAuthListUserCountReply
              */
             type GetAuthListUserCountCallback = (error: (Error|null), response?: dcnet.pb.GetAuthListUserCountReply) => void;
+
+            /**
+             * Callback as used by {@link dcnet.pb.Service#getKeyValueRecordCount}.
+             * @param error Error, if any
+             * @param [response] GetKeyValueRecordCountReply
+             */
+            type GetKeyValueRecordCountCallback = (error: (Error|null), response?: dcnet.pb.GetKeyValueRecordCountReply) => void;
 
             /**
              * Callback as used by {@link dcnet.pb.Service#getUserOwnAuthInfo}.
