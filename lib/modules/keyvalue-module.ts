@@ -495,9 +495,12 @@ export class KeyValueModule implements DCModule, IKeyValueOperations {
     const seekKey = options.seekKey || "";
     const direction = options.direction || Direction.Forward;
     const offset = options.offset || 0;
-    let indexValueStr = indexValue;
-    if( options.type === "number" ){ //
-      indexValueStr = padPositiveInt20(indexValue);
+    // indexValue 为 null/undefined/空串时表示「不限定具体值」（排行榜场景：按数值索引取前 N 名），
+    // 此时不能做数值补零，直接透传空串，由底层按 direction/seekKey 排序返回。
+    // 仅当传入了具体数值时才对其补零，保证与设置索引时的字典序排序一致。
+    let indexValueStr = indexValue == null ? "" : indexValue;
+    if( options.type === "number" && indexValueStr !== "" ){
+      indexValueStr = padPositiveInt20(indexValueStr);
     }
     try {
       return await kvdb.getWithIndex(indexKey, indexValueStr, limit,seekKey, direction,offset,  vaccount);
