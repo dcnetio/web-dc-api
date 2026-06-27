@@ -87,7 +87,7 @@ export interface IRTCAuthInfo {
   channelId: string; // 如果是 RTC 邀请场景，channelId 一般基于RTM信令协商生成;如果是RTM场景,channelId 一般为 RTM 通道 ID
   appId: string;
   rtcAppId?: string;
-  userId: string;
+  userId?: string; // 可选：RTC 初始化恒以当前登录用户公钥(publicKey.string())为准，无需调用方传入
   themeAuthor?: string;
   configTheme?: string;
   serviceName?: string;

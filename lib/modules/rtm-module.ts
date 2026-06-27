@@ -37,12 +37,24 @@ export class RTMModule implements DCModule, IRTMOperations {
   }
 
   public async login(authInfo: IRTMAuthInfo): Promise<void> {
+    // RTM 登录的是主连接（当前登录用户的 userBox），其 userId 恒等于登录用户的公钥字符串，
+    // 同时用作自动申请 aliyun token 时的 channelId 与 userId。因此一律以 SDK 内当前登录用户的
+    // publicKey.string() 为准，不依赖调用方传入的 userId（自动生成的应用代码常遗漏或传错），
+    // 从根源避免 "user undefined" / "missing channelId"。仅当公钥尚不可用时才回退到传入值。
+    const loginUserId = this.context?.publicKey?.string() || authInfo.userId || "";
     this.authInfo = {
       ...authInfo,
+      userId: loginUserId,
       rtcAppId: authInfo.rtcAppId || this.context?.appInfo?.rtcAppId,
       appId: authInfo.appId || this.context?.appInfo?.appId || ""
     };
-    
+
+    if (!this.authInfo.userId) {
+      throw new Error(
+        '[RTM] Login failed: no logged-in user. Ensure the user is logged in (dc.publicKey ready) before calling dc.rtm.login.'
+      );
+    }
+
     // Auto-fetch token for main userBox if no token is provided but native config exists
     if (!this.authInfo.token && (this.context as any)?.aiproxy && this.authInfo.themeAuthor) {
       try {

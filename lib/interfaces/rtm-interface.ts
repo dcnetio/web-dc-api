@@ -14,7 +14,7 @@ export interface IRTMAuthInfo {
   token?: string; // 可选，token为空时,dcapi会自动申请
   appId: string;
   rtcAppId?: string;
-  userId: string;
+  userId?: string; // 可选：RTM 登录恒以当前登录用户公钥(publicKey.string())为准，无需调用方传入
   userName?: string;
   sessionId?: string;
   themeAuthor: string;
@@ -75,10 +75,13 @@ export interface IRTMOperations {
   * 成功后会自动利用自身的 userId 加入 RTM 网络，channelId、sessionId 都是 userId，
   * 别人可以直接通过 userId 找到这个用户并发送消息。
   *
+  * 注意：userId 恒由 SDK 内当前登录用户的公钥(publicKey.string())决定，无需在 authInfo 中传入；
+  * 即便传了也会被忽略。调用前请确保用户已登录（dc.publicKey 就绪）。
+  *
   * 设计说明：
   * 1) 收消息与事件监听走这条长连接（onMessageReceived 等事件来源于此）
   * 2) 主动发消息默认走短连接发送链路（见 sendMessageToPeer 注释），两者职责分离
-   * @param authInfo 登录信息，包括 appId、userId、token 等
+   * @param authInfo 登录信息，包括 appId、themeAuthor、configTheme、serviceName、token 等（userId 自动取当前登录用户公钥）
    */
   login(authInfo: IRTMAuthInfo): Promise<void>;
   

@@ -178,11 +178,23 @@ export class RTCModule implements DCModule, IRTCOperations {
    *   用于实现 sendMessageToPeer / sendMessageToSession，与全局 RTM 模块是独立的两套机制。
    */
   public async init(authInfo: IRTCAuthInfo): Promise<void> {
+    // userId 同时用作申请 aliyun token 时的 userId 与 channelId 占位（channelId 缺省时回退到 userId）。
+    // 与 RTM 一致：一律以 SDK 内当前登录用户的 publicKey.string() 为准，不依赖调用方传入
+    // （自动生成的应用代码常遗漏或传错），从根源避免 "user undefined" / "missing channelId"。
+    // 仅当公钥尚不可用时才回退到传入值。
+    const loginUserId = this.context?.publicKey?.string() || authInfo.userId || "";
     this.authInfo = {
       ...authInfo,
+      userId: loginUserId,
       rtcAppId: authInfo.rtcAppId || this.context?.appInfo?.rtcAppId,
       appId: authInfo.appId || this.context?.appInfo?.appId || ""
     };
+
+    if (!this.authInfo.userId) {
+      throw new Error(
+        '[RTC] Init failed: no logged-in user. Ensure the user is logged in (dc.publicKey ready) before calling dc.rtc.init.'
+      );
+    }
 
     if (!this.authInfo.token && this.authInfo.fetchAuthInfo) {
       const res = await this.authInfo.fetchAuthInfo(true);
