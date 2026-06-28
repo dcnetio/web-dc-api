@@ -113,6 +113,10 @@ export class AliyunRTCOperations implements IRTCOperations {
       
       // 创建客户端实例
       const RTCEngine = (DingRTC as any).default || DingRTC;
+
+      // 注意：DingRTC 新版的 setLogLevel 已废弃（调用会打印
+      // "[dingrtc]: setLogLevel is deprecated" 且本身是空操作），故不再调用。
+      // SDK 向 *.log.aliyuncs.com 的日志上报噪音由 blockAliyunLogRequests() 统一拦截。
       
       if (typeof RTCEngine.checkSystemRequirements === 'function') {
         const supported = RTCEngine.checkSystemRequirements();
@@ -419,49 +423,64 @@ export class AliyunRTCOperations implements IRTCOperations {
   }
 
   public destroy(): void {
-    if (this.rtcClient) {
-      if (typeof this.rtcClient.leave === 'function') {
-        this.rtcClient.leave().catch(() => {});
+    // teardown 必须「未初始化 / 已销毁时安全跳过」：任何一步都不得抛错，
+    // 否则会中断上层 leaveGame/destroy，并产生 "reading 'catch' of undefined"
+    // 之类的二次异常（例如底层 leave()/logout() 在半初始化状态下返回非 Promise）。
+    const safe = (fn: () => unknown): void => {
+      try {
+        const r = fn();
+        if (r && typeof (r as any).catch === 'function') {
+          (r as Promise<unknown>).catch(() => {});
+        }
+      } catch {
+        /* 资源未初始化或已释放，安全跳过 */
       }
+    };
+
+    if (this.rtcClient) {
+      const client = this.rtcClient;
+      if (typeof client.leave === 'function') safe(() => client.leave());
       this.rtcClient = null;
     }
-    
+
     if (this.rtmClient) {
-      if (typeof this.rtmClient.logout === 'function') {
-        this.rtmClient.logout().catch(() => {});
-      } else if (typeof this.rtmClient.leave === 'function') {
-        this.rtmClient.leave();
-      }
+      const rtm = this.rtmClient;
+      if (typeof rtm.logout === 'function') safe(() => rtm.logout());
+      else if (typeof rtm.leave === 'function') safe(() => rtm.leave());
       this.rtmClient = null;
     }
     if (this.cameraTrack) {
-      if (typeof this.cameraTrack.close === 'function') this.cameraTrack.close();
+      const t = this.cameraTrack;
+      if (typeof t.close === 'function') safe(() => t.close());
       this.cameraTrack = null;
     }
     if (this.screenTrack) {
-      if (typeof this.screenTrack.close === 'function') this.screenTrack.close();
+      const t = this.screenTrack;
+      if (typeof t.close === 'function') safe(() => t.close());
       this.screenTrack = null;
     }
     if (this.micTrack) {
-      if (typeof this.micTrack.close === 'function') this.micTrack.close();
+      const t = this.micTrack;
+      if (typeof t.close === 'function') safe(() => t.close());
       this.micTrack = null;
     }
-    
+
     for (const track of this.remoteVideoTracks.values()) {
-      if (typeof track.stopPlay === 'function') track.stopPlay();
-      else if (typeof track.stop === 'function') track.stop();
+      if (typeof track.stopPlay === 'function') safe(() => track.stopPlay());
+      else if (typeof track.stop === 'function') safe(() => track.stop());
     }
     this.remoteVideoTracks.clear();
 
     for (const track of this.remoteScreenTracks.values()) {
-      if (typeof track.stopPlay === 'function') track.stopPlay();
-      else if (typeof track.stop === 'function') track.stop();
+      if (typeof track.stopPlay === 'function') safe(() => track.stopPlay());
+      else if (typeof track.stop === 'function') safe(() => track.stop());
     }
     this.remoteScreenTracks.clear();
-    
+
     if (this.mcuAudioTrack) {
-      if (typeof this.mcuAudioTrack.stopPlay === 'function') this.mcuAudioTrack.stopPlay();
-      else if (typeof this.mcuAudioTrack.stop === 'function') this.mcuAudioTrack.stop();
+      const t = this.mcuAudioTrack;
+      if (typeof t.stopPlay === 'function') safe(() => t.stopPlay());
+      else if (typeof t.stop === 'function') safe(() => t.stop());
       this.mcuAudioTrack = null;
     }
 

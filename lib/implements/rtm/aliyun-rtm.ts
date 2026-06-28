@@ -39,7 +39,7 @@ export class AliyunRTMOperations {
     if (RTMEngine.Logger) {
        RTMEngine.Logger.enableUpload = false;
        if (typeof RTMEngine.Logger.disableUpload === 'function') RTMEngine.Logger.disableUpload();
-       if (typeof RTMEngine.Logger.setLogLevel === 'function') RTMEngine.Logger.setLogLevel('error');
+       if (typeof RTMEngine.Logger.setLogLevel === 'function') RTMEngine.Logger.setLogLevel('none');
     }
 
     
@@ -52,7 +52,7 @@ export class AliyunRTMOperations {
       this.client.logger.disableUpload();
     }
     if (this.client.setLogLevel) {
-      this.client.setLogLevel('error');
+      this.client.setLogLevel('none');
     }
     if (RTMEngine.enableUploadLog) {
       RTMEngine.enableUploadLog = false;

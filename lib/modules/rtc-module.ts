@@ -513,22 +513,33 @@ export class RTCModule implements DCModule, IRTCOperations {
   }
 
   public destroy(): void {
+    // teardown 必须「未初始化时安全跳过」且整体不抛错：上层（生成应用的 leaveGame 等）
+    // 常在 init 失败 / 从未入房的半初始化状态下调用 destroy，任何一步抛错都会变成
+    // "Leave game error" 二次异常。这里逐步包裹，确保即便某模块未就绪也能完成清理。
     this.joinRoomInFlight = null;
-    if (this.context) {
-      const rtmModule = (this.context as any)?.getModule(CoreModuleName.RTM);
-      if (rtmModule && this.rtmListenerAttached) {
-        rtmModule.off('onMessageReceived', this.handleRTMMessage);
+    try {
+      if (this.context) {
+        const rtmModule = (this.context as any)?.getModule(CoreModuleName.RTM);
+        if (rtmModule && this.rtmListenerAttached) {
+          rtmModule.off('onMessageReceived', this.handleRTMMessage);
+        }
       }
+    } catch {
+      /* RTM 模块未初始化，安全跳过 */
     }
     this.rtmListenerAttached = false;
-    this.detachRTCStateListener();
+    try { this.detachRTCStateListener(); } catch { /* 未注册监听，安全跳过 */ }
     this.hasJoinedChannel = false;
     this.shouldPublishAudio = false;
     this.shouldPublishVideo = false;
     this.isScreenSharing = false;
-    this.syncActiveMediaRefreshTask();
+    try { this.syncActiveMediaRefreshTask(); } catch { /* 安全跳过 */ }
     this.customEventListeners.clear();
-    return this.rtcOps.destroy();
+    try {
+      this.rtcOps.destroy();
+    } catch {
+      /* RTC provider 未初始化或已销毁，安全跳过 */
+    }
   }
 
   public async muteLocalCamera(mute: boolean): Promise<void> {
