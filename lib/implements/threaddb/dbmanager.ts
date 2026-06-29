@@ -2405,12 +2405,14 @@ export class DBManager {
         ? new TextDecoder().decode(result)
         : jsonStringify(result);
     } catch (err: any) {
-      console.error(`🚨 Fatal error during database preload: ${err instanceof Error ? err.message : err}`);
-      console.warn(
-        `Failed to find instance by ID: ${
-          err instanceof Error ? err.message : String(err)
-        }`
-      );
+      const msg = err instanceof Error ? err.message : String(err);
+      // "instance not found" / "ERR_NOT_FOUND" 是正常的“记录不存在”场景（如新用户首次查询），
+      // 并非致命错误：上层 DatabaseModule.findByID 会以 [null, err] 元组形式优雅返回，
+      // 调用方据此返回默认值即可。这里不再打印误导性的“Fatal error”日志，仅原样抛出由上层处理。
+      if (!/instance not found|ERR_NOT_FOUND/i.test(msg)) {
+        console.error(`🚨 Fatal error during database preload: ${msg}`);
+        console.warn(`Failed to find instance by ID: ${msg}`);
+      }
       throw err;
     }
   }

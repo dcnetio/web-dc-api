@@ -681,7 +681,12 @@ async findByID(threadId: string, collectionName: string, instanceID: string): Pr
      const result =  await this.context.dbManager.findByID(threadId, collectionName, instanceID);
       return [result, null];
     } catch (error) {
-      logger.error(`通过ID查询实例失败:`, error);
+      const msg = error instanceof Error ? error.message : String(error);
+      // "instance not found"（记录不存在）是正常控制流（如新用户首次查询），
+      // 按 [null, err] 元组返回交由调用方处理即可，不打印 error 级噪音日志。
+      if (!/instance not found|ERR_NOT_FOUND/i.test(msg)) {
+        logger.error(`通过ID查询实例失败:`, error);
+      }
       return [null, error instanceof Error ? error : new Error(String(error))];
     }
 }
