@@ -1321,21 +1321,26 @@ export class FileManager {
     cid: string,
     decryptKey: string,
     peerAddr: string,
+    options?: { signal?: AbortSignal; forceReconnect?: boolean },
   ): Promise<[Uint8Array | null, Error | null]> => {
     try {
-      // 建立链接
+      // 建立链接：连接失败必须快速失败，不能带着未连接状态去拉取
       try {
-        const nodeAddr = await this.dc?.connectToPeerWithAddr(peerAddr);
+        const nodeAddr = await this.dc?.connectToPeerWithAddr(peerAddr, {
+          forceReconnect: options?.forceReconnect,
+        });
         if (!nodeAddr) {
           return [null, Errors.ErrBuildServerConnect];
         }
       } catch (error) {
-        console.warn("Error connecting to peer1:", error);
+        console.warn("Error connecting to build server:", error);
+        return [null, Errors.ErrBuildServerConnect];
       }
       const fileContent = await this.getFileFromDcContent(
         cid,
         decryptKey,
         false,
+        options?.signal,
       );
       return [fileContent, null];
     } catch (error: any) {
@@ -1347,6 +1352,7 @@ export class FileManager {
     cid: string,
     decryptKey: string,
     folderFlag?: boolean,
+    externalSignal?: AbortSignal,
   ): Promise<Uint8Array | null> => {
     try {
       // 1. 验证 dcNodeClient
@@ -1411,6 +1417,17 @@ export class FileManager {
           console.warn("getFileFromDcContent: timeout fetching cid", cid);
         }, 60000);
       };
+
+      // 外部超时/取消信号联动：外层 abort 时真正中断底层 cat，避免“僵尸拉取”占用连接
+      if (externalSignal) {
+        if (externalSignal.aborted) {
+          controller.abort();
+        } else {
+          externalSignal.addEventListener("abort", () => controller.abort(), {
+            once: true,
+          });
+        }
+      }
 
       try {
         resetTimeout();

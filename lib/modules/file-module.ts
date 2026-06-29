@@ -221,6 +221,7 @@ export class FileModule implements DCModule, IFileOperations {
     cid: string,
     decryptKey: string,
     peerAddr: string,
+    options?: { signal?: AbortSignal; forceReconnect?: boolean },
   ): Promise<[Uint8Array | null, Error | null]> {
     try {
       this.assertInitialized();
@@ -228,6 +229,7 @@ export class FileModule implements DCModule, IFileOperations {
         cid,
         decryptKey,
         peerAddr,
+        options,
       );
     } catch (error) {
       logger.error(`获取文件失败: ${cid}`, error);

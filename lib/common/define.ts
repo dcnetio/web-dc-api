@@ -52,6 +52,9 @@ export const shouldReturnUserInfo = _shouldReturnUserInfo;
 export const walletWindowName = "walletWindow"; // 窗口名称
 export const dc_protocol = "/dc/thread/0.0.1";
 export const dial_timeout = 3000;
+// 直连指定节点（如编译服务器，走 WSS + TLS 握手）的拨号超时，
+// 比链上并行拨号的 dial_timeout 更宽松，避免弱网下握手未完成就超时。
+export const peer_dial_timeout = 10000;
 export const keyExpire = 60 * 60 * 24; // setcachekey 过期时间默认一天
 export const OffChainOpTimes = 20000; // 链下操作次数
 export const OffChainSpaceLimit = 1024 * 1024 * 10; // 评论空间下限10m

@@ -58,7 +58,7 @@ import { autoNAT } from "@libp2p/autonat";
 import { dcutr } from "@libp2p/dcutr";
 import { bitswap } from "@helia/block-brokers";
 import { Client } from "./dcapi";
-import { dc_protocol, dial_timeout } from "./define";
+import { dc_protocol, dial_timeout, peer_dial_timeout } from "./define";
 
 const controller = new AbortController();
 const { signal } = controller;
@@ -87,7 +87,11 @@ export class DcUtil {
 
 
 
-  connectToPeerWithAddr = async (peerAddr: string): Promise<Multiaddr> => {
+  connectToPeerWithAddr = async (
+    peerAddr: string,
+    options?: { forceReconnect?: boolean; timeout?: number },
+  ): Promise<Multiaddr> => {
+    const dialTimeout = options?.timeout ?? peer_dial_timeout;
     // 直接使用传入的地址拨号，不走链上查询
     let addr: Multiaddr;
     try {
@@ -101,30 +105,87 @@ export class DcUtil {
       throw new Error("peerId not found in peerAddr");
     }
 
-    // 检查是否已经连接
-    try {
-      const peerId = peerIdFromString(peerIdStr);
-      const connections = this.dcNodeClient?.libp2p.getConnections(peerId);
-      if (connections && connections.length > 0) {
-        if (connections[0].status === "open") {
-          return connections[0].remoteAddr;
-        }
-      }
-    } catch (e) {
-    }
-
     if (!this.dcNodeClient?.libp2p) {
       throw new Error("dcNodeClient is not initialized");
     }
+    const libp2p = this.dcNodeClient.libp2p;
 
-    const resCon = await this.dcNodeClient.libp2p.dial(addr, {
-      signal: AbortSignal.timeout(dial_timeout),
+    let peerId: any = null;
+    try {
+      peerId = peerIdFromString(peerIdStr);
+    } catch (e) {
+      peerId = null;
+    }
+
+    // 检查是否已经有可复用连接
+    if (peerId) {
+      try {
+        const connections = libp2p.getConnections(peerId);
+        const openConn = connections?.find((conn) => conn.status === "open");
+        if (openConn) {
+          if (options?.forceReconnect) {
+            // 强制重连：先断开旧连接，避免复用半死的 WSS 长连接
+            try {
+              await libp2p.hangUp(peerId);
+            } catch (e) {
+              console.warn(
+                "connectToPeerWithAddr: hangUp before reconnect failed",
+                e,
+              );
+            }
+          } else if (await this.isConnectionAlive(peerId)) {
+            // 复用前做一次存活探测，剔除"状态 open 但实际不可用"的连接
+            return openConn.remoteAddr;
+          } else {
+            try {
+              await libp2p.hangUp(peerId);
+            } catch (e) {
+              console.warn(
+                "connectToPeerWithAddr: hangUp stale connection failed",
+                e,
+              );
+            }
+          }
+        }
+      } catch (e) {
+        // 忽略，继续重新拨号
+      }
+    }
+
+    const resCon = await libp2p.dial(addr, {
+      signal: AbortSignal.timeout(dialTimeout),
     });
     if (!resCon) {
       throw new Error("dial peerAddr failed");
     }
 
     return addr;
+  };
+
+  // 通过 libp2p ping 探测连接是否真正存活。
+  // 注意：只有"探测超时（对端无响应）"才判定为失效；其它错误（例如对端不支持 ping
+  // 协议而快速抛错）一律视为存活，避免对不支持 ping 的节点造成无谓的断连重拨。
+  private isConnectionAlive = async (peerId: any): Promise<boolean> => {
+    const pingService = (this.dcNodeClient?.libp2p as any)?.services?.ping;
+    if (!pingService || typeof pingService.ping !== "function") {
+      return true;
+    }
+    const signal = AbortSignal.timeout(3000);
+    try {
+      await pingService.ping(peerId, { signal });
+      return true;
+    } catch (e) {
+      if (signal.aborted) {
+        // 探测超时，连接大概率已半死
+        console.warn(
+          "connectToPeerWithAddr: liveness ping timed out, will reconnect",
+          e,
+        );
+        return false;
+      }
+      // 快速失败（如不支持 ping 协议）：不判定为失效，继续复用
+      return true;
+    }
   };
 
 

@@ -63,6 +63,7 @@ export interface IFileOperations {
     cid: string,
     decryptKey: string,
     peerAddr: string,
+    options?: { signal?: AbortSignal; forceReconnect?: boolean },
   ): Promise<[Uint8Array | null, Error | null]>;
   /**
    * 获取指定文件夹CID中指定路径的文件内容或目录列表

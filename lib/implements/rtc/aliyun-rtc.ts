@@ -331,7 +331,14 @@ export class AliyunRTCOperations implements IRTCOperations {
             }
           }
         } catch (err) {
-          console.warn('Aliyun RTM: Failed to unsubscribe primary topics', err);
+          // 「cannot find specified session / not found」是预期内的良性场景：进房前 _doJoinRoom 会做
+          // 防御性退房，而上一次 RTC leave() 或切换频道已使底层 RTM session 失效（isRtmSubscribed 尚未
+          // 同步复位）。此时退订必然抛该错，但对功能无任何影响，故静默忽略，避免污染控制台；
+          // 仅对真正未预期的错误保留告警。
+          const msg = String((err as any)?.message ?? err ?? '');
+          if (!/cannot find specified session|no\s*such\s*session|session\s*not\s*found|not\s*found/i.test(msg)) {
+            console.warn('Aliyun RTM: Failed to unsubscribe primary topics', err);
+          }
         }
       }
       if (this.rtcClient && typeof this.rtcClient.leave === 'function') {
