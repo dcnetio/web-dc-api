@@ -82,6 +82,31 @@ export interface IRTCCameraDevice {
 export type IRTCScreenShareConfig = Record<string, unknown>;
 export type RTCGenericEventCallback = (...args: unknown[]) => void;
 
+// RTC 视频计费档位（对齐阿里云「集合分辨率」分档，取 DingRTC 可用预设的子集）。
+// 说明：DingRTC 的 dimension 预设最高到 VD_2560x1440(2K)，故摄像头不提供 2K+(4K) 档；
+// 屏幕共享采集的是显示器原生分辨率，单独计价，不走本档位。
+export type RtcVideoProfile = 'SD' | 'HD' | 'FHD' | '2K';
+
+export interface RtcVideoProfileSpec {
+  /** DingRTC 采集/编码规格预设（VideoDimension）。 */
+  dimension: string;
+  /** 上报给后端计费的档位标识（写入请求头 video_resolution）。 */
+  label: RtcVideoProfile;
+  /** 集合分辨率（宽×高像素数），便于与阿里云分档表对照。 */
+  pixels: number;
+}
+
+// 档位 -> 采集规格/上报标识 映射。label 即后端查表用的档位键。
+export const RTC_VIDEO_PROFILES: Record<RtcVideoProfile, RtcVideoProfileSpec> = {
+  SD: { dimension: 'VD_640x480', label: 'SD', pixels: 640 * 480 },
+  HD: { dimension: 'VD_1280x720', label: 'HD', pixels: 1280 * 720 },
+  FHD: { dimension: 'VD_1920x1080', label: 'FHD', pixels: 1920 * 1080 },
+  '2K': { dimension: 'VD_2560x1440', label: '2K', pixels: 2560 * 1440 },
+};
+
+// 未显式配置 videoProfile 时的默认档位（与历史写死的 VD_1280x720 保持一致，避免行为突变）。
+export const DEFAULT_RTC_VIDEO_PROFILE: RtcVideoProfile = 'HD';
+
 export interface IRTCAuthInfo {
   token?: string;       // 如果外部有具体传入的 token，依然可用作默认或兜底
   channelId: string; // 如果是 RTC 邀请场景，channelId 一般基于RTM信令协商生成;如果是RTM场景,channelId 一般为 RTM 通道 ID
@@ -95,6 +120,16 @@ export interface IRTCAuthInfo {
   fetchAuthInfo?: (forceRefresh: boolean) => Promise<{ token: string, expiresAt?: number }>;
   // 配置是否在 RTC 初始化后自动集成 RTM
   enableRTM?: boolean;
+  // Token 有效期（秒），由应用侧传入。仅决定 Token 有效性与自动续期节奏：
+  // SDK 在临近过期时自动续期（而非固定周期刷新）。
+  // 注意：RTC 按时长计费已改为「按实际使用时长增量结算」，计费时长不再等于本有效期——
+  // SDK 会上报各计费区间的实际经过秒数（续期/升降档/离开时结算），避免申请长用得短的预付浪费。
+  // 未设置时服务端使用默认有效期（约 12 小时）。
+  expiresIn?: number;
+  // 视频计费档位（分辨率档）。决定摄像头采集规格，并在计费请求头 video_resolution 中上报，
+  // 供后端按分辨率档查表计价。未设置时取 DEFAULT_RTC_VIDEO_PROFILE（HD，与历史行为一致）。
+  // 注意：仅影响摄像头视频流；屏幕共享按其单独单价计费，不受此档位影响。
+  videoProfile?: RtcVideoProfile;
 }
 
 export interface IRTCOperations {

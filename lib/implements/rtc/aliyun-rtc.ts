@@ -1,4 +1,4 @@
-import { IRTCOperations, IRTCAuthInfo, IRTCJoinRoomOptions, IRTCMember, IRTCStreamConfig, RTCChannelInviteMessage, IRTCCameraDevice, IRTCScreenShareConfig, RTCGenericEventCallback } from '../../interfaces/rtc-interface';
+import { IRTCOperations, IRTCAuthInfo, IRTCJoinRoomOptions, IRTCMember, IRTCStreamConfig, RTCChannelInviteMessage, IRTCCameraDevice, IRTCScreenShareConfig, RTCGenericEventCallback, RTC_VIDEO_PROFILES, DEFAULT_RTC_VIDEO_PROFILE } from '../../interfaces/rtc-interface';
 import DingRTC from 'dingrtc';
 import RTM from '@dingrtc/rtm';
 import { blockAliyunLogRequests } from '../util/aliyun-log-block';
@@ -96,6 +96,14 @@ export class AliyunRTCOperations implements IRTCOperations {
     this.rtcClient = null;
     this.textEncoder = new TextEncoder();
     this.textDecoder = new TextDecoder();
+  }
+
+  // 根据配置的视频档位(authInfo.videoProfile)解析摄像头采集规格(DingRTC dimension)。
+  // 未配置或非法值时回退默认档(HD/VD_1280x720)，与历史行为一致。
+  private getCameraDimension(): string {
+    const profile = this.authInfo?.videoProfile;
+    const spec = (profile && RTC_VIDEO_PROFILES[profile]) || RTC_VIDEO_PROFILES[DEFAULT_RTC_VIDEO_PROFILE];
+    return spec.dimension;
   }
 
 
@@ -243,7 +251,7 @@ export class AliyunRTCOperations implements IRTCOperations {
     if (!this.isLocalCameraMuted) {
       this.cameraTrack = await RTCEngine.createCameraVideoTrack({
         frameRate: 15,
-        dimension: 'VD_1280x720',
+        dimension: this.getCameraDimension(),
       });
       // 如果之前设置过需要切换的摄像头（尤其是断连续命时），在此恢复指定设备
       if (this.currentCameraDeviceId && typeof this.cameraTrack.setDevice === 'function') {
@@ -514,7 +522,7 @@ export class AliyunRTCOperations implements IRTCOperations {
         const RTCEngine = (DingRTC as any).default || DingRTC;
         this.cameraTrack = await RTCEngine.createCameraVideoTrack({
           frameRate: 15,
-          dimension: 'VD_1280x720',
+          dimension: this.getCameraDimension(),
         });
         if (this.currentCameraDeviceId && typeof this.cameraTrack.setDevice === 'function') {
           await this.cameraTrack.setDevice(this.currentCameraDeviceId).catch((e: Error) => console.warn(e));
