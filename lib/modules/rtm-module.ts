@@ -21,6 +21,20 @@ export class RTMModule implements DCModule, IRTMOperations {
   private pendingAcks: Map<string, Set<(success: boolean, err?: Error) => void>> = new Map();
   private _proxyListeners: Map<string, Set<RTMGenericEventCallback>> = new Map();
 
+  // --- transient send infrastructure (per-target token cache / connection pool / send queue) ---
+  /** 按目标用户缓存动态 token，避免每条消息都重新取 token */
+  private transientTokenCache: Map<string, { token: string; rtcAppId?: string; expireAt: number }> = new Map();
+  /** 按目标用户复用临时连接，空闲一段时间后自动断开 */
+  private transientOps: Map<string, { op: AliyunRTMOperations; idleTimer: any }> = new Map();
+  /** 按目标用户串行化发送，避免并发建连/发布相互竞争 */
+  private transientSendQueues: Map<string, Promise<boolean>> = new Map();
+  /** 临时连接空闲多久后断开 */
+  private static readonly TRANSIENT_IDLE_MS = 30 * 1000;
+  /** token 距过期小于该值时视为失效，提前刷新 */
+  private static readonly TOKEN_SAFETY_MS = 30 * 1000;
+  /** 缓存 token 未携带过期时间时的保守有效期 */
+  private static readonly TOKEN_DEFAULT_TTL_MS = 10 * 60 * 1000;
+
   constructor() {}
 
   public get name(): string {
@@ -102,12 +116,25 @@ export class RTMModule implements DCModule, IRTMOperations {
       await this.userBoxOps.disconnect();
       this.userBoxOps = null;
     }
+    // 清理所有临时连接与缓存，保证登出后无残留连接/定时器
+    this.transientOps.forEach((entry) => {
+      if (entry.idleTimer) clearTimeout(entry.idleTimer);
+      entry.op.disconnect().catch(() => {});
+    });
+    this.transientOps.clear();
+    this.transientTokenCache.clear();
+    this.transientSendQueues.clear();
     this.authInfo = null;
     this.stopMaintainTask();
   }
 
   private registerOpListeners(op: AliyunRTMOperations) {
-    op.on('onMessageReceived', (msg) => this.handleMessage(op, msg));
+    // handleMessage 为 async：必须吞掉 rejection，避免出现 Unhandled Promise Rejection
+    op.on('onMessageReceived', (msg) => {
+      this.handleMessage(op, msg).catch((e: any) => {
+        console.warn('[RTM] handleMessage error:', e?.message || e);
+      });
+    });
   }
 
   private async handleMessage(op: AliyunRTMOperations, data: IRTMMessageReceivedPayload) {
@@ -160,8 +187,17 @@ export class RTMModule implements DCModule, IRTMOperations {
         const ackStr = `__DC_ACK__:${hashId}`;
 
         const sessionId = incomingSessionId || this.authInfo?.userId;
-        if (this.userBoxOps && sessionId) {
-          await this.userBoxOps.publish(sessionId, new TextEncoder().encode(ackStr));
+        // 就绪守卫：仅在主连接可用时回 ACK；首发失败（如 session is not ready）时短暂等待后静默重试一次
+        if (this.userBoxOps && this.userBoxOps.client && sessionId) {
+          const ackBytes = new TextEncoder().encode(ackStr);
+          try {
+            await this.userBoxOps.publish(sessionId, ackBytes);
+          } catch (firstErr) {
+            await new Promise(res => setTimeout(res, 300));
+            if (this.userBoxOps && this.userBoxOps.client) {
+              await this.userBoxOps.publish(sessionId, ackBytes);
+            }
+          }
         }
       } catch(e) {}
     }
@@ -208,9 +244,92 @@ export class RTMModule implements DCModule, IRTMOperations {
     }
   }
 
+  /**
+   * 获取发往 targetUserId 所需的动态 token（带本地缓存）。
+   * 命中有效缓存直接返回；否则向 aiproxy 请求并按 expiresAt 缓存。
+   */
+  private async getTransientToken(targetUserId: string): Promise<string> {
+    const cached = this.transientTokenCache.get(targetUserId);
+    if (cached && cached.expireAt - Date.now() > RTMModule.TOKEN_SAFETY_MS) {
+      return cached.token;
+    }
+
+    if (!(this.context as any)?.aiproxy || !this.authInfo?.themeAuthor) {
+      throw new Error('Native config properties required to generate dynamic tokens for transient sending.');
+    }
+
+    const transientUserId = this.authInfo.userId + "_s";
+    try {
+      const [authRes, err] = await (this.context as any).aiproxy.GetAliyunV3Token({
+        channelId: targetUserId,
+        userId: transientUserId,
+        appId: this.authInfo.appId,
+        themeAuthor: this.authInfo.themeAuthor,
+        configTheme: this.authInfo.configTheme,
+        serviceName: this.authInfo.serviceName,
+        forceRefresh: true
+      });
+      if (err || !authRes || !authRes.token) throw err || new Error("empty response");
+      const expireAt = authRes.expiresAt ? authRes.expiresAt * 1000 : (Date.now() + RTMModule.TOKEN_DEFAULT_TTL_MS);
+      this.transientTokenCache.set(targetUserId, { token: authRes.token, rtcAppId: authRes.serviceAppId, expireAt });
+      return authRes.token;
+    } catch (e: any) {
+      throw new Error(`[RTM] Auto-fetch auth info for sending transient message failed: ${e.message}`);
+    }
+  }
+
+  /** 释放并断开某目标的池化临时连接 */
+  private dropTransientOp(targetUserId: string): void {
+    const entry = this.transientOps.get(targetUserId);
+    if (!entry) return;
+    this.transientOps.delete(targetUserId);
+    if (entry.idleTimer) clearTimeout(entry.idleTimer);
+    entry.op.disconnect().catch(() => {});
+  }
+
+  /** 重置某目标临时连接的空闲断开计时 */
+  private touchTransientOp(targetUserId: string): void {
+    const entry = this.transientOps.get(targetUserId);
+    if (!entry) return;
+    if (entry.idleTimer) clearTimeout(entry.idleTimer);
+    entry.idleTimer = setTimeout(() => {
+      this.dropTransientOp(targetUserId);
+    }, RTMModule.TRANSIENT_IDLE_MS);
+  }
+
+  /**
+   * 获取（或建立）到 targetUserId 的池化临时连接。
+   * 连接始终以非静默模式建立（注册监听），保证等 ACK / 收 PONG 均可用。
+   */
+  private async acquireTransientOp(targetUserId: string): Promise<AliyunRTMOperations> {
+    // logout 竞态守卫：登出后在途/排队中的发送直接失败，避免用空认证信息建连
+    if (!this.authInfo) throw new Error('Not logged in');
+    const existing = this.transientOps.get(targetUserId);
+    if (existing && existing.op.client) {
+      // 复用期间先解除空闲断开计时，避免发送/等 ACK 途中被计时器断连；发送结束后由 touchTransientOp 重新计时
+      if (existing.idleTimer) {
+        clearTimeout(existing.idleTimer);
+        existing.idleTimer = null;
+      }
+      return existing.op;
+    }
+    if (existing) this.dropTransientOp(targetUserId);
+
+    const token = await this.getTransientToken(targetUserId);
+    const channelAuthInfo = { ...this.authInfo!, sessionId: targetUserId, token, userId: this.authInfo!.userId + "_s" };
+    const op = new AliyunRTMOperations();
+    await op.connect(channelAuthInfo, targetUserId);
+    this.transientOps.set(targetUserId, { op, idleTimer: null });
+    return op;
+  }
+
+  /**
+   * 发送瞬时点对点消息。同一目标串行排队，避免并发建连/发布相互竞争；
+   * 不同目标之间互不影响。
+   */
   private async sendTransientMessage(targetUserId: string, payload: Uint8Array | string, waitAckStr?: string | boolean): Promise<boolean> {
     if (!this.authInfo) throw new Error('Not logged in');
-    
+
     let waitAckHash: string | undefined;
     if (waitAckStr === undefined || waitAckStr === true) {
         const payloadBytes = typeof payload === 'string' ? new TextEncoder().encode(payload) : payload;
@@ -218,65 +337,74 @@ export class RTMModule implements DCModule, IRTMOperations {
     } else if (typeof waitAckStr === 'string' && waitAckStr !== "") {
         waitAckHash = waitAckStr;
     }
-    const transientUserId = this.authInfo.userId + "_s";
-    
-    let token = '';
-    if ((this.context as any)?.aiproxy && this.authInfo.themeAuthor) {
-      try {
-        const [authRes, err] = await (this.context as any).aiproxy.GetAliyunV3Token({
-          channelId: targetUserId,
-          userId: transientUserId,
-          appId: this.authInfo.appId,
-          themeAuthor: this.authInfo.themeAuthor,
-          configTheme: this.authInfo.configTheme,
-          serviceName: this.authInfo.serviceName,
-          forceRefresh: true
-        });
-        if (err || !authRes || !authRes.token) throw err || new Error("empty response");
-        token = authRes.token;
-      } catch (e: any) {
-        throw new Error(`[RTM] Auto-fetch auth info for sending transient message failed: ${e.message}`);
+
+    const prev = this.transientSendQueues.get(targetUserId) || Promise.resolve(true);
+    const task = prev.catch(() => false).then(() => this.doSendTransient(targetUserId, payload, waitAckHash));
+    this.transientSendQueues.set(targetUserId, task);
+    try {
+      return await task;
+    } finally {
+      if (this.transientSendQueues.get(targetUserId) === task) {
+        this.transientSendQueues.delete(targetUserId);
       }
-    } else {
-      throw new Error('Native config properties required to generate dynamic tokens for transient sending.');
+    }
+  }
+
+  /** 实际的瞬时发送：复用池化连接；失败时失效缓存并重试一次（闭环自愈） */
+  private async doSendTransient(targetUserId: string, payload: Uint8Array | string, waitAckHash?: string, isRetry: boolean = false): Promise<boolean> {
+    let op: AliyunRTMOperations;
+    try {
+      op = await this.acquireTransientOp(targetUserId);
+    } catch (e: any) {
+      // 建连失败可能因缓存 token 已失效：失效缓存后重试一次；token 拉取本身失败则按原行为抛出
+      this.transientTokenCache.delete(targetUserId);
+      if (!isRetry && !String(e?.message).includes('Auto-fetch auth info')) {
+        return this.doSendTransient(targetUserId, payload, waitAckHash, true);
+      }
+      throw e;
     }
 
-    const channelAuthInfo = { ...this.authInfo, sessionId: targetUserId, token, userId: transientUserId };
-    const tempOp = new AliyunRTMOperations();
-    
     try {
-      // 如果需要等ack，则建连时不能完全静默，需要监听以接收回执
-      await tempOp.connect(channelAuthInfo, targetUserId, !waitAckHash);
-      
       let ackPromise: Promise<boolean> | null = null;
       if (waitAckHash) {
           ackPromise = new Promise<boolean>((resolve) => {
               let done = false;
-              const timeout = setTimeout(() => { done = true; resolve(false); }, 3000);
-            tempOp.on('onMessageReceived', (msg) => {
+              const ackListener = (msg: IRTMMessageReceivedPayload) => {
                   if (done) return;
                   if (msg.message === `__DC_ACK__:${waitAckHash}` && msg.publisher == targetUserId) {
                       done = true;
                       clearTimeout(timeout);
+                      op.off('onMessageReceived', ackListener);
                       resolve(true);
                   }
-              });
+              };
+              const timeout = setTimeout(() => {
+                  done = true;
+                  op.off('onMessageReceived', ackListener);
+                  resolve(false);
+              }, 3000);
+              op.on('onMessageReceived', ackListener);
           });
       }
 
-      await tempOp.publish(targetUserId, payload);
-      
+      await op.publish(targetUserId, payload);
+
       if (ackPromise) {
           return await ackPromise;
-      } else {
-          await new Promise(res => setTimeout(res, 800));
-          return true;
       }
+      // 连接池化后不再立即断开，无需为消息落地等待 800ms
+      return true;
     } catch (e: any) {
+      // 发布失败：连接可能已失效（token 过期/断线）。丢弃连接与缓存后重试一次
+      this.dropTransientOp(targetUserId);
+      this.transientTokenCache.delete(targetUserId);
+      if (!isRetry) {
+        return this.doSendTransient(targetUserId, payload, waitAckHash, true);
+      }
       console.error("[RTM] sendTransientMessage failed: ", e.message);
       return false;
     } finally {
-      await tempOp.disconnect();
+      this.touchTransientOp(targetUserId);
     }
   }
 
@@ -337,9 +465,12 @@ export class RTMModule implements DCModule, IRTMOperations {
       if (!this.pendingAcks.has(ackKey)) this.pendingAcks.set(ackKey, new Set());
       this.pendingAcks.get(ackKey)!.add(finish as any);
 
+      // 挂起守卫：真正的 ACK 等待（3s）在 sendTransientMessage 内部完成；
+      // 同目标发送会串行排队，外层若仍用 3s 会在排队阶段误判超时并可能触发离线兜底造成重复投递，
+      // 故这里只作防死挂的兜底保护
       timeoutId = setTimeout(() => {
         finish(false);
-      }, 3000);
+      }, 15000);
 
       try {
         const success = await this.sendTransientMessage(userId, encodedMsg);
@@ -373,11 +504,17 @@ export class RTMModule implements DCModule, IRTMOperations {
       if (!this.pendingPings.has(userId)) this.pendingPings.set(userId, new Set());
       this.pendingPings.get(userId)!.add(finish);
 
-      timeoutId = setTimeout(() => { finish(false); }, 3000);
-
       try {
         const encodedPing = new TextEncoder().encode('__DC_PING__');
-        await this.sendTransientMessage(userId, encodedPing, false);
+        const sent = await this.sendTransientMessage(userId, encodedPing, false);
+        if (!sent) {
+          finish(false);
+          return;
+        }
+        // PING 已真正发出（排队结束）后才开始等 PONG，避免排队耗时吃掉等待窗口
+        if (!isDone) {
+          timeoutId = setTimeout(() => { finish(false); }, 3000);
+        }
       } catch (e) {
         finish(false);
       }

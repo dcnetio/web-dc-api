@@ -198,7 +198,7 @@ export class AliyunRTMOperations {
       const message = data.message || data.messageData || data.data;
       const broadcast = data.broadcast;
       let uid = data.uid || data.publisher || data.userId || data.fromUser || data.senderId;
-      if (uid.includes('_')) {
+      if (typeof uid === 'string' && uid.includes('_')) {
         uid = uid.split('_')[0]; // 提取出真的uid
       }
       const sessionId = data.sessionId || data.topic || data.sessionId;
@@ -269,7 +269,17 @@ export class AliyunRTMOperations {
   public emit<E extends InternalRTMEventName>(event: E, payload: InternalRTMEventPayloadMap[E]) {
     const callbacks = this.eventListeners.get(event);
     if (callbacks) {
-      callbacks.forEach(cb => cb(payload));
+      // 隔离单个监听器异常：一个回调抛错（或 async rejection）不影响其他回调，也不产生 Unhandled Promise Rejection
+      callbacks.slice().forEach(cb => {
+        try {
+          const r: any = cb(payload);
+          if (r && typeof r.catch === 'function') {
+            r.catch((e: any) => { console.warn(`[RTM] listener for "${event}" rejected:`, e?.message || e); });
+          }
+        } catch (e: any) {
+          console.warn(`[RTM] listener for "${event}" threw:`, e?.message || e);
+        }
+      });
     }
   }
 }
