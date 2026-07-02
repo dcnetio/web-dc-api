@@ -265,20 +265,19 @@ export class RTCModule implements DCModule, IRTCOperations {
     }
   }
 
-  // 周期心跳结算（方案A，metered）：入房且有活跃媒体时，每 60 秒调一次 settleCurrentUsageInterval()，
+  // 周期心跳结算（方案A，metered）：入房且走 aliyun 计费时，每 60 秒调一次 settleCurrentUsageInterval()，
   // 把"上次结算 -> 现在"的实际用量按当前媒体档即时结算（服务端按现有逻辑对该区间即时扣费）。
   // 目的：即便客户端异常断开（崩溃 / 断网 / 直接关闭页面，未走 leaveChannel/destroy），也最多只丢失
   // 一个心跳周期（≤60s）的用量，避免整段会话收不到费。Token 续期仍由 startMaintainTask 负责（临近过期
   // 才刷新），与本心跳相互独立。应用自管 token（fetchAuthInfo）不由 SDK 结算，故不为其启动心跳。
+  // 注意：不再要求「有活跃推流媒体」——纯接收/观众（音视频/屏幕全不开）会话也可能被服务端按「连线底价」
+  // (RtcBaseCost) 计费，故只要入房即启动心跳；服务端在未配置底价时对该区间结算返回 0（无害）。
   // 本方法在多处被调用以重新评估媒体状态，需保持幂等：已在运行则不重启定时器。
   private syncActiveMediaRefreshTask() {
     const isAliyunBilled = !this.authInfo?.fetchAuthInfo && !!this.authInfo?.themeAuthor;
-    const hasActiveMedia =
-      this.hasJoinedChannel &&
-      isAliyunBilled &&
-      (this.shouldPublishAudio || this.shouldPublishVideo || this.isScreenSharing);
+    const shouldHeartbeat = this.hasJoinedChannel && isAliyunBilled;
 
-    if (!hasActiveMedia) {
+    if (!shouldHeartbeat) {
       if (this.activeMediaRefreshTimer) {
         clearInterval(this.activeMediaRefreshTimer);
         this.activeMediaRefreshTimer = null;
