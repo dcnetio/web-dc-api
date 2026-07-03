@@ -390,6 +390,42 @@ export class AIProxyModule implements DCModule, IAIProxyOperations {
       } else if (Array.isArray(node)) {
         node.forEach((item, index) => traverse(item, `${pathStr}[${index}]`));
       } else if (node !== null && typeof node === 'object') {
+        // Gemini / 多模态内联数据结构：{ inlineData: { mimeType, data } }
+        // 或 snake_case { inline_data: { mime_type, data } }。
+        // 生成的图片/视频/音频以「纯 base64」放在 data 字段（无 data: 前缀、无 http URL），
+        // 常规字符串遍历无法识别，这里重建为 data URI 以便应用层直接渲染/下载。
+        const inline = (node as any).inlineData ?? (node as any).inline_data;
+        if (inline !== null && typeof inline === 'object') {
+          const mime = String(inline.mimeType ?? inline.mime_type ?? '').toLowerCase();
+          const b64 = inline.data;
+          if (
+            typeof b64 === 'string' &&
+            b64.length > 0 &&
+            !/^(https?:\/\/|data:)/i.test(b64)
+          ) {
+            const dataUri = `data:${mime || 'application/octet-stream'};base64,${b64}`;
+            const inlinePath = pathStr
+              ? `${pathStr}.inlineData`
+              : 'inlineData';
+            if (mime.startsWith('image/')) {
+              result.imagelist.push({ [inlinePath]: dataUri });
+            } else if (mime.startsWith('video/')) {
+              result.videolist.push({ [inlinePath]: dataUri });
+            } else if (mime.startsWith('audio/')) {
+              result.audiolist.push({ [inlinePath]: dataUri });
+            } else if (mime) {
+              result.doclist.push({ [inlinePath]: dataUri });
+            } else if (expectedMediaType === 'image') {
+              result.imagelist.push({ [inlinePath]: dataUri });
+            } else if (expectedMediaType === 'video') {
+              result.videolist.push({ [inlinePath]: dataUri });
+            } else if (expectedMediaType === 'audio') {
+              result.audiolist.push({ [inlinePath]: dataUri });
+            } else {
+              result.doclist.push({ [inlinePath]: dataUri });
+            }
+          }
+        }
         for (const key of Object.keys(node)) {
           traverse(node[key], pathStr ? `${pathStr}.${key}` : key);
         }
