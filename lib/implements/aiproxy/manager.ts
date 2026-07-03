@@ -739,6 +739,8 @@ export class AIProxyManager {
     headers?: string,
     path?: string,
     model?: string,
+    // 二进制透传模式：提供该回调时，响应内容原始字节直接交给调用方（如视频/音频字节流下载）
+    onBinaryChunk: ((chunk: Uint8Array) => void) | null = null,
   ): Promise<number> {
     if (!configTheme.startsWith("keyvalue_")) {
       configTheme = "keyvalue_" + configTheme;
@@ -804,6 +806,7 @@ export class AIProxyManager {
         blockHeight,
         signature,
         onStreamResponse,
+        onBinaryChunk,
       );
     } catch (e) {
       callError = e;

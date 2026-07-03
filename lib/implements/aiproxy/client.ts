@@ -238,7 +238,10 @@ export class AIProxyClient {
     forceRefresh: number,
     blockHeight: number,
     signature: Uint8Array,
-    onStreamResponse: OnStreamResponseType | null = null
+    onStreamResponse: OnStreamResponseType | null = null,
+    // 二进制透传模式：提供该回调时，content 原始字节直接交给调用方（如 MP4 视频字节流下载），
+    // 不再做 TextDecoder 文本解码（文本解码对二进制内容是有损的，无法还原）
+    onBinaryChunk: ((chunk: Uint8Array) => void) | null = null
   ): Promise<number> {
     const message = new dcnet.pb.DoAIProxyCallRequest({});
     message.appId = new TextEncoder().encode(appId);
@@ -343,12 +346,22 @@ export class AIProxyClient {
 
       try {
         const decodedPayload = dcnet.pb.DoAIProxyCallReply.decode(payload);
-        let decodedContent = decodeStreamChunk(contentDecoder, decodedPayload.content);
+        let decodedContent = "";
+        if (onBinaryChunk) {
+          // 二进制模式：原始字节直接交给调用方，跳过文本解码
+          if (decodedPayload.content && decodedPayload.content.length > 0) {
+            onBinaryChunk(decodedPayload.content);
+          }
+        } else {
+          decodedContent = decodeStreamChunk(contentDecoder, decodedPayload.content);
+        }
         let decodedErr = decodeStreamChunk(errDecoder, decodedPayload.err);
         if (decodedPayload.flag == AIStreamResponseFlag.CONNECTION_CLOSED) {
           isCompleted = true; // 如果不是流式响应，标记为完成
           clearTimeoutTimer();
-          decodedContent += decodeStreamChunk(contentDecoder, undefined, true);
+          if (!onBinaryChunk) {
+            decodedContent += decodeStreamChunk(contentDecoder, undefined, true);
+          }
           decodedErr += decodeStreamChunk(errDecoder, undefined, true);
         }
         if (onStreamResponse) {
@@ -377,7 +390,7 @@ export class AIProxyClient {
       if (onStreamResponse) {
         onStreamResponse(
           AIStreamResponseFlag.CONNECTION_CLOSED,
-          decodeStreamChunk(contentDecoder, undefined, true),
+          onBinaryChunk ? "" : decodeStreamChunk(contentDecoder, undefined, true),
           decodeStreamChunk(errDecoder, undefined, true)
         );
       }

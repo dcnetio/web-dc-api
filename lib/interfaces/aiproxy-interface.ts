@@ -212,10 +212,56 @@ export interface IAIProxyOperations {
       existingTaskId?: string;    // 从外部直接传入已有的 task_id (跳过提交，直接进行轮询)
       buildPollReqBody?: (taskId: string) => string;
       buildPollPath?: (taskId: string) => string;
+      // 第3阶段：任务完成后的结果内容下载（默认自动启用）
+      // 适配「轮询接口只返回任务状态、不返回资源 URL」的服务商
+      // （如 laozhang veo：完成后需 GET /v1/videos/{id}/content 下载 MP4 字节流）
+      // 仅当任务显式完成且轮询响应中未提取到任何资源时才触发，SDK 自动把下载结果
+      // （data URI 或 URL）补进对应媒体列表，调用方无需感知服务商差异；
+      // 下载失败（如服务商不支持 content 接口时快速失败）回退为原始轮询结果。
+      // 不传 = 自动启用；传 false = 禁用；传对象 = 自定义下载方式
+      contentDownload?: false | {
+        serviceName?: string;                      // 下载服务名，默认复用 pollServiceName
+        headers?: Record<string, string>;          // 默认复用 pollHeaders
+        model?: string;                            // 默认复用 pollModel
+        path?: string;                             // 基础路径，默认复用 pollPath；最终请求 {path}/{taskId}/content
+        buildPath?: (taskId: string) => string;    // 完全自定义下载路径（优先级最高，便于适配其他服务商）
+        buildReqBody?: (taskId: string) => string; // 自定义请求体，默认空 body（REST GET 风格）
+        mimeType?: string;                         // 字节流 MIME 嗅探失败时的兜底类型
+        maxRetries?: number;                       // 文件落盘延迟重试次数（默认 3）
+        retryIntervalMs?: number;                  // 重试间隔（默认 15000ms）
+      };
       onTaskSubmitted?: (taskId: string, initialResult: any) => void;
       onPollTick?: (pollResult: any) => void; 
     }
   ): Promise<[any, Error | null]>;
+
+  /**
+   * 下载 AI 任务的结果内容（二进制字节流 / JSON 包 URL）
+   *
+   * 适配「任务查询接口只返回状态、不返回资源 URL」的服务商：
+   * 如 laozhang veo 系列任务完成后需 GET /v1/videos/{id}/content 下载 MP4 字节流。
+   * - 二进制响应（MP4/PNG/MP3 等）：自动嗅探 MIME 并转为 data URI 返回；
+   * - JSON 含资源 URL：直接返回该 URL；
+   * - JSON 错误（文件落盘延迟，如 task status is IN_PROGRESS）：按间隔自动重试。
+   */
+  DownloadAIResourceContent(
+    context: { signal?: AbortSignal },
+    options: {
+      appId?: string;
+      themeAuthor?: string;
+      configTheme?: string;
+      serviceName?: string;
+      headers?: Record<string, string>;
+      path?: string;                 // 下载路径，如 /task_xxx/content（拼接在服务 endpoint 之后）
+      model?: string;
+      reqBody?: string;              // 默认空 body（REST GET 风格）
+      forceRefresh?: boolean;
+      expectedMediaType?: 'image' | 'video' | 'audio' | 'doc';
+      mimeType?: string;             // 字节流 MIME 嗅探失败时的兜底类型
+      maxRetries?: number;           // 文件未就绪时的重试次数，默认 3
+      retryIntervalMs?: number;      // 重试间隔，默认 15000ms
+    }
+  ): Promise<[{ url?: string; dataUri?: string; bytes?: Uint8Array; mimeType?: string } | null, Error | null]>;
 
   /**
    * 单次任务轮询查询（提供给内建轮询调度使用，也可手动调用）

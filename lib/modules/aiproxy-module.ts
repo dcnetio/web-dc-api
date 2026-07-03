@@ -20,6 +20,7 @@ import {
   ProxyCallConfig,
   UserAIProxyAuthResult,
   UserProxyCallConfig,
+  AIStreamResponseFlag,
 } from "../common/types/types";
 import { AIProxyManager } from "../implements/aiproxy/manager";
 import { AIProxyRealtimeAudioSession } from "../implements/aiproxy/realtime-audio-session";
@@ -72,6 +73,66 @@ const isAliyunOpenAIRealtimeModel = (model?: string): boolean => {
     (normalizedModel.includes("omni") && normalizedModel.includes("realtime")) ||
     (normalizedModel.includes("qwen") && normalizedModel.includes("realtime"))
   );
+};
+
+// 将字节流分块转 base64（避免一次性 String.fromCharCode 超出调用栈上限）
+const bytesToBase64 = (bytes: Uint8Array): string => {
+  if (typeof btoa !== "undefined") {
+    let binary = "";
+    const chunkSize = 0x8000;
+    for (let i = 0; i < bytes.length; i += chunkSize) {
+      const sub = bytes.subarray(i, Math.min(i + chunkSize, bytes.length));
+      binary += String.fromCharCode.apply(null, sub as unknown as number[]);
+    }
+    return btoa(binary);
+  }
+  // Node 环境兜底
+  return Buffer.from(bytes).toString("base64");
+};
+
+// 通过文件头魔数嗅探常见媒体 MIME 类型
+const sniffMimeTypeFromBytes = (bytes: Uint8Array): string | null => {
+  if (bytes.length < 12) return null;
+  // MP4/MOV/M4A 系：偏移 4 处为 'ftyp'
+  if (bytes[4] === 0x66 && bytes[5] === 0x74 && bytes[6] === 0x79 && bytes[7] === 0x70) return "video/mp4";
+  // WebM/MKV (EBML)
+  if (bytes[0] === 0x1a && bytes[1] === 0x45 && bytes[2] === 0xdf && bytes[3] === 0xa3) return "video/webm";
+  // PNG
+  if (bytes[0] === 0x89 && bytes[1] === 0x50 && bytes[2] === 0x4e && bytes[3] === 0x47) return "image/png";
+  // JPEG
+  if (bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff) return "image/jpeg";
+  // GIF
+  if (bytes[0] === 0x47 && bytes[1] === 0x49 && bytes[2] === 0x46) return "image/gif";
+  // RIFF 容器：WAVE / WEBP / AVI
+  if (bytes[0] === 0x52 && bytes[1] === 0x49 && bytes[2] === 0x46 && bytes[3] === 0x46) {
+    if (bytes[8] === 0x57 && bytes[9] === 0x41) return "audio/wav";   // 'WA'VE
+    if (bytes[8] === 0x57 && bytes[9] === 0x45) return "image/webp";  // 'WE'BP
+    if (bytes[8] === 0x41 && bytes[9] === 0x56) return "video/x-msvideo"; // 'AV'I
+    return null;
+  }
+  // MP3 (ID3 tag 或 MPEG 帧同步头)
+  if (bytes[0] === 0x49 && bytes[1] === 0x44 && bytes[2] === 0x33) return "audio/mpeg";
+  if (bytes[0] === 0xff && (bytes[1] & 0xe0) === 0xe0) return "audio/mpeg";
+  // OGG
+  if (bytes[0] === 0x4f && bytes[1] === 0x67 && bytes[2] === 0x67 && bytes[3] === 0x53) return "audio/ogg";
+  // PDF
+  if (bytes[0] === 0x25 && bytes[1] === 0x50 && bytes[2] === 0x44 && bytes[3] === 0x46) return "application/pdf";
+  return null;
+};
+
+// 判断内容下载的错误响应是否值得重试：
+// - 确定性错误（404/路径不存在/无权限等，通常是服务商根本不支持 content 接口）→ 快速失败，避免空耗重试
+// - 响应只是任务状态对象（已完成但无内容，如兼容查询接口被误路由）→ 重试也不会有结果，快速失败
+// - 其余（如 task status is IN_PROGRESS、400 落盘延迟、短暂断流）→ 可重试
+const isRetryableContentError = (text: string): boolean => {
+  if (/not[\s_-]?found|no\s+such|unknown\s+(?:path|route|api|method)|method\s+not\s+allowed|"(?:status|code)"\s*:\s*"?40[1345]"?|unauthorized|forbidden|invalid[\s_-]?(?:api|parameter|url|request|path)|unsupported|不存在|无权限/i.test(text)) {
+    return false;
+  }
+  // 响应是“已完成”的任务状态对象（而非文件内容/未就绪错误）：重试无意义
+  if (/"(?:status|state|task_status|job_status)"\s*:\s*"(?:success|succeeded|finished|completed|done)"/i.test(text)) {
+    return false;
+  }
+  return true;
 };
 
 /**
@@ -485,6 +546,185 @@ export class AIProxyModule implements DCModule, IAIProxyOperations {
   }
 
   /**
+   * 下载 AI 任务的结果内容（二进制字节流 / JSON 包 URL）
+   *
+   * 适配「任务查询接口只返回状态、不返回资源 URL」的服务商：
+   * 如 laozhang veo 系列任务完成后需 GET /v1/videos/{id}/content 下载 MP4 字节流。
+   *
+   * 响应自适应处理（便于以后扩展其他服务商的取结果方式）：
+   * - 二进制字节流（MP4/PNG/MP3 等）：自动嗅探 MIME 类型并转换为 data URI 返回；
+   * - JSON 且含资源 URL：直接返回该 URL（部分服务商 content 接口返回 JSON 包装的 URL）；
+   * - JSON 错误（如 task status is IN_PROGRESS，文件落盘延迟 / 400 错误）：按间隔自动重试。
+   */
+  async DownloadAIResourceContent(
+    context: { signal?: AbortSignal },
+    options: {
+      appId?: string;
+      themeAuthor?: string;
+      configTheme?: string;
+      serviceName?: string;
+      headers?: Record<string, string>;
+      path?: string;                 // 下载路径，如 /task_xxx/content（拼接在服务 endpoint 之后）
+      model?: string;
+      reqBody?: string;              // 默认空 body（REST GET 风格）
+      forceRefresh?: boolean;
+      expectedMediaType?: 'image' | 'video' | 'audio' | 'doc'; // 用于 URL 分类与兜底 MIME 推断
+      mimeType?: string;             // 字节流 MIME 嗅探失败时的兜底类型
+      maxRetries?: number;           // 文件未就绪（JSON 错误）时的重试次数，默认 3
+      retryIntervalMs?: number;      // 重试间隔，默认 15000ms（官方建议 10-20 秒）
+    }
+  ): Promise<[{ url?: string; dataUri?: string; bytes?: Uint8Array; mimeType?: string } | null, Error | null]> {
+    try {
+      this.assertInitialized();
+      const resolvedConfig = this.resolveAICallConfig(
+        options.appId,
+        options.themeAuthor,
+        options.configTheme,
+        options.serviceName,
+        options.headers,
+        options.path,
+        options.model,
+      );
+
+      const maxRetries = options.maxRetries ?? 3;
+      const retryIntervalMs = Math.max(1000, options.retryIntervalMs ?? 15000);
+      let lastError: Error | null = null;
+
+      for (let attempt = 0; attempt <= maxRetries; attempt++) {
+        if (context.signal?.aborted) {
+          return [null, new Error("内容下载被安全中止")];
+        }
+        if (attempt > 0) {
+          await new Promise((r) => setTimeout(r, retryIntervalMs));
+          if (context.signal?.aborted) {
+            return [null, new Error("内容下载被安全中止")];
+          }
+        }
+
+        const chunks: Uint8Array[] = [];
+        let streamErr = "";
+        const finishedOk = await new Promise<boolean>((resolveAttempt) => {
+          let settled = false;
+          const settle = (ok: boolean) => { if (!settled) { settled = true; resolveAttempt(ok); } };
+          this.aiProxyManager.DoAIProxyCall(
+            context,
+            resolvedConfig.appId,
+            resolvedConfig.themeAuthor,
+            resolvedConfig.configTheme,
+            resolvedConfig.serviceName,
+            options.reqBody || "",
+            !!options.forceRefresh,
+            (flag, _content, err) => {
+              if (err) streamErr += err;
+              if (flag === AIStreamResponseFlag.CONNECTION_CLOSED) {
+                settle(true);
+              } else if (
+                flag === AIStreamResponseFlag.PERMISSION_DENIED ||
+                flag === AIStreamResponseFlag.FETCH_FAILED ||
+                flag === AIStreamResponseFlag.EXTERNAL_EXIT ||
+                flag === AIStreamResponseFlag.STREAM_HANG ||
+                flag === AIStreamResponseFlag.OTHER_ERROR
+              ) {
+                settle(false);
+              }
+            },
+            resolvedConfig.headersStr,
+            resolvedConfig.path,
+            resolvedConfig.model,
+            (chunk) => { chunks.push(chunk); },  // 二进制透传模式收取原始字节
+          ).catch((e) => {
+            streamErr += e instanceof Error ? e.message : String(e);
+            settle(false);
+          });
+        });
+
+        const totalLen = chunks.reduce((sum, c) => sum + c.length, 0);
+        if (totalLen === 0) {
+          // 无内容（网络异常或文件未就绪的短暂断流），重试
+          lastError = new Error(streamErr || "内容下载响应为空（文件可能尚未就绪）");
+          if (context.signal?.aborted) return [null, lastError];
+          continue;
+        }
+        if (!finishedOk) {
+          lastError = new Error(streamErr || "内容下载失败");
+          continue;
+        }
+
+        const bytes = new Uint8Array(totalLen);
+        let offset = 0;
+        for (const c of chunks) { bytes.set(c, offset); offset += c.length; }
+
+        // 嗅探响应类型：JSON（含资源 URL / 未就绪错误）or 二进制字节流
+        let i = 0;
+        while (i < bytes.length && (bytes[i] === 0x20 || bytes[i] === 0x09 || bytes[i] === 0x0a || bytes[i] === 0x0d)) i++;
+        const firstByte = bytes[i];
+        if (firstByte === 0x7b /* { */ || firstByte === 0x5b /* [ */) {
+          let jsonText = "";
+          let parsed: any = undefined;
+          try {
+            jsonText = new TextDecoder("utf-8", { fatal: true }).decode(bytes);
+            parsed = JSON.parse(jsonText);
+          } catch (_) { /* 非合法 JSON，按二进制处理 */ }
+          if (parsed !== undefined) {
+            // JSON 响应里带资源 URL：直接返回（部分服务商 content 接口返回 JSON 包 URL）
+            const extracted = this.ExtractAIResourceResult(jsonText, undefined, options.expectedMediaType);
+            const firstOf = (list: { [key: string]: string }[]) =>
+              list.length > 0 ? Object.values(list[0])[0] : undefined;
+            const url = firstOf(extracted.videolist) || firstOf(extracted.audiolist)
+              || firstOf(extracted.imagelist) || firstOf(extracted.doclist);
+            if (url) {
+              return [{ url }, null];
+            }
+            // JSON 无资源 URL：视为文件未就绪或错误（如 task status is IN_PROGRESS）
+            lastError = new Error(`内容尚未就绪或下载出错: ${jsonText.slice(0, 300)}`);
+            // 确定性错误（如 404/接口不存在）快速失败，避免对不支持 content 接口的服务商空耗重试
+            if (!isRetryableContentError(jsonText)) {
+              return [null, lastError];
+            }
+            continue;
+          }
+        }
+
+        const sniffedMime = sniffMimeTypeFromBytes(bytes);
+        // 非已知二进制格式且体积小：尝试按纯文本处理（裸 URL / 纯文本错误提示），
+        // 避免把服务商的文本错误（如 "task status is IN_PROGRESS"）当成字节流打包成假媒体
+        if (!sniffedMime && totalLen < 64 * 1024) {
+          let text = "";
+          try {
+            text = new TextDecoder("utf-8", { fatal: true }).decode(bytes).trim();
+          } catch (_) { /* 非 UTF-8 文本，按二进制处理 */ }
+          if (text) {
+            // 部分服务商 content 接口直接返回裸 URL 文本
+            if (/^https?:\/\/\S+$/i.test(text)) {
+              return [{ url: text }, null];
+            }
+            // 纯文本错误/未就绪提示
+            lastError = new Error(`内容尚未就绪或下载出错: ${text.slice(0, 300)}`);
+            if (!isRetryableContentError(text)) {
+              return [null, lastError];
+            }
+            continue;
+          }
+        }
+
+        const mimeType = sniffedMime
+          || options.mimeType
+          || (options.expectedMediaType === 'image' ? 'image/png'
+            : options.expectedMediaType === 'audio' ? 'audio/mpeg'
+            : options.expectedMediaType === 'video' ? 'video/mp4'
+            : 'application/octet-stream');
+        const dataUri = `data:${mimeType};base64,${bytesToBase64(bytes)}`;
+        return [{ dataUri, bytes, mimeType }, null];
+      }
+
+      return [null, lastError || new Error("内容下载失败")];
+    } catch (error) {
+      logger.error("下载AI任务结果内容失败:", error);
+      return [null, error instanceof Error ? error : new Error(String(error))];
+    }
+  }
+
+  /**
    * ✨ 完备化生成与轮询通用接口
    * 实现了同步执行与异步任务（提交 + 提取 task_id + 循环轮询 + 收取媒体资源）的高度一体化和解耦。
    */
@@ -527,6 +767,27 @@ export class AIProxyModule implements DCModule, IAIProxyOperations {
       buildPollReqBody?: (taskId: string) => string;
       // 动态构造轮询路径的方法（目前很多主流大模型会将 taskId 拼接到 URL 路径中如 /tasks/{task_id} ）
       buildPollPath?: (taskId: string) => string;
+
+      // ===================
+      // 第3阶段：结果内容下载（默认自动启用）
+      // 适配「轮询接口只返回任务状态、不返回资源 URL」的服务商
+      // （如 laozhang veo：完成后需 GET /v1/videos/{id}/content 下载 MP4 字节流）
+      // 仅当任务显式完成且轮询响应中未提取到任何资源时才触发，
+      // 因此对轮询响应已含 URL 的服务商（如阿里云）无任何影响；
+      // 下载失败（如服务商不支持 content 接口时快速失败）不视为任务失败，回退为原始轮询结果。
+      // 不传 = 自动启用（默认策略）；传 false = 禁用；传对象 = 自定义下载方式
+      // ===================
+      contentDownload?: false | {
+        serviceName?: string;                      // 下载服务名，默认复用 pollServiceName
+        headers?: Record<string, string>;          // 默认复用 pollHeaders
+        model?: string;                            // 默认复用 pollModel
+        path?: string;                             // 基础路径，默认复用 pollPath；最终请求 {path}/{taskId}/content
+        buildPath?: (taskId: string) => string;    // 完全自定义下载路径（优先级最高，便于适配其他服务商的取结果接口）
+        buildReqBody?: (taskId: string) => string; // 自定义请求体，默认空 body（REST GET 风格）
+        mimeType?: string;                         // 字节流 MIME 嗅探失败时的兜底类型（默认按 expectedMediaType 推断）
+        maxRetries?: number;                       // 文件落盘延迟重试次数（默认 3）
+        retryIntervalMs?: number;                  // 重试间隔（默认 15000ms）
+      };
       
       // ===================
       // 生命周期 Hooks
@@ -609,6 +870,8 @@ export class AIProxyModule implements DCModule, IAIProxyOperations {
                      }
 
                      // 完成检测核心逻辑：一旦检测到图片、视频或文档资源被成功提取出，则视为完成
+                     // 注：audiolist 不参与完成判定（音频输入类任务可能在进行中回显输入音频 URL），
+                     // 仅在下方内容下载触发条件中单独检查
                      const hasResource = 
                           (pollResult.imagelist && pollResult.imagelist.length > 0) || 
                           (pollResult.videolist && pollResult.videolist.length > 0) || 
@@ -643,6 +906,54 @@ export class AIProxyModule implements DCModule, IAIProxyOperations {
 
                      if (hasResource || isExplicitFinished) {
                           clearInterval(timer);
+                          // 第3阶段（默认自动）：任务显式完成但轮询响应中没有任何资源 URL
+                          // （如 laozhang veo：完成状态不带 URL，需 GET /v1/videos/{id}/content 下载字节流）
+                          // SDK 自动尝试下载并把结果补进媒体列表，调用方无需感知服务商差异；
+                          // 传 contentDownload: false 可禁用，传对象可自定义下载方式
+                          const hasAnyResource = hasResource ||
+                               (pollResult.audiolist && pollResult.audiolist.length > 0);
+                          if (!hasAnyResource && options.contentDownload !== false) {
+                               try {
+                                    const cd = (options.contentDownload && typeof options.contentDownload === "object")
+                                         ? options.contentDownload
+                                         : {};
+                                    const downloadPath = cd.buildPath
+                                         ? cd.buildPath(taskId)
+                                         : `${(cd.path || options.pollPath || "").replace(/\/$/, '')}/${taskId}/content`;
+                                    const [dlResult, dlErr] = await this.DownloadAIResourceContent(context, {
+                                         appId: options.appId,
+                                         themeAuthor: options.themeAuthor,
+                                         configTheme: options.configTheme,
+                                         serviceName: cd.serviceName || options.pollServiceName,
+                                         headers: cd.headers || options.pollHeaders,
+                                         model: cd.model || options.pollModel,
+                                         path: downloadPath,
+                                         reqBody: cd.buildReqBody ? cd.buildReqBody(taskId) : "",
+                                         forceRefresh,
+                                         expectedMediaType: options.expectedMediaType,
+                                         mimeType: cd.mimeType,
+                                         maxRetries: cd.maxRetries,
+                                         retryIntervalMs: cd.retryIntervalMs,
+                                    });
+                                    if (dlResult && (dlResult.url || dlResult.dataUri)) {
+                                         const resourceUrl = (dlResult.url || dlResult.dataUri) as string;
+                                         const mime = dlResult.mimeType || "";
+                                         const entry = { content_download: resourceUrl };
+                                         if (mime.startsWith("image/")) pollResult.imagelist.push(entry);
+                                         else if (mime.startsWith("audio/")) pollResult.audiolist.push(entry);
+                                         else if (mime.startsWith("video/")) pollResult.videolist.push(entry);
+                                         else if (options.expectedMediaType === "image") pollResult.imagelist.push(entry);
+                                         else if (options.expectedMediaType === "audio") pollResult.audiolist.push(entry);
+                                         else if (options.expectedMediaType === "video") pollResult.videolist.push(entry);
+                                         else pollResult.doclist.push(entry);
+                                    } else {
+                                         // 下载失败不视为任务失败：保留原始完成响应，交由上层兜底展示
+                                         logger.warn(`任务已完成但结果内容下载失败(taskId: ${taskId}):`, dlErr);
+                                    }
+                               } catch (e) {
+                                    logger.warn(`任务结果内容下载异常(taskId: ${taskId}):`, e);
+                               }
+                          }
                           safeResolve([pollResult, null]);
                      } else if (isExplicitFailed) {
                           clearInterval(timer);
