@@ -374,6 +374,10 @@ export class KeyValueClient {
         }
         return null;
       }
+      if (error?.message && error.message.indexOf('datastore: key not found') != -1) {
+        // key 不存在，视为无值返回 null（与 decoded.flag != 0 分支语义一致）
+        return null;
+      }
       console.warn("GetValueWithKey error:", error);
       throw error;
     }
