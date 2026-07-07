@@ -894,10 +894,8 @@ export class KeyValueManager {
       );
 
       if (res == null) {
-        return [
-          null,
-          new Error(`vaGetValueWithKeyForVAccount fail, resFlag:${res}`),
-        ];
+        // key 不存在/无值属正常场景，返回 [null, null] 由上层做兜底，勿当作错误
+        return [null, null];
       }
       const keyValue = new TextDecoder().decode(res);
       return [keyValue, null];
@@ -953,10 +951,8 @@ export class KeyValueManager {
       );
 
       if (res == null) {
-        return [
-          null,
-          new Error(`vaGetValuesWithKeysForVAccount fail, resFlag:${res}`),
-        ];
+        // keys 全部不存在/无值属正常场景，返回 [null, null] 由上层做兜底，勿当作错误
+        return [null, null];
       }
       const keyValues = new TextDecoder().decode(res);
       return [keyValues, null];
@@ -1022,10 +1018,8 @@ export class KeyValueManager {
       );
 
       if (res == null) {
-        return [
-          null,
-          new Error(`vaGetValuesWithKeysForVAccount fail, resFlag:${res}`),
-        ];
+        // 索引查询无匹配结果属正常场景，返回 [null, null] 由上层转为空列表，勿当作错误
+        return [null, null];
       }
       const keyValues = new TextDecoder().decode(res);
       return [keyValues, null];

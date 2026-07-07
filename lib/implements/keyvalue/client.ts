@@ -446,6 +446,10 @@ export class KeyValueClient {
         }
         return null;
       }
+      if (error?.message && error.message.indexOf('datastore: key not found') != -1) {
+        // keys 全部不存在，视为无值返回 null（与 decoded.flag != 0 分支语义一致）
+        return null;
+      }
       console.warn("GetValuesWithKeys error:", error);
       throw error;
     }
@@ -520,6 +524,10 @@ export class KeyValueClient {
         if(decoded.flag == 0) {
           return decoded.keyValues;
         }
+        return null;
+      }
+      if (error?.message && error.message.indexOf('datastore: key not found') != -1) {
+        // 索引无匹配，视为空结果返回 null（与 decoded.flag != 0 分支语义一致）
         return null;
       }
       console.warn("GetValuesWithIndex error:", error);
