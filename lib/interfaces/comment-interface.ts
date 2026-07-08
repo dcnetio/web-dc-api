@@ -9,7 +9,7 @@ export interface ICommentOperations {
   /**
    * 为指定主题开通评论功能
    * @param theme 主题/对象标识符
-   * @param openFlag 开放标志 0-公开 1-私密 2-鉴权
+   * @param openFlag 开放标志 0-公开(任何人可读写) 1-私密(任何登录用户都可写评论,但每条评论默认仅"评论者本人+主题作者(管理员)"可见;主题作者可 setObjCommentPublic 精选公开某条评论) 2-鉴权(需被授权才能访问)
    * @param commentSpace 可选，评论空间上限大小(字节)，默认50MB
    * @returns 操作结果  0:成功 1:评论空间没有配置 2:评论空间不足 3:评论数据同步中
    */
@@ -48,7 +48,7 @@ export interface ICommentOperations {
    * @param commentType 评论类型
    * @param comment 评论内容
    * @param refercommentkey 可选，引用的评论键
-   * @param openFlag 可选，评论可见性标志
+   * @param openFlag 可选，评论可见性 0-公开(所有人可见) 1-私密(仅评论者本人+主题作者可见;主题作者可 setObjCommentPublic 精选公开)
    * @returns 评论发布结果
    */
   publishCommentToTheme(

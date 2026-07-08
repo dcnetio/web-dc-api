@@ -803,7 +803,7 @@ if (dc.publicKey.string() === APPThemeConfig.appThemeAuthor) {
     
     const [status, err] = await dc.comment.addThemeObj(
       'news_comments',        // 主题ID（比如新闻评论区）
-      0,                      // 访问类型：0=公开, 1=私密, 2=授权
+      0,                      // 访问类型：0=公开(任何人可读写) 1=私密(任何登录用户仍可评论,但每条评论默认仅本人+主题作者可见,作者可精选公开) 2=授权(需被授权才能访问)
       50 * 1024 * 1024       // 分配50MB存储空间
     );
     if (status === 0) {

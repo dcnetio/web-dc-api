@@ -631,7 +631,7 @@ console.log('主题对象列表:', themes);
 **参数:**
 
 - `theme`: string - 主题标识符
-- `openFlag`: OpenFlag - 评论可见性标志
+- `openFlag`: OpenFlag - 评论可见性标志。**OpenFlag.PUBLIC(0)**=公开，任何人可读写；**OpenFlag.PRIVATE(1)**=私密，任何登录用户仍可发表评论，但每条评论默认仅“评论者本人+主题作者(管理员)”可见，主题作者可用 `setObjCommentPublic` 精选公开某条（公开后所有人可见）；**OpenFlag.AUTH(2)**=鉴权，需被授权才能访问
 - `commentSpace`: number (可选) - 评论空间大小，默认50MB
 
 **返回:** Promise<[number | null, Error | null]> - 状态码和错误
