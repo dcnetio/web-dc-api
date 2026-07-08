@@ -230,6 +230,35 @@ async addUserOffChainOpTimes(
   }
   
   /**
+   * 将某条评论精选公开(仅评论对象/主题的拥有者可调用)
+   * @param theme 主题
+   * @param themeAuthor 主题作者
+   * @param commentKey 评论键
+   */
+  async setObjCommentPublic(
+    theme: string,
+    themeAuthor: string,
+    commentKey: string
+  ): Promise<[number | null, Error | null]> {
+    try {
+      this.assertInitialized();
+      const res = await this.commentManager.setObjCommentPublic(
+        this.context.appInfo?.appId || "",
+        theme,
+        themeAuthor,
+        commentKey
+      );
+      if (!res[1]) {
+        logger.info(`精选公开评论 ${commentKey} 成功`);
+      }
+      return res;
+    } catch (error) {
+      logger.error(`精选公开评论 ${commentKey} 失败:`, error);
+      return [null, error as Error];
+    }
+  }
+  
+  /**
    * 获取评论对象列表
    * @param themeAuthor 主题作者
    * @param startHeight 起始高度

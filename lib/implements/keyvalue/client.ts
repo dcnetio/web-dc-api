@@ -301,9 +301,7 @@ export class KeyValueClient {
           messageBytes,
           30000
         );
-        console.log("SetKeyValue reply", reply);
         const decoded = dcnet.pb.SetKeyValueReply.decode(reply);
-        console.log("SetKeyValue decoded", decoded);
         return [decoded.flag, decoded.timestamp as number];
       }
       console.warn("SetKeyValue error:", error);

@@ -575,7 +575,8 @@ export class CommentManager {
           commentCidBase32,
           comment,
           refercommentkey,
-          signature
+          signature,
+          openFlag
         );
         if (res === 0) {
           // 获取高度
@@ -694,6 +695,76 @@ export class CommentManager {
       return [0, null];
     } catch (err) {
       console.warn("deleteSelfComment error:", err);
+      throw err;
+    }
+  }
+
+  async setObjCommentPublic(
+    appId: string,
+    theme: string,
+    themeAuthor: string,
+    commentKey: string
+  ): Promise<[number | null, Error | null]> {
+    try {
+      if (!this.context.AccountBackupDc?.client) {
+        return [null, Errors.ErrNoDcPeerConnected];
+      }
+      if (!this.context.publicKey) {
+        return [null, Errors.ErrPublicKeyIsNull];
+      }
+      if (this.context.AccountBackupDc.client.token == "") {
+        await this.context.AccountBackupDc.client.GetToken(
+          appId,
+          this.context.publicKey.string(),
+          this.context.sign
+        );
+      }
+      const parts = commentKey.split("/");
+      if (parts.length < 2) {
+        return [null, Errors.ErrCommentKeyInvalid];
+      }
+      const blockHeight = (await this.chainUtil.getBlockHeight()) || 0;
+      const commentCid = parts[1]!;
+      const commentBlockHeight = parts[0]!;
+      // commentBlockHeight 转32位无符号整数
+      const commentBlockHeightUint32 = parseUint32(commentBlockHeight);
+      const hValue: Uint8Array = uint32ToLittleEndianBytes(
+        blockHeight ? blockHeight : 0
+      );
+      const themeValue: Uint8Array = new TextEncoder().encode(theme);
+      const appIdValue: Uint8Array = new TextEncoder().encode(appId);
+      const authValue: Uint8Array = new TextEncoder().encode(themeAuthor);
+      const cidValue: Uint8Array = new TextEncoder().encode(commentCid);
+      const preSign = new Uint8Array([
+        ...themeValue,
+        ...appIdValue,
+        ...authValue,
+        ...hValue,
+        ...cidValue,
+      ]);
+      const signature = await this.context.sign(preSign);
+      const userPubkey = this.context.getPublicKey();
+      const commentClient = new CommentClient(
+        this.context.AccountBackupDc.client,
+        this.dcNodeClient,
+        this.context
+      );
+      const res = await commentClient.setObjCommentPublic(
+        appId,
+        theme,
+        themeAuthor,
+        blockHeight || 0,
+        userPubkey.string(),
+        commentCid,
+        commentBlockHeightUint32,
+        signature
+      );
+      if (res !== 0) {
+        return [res, new CommentError("setObjCommentPublic error")];
+      }
+      return [0, null];
+    } catch (err) {
+      console.warn("setObjCommentPublic error:", err);
       throw err;
     }
   }

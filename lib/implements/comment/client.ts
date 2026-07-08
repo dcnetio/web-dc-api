@@ -418,7 +418,9 @@ export class CommentClient {
     message.commentSize = message.comment.length;
     message.refercommentkey = new TextEncoder().encode(refercommentkey);
     if (openFlag !== undefined) {
-      message.type = openFlag;
+      // openFlag 表示单条评论的公开/私密状态(0公开 1私密),对应 proto 的 status 字段。
+      // 注意:不要写入 message.type(评论类型 0普通/1回复),否则会破坏评论类型。
+      message.status = openFlag;
     }
     message.signature = signature;
     const messageBytes =
@@ -684,6 +686,76 @@ export class CommentClient {
         return decoded.flag;
       }
       console.warn("DeleteSelfComment error:", error);
+      throw error;
+    }
+  }
+
+  async setObjCommentPublic(
+    appId: string,
+    theme: string,
+    themeAuthor: string,
+    blockheight: number,
+    userPubkey: string,
+    commentCid: string,
+    commentBlockHeight: number,
+    signature: Uint8Array
+  ): Promise<number> {
+    const message = new dcnet.pb.SetObjCommentPublicRequest({});
+    message.theme = new TextEncoder().encode(theme);
+    message.appId = new TextEncoder().encode(appId);
+    message.themeAuthor = new TextEncoder().encode(themeAuthor);
+    message.blockheight = blockheight;
+    message.commentBlockheight = commentBlockHeight;
+    message.commentCid = new TextEncoder().encode(commentCid);
+    message.signature = signature;
+    const messageBytes =
+      dcnet.pb.SetObjCommentPublicRequest.encode(message).finish();
+    try {
+      const grpcClient = new Libp2pGrpcClient(
+        this.client.p2pNode,
+        this.client.peerAddr,
+        this.client.token,
+        this.client.protocol
+      );
+      const reply = await grpcClient.unaryCall(
+        "/dcnet.pb.Service/SetObjCommentPublic",
+        messageBytes,
+        30000
+      );
+      console.log("SetObjCommentPublic reply", reply);
+      const decoded = dcnet.pb.SetObjCommentPublicReply.decode(reply);
+      console.log("SetObjCommentPublic decoded", decoded);
+      return decoded.flag;
+    } catch (error: any) {
+      if (error.message.indexOf(Errors.INVALID_TOKEN.message) != -1) {
+        // try to get token
+        const token = await this.client.GetToken(
+          appId || "",
+          userPubkey,
+          (payload: Uint8Array): Promise<Uint8Array> => {
+            return this.context.sign(payload);
+          }
+        );
+        if (!token) {
+          throw new Error(Errors.INVALID_TOKEN.message);
+        }
+        const grpcClient = new Libp2pGrpcClient(
+          this.client.p2pNode,
+          this.client.peerAddr,
+          this.client.token,
+          this.client.protocol
+        );
+        const reply = await grpcClient.unaryCall(
+          "/dcnet.pb.Service/SetObjCommentPublic",
+          messageBytes,
+          30000
+        );
+        console.log("SetObjCommentPublic reply", reply);
+        const decoded = dcnet.pb.SetObjCommentPublicReply.decode(reply);
+        console.log("SetObjCommentPublic decoded", decoded);
+        return decoded.flag;
+      }
+      console.warn("SetObjCommentPublic error:", error);
       throw error;
     }
   }

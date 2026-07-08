@@ -49,6 +49,10 @@ export class RTCModule implements DCModule, IRTCOperations {
   private mainTokenExpireAt: number = 0;
   private tokenRefreshInFlight: Promise<void> | null = null;
   private joinRoomInFlight: Promise<void> | null = null;
+  // 记录进行中的（或已完成的）init，用于把 init 与 joinRoom 串行化：
+  // 生成应用常常未 await dc.rtc.init() 就调用 joinRoom，导致底层 rtcOps 尚未初始化，
+  // joinChannel 抛 "RTC instance or auth info is missing"。joinRoom 前 await 此 promise 即可根除该竞态。
+  private initInFlight: Promise<void> | null = null;
   private hasJoinedChannel: boolean = false;
   private shouldPublishAudio: boolean = true;
   private shouldPublishVideo: boolean = true;
@@ -299,8 +303,17 @@ export class RTCModule implements DCModule, IRTCOperations {
    *   请确保在调用任何信令相关方法前，全局 RTM 已通过 dc.rtm.init() 完成初始化。
    * - 若传入 authInfo.enableRTM = true，底层 provider 会尝试复用 RTC 连接创建一个内置 RTM client
    *   用于实现 sendMessageToPeer / sendMessageToSession，与全局 RTM 模块是独立的两套机制。
+   *
+   * 注意：本方法把整个初始化过程记录在 this.initInFlight，joinRoom 会先 await 它，
+   * 因此即便调用方遗漏 await（如 `dc.rtc.init(x); dc.rtc.joinRoom(y);`）也不会因竞态
+   * 触发底层 "RTC instance or auth info is missing"。
    */
-  public async init(authInfo: IRTCAuthInfo): Promise<void> {
+  public init(authInfo: IRTCAuthInfo): Promise<void> {
+    this.initInFlight = this._doInit(authInfo);
+    return this.initInFlight;
+  }
+
+  private async _doInit(authInfo: IRTCAuthInfo): Promise<void> {
     // userId 同时用作申请 aliyun token 时的 userId 与 channelId 占位（channelId 缺省时回退到 userId）。
     // 与 RTM 一致：一律以 SDK 内当前登录用户的 publicKey.string() 为准，不依赖调用方传入
     // （自动生成的应用代码常遗漏或传错），从根源避免 "user undefined" / "missing channelId"。
@@ -407,6 +420,13 @@ export class RTCModule implements DCModule, IRTCOperations {
   }
 
   private async _doJoinRoom(channelId: string, options?: IRTCJoinRoomOptions): Promise<void> {
+    // 容错：应用常常未 await dc.rtc.init() 就调用 joinRoom。init 的同步头部虽已设置 this.authInfo，
+    // 但底层 rtcOps.init() 在 init 末尾 await 后才完成；此时若直接进房，joinChannel 会因
+    // rtcClient/authInfo 未就绪抛 "RTC instance or auth info is missing"。先等待进行中的 init 完成，
+    // 将 init/join 串行化，从根源消除该竞态（init 失败时下方 authInfo 守卫兜底）。
+    if (this.initInFlight) {
+      try { await this.initInFlight; } catch { /* init 失败：交由下方守卫与 rtcOps 抛错处理 */ }
+    }
     if (!this.authInfo) throw new Error('Not initialized');
 
     const nextAudioPublish = options?.audioPublish ?? true;

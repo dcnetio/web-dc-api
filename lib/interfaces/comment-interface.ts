@@ -70,6 +70,15 @@ export interface ICommentOperations {
   deleteSelfComment(theme: string, themeAuthor: string, commentKey: string): Promise<[number | null, Error | null]>;
   
   /**
+   * 将某条评论精选公开,使其对所有人可见(仅评论对象/主题的拥有者可调用)
+   * @param theme 主题/对象标识符
+   * @param themeAuthor 主题作者的公钥
+   * @param commentKey 评论的唯一键
+   * @returns 操作结果
+   */
+  setObjCommentPublic(theme: string, themeAuthor: string, commentKey: string): Promise<[number | null, Error | null]>;
+  
+  /**
    * 获取指定作者的主题对象列表,无法查询作者设置为私密的主题
    * @param themeAuthor 主题作者的公钥
    * @param startHeight 可选，查询起始高度
