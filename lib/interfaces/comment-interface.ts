@@ -11,9 +11,10 @@ export interface ICommentOperations {
    * @param theme 主题/对象标识符
    * @param openFlag 开放标志 0-公开(任何人可读写) 1-私密(任何登录用户都可写评论,但每条评论默认仅"评论者本人+主题作者(管理员)"可见;主题作者可 setObjCommentPublic 精选公开某条评论) 2-鉴权(需被授权才能访问)
    * @param commentSpace 可选，评论空间上限大小(字节)，默认50MB
+   * @param appId 可选，覆盖当前 DC 上下文的 appId（用于在另一个应用命名空间下创建主题，如平台侧代生成应用管理其留言主题）
    * @returns 操作结果  0:成功 1:评论空间没有配置 2:评论空间不足 3:评论数据同步中
    */
-  addThemeObj(theme: string, openFlag: OpenFlag, commentSpace?: number): Promise<[number | null, Error | null]>;
+  addThemeObj(theme: string, openFlag: OpenFlag, commentSpace?: number, appId?: string): Promise<[number | null, Error | null]>;
   
   /**
    * 添加用户链下评论空间,DC为了提升性能,用户发布评论等操作,无需上链,有DC节点在TEE环境维护用户的评论空间使用情况,新用户在发布评论前需要先添加评论空间,每次调用会分配50MB的链下空间,用于发布评论等链下操作
@@ -49,6 +50,7 @@ export interface ICommentOperations {
    * @param comment 评论内容
    * @param refercommentkey 可选，引用的评论键
    * @param openFlag 可选，评论可见性 0-公开(所有人可见) 1-私密(仅评论者本人+主题作者可见;主题作者可 setObjCommentPublic 精选公开)
+   * @param appId 可选，覆盖当前 DC 上下文的 appId
    * @returns 评论发布结果
    */
   publishCommentToTheme(
@@ -57,7 +59,8 @@ export interface ICommentOperations {
     commentType: number,
     comment: string,
     openFlag?: number,
-    refercommentkey?: string
+    refercommentkey?: string,
+    appId?: string
   ): Promise<[string | null, Error | null]>;
   
   /**
@@ -74,9 +77,10 @@ export interface ICommentOperations {
    * @param theme 主题/对象标识符
    * @param themeAuthor 主题作者的公钥
    * @param commentKey 评论的唯一键
+   * @param appId 可选，覆盖当前 DC 上下文的 appId
    * @returns 操作结果
    */
-  setObjCommentPublic(theme: string, themeAuthor: string, commentKey: string): Promise<[number | null, Error | null]>;
+  setObjCommentPublic(theme: string, themeAuthor: string, commentKey: string, appId?: string): Promise<[number | null, Error | null]>;
   
   /**
    * 获取指定作者的主题对象列表,无法查询作者设置为私密的主题
@@ -106,6 +110,7 @@ export interface ICommentOperations {
    * @param offset 可选，结果集偏移量
    * @param limit 可选，最大返回数量，默认100
    * @param seekKey 可选，查询的起始键,格式为返回记录的 blockheight/key
+   * @param appId 可选，覆盖当前 DC 上下文的 appId
    * @returns 主题的评论列表
    */
   getThemeComments(
@@ -115,7 +120,8 @@ export interface ICommentOperations {
     direction?: number,
     offset?: number,
     limit?: number,
-    seekKey?: string
+    seekKey?: string,
+    appId?: string
   ): Promise<[ThemeComment[] | null, Error | null]>;
 
 

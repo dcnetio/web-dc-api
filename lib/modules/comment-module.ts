@@ -93,11 +93,11 @@ async addUserOffChainOpTimes(
    * @param openFlag 开放标志
    * @param commentSpace 评论空间大小
    */
-  async addThemeObj(theme: string, openFlag: number, commentSpace?: number): Promise<[number | null, Error | null]> {
+  async addThemeObj(theme: string, openFlag: number, commentSpace?: number, appId?: string): Promise<[number | null, Error | null]> {
     try {
       this.assertInitialized();
       const res = await this.commentManager.addThemeObj(
-        this.context.appInfo?.appId || "",
+        appId || this.context.appInfo?.appId || "",
         theme,
         openFlag,
         commentSpace || 50 * 1024 * 1024 // 50M
@@ -173,14 +173,15 @@ async addUserOffChainOpTimes(
     commentType: number,
     comment: string,
     openFlag?: number,
-    refercommentkey?: string
+    refercommentkey?: string,
+    appId?: string
   ): Promise<[string | null, Error | null]> {
    
     
     try {
        this.assertInitialized();
       const res = await this.commentManager.publishCommentToTheme(
-        this.context.appInfo?.appId || "",
+        appId || this.context.appInfo?.appId || "",
         theme,
         themeAuthor,
         commentType,
@@ -238,12 +239,13 @@ async addUserOffChainOpTimes(
   async setObjCommentPublic(
     theme: string,
     themeAuthor: string,
-    commentKey: string
+    commentKey: string,
+    appId?: string
   ): Promise<[number | null, Error | null]> {
     try {
       this.assertInitialized();
       const res = await this.commentManager.setObjCommentPublic(
-        this.context.appInfo?.appId || "",
+        appId || this.context.appInfo?.appId || "",
         theme,
         themeAuthor,
         commentKey
@@ -315,14 +317,15 @@ async addUserOffChainOpTimes(
     direction?: number,
     offset?: number,
     limit?: number,
-    seekKey?: string
+    seekKey?: string,
+    appId?: string
   ): Promise<[ThemeComment[] | null, Error | null]> {
     
     
     try {
       this.assertInitialized();
       const res = await this.commentManager.getThemeComments(
-        this.context.appInfo?.appId || "",
+        appId || this.context.appInfo?.appId || "",
         theme,
         themeAuthor,
         startHeight || 0,
