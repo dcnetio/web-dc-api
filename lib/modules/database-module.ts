@@ -654,7 +654,15 @@ async find(threadId: string, collectionName: string, queryString?: string): Prom
       const results =  await this.context.dbManager.find(threadId, collectionName, queryString);
       return [results, null];
     } catch (error) {
-      logger.error(`查询实例失败:`, error);
+      const msg = error instanceof Error ? error.message : String(error);
+      // 集合/记录首次访问尚不存在(collection/instance/index not found)属正常控制流,
+      // 按 [null, err] 元组返回交由调用方处理,不打 error 级噪音日志。
+      if (
+        !(/collection|instance|index/i.test(msg) &&
+          /not found|does not exist/i.test(msg))
+      ) {
+        logger.error(`查询实例失败:`, error);
+      }
       return [null, error instanceof Error ? error : new Error(String(error))];
     }
   }

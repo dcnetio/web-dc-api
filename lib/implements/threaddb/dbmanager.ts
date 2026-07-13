@@ -2361,12 +2361,16 @@ export class DBManager {
         return new TextDecoder().decode(joinedResult);
       }
     } catch (err: any) {
-      console.error(`🚨 Fatal error during database preload: ${err instanceof Error ? err.message : err}`);
-      console.warn(
-        `Failed to find instances: ${
-          err instanceof Error ? err.message : String(err)
-        }`
-      );
+      const msg = err instanceof Error ? err.message : String(err);
+      // 集合/记录首次访问尚不存在(collection/instance/index not found)属正常控制流,
+      // 不打印误导性的 "Fatal error during database preload" 噪音,仍原样抛出保持契约。
+      const benignNotFound =
+        /collection|instance|index/i.test(msg) &&
+        /not found|does not exist/i.test(msg);
+      if (!benignNotFound) {
+        console.error(`🚨 Fatal error during database preload: ${msg}`);
+        console.warn(`Failed to find instances: ${msg}`);
+      }
       throw err;
     }
   }
