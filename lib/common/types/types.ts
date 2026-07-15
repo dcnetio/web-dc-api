@@ -294,9 +294,9 @@ export interface AIProxySignatureConfig {
 }
 
 export enum AIModelType {
-  ModelType_AI = 0,
-  ModelType_MCPServer = 1,
-  ModelType_SubTheme = 2,
+  ModelType_AI = 0, // AI模型
+  ModelType_MCPServer = 1, // MCP服务
+  ModelType_SubTheme = 2, // 子主题
 }
 
 /**
