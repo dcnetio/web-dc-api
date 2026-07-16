@@ -131,10 +131,10 @@ export enum PaymentPackageTypeValue {
  * 约束调用方只能使用定义内的合法套餐类型值。
  */
 export type PaymentPackageType =
-  | PaymentPackageTypeValue.SERVICECALL_MEMBER
-  | PaymentPackageTypeValue.APP_PUBLISH
-  | PaymentPackageTypeValue.STORAGE_PURCHASE
-  | PaymentPackageTypeValue.PLATFORM_SVIP;
+  | PaymentPackageTypeValue.SERVICECALL_MEMBER // 模型调用会员套餐
+  | PaymentPackageTypeValue.APP_PUBLISH // 应用发布套餐
+  | PaymentPackageTypeValue.STORAGE_PURCHASE // 存储扩容套餐
+  | PaymentPackageTypeValue.PLATFORM_SVIP; // 平台 SVIP 套餐
 
 /**
  * 应用开发者提交套餐申请/修改时的请求体。
