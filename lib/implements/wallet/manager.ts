@@ -44,6 +44,21 @@ export class WalletManager {
     this.context = context;
   }
 
+  private getWalletPageUrl(): string {
+    const pageUrl = new URL(`${walletUrl.replace(/\/$/, "")}/home`);
+    pageUrl.searchParams.set("origin", appOrigin);
+
+    const theme =
+      typeof globalThis !== "undefined"
+        ? (globalThis as { dc_wallet_theme?: unknown }).dc_wallet_theme
+        : undefined;
+    if (theme === "light" || theme === "dark") {
+      pageUrl.searchParams.set("dc_wallet_theme", theme);
+    }
+
+    return pageUrl.toString();
+  }
+
   async init(): Promise<boolean> {
     console.log("========init walletManager", appOrigin, walletOrigin);
     // Check if we are in a browser environment with document access
@@ -275,7 +290,7 @@ export class WalletManager {
       // html添加iframe标签，id是dcWalletIframe
       const iframe = document.createElement("iframe");
       iframe.id = this.walletIframeId;
-      iframe.src = `${walletUrl}/home?origin=${appOrigin}`;
+      iframe.src = this.getWalletPageUrl();
 
       iframe.onload = async () => {
         console.log("debug================onload", new Date());
@@ -367,8 +382,10 @@ export class WalletManager {
         }
       } else {
         // 普通窗口
-        const urlWithOrigin = walletUrl + "/home?origin=" + appOrigin;
-        this.walletWindow = window.open(urlWithOrigin, walletWindowName);
+        this.walletWindow = window.open(
+          this.getWalletPageUrl(),
+          walletWindowName,
+        );
         if (!this.walletWindow) {
           const error = new WalletError("钱包窗口被浏览器拦截，请允许弹窗后重试");
           this.reportWalletFailure(error.message);
@@ -597,8 +614,10 @@ export class WalletManager {
         }
       } else {
         // 普通窗口
-        const urlWithOrigin = walletUrl + "/home?origin=" + appOrigin;
-        this.walletWindow = window.open(urlWithOrigin, walletWindowName);
+        this.walletWindow = window.open(
+          this.getWalletPageUrl(),
+          walletWindowName,
+        );
         if (!this.walletWindow) {
           const error = new WalletError("钱包窗口被浏览器拦截，请允许弹窗后重试");
           this.reportWalletFailure(error.message);
@@ -668,8 +687,10 @@ export class WalletManager {
         }
       } else {
         // 普通窗口
-        const urlWithOrigin = walletUrl + "/home?origin=" + appOrigin;
-        this.walletWindow = window.open(urlWithOrigin, walletWindowName);
+        this.walletWindow = window.open(
+          this.getWalletPageUrl(),
+          walletWindowName,
+        );
         if (!this.walletWindow) {
           const error = new WalletError("钱包窗口被浏览器拦截，请允许弹窗后重试");
           this.reportWalletFailure(error.message);
