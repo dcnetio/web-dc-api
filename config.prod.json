@@ -1,5 +1,5 @@
 {
-  "baseUrl": "/v0_1_8",
+  "baseUrl": "/v0_1_10",
   "walletOrigin": "https://login.baybird.cn",
   "payProtocol": "/dc/pay/1.0.0"
 }
