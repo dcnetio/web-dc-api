@@ -21,7 +21,7 @@ const appUrl = typeof window !== "undefined" ? window.location.href : "";
 
 const localStorageKey_dcwallet_opener = "dcwallet_opener";
 const timeout = 30000;
-const walletConnectTimeout = 60000;
+const walletConnectTimeout = 300000;
 // 错误定义
 export class WalletError extends Error {
   constructor(message: string) {
@@ -39,6 +39,7 @@ export class WalletManager {
   private channelPort2: MessagePort | null = null;
   private iframeLoaded = false;
   private walletIframeLoadPromise: Promise<boolean> | null = null;
+  private openConnectPromise: Promise<Account> | null = null;
   constructor(context: DCContext) {
     this.context = context;
   }
@@ -275,7 +276,6 @@ export class WalletManager {
       const iframe = document.createElement("iframe");
       iframe.id = this.walletIframeId;
       iframe.src = `${walletUrl}/home?origin=${appOrigin}`;
-      (iframe as any).credentialless = true; // iframe和父窗口不可传递cookies等凭证，符合安全规则
 
       iframe.onload = async () => {
         console.log("debug================onload", new Date());
@@ -330,6 +330,24 @@ export class WalletManager {
   }
 
   async openConnect(
+    accountInfo: AccountInfo = {} as AccountInfo,
+  ): Promise<Account> {
+    if (this.openConnectPromise) {
+      return this.openConnectPromise;
+    }
+
+    const connectPromise = this.openConnectInternal(accountInfo);
+    this.openConnectPromise = connectPromise;
+    try {
+      return await connectPromise;
+    } finally {
+      if (this.openConnectPromise === connectPromise) {
+        this.openConnectPromise = null;
+      }
+    }
+  }
+
+  private async openConnectInternal(
     accountInfo: AccountInfo = {} as AccountInfo,
   ): Promise<Account> {
     return new Promise(async (resolve, reject) => {
@@ -391,7 +409,7 @@ export class WalletManager {
         })
         .catch((error) => {
           console.warn("openConnect error", error);
-          reject(new WalletError("openConnect error"));
+          reject(error instanceof WalletError ? error : new WalletError("openConnect error"));
         });
       //     }
       // });
