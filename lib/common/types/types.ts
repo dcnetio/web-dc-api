@@ -52,6 +52,7 @@ export interface APPInfo {
   appIcon?: string;
   appUrl?: string;
   appVersion?: string;
+  themeColor?: string;
 }
 
 export interface ThemeObj {

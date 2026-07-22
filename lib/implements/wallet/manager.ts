@@ -40,6 +40,7 @@ export class WalletManager {
   private iframeLoaded = false;
   private walletIframeLoadPromise: Promise<boolean> | null = null;
   private openConnectPromise: Promise<Account> | null = null;
+  private messageListener: ((event: MessageEvent) => void) | null = null;
   constructor(context: DCContext) {
     this.context = context;
   }
@@ -54,6 +55,14 @@ export class WalletManager {
         : undefined;
     if (theme === "light" || theme === "dark") {
       pageUrl.searchParams.set("dc_wallet_theme", theme);
+    }
+
+    const themeColor = this.context.appInfo.themeColor;
+    if (
+      typeof themeColor === "string" &&
+      /^#(?:[0-9a-f]{3}|[0-9a-f]{6})$/i.test(themeColor)
+    ) {
+      pageUrl.searchParams.set("themeColor", themeColor);
     }
 
     return pageUrl.toString();
@@ -86,10 +95,9 @@ export class WalletManager {
         // (iframe as any).credentialless = true; // iframe和父窗口不可传递cookies等凭证，符合安全规则
         iframe.style.width = "1px";
         iframe.style.height = "1px";
-        if (typeof window !== "undefined") {
-          window.addEventListener("message", (event) => {
-            that.listenFromWallet(event);
-          });
+        if (typeof window !== "undefined" && !this.messageListener) {
+          this.messageListener = (event) => that.listenFromWallet(event);
+          window.addEventListener("message", this.messageListener);
         }
         const iframeLoaded = that.iframeLoaded;
         if (!iframeLoaded) {
@@ -133,6 +141,7 @@ export class WalletManager {
           appIcon: this.context.appInfo.appIcon,
           appVersion: this.context.appInfo.appVersion,
           appUrl: appUrl,
+          themeColor: this.context.appInfo.themeColor,
         },
       };
       that
@@ -270,7 +279,37 @@ export class WalletManager {
       this.walletIframeId,
     ) as HTMLIFrameElement;
     if (walletIframe) {
-      return true;
+      const walletPageUrl = this.getWalletPageUrl();
+      if (walletIframe.src === walletPageUrl) {
+        return true;
+      }
+      if (this.walletIframeLoadPromise) {
+        return this.walletIframeLoadPromise;
+      }
+
+      this.walletIframeLoadPromise = new Promise((resolve) => {
+        let settled = false;
+        const settle = (result: boolean) => {
+          if (settled) {
+            return;
+          }
+          settled = true;
+          clearTimeout(loadTimeout);
+          this.walletIframeLoadPromise = null;
+          resolve(result);
+        };
+        walletIframe.onload = () => settle(true);
+        walletIframe.onerror = () => {
+          this.reportWalletFailure("钱包页面加载失败，请检查网络后重试");
+          settle(false);
+        };
+        const loadTimeout = setTimeout(() => {
+          this.reportWalletFailure("钱包页面加载超时，请检查网络后重试");
+          settle(false);
+        }, 15000);
+        walletIframe.src = walletPageUrl;
+      });
+      return this.walletIframeLoadPromise;
     }
     if (this.walletIframeLoadPromise) {
       return this.walletIframeLoadPromise;
@@ -402,6 +441,7 @@ export class WalletManager {
           accountInfo: accountInfo || {},
           shouldReturnUserInfo: shouldReturnUserInfo || false,
           attach: "", // 附加参数，以后可以用来传递一些参数
+          themeColor: this.context.appInfo.themeColor,
         },
       };
       this.sendMessageToIframe(message, walletConnectTimeout)

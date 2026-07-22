@@ -21,6 +21,7 @@ export interface IAuthOperations {
   getLoginInfo(): Promise<[Account | null, Error | null]>;
   /**
    * 账户登录通过钱包
+    * 主题色可通过初始化 DC 时的 appInfo.themeColor 传递给钱包。
    * @returns 是否登录成功
    */
   accountLoginWithWallet(): Promise<[Account | null, Error | null]>;
