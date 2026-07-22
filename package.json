@@ -1,6 +1,6 @@
 {
   "name": "web-dc-api",
-  "version": "0.2.57",
+  "version": "0.2.58",
   "description": "一个革命性的去中心化 Web 开发 SDK，让您无需任何服务器即可构建完整的互联网应用",
   "type": "module",
   "sideEffects": false,
@@ -48,7 +48,7 @@
     "@libp2p/crypto": "5.1.17",
     "@libp2p/interface": "^3.1.0",
     "@libp2p/interface-keys": "^1.0.8",
-    "@libp2p/kad-dht": "16.2.4",
+    "@libp2p/kad-dht": "16.2.6",
     "@libp2p/peer-id": "6.0.8",
     "@multiformats/multiaddr": "13.0.1",
     "@noble/curves": "^1.6.0",
