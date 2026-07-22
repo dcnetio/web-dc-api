@@ -92,6 +92,9 @@ export class WalletManager {
           iframe = document.createElement("iframe");
           iframe.id = that.iframeId;
         }
+        // This hidden iframe only initializes the wallet message channel. It must
+        // never be able to trigger a camera or microphone permission prompt.
+        iframe.allow = "camera 'none'; microphone 'none'";
         // (iframe as any).credentialless = true; // iframe和父窗口不可传递cookies等凭证，符合安全规则
         iframe.style.width = "1px";
         iframe.style.height = "1px";
@@ -289,12 +292,15 @@ export class WalletManager {
 
       this.walletIframeLoadPromise = new Promise((resolve) => {
         let settled = false;
+        let loadTimeout: ReturnType<typeof setTimeout> | undefined;
         const settle = (result: boolean) => {
           if (settled) {
             return;
           }
           settled = true;
-          clearTimeout(loadTimeout);
+          if (loadTimeout) {
+            clearTimeout(loadTimeout);
+          }
           this.walletIframeLoadPromise = null;
           resolve(result);
         };
@@ -303,7 +309,10 @@ export class WalletManager {
           this.reportWalletFailure("钱包页面加载失败，请检查网络后重试");
           settle(false);
         };
-        const loadTimeout = setTimeout(() => {
+        loadTimeout = setTimeout(() => {
+          if (settled) {
+            return;
+          }
           this.reportWalletFailure("钱包页面加载超时，请检查网络后重试");
           settle(false);
         }, 15000);
@@ -317,19 +326,21 @@ export class WalletManager {
 
     this.walletIframeLoadPromise = new Promise((resolve) => {
       let settled = false;
+      let loadTimeout: ReturnType<typeof setTimeout> | undefined;
       const settle = (result: boolean) => {
         if (settled) {
           return;
         }
         settled = true;
-        clearTimeout(loadTimeout);
+        if (loadTimeout) {
+          clearTimeout(loadTimeout);
+        }
         this.walletIframeLoadPromise = null;
         resolve(result);
       };
       // html添加iframe标签，id是dcWalletIframe
       const iframe = document.createElement("iframe");
       iframe.id = this.walletIframeId;
-      iframe.src = this.getWalletPageUrl();
 
       iframe.onload = async () => {
         console.log("debug================onload", new Date());
@@ -341,11 +352,15 @@ export class WalletManager {
         this.reportWalletFailure("钱包页面加载失败，请检查网络后重试");
         settle(false);
       };
-      const loadTimeout = setTimeout(() => {
+      loadTimeout = setTimeout(() => {
+        if (settled) {
+          return;
+        }
         iframe.remove();
         this.reportWalletFailure("钱包页面加载超时，请检查网络后重试");
         settle(false);
       }, 15000);
+      iframe.src = this.getWalletPageUrl();
       iframe.allow =
         "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture;publickey-credentials-create; publickey-credentials-get";
 
