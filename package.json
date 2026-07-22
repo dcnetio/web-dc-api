@@ -48,6 +48,7 @@
     "@libp2p/crypto": "^5.1.0",
     "@libp2p/interface": "^3.1.0",
     "@libp2p/interface-keys": "^1.0.8",
+    "@libp2p/kad-dht": "^16.2.6",
     "@libp2p/peer-id": "^6.0.0",
     "@multiformats/multiaddr": "^13.0.1",
     "@noble/curves": "^1.6.0",
@@ -83,8 +84,6 @@
     "lib": "lib",
     "test": "test"
   },
-  
-
   "devDependencies": {
     "@babel/core": "^7.27.4",
     "@babel/parser": "^7.28.4",
