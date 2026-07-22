@@ -1,6 +1,6 @@
 {
   "name": "web-dc-api",
-  "version": "0.2.56",
+  "version": "0.2.58",
   "description": "一个革命性的去中心化 Web 开发 SDK，让您无需任何服务器即可构建完整的互联网应用",
   "type": "module",
   "sideEffects": false,
@@ -45,11 +45,12 @@
     "@helia/unixfs": "^7.0.0",
     "@ipld/dag-cbor": "^9.2.2",
     "@ipld/dag-pb": "^4.1.5",
-    "@libp2p/crypto": "^5.1.0",
+    "@libp2p/crypto": "5.1.17",
     "@libp2p/interface": "^3.1.0",
     "@libp2p/interface-keys": "^1.0.8",
-    "@libp2p/peer-id": "^6.0.0",
-    "@multiformats/multiaddr": "^13.0.1",
+    "@libp2p/kad-dht": "16.2.6",
+    "@libp2p/peer-id": "6.0.8",
+    "@multiformats/multiaddr": "13.0.1",
     "@noble/curves": "^1.6.0",
     "@noble/hashes": "^2.0.1",
     "@polkadot/api": "11.0.3",
@@ -83,8 +84,11 @@
     "lib": "lib",
     "test": "test"
   },
-  
-
+  "overrides": {
+    "@libp2p/crypto": "5.1.17",
+    "@multiformats/multiaddr": "13.0.1",
+    "@libp2p/record": "4.0.12"
+  },
   "devDependencies": {
     "@babel/core": "^7.27.4",
     "@babel/parser": "^7.28.4",

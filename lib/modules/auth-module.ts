@@ -347,11 +347,11 @@ export class AuthModule implements DCModule, IAuthOperations {
           );
           publicKey = privateKey.publicKey;
           this.context.publicKey = publicKey;
-          const parentPrivateKey = await keymanager.getEd25519KeyFromMnemonic(
+          const parentKey = await keymanager.getEd25519KeyFromMnemonic(
             mnemonic,
             "",
           );
-          this.context.parentPublicKey = parentPrivateKey.publicKey;
+          this.context.parentPublicKey = parentKey.publicKey;
           this.context.privateKey = privateKey;
         } else {
           // 获取私钥

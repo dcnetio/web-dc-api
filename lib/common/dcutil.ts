@@ -940,7 +940,10 @@ export class DcUtil {
         if (done) {
           break;
         }
-        const res = value instanceof Uint8ArrayList ? value.subarray() : value;
+        const res: Uint8Array =
+          value instanceof Uint8ArrayList
+            ? value.subarray()
+            : (value as Uint8Array);
         yield res;
       } catch (err) {
         console.warn("Stream chunk error:", err);

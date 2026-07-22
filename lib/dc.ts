@@ -38,6 +38,8 @@ import { Client } from "./common/dcapi";
 import { ICollectionConfig, IDBInfo } from "./implements/threaddb/core/core";
 import { KeyManager } from "./common/dc-key/keyManager";
 import { initializeDatabase } from "./indexDB/db";
+import { sha256, uint8ArrayToHex } from "./util/utils";
+import { bytesToHex, hexToBytes } from "@noble/hashes/utils.js";
 
 const logger = createLogger("DC");
 
@@ -54,7 +56,7 @@ export class DC implements DCContext {
   dcutil: DcUtil;
   privateKey: Ed25519PrivKey | undefined | null;
   publicKey: Ed25519PubKey | undefined;
-  parentPublicKey: Ed25519PubKey | undefined | null; // 应用私钥
+  parentPublicKey: Ed25519PubKey | undefined | null;
   dbThreadId: string = ""; // 当前用户的去中心化数据库ID
   ethAddress: string = ""; // 以太坊格式的公钥,16进制字符串
 
@@ -259,6 +261,212 @@ export class DC implements DCContext {
 
   setAccountInfo(accountInfo: AccountInfo): void {
     this.accountInfo = accountInfo;
+  }
+
+  async Bc_GetStoragePrices(): Promise<unknown[]> {
+    const chainApi = this.getChainApi();
+    const storagePackages = await (chainApi.query as any).dcNode.storagePackages();
+    const packages = storagePackages.toJSON();
+
+    if (!Array.isArray(packages)) {
+      throw new Error("链上存储套餐数据格式无效");
+    }
+    return packages;
+  }
+
+  async Bc_SubscribeStorage(packageId: number): Promise<void> {
+    const signerAddress = this.getChainSignerAddress();
+    const storagePackage = await this.getStoragePackage(packageId);
+    await this.assertSufficientBalance(signerAddress, storagePackage.price);
+    await this.submitStoragePurchase(signerAddress, packageId, storagePackage.price);
+  }
+
+  async Bc_SubscribeStorageForNFTAccount(
+    packageId: number,
+    nftAccount: string,
+  ): Promise<void> {
+    if (!nftAccount.trim()) {
+      throw new Error("NFT 账户不能为空");
+    }
+
+    const chainApi = this.getChainApi();
+    const accountHash = await sha256(new TextEncoder().encode(nftAccount));
+    const targetAccount = await (chainApi.query as any).dcNode.nftToWalletAccount(
+      `0x${uint8ArrayToHex(accountHash)}`,
+    );
+    const resolvedAccount = targetAccount.isSome
+      ? targetAccount.unwrap()
+      : targetAccount;
+
+    if (targetAccount.isNone || this.isEmptyAccountId(resolvedAccount)) {
+      throw new Error("NFT 账户未绑定链上钱包账户");
+    }
+
+    const storagePackage = await this.getStoragePackage(packageId);
+    const signerAddress = this.getChainSignerAddress();
+    await this.assertSufficientBalance(signerAddress, storagePackage.price);
+    await this.submitStoragePurchase(
+      resolvedAccount.toString(),
+      packageId,
+      storagePackage.price,
+    );
+  }
+
+  private getChainApi() {
+    if (!this.initialized || !this.dcChain.dcchainapi) {
+      throw new Error("区块链尚未初始化");
+    }
+    return this.dcChain.dcchainapi;
+  }
+
+  private getChainSigner(): { address: string; privateKey: Ed25519PrivKey } {
+    const signerPublicKey = this.publicKey;
+    const signerPrivateKey = this.privateKey;
+    if (!signerPublicKey || !signerPrivateKey) {
+      throw new Error("请先登录区块链账户");
+    }
+    if (
+      uint8ArrayToHex(signerPublicKey.raw) !==
+      uint8ArrayToHex(signerPrivateKey.publicKey.raw)
+    ) {
+      throw new Error("区块链付款账户与签名密钥不匹配");
+    }
+    return {
+      address: `0x${uint8ArrayToHex(signerPublicKey.raw)}`,
+      privateKey: signerPrivateKey,
+    };
+  }
+
+  private getChainSignerAddress(): string {
+    return this.getChainSigner().address;
+  }
+
+  private isEmptyAccountId(account: any): boolean {
+    const accountId = account?.toString?.() || "";
+    return !accountId || accountId === "0x" || /^0x0+$/.test(accountId);
+  }
+
+  private async getStoragePackage(
+    packageId: number,
+  ): Promise<{ price: string }> {
+    if (!Number.isInteger(packageId) || packageId <= 0 || packageId > 0xffffffff) {
+      throw new Error("存储套餐 ID 无效");
+    }
+
+    const packages = await this.Bc_GetStoragePrices();
+    const storagePackage = packages.find(
+      (item: any) => Number(item.packageId ?? item.package_id) === packageId,
+    ) as any;
+    const price = storagePackage?.price;
+
+    if (price === undefined || price === null) {
+      throw new Error("指定存储套餐不存在");
+    }
+    const normalizedPrice = String(price);
+    if (!/^\d+$/.test(normalizedPrice)) {
+      throw new Error("链上存储套餐价格无效");
+    }
+    return { price: normalizedPrice };
+  }
+
+  private async assertSufficientBalance(
+    account: string,
+    price: string,
+  ): Promise<void> {
+    const chainApi = this.getChainApi();
+    const accountInfo = (await chainApi.query.system.account(account)) as any;
+    const freeBalance = BigInt(accountInfo.data.free.toString());
+
+    if (freeBalance < BigInt(price)) {
+      throw new Error("账户余额不足，无法购买存储套餐");
+    }
+  }
+
+  private getDispatchErrorMessage(dispatchError: any): string {
+    if (dispatchError?.isModule) {
+      try {
+        const chainApi = this.getChainApi();
+        const decoded = chainApi.registry.findMetaError(dispatchError.asModule);
+        return `${decoded.section}.${decoded.name}: ${decoded.docs.join(" ")}`;
+      } catch {
+        // Fall back to the codec's textual form if runtime metadata is unavailable.
+      }
+    }
+    return dispatchError?.toString?.() || "链上交易执行失败";
+  }
+
+  private async submitStoragePurchase(
+    targetAccount: string,
+    packageId: number,
+    price: string,
+  ): Promise<void> {
+    const chainApi = this.getChainApi();
+    const signer = this.getChainSigner();
+    const transaction = (chainApi.tx as any).dcNode.purchaseStorage(
+      targetAccount,
+      packageId,
+      price,
+    );
+    const transactionSigner = {
+      signPayload: async (payload: any) => {
+        const signature = signer.privateKey.sign(
+          hexToBytes(payload.data.replace(/^0x/, "")),
+        );
+        if (signature.length !== 64) {
+          throw new Error("区块链交易签名失败");
+        }
+        return {
+          id: payload.address,
+          signature: `0x${bytesToHex(signature)}`,
+        };
+      },
+    };
+
+    await new Promise<void>((resolve, reject) => {
+      let unsubscribe: (() => void) | undefined;
+      let settled = false;
+      const finish = (error?: Error) => {
+        if (settled) {
+          return;
+        }
+        settled = true;
+        unsubscribe?.();
+        if (error) {
+          reject(error);
+        } else {
+          resolve();
+        }
+      };
+      transaction
+        .signAndSend(signer.address, { signer: transactionSigner }, (result: any) => {
+          if (result.dispatchError) {
+            finish(new Error(this.getDispatchErrorMessage(result.dispatchError)));
+            return;
+          }
+          if (result.status.isFinalized) {
+            const failedEvent = result.events?.find(
+              ({ event }: any) =>
+                event.section === "system" && event.method === "ExtrinsicFailed",
+            );
+            if (failedEvent) {
+              finish(
+                new Error(
+                  this.getDispatchErrorMessage(failedEvent.event.data[0]),
+                ),
+              );
+              return;
+            }
+            finish();
+          }
+        })
+        .then((callback: () => void) => {
+          unsubscribe = callback;
+          if (settled) {
+            unsubscribe();
+          }
+        })
+        .catch((error: Error) => finish(error));
+    });
   }
 
   /**
