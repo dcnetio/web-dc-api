@@ -31,7 +31,53 @@ const external = [
 console.log("NODE_ENV:", process.env.NODE_ENV);
 const isProduction = process.env.NODE_ENV === "production";
 
+const splitOnUnescapedSlashHelper = `
+const splitOnUnescapedSlash = (path) => {
+  const parts = [];
+  let start = 0;
+  for (let index = 0; index < path.length; index += 1) {
+    if (path[index] === "/" && (index === 0 || path[index - 1] !== "\\\\")) {
+      parts.push(path.slice(start, index));
+      start = index + 1;
+    }
+  }
+  parts.push(path.slice(start));
+  return parts;
+};
+`;
+
+// iOS WeChat's JavaScriptCore cannot parse lookbehind regexes. These two IPFS
+// internals only use lookbehind to split an unescaped path separator, which can
+// be expressed without regex syntax that older JavaScript engines reject.
+const legacyPathSplitCompatibility = {
+  name: "legacy-path-split-compatibility",
+  transform(code, id) {
+    const normalizedId = id.replaceAll("\\", "/").split("?")[0];
+    const importerSplit = "path.split(/(?<!\\\\)\\//).filter(Boolean)";
+    const exporterSplit = "path\n        .split(/(?<!\\\\)\\//g)";
+
+    if (normalizedId.endsWith("ipfs-unixfs-importer/dist/src/utils/to-path-components.js")) {
+      if (!code.includes(importerSplit)) return null;
+      return {
+        code: `${splitOnUnescapedSlashHelper}\n${code.replace(importerSplit, "splitOnUnescapedSlash(path).filter(Boolean)")}`,
+        map: null,
+      };
+    }
+
+    if (normalizedId.endsWith("ipfs-unixfs-exporter/dist/src/walk-path/index.js")) {
+      if (!code.includes(exporterSplit)) return null;
+      return {
+        code: `${splitOnUnescapedSlashHelper}\n${code.replace(exporterSplit, "splitOnUnescapedSlash(path)")}`,
+        map: null,
+      };
+    }
+
+    return null;
+  },
+};
+
 const basePlugins = [
+  legacyPathSplitCompatibility,
   // 🔧 注意：inject插件会在所有格式中注入导入
   // 对于ESM构建，process和buffer应该由使用方提供或通过import maps处理
   replace({
