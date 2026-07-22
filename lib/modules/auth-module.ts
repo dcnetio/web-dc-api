@@ -46,6 +46,7 @@ export class AuthModule implements DCModule, IAuthOperations {
   private context!: DCContext;
   private initialized: boolean = false;
   private tokenTask: boolean = false;
+  private unavailableConnections = new Set<DCConnectInfo>();
   private walletManager!: WalletManager;
 
   /**
@@ -688,6 +689,129 @@ export class AuthModule implements DCModule, IAuthOperations {
     return dcClient;
   }
 
+  private async getTokenForClient(client: Client): Promise<void> {
+    if (!this.context.publicKey) {
+      throw new Error("publicKey is null");
+    }
+
+    const token = await client.GetToken(
+      this.context.appInfo.appId || "",
+      this.context.publicKey.string(),
+      this.context.sign,
+    );
+    if (!token) {
+      throw new Error("GetToken failed");
+    }
+  }
+
+  private notifyDcUnavailable(connectInfo: DCConnectInfo): void {
+    if (
+      this.unavailableConnections.has(connectInfo) ||
+      typeof window === "undefined" ||
+      typeof CustomEvent !== "function"
+    ) {
+      return;
+    }
+    this.unavailableConnections.add(connectInfo);
+    window.dispatchEvent(
+      new CustomEvent("dcdc:unavailable", {
+        detail: { message: "服务节点维护中，暂时无法连接成功" },
+      }),
+    );
+  }
+
+  private async reconnectDcNode(
+    connectInfo: DCConnectInfo,
+  ): Promise<void> {
+    const currentPeerId = getPeerIdString(connectInfo.nodeAddr);
+
+    for (let attempt = 1; attempt <= 3; attempt++) {
+      try {
+        if (!currentPeerId) {
+          throw new Error("current peerId is null");
+        }
+        const currentNodeAddr = await this.context.dcutil?._getNodeAddr(
+          currentPeerId,
+        );
+        if (!currentNodeAddr) {
+          throw new Error("current node address is null");
+        }
+        const currentClient = await this.newDcClient(currentNodeAddr);
+        if (!currentClient) {
+          throw new Error("create current node client failed");
+        }
+        await this.getTokenForClient(currentClient);
+        connectInfo.nodeAddr = currentNodeAddr;
+        connectInfo.client = currentClient;
+        this.unavailableConnections.delete(connectInfo);
+        logger.info(`DC节点重连成功, PEERID: ${currentPeerId}`);
+        return;
+      } catch (error: any) {
+        logger.warn(
+          `当前DC节点重连失败 (${attempt}/3), err: ${
+            error?.message
+          }, PEERID: ${currentPeerId || "unknown"}`,
+        );
+        if (attempt < 3) {
+          await sleep(1000);
+        }
+      }
+    }
+
+    try {
+      if (connectInfo === this.context.AccountBackupDc) {
+        if (!this.context.publicKey) {
+          throw new Error("publicKey is null");
+        }
+        logger.info("当前账号节点不可用，尝试切换到账号备用节点");
+        const accountClients =
+          await this.context.dcutil.connectToUserDcPeerCandidates(
+            this.context.publicKey.raw,
+            currentPeerId,
+          );
+        for (const accountClient of accountClients) {
+          try {
+            await this.getTokenForClient(accountClient);
+            connectInfo.nodeAddr = accountClient.peerAddr;
+            connectInfo.client = accountClient;
+            this.unavailableConnections.delete(connectInfo);
+            logger.info(
+              `账号节点切换成功, PEERID: ${getPeerIdString(
+                accountClient.peerAddr,
+              )}`,
+            );
+            return;
+          } catch (error: any) {
+            logger.warn(`账号备用节点获取Token失败, err: ${error?.message}`);
+          }
+        }
+        throw new Error("no account DC node available");
+      }
+
+      logger.info("当前DC节点不可用，尝试切换到备用DC节点");
+      const fallbackNodeAddr = await this.context.dcutil?.getDefaultDcNodeAddr(
+        currentPeerId,
+      );
+      if (!fallbackNodeAddr) {
+        throw new Error("no fallback DC node available");
+      }
+      const fallbackClient = await this.newDcClient(fallbackNodeAddr);
+      if (!fallbackClient) {
+        throw new Error("create fallback node client failed");
+      }
+      await this.getTokenForClient(fallbackClient);
+      connectInfo.nodeAddr = fallbackNodeAddr;
+      connectInfo.client = fallbackClient;
+      this.unavailableConnections.delete(connectInfo);
+      logger.info(
+        `DC节点切换成功, PEERID: ${getPeerIdString(fallbackNodeAddr)}`,
+      );
+    } catch (error: any) {
+      logger.error(`切换备用DC节点失败, err: ${error?.message}`);
+      this.notifyDcUnavailable(connectInfo);
+    }
+  }
+
   /**
    * 开启定时验证 token 线程,不抛出异常
    */
@@ -709,10 +833,16 @@ export class AuthModule implements DCModule, IAuthOperations {
       (async () => {
         while (this.tokenTask) {
           try {
-            if (this.context.connectedDc.client) {
+            if (
+              this.context.connectedDc.client ||
+              this.context.connectedDc.nodeAddr
+            ) {
               await this.getTokenWithDCConnectInfo(this.context.connectedDc);
             }
-            if (this.context.AccountBackupDc.client) {
+            if (
+              this.context.AccountBackupDc.client ||
+              this.context.AccountBackupDc.nodeAddr
+            ) {
               await this.getTokenWithDCConnectInfo(
                 this.context.AccountBackupDc,
               );
@@ -747,6 +877,7 @@ export class AuthModule implements DCModule, IAuthOperations {
       this.assertInitialized();
       // 判断 client 是否为空
       if (!connectInfo.client) {
+        await this.reconnectDcNode(connectInfo);
         return;
       }
 
@@ -765,30 +896,28 @@ export class AuthModule implements DCModule, IAuthOperations {
           connectInfo.client = await this.newDcClient(nodeAddr);
         } catch (e) {
           logger.error("重新连接失败", e);
-          return;
+          await this.reconnectDcNode(connectInfo);
         }
       }
     } catch (error) {
       logger.error("连接检查失败", error);
-      return;
+      await this.reconnectDcNode(connectInfo);
     }
 
     // 判断 token 是否为空
     if (!connectInfo.client?.token) {
       try {
         // 直接获取token
-        if (!this.context.publicKey) {
-          return;
-        }
         logger.info("获取新Token");
-        await connectInfo.client?.GetToken(
-          this.context.appInfo.appId || "",
-          this.context.publicKey.string(),
-          this.context.sign,
-        );
+        const client = connectInfo.client;
+        if (!client) {
+          throw new Error("dcClient is null");
+        }
+        await this.getTokenForClient(client);
         return;
       } catch (error) {
         logger.error("获取token失败", error);
+        await this.reconnectDcNode(connectInfo);
         return;
       }
     }
@@ -803,60 +932,24 @@ export class AuthModule implements DCModule, IAuthOperations {
         if (!this.context.publicKey) {
           return;
         }
-        logger.info("刷新Token");
-        await connectInfo.client?.refreshToken(
-          this.context.appInfo.appId || "",
-          this.context.publicKey.string(),
-          this.context.sign,
-        );
-      } else {
-        logger.info("需要重连节点");
-        // 需要重连
-        let resClient: Client | undefined;
         try {
-          const nodeAddr = await this.context.dcutil?._getNodeAddr(
-            getPeerIdString(connectInfo.nodeAddr) as string,
-          );
-          if (!nodeAddr) {
-            logger.error("无法获取节点地址");
-            return;
-          }
-          resClient = await this.newDcClient(nodeAddr);
-          if (!resClient) {
-            logger.error("创建客户端失败");
-            return;
-          }
-        } catch (e: any) {
-          logger.error(
-            `获取客户端失败, err: ${
-              e?.message
-            }, PEERID: ${getPeerIdString(connectInfo.nodeAddr)}`,
-          );
-          return;
-        }
-
-        if (resClient) {
-          connectInfo.client = resClient;
-        }
-
-        try {
-          // 直接获取token
-          if (!this.context.publicKey) {
-            return;
-          }
-          logger.info("获取新Token");
-          await connectInfo.client?.GetToken(
+          logger.info("刷新Token");
+          const token = await connectInfo.client?.refreshToken(
             this.context.appInfo.appId || "",
             this.context.publicKey.string(),
             this.context.sign,
           );
-        } catch (tokenErr: any) {
-          logger.error(
-            `获取token失败, err: ${
-              tokenErr?.message
-            }, PEERID: ${getPeerIdString(connectInfo.nodeAddr)}`,
-          );
+          if (!token) {
+            throw new Error("refreshToken failed");
+          }
+          this.unavailableConnections.delete(connectInfo);
+        } catch (refreshError) {
+          logger.error("刷新Token失败", refreshError);
+          await this.reconnectDcNode(connectInfo);
         }
+      } else {
+        logger.info("需要重连节点");
+        await this.reconnectDcNode(connectInfo);
       }
     }
   }

@@ -220,10 +220,19 @@ export class DcUtil {
       const _this = this;
       const len = peerListJson.length;
 
+      if (len === 0) {
+        reject(new Error("peer list is empty"));
+        return;
+      }
+
       let num = 0;
 
       async function dialNodeAddr(i: number) {
         if (!peerListJson[i]) {
+          num++;
+          if (num >= len) {
+            reject(new Error("peer list contains no valid peer"));
+          }
           return;
         }
 
@@ -338,6 +347,37 @@ export class DcUtil {
       dc_protocol,
     );
     return client;
+  };
+
+  connectToUserDcPeerCandidates = async (
+    account: Uint8Array,
+    excludedPeerId?: string,
+  ): Promise<Client[]> => {
+    const peerAddrs = await this.dcChain.getAccountPeers(account);
+    if (!peerAddrs || peerAddrs.length === 0 || !this.dcNodeClient?.libp2p) {
+      return [];
+    }
+
+    const candidates = excludedPeerId
+      ? peerAddrs.filter((peerId) => peerId !== excludedPeerId)
+      : peerAddrs;
+    const clients: Client[] = [];
+    for (const peerId of candidates) {
+      try {
+        const nodeAddr = await this._connectPeers([peerId]);
+        clients.push(
+          new Client(
+            this.dcNodeClient.libp2p,
+            this.dcNodeClient.blockstore,
+            nodeAddr,
+            dc_protocol,
+          ),
+        );
+      } catch (error) {
+        console.warn("connectToUserDcPeerCandidates error", error);
+      }
+    }
+    return clients;
   };
 
   // 连接节点列表
@@ -541,9 +581,11 @@ export class DcUtil {
     return nodeAddr ? nodeAddr : undefined;
   };
 
-  getDefaultDcNodeAddr = async (): Promise<Multiaddr | undefined> => {
+  getDefaultDcNodeAddr = async (
+    excludedPeerId?: string,
+  ): Promise<Multiaddr | undefined> => {
     const peerId = await this._getConnectedPeerId();
-    if (peerId) {
+    if (peerId && peerId !== excludedPeerId) {
       let nodeAddr = await this._getNodeAddr(peerId);
       if (nodeAddr) {
         try {
@@ -555,6 +597,11 @@ export class DcUtil {
           }
         } catch (error) {}
       }
+      this.defaultPeerId = undefined;
+      localStorage.removeItem("defaultPeerId");
+    }
+    if (peerId === excludedPeerId) {
+      this.defaultPeerId = undefined;
       localStorage.removeItem("defaultPeerId");
     }
     // 获取节点上的默认节点列表，随机获取几个，批量连接节点，得到最快的节点
@@ -562,8 +609,14 @@ export class DcUtil {
     if (!allNodeList) {
       return;
     }
+    const candidateNodeList = excludedPeerId
+      ? allNodeList.filter((node) => node.split(",")[0] !== excludedPeerId)
+      : allNodeList;
+    if (candidateNodeList.length === 0) {
+      return;
+    }
     // 连接节点，得到最快的节点（随机取几个连接取最快，如果都没有连接上继续随机取）
-    const nodeAddr = await this._getConnectDcNodeList(allNodeList);
+    const nodeAddr = await this._getConnectDcNodeList(candidateNodeList);
     if (!nodeAddr) {
       console.warn("no node connected");
       return;
@@ -572,6 +625,7 @@ export class DcUtil {
     // 保存默认节点
     const defaultPeerId = getPeerIdString(nodeAddr);
     if (defaultPeerId) {
+      this.defaultPeerId = defaultPeerId.toString();
       localStorage.setItem("defaultPeerId", defaultPeerId.toString());
     }
     return nodeAddr as Multiaddr;
