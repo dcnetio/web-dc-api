@@ -16,6 +16,7 @@ export class Client {
   blockstore: Blocks;
   peerAddr: Multiaddr;
   token: string;
+  private tokenRequest: Promise<string> | null = null;
 
   constructor(node: Libp2p,blockstore: Blocks, peerAddr: Multiaddr, protocol: string) {
     this.protocol = protocol;
@@ -31,7 +32,14 @@ export class Client {
     signCallback: (payload: Uint8Array) =>  Promise<Uint8Array> ,
     peerAddr?: Multiaddr
   ): Promise<string> {
-    try {
+    if (this.token) {
+      return this.token;
+    }
+    if (this.tokenRequest) {
+      return this.tokenRequest;
+    }
+
+    const request = (async () => {
       if (this.p2pNode == null) {
         throw new Error("p2pNode is null");
       }
@@ -50,8 +58,17 @@ export class Client {
       const token = await grpcClient.GetToken(appId, pubkey, signCallback);
       this.token = token;
       return token;
-    } catch (err) {
+    })().catch(() => {
       return "";
+    });
+    this.tokenRequest = request;
+
+    try {
+      return await request;
+    } finally {
+      if (this.tokenRequest === request) {
+        this.tokenRequest = null;
+      }
     }
   }
 
