@@ -59,6 +59,7 @@ export class DC implements DCContext {
   parentPublicKey: Ed25519PubKey | undefined | null;
   dbThreadId: string = ""; // 当前用户的去中心化数据库ID
   ethAddress: string = ""; // 以太坊格式的公钥,16进制字符串
+  private postLoginMaintenance: Record<string, Promise<void>> = {};
 
   // 连接相关
   public connectedDc: DCConnectInfo = {};
@@ -112,6 +113,41 @@ export class DC implements DCContext {
 
     // 注册核心模块
     this.registerCoreModules(options.names || []);
+  }
+
+  private runPostLoginMaintenance(
+    threadid: string,
+    task: (isIOS: boolean) => void | Promise<void>,
+  ): void {
+    const isIOS = this.isIOSBrowser();
+    const enqueue = () => {
+      const previous = this.postLoginMaintenance[threadid] || Promise.resolve();
+      const queued = previous
+        .catch(() => undefined)
+        .then(() => task(isIOS))
+        .catch((error) => {
+          logger.warn("登录后的数据库维护失败:", error);
+        })
+        .finally(() => {
+          if (this.postLoginMaintenance[threadid] === queued) {
+            delete this.postLoginMaintenance[threadid];
+          }
+        });
+      this.postLoginMaintenance[threadid] = queued;
+    };
+
+    if (isIOS) {
+      setTimeout(enqueue, 30000);
+      return;
+    }
+    enqueue();
+  }
+
+  private isIOSBrowser(): boolean {
+    return (
+      typeof navigator !== "undefined" &&
+      /iPhone|iPad|iPod/i.test(navigator.userAgent)
+    );
   }
 
   /**
@@ -538,13 +574,25 @@ export class DC implements DCContext {
                 // 需要升级表结构
                 await this.db.upgradeCollections(threadid, collections);
               }
-              // 后台异步刷新数据库，不阻塞登录流程
-              this.db.refreshDBFromDC(threadid).then(async () => {
-                // 同步完成后判断 logs counts
+              this.runPostLoginMaintenance(threadid, async (isIOS) => {
+                if (this.dbThreadId !== threadid) {
+                  logger.info("跳过已失效会话的数据库维护");
+                  return;
+                }
+                // 先确保本地容量，再写入远端拉取的数据。
+                await this.autoExpandDBSpace(this, threadid);
+                // iOS 保留必要的数据拉取，但不使用多节点并发，减少首页内存峰值。
+                const refreshErr = await this.db!.refreshDBFromDC(
+                  threadid,
+                  !isIOS,
+                );
+                if (refreshErr) {
+                  console.warn("后台刷新数据库失败:", refreshErr);
+                  return;
+                }
                 try {
                   const [counts, countErr] = await this.db!.getDBRecordsCount(threadid);
                   if (!countErr && counts >= Number(preCount) + 1000) {
-                    // 当counts大于等于precount+1000时，导出本地数据库并存到 DC
                     const [threadInfo, fileBytes, exportErr] = await this.db!.exportDBToFile(threadid, "db-export.txt", rk, false);
                     if (!exportErr && fileBytes) {
                       const file = new File([fileBytes as any], "db-export.txt", { type: "text/plain" });
@@ -552,7 +600,6 @@ export class DC implements DCContext {
                       if (fileMod) {
                         const [fileId, addErr] = await fileMod.addFile(file, "", () => {});
                         if (!addErr && fileId) {
-                          // 导出后更新用户 dbConfig （包含 fid 和 counts）
                           const remark = `${fileId}|${counts}`;
                           await this.setUserDefaultDB(this, threadid, rk, sk, remark);
                           logger.info("用户数据库已成功导出并更新至 DC, 最新文件ID: " + fileId);
@@ -563,18 +610,18 @@ export class DC implements DCContext {
                 } catch (e) {
                   logger.warn("检查或导出本地数据库记录出错:", e);
                 }
-              }).catch((err) => {
-                console.warn("后台刷新数据库失败:", err);
-              });
-              //3秒后将本地数据库同步到DC
-              setTimeout(() => {
-                if (this.db) {
-                  this.db.syncDBToDC(threadid);
+                // 导出维护完成后再回推，避免拉取、导出和同步同时占用内存。
+                await new Promise<void>((resolve) => {
+                  setTimeout(resolve, isIOS ? 3000 : 5000);
+                });
+                if (!this.db) return;
+                const syncErr = await this.db.syncDBToDC(threadid);
+                if (syncErr) {
+                  console.warn("后台同步数据库失败:", syncErr);
+                  return;
                 }
-              }, 5000);
+              });
               this.dbThreadId = dbinfo.id;
-              // 自动扩容threaddb,当threaddb的可用空间小于10MB，自动扩容50MB,无需等待结果
-              this.autoExpandDBSpace(this, this.dbThreadId);
               return [dbinfo, null];
             } else if (threadid != "") {
               //本地数据库不存在,从DC同步
@@ -586,17 +633,28 @@ export class DC implements DCContext {
                 sk,
                 true,
                 collections,
-                fid
+                fid,
+                !this.isIOSBrowser(),
               );
               const [dbinfo, error] = await this.db.getDBInfo(threadid);
               if (dbinfo != null && !error) {
                 this.dbThreadId = dbinfo.id;
-                // 后台异步刷新数据库，不阻塞登录流程
-                this.db.refreshDBFromDC(threadid).catch((err) => {
-                  console.warn("后台刷新数据库失败:", err);
+                this.runPostLoginMaintenance(threadid, async (isIOS) => {
+                  if (this.dbThreadId !== threadid) {
+                    logger.info("跳过已失效会话的数据库维护");
+                    return;
+                  }
+                  // 本地库刚建立完成时同样先扩容，再进行后续刷新。
+                  await this.autoExpandDBSpace(this, threadid);
+                  const refreshErr = await this.db!.refreshDBFromDC(
+                    threadid,
+                    !isIOS,
+                  );
+                  if (refreshErr) {
+                    console.warn("后台刷新数据库失败:", refreshErr);
+                    return;
+                  }
                 });
-                // 自动扩容threaddb,当threaddb的可用空间小于10MB，自动扩容50MB,无需等待结果
-                this.autoExpandDBSpace(this, this.dbThreadId);
                 return [dbinfo, null]; //返回dbinfo;
               } else {
                 // 获取DB失败

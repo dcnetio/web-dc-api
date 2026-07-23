@@ -241,7 +241,8 @@ export class DatabaseModule implements DCModule, IDatabaseOperations {
     b32Sk: string,  
     block: boolean,  
     collectionInfos: ICollectionConfig[],
-    fid?: string
+    fid?: string,
+    multiPeersFlag: boolean = true,
   ): Promise<Error|null> {
    
     try {
@@ -262,7 +263,8 @@ export class DatabaseModule implements DCModule, IDatabaseOperations {
         b32Sk,
         block,
         collectionInfos,
-        fid
+        fid,
+        multiPeersFlag,
       );
       
       if (syncErr) {
@@ -334,7 +336,10 @@ export class DatabaseModule implements DCModule, IDatabaseOperations {
    * @param threadid 数据库ID
    * @returns 错误信息或null
    */
-  async refreshDBFromDC(threadid: string, verno?: number): Promise<Error | null> {
+  async refreshDBFromDC(
+    threadid: string,
+    multiPeersFlag: boolean = true,
+  ): Promise<Error | null> {
 
     try {
       this.assertInitialized();
@@ -343,7 +348,7 @@ export class DatabaseModule implements DCModule, IDatabaseOperations {
     if (!this.context.dbManager) {
       throw new Error("数据库管理器未初始化");
     }
-        await this.context.dbManager.refreshDBFromDC(threadid);  
+        await this.context.dbManager.refreshDBFromDC(threadid, multiPeersFlag);
         return null;  
       } catch (error) {  
         logger.error(`刷新数据库 ${threadid} 失败:`, error);  

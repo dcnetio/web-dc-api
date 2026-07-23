@@ -1274,13 +1274,13 @@ export class DBManager {
     b32Sk: string,
     block: boolean,
     collectionInfos: ICollectionConfig[],
-    fid?: string
+    fid?: string,
+    multiPeersFlag: boolean = true,
   ): Promise<Error | null> {
     try {
       const tID = await this.decodeThreadId(threadid);
       const logKey = await this.getLogKey(tID);
       const lid = peerIdFromPrivateKey(logKey);
-      await this.dc._connectToObjNodes(threadid);
       // await this.addLogToThreadStart(ctx,tID, lid); //移动到首次上报数据这边,避免空log上链
       const sk = SymmetricKey.fromString(b32Sk);
       const rk = SymmetricKey.fromString(b32Rk);
@@ -1313,7 +1313,8 @@ export class DBManager {
       } else {
         //从区块链中获取节点信息,再连接
         const [connectedAddr, peers] = await this.dc._connectToObjNodes(
-          threadid
+          threadid,
+          multiPeersFlag,
         );
         if (!connectedAddr) {
           throw new Error("connect to obj nodes failed");
@@ -1592,10 +1593,13 @@ export class DBManager {
     }
   }
 
-  async refreshDBFromDC(threadId: string): Promise<Error | null> {
+  async refreshDBFromDC(
+    threadId: string,
+    multiPeersFlag: boolean = true,
+  ): Promise<Error | null> {
     try {
       const tId = await this.decodeThreadId(threadId);
-      await this.network.pullThread(tId, 600, { multiPeersFlag: true });
+      await this.network.pullThread(tId, 600, { multiPeersFlag });
       return null;
     } catch (error) {
       return error as Error;
