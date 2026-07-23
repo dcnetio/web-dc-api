@@ -45,6 +45,9 @@ import {
   PeerRecords,
   netPullingLimit,
 } from "./define";
+
+const IOS_RECORD_PULL_LIMIT = 100;
+
 import { CID } from "multiformats/cid";
 import { getHeadUndef } from "../core/head";
 import {
@@ -102,6 +105,8 @@ export class Network implements Net {
   private tokenCache: Map<string, { token: string; expiresAt: number }> =
     new Map();
   private threadMutexes: Record<string, AsyncMutex> = {};
+  private recordSyncMutexes: Record<string, AsyncMutex> = {};
+  private recentFullRecordPulls: Map<string, number> = new Map();
   private knownLogs: Set<string> = new Set();
   private pushQueue: Array<{
     tid: ThreadID;
@@ -263,6 +268,13 @@ export class Network implements Net {
       this.threadMutexes[threadId] = new AsyncMutex();
     }
     return this.threadMutexes[threadId];
+  }
+
+  private getRecordSyncMutex(threadId: string): AsyncMutex {
+    if (!this.recordSyncMutexes[threadId]) {
+      this.recordSyncMutexes[threadId] = new AsyncMutex();
+    }
+    return this.recordSyncMutexes[threadId];
   }
 
   async getPeers(id: ThreadID): Promise<PeerId[] | undefined> {
@@ -434,18 +446,7 @@ export class Network implements Net {
         throw new Error("Failed to get client");
       }
       const dbClient = new DBClient(client, this.dc, this, this.logstore);
-
-      // 发送请求
-      try {
-        const threadInfo = dbClient.getThreadFromPeer(id, peerId, options);
-        return threadInfo;
-      } catch (err) {
-        throw new Error(
-          `Error getting thread from peer: ${
-            err instanceof Error ? err.message : String(err)
-          }`,
-        );
-      }
+      return await dbClient.getThreadFromPeer(id, peerId, options);
     } catch (err) {
       throw new Error(
         `Error getting thread from peer: ${
@@ -621,6 +622,9 @@ export class Network implements Net {
     // Handle records
     const tRecords: TimestampedRecord[] = [];
     const logEntries = Object.entries(recs);
+    const isIOS =
+      typeof navigator !== "undefined" &&
+      /iPhone|iPad|iPod/i.test(navigator.userAgent);
 
     for (let logIndex = 0; logIndex < logEntries.length; logIndex++) {
       const [lidStr, rec] = logEntries[logIndex]!;
@@ -628,7 +632,7 @@ export class Network implements Net {
       const rs = rec as PeerRecords;
       if (appConnected) {
         // 使用并发控制，但不分批 - 避免慢任务拖累整批
-        const maxConcurrency = 3; // 最大并发数
+        const maxConcurrency = isIOS ? 1 : 3;
         let activePromises: Promise<void>[] = [];
         let processedCount = 0;
         let indexCounter = rs.counter - rs.records.length + 1;
@@ -792,6 +796,8 @@ export class Network implements Net {
     tid: ThreadID,
     multiPeersFlag: boolean = false,
   ): Promise<Record<string, PeerRecords>> {
+    const mutex = this.getRecordSyncMutex(tid.toString());
+    await mutex.acquire();
     try {
       let [offsets, peers] = await this.threadOffsets(tid);
       try {
@@ -817,6 +823,12 @@ export class Network implements Net {
       }
 
       // Definition of the sync logic for a single peer
+      // 单节点模式运行在资源受限的浏览器中。完整同步仍由循环完成，但每次只
+      // 解码和写入 100 条记录，避免单个 500 条响应同时保留原始记录、区块和排序缓存。
+      const pullLimit = multiPeersFlag
+        ? netPullingLimit
+        : Math.min(netPullingLimit, IOS_RECORD_PULL_LIMIT);
+
       const syncPeer = async (
         peer: PeerId,
         offsetsToUpdate: Record<string, any>,
@@ -828,7 +840,7 @@ export class Network implements Net {
               [peer],
               tid,
               offsetsToUpdate,
-              netPullingLimit,
+              pullLimit,
               false,
             );
 
@@ -847,7 +859,7 @@ export class Network implements Net {
                   id: lastRecord.cid(),
                   counter: rs.counter,
                 };
-                if (rs.records.length >= netPullingLimit) hasMore = true;
+                if (rs.records.length >= pullLimit) hasMore = true;
               }
             }
 
@@ -885,9 +897,11 @@ export class Network implements Net {
 
       if (!firstPeerSuccess) return {};
 
-      // 4. Sequence sync remaining peers directly asynchronously without waiting
-      if (remainingPeers.length > 0) {
+      // 多节点模式才继续同步其余节点。单节点拉取用于资源受限环境，首个成功
+      // 节点完成后必须结束，不能在后台继续发起未等待的拉取和本地写入。
+      if (multiPeersFlag && remainingPeers.length > 0) {
         (async () => {
+          await mutex.acquire();
           try {
             // 3. Re-extract offsets
             const [latestOffsets] = await this.threadOffsets(tid);
@@ -897,13 +911,18 @@ export class Network implements Net {
             }
           } catch (err) {
             console.warn(`Background sync failed for thread ${tid}`, err);
+          } finally {
+            mutex.release();
           }
         })();
       }
 
+      this.recentFullRecordPulls.set(tid.toString(), Date.now());
       return {};
     } catch (err) {
       throw err;
+    } finally {
+      mutex.release();
     }
   }
 
@@ -995,7 +1014,6 @@ export class Network implements Net {
     const info = await this.logstore.getThread(tid);
 
     const offsets: Record<string, Head> = {};
-    console.log(`[threadOffsets] 准备检查 Logs, count: ${info.logs?.length}`);
     const addrs: TMultiaddr[] = [];
 
     // Process all logs in thread
@@ -1007,7 +1025,6 @@ export class Network implements Net {
         has = await this.isKnown(lg.head.id, tid);
       }
 
-      console.log(`[threadOffsets] Log ${lg.id.toString()} head: ${lg.head?.id?.toString()} counter:${lg.head?.counter}, isKnown: ${has}`);
       if (has && lg.head) {
         offsets[lg.id.toString()] = lg.head;
         // Collect addresses
@@ -1054,69 +1071,80 @@ export class Network implements Net {
     peerId: PeerId | null,
     client?: DBClient,
   ): Promise<void> {
+    const mutex = this.getRecordSyncMutex(tid.toString());
+    await mutex.acquire();
     try {
-      // 获取threaddb 偏移量
-      const [offsets, peers] = await this.threadOffsets(tid);
-
-      // 构建获取记录的请求
-      console.log(`[getRecords] 发起请求的参数 offsets:`, JSON.stringify(offsets, null, 2));
-      const { req, serviceKey } = await this.buildGetRecordsRequest(
-        tid,
-        offsets,
-        netPullingLimit,
-      );
-      let recs: Record<string, PeerRecords> = {};
-      if (client) {
-        recs = await this.getRecordsWithDbClient(client, req, serviceKey);
-      } else {
-        if (!peerId) {
-          throw new Error("A peer-id is required to request records");
-        }
-        // 从对等点获取记录
-        recs = await this.getRecordsFromPeer(peerId, req, serviceKey);
+      const isIOS =
+        typeof navigator !== "undefined" &&
+        /iPhone|iPad|iPod/i.test(navigator.userAgent);
+      const lastFullPullAt = this.recentFullRecordPulls.get(tid.toString());
+      if (client && isIOS && lastFullPullAt && Date.now() - lastFullPullAt < 15_000) {
+        return;
       }
-      // 处理接收到的记录
-      const entries = Object.entries(recs);
-      for (let entryIndex = 0; entryIndex < entries.length; entryIndex++) {
-        const [lidStr, rs] = entries[entryIndex]!;
-        try {
-          // 将字符串ID转换为PeerId对象
-          const lid = peerIdFromString(lidStr);
+      const pullLimit = isIOS
+        ? Math.min(netPullingLimit, IOS_RECORD_PULL_LIMIT)
+        : netPullingLimit;
 
-          // 将记录添加到本地存储
-          await this.putRecords(tid, lid, rs.records, rs.counter);
-
-          // 每处理一个日志后让出控制权
-          await new Promise((resolve) => setTimeout(resolve, 0));
-        } catch (err) {
-          throw new Error(
-            `Putting records from log ${lidStr} (thread ${tid}) failed: ${
-              err instanceof Error ? err.message : String(err)
-            }`,
-          );
-        }
-      }
-      // 检查是否可能有更多记录需要获取
-      for (const [lidStr, rs] of Object.entries(recs)) {
-        try {
-          const lid = peerIdFromString(lidStr);
-          const head = await this.currentHead(tid, lid);
-
-          // 如果我们收到了最大数量的记录，并且可能还有更多
-          if (
-            head.counter <= rs.counter &&
-            rs.records.length === netPullingLimit
-          ) {
-            // 递归调用继续获取更多记录
-            return this.updateRecordsFromPeer(tid, peerId, client);
+      while (true) {
+        // 每批重新读取 offset，确保下一批从已写入的位置继续。
+        const [offsets] = await this.threadOffsets(tid);
+        const { req, serviceKey } = await this.buildGetRecordsRequest(
+          tid,
+          offsets,
+          pullLimit,
+        );
+        let recs: Record<string, PeerRecords> = {};
+        if (client) {
+          recs = await this.getRecordsWithDbClient(client, req, serviceKey);
+        } else {
+          if (!peerId) {
+            throw new Error("A peer-id is required to request records");
           }
-        } catch (err) {
-          // 忽略获取头部的错误，继续检查其他日志
-          console.warn(
-            `Error checking head for log ${lidStr}: ${
-              err instanceof Error ? err.message : String(err)
-            }`,
-          );
+          // 从对等点获取记录
+          recs = await this.getRecordsFromPeer(peerId, req, serviceKey);
+        }
+        // 处理接收到的记录
+        const entries = Object.entries(recs);
+        for (let entryIndex = 0; entryIndex < entries.length; entryIndex++) {
+          const [lidStr, rs] = entries[entryIndex]!;
+          try {
+            // 将字符串ID转换为PeerId对象
+            const lid = peerIdFromString(lidStr);
+
+            // 将记录添加到本地存储
+            await this.putRecords(tid, lid, rs.records, rs.counter);
+
+            // 每处理一个日志后让出控制权
+            await new Promise((resolve) => setTimeout(resolve, 0));
+          } catch (err) {
+            throw new Error(
+              `Putting records from log ${lidStr} (thread ${tid}) failed: ${
+                err instanceof Error ? err.message : String(err)
+              }`,
+            );
+          }
+        }
+
+        let hasMore = false;
+        for (const [lidStr, rs] of Object.entries(recs)) {
+          try {
+            const lid = peerIdFromString(lidStr);
+            const head = await this.currentHead(tid, lid);
+            if (head.counter <= rs.counter && rs.records.length === pullLimit) {
+              hasMore = true;
+              break;
+            }
+          } catch (err) {
+            console.warn(
+              `Error checking head for log ${lidStr}: ${
+                err instanceof Error ? err.message : String(err)
+              }`,
+            );
+          }
+        }
+
+        if (!hasMore) {
+          break;
         }
       }
     } catch (err) {
@@ -1125,6 +1153,8 @@ export class Network implements Net {
           err instanceof Error ? err.message : String(err)
         }`,
       );
+    } finally {
+      mutex.release();
     }
   }
 
@@ -1143,8 +1173,7 @@ export class Network implements Net {
         return {};
       }
       const dbClient = new DBClient(client, this.dc, this, this.logstore);
-      const recs = await dbClient.getRecordsFromPeer(req, serviceKey);
-      return recs;
+      return await dbClient.getRecordsFromPeer(req, serviceKey);
     } catch (err) {
       console.warn("getRecordsFromPeer error:", err);
       throw err;
@@ -1589,9 +1618,7 @@ export class Network implements Net {
       const recordCollector = new RecordCollector();
       let successCount = 0;
 
-      console.log(`[getRecords] 开始同步，目标 Peer 数: ${peers.length}, 多点同步: ${multiPeersFlag}. req length: ${req.body?.logs?.length}`);
-
-      const MAX_CONCURRENCY = 3;
+      const maxConcurrency = multiPeersFlag ? 3 : 1;
       const peerQueue = [...peers];
       let stopProcessing = false;
 
@@ -1606,10 +1633,8 @@ export class Network implements Net {
 
           (async () => {
             try {
-              //连接到指定peerId,返回一个Client
               const [client, err] = await this.getClient(peerId);
               if (!client) {
-                // 抛出错误以便重试
                 throw new Error(
                   `Connection failed: ${err instanceof Error ? err.message : String(err)}`,
                 );
@@ -1620,31 +1645,12 @@ export class Network implements Net {
                 this,
                 this.logstore,
               );
-              const startTime = Date.now();
               const records = await dbClient.getRecordsFromPeer(
                 req,
                 serviceKey,
               );
 
               successCount++;
-
-              let recCount = 0;
-              if (records) {
-                for (const [logId, rs] of Object.entries(records)) {
-                  recCount += rs.records.length;
-                }
-              }
-
-              // 合并日志，减少输出次数
-              const pidStr = peerId.toString();
-              // 仅在有数据时打印，减少日志噪音
-              if (recCount > 0) {
-                console.log(
-                  `[记录同步] 从 ${pidStr.slice(0, 8)}...${pidStr.slice(-4)} 获取 ${recCount} 条记录 (耗时: ${
-                    Date.now() - startTime
-                  }ms)`,
-                );
-              }
 
               if (records) {
                 for (const [logId, rs] of Object.entries(records)) {
@@ -1666,7 +1672,7 @@ export class Network implements Net {
       };
 
       // 启动并发工作线程
-      const workers = Array(Math.min(peers.length, MAX_CONCURRENCY))
+      const workers = Array(Math.min(peers.length, maxConcurrency))
         .fill(null)
         .map(async () => {
           while (peerQueue.length > 0 && !stopProcessing) {
@@ -1864,9 +1870,8 @@ export class Network implements Net {
       for (const log of logs) {
         try {
           const heads = await this.logstore.headBook.heads(tid, log.id);
-            console.log(`[createExternalLogsIfNotExistForPreload] ${log.id.toString()} existing heads length: ${heads.length}. Will set preloaded_head: ${log.head?.id?.toString() || 'none'}`);
 
-          if (heads.length === 0 || true) {  // FORCING true just in case heads was populated without preloaded_head
+          if (heads.length === 0) {
             log.head = await getHeadUndef();
             await this.logstore.addLog(tid, log);
           } else {
@@ -1993,10 +1998,6 @@ export class Network implements Net {
         lg.id,
         lg.head?.counter + 1,
         tr.value().cid(),
-      );
-
-      console.debug(
-        `Created record ${tr.value().cid()} (thread=${id}, log=${lg.id})`,
       );
 
       // 推送记录到节点
@@ -2175,10 +2176,9 @@ export class Network implements Net {
             dbClient &&
             err.message === Errors.ErrLogNotFound.message
           ) {
-            //log文件没绑定,进行绑定
             try {
               await this.context.dbManager?.addLogToThreadStart(null, tid, lid);
-              const err = await dbClient.pushLogToPeer(tid, lid, rec); //推送本地log文件到对等节点,rec表示最新的记录
+              const err = await dbClient.pushLogToPeer(tid, lid, rec);
               if (err) {
                 console.warn(
                   "Failed to push log after adding to thread:",
@@ -2190,9 +2190,7 @@ export class Network implements Net {
               }
             } catch (err) {
               console.warn(
-                "Failed to create transfer stream for pushing log:",
-                err,
-              );
+                "Failed to create transfer stream for pushing log:", err);
             }
           }
         }
@@ -2267,16 +2265,11 @@ export class Network implements Net {
    */
   private async exchangeWithPeer(pid: PeerId, tid: ThreadID): Promise<void> {
     try {
-      // 获取客户端连接
       const [client, _] = await this.getClient(pid);
       if (!client) {
         return;
       }
-
-      // 创建数据库客户端
       const dbClient = new DBClient(client, this.dc, this, this.logstore);
-
-      // 交换边缘
       await dbClient.exchangeEdges([tid]);
     } catch (err) {
       throw err;

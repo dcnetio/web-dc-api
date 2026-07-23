@@ -376,6 +376,9 @@ export class DBGrpcClient {
       // 处理响应数据
       const result: Record<string, PeerRecords> = {};
       const logs = response.logs || [];
+      const isIOS =
+        typeof navigator !== "undefined" &&
+        /iPhone|iPad|iPod/i.test(navigator.userAgent);
 
       // 外层循环：遍历每个日志，每处理一个日志后让出控制权
       for (let logIndex = 0; logIndex < logs.length; logIndex++) {
@@ -389,7 +392,7 @@ export class DBGrpcClient {
         const unsortedRecords: IRecord[] = new Array(rawRecords.length);
 
         // 内层循环：处理记录，使用更小的批量
-        const BATCH_SIZE = 50;
+        const BATCH_SIZE = isIOS ? 20 : 50;
 
         for (let i = 0; i < rawRecords.length; i += BATCH_SIZE) {
           const end = Math.min(i + BATCH_SIZE, rawRecords.length);

@@ -59,7 +59,7 @@ export class Ed25519PubKey implements Ed25519PublicKey {
    * Returns a multihash, the digest of which is the protobuf-encoded public key
    * encoded as an identity hash
    */
-  toMultihash(): MultihashDigest<0> {
+  toMultihash(): ReturnType<Ed25519PublicKey["toMultihash"]> {
     // 使用 protobuf 编码公钥
     const protoBytes = Ed25519PubKey.publicKeyToProto(this);
     const size = protoBytes.length;
@@ -75,12 +75,16 @@ export class Ed25519PubKey implements Ed25519PublicKey {
       size,
       digest: protoBytes,
       bytes,
-    };
+    } as ReturnType<Ed25519PublicKey["toMultihash"]>;
   }
 
-  toCID() {
+  toCID(): ReturnType<Ed25519PublicKey["toCID"]> {
     const hash = this.toMultihash();
-    return CID.create(1, 0x72, hash);
+    return CID.create(
+      1,
+      0x72,
+      hash as unknown as MultihashDigest<0>,
+    ) as unknown as ReturnType<Ed25519PublicKey["toCID"]>;
   }
 
   equals(other: Ed25519PublicKey): boolean {

@@ -76,11 +76,25 @@ export class DcUtil {
   // 连接到所有文件存储节点
   _connectToObjNodes = async (
     cid: string,
+    multiPeersFlag: boolean = true,
   ): Promise<[Multiaddr | null, string[] | null]> => {
     const peers = await this.dcChain.getObjNodes(cid);
     if (!peers) {
       return [null, null];
     }
+
+    if (!multiPeersFlag) {
+      let lastError: unknown;
+      for (const peer of peers) {
+        try {
+          return [await this._connectPeers([peer]), peers];
+        } catch (error) {
+          lastError = error;
+        }
+      }
+      throw lastError || new Error("Failed to connect to object nodes");
+    }
+
     const res = await this._connectPeers(peers);
     return [res, peers];
   };
@@ -413,7 +427,6 @@ export class DcUtil {
             reslove(null);
           }
         } catch (error) {
-          console.warn("nodeAddr catch return", error);
           num++;
           if (num >= len) {
             reslove(null);
@@ -790,9 +803,6 @@ export class DcUtil {
 
           if (parsedMessage) {
             if (parsedMessage.type === Http2_Type.Close) {
-              console.log(
-                `Transfer completed - Blocks sent: ${blocksSent}, Bytes sent: ${(bytesSent / 1024 / 1024).toFixed(2)}MB`,
-              );
               return;
             }
             if (!handshakeFlag && parsedMessage.type === Http2_Type.Handshake) {

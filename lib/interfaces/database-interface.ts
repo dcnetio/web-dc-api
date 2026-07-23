@@ -54,7 +54,8 @@ export interface IDatabaseOperations {
     b32Sk: string,  
     block: boolean,  
     collectionInfos: ICollectionConfig[],
-    fid?: string
+    fid?: string,
+    multiPeersFlag?: boolean,
   ): Promise<Error| null>;
   
   /**
@@ -79,7 +80,10 @@ export interface IDatabaseOperations {
    * @param threadid 数据库线程ID
    * @returns 错误信息或null表示成功
    */
-  refreshDBFromDC(threadid: string): Promise<Error | null>;
+  refreshDBFromDC(
+    threadid: string,
+    multiPeersFlag?: boolean,
+  ): Promise<Error | null>;
   
   /**
    * 同步数据库到分布式网络

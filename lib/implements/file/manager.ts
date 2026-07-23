@@ -6,6 +6,7 @@ import { Errors as GErrors } from "../../common/error";
 
 import {
   compareByteArrays,
+  concatenateUint8Arrays,
   mergeUInt8Arrays,
   sleep,
   uint32ToLittleEndianBytes,
@@ -1447,7 +1448,7 @@ export class FileManager {
       }
 
       let waitBuffer = new Uint8Array(0);
-      let fileContent = new Uint8Array(0);
+      const fileChunks: Uint8Array[] = [];
       let headDealed = false;
 
       const encryptextLen = (3 << 20) + NonceBytes + TagBytes;
@@ -1486,9 +1487,9 @@ export class FileManager {
 
             if (decryptKey) {
               const decrypted = await decryptContent(encryptBuffer, decryptKey);
-              fileContent = mergeUInt8Arrays(fileContent, decrypted) as any;
+              fileChunks.push(decrypted);
             } else {
-              fileContent = mergeUInt8Arrays(fileContent, encryptBuffer) as any;
+              fileChunks.push(encryptBuffer);
             }
           }
         }
@@ -1497,13 +1498,13 @@ export class FileManager {
         if (waitBuffer.length > 0) {
           if (decryptKey) {
             const decrypted = await decryptContent(waitBuffer, decryptKey);
-            fileContent = mergeUInt8Arrays(fileContent, decrypted) as any;
+            fileChunks.push(decrypted);
           } else {
-            fileContent = mergeUInt8Arrays(fileContent, waitBuffer) as any;
+            fileChunks.push(waitBuffer);
           }
         }
 
-        return fileContent;
+        return concatenateUint8Arrays(...fileChunks);
       } finally {
         if (timeoutId) clearTimeout(timeoutId);
         controller.abort();
