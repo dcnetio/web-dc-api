@@ -1222,6 +1222,8 @@ const outTradeNo = await dc.pay.createPayOrder({
 const paid = await dc.pay.queryPaymentResult(outTradeNo);
 ```
 
+自由定价套餐（`pkgType = 5`）的 `amountCents` 是本次实际支付金额，必须大于 0 且不超过套餐配置的最高金额；还必须传入 `priceKey`。网关会从套餐绑定主题读取该键的价格，并要求它与 `amountCents` 完全一致。使用 `buildHostedCheckoutUrl()` 时也必须同时传入相同的 `amountCents` 和 `priceKey`，以便移动端收银台重建订单时继续校验。`listPaymentOrders()` 返回的订单记录也会包含 `priceKey`，可用于支付完成后的 SKU/档位发货恢复。
+
 ### 16.11 `IUtilOperations` 全量方法
 
 1. `createSymmetricKey()`

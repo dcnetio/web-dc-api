@@ -2020,6 +2020,9 @@ export namespace pb {
 
         /** CreateOrderRequest oldNo */
         oldNo?: (number|null);
+
+        /** CreateOrderRequest priceKey */
+        priceKey?: (string|null);
     }
 
     /** Represents a CreateOrderRequest. */
@@ -2063,6 +2066,9 @@ export namespace pb {
 
         /** CreateOrderRequest oldNo. */
         public oldNo: number;
+
+        /** CreateOrderRequest priceKey. */
+        public priceKey: string;
 
         /**
          * Creates a new CreateOrderRequest instance using the specified properties.

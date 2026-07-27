@@ -124,6 +124,10 @@ export enum PaymentPackageTypeValue {
    * 平台 SVIP 套餐。
    */
   PLATFORM_SVIP = 4,
+  /**
+   * 自由定价套餐。
+   */
+  FLEXIBLE_PRICING = 5,
 }
 
 /**
@@ -134,7 +138,8 @@ export type PaymentPackageType =
   | PaymentPackageTypeValue.SERVICECALL_MEMBER // 模型调用会员套餐
   | PaymentPackageTypeValue.APP_PUBLISH // 应用发布套餐
   | PaymentPackageTypeValue.STORAGE_PURCHASE // 存储扩容套餐
-  | PaymentPackageTypeValue.PLATFORM_SVIP; // 平台 SVIP 套餐
+  | PaymentPackageTypeValue.PLATFORM_SVIP // 平台 SVIP 套餐
+  | PaymentPackageTypeValue.FLEXIBLE_PRICING; // 自由定价套餐
 
 /**
  * 应用开发者提交套餐申请/修改时的请求体。
@@ -290,6 +295,10 @@ export interface IPendingGatewayPayment {
    */
   amountCents: number;
   /**
+   * 自由定价套餐使用的价格明细 key。
+   */
+  priceKey?: string;
+  /**
    * 套餐时长（天）。
    */
   durationDays?: number;
@@ -336,6 +345,10 @@ export interface IPaymentOrderRecord {
    * 订单金额（分）。
    */
   amountCents: number;
+  /**
+   * 自由定价套餐使用的价格明细 key。
+   */
+  priceKey?: string;
   /**
    * 支付状态码。
    */
@@ -463,6 +476,10 @@ export interface IPayOperations {
      * 续费时指定的原订单 NO（仅续费时有效）。
      */
     oldNo?: number;
+    /**
+     * 自由定价套餐金额明细 key（可选）。
+     */
+    priceKey?: string;
   }): Promise<string>;
 
   /**
@@ -591,6 +608,10 @@ export interface IPayOperations {
      * 商户订单号（不传则由服务端生成）。
      */
     outTradeNo?: string;
+    /**
+     * 自由定价套餐金额明细 key（可选）。
+     */
+    priceKey?: string;
     /**
      * 收银台展示标题。
      */

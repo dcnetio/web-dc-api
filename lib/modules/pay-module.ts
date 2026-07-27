@@ -199,9 +199,9 @@ export class PayModule implements DCModule, IPayOperations {
       const hosted = new URL(
         this.hostedPayBaseUrl || "https://bnpay.baybird.cn/pay",
       );
-      return `${hosted.origin}/api/v1/wxpayments`;
+      return `${hosted.origin}/api/v2/payments`;
     } catch {
-      return "/api/v1/wxpayments";
+      return "/api/v2/payments";
     }
   }
 
@@ -265,6 +265,8 @@ export class PayModule implements DCModule, IPayOperations {
   private mapPayStatusText(payStatus: number): string {
     if (payStatus === 2) return "已支付";
     if (payStatus === 1) return "待支付";
+    if (payStatus === 3) return "已放弃";
+    if (payStatus === 4) return "支付失败";
     return "未知";
   }
 
@@ -388,6 +390,7 @@ export class PayModule implements DCModule, IPayOperations {
             ? String(attach.split(":")[1]).trim()
             : String(order?.pkg_id || ""),
           amountCents: Number(order?.total || 0),
+          priceKey: String(reqText?.price_key || "").trim() || undefined,
           payStatus,
           payStatusText: this.mapPayStatusText(payStatus),
           tradeState,
@@ -478,6 +481,7 @@ export class PayModule implements DCModule, IPayOperations {
     dappid?: string;
     isRenew?: boolean;
     oldNo?: number;
+    priceKey?: string;
   }): Promise<string> {
     const pkgId = Number(options.packageId || 0);
     if (!Number.isFinite(pkgId) || pkgId <= 0) {
@@ -497,6 +501,7 @@ export class PayModule implements DCModule, IPayOperations {
       attach: String(options.attach || ""),
       isRenew: options.isRenew === true,
       oldNo: Number(options.oldNo || 0),
+      priceKey: String(options.priceKey || ""),
     });
     const requestBytes = pb.CreateOrderRequest.encode(request).finish();
     const responseBytes = await grpcClient.unaryCall(
@@ -910,6 +915,7 @@ export class PayModule implements DCModule, IPayOperations {
     returnUrl: string;
     attach?: string;
     outTradeNo?: string;
+    priceKey?: string;
     title?: string;
   }): string {
     if (!this.hostedPayBaseUrl) {
@@ -935,6 +941,9 @@ export class PayModule implements DCModule, IPayOperations {
     }
     if (options.outTradeNo) {
       target.searchParams.set("out_trade_no", String(options.outTradeNo));
+    }
+    if (options.priceKey) {
+      target.searchParams.set("price_key", String(options.priceKey));
     }
     return target.toString();
   }
