@@ -11,6 +11,7 @@ import type {
   Account,
   AccountInfo,
   EIP712SignReqMessage,
+  RawDigestSignReqMessage,
   SendMessage,
   SignReqMessage,
   SignResponseMessage,
@@ -80,7 +81,12 @@ export class WalletManager {
 
     const that = this;
 
-    if (walletIframeOpenFlag || appOrigin.indexOf(walletOrigin) === -1) {
+    const needsBridgeIframe =
+      !document.getElementById(that.iframeId) ||
+      !that.iframeLoaded ||
+      walletIframeOpenFlag ||
+      appOrigin.indexOf(walletOrigin) === -1;
+    if (needsBridgeIframe) {
       return new Promise(async (resolve, reject) => {
         // html添加iframe标签，id是dcWalletIframe
         const startTime = Date.now();
@@ -716,6 +722,88 @@ export class WalletManager {
     });
   }
 
+  async signRawDigest(
+    data: RawDigestSignReqMessage,
+  ): Promise<SignResponseMessage | null> {
+    if (!this.context) {
+      throw new WalletError("未连接钱包");
+    }
+    const localWallet = this.getLocalWalletBridge();
+    if (localWallet?.dcWalletSignRawDigest) {
+      const signature = await localWallet.dcWalletSignRawDigest(
+        data.data.digest,
+        data.data.ethAccount,
+      );
+      return { success: true, signature };
+    }
+    if (isIframeOpen()) {
+      await this.initCommChannel();
+      if (!(await this.openWalletIframe())) {
+        throw new WalletError("openWalletIframe error");
+      }
+    } else {
+      await this.openWalletWindowAndInitChannel();
+    }
+
+    const response = await this.sendMessageToIframe(
+      { type: "signRawDigest", data },
+      60000,
+      true,
+      !isIframeOpen(),
+    );
+    const responseData = response?.data?.data;
+    if (!responseData) {
+      throw new WalletError("signRawDigest response is null");
+    }
+    if (responseData.success === false) {
+      throw new WalletError(this.getWalletErrorMessage(responseData, "交易签名失败"));
+    }
+    if (!responseData.signature) {
+      throw new WalletError("signRawDigest signature is null");
+    }
+    return responseData;
+  }
+
+  async getEvmAccount(): Promise<string> {
+    const localWallet = this.getLocalWalletBridge();
+    if (localWallet?.dcWalletGetEvmAccount) {
+      return localWallet.dcWalletGetEvmAccount();
+    }
+    if (isIframeOpen()) {
+      await this.initCommChannel();
+    } else {
+      await this.openWalletWindowAndInitChannel();
+    }
+    const response = await this.sendMessageToIframe(
+      { type: "getEvmAccount" },
+      10000,
+      true,
+      !isIframeOpen(),
+    );
+    const account = response?.data?.data?.account;
+    if (!/^0x[0-9a-fA-F]{40}$/.test(account || "")) {
+      throw new WalletError("钱包当前账户无效");
+    }
+    return account;
+  }
+
+  private getLocalWalletBridge(): {
+    dcWalletGetEvmAccount?: () => Promise<string>;
+    dcWalletSignRawDigest?: (digest: string, ethAccount: string) => Promise<string>;
+  } | null {
+    if (typeof window === "undefined") {
+      return null;
+    }
+    const localWallet = window as unknown as {
+      dcWalletGetEvmAccount?: () => Promise<string>;
+      dcWalletSignRawDigest?: (digest: string, ethAccount: string) => Promise<string>;
+    };
+    if (!localWallet.dcWalletGetEvmAccount || !localWallet.dcWalletSignRawDigest) {
+      return null;
+    }
+    return localWallet;
+  }
+
   // 签名EIP712消息
   async signEIP712Message(
     data: EIP712SignReqMessage,
@@ -843,7 +931,14 @@ export class WalletManager {
   }
 
   private async initCommChannel(): Promise<void> {
-    const iframe = document.getElementById(this.iframeId) as HTMLIFrameElement;
+    let iframe = document.getElementById(this.iframeId) as HTMLIFrameElement;
+    if (!iframe) {
+      const initialized = await this.init();
+      if (!initialized) {
+        throw new WalletError("钱包初始化页面加载失败，请检查网络后重试");
+      }
+      iframe = document.getElementById(this.iframeId) as HTMLIFrameElement;
+    }
     // port1转移给iframe
     if (iframe) {
       const message = {
@@ -879,15 +974,39 @@ export class WalletManager {
       throw error;
     }
   }
+
+  private async openWalletWindowAndInitChannel(): Promise<void> {
+    this.walletWindow = window.open(this.getWalletPageUrl(), walletWindowName);
+    if (!this.walletWindow) {
+      const error = new WalletError("钱包窗口被浏览器拦截，请允许弹窗后重试");
+      this.reportWalletFailure(error.message);
+      throw error;
+    }
+    const loaded = await this.waitForWalletLoaded(this.walletWindow, timeout);
+    if (!loaded) {
+      throw new WalletError("钱包页面加载超时，请检查网络后重试");
+    }
+    const messageChannel = new MessageChannel();
+    this.walletWindow.postMessage(
+      { type: "channelPort2", origin: appOrigin },
+      walletOrigin,
+      [messageChannel.port2],
+    );
+    this.channelPort2 = messageChannel.port1;
+  }
   // 利用messageChannel通信
   private async sendMessageToIframe(
     message: SendMessage<any>,
     timeout: number,
     removeFlag: boolean = true,
+    preferWalletWindow: boolean = false,
   ): Promise<MessageEvent | null> {
     const iframe = document.getElementById(this.iframeId) as HTMLIFrameElement;
+    const target = preferWalletWindow
+      ? this.walletWindow || iframe?.contentWindow
+      : iframe?.contentWindow || this.walletWindow;
     // port2转移给iframe
-    if (iframe) {
+    if (target) {
       const messageChannel = new MessageChannel();
       // 等待钱包iframe返回,并关闭channel,超时时间timeout
       return new Promise((resolve, reject) => {
@@ -915,7 +1034,7 @@ export class WalletManager {
           resolve(event);
         };
         try {
-          iframe.contentWindow?.postMessage(message, walletOrigin, [
+          target.postMessage(message, walletOrigin, [
             messageChannel.port2,
           ]);
         } catch (error) {

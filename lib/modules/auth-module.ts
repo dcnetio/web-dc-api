@@ -506,6 +506,50 @@ export class AuthModule implements DCModule, IAuthOperations {
     }
   }
 
+  async signRawDigestWithWallet(
+    digest: string,
+  ): Promise<[SignResponseMessage | null, Error | null]> {
+    const addresses = [
+      this.context.ethAddress,
+      this.context.userInfo?.ethAccount,
+      this.context.accountInfo?.account,
+    ];
+    const ethAccount = addresses.find((address) =>
+      /^0x[0-9a-fA-F]{40}$/.test(address || ""),
+    );
+    if (!this.walletManager || !ethAccount) {
+      return [null, new Error("请重新登录后使用主账户支付存储套餐")];
+    }
+    this.context.ethAddress = ethAccount;
+    try {
+      const response = await this.walletManager.signRawDigest({
+        type: "signRawDigest",
+        origin: window.location.origin,
+        data: {
+          appUrl: window.location.href,
+          ethAccount,
+          digest,
+        },
+      });
+      return [response, null];
+    } catch (error) {
+      return [null, error as Error];
+    }
+  }
+
+  async getEvmAccountFromWallet(): Promise<[string | null, Error | null]> {
+    if (!this.walletManager) {
+      return [null, new Error("钱包认证模块不可用")];
+    }
+    try {
+      const ethAccount = await this.walletManager.getEvmAccount();
+      this.context.ethAddress = ethAccount;
+      return [ethAccount, null];
+    } catch (error) {
+      return [null, error as Error];
+    }
+  }
+
   async signEIP712MessageWithWallet(
     data: EIP712SignReqMessage,
   ): Promise<[SignResponseMessage | null, Error | null]> {

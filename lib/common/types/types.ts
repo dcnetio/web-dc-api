@@ -480,6 +480,16 @@ export type SignResponseMessage = {
   signature: string;
 };
 
+export type RawDigestSignReqMessage = {
+  type: string;
+  origin: string;
+  data: {
+    appUrl: string;
+    ethAccount: string;
+    digest: string;
+  };
+};
+
 type EIP712SignReqMessageData = {
   appUrl: string;
   ethAccount: string;

@@ -40,6 +40,8 @@ import { KeyManager } from "./common/dc-key/keyManager";
 import { initializeDatabase } from "./indexDB/db";
 import { sha256, uint8ArrayToHex } from "./util/utils";
 import { bytesToHex, hexToBytes } from "@noble/hashes/utils.js";
+import { blake2b } from "@noble/hashes/blake2.js";
+import { keccak_256 } from "@noble/hashes/sha3.js";
 
 const logger = createLogger("DC");
 
@@ -321,13 +323,13 @@ export class DC implements DCContext {
   }
 
   async Bc_SubscribeStorage(packageId: number): Promise<void> {
-    const signer = this.getChainSignerAddress();
+    const targetAccount = this.getStorageOwnerAddress();
     const storagePackage = await this.getStoragePackage(packageId);
-    console.log("[DC] accountInfo:", JSON.stringify(this.accountInfo));
-    const balanceAccount = this.accountInfo?.account || signer;
-    console.log("[DC] balanceAccount:", balanceAccount, "signer:", signer);
-    await this.assertSufficientBalance(balanceAccount, storagePackage.price);
-    await this.submitStoragePurchase(signer, packageId, storagePackage.price);
+    await this.submitStoragePurchase(
+      targetAccount,
+      packageId,
+      storagePackage.price,
+    );
   }
 
   async Bc_SubscribeStorageForNFTAccount(
@@ -352,10 +354,6 @@ export class DC implements DCContext {
     }
 
     const storagePackage = await this.getStoragePackage(packageId);
-    const signer = this.getChainSignerAddress();
-    
-    const balanceAccount = this.accountInfo?.account || signer;
-    await this.assertSufficientBalance(balanceAccount, storagePackage.price);
     await this.submitStoragePurchase(
       resolvedAccount.toString(),
       packageId,
@@ -370,26 +368,33 @@ export class DC implements DCContext {
     return this.dcChain.dcchainapi;
   }
 
-  private getChainSigner(): { address: string; privateKey: Ed25519PrivKey } {
-    const signerPublicKey = this.publicKey;
-    const signerPrivateKey = this.privateKey;
-    if (!signerPublicKey || !signerPrivateKey) {
-      throw new Error("请先登录区块链账户");
+  private async getChainSignerAddress(): Promise<string> {
+    const addresses = [
+      this.ethAddress,
+      this.userInfo?.ethAccount,
+      this.accountInfo?.account,
+    ];
+    const signerAddress = addresses.find((address) =>
+      /^0x[0-9a-fA-F]{40}$/.test(address || ""),
+    );
+    if (signerAddress) {
+      this.ethAddress = signerAddress;
+      return signerAddress;
     }
-    if (
-      uint8ArrayToHex(signerPublicKey.raw) !==
-      uint8ArrayToHex(signerPrivateKey.publicKey.raw)
-    ) {
-      throw new Error("区块链付款账户与签名密钥不匹配");
+    const [walletAddress, walletError] = await this.auth?.getEvmAccountFromWallet()
+      ?? [null, new Error("钱包认证模块不可用")];
+    if (walletError || !walletAddress) {
+      throw walletError || new Error("请重新登录后使用主账户支付存储套餐");
     }
-    return {
-      address: `0x${uint8ArrayToHex(signerPublicKey.raw)}`,
-      privateKey: signerPrivateKey,
-    };
+    return walletAddress;
   }
 
-  private getChainSignerAddress(): string {
-    return this.getChainSigner().address;
+  private getStorageOwnerAddress(): string {
+    const publicKey = this.publicKey?.raw;
+    if (!publicKey || publicKey.length !== 32) {
+      throw new Error("请重新登录后使用当前账户兑换存储套餐");
+    }
+    return `0x${uint8ArrayToHex(publicKey)}`;
   }
 
   private isEmptyAccountId(account: any): boolean {
@@ -420,21 +425,6 @@ export class DC implements DCContext {
     return { price: normalizedPrice };
   }
 
-  private async assertSufficientBalance(
-    account: string,
-    price: string,
-  ): Promise<void> {
-    const chainApi = this.getChainApi();
-    console.log("[DC] assertSufficientBalance 查询账户:", account);
-    const accountInfo = (await chainApi.query.system.account(account)) as any;
-    const freeBalance = BigInt(accountInfo.data.free.toString());
-    console.log("[DC] 我的余额:", freeBalance.toString(), "需要:", price);
-
-    if (freeBalance < BigInt(price)) {
-      throw new Error("账户余额不足，无法购买存储套餐");
-    }
-  }
-
   private getDispatchErrorMessage(dispatchError: any): string {
     if (dispatchError?.isModule) {
       try {
@@ -454,72 +444,98 @@ export class DC implements DCContext {
     price: string,
   ): Promise<void> {
     const chainApi = this.getChainApi();
-    const signer = this.getChainSigner();
+    const signerAddress = await this.getChainSignerAddress();
     const transaction = (chainApi.tx as any).dcNode.purchaseStorage(
       targetAccount,
       packageId,
       price,
     );
-    const transactionSigner = {
-      signPayload: async (payload: any) => {
-        const signature = signer.privateKey.sign(
-          hexToBytes(payload.data.replace(/^0x/, "")),
-        );
-        if (signature.length !== 64) {
-          throw new Error("区块链交易签名失败");
-        }
-        return {
-          id: payload.address,
-          signature: `0x${bytesToHex(signature)}`,
-        };
-      },
-    };
+    const accountInfo = await (chainApi.query as any).system.account(signerAddress);
+    const nonce = BigInt(accountInfo.nonce.toString());
+    const runtimeVersion = await chainApi.rpc.state.getRuntimeVersion();
+    const genesisHash = await chainApi.rpc.chain.getBlockHash(0);
+    const method = transaction.method.toU8a();
+    const era = new Uint8Array([0]);
+    const compactNonce = this.encodeCompact(nonce);
+    const compactTip = new Uint8Array([0]);
+    const specVersion = this.encodeU32(runtimeVersion.specVersion.toNumber());
+    const transactionVersion = this.encodeU32(runtimeVersion.transactionVersion.toNumber());
+    const genesis = genesisHash.toU8a();
+    const payload = this.concatBytes(
+      method,
+      era,
+      compactNonce,
+      compactTip,
+      specVersion,
+      transactionVersion,
+      genesis,
+      genesis,
+    );
+    const payloadHash = keccak_256(
+      payload.length > 256 ? blake2b(payload, { dkLen: 32 }) : payload,
+    );
+    const [walletSignature, signingError] = await this.auth?.signRawDigestWithWallet(
+      `0x${bytesToHex(payloadHash)}`,
+    ) ?? [null, new Error("钱包认证模块不可用")];
+    if (signingError || !walletSignature?.signature) {
+      throw signingError || new Error("交易签名失败");
+    }
+    const signature = hexToBytes(walletSignature.signature.replace(/^0x/, ""));
+    if (signature.length !== 65) {
+      throw new Error("钱包返回的 ECDSA 签名长度无效");
+    }
+    const signer = hexToBytes(signerAddress.slice(2));
+    const body = this.concatBytes(
+      new Uint8Array([0x84]),
+      signer,
+      signature,
+      era,
+      compactNonce,
+      compactTip,
+      method,
+    );
+    const extrinsic = `0x${bytesToHex(this.concatBytes(this.encodeCompact(BigInt(body.length)), body))}`;
+    const rpcProvider = (chainApi as unknown as {
+      _rpcCore: { provider: { send: (method: string, params: unknown[]) => Promise<unknown> } };
+    })._rpcCore.provider;
+    await rpcProvider.send("author_submitExtrinsic", [extrinsic]);
+  }
 
-    await new Promise<void>((resolve, reject) => {
-      let unsubscribe: (() => void) | undefined;
-      let settled = false;
-      const finish = (error?: Error) => {
-        if (settled) {
-          return;
-        }
-        settled = true;
-        unsubscribe?.();
-        if (error) {
-          reject(error);
-        } else {
-          resolve();
-        }
-      };
-      transaction
-        .signAndSend(signer.address, { signer: transactionSigner }, (result: any) => {
-          if (result.dispatchError) {
-            finish(new Error(this.getDispatchErrorMessage(result.dispatchError)));
-            return;
-          }
-          if (result.status.isFinalized) {
-            const failedEvent = result.events?.find(
-              ({ event }: any) =>
-                event.section === "system" && event.method === "ExtrinsicFailed",
-            );
-            if (failedEvent) {
-              finish(
-                new Error(
-                  this.getDispatchErrorMessage(failedEvent.event.data[0]),
-                ),
-              );
-              return;
-            }
-            finish();
-          }
-        })
-        .then((callback: () => void) => {
-          unsubscribe = callback;
-          if (settled) {
-            unsubscribe();
-          }
-        })
-        .catch((error: Error) => finish(error));
-    });
+  private encodeCompact(value: bigint): Uint8Array {
+    if (value < 0n) throw new Error("紧凑整数不能为负数");
+    if (value < 1n << 6n) return new Uint8Array([Number(value << 2n)]);
+    if (value < 1n << 14n) {
+      const encoded = Number((value << 2n) | 1n);
+      return new Uint8Array([encoded & 0xff, encoded >> 8]);
+    }
+    if (value < 1n << 30n) {
+      const encoded = Number((value << 2n) | 2n);
+      return new Uint8Array([encoded & 0xff, (encoded >> 8) & 0xff, (encoded >> 16) & 0xff, encoded >> 24]);
+    }
+    const bytes: number[] = [];
+    let current = value;
+    while (current > 0n) {
+      bytes.push(Number(current & 0xffn));
+      current >>= 8n;
+    }
+    if (bytes.length < 4 || bytes.length > 67) throw new Error("紧凑整数超出编码范围");
+    return new Uint8Array([((bytes.length - 4) << 2) | 3, ...bytes]);
+  }
+
+  private encodeU32(value: number): Uint8Array {
+    const bytes = new Uint8Array(4);
+    new DataView(bytes.buffer).setUint32(0, value, true);
+    return bytes;
+  }
+
+  private concatBytes(...parts: Uint8Array[]): Uint8Array {
+    const result = new Uint8Array(parts.reduce((length, part) => length + part.length, 0));
+    let offset = 0;
+    for (const part of parts) {
+      result.set(part, offset);
+      offset += part.length;
+    }
+    return result;
   }
 
   /**
