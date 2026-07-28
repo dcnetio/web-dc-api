@@ -302,19 +302,32 @@ export class DC implements DCContext {
   async Bc_GetStoragePrices(): Promise<unknown[]> {
     const chainApi = this.getChainApi();
     const storagePackages = await (chainApi.query as any).dcNode.storagePackages();
-    const packages = storagePackages.toJSON();
+    const raw = storagePackages.toJSON();
 
-    if (!Array.isArray(packages)) {
+    if (!Array.isArray(raw)) {
       throw new Error("链上存储套餐数据格式无效");
     }
-    return packages;
+    // 链上返回数组 [packageId, spaceSizeBytes, price, duration, extra]，转为对象
+    return raw.map((item: any) => {
+      if (Array.isArray(item)) {
+        return {
+          packageId: Number(item[0] ?? 0),
+          spaceSize: Number(item[1] ?? 0),
+          price:     String(item[2] ?? "0"),
+        };
+      }
+      return item;
+    });
   }
 
   async Bc_SubscribeStorage(packageId: number): Promise<void> {
-    const signerAddress = this.getChainSignerAddress();
+    const signer = this.getChainSignerAddress();
     const storagePackage = await this.getStoragePackage(packageId);
-    await this.assertSufficientBalance(signerAddress, storagePackage.price);
-    await this.submitStoragePurchase(signerAddress, packageId, storagePackage.price);
+    console.log("[DC] accountInfo:", JSON.stringify(this.accountInfo));
+    const balanceAccount = this.accountInfo?.account || signer;
+    console.log("[DC] balanceAccount:", balanceAccount, "signer:", signer);
+    await this.assertSufficientBalance(balanceAccount, storagePackage.price);
+    await this.submitStoragePurchase(signer, packageId, storagePackage.price);
   }
 
   async Bc_SubscribeStorageForNFTAccount(
@@ -339,8 +352,10 @@ export class DC implements DCContext {
     }
 
     const storagePackage = await this.getStoragePackage(packageId);
-    const signerAddress = this.getChainSignerAddress();
-    await this.assertSufficientBalance(signerAddress, storagePackage.price);
+    const signer = this.getChainSignerAddress();
+    
+    const balanceAccount = this.accountInfo?.account || signer;
+    await this.assertSufficientBalance(balanceAccount, storagePackage.price);
     await this.submitStoragePurchase(
       resolvedAccount.toString(),
       packageId,
@@ -385,7 +400,7 @@ export class DC implements DCContext {
   private async getStoragePackage(
     packageId: number,
   ): Promise<{ price: string }> {
-    if (!Number.isInteger(packageId) || packageId <= 0 || packageId > 0xffffffff) {
+    if (!Number.isInteger(packageId) || packageId < 0 || packageId > 0xffffffff) {
       throw new Error("存储套餐 ID 无效");
     }
 
@@ -410,8 +425,10 @@ export class DC implements DCContext {
     price: string,
   ): Promise<void> {
     const chainApi = this.getChainApi();
+    console.log("[DC] assertSufficientBalance 查询账户:", account);
     const accountInfo = (await chainApi.query.system.account(account)) as any;
     const freeBalance = BigInt(accountInfo.data.free.toString());
+    console.log("[DC] 我的余额:", freeBalance.toString(), "需要:", price);
 
     if (freeBalance < BigInt(price)) {
       throw new Error("账户余额不足，无法购买存储套餐");
@@ -1022,6 +1039,7 @@ export class DC implements DCContext {
   }
   setPrivateKey(appPrivateKey: Ed25519PrivKey | null) {
     this.privateKey = appPrivateKey;
+    this.publicKey = appPrivateKey?.publicKey ?? undefined;
   }
   /**
    * 创建DC客户端
