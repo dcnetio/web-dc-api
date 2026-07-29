@@ -62,6 +62,8 @@ export class DC implements DCContext {
   dbThreadId: string = ""; // 当前用户的去中心化数据库ID
   ethAddress: string = ""; // 以太坊格式的公钥,16进制字符串
   private postLoginMaintenance: Record<string, Promise<void>> = {};
+  private storagePurchaseNonce: { signer: string; next: bigint } | null = null;
+  private storagePurchaseNonceLock: Promise<void> = Promise.resolve();
 
   // 连接相关
   public connectedDc: DCConnectInfo = {};
@@ -450,8 +452,7 @@ export class DC implements DCContext {
       packageId,
       price,
     );
-    const accountInfo = await (chainApi.query as any).system.account(signerAddress);
-    const nonce = BigInt(accountInfo.nonce.toString());
+    const nonce = await this.reserveStoragePurchaseNonce(chainApi, signerAddress);
     const runtimeVersion = await chainApi.rpc.state.getRuntimeVersion();
     const genesisHash = await chainApi.rpc.chain.getBlockHash(0);
     const method = transaction.method.toU8a();
@@ -498,7 +499,63 @@ export class DC implements DCContext {
     const rpcProvider = (chainApi as unknown as {
       _rpcCore: { provider: { send: (method: string, params: unknown[]) => Promise<unknown> } };
     })._rpcCore.provider;
-    await rpcProvider.send("author_submitExtrinsic", [extrinsic]);
+    try {
+      await rpcProvider.send("author_submitExtrinsic", [extrinsic]);
+    } catch (error) {
+      this.invalidateStoragePurchaseNonce(signerAddress, nonce);
+      throw error;
+    }
+  }
+
+  private async reserveStoragePurchaseNonce(
+    chainApi: any,
+    signerAddress: string,
+  ): Promise<bigint> {
+    let releaseLock: (() => void) | undefined;
+    const previousLock = this.storagePurchaseNonceLock;
+    this.storagePurchaseNonceLock = new Promise<void>((resolve) => {
+      releaseLock = resolve;
+    });
+    await previousLock;
+
+    try {
+      let pendingNonce: bigint;
+      try {
+        const nextIndex = await chainApi.rpc.system.accountNextIndex(signerAddress);
+        pendingNonce = BigInt(nextIndex.toString());
+      } catch {
+        const accountInfo = await chainApi.query.system.account(signerAddress);
+        pendingNonce = BigInt(accountInfo.nonce.toString());
+      }
+
+      const normalizedSigner = signerAddress.toLowerCase();
+      if (
+        !this.storagePurchaseNonce ||
+        this.storagePurchaseNonce.signer !== normalizedSigner ||
+        pendingNonce > this.storagePurchaseNonce.next
+      ) {
+        this.storagePurchaseNonce = {
+          signer: normalizedSigner,
+          next: pendingNonce,
+        };
+      }
+
+      const nonce = this.storagePurchaseNonce.next;
+      this.storagePurchaseNonce.next = nonce + 1n;
+      return nonce;
+    } finally {
+      releaseLock?.();
+    }
+  }
+
+  private invalidateStoragePurchaseNonce(signerAddress: string, nonce: bigint): void {
+    const normalizedSigner = signerAddress.toLowerCase();
+    if (
+      this.storagePurchaseNonce?.signer === normalizedSigner &&
+      this.storagePurchaseNonce.next === nonce + 1n
+    ) {
+      this.storagePurchaseNonce = null;
+    }
   }
 
   private encodeCompact(value: bigint): Uint8Array {
