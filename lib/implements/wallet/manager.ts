@@ -21,6 +21,7 @@ const appOrigin = typeof window !== "undefined" ? window.location.origin : ""; /
 const appUrl = typeof window !== "undefined" ? window.location.href : "";
 
 const localStorageKey_dcwallet_opener = "dcwallet_opener";
+const timeout = 3000;
 const walletConnectTimeout = 300000;
 // 错误定义
 export class WalletError extends Error {
@@ -859,7 +860,9 @@ export class WalletManager {
       throw new WalletError("signRawDigest response is null");
     }
     if (responseData.success === false) {
-      throw new WalletError(this.getWalletErrorMessage(responseData, "交易签名失败"));
+      throw new WalletError(
+        this.getWalletErrorMessage(responseData, "交易签名失败"),
+      );
     }
     if (!responseData.signature) {
       throw new WalletError("signRawDigest signature is null");
@@ -892,16 +895,25 @@ export class WalletManager {
 
   private getLocalWalletBridge(): {
     dcWalletGetEvmAccount?: () => Promise<string>;
-    dcWalletSignRawDigest?: (digest: string, ethAccount: string) => Promise<string>;
+    dcWalletSignRawDigest?: (
+      digest: string,
+      ethAccount: string,
+    ) => Promise<string>;
   } | null {
     if (typeof window === "undefined") {
       return null;
     }
     const localWallet = window as unknown as {
       dcWalletGetEvmAccount?: () => Promise<string>;
-      dcWalletSignRawDigest?: (digest: string, ethAccount: string) => Promise<string>;
+      dcWalletSignRawDigest?: (
+        digest: string,
+        ethAccount: string,
+      ) => Promise<string>;
     };
-    if (!localWallet.dcWalletGetEvmAccount || !localWallet.dcWalletSignRawDigest) {
+    if (
+      !localWallet.dcWalletGetEvmAccount ||
+      !localWallet.dcWalletSignRawDigest
+    ) {
       return null;
     }
     return localWallet;
@@ -1124,9 +1136,7 @@ export class WalletManager {
           resolve(event);
         };
         try {
-          target.postMessage(message, walletOrigin, [
-            messageChannel.port2,
-          ]);
+          target.postMessage(message, walletOrigin, [messageChannel.port2]);
         } catch (error) {
           console.warn("sendMessageToIframe postMessage error", error);
           clearTimeout(timer);
