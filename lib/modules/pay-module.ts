@@ -442,10 +442,13 @@ export class PayModule implements DCModule, IPayOperations {
     const grpcClient = await this.getPayGrpcClient();
     const normalizedScene = String(scene || "").trim();
 
+    const hostname =
+      typeof window !== "undefined" ? String(window.location.hostname || "") : "";
+    const isGlobalDomain = hostname.endsWith("nowcode.ai");
     const requestObj: any = {
       pkgType,
-      lang: "zh",
-      currency: "CNY",
+      lang: isGlobalDomain ? "en" : "zh",
+      currency: isGlobalDomain ? "USD" : "CNY",
       appid: appid || "",
     };
     if (normalizedScene) {
