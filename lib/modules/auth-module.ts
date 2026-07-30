@@ -108,6 +108,7 @@ export class AuthModule implements DCModule, IAuthOperations {
       this.context.publicKey = publicKey;
       data.account = publicKey.string();
       this.context.ethAddress = data.ethAccount;
+      await this.context.connectedDc.client.ClearToken();
       // 获取用户token
       await this.getUserToken(publicKey.string());
       // 登录后检查用户空间
@@ -136,6 +137,7 @@ export class AuthModule implements DCModule, IAuthOperations {
       this.context.publicKey = publicKey;
       account.account = publicKey.string();
       this.context.ethAddress = account.ethAccount;
+      await this.context.connectedDc.client.ClearToken();
       // 获取用户token
       await this.getUserToken(publicKey.string());
       // 登录后检查用户空间
@@ -338,8 +340,8 @@ export class AuthModule implements DCModule, IAuthOperations {
         this.context.privateKey = null;
         this.context.publicKey = undefined;
         //清空原来连接的token信息,原来是基于临时私钥登录的
-        client.token = "";
-        this.context.connectedDc.client.token = "";
+        await client.ClearToken();
+        await this.context.connectedDc.client.ClearToken();
 
         let privateKey = null;
         let publicKey = null;
