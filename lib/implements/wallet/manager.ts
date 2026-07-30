@@ -424,7 +424,7 @@ export class WalletManager {
 
     // 等待 wallet-web JS 监听器就绪后再发送
     await new Promise<void>((resolve) =>
-      setTimeout(resolve, isIframeOpen() ? 300 : 800),
+      setTimeout(resolve, isIframeOpen() ? 100 : 200),
     );
 
     if (isIframeOpen()) {
