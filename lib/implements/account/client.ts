@@ -85,6 +85,7 @@ export class AccountClient {
     }
 
     const selfPubkey = selfPrivkey.publicKey;
+    await this.client.ClearToken();
     const token = await this.client.GetToken(
       context.appInfo.appId || "",
       selfPubkey.string(),
