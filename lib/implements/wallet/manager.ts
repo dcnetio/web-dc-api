@@ -82,10 +82,9 @@ export class WalletManager {
     const that = this;
 
     const needsBridgeIframe =
-      !document.getElementById(that.iframeId) ||
-      !that.iframeLoaded ||
-      walletIframeOpenFlag ||
-      appOrigin.indexOf(walletOrigin) === -1;
+      walletIframeOpenFlag &&
+      appOrigin.indexOf(walletOrigin) === -1 &&
+      (!document.getElementById(that.iframeId) || !that.iframeLoaded);
     if (needsBridgeIframe) {
       return new Promise(async (resolve, reject) => {
         // html添加iframe标签，id是dcWalletIframe

@@ -211,7 +211,10 @@ export class AuthModule implements DCModule, IAuthOperations {
     const [offchainUsedInfo, resErr] =
       await commentManager.getUserOffChainUsedInfo();
     if (resErr) {
-      throw resErr;
+      // 新用户可能还没有备用节点（AccountBackupDc 未建立），此时无法获取链下使用信息
+      // 不应阻止登录，因为新用户还没有链下评论使用量，无需检查空间
+      logger.warn("获取用户链下评论使用信息失败，跳过空间检查:", resErr);
+      return;
     }
     const leftSpace = offchainUsedInfo
       ? userInfo.offchainSpace - Number(offchainUsedInfo.usedspace)
