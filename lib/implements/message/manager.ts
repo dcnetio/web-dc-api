@@ -61,7 +61,7 @@ export class MessageManager {
       if(!receiverClient){
         return [null, Errors.ErrNoReceiverPeerConnected]
       }
-      const token = await receiverClient.GetToken(
+      await receiverClient.GetToken(
         appId,
         sendPublicKey.string(),
         (payload: Uint8Array): Promise<Uint8Array> => {
@@ -107,7 +107,7 @@ export class MessageManager {
           const publicKeyString = publickey;
           // 获取token
           if(!client.token) {
-            const token = await client.GetToken(
+            await client.GetToken(
               appId,
               publicKeyString,
               (payload: Uint8Array): Promise<Uint8Array> => {
