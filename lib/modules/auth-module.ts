@@ -274,6 +274,21 @@ export class AuthModule implements DCModule, IAuthOperations {
   }
 
   /**
+   * 续订存储套餐
+   * 打开钱包页面进行存储套餐购买，购买完成后返回结果
+   * @returns [是否成功, 错误信息]
+   */
+  async renewStoragePlan(): Promise<[boolean, Error | null]> {
+    try {
+      this.assertInitialized();
+      const result = await this.walletManager.openStoragePurchase();
+      return [result, null];
+    } catch (error) {
+      return [false, error instanceof Error ? error : new Error(String(error))];
+    }
+  }
+
+  /**
    * 账户登录(钱包登录)不抛出异常
    * @param nftAccount NFT账户
    * @param password 密码
@@ -390,7 +405,7 @@ export class AuthModule implements DCModule, IAuthOperations {
           chainId: "", // 区块链ID
           chainName: "", // 区块链名称
         };
-        
+
         // this.context.accountInfo = {
         //   nftAccount, // NFT账号
         //   account: this.context.publicKey.string(), // 应用专用账号公钥
@@ -401,7 +416,7 @@ export class AuthModule implements DCModule, IAuthOperations {
         //   timeStamp: 0,
         //   type: "",
         // }
-    
+
         return [mnemonic, null];
       }
       return ["", new Error("accountLogin failed")];
@@ -764,9 +779,7 @@ export class AuthModule implements DCModule, IAuthOperations {
     );
   }
 
-  private async reconnectDcNode(
-    connectInfo: DCConnectInfo,
-  ): Promise<void> {
+  private async reconnectDcNode(connectInfo: DCConnectInfo): Promise<void> {
     const currentPeerId = getPeerIdString(connectInfo.nodeAddr);
 
     for (let attempt = 1; attempt <= 3; attempt++) {
@@ -774,9 +787,8 @@ export class AuthModule implements DCModule, IAuthOperations {
         if (!currentPeerId) {
           throw new Error("current peerId is null");
         }
-        const currentNodeAddr = await this.context.dcutil?._getNodeAddr(
-          currentPeerId,
-        );
+        const currentNodeAddr =
+          await this.context.dcutil?._getNodeAddr(currentPeerId);
         if (!currentNodeAddr) {
           throw new Error("current node address is null");
         }
@@ -833,9 +845,8 @@ export class AuthModule implements DCModule, IAuthOperations {
       }
 
       logger.info("当前DC节点不可用，尝试切换到备用DC节点");
-      const fallbackNodeAddr = await this.context.dcutil?.getDefaultDcNodeAddr(
-        currentPeerId,
-      );
+      const fallbackNodeAddr =
+        await this.context.dcutil?.getDefaultDcNodeAddr(currentPeerId);
       if (!fallbackNodeAddr) {
         throw new Error("no fallback DC node available");
       }
