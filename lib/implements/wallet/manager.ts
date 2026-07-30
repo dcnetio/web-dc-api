@@ -20,7 +20,6 @@ const appOrigin = typeof window !== "undefined" ? window.location.origin : ""; /
 const appUrl = typeof window !== "undefined" ? window.location.href : "";
 
 const localStorageKey_dcwallet_opener = "dcwallet_opener";
-const timeout = 30000;
 const walletConnectTimeout = 300000;
 // 错误定义
 export class WalletError extends Error {
@@ -113,7 +112,9 @@ export class WalletManager {
             resolve(bool);
           };
           iframe.onerror = () => {
-            const error = new WalletError("钱包初始化页面加载失败，请检查网络后重试");
+            const error = new WalletError(
+              "钱包初始化页面加载失败，请检查网络后重试",
+            );
             console.warn(error.message);
             iframe.remove();
             this.reportWalletFailure(error.message);
@@ -277,12 +278,12 @@ export class WalletManager {
   };
 
   // 打开钱包iframe窗口
-  async openWalletIframe(): Promise<boolean> {
+  async openWalletIframe(pageUrl?: string): Promise<boolean> {
+    const walletPageUrl = pageUrl || this.getWalletPageUrl();
     const walletIframe = document.getElementById(
       this.walletIframeId,
     ) as HTMLIFrameElement;
     if (walletIframe) {
-      const walletPageUrl = this.getWalletPageUrl();
       if (walletIframe.src === walletPageUrl) {
         return true;
       }
@@ -360,7 +361,7 @@ export class WalletManager {
         this.reportWalletFailure("钱包页面加载超时，请检查网络后重试");
         settle(false);
       }, 15000);
-      iframe.src = this.getWalletPageUrl();
+      iframe.src = walletPageUrl;
       iframe.allow =
         "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture;publickey-credentials-create; publickey-credentials-get";
 
@@ -398,6 +399,72 @@ export class WalletManager {
     }
   }
 
+  /**
+   * 打开钱包页面并延迟发送消息（等待 wallet-web JS 初始化）
+   * @returns 是否成功打开钱包页面
+   */
+  private async openWalletAndSend(msg: any): Promise<boolean> {
+    if (isIframeOpen()) {
+      const ok = await this.openWalletIframe(this.getWalletPageUrl());
+      if (!ok) return false;
+    } else {
+      this.walletWindow = window.open(
+        this.getWalletPageUrl(),
+        walletWindowName,
+      );
+      if (!this.walletWindow) return false;
+    }
+
+    // 等待 wallet-web JS 监听器就绪后再发送
+    await new Promise<void>((resolve) =>
+      setTimeout(resolve, isIframeOpen() ? 300 : 800),
+    );
+
+    if (isIframeOpen()) {
+      const iframe = document.getElementById(
+        this.walletIframeId,
+      ) as HTMLIFrameElement;
+      iframe?.contentWindow?.postMessage(msg, walletOrigin);
+    } else if (this.walletWindow) {
+      this.walletWindow.postMessage(msg, walletOrigin);
+    }
+    return true;
+  }
+
+  /**
+   * 初始化 iframe 通道并打开钱包页面（connect / signMessage / signEIP712Message 共用）
+   * @returns null 表示成功，否则返回错误
+   */
+  private async openWalletForChannel(): Promise<WalletError | null> {
+    try {
+      await this.initCommChannel();
+    } catch (error) {
+      return error instanceof WalletError
+        ? error
+        : new WalletError(String(error));
+    }
+
+    if (isIframeOpen()) {
+      const ok = await this.openWalletIframe();
+      if (!ok) {
+        this.channelPort2 = null;
+        return new WalletError("openWalletIframe error");
+      }
+    } else {
+      this.walletWindow = window.open(
+        this.getWalletPageUrl(),
+        walletWindowName,
+      );
+      if (!this.walletWindow) {
+        this.channelPort2 = null;
+        const err = new WalletError("钱包窗口被浏览器拦截，请允许弹窗后重试");
+        this.reportWalletFailure(err.message);
+        return err;
+      }
+    }
+    return null;
+  }
+
   async openConnect(
     accountInfo: AccountInfo = {} as AccountInfo,
   ): Promise<Account> {
@@ -420,42 +487,19 @@ export class WalletManager {
     accountInfo: AccountInfo = {} as AccountInfo,
   ): Promise<Account> {
     return new Promise(async (resolve, reject) => {
-      try {
-        await this.initCommChannel();
-      } catch (error) {
-        reject(error);
+      const err = await this.openWalletForChannel();
+      if (err) {
+        reject(err);
         return;
       }
-      if (isIframeOpen()) {
-        // 微信窗口
-        const bool = await this.openWalletIframe();
-        if (!bool) {
-          console.warn("openWalletIframe error");
-          reject(new WalletError("openWalletIframe error"));
-          return;
-        }
-      } else {
-        // 普通窗口
-        this.walletWindow = window.open(
-          this.getWalletPageUrl(),
-          walletWindowName,
-        );
-        if (!this.walletWindow) {
-          const error = new WalletError("钱包窗口被浏览器拦截，请允许弹窗后重试");
-          this.reportWalletFailure(error.message);
-          reject(error);
-          return;
-        }
-      }
-      // this.waitForWalletLoaded(this.walletWindow, timeout).then((flag) => {
-      //   if (flag) {
+
       const message = {
         type: "connect",
         data: {
           origin: appOrigin,
           accountInfo: accountInfo || {},
           shouldReturnUserInfo: shouldReturnUserInfo || false,
-          attach: "", // 附加参数，以后可以用来传递一些参数
+          attach: "",
           themeColor: this.context.appInfo.themeColor,
         },
       };
@@ -469,22 +513,82 @@ export class WalletManager {
           const data = response.data?.data;
           const messageData = data.message;
           if (data.success === false) {
-            reject(new WalletError(this.getWalletErrorMessage(data, "钱包连接失败")));
+            reject(
+              new WalletError(this.getWalletErrorMessage(data, "钱包连接失败")),
+            );
             return;
           }
           if (!messageData?.appAccount) {
             console.warn("openConnect error", message);
+            this.channelPort2 = null;
             reject(new WalletError("openConnect appAccount is null"));
             return;
           }
+          this.channelPort2 = null;
           resolve(messageData);
         })
         .catch((error) => {
           console.warn("openConnect error", error);
-          reject(error instanceof WalletError ? error : new WalletError("openConnect error"));
+          this.channelPort2 = null;
+          reject(
+            error instanceof WalletError
+              ? error
+              : new WalletError("openConnect error"),
+          );
         });
       //     }
       // });
+    });
+  }
+
+  // 打开钱包页面进行存储套餐续订
+  async openStoragePurchase(): Promise<boolean> {
+    return new Promise(async (resolve) => {
+      const opened = await this.openWalletAndSend({
+        type: "renewStorage",
+        origin: appOrigin,
+        data: {
+          appId: this.context.appInfo.appId,
+          appName: this.context.appInfo.appName,
+          appIcon: this.context.appInfo.appIcon,
+          appVersion: this.context.appInfo.appVersion,
+          appUrl: appUrl,
+          themeColor: this.context.appInfo.themeColor,
+        },
+      });
+      if (!opened) {
+        resolve(false);
+        return;
+      }
+
+      let settled = false;
+
+      const cleanup = () => {
+        settled = true;
+        clearTimeout(timeoutId);
+        window.removeEventListener("message", handler);
+      };
+
+      const handler = (event: MessageEvent) => {
+        if (event.origin !== walletOrigin) return;
+        const msg = event.data;
+        if (msg?.type === "renewStorageResult") {
+          cleanup();
+          if (isIframeOpen()) {
+            this.removeWalletIframe();
+          }
+          resolve(msg?.data?.success === true);
+        }
+      };
+
+      const timeoutId = setTimeout(() => {
+        if (!settled) {
+          cleanup();
+          resolve(false);
+        }
+      }, walletConnectTimeout);
+
+      window.addEventListener("message", handler);
     });
   }
 
@@ -504,23 +608,32 @@ export class WalletManager {
         .then((response) => {
           if (!response || !response.data || !response.data.data) {
             console.warn("getLoginInfo response is null");
+            this.channelPort2 = null;
             reject(new WalletError("getLoginInfo response is null"));
             return;
           }
           const data = response.data?.data;
           const messageData: Account = data.message;
           if (data.success === false) {
-            reject(new WalletError(this.getWalletErrorMessage(data, "获取钱包登录信息失败")));
+            this.channelPort2 = null;
+            reject(
+              new WalletError(
+                this.getWalletErrorMessage(data, "获取钱包登录信息失败"),
+              ),
+            );
             return;
           }
           if (!messageData) {
+            this.channelPort2 = null;
             reject(new WalletError("getLoginInfo messageData is null"));
             return;
           }
+          this.channelPort2 = null;
           resolve(messageData);
         })
         .catch((error) => {
           console.warn("getLoginInfo error", error);
+          this.channelPort2 = null;
           reject(error);
           return;
         });
@@ -551,7 +664,9 @@ export class WalletManager {
           const messageData = data.message;
           if (data.success === false) {
             console.warn("exitLogin error", message);
-            reject(new WalletError(this.getWalletErrorMessage(data, "退出钱包失败")));
+            reject(
+              new WalletError(this.getWalletErrorMessage(data, "退出钱包失败")),
+            );
             return;
           }
           resolve(messageData);
@@ -587,7 +702,9 @@ export class WalletManager {
           const data = response.data?.data;
           const messageData = data.message;
           if (data.success === false) {
-            reject(new WalletError(this.getWalletErrorMessage(data, "钱包解密失败")));
+            reject(
+              new WalletError(this.getWalletErrorMessage(data, "钱包解密失败")),
+            );
             return;
           }
           if (!messageData) {
@@ -628,7 +745,9 @@ export class WalletManager {
           const data = response.data?.data;
           const messageData = data.message;
           if (data.success === false) {
-            reject(new WalletError(this.getWalletErrorMessage(data, "钱包签名失败")));
+            reject(
+              new WalletError(this.getWalletErrorMessage(data, "钱包签名失败")),
+            );
             return;
           }
           if (!messageData) {
@@ -653,36 +772,13 @@ export class WalletManager {
         reject(new WalletError("未连接钱包"));
         return;
       }
-      try {
-        await this.initCommChannel();
-      } catch (error) {
-        reject(error);
+
+      const err = await this.openWalletForChannel();
+      if (err) {
+        reject(err);
         return;
       }
-      if (isIframeOpen()) {
-        // 微信窗口
-        const bool = await this.openWalletIframe();
-        if (!bool) {
-          console.warn("openWalletIframe error");
-          reject(new WalletError("openWalletIframe error"));
-          return;
-        }
-      } else {
-        // 普通窗口
-        this.walletWindow = window.open(
-          this.getWalletPageUrl(),
-          walletWindowName,
-        );
-        if (!this.walletWindow) {
-          const error = new WalletError("钱包窗口被浏览器拦截，请允许弹窗后重试");
-          this.reportWalletFailure(error.message);
-          reject(error);
-          return;
-        }
-      }
-      // this.waitForWalletLoaded(this.walletWindow, timeout).then((flag) => {
-      //   if (flag) {
-      // 每100ms发送一次消息,直到钱包加载完成
+
       const message = {
         type: "signMessage",
         data,
@@ -691,24 +787,31 @@ export class WalletManager {
         .then((response: MessageEvent | null) => {
           if (!response || !response.data || !response.data.data) {
             console.warn("signMessage response is null");
+            this.channelPort2 = null;
             reject(new WalletError("signMessage response is null"));
             return;
           }
           const data = response.data?.data;
           const messageData = data.message;
           if (data.success === false) {
-            reject(new WalletError(this.getWalletErrorMessage(data, "消息签名失败")));
+            this.channelPort2 = null;
+            reject(
+              new WalletError(this.getWalletErrorMessage(data, "消息签名失败")),
+            );
             return;
           }
           if (!messageData) {
             console.warn("signMessage error", message);
+            this.channelPort2 = null;
             reject(new WalletError("signMessage messageData is null"));
             return;
           }
+          this.channelPort2 = null;
           resolve(messageData);
         })
         .catch((error) => {
           console.warn("signMessage error", error);
+          this.channelPort2 = null;
           reject(error);
         });
       //   }
@@ -726,36 +829,13 @@ export class WalletManager {
         reject(new WalletError("未连接钱包"));
         return;
       }
-      try {
-        await this.initCommChannel();
-      } catch (error) {
-        reject(error);
+
+      const err = await this.openWalletForChannel();
+      if (err) {
+        reject(err);
         return;
       }
-      if (isIframeOpen()) {
-        // 微信窗口
-        const bool = await this.openWalletIframe();
-        if (!bool) {
-          console.warn("openWalletIframe error");
-          reject(new WalletError("openWalletIframe error"));
-          return;
-        }
-      } else {
-        // 普通窗口
-        this.walletWindow = window.open(
-          this.getWalletPageUrl(),
-          walletWindowName,
-        );
-        if (!this.walletWindow) {
-          const error = new WalletError("钱包窗口被浏览器拦截，请允许弹窗后重试");
-          this.reportWalletFailure(error.message);
-          reject(error);
-          return;
-        }
-      }
-      // this.waitForWalletLoaded(this.walletWindow, timeout).then((flag) => {
-      //   if (flag) {
-      // port1 转移给iframe
+
       const message = {
         type: "signEIP712Message",
         data: data,
@@ -764,24 +844,33 @@ export class WalletManager {
         .then((response) => {
           if (!response || !response.data || !response.data.data) {
             console.warn("signEIP712Message response is null");
+            this.channelPort2 = null;
             reject(new WalletError("signEIP712Message response is null"));
             return;
           }
           const data = response.data?.data;
           const messageData = data.message;
           if (data.success === false) {
-            reject(new WalletError(this.getWalletErrorMessage(data, "EIP-712 签名失败")));
+            this.channelPort2 = null;
+            reject(
+              new WalletError(
+                this.getWalletErrorMessage(data, "EIP-712 签名失败"),
+              ),
+            );
             return;
           }
           if (!messageData) {
             console.warn("signEIP712Message error", message);
+            this.channelPort2 = null;
             reject(new WalletError("signEIP712Message messageData is null"));
             return;
           }
+          this.channelPort2 = null;
           resolve(messageData);
         })
         .catch((error) => {
           console.warn("signEIP712Message error", error);
+          this.channelPort2 = null;
           reject(error);
         });
       //   }
@@ -835,6 +924,7 @@ export class WalletManager {
               }
             }
           }
+          this.channelPort2 = null;
         }
       }
     } catch (error) {
@@ -940,7 +1030,9 @@ export class WalletManager {
     if (typeof window === "undefined" || typeof CustomEvent !== "function") {
       return;
     }
-    window.dispatchEvent(new CustomEvent("dcwallet:error", { detail: { message } }));
+    window.dispatchEvent(
+      new CustomEvent("dcwallet:error", { detail: { message } }),
+    );
   }
 
   private getWalletErrorMessage(data: any, fallback: string): string {
