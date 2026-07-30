@@ -187,7 +187,7 @@ export class Network implements Net {
 
       if (cachedToken && cachedToken.expiresAt > Date.now() / 1000) {
         token = cachedToken.token;
-        client.token = token;
+        client.setToken(token, appId, pubKeyStr);
       } else {
         token = await client.GetToken(
           appId,

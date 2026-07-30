@@ -68,7 +68,6 @@ export class MessageManager {
           return this.context.sign(payload);
         }
       );
-      receiverClient.token = token;
   
       const messageClient = new MessageClient(
         this.context.AccountBackupDc.client,
@@ -115,7 +114,6 @@ export class MessageManager {
                 return this.context.sign(payload);
               }
             );
-            client.token = token;
           }
           const messageClient = new MessageClient(
             client,

@@ -23,8 +23,10 @@ export class Client {
   peerAddr: Multiaddr;
   token: string;
   private tokenRequest: Promise<string> | null = null;
+  private tokenRequestIdentity: string | null = null;
   private tokenCacheKey: string | null = null;
   private tokenGeneration = 0;
+  private tokenIdentity: string | null = null;
 
   constructor(node: Libp2p,blockstore: Blocks, peerAddr: Multiaddr, protocol: string) {
     this.protocol = protocol;
@@ -40,20 +42,31 @@ export class Client {
     signCallback: (payload: Uint8Array) =>  Promise<Uint8Array> ,
     peerAddr?: Multiaddr
   ): Promise<string> {
-    if (this.token) {
+    if (!pubkey || pubkey.length == 0) {
+      throw new Error("pubkey is empty");
+    }
+    const targetPeer = peerAddr || this.peerAddr;
+    const tokenIdentity = this.getTokenIdentity(targetPeer, appId, pubkey);
+    if (
+      (this.token && this.tokenIdentity !== tokenIdentity) ||
+      (this.tokenRequest && this.tokenRequestIdentity !== tokenIdentity)
+    ) {
+      await this.ClearToken();
+    }
+    if (this.token && this.tokenIdentity === tokenIdentity) {
       return this.token;
     }
     if (this.tokenRequest) {
       return this.tokenRequest;
     }
 
-    const targetPeer = peerAddr || this.peerAddr;
-    const cacheKey = `${this.protocol}:${targetPeer.toString()}:${appId}:${pubkey}`;
+    const cacheKey = tokenIdentity;
     const tokenGeneration = this.tokenGeneration;
     this.tokenCacheKey = cacheKey;
     const cached = Client.sharedTokens.get(cacheKey);
     if (cached && cached.expiresAt > Date.now()) {
       this.token = cached.token;
+      this.tokenIdentity = tokenIdentity;
       return cached.token;
     }
     if (cached) {
@@ -63,15 +76,18 @@ export class Client {
     const inFlightRequest = Client.sharedTokenRequests.get(cacheKey);
     if (inFlightRequest) {
       this.tokenRequest = inFlightRequest;
+      this.tokenRequestIdentity = tokenIdentity;
       try {
         const token = await inFlightRequest;
         if (tokenGeneration === this.tokenGeneration) {
           this.token = token;
+          this.tokenIdentity = tokenIdentity;
         }
         return token;
       } finally {
         if (this.tokenRequest === inFlightRequest) {
           this.tokenRequest = null;
+          this.tokenRequestIdentity = null;
         }
       }
     }
@@ -84,9 +100,6 @@ export class Client {
       if (!peerAddr) {
         peerAddr = this.peerAddr;
       }
-      if (!pubkey || pubkey.length == 0) {
-        throw new Error("pubkey is empty");
-      }
       const grpcClient = new DCGrpcClient(
         this.p2pNode,
         peerAddr,
@@ -96,6 +109,7 @@ export class Client {
       const token = await grpcClient.GetToken(appId, pubkey, signCallback);
       if (tokenGeneration === this.tokenGeneration) {
         this.token = token;
+        this.tokenIdentity = tokenIdentity;
       }
       if (
         token &&
@@ -112,6 +126,7 @@ export class Client {
       return "";
     });
     this.tokenRequest = request;
+    this.tokenRequestIdentity = tokenIdentity;
     Client.sharedTokenRequests.set(cacheKey, request);
 
     try {
@@ -122,19 +137,47 @@ export class Client {
       }
       if (this.tokenRequest === request) {
         this.tokenRequest = null;
+        this.tokenRequestIdentity = null;
       }
     }
+  }
+
+  private getTokenIdentity(
+    peerAddr: Multiaddr,
+    appId: string,
+    pubkey: string,
+  ): string {
+    return `${this.protocol}:${peerAddr.toString()}:${appId}:${pubkey}`;
+  }
+
+  setToken(
+    token: string,
+    appId: string,
+    pubkey: string,
+    peerAddr?: Multiaddr,
+  ): void {
+    this.tokenGeneration++;
+    this.tokenRequest = null;
+    this.tokenRequestIdentity = null;
+    this.token = token;
+    this.tokenIdentity = token
+      ? this.getTokenIdentity(peerAddr || this.peerAddr, appId, pubkey)
+      : null;
+    this.tokenCacheKey = this.tokenIdentity;
   }
 
   // 清除token
   async ClearToken(): Promise<void> {
       this.token = "";
+      this.tokenIdentity = null;
       this.tokenGeneration++;
       this.tokenRequest = null;
+      this.tokenRequestIdentity = null;
       if (this.tokenCacheKey) {
         Client.sharedTokens.delete(this.tokenCacheKey);
         Client.sharedTokenRequests.delete(this.tokenCacheKey);
       }
+      this.tokenCacheKey = null;
   }
 
 
