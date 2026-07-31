@@ -41,6 +41,18 @@ export interface IRenewPackageInfo {
    */
   scene?: string;
   /**
+   * 套餐关联的主题标识。
+   */
+  theme?: string;
+  /**
+   * 套餐关联的主题作者标识。
+   */
+  themeAuthor?: string;
+  /**
+   * 套餐关联的主题 AppID。
+   */
+  themeAppid?: string;
+  /**
    * AI 应用 AppID（AI 套餐相关）。
    */
   aiAppid?: string;
