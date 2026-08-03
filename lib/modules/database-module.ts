@@ -31,6 +31,15 @@ export class DatabaseModule implements DCModule, IDatabaseOperations {
   private initialized: boolean = false;
   private dbLocation?: string;
   private initQueue: Promise<Error | null> = Promise.resolve(null);
+
+  private validateThreadId(threadId: string): Error | null {
+    try {
+      ThreadID.fromString(String(threadId || "").trim());
+      return null;
+    } catch {
+      return new Error("用户数据库尚未初始化或 ThreadID 无效");
+    }
+  }
   
   /**
    * 初始化数据库模块
@@ -647,7 +656,8 @@ async has(threadId: string, collectionName: string, instanceID: string): Promise
  * @throws Error if query fails
  */
 async find(threadId: string, collectionName: string, queryString?: string): Promise<[string|null, Error|null]> {  
-   
+    const threadIdError = this.validateThreadId(threadId);
+    if (threadIdError) return [null, threadIdError];
     
     try {
        this.assertInitialized();
@@ -682,7 +692,8 @@ async find(threadId: string, collectionName: string, queryString?: string): Prom
  * @throws Error if query fails
  */
 async findByID(threadId: string, collectionName: string, instanceID: string): Promise<[string|null, Error|null]> {
-    
+    const threadIdError = this.validateThreadId(threadId);
+    if (threadIdError) return [null, threadIdError];
     
     try {
       this.assertInitialized();

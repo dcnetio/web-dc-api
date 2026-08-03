@@ -2,6 +2,7 @@ import {
   AIProxyAliyunRealtimeAudioSessionOptions,
   AIProxyAliyunRealtimeVoiceSessionOptions,
   AIProxyConfig,
+  AIProxyCallContext,
   AIServiceUsage,
   AIProxyRealtimeAudioSessionOptions,
   AIProxyRealtimeVoiceSessionOptions,
@@ -141,7 +142,7 @@ export interface IAIProxyOperations {
    * @returns 调用状态码
    */
   DoAIProxyCall(
-    context: { signal?: AbortSignal },
+    context: AIProxyCallContext,
     reqBody: string,
     forceRefresh: boolean,
     onStreamResponse: OnStreamResponseType,

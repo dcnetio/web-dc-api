@@ -6,6 +6,7 @@ import { DCModule, CoreModuleName } from "../common/module-system";
 import { createLogger } from "../util/logger";
 import {
   AIProxyAliyunRealtimeAudioSessionOptions,
+  AIProxyCallContext,
   AIProxyAliyunRealtimeVoiceSessionOptions,
   AIProxyConfig,
   AIProxyRealtimeConfig,
@@ -307,7 +308,7 @@ export class AIProxyModule implements DCModule, IAIProxyOperations {
 
   //AI相关代理的调用,包括代理与AI的通信或者与MCPServer的通信
   async DoAIProxyCall(
-    context: { signal?: AbortSignal },
+    context: AIProxyCallContext,
     reqBody: string,
     forceRefresh: boolean,
     onStreamResponse: OnStreamResponseType,

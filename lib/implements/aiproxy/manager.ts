@@ -1,5 +1,6 @@
 import {
   AIProxyConfig,
+  AIProxyCallContext,
   AIServiceUsage,
   GetUserAIProxyAuthParams,
   OnStreamResponseType,
@@ -728,7 +729,7 @@ export class AIProxyManager {
 
   //AI相关代理的调用,包括代理与AI的通信或者与MCPServer的通信
   async DoAIProxyCall(
-    context: { signal?: AbortSignal },
+    context: AIProxyCallContext,
     appId: string,
     themeAuthor: string,
     configTheme: string,

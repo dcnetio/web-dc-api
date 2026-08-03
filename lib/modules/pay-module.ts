@@ -32,6 +32,8 @@ export class PayModule implements DCModule, IPayOperations {
   private readonly pendingPaymentKey = "dcapi_pending_gateway_payment";
   private readonly returnFlagKey = "pay_return";
   private readonly returnSceneKey = "pay_scene";
+  private readonly returnOrderKey = "pay_out_trade_no";
+  private readonly returnOriginOrderKey = "pay_origin_out_trade_no";
 
   private getPackageMutationSignerPubkey(): string {
     const signer = String(
@@ -861,6 +863,8 @@ export class PayModule implements DCModule, IPayOperations {
    */
   markCurrentUrlAsPayReturn(scene?: PaymentGatewayScene): string {
     const url = new URL(globalThis.window.location.href);
+    url.searchParams.delete(this.returnOrderKey);
+    url.searchParams.delete(this.returnOriginOrderKey);
     url.searchParams.set(this.returnFlagKey, "1");
     if (scene) {
       url.searchParams.set(this.returnSceneKey, scene);
@@ -894,7 +898,12 @@ export class PayModule implements DCModule, IPayOperations {
     try {
       const url = new URL(globalThis.window.location.href);
       let changed = false;
-      [this.returnFlagKey, this.returnSceneKey].forEach((key) => {
+      [
+        this.returnFlagKey,
+        this.returnSceneKey,
+        this.returnOrderKey,
+        this.returnOriginOrderKey,
+      ].forEach((key) => {
         if (url.searchParams.has(key)) {
           url.searchParams.delete(key);
           changed = true;

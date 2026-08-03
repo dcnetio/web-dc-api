@@ -425,6 +425,12 @@ export type OnStreamResponseType = (
   err: string,
 ) => void;
 
+export interface AIProxyCallContext {
+  signal?: AbortSignal;
+  /** Idle time between streamed response frames; defaults to 60 seconds. */
+  streamIdleTimeoutMs?: number;
+}
+
 export enum NFTBindStatus {
   Success = 0,
   UserBinded = 1, // 用户已绑定其他nft账号

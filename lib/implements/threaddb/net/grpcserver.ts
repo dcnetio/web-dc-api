@@ -18,6 +18,35 @@ import {
 import { Net } from '../core/app';
 import { ThreadID } from '@textile/threads-id';
 
+const isExpectedInboundStreamClosure = (error: unknown): boolean => {
+  const name = error instanceof Error ? error.name : "";
+  const message = error instanceof Error ? error.message : String(error || "");
+  return (
+    name === "TimeoutError" ||
+    name === "AbortError" ||
+    /(?:signal|operation|stream).*timed?\s*out|aborted|stream.*closed|closed.*stream/i.test(
+      `${name} ${message}`
+    )
+  );
+};
+
+async function* normalizeInboundStream(source: AsyncIterable<unknown>) {
+  try {
+    for await (const chunk of source) {
+      yield chunk;
+    }
+  } catch (error) {
+    // Inbound diagnostic streams are routinely closed by timeout/abort when
+    // the remote side goes away. End them normally so the parser can clean up
+    // without producing an unhandled rejection in the host application.
+    if (isExpectedInboundStreamClosure(error)) {
+      console.warn("Inbound DC stream closed:", error);
+      return;
+    }
+    throw error;
+  }
+}
+
 export class DCGrpcServer {
     private net: Net | undefined;
     constructor(private libp2p: Libp2p, private protocol: string) {}
@@ -65,7 +94,7 @@ export class DCGrpcServer {
                 method = plainHeaders.get(':path')
             }
 
-          http2Parser.processStream(source)
+          await http2Parser.processStream(normalizeInboundStream(source) as any)
         } catch (err) {
           console.warn("Error handling request:", err);
         }

@@ -8,6 +8,7 @@ import { Errors } from "../../common/error";
 import { DCContext } from "../../../lib/interfaces/DCContext";
 import {
   AIStreamResponseFlag,
+  AIProxyCallContext,
   GetUserAIProxyAuthParams,
   OnStreamResponseType,
   ProxyCallConfig,
@@ -226,7 +227,7 @@ export class AIProxyClient {
   }
 
   async DoAIProxyCall(
-    context: { signal?: AbortSignal },
+    context: AIProxyCallContext,
     appId: string,
     themeAuthor: string,
     configTheme: string,
@@ -271,6 +272,10 @@ export class AIProxyClient {
     let isAborted = false;
     let contentDecoder = new TextDecoder();
     let errDecoder = new TextDecoder();
+    const requestedIdleTimeout = Number(context.streamIdleTimeoutMs);
+    const streamIdleTimeoutMs = Number.isFinite(requestedIdleTimeout)
+      ? Math.min(Math.max(requestedIdleTimeout, 30_000), 10 * 60_000)
+      : 60_000;
 
     const decodeStreamChunk = (
       decoder: TextDecoder,
@@ -310,7 +315,9 @@ export class AIProxyClient {
       clearTimeoutTimer();
       timeoutTimer = setTimeout(() => {
         if (!isCompleted && !isAborted && hasStartedReceiving) {
-          console.warn("DoAIProxyCall 数据流超时，超过30秒未收到数据");
+          console.warn(
+            `DoAIProxyCall 数据流超时，超过${streamIdleTimeoutMs / 1000}秒未收到数据`,
+          );
           isAborted = true;
 
           // 通知调用者超时
@@ -318,11 +325,11 @@ export class AIProxyClient {
             onStreamResponse(
               AIStreamResponseFlag.STREAM_HANG,
               "",
-              "数据流超时：超过30秒未收到响应数据"
+              `数据流超时：超过${streamIdleTimeoutMs / 1000}秒未收到响应数据`
             );
           }
         }
-      }, 60000); // 60秒超时
+      }, streamIdleTimeoutMs);
     };
 
     // 检查是否已经被中止
