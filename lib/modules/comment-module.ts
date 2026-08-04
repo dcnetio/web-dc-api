@@ -164,8 +164,8 @@ async addUserOffChainOpTimes(
    * @param themeAuthor 主题作者 base32编码格式
    * @param commentType 评论类型
    * @param comment 评论内容
-   * @param refercommentkey 引用评论的键
-   * @param openFlag 开放标志
+   * @param openFlag 开放标志，0公开、1私密
+   * @param refercommentkey 引用评论的键；回复仍使用 commentType=0
    */
   async publishCommentToTheme(
     theme: string,

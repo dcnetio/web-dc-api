@@ -48,8 +48,8 @@ export interface ICommentOperations {
    * @param themeAuthor 主题作者的公钥
    * @param commentType 评论类型
    * @param comment 评论内容
-   * @param refercommentkey 可选，引用的评论键
    * @param openFlag 可选，评论可见性 0-公开(所有人可见) 1-私密(仅评论者本人+主题作者可见;主题作者可 setObjCommentPublic 精选公开)
+   * @param refercommentkey 可选，引用的评论键；回复仍使用 commentType=0
    * @param appId 可选，覆盖当前 DC 上下文的 appId
    * @returns 评论发布结果
    */
@@ -86,7 +86,7 @@ export interface ICommentOperations {
    * 获取指定作者的主题对象列表,无法查询作者设置为私密的主题
    * @param themeAuthor 主题作者的公钥
    * @param startHeight 可选，查询起始高度
-   * @param direction 可选，查询方向 (0:从新到旧, 1:从旧到新)
+   * @param direction 可选，查询方向 (0:正向/从旧到新, 1:逆向/从新到旧)
    * @param offset 可选，结果集偏移量
    * @param limit 可选，最大返回数量，默认100
    * @param seekKey 可选，查询的起始键,格式为返回记录的 blockheight/key
@@ -106,7 +106,7 @@ export interface ICommentOperations {
    * @param theme 主题/对象标识符
    * @param themeAuthor 主题作者的公钥
    * @param startHeight 可选，查询起始高度
-   * @param direction 可选，查询方向 (0:从新到旧, 1:从旧到新) 
+   * @param direction 可选，查询方向 (0:正向/从旧到新, 1:逆向/从新到旧)
    * @param offset 可选，结果集偏移量
    * @param limit 可选，最大返回数量，默认100
    * @param seekKey 可选，查询的起始键,格式为返回记录的 blockheight/key
@@ -199,7 +199,7 @@ export interface ICommentOperations {
    * 获取指定用户发布的评论列表,无法查询用户设置为私密的评论
    * @param userPubkey 用户公钥
    * @param startHeight 可选，查询起始高度
-   * @param direction 可选，查询方向 (0:从新到旧, 1:从旧到新)
+   * @param direction 可选，查询方向 (0:正向/从旧到新, 1:逆向/从新到旧)
    * @param offset 可选，结果集偏移量
    * @param limit 可选，最大返回数量，默认100
    * @param seekKey 可选，查询的起始键,格式为返回记录的 blockheight/key

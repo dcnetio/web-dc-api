@@ -552,9 +552,9 @@ export class CommentManager {
       );
       // res 0:成功 1:评论空间没有配置 2:评论空间不足
       if (res === 0) {
-        // 获取高度
-        const commentBlockHeight = (await this.chainUtil.getBlockHeight()) || 0;
-        const commentKey = `${commentBlockHeight}/${commentCidBase32}`;
+        // 返回服务端实际用于落库的请求高度。再次取链高度可能已经跨块，
+        // 会生成一个无法用于回复、删除或精选公开的错误 commentKey。
+        const commentKey = `${blockHeight}/${commentCidBase32}`;
         return [commentKey, null];
       }
       // if(res === 1){
@@ -579,10 +579,7 @@ export class CommentManager {
           openFlag
         );
         if (res === 0) {
-          // 获取高度
-          const commentBlockHeight =
-            (await this.chainUtil.getBlockHeight()) || 0;
-          const commentKey = `${commentBlockHeight}/${commentCidBase32}`;
+          const commentKey = `${blockHeight}/${commentCidBase32}`;
           return [commentKey, null];
         }
       }
@@ -1436,7 +1433,7 @@ export class CommentManager {
       TCount: content.TCount,
       type: content.type,
       signature: uint8ArrayToHex(content.signature),
-      vaccount: uint8ArrayToHex(content.vaccount),
+      vaccount: uint8ArrayToString(content.vaccount),
     };
   }
 

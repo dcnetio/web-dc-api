@@ -419,7 +419,7 @@ export class CommentClient {
     message.refercommentkey = new TextEncoder().encode(refercommentkey);
     if (openFlag !== undefined) {
       // openFlag 表示单条评论的公开/私密状态(0公开 1私密),对应 proto 的 status 字段。
-      // 注意:不要写入 message.type(评论类型 0普通/1回复),否则会破坏评论类型。
+      // 注意:不要写入 message.type(评论类型 0普通/1点赞/2踩/3推荐或转发),否则会破坏评论类型。
       message.status = openFlag;
     }
     message.signature = signature;
