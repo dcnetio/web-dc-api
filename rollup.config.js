@@ -16,6 +16,22 @@ const __dirname = fileURLToPath(new URL("./", import.meta.url));
 const pkg = JSON.parse(
   fs.readFileSync(new URL("./package.json", import.meta.url), "utf8"),
 );
+const serviceWorkerSource = fileURLToPath(
+  new URL("./assets/sw.js", import.meta.url),
+);
+const serviceWorkerOutput = fileURLToPath(
+  new URL("./dist/sw.js", import.meta.url),
+);
+
+const copyServiceWorkerPlugin = {
+  name: "copy-service-worker",
+  buildStart() {
+    this.addWatchFile(serviceWorkerSource);
+  },
+  writeBundle() {
+    fs.copyFileSync(serviceWorkerSource, serviceWorkerOutput);
+  },
+};
 
 // 外部依赖（这些将不会被打包进最终文件）
 const external = [
@@ -348,6 +364,7 @@ export default [
       }),
       ...basePlugins,
       umdCompressionPlugin, // ✅ 只在 UMD/Min 版本保留强压缩
+      copyServiceWorkerPlugin,
     ],
   },
 ];

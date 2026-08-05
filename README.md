@@ -1,1393 +1,1205 @@
-# Web DC API 开发指南
+# Web DC API
 
-**web-dc-api** 是一个革命性的去中心化 Web 开发 SDK，让您无需任何服务器即可构建完整的互联网应用。
+`web-dc-api` 是面向浏览器的去中心化应用 SDK。它把钱包身份、用户私有数据库、共享 KeyValue、文件、评论、消息、AI 代理、实时通信、白板和支付能力统一在一个 `DC` 实例中。
 
-## 核心特性
+本文档对应仓库当前 SDK `0.2.71`，示例以当前 TypeScript 类型和实现为准。
 
-🚀 **零服务器架构** - 完全去中心化，无需部署后端服务器、数据库或存储服务  
-🔐 **自动统一登录** - 内置钱包登录和身份认证，一次接入，全网通用  
-💾 **分布式存储** - 用户数据库、键值存储、文件系统全部去中心化  
-💬 **内置社交功能** - 评论系统、消息通信，开箱即用  
-🤖 **AI 集成** - 原生支持 AI 代理和 MCP Server 调用  
-🔧 **免运维** - 无需服务器运维、监控、扩容，专注业务逻辑开发  
-🌉 **Web2 到 Web3 的桥梁** - 让传统 Web 开发者无缝过渡到去中心化世界
+## 目录
 
-## 适用场景
+- [能力总览](#能力总览)
+- [运行要求](#运行要求)
+- [安装](#安装)
+- [5 分钟接入](#5-分钟接入)
+- [初始化配置](#初始化配置)
+- [调用约定与生命周期](#调用约定与生命周期)
+- [React 接入](#react-接入)
+- [认证](#认证)
+- [ThreadDB 用户数据库](#threaddb-用户数据库)
+- [KeyValue 共享存储](#keyvalue-共享存储)
+- [文件](#文件)
+- [Service Worker 媒体访问](#service-worker-媒体访问)
+- [评论](#评论)
+- [消息与 RTM](#消息与-rtm)
+- [AI 代理](#ai-代理)
+- [RTC 音视频](#rtc-音视频)
+- [实时白板](#实时白板)
+- [支付](#支付)
+- [缓存与工具](#缓存与工具)
+- [高级能力](#高级能力)
+- [常见问题](#常见问题)
+- [API 索引](#api-索引)
 
-- **社交应用**：博客、论坛、社区、内容平台
-- **协作工具**：笔记、文档、任务管理
-- **数据应用**：个人数据管理、隐私保护应用
-- **AI 应用**：集成 AI 能力的去中心化应用
-- **任何需要后端的 Web 应用**：DC API 就是您的后端
+## 能力总览
 
-## 快速开始 (Quick Start)
+| 需求 | 模块/导出 | 适合存储或处理 | 关键入口 | 额外前置条件 |
+| --- | --- | --- | --- | --- |
+| 钱包登录与身份 | `dc.auth` | 登录、签名、解密、用户空间 | `accountLoginWithWallet` | `dc.init()` |
+| 用户私有结构化数据 | `dc.db` | 设置、笔记、草稿、个人记录 | `dc.initUserDB`、`create`、`find`、`save` | 登录后初始化数据库 |
+| 多用户共享数据 | `dc.keyValue` | 配置、商品、排行榜、全局状态 | `createStore`、`createSharedStore`、`set`、`getWithIndex` | 登录；创建者公钥和权限配置 |
+| 类型化 KV 仓储 | `EntityRepository` | 基于 KeyValue 的实体、索引查询 | `save`、`findById`、`findByIndex` | 已获得 `KeyValueDB` |
+| 文件与目录 | `dc.file` | 加密上传、CID 下载、流式读取 | `addFile`、`getFile`、`getSeekableFileStream` | 登录；保管好加密密钥 |
+| 时间线与留言 | `dc.comment` | 动态、评论、回复、点赞/踩/转发 | `addThemeObj`、`publishCommentToTheme` | 登录；明确主题作者 |
+| 离线消息箱 | `dc.message` | 通知、私信、稍后拉取的消息 | `sendMsgToUserBox`、`getMsgFromUserBox` | 登录 |
+| 在线实时消息 | `dc.rtm` | 在线单聊、在线状态、信令接收 | `login`、`sendMessageToPeer` | RTM Token，或可自动取 Token 的 AI 代理配置 |
+| AI 与 MCP | `dc.aiproxy` | 流式模型调用、MCP、异步资源、实时语音 | `DoAIProxyCall`、`GenerateAndPollAIResource` | 服务配置和用户授权 |
+| 实时音视频 | `dc.rtc` | 通话、会议、屏幕共享、实时房间消息 | `init`、`callPeer`、`joinRoom` | RTC Token 服务；呼叫信令另需 RTM 登录 |
+| 协作白板 | `dc.whiteboard` | 绘制、文档、翻页、视角同步 | `init`、`joinRoom`、`getWhiteboard` | 白板 Token 服务；邀请功能另需 RTM 登录 |
+| 支付 | `dc.pay` | 套餐、订单、扫码支付、托管收银台 | `config`、`listRenewPackages`、`createPayOrder` | 支付服务地址 |
+| 短期分布式缓存 | `dc.cache` | 有过期时间的临时值 | `setCacheKey`、`getCacheValue` | 登录 |
+| 网络与密钥工具 | `dc.client` / `dc.util` | 节点信息、对称密钥、应用信息 | `getHostID`、`createSymmetricKey` | `dc.init()` |
 
-以下是一个完整的调用示例，展示了从引入 SDK 到登录、初始化数据库以及使用功能的完整流程。
+### 三种数据能力怎么选
 
-### 1. 基础调用 (Raw SDK)
+| 能力 | 数据边界 | 查询方式 | 典型场景 |
+| --- | --- | --- | --- |
+| ThreadDB (`dc.db`) | 当前用户专属，跨设备同步 | JSON 条件、排序、游标 | 用户设置、笔记、私有业务数据 |
+| 普通 KeyValue (`createStore`) | 同一个 key 可按写入用户分别保存 | key、写入者、索引、时间 | 用户提交、排行榜、多人共享记录 |
+| 共享 KeyValue (`createSharedStore`) | 同一个 key 全局只保留最新值 | key、索引、时间 | 全局配置、公告、状态标志 |
 
-这是最基础的使用方式，直接引入 `DC` 类进行操作。
+评论系统适合按时间线组织互动内容；消息箱适合发给指定用户；它们不应替代通用数据库。
 
-```typescript
-import { DC } from 'web-dc-api';
+## 运行要求
 
-// 1. 配置并初始化 DC 实例
+- SDK 的主要运行目标是现代浏览器，而不是纯 Node.js 服务端。
+- 核心能力要求浏览器支持 ES2020、Web Crypto、IndexedDB 和 WebSocket。
+- 文件流读取还需要 `ReadableStream`；`wrapWorker` / `exposeDC` 等 Worker 封装需要 Web Worker。只使用核心模块时不必把 Web Worker 视为强制前提。
+- 钱包登录会打开钱包页面，请从用户点击等真实交互中触发，避免被浏览器拦截弹窗。
+- 摄像头、麦克风、屏幕共享和 Service Worker 需要 HTTPS；本地开发可使用 `localhost`。
+- SSR 框架中只在客户端创建 `DC`，不要在服务端渲染阶段初始化。
+- `appId` 是数据命名空间的一部分。上线后不要随意修改，否则应用会访问到不同的数据空间。
+
+## 安装
+
+### npm / pnpm / yarn
+
+```bash
+npm install web-dc-api
+```
+
+```bash
+pnpm add web-dc-api
+```
+
+```bash
+yarn add web-dc-api
+```
+
+包同时提供 ESM、CommonJS 和 TypeScript 类型。应用代码应从包根入口导入：
+
+```ts
+import { DC, LogLevel, ThemePermission } from "web-dc-api";
+```
+
+不要从 `web-dc-api/lib/...` 或 `web-dc-api/dist/...` 深层导入；包的公开 `exports` 只保证根入口和 `package.json`。
+
+### CDN
+
+CDN 版本还需要先加载 `grpc-libp2p-client`。建议在生产环境固定版本：
+
+```html
+<script src="https://cdn.jsdelivr.net/npm/grpc-libp2p-client@0.0.43/dist/grpc.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/web-dc-api@0.2.71/dist/dc.min.js"></script>
+<script>
+  const { DC } = WebDcApi;
+</script>
+```
+
+## 5 分钟接入
+
+下面的示例完成 SDK 初始化、钱包登录、用户数据库初始化、写入和查询。链节点地址及应用信息应由部署配置提供。
+
+```ts
+import { DC, LogLevel } from "web-dc-api";
+
 const dc = new DC({
   wssUrl: "wss://dcchain.baybird.cn",
   backWssUrl: "wss://dcchain.baybird.cn",
   appInfo: {
-    appId: "your-app-id",
+    appId: "your-stable-app-id",
     appName: "Your App Name",
     appVersion: "1.0.0",
-    appIcon: "",
-    appDesc: ""
-  }
+    appIcon: "https://example.com/icon.png",
+    appUrl: window.location.origin,
+    themeColor: "#1677ff",
+  },
+  logLevel: LogLevel.WARN,
 });
 
-async function main() {
-  // 2. 初始化 DC 实例 (连接节点、启动服务)
-  const initSuccess = await dc.init();
-  if (!initSuccess) {
-    console.warn("DC 初始化失败");
-    return;
-  }
-  console.log("DC 初始化成功");
+const initialized = await dc.init(async (step) => {
+  // step: 0=模块已注册，1=链已连接，2=DC 节点已连接，3=模块已初始化，4=临时身份已创建
+  console.log("DC init step:", step);
+});
 
-  // 3. 用户登录 (钱包登录)
-  const [accountInfo, loginError] = await dc.auth.accountLoginWithWallet();
-  
-  if (loginError || !accountInfo) {
-    console.warn("登录失败:", loginError);
-    return;
-  }
-  console.log("登录成功, 用户公钥:", dc.publicKey?.string());
-
-  // 4. 初始化用户数据库
-  const collections = [{
-    name: 'user_notes',
-    schema: {
-      type: 'object',
-      properties: {
-        _id: { type: 'string' },
-        content: { type: 'string' },
-        create_time: { type: 'number' },
-        _mod: { type: 'number' }
-      },
-      required: ["_id"]
-    }
-  }];
-  
-  const [, dbError] = await dc.initUserDB(collections, "1.0.0", false);
-  if (dbError) {
-    console.warn("数据库初始化失败:", dbError);
-    return;
-  }
-
-  // 5. 使用功能 (例如写入数据)
-  const [id, createErr] = await dc.db.create(
-    dc.dbThreadId, 
-    'user_notes', 
-    JSON.stringify({ 
-      content: "Hello DC World!", 
-      create_time: Date.now(),
-      _mod: Date.now() 
-    })
-  );
-  
-  if (!createErr) {
-    console.log("数据写入成功, ID:", id);
-  }
+if (!initialized) {
+  throw new Error("DC 初始化失败，请检查链节点地址和网络状态");
 }
 
-main();
-```
+const auth = dc.auth;
+if (!auth) throw new Error("Auth 模块不可用");
 
-### 2. React 集成 (DCContext)
-
-在 React 项目中，建议使用 Context 来管理 DC 实例。你可以将以下代码保存为 `src/contexts/DCContext.tsx`。
-
-```tsx
-import React, { createContext, useContext, useState, useCallback, ReactNode } from 'react';
-import { DC } from 'web-dc-api';
-import { AccountInfo } from 'web-dc-api/lib/common/types/types';
-
-interface DCStatus {
-  accountInfo: AccountInfo | null;
-  isReady: boolean;
+// 应在用户点击登录按钮后调用。
+const [account, loginError] = await auth.accountLoginWithWallet();
+if (loginError || !account) {
+  throw loginError ?? new Error("钱包登录失败");
 }
 
-interface DCContextType {
-  getDC: () => Promise<DC | null>;
-  saveAccountInfo: (info: AccountInfo) => void;
-  dcStatus: DCStatus;
-}
+console.log("显示账号:", account.nftAccount);
+console.log("应用账号:", account.account);
+console.log("用户公钥:", dc.publicKey?.string());
 
-const DCContext = createContext<DCContextType | null>(null);
-
-export const DCProvider = ({ children }: { children: ReactNode }) => {
-  const [dcInstance, setDcInstance] = useState<DC | null>(null);
-  const [dcStatus, setDcStatus] = useState<DCStatus>({
-    accountInfo: null,
-    isReady: false
-  });
-
-  const getDC = useCallback(async () => {
-    if (dcInstance) return dcInstance;
-
-    try {
-      // 初始化配置
-      const config = {
-        wssUrl: "wss://dcchain.baybird.cn",
-        backWssUrl: "wss://dcchain.baybird.cn",
-        appInfo: {
-          appId: "your-app-id",
-          appName: "Your App Name",
-          appVersion: "1.0.0",
-          appIcon: "",
-          appDesc: ""
-        }
-      };
-
-      const dc = new DC(config);
-      
-      // 初始化 DC 实例
-      const initSuccess = await dc.init();
-      if (!initSuccess) {
-        console.warn("DC 初始化失败");
-        return null;
-      }
-      
-      setDcInstance(dc);
-      return dc;
-    } catch (error) {
-      console.warn("DC init failed:", error);
-      return null;
-    }
-  }, [dcInstance]);
-
-  const saveAccountInfo = useCallback((info: AccountInfo) => {
-    setDcStatus(prev => ({
-      ...prev,
-      accountInfo: info,
-      isReady: true
-    }));
-  }, []);
-
-  return (
-    <DCContext.Provider value={{ getDC, saveAccountInfo, dcStatus }}>
-      {children}
-    </DCContext.Provider>
-  );
-};
-
-export const useDC = () => {
-  const context = useContext(DCContext);
-  if (!context) {
-    throw new Error('useDC must be used within a DCProvider');
-  }
-  return context;
-};
-```
-
-### 3. React 组件中使用示例
-
-```tsx
-import React from 'react';
-import { useDC } from "./contexts/DCContext";
-
-const App = () => {
-  const { getDC, saveAccountInfo, dcStatus } = useDC();
-
-  const handleLogin = async () => {
-    // getDC() 会自动处理 dc.init()
-    const dc = await getDC();
-    if (!dc) return;
-
-    const [accountInfo, err] = await dc.auth.accountLoginWithWallet();
-    if (accountInfo) {
-      // 初始化DB...
-      // await dc.initUserDB(...)
-      
-      saveAccountInfo(accountInfo);
-    }
-  };
-
-  return (
-    <button onClick={handleLogin}>Login</button>
-  );
-};
-```
-
-## 1. 初始化与认证 (Auth)
-
-### DCAPI 使用示例
-
-```tsx
-import { useDC } from "/src/contexts/DCContext.tsx";
-const {getDC} = useDC();
-const dc = await getDC();
-if (!dc) {
-  console.warn("未获取到有效的DC实例或认证信息");
-  return;
-}
-```
-
-### 用户登录验证
-
-```javascript
-// 用户登录,登录成功返回的accountInfo信息中包括:1.nftAccount: string类型,用户账号,用于界面显示 2.appAccount: Uint8Array(32)类型,应用账号,用于数据存储的用户标识
-// 这条语句必须放在符合语法的地方
-const { dcStatus, getDC, saveAccountInfo } = useDC();
-const dc = await getDC();
-const [accountInfo, loginError] = await dc.auth.accountLoginWithWallet(); 
-const publicKeyStr = dc.publicKey.string(); // 获取用户公钥
-// 用户登录成功后,必须马上初始化用户数据库
-const [,err] = await dc.initUserDB(dbCollections, appVersion, false);
-// 用户登录成功后,在dc.initUserDB调用之后,保存用户信息
-saveAccountInfo(accountInfo);
-
-// 全局其他地方可以通过以下方式判断是否登录成功
-if (dcStatus.accountInfo && dcStatus.accountInfo.appAccount) {
-  //已经登录成功,dcStatus.accountInfo.nftAccount 表示登录的用户名
-
-}
-```
-
-## 2. 文件模块 (File)
-
-```javascript
-// 上传文件并跟踪进度,进度回调参数:status表示状态: 0=成功,1=加密中,2=上传中,3=出错,4=异常，size表示已上传的字节数
-const [cid, error] = await dc.file.addFile(
-  file, //File对象
-  '加密密钥', // 需要文件加密时,使用对32字节长度字符进行base32加密后的字符串; 不需要文件加密时, 使用空字符串
-  (status, size) => console.log(`上传状态:${status} 已上传, ${size} 字节`)
-);
-
-// 通过CID等待下载完整文件再返回
-const [fileContent, error] = await dc.file.getFile('file-cid', '解密密钥'); // 解密密钥为文件上传时的加密密钥
-
-// 通过流式下载文件,可以显示下载进度
-const [stream, error] = await dc.file.createFileStream('file-cid', '解密密钥'); // 解密密钥为文件上传时的加密密钥
-
-// 上传文件夹,进度回调参数:status表示状态: 0=成功,1=加密中,2=上传中,3=出错,4=异常，total表示总文件数，process表示已上传的文件数
-const folderInput = document.getElementById('folderInput') as HTMLInputElement;
-const files = folderInput.files;
-const res = await dc.file.addFolder(
-    files, // 文件列表
-    "加密密钥",  // 需要文件加密时,使用对32字节长度字符进行base32加密后的字符串; 不需要文件加密时, 使用空字符串
-    (status: number, total: number, process: number) => console.log(`上传状态: ${status}, 总文件数: ${total}, 进度: ${process} 已上传,`)
-);
-folderCID = res[0];
-
-// 获取文件夹文件列表,返回的fileList格式为JSON对象:Array<{Name: string; Type: number; Size: number; Hash: string; Path: string}> type=0文件 type=1文件夹,每个文件内容可以将Hash字段的值作为cid通过 dc.file.getFile 获取,
-const [fileList, error] = await dc.file.getFolderFileList(
-    'folder-cid', // 文件夹CID
-     false, // 是否重新寻址
-     true // 是否递归获取所有子文件夹的文件列表
-      );
-```
-
-## 3. ThreadDB用户数据库 (db)
-
-用户数据库专门用于存储个人数据，支持跨设备同步。每个用户只能访问自己的数据，适合存储用户设置、个人记录等私密信息。
-
-```javascript
-// =====第一步：定义数据结构=====
-// 定义数据集合（类似表结构）
 const collections = [
   {
-    name: 'user_notes',           // 集合名称（如用户笔记）
+    name: "notes",
     schema: {
-      type: 'object',
+      type: "object",
       properties: {
-        _id: { type: 'string' },           // 必需字段，系统自动生成
-        title: { type: 'string' },         // 笔记标题
-        content: { type: 'string' },       // 笔记内容
-        create_time: { type: 'number' },   // 创建时间
-        _mod: { type: 'number' }           // 必需字段，修改时间
+        _id: { type: "string" },
+        _mod: { type: "number" },
+        title: { type: "string" },
+        content: { type: "string" },
+        createdAt: { type: "number" },
       },
-      required: ["_id"],
-      additionalProperties: true
-    }
-  }
+      required: ["_id", "title", "content", "createdAt"],
+      additionalProperties: true,
+    },
+  },
 ];
 
-
-// =====第二步：初始化数据库=====
-// 初始化用户数据库
-
-// 用户登录成功后,必须进行初始化个人数据库,
-const [, dbError] = await dc.initUserDB(collections);
-
-if (dbError) {
-  console.warn('初始化失败:', dbError);
-  return;
-}
-console.log('初始化成功，ID:', dc.dbThreadId);
-
-
-// =====第三步：操作数据库=====
-// 创建记录
-const noteData = {
-  title: '第一条笔记',
-  content: '笔记内容',
-  create_time: Date.now()
-};
-
-const [recordId, createError] = await dc.db.create(
-  dc.dbThreadId,
-  'user_notes',
-  JSON.stringify(noteData)    // 不需要传入_id，系统自动生成
+// schemaVersion 必须是数字。集合结构变化时递增，例如 1 -> 2。
+const schemaVersion = 1;
+const [dbInfo, dbError] = await dc.initUserDB(
+  collections,
+  schemaVersion,
+  false,
 );
-console.log('记录创建成功，ID:', recordId);
+if (dbError || !dbInfo) {
+  throw dbError ?? new Error("用户数据库初始化失败");
+}
 
-// 查询记录
-const [results, findError] = await dc.db.find(
-  dc.dbThreadId,
-  'user_notes',
+const db = dc.db;
+if (!db) throw new Error("Database 模块不可用");
+
+const [noteId, createError] = await db.create(
+  dbInfo.id,
+  "notes",
   JSON.stringify({
-    sort: { fieldPath: "create_time", desc: true }  // 按创建时间倒序
-  })
+    title: "第一条笔记",
+    content: "Hello DC",
+    createdAt: Date.now(),
+  }),
 );
-
-if (results) {
-  const noteList = JSON.parse(results);
-  console.log('笔记列表:', noteList);
+if (createError || !noteId) {
+  throw createError ?? new Error("创建笔记失败");
 }
 
-// 更新记录
-const updateData = {
-  _id: recordId,              // 必须包含记录ID
-  title: '更新后的标题',
-  content: '更新后的内容',
-  create_time: Date.now()
-};
-
-await dc.db.save(
-  dc.dbThreadId,
-  'user_notes',
-  JSON.stringify(updateData)
+const [resultJSON, findError] = await db.find(
+  dbInfo.id,
+  "notes",
+  JSON.stringify({
+    sort: { fieldPath: "createdAt", desc: true },
+  }),
 );
+if (findError) throw findError;
 
-// 删除记录
-await dc.db.delete(dc.dbThreadId, 'user_notes', recordId);
-
-//=====第四步：查询举例=====
-
-// 简单条件查询
-const simpleQuery = {
-  condition: "title = '我的笔记'"
-};
-
-// 复合条件查询
-const complexQuery = {
-  condition: "create_time > 1640995200000",
-  ors: [
-    { condition: "title = '重要笔记'" }
-  ],
-  sort: { fieldPath: "create_time", desc: true },
-  seek: "分页标记"     // 用于分页
-};
-
-const [queryResults, queryError] = await dc.db.find(
-  dc.dbThreadId,
-  'user_notes',
-  JSON.stringify(complexQuery)
-);
-
-//=====第五步：实际应用=====
-
-// 创建用户设置管理
-const saveUserSettings = async (settings) => {
-  const [id, error] = await dc.db.create(
-    dc.dbThreadId,
-    'user_settings',
-    JSON.stringify({
-      ...settings,
-      update_time: Date.now()
-    })
-  );
-  return { id, error };
-};
-
-// 获取用户最新设置
-const getUserSettings = async () => {
-  const [results, error] = await dc.db.find(
-    dc.dbThreadId,
-    'user_settings',
-    JSON.stringify({
-      sort: { fieldPath: "update_time", desc: true }
-    })
-  );
-  
-  if (results) {
-    const settings = JSON.parse(results);
-    return settings[0];  // 返回最新的设置
-  }
-  return null;
-};
-
-// 使用示例
-await saveUserSettings({ theme: 'dark', language: 'zh-CN' });
-const currentSettings = await getUserSettings();
+const notes = resultJSON ? JSON.parse(resultJSON) : [];
+console.log(notes);
 ```
 
-## 4. keyValue DB存储
+登录成功后，`account` 的常用字段是：
 
-keyValue DB是一个键值对存储系统，类似于Redis或MongoDB等NoSQL数据库。它的特点是：
+| 字段 | 类型 | 用途 |
+| --- | --- | --- |
+| `nftAccount` | `string` | 面向用户显示的账号 |
+| `appAccount` | `Uint8Array` | 当前应用专用账号原始字节 |
+| `account` | `string` | 应用账号字符串，可用于存储或业务标识 |
+| `ethAccount` | `string` | EVM 兼容账号 |
+| `dc.publicKey?.string()` | `string` | 当前 DC 身份公钥；钱包登录成功后才是当前用户的应用公钥 |
 
-**功能特性：**
-- 主题名称必须以"keyvalue_"开头
-- 支持权限控制，可以设置哪些用户能读取或修改数据
-- 支持索引查询，方便批量获取数据
+`dc.init()` 的第 4 步会先创建临时身份，因此不能只用 `dc.publicKey` 是否存在来判断钱包登录状态。业务模块调用前应以 `accountLoginWithWallet()` 成功返回 `Account` 为准；需要在其他代码路径校验时，同时检查 `dc.userInfo` 和 `dc.publicKey`。正常退出请使用 `await dc.exit()`，不要只调用 `auth.exitLogin()` 后继续复用旧身份字段。
 
-**使用场景对比：**
-- **用户数据库(db)**：专门用于个人数据存储，每个用户只能访问自己的数据
-- **keyValue DB**：适合多用户共享数据的场景，比如：
-  - 应用配置信息（所有用户共享）
-  - 公告通知（发布给所有用户）
-  - 排行榜数据（用户之间可见）
-  - 商品信息（多用户浏览）
+## 初始化配置
 
-**权限管理：**
-创建公共主题时有特殊限制：
-- 只有应用的初始主题作者（APPThemeConfig.appThemeAuthor）才能创建供全体用户访问的公共主题
-- 其他用户可以创建私有主题或邀请制主题
-- 主题名称必须以"keyvalue_"开头，公共主题必须以"_pub"结尾。
+```ts
+new DC({
+  wssUrl,
+  backWssUrl,
+  appInfo,
+  swUrl,
+  logLevel,
+});
+```
 
-简单理解：keyValue DB = 多人共享的数据仓库，ThreadDB用户数据库 (db) = 个人专属的数据柜子
-使用keyValueDB时, 需要注意以下几点：
+| 字段 | 必填 | 说明 |
+| --- | --- | --- |
+| `wssUrl` | 是 | 主链 WebSocket 地址 |
+| `backWssUrl` | 是 | 主链连接失败时使用的备用地址；可以和主地址相同 |
+| `appInfo.appId` | 业务上必填 | 稳定且唯一的应用 ID，也是数据命名空间的一部分 |
+| `appInfo.appName` | 业务上必填 | 钱包及界面显示的应用名称 |
+| `appInfo.appVersion` | 否 | 应用展示版本；它不是 ThreadDB 的 schema 版本 |
+| `appInfo.appIcon` | 否 | 应用图标 URL |
+| `appInfo.appUrl` | 否 | 应用 URL |
+| `appInfo.themeColor` | 否 | 钱包页面使用的主题色 |
+| `appInfo.rtcAppId` | 否 | RTC/RTM 服务需要的应用 ID |
+| `swUrl` | 否 | 文件流 Service Worker 脚本地址；未设置时文件模块会尝试使用同源 `/sw.js` |
+| `logLevel` | 否 | SDK 日志级别，例如 `LogLevel.WARN` |
 
-1. 主题名称必须以"keyvalue_"开头，公共主题必须以"_pub"结尾。
-2. 支持权限控制，可以设置哪些用户能读取或修改数据。
-3. 支持索引查询，方便批量获取数据。
+`dc.init()` 可重复调用；实例已经初始化时会直接返回 `true`。应用中应复用一个实例，避免建立重复的 P2P 和数据库连接。
 
-使用示例：
+文件模块初始化时会自动尝试注册 Service Worker。浏览器不支持、页面不是 HTTPS/localhost 或脚本不存在时，注册失败只会记录日志，不会导致整个 `dc.init()` 失败；不需要媒体 Range 请求或 seek 时可忽略该能力。SDK 构建产物包含 `dist/sw.js`，但浏览器要求 Service Worker 与应用同源，因此接入方仍需把它部署到应用根目录。完整步骤见 [Service Worker 媒体访问](#service-worker-媒体访问)。
+
+## 调用约定与生命周期
+
+### 两类错误返回方式
+
+数据、文件、认证、评论等模块通常返回元组：
+
+```ts
+const [value, error] = await operation();
+if (error) throw error;
+```
+
+部分更新/删除方法直接返回 `Error | null`：
+
+```ts
+const error = await dc.db?.save(threadId, "notes", JSON.stringify(note));
+if (error) throw error;
+```
+
+RTM、RTC、白板和支付的大多数方法失败时会抛异常，应使用 `try/catch`：
+
+```ts
+try {
+  await dc.rtm?.sendMessageToPeer(receiverPubkey, "hello");
+} catch (error) {
+  console.error(error);
+}
+```
+
+不要只判断返回值是否为空而忽略 `error`；空值有时表示“记录不存在”，有时表示操作失败。
+
+### 推荐生命周期
+
+```text
+创建单例 DC
+  -> dc.init()
+  -> 用户手势触发 accountLoginWithWallet()
+  -> 按需初始化 ThreadDB / RTM / RTC / 白板
+  -> 使用业务模块
+  -> dc.exit() 清理当前身份字段和钱包登录态
+  -> dc.shutdown() 关闭模块、数据库、gRPC 和 P2P 连接
+```
+
+页面只是切换路由时通常不需要 `shutdown()`。只有整个应用退出或确定不再使用 SDK 时才关闭实例。
+
+## React 接入
+
+推荐把实例和初始化 Promise 一起做成单例，避免 React Strict Mode 或并发渲染创建多个连接。钱包登录仍应放在按钮点击事件中。
+
+```ts
+// src/lib/dc-client.ts
+import { DC, LogLevel } from "web-dc-api";
+
+let dcInstance: DC | null = null;
+let initializing: Promise<DC> | null = null;
+
+export function getDC(): Promise<DC> {
+  if (dcInstance?.isInitialized()) return Promise.resolve(dcInstance);
+  if (initializing) return initializing;
+
+  initializing = (async () => {
+    const dc = new DC({
+      wssUrl: import.meta.env.VITE_DC_WSS_URL,
+      backWssUrl: import.meta.env.VITE_DC_BACK_WSS_URL,
+      appInfo: {
+        appId: import.meta.env.VITE_DC_APP_ID,
+        appName: "Your App",
+        appVersion: "1.0.0",
+        appUrl: window.location.origin,
+      },
+      logLevel: LogLevel.WARN,
+    });
+
+    if (!(await dc.init())) throw new Error("DC 初始化失败");
+    dcInstance = dc;
+    return dc;
+  })().catch((error) => {
+    initializing = null;
+    throw error;
+  });
+
+  return initializing;
+}
+
+export async function disposeDC(): Promise<void> {
+  if (dcInstance) await dcInstance.shutdown();
+  dcInstance = null;
+  initializing = null;
+}
+```
 
 ```tsx
-import { APPThemeConfig } from '@config/config.json';
+import { getDC } from "./lib/dc-client";
 
+export function LoginButton() {
+  const login = async () => {
+    const dc = await getDC();
+    const auth = dc.auth;
+    if (!auth) throw new Error("Auth 模块不可用");
 
-//=====第一步：获取或创建数据存储空间=====
+    const [account, error] = await auth.accountLoginWithWallet();
+    if (error || !account) throw error ?? new Error("登录失败");
 
-let kvdb = null;
-let error = null;
+    console.log("logged in:", account.nftAccount);
+  };
 
-// 尝试获取已存在的公共数据存储
-[kvdb, error] = await dc.keyValue.getStore(
-    dc.appInfo.appId,           // 应用ID
-    'keyvalue_app_config_pub',               //存储主题名称（比如应用配置）,必须以"keyvalue_"开头,如果是公共存储则额外的必须以"_pub"结尾
-    APPThemeConfig.appThemeAuthor    // 主题作者公钥,这里必须为APPThemeConfig.appThemeAuthor,不要更改
+  return <button onClick={login}>使用 DC 钱包登录</button>;
+}
+```
+
+在 Next.js、Nuxt 等 SSR 项目中，将上述文件只从客户端组件加载，或使用关闭 SSR 的动态导入。
+
+## 认证
+
+应用开发者最常用的是以下方法：
+
+```ts
+const auth = dc.auth;
+if (!auth) throw new Error("Auth 模块不可用");
+
+const [account, loginError] = await auth.accountLoginWithWallet();
+const [currentAccount, infoError] = await auth.getLoginInfo();
+
+const payload = new TextEncoder().encode("content to sign");
+const [signature, signError] = await auth.sign(payload);
+
+// 推荐退出方式：同时退出钱包，并清理公钥、dbThreadId、EVM 地址和账号备份连接。
+await dc.exit();
+```
+
+`auth.exitLogin()` 只调用钱包侧退出，不会清理 `DC` 上的身份字段。`dc.exit()` 的清理范围更完整，但当前实现不会把 `dc.userInfo` / `dc.accountInfo` 置空，也不会关闭模块和网络连接；因此登录判断应同时检查 `dc.userInfo` 和 `dc.publicKey`，彻底停止 SDK 则另行调用 `dc.shutdown()`。
+
+其他认证能力包括钱包消息签名、EIP-712 签名、NFT 账号绑定、应用账号生成、用户空间检查和存储套餐续订。普通 DApp 不应自行实现账号密码托管流程，优先使用钱包登录。
+
+## ThreadDB 用户数据库
+
+ThreadDB 用于当前用户的私有结构化数据。`dc.initUserDB()` 会创建或恢复用户数据库，并设置 `dc.dbThreadId`；同步和维护任务会在后台继续运行。
+
+### Schema 规则
+
+- 每个 collection 必须有唯一 `name` 和 JSON Schema。
+- Schema 必须声明字符串类型的 `_id`，它是记录主键。创建数据时可省略，由 SDK 在校验前生成；保存时必须带回已有 `_id`。
+- Schema 还应声明可索引的 `_mod` 字段，但不要把它放进 `required`。SDK 会移除调用方传入的 `_mod`，再写入自己的修改时间标记和索引，业务代码不要覆盖它。
+- `schemaVersion` 是正整数，不是 `"1.0.0"`。集合字段或索引变化时递增。
+- `reset=true` 会重建数据库并导致原数据丢失，只能用于明确的开发调试场景。
+
+### CRUD
+
+```ts
+const db = dc.db;
+if (!db || !dc.dbThreadId) throw new Error("请先调用 initUserDB");
+
+const [id, createError] = await db.create(
+  dc.dbThreadId,
+  "notes",
+  JSON.stringify({ title: "Draft", content: "...", createdAt: Date.now() }),
 );
+if (createError || !id) throw createError ?? new Error("create failed");
 
-// 如果存储不存在，则创建新的
-if (!kvdb) {
-    // 检查权限：只有应用管理员才能创建公共存储
-    if (dc.publicKey.string() === APPThemeConfig.appThemeAuthor) {
-        console.log('正在创建公共数据存储...');
-        [kvdb, error] = await dc.keyValue.createStore(
-            dc.appInfo.appId,
-            'keyvalue_app_config_pub',       // 主题必须以"keyvalue_"开头,如果是公共存储必须以"_pub"结尾
-            50 * 1024 * 1024,       // 分配50MB存储空间
-            2                       // 访问类型：2=公共（所有人可读，写入需授权） 
-        );
-        
-        if (kvdb) {
-            console.log('公共数据存储创建成功！');
-        }
-    } else {
-        console.warn('权限不足：只有应用管理员可以创建公共存储');
-        return;
-    }
+const [oneJSON, oneError] = await db.findByID(dc.dbThreadId, "notes", id);
+if (oneError) throw oneError;
+const note = oneJSON ? JSON.parse(oneJSON) : null;
+
+if (note) {
+  note.title = "Published";
+  const saveError = await db.save(
+    dc.dbThreadId,
+    "notes",
+    JSON.stringify(note),
+  );
+  if (saveError) throw saveError;
 }
 
-//=====第二步：配置用户访问权限=====
-
-// 授权所有用户具有写入权限
-const [authResult, authError] = await dc.keyValue.configAuth(
-    kvdb,
-    'all',          // 'all'表示所有用户，也可以填具体用户的公钥
-    3,              // 权限级别： 0: 无权限   1: 申请权限    2: 只读    3: 读写    4: 管理员    5: 只写
-    '允许所有用户访问应用配置'  // 授权说明
+const [listJSON, listError] = await db.find(
+  dc.dbThreadId,
+  "notes",
+  JSON.stringify({
+    condition: "createdAt > 1700000000000",
+    ors: [{ condition: "title = 'Pinned'" }],
+    sort: { fieldPath: "createdAt", desc: true },
+    seek: "",
+  }),
 );
+if (listError) throw listError;
 
+const deleteError = await db.delete(dc.dbThreadId, "notes", id);
+if (deleteError) throw deleteError;
+```
 
+常用补充接口：`has`、`deleteMany`、`modifiedSince`、`getDBRecordsCount`、`refreshDBFromDC`、`syncDBToDC`、`exportDBToFile`。
 
+## KeyValue 共享存储
 
-// =====第三步：存储数据（支持索引查询）=====
+KeyValue 主题由 `(appId, theme, themeAuthor)` 唯一定位。`themeAuthor` 是创建该主题的用户公钥，必须作为应用配置长期保存；它不一定等于当前登录用户。
 
+### 命名、类型和权限
 
-// 存储应用设置，并设置索引便于查询
-const appSettings = {
-    theme: 'dark',
-    language: 'zh-CN',
-    version: '1.0.0'
-};
+- 普通主题会自动补 `keyvalue_` 前缀。
+- 公共主题类型为 `2`，主题名必须以 `_pub` 结尾；所有人默认可读，写入需要授权。
+- 鉴权主题类型为 `1`，读写都需要授权。
+- `createStore` 为每个写入用户保留同 key 的独立值。
+- `createSharedStore` 自动规范化为 `keyvalue_shared_` 前缀，同 key 全局只保留时间戳最新值。
+- 创建时传入的空间小于 100 MiB 会在实现中提升到 100 MiB。
 
-//设置值,在设置时,为了后续不同纬度快速检索,可以同时设置索引信息,格式为json字符串,数据格式如下:[{key:"indexkey1",type:"string",value:"value"},{key:"indexkey2",type:"number", value:12}]
-const [setSuccess, setTimestamp, setError] = await dc.keyValue.set(
-    kvdb,
-    'app_settings',                     // 数据的键名
-    JSON.stringify(appSettings),        // 数据内容（JSON格式）
-    JSON.stringify([{key:"type",type:"string",value:"settings"},{key:"theme",type:"string",value:"dark"},{key:"lang",type:"string",value:"zh-CN"}])  // 索引配置,json字符串格式：类型=设置，主题=暗色，语言=中文 
-);
+权限使用 `ThemePermission`：`NONE`、`APPLY`、`READ`、`WRITE`、`ADMIN`、`ONLY_WRITE`、`DEVICE`、`QUERY`。
 
-if (setSuccess) {
-    console.log('应用设置保存成功, 时间戳:', setTimestamp);
+### 创建或获取共享主题
+
+```ts
+import {
+  Direction,
+  ThemePermission,
+  toSharedTheme,
+} from "web-dc-api";
+
+const keyValue = dc.keyValue;
+if (!keyValue || !dc.userInfo || !dc.publicKey) {
+  throw new Error("请先完成钱包登录");
 }
 
-// 存储用户偏好设置
-const userPrefs = {
-    notifications: true,
-    autoSave: false,
-    userId: 'user123'
-};
+const appId = dc.appInfo.appId;
+const themeAuthor = "creator-public-key-from-app-config";
+const theme = toSharedTheme("global_config_pub");
 
-await dc.keyValue.set(
-    kvdb,
-    'prefs_user123', //key
-    JSON.stringify(userPrefs), //value
-    JSON.stringify([{key:"type",type:"string",value:"userprefs"},{key:"userId",type:"string",value:"user123"},{key:"notifications",type:"boolean",value:true}]) //indexs
+let [store, storeError] = await keyValue.getStore(
+  appId,
+  theme,
+  themeAuthor,
 );
 
-//存储需要用于排名的数据,
-const userRankValue = {
-    userpubkey: "bb",
-    name:"Alice",
-    score: 100
-};
-await dc.keyValue.set(
-    kvdb,
-    'ranking',
-    JSON.stringify(userRankValue),
-    JSON.stringify([{key:"index_score",type:"number",value:100}]),
-);
-
-//=====第四步：读取数据=====
-
-// 方式1: 获取key最近设置的value,如果writerPubkey存在,则获取该用户针对该key设置的最新值,如果省略掉该参数,或者传入空字符串,
-const [value,error] = await dc.keyValue.get(
-    kvdb,
-    'app_settings', //应用的设置
-    writerPubkey //写入者动pubkey,可以省略。如果这里省略,或者输入空字符串,则获取针对该key所有用户写入的value中的最新值
-);
-if (error) {
-    console.warn('获取应用设置失败:', error);
-} else {
-    console.log('应用设置:', JSON.parse(value));
+if (!store && dc.publicKey.string() === themeAuthor) {
+  [store, storeError] = await keyValue.createSharedStore(
+    appId,
+    theme,
+    100 * 1024 * 1024,
+    2,
+  );
 }
 
-
-
-
-// 方式2：通过索引获取排名,获取kvdb中所有key为"ranking",index中score值最高的前10个记录,其中最后一个参数对象的type必须与设置索引时的type一致
-const [rankingList, getError] = await dc.keyValue.getWithIndex(
-    kvdb, 
-    "index_score",  //索引名称
-    null, //索引值,null表示不限定值
-     {
-    type:"number",//索引值的类型
-    limit: 10, //最多返回10个
-    seekKey: '', //起始键
-    direction: 0, //获取记录的方向: 0-正序获取记录 1-倒序获取数据
-    offset: 0 //起始位移
-});
-if (rankingList) {
-    const rankings = JSON.parse(rankingList); //rankingList格式为设置进去的值的数组: '[{"ranking": "{"userpubkey": "bb", "name": "Alice", "score": 100}"}]'
-    console.log('当前排行榜:', rankings);
+if (storeError || !store) {
+  throw storeError ?? new Error("主题不存在，且当前用户不是创建者");
 }
 
-// 方式3：通过索引批量查询
-const [searchResults, searchError] = await dc.keyValue.getWithIndex(
-    kvdb,
-    'type',           // 索引名称
-    'userprefs',      // 索引值（查找所有用户偏好设置）
-    {
-      type: "string",  // 索引值的类型
-      direction: 0,
-      limit: 10 ,      // 最多返回10条结果
-      offset: 0 ,     // 起始位移
-      seekKey: ''    // 起始键
-    }
-);
-
-if (searchResults) {
-    const userPrefsList = JSON.parse(searchResults);
-    console.log('所有用户偏好设置:', userPrefsList);
+// 只由主题作者在管理/部署流程中执行一次。"all" 表示给所有用户写权限。
+if (dc.publicKey.string() === themeAuthor) {
+  const [authStatus, authError] = await keyValue.configAuth(
+    store,
+    "all",
+    ThemePermission.WRITE,
+    "allow app users to update",
+  );
+  if (authError || authStatus !== 0) {
+    throw authError ?? new Error(`授权失败，状态码：${authStatus}`);
+  }
 }
 
+const settings = { theme: "dark", language: "zh-CN" };
+const indexes = [
+  { key: "kind", type: "string", value: "settings" },
+  { key: "updatedAt", type: "number", value: Date.now() },
+];
 
-//方式4: 获取指定key下的所有值
-const [allValues, allError] = await dc.keyValue.getValues(
-    kvdb,
-    'prefs_user123', //所有用户针对该key设置的值
-    {
-      limit: 10,      // 最多返回10条
-      seekKey: '',    // 起始键(分页用)
-      direction: 0,   // 0-正序 1-倒序
-      offset: 0       // 起始位移
-    }
+const [saved, timestamp, setError] = await keyValue.set(
+  store,
+  "app_settings",
+  JSON.stringify(settings),
+  JSON.stringify(indexes),
 );
-if (allError) {
-    console.warn('获取所有用户设置失败:', allError);
-} else {
-    console.log('所有用户设置:', JSON.parse(allValues));
+if (setError || !saved) throw setError ?? new Error("KV 写入失败");
+
+console.log("server timestamp:", timestamp);
+```
+
+获取共享主题时，必须把 `toSharedTheme(...)` 的结果传给 `getStore`。如果用普通主题名获取，再用 `createSharedStore` 创建，两次实际访问的主题名不同。
+
+### 读取值和元数据
+
+KeyValue 的原始读取结果包含业务值和 DC 元数据：
+
+```text
+<value>$$$dckv_extra$$$<metadata-json>
+```
+
+直接 `JSON.parse(raw)` 会失败，应先拆分：
+
+```ts
+function parseKVValue<T>(raw: string): {
+  value: T;
+  meta: { dc_timestamp?: number; dc_opuser?: string };
+} {
+  const separator = "$$$dckv_extra$$$";
+  const index = raw.indexOf(separator);
+  const valuePart = index >= 0 ? raw.slice(0, index) : raw;
+  const metaPart = index >= 0 ? raw.slice(index + separator.length) : "{}";
+  return {
+    value: JSON.parse(valuePart) as T,
+    meta: JSON.parse(metaPart || "{}"),
+  };
 }
 
-//=====实际应用场景示例=====
+const [raw, getError] = await keyValue.get(store, "app_settings");
+if (getError) throw getError;
+if (raw) console.log(parseKVValue(raw));
 
-// 场景0：游戏应用排行榜（写入与读取）
-// 写入玩家分数（按 score 建索引，便于排行榜查询）
-const playerScore = {
-  userpubkey: dc.publicKey.string(),
-  name: "Alice",
-  score: 1280,
-  updatedAt: Date.now()
-};
-
-await dc.keyValue.set(
-  kvdb,
-  "ranking", // 统一 key，所有玩家写入同一个 key，依赖索引排序
-  JSON.stringify(playerScore),
-  JSON.stringify([{key:"index_score",type:"number",value:playerScore.score}])
-);
-
-// 读取排行榜（取分数最高的前 10 名）
-const [topList, topError] = await dc.keyValue.getWithIndex(
-  kvdb,
-  "index_score",
-  null,
+// indexValue 传空字符串表示不限定具体值；这里按更新时间倒序读取。
+const [recentJSON, recentError] = await keyValue.getWithIndex(
+  store,
+  "updatedAt",
+  "",
   {
     type: "number",
     limit: 10,
     seekKey: "",
-    direction: 1, // 1=倒序，分数从高到低
-    offset: 0
-  }
-);
-
-if (topList && !topError) {
-  const rankings = JSON.parse(topList);
-  console.log("Top 10:", rankings);
-} else {
-  console.warn("获取排行榜失败:", topError);
-}
-
-// 场景1：存储商品信息
-const product = {
-    id: 'prod001',
-    name: 'iPhone 15',
-    price: 5999,
-    category: 'electronics'
-};
-
-await dc.keyValue.set(
-    kvdb,
-    'product_' + product.id,
-    JSON.stringify(product),
-    JSON.stringify([{key:"category",type:"string",value:product.category},{key:"price",type:"number",value:product.price},{key:"type",type:"string",value:"product"}])   //  索引：分类=电子产品，价格=5999，类型=商品
-);
-
-// 场景2：查询特定分类的商品
-const [electronics, _] = await dc.keyValue.getWithIndex(
-    kvdb,
-    'category',       // 按分类查询
-    'electronics',    // 查找电子产品
-   {
-    type: "string",
-    limit: 20, // 最多返回20条结果
+    direction: Direction.Reverse,
     offset: 0,
-    seekKey: ''
+  },
+);
+if (recentError) throw recentError;
+console.log(recentJSON ? JSON.parse(recentJSON) : []);
+
+const [recordCount, countError] = await keyValue.getRecordCount(store);
+if (countError) throw countError;
+console.log("records:", recordCount);
+```
+
+常用补充接口：`getValues`、`getBatch`、`getWithTimeOrder`、`setWithCount`、`getDBCount`、`getDbAuthList`、`GetUserOwnAuth`、`GetUserAuth`。删除一个 key 时使用 `set(store, key, "", "")`。
+
+### 类型化仓储
+
+SDK 导出 `BaseEntity`、`EntityRepository`、`Entity`、`Column`、`Index` 和 `composeCompositeIndexValue`。它们建立在 KeyValue 之上，提供实体校验、保存、局部更新、主键查询、单字段/复合索引查询及分页读取。
+
+```ts
+import { BaseEntity, EntityRepository } from "web-dc-api";
+
+class Product extends BaseEntity {
+  id = "";
+  name = "";
+  category = "";
+  price = 0;
+
+  validate() {
+    if (!this.id || !this.name) throw new Error("invalid product");
+  }
+}
+
+const products = new EntityRepository(Product, keyValue, store);
+await products.save(
+  Product.from({ id: "p-1", name: "Keyboard", category: "hardware", price: 299 }),
+);
+const product = await products.findById("p-1");
+```
+
+仓储使用 KeyValue 的索引规则；需要 `findByIndex` 时，应通过装饰器或底层 `set` 预先建立对应索引。
+
+## 文件
+
+文件模块支持普通文件、目录、完整下载、流式读取、可 seek 流和本地缓存。
+
+```ts
+import { UploadStatus } from "web-dc-api";
+
+const fileModule = dc.file;
+const util = dc.util;
+if (!fileModule || !util || !dc.userInfo || !dc.publicKey) {
+  throw new Error("请先完成钱包登录并确认 File/Util 模块可用");
+}
+
+const input = document.querySelector<HTMLInputElement>("#file");
+const file = input?.files?.[0];
+if (!file) throw new Error("请选择文件");
+
+// 空字符串表示不加密；加密时必须由业务安全保存密钥。
+const encryptionKey = util.createSymmetricKey().toString();
+
+const [cid, uploadError] = await fileModule.addFile(
+  file,
+  encryptionKey,
+  (status, uploadedBytes) => {
+    if (status === UploadStatus.UPLOADING) {
+      console.log("uploaded bytes:", uploadedBytes);
+    }
+  },
+);
+if (uploadError || !cid) throw uploadError ?? new Error("上传失败");
+
+const [bytes, downloadError] = await fileModule.getFile(cid, encryptionKey);
+if (downloadError || !bytes) {
+  throw downloadError ?? new Error("下载失败");
+}
+const blobUrl = URL.createObjectURL(new Blob([bytes as BlobPart]));
+
+// createFileStream 返回 ReadableStream | null，不是 [stream, error] 元组。
+const stream = await fileModule.createFileStream(cid, encryptionKey);
+
+// 视频跳转或大文件分段读取。
+const seekable = await fileModule.getSeekableFileStream(cid, encryptionKey);
+seekable.seek(1024 * 1024);
+const chunk = await seekable.read(256 * 1024);
+```
+
+目录相关入口：`addFolder`、`getFolderFileList`、`getFolderFileListWithContent`、`getFileFromDir`、`getSeekableFileStreamFromDir`。`getFolderFileList(cid, flag, recursive)` 的 `flag` 是数字：`0` 表示需要连接节点，`1` 表示不需要；不是布尔值。
+
+加密密钥一旦丢失，SDK 无法恢复加密文件。不要把密钥写进公开 KeyValue 或业务日志。使用下述 Service Worker URL 播放加密媒体时，协议会把密钥放在 URL 路径中；敏感内容应优先使用文件流 API，或确保网关、监控和访问日志不会记录 `/dc/ipfs/` 路径。
+
+## Service Worker 媒体访问
+
+SDK 提供的 [assets/sw.js](assets/sw.js) 会在构建时复制为 npm 包内的 `dist/sw.js`，并可通过包子路径 `web-dc-api/sw.js` 定位。它只拦截同源的 `GET /dc/ipfs/` 请求，把 CID、可选解密密钥和 Range 请求通过 `MessageChannel` 交给页面中的 `dc.file` 处理，适合直接为 `<video>`、`<audio>`、PDF 或其他需要 HTTP Range 的组件提供 URL。
+
+### 1. 将脚本部署到应用根目录
+
+Service Worker 不能从 jsDelivr 等第三方域名跨域注册，也不能直接把 `node_modules` 路径交给浏览器。安装 npm 包后，将脚本复制到框架的静态资源目录，并确保最终可通过应用同源的 `/sw.js` 访问：
+
+```bash
+# Vite、Next.js、Nuxt 等项目通常会把 public/ 映射到站点根目录。
+cp node_modules/web-dc-api/dist/sw.js public/sw.js
+```
+
+建议把复制动作加入应用构建流程，避免升级 SDK 后继续使用旧脚本。CDN 接入也必须先下载再由应用域名托管，不能直接把 CDN URL 设为 `swUrl`。把下面的 `VERSION` 替换为一个实际已发布、且包内包含 `dist/sw.js` 的版本号：
+
+```bash
+VERSION="<已发布版本号>"
+curl -L "https://cdn.jsdelivr.net/npm/web-dc-api@${VERSION}/dist/sw.js" \
+  -o public/sw.js
+```
+
+当前仓库新增该文件时 `package.json` 仍是 `0.2.71`；不要据此假设 npm 上既有的 `0.2.71` 已包含它。发布前应先更新包版本，再把这里和本文开头的版本号同步为实际发布版本。
+
+脚本必须部署在站点根级路径，例如 `/sw.js` 或 `/dc-ipfs-sw.js`。如果放在 `/assets/sw.js`，浏览器默认只授予 `/assets/` 作用域，无法拦截 `/dc/ipfs/`。当前自动注册流程不适用于无法部署根级 Service Worker 的子路径应用；这类应用应直接使用 `getFile`、`createFileStream` 或 `getSeekableFileStream`。
+
+### 2. 配置并检查注册状态
+
+部署为默认 `/sw.js` 时可以省略 `swUrl`；修改文件名时必须传同源、根级 URL：
+
+```ts
+const dc = new DC({
+  wssUrl,
+  backWssUrl,
+  appInfo,
+  // 默认值就是 "/sw.js"；自定义时也要放在站点根目录。
+  swUrl: "/dc-ipfs-sw.js",
 });
 
-const productList = JSON.parse(electronics);
-console.log('电子产品列表:', productList);
+if (!(await dc.init())) throw new Error("DC 初始化失败");
+
+console.log("Service Worker ready:", dc.swInited);
 ```
 
-### 共享型存储（createSharedStore）
+`dc.swInited === false` 不会阻止其他模块工作。此时依次检查：页面是否为 HTTPS/localhost、脚本 URL 是否返回 JavaScript 而不是 SPA HTML、响应是否为同源、脚本是否位于根路径，以及浏览器控制台中的注册错误。更新已部署脚本后可调用根入口导出的 `updateServiceWorker()`；`isServiceWorkerActive()` 可检查当前注册是否已有 active worker。
 
-普通主题（`createStore`）按用户分区存储，同一个 key 不同用户各存一份；**共享型主题**则让同一个 key 全局只保留唯一最新值，按时间戳后写覆盖，适合全局配置、计数器、状态标志等"所有人共用一份、只关心最新值"的数据。
+### 3. 构造媒体 URL
 
-主题名会被内部自动规范化为 `keyvalue_shared_` 前缀，调用方无需关心命名约定；行为差异：
+未加密文件和目录内文件的 URL 格式分别为：
 
-- `set`/`setWithCount`：不同用户写入同一 key 会相互覆盖，最终保留时间戳最大的一条（同一微秒并发按内容确定性收敛，多节点结果一致），vaccount 不再区分存储分区。
-- `get`（不传 writerPubkey）/`getValues`/`getWithIndex`/`getWithTimeOrder`：直接返回该 key 的唯一最新值，时间排序索引天然去重，无需应用层再按用户去重。
-- 写入值里的 `dc_opuser` 会统一记为主题作者；若需记录"实际操作者"，请把用户标识写进 value 内容中。
-
-```tsx
-// 创建共享型存储（无需手动加 shared_ 前缀，内部自动处理）
-let [kvdb, error] = await dc.keyValue.getStore(
-    dc.appInfo.appId,
-    'keyvalue_global_config_pub',
-    APPThemeConfig.appThemeAuthor
-);
-if (!kvdb && dc.publicKey.string() === APPThemeConfig.appThemeAuthor) {
-    [kvdb, error] = await dc.keyValue.createSharedStore(
-        dc.appInfo.appId,
-        'keyvalue_global_config_pub', // 公共共享存储,必须以"keyvalue_"开头、"_pub"结尾
-        50 * 1024 * 1024,             // 分配50MB存储空间
-        2                             // 2=公共（所有人可读，写入需授权）
-    );
-}
-
-// 任意被授权用户写入同一个 key，全局只保留最新一条
-await dc.keyValue.set(kvdb, 'site_notice', JSON.stringify({ text: '系统维护中', level: 'warn' }), '');
-
-// 读取该 key 的唯一最新值（无需传 writerPubkey）
-const [notice, noticeErr] = await dc.keyValue.get(kvdb, 'site_notice');
-if (!noticeErr) {
-    console.log('当前公告:', JSON.parse(notice));
-}
+```text
+/dc/ipfs/<cid>/<filename>
+/dc/ipfs/<folder-cid>/<relative/path/to/file>
 ```
 
-### 记录总条数统计（getRecordCount）
+例如把已上传视频交给原生播放器：
 
-`getRecordCount` 返回 keyValue 数据库的记录总条数，由节点自动维护：新增一条全新记录时自动 +1，删除已存在记录时自动 -1。
+```ts
+const video = document.querySelector<HTMLVideoElement>("#preview-video");
+if (!video) throw new Error("缺少视频元素");
 
-- 统计为各节点本地自动维护，数据在多节点间最终收敛后计数也随之收敛。
-- `setWithCount`/`saveWithCount` 的数值累加类统计键不计入记录总条数。
-- 普通主题按 (写入用户, key) 维度计数；共享型主题按去重后的 key 计数。
-
-```tsx
-const [count, countErr] = await dc.keyValue.getRecordCount(kvdb);
-if (countErr === null) {
-    console.log('记录总条数:', count);
-}
+const safeName = encodeURIComponent(file.name || "video.mp4");
+video.src = `/dc/ipfs/${cid}/${safeName}`;
+video.controls = true;
 ```
 
+加密文件使用 `/dc/ipfs/<cid>_<decryptKey>/<filename>`。密钥会出现在浏览器可见的 URL 路径中，可能被历史记录、错误上报、代理或服务器访问日志采集，因此不要把这种 URL 用于高敏感内容：
 
-## 5. 评论系统 (comment)
-
-评论系统 (comment) 是专门为社交互动设计的功能模块，让用户可以发布、查看和管理评论内容。
-
-**核心特点：**
-- **时间线存储**：所有评论按发布时间顺序保存，可以按时间线浏览
-- **权限控制**：支持设置谁能发评论、谁能查看评论
-- **主题管理**：可以为不同话题创建独立的评论区
-
-**与 keyValue DB 的区别：**
-- **keyValue DB**：像一个文件柜，适合存储配置信息、商品数据等相对固定的内容,且主题名称必须以"keyvalue_"开头
-- **评论系统**：像一个留言板，适合存储用户发言、互动讨论等时序性内容
-
-**comment使用规则**
-- - 如果一个生成的代码文件里面包含了对comment主题的创建操作, 必须在文件头部标注使用到的主题名称,方便数据库静态构建.
-  格式如下: `/**comment: news_comments */` 每个主题一行,如果有多个主题,请逐行添加
-- 所有涉及到评论系统 (comment)的操作的代码文件都应该放在services目录下
-
-
-- **评论系统**：像一个留言板，适合存储用户发言、互动讨论等时序性内容
-
-**适用场景：**
-- 微博、朋友圈（用户动态和评论）
-- 论坛、社区（帖子和回复）
-- 商品评价（买家评论和商家回复）
-- 新闻评论（读者评论和讨论）
-
-**灵活的内容处理：**
-评论内容可以根据业务需要自定义格式。比如：
-- 在评论中包含特定ID，后续可以通过这个ID来更新评论状态
-- 支持富文本、图片、链接等多种内容格式
-- 可以实现点赞、回复、转发等社交功能
-
-简单理解：keyValue DB = 数据存储柜，comment = 时间线留言板
-
-```tsx
-import { APPThemeConfig } from '@config/config.json';
-
-
-//=====第一步：创建评论主题（仅应用管理员可操作）=====
-// 检查权限：只有应用管理员才能创建公共评论主题
-if (dc.publicKey.string() === APPThemeConfig.appThemeAuthor) {
-  try {
-    console.log('正在创建公共评论主题...');
-    
-    const [status, err] = await dc.comment.addThemeObj(
-      'news_comments',        // 主题ID（比如新闻评论区）
-      0,                      // 访问类型：0=公开(任何人可读写) 1=私密(任何登录用户仍可评论,但每条评论默认仅本人+主题作者可见,作者可精选公开) 2=授权(需被授权才能访问)
-      50 * 1024 * 1024       // 分配50MB存储空间
-    );
-    if (status === 0) {
-      console.log('评论主题创建成功！');
-    }
-  } catch(e) {
-    console.log('主题已存在，无需重复创建');
-  }
-} else {
-  console.log('权限不足：只有应用管理员可以创建公共评论主题');
-}
-
-
-//=====第二步：配置用户访问权限=====
-
-// 授权所有用户具有评论权限
-const [authStatus, authError] = await dc.comment.configAuth(
-  APPThemeConfig.appThemeAuthor,  // 主题作者公钥
-  'news_comments',           // 主题ID
-  'all',                     // 'all'表示所有用户，也可以填具体用户公钥
-  3,                         // 权限级别：与keyValue DB的权限级别定义一致
-  '允许所有用户参与评论讨论'   // 授权说明
-);
-
-
-//=====第三步：发布评论=====
-
-// 发布普通评论
-const newsContent = {
-  newsId: 'news_001',
-  title: 'DC平台最新功能发布',
-  userComment: '这个功能很棒，期待更多更新！'
-};
-
-const [commentId, commentError] = await dc.comment.publishCommentToTheme(
-  'news_comments',                    // 主题ID
-  APPThemeConfig.appThemeAuthor,           // 主题作者公钥
-  0,                                  // 评论类型：0=普通评论, 1=点赞, 2=推荐, 3=踩
-  JSON.stringify(newsContent),        // 评论内容
-  1,                                  // 可见性：0=仅作者可见, 1=公开
-  ''                                  // 引用其他评论（空表示不引用）
-);
-
-if (commentId) {
-  console.log('评论发布成功，ID:', commentId);
-}
-
-// 发布点赞评论
-const [likeId, likeError] = await dc.comment.publishCommentToTheme(
-  'news_comments',
-  APPThemeConfig.appThemeAuthor, //主题作者公钥,这里必须为APPThemeConfig.appThemeAuthor,不要更改
-  1,                                  // 评论类型：1=点赞
-  JSON.stringify({ 
-    action: 'like', 
-    targetComment: commentId,
-    userId: dc.publicKey.string()
-  }),
-  1,
-  '1000/'+commentId               // 引用刚才的评论,格式: 原评论发布时的区块高度/评论ID
-);
-
-//=====第四步：获取评论列表=====
-
-// 获取最新的评论列表
-const [comments, commentsError] = await dc.comment.getThemeComments(
-  'news_comments',           // 主题ID
-  APPThemeConfig.appThemeAuthor,  //主题作者公钥,这里必须为APPThemeConfig.appThemeAuthor,不要更改
-  0,                         // 起始高度（0表示从最新开始）
-  0,                         // 方向：0=最新优先, 1=最旧优先
-  0,                         // 偏移量（分页用）
-  20                         // 获取数量限制
-);
-
-if (comments && !commentsError) {
-  const commentList = JSON.parse(comments);
-  console.log('评论列表:', commentList);
-  
-  // 处理评论数据
-  commentList.forEach(comment => {
-    const content = JSON.parse(comment.content);
-    console.log('用户评论: '+ content.userComment);
-    console.log('发布时间: '+ new Date(comment.timestamp).toLocaleString()});
-  });
-} else {
-  console.warn('获取评论失败:', commentsError);
-}
-
-//=====实际应用场景示例=====
-
-// 场景1：新闻评论系统
-const publishNewsComment = async (newsId, commentText) => {
-  const commentData = {
-    type: 'news_comment',
-    newsId: newsId,
-    comment: commentText,
-    timestamp: Date.now(),
-    author: dc.publicKey.string()
-  };
-  
-  const [id, error] = await dc.comment.publishCommentToTheme(
-    'news_comments',
-    APPThemeConfig.appThemeAuthor, //主题作者公钥,这里必须为APPThemeConfig.appThemeAuthor,不要更改
-    0,
-    JSON.stringify(commentData),
-    1,
-    ''
-  );
-  return { id, error };
-};
-
-// 场景2：商品评价系统
-const publishProductReview = async (productId, rating, review) => {
-  const reviewData = {
-    type: 'product_review',
-    productId: productId,
-    rating: rating,        // 1-5星评分
-    review: review,
-    timestamp: Date.now(),
-    reviewer: dc.publicKey.string()
-  };
-  
-  const [id, error] = await dc.comment.publishCommentToTheme(
-    'product_reviews',
-    APPThemeConfig.appThemeAuthor,//主题作者公钥,这里必须为APPThemeConfig.appThemeAuthor,不要更改
-    0,
-    JSON.stringify(reviewData),
-    1,
-    ''
-  );
-  
-  return { id, error };
-};
-
-// 使用示例
-await publishNewsComment('news_001', '这篇文章写得很好！');
-await publishProductReview('prod_001', 5, '商品质量很棒，物流也很快！');
+```ts
+const encryptedMediaUrl =
+  `/dc/ipfs/${cid}_${encryptionKey}/${encodeURIComponent(file.name)}`;
 ```
 
+Service Worker 会透传 `Content-Range`、`Content-Length` 和 `Accept-Ranges`。页面中的文件处理失败时返回 `502`，找不到可处理请求的页面客户端时返回 `503`，最终响应等待超过 60 秒时返回 `504`。无 Range、未加密且不超过 5 MiB 的完整响应会缓存到 IndexedDB `dc-ipfs-cache`；Range 响应和带解密密钥的响应不会持久化，避免缓存解密后的内容。
 
-## 6. 消息系统 (message)
+## 评论
 
-消息系统 (message) 提供用户之间的私信功能，类似于邮件系统或即时通讯。
+一个评论主题由 `appId + theme + themeAuthor` 定位。创建主题的当前登录用户就是 `themeAuthor`。
 
-**核心特点：**
-- **点对点通信**：用户可以直接给其他用户发送私信
-- **收件箱模式**：所有收到的消息都存储在个人收件箱中
-- **简单易用**：只需要知道对方的公钥即可发送消息
+```ts
+import { CommentType } from "web-dc-api";
 
-**适用场景：**
-- 用户之间的私人对话
-- 系统通知和提醒
-- 客服消息和反馈
-- 好友聊天和交流
-
-**与其他模块的区别：**
-- **消息系统**：一对一的私密通信，类似微信私聊
-- **评论系统**：公开的讨论区，类似微博评论
-- **用户数据库**：个人数据存储，不涉及通信
-
-简单理解：消息系统 = 私人邮箱，comment = 公共留言板
-
-使用示例：
-
-```javascript
-// =====发送私信给其他用户=====
-
-// 发送简单文本消息
-const [status, sendError] = await dc.message.sendMsgToUserBox(
-  'anotherUserPublicKey123',    // 接收者的公钥（可通过 dc.publicKey.string() 获取）
-  '你好，这是一条测试消息！'     // 消息内容
-);
-
-if (status === 0) {
-  console.log('消息发送成功');
-} else {
-  console.warn('消息发送失败:', sendError);
+const comment = dc.comment;
+if (!comment || !dc.userInfo || !dc.publicKey) {
+  throw new Error("请先完成钱包登录");
 }
 
-// 发送复杂消息（JSON格式）
-const messageData = {
-  type: 'notification',
-  title: '系统通知',
-  content: '您有一个新的订单需要处理',
-  timestamp: Date.now(),
-  sender: dc.publicKey.string()
-};
+const theme = "article_42_comments";
+const themeAuthor = dc.publicKey.string();
+const COMMENT_PUBLIC = 0;
 
-const [status2, sendError2] = await dc.message.sendMsgToUserBox(
-  'receiverPublicKey',
-  JSON.stringify(messageData)
+const [createStatus, createError] = await comment.addThemeObj(
+  theme,
+  COMMENT_PUBLIC,
+  50 * 1024 * 1024,
 );
+if (createError) throw createError;
+console.log("theme status:", createStatus);
 
-//=====获取收件箱消息=====
-
-// 获取最新的消息列表
-const [messages, getError] = await dc.message.getMsgFromUserBox(20); // 获取最新20条消息
-
-if (messages && !getError) {
-  console.log('收到的消息:', messages);
-  
-  // 处理消息列表
-  messages.forEach((message, index) => {
-    console.log('消息 ' + (index + 1) + ': 发送者=' + message.sender + ', 内容=' + message.content + ', 时间=' + new Date(message.timestamp).toLocaleString());
-  });
-} else {
-  console.warn('获取消息失败:', getError);
+const [commentKey, publishError] = await comment.publishCommentToTheme(
+  theme,
+  themeAuthor,
+  CommentType.Comment,
+  JSON.stringify({ text: "这是一条评论", createdAt: Date.now() }),
+  COMMENT_PUBLIC,
+  "", // refercommentkey：回复时传被引用评论的 key
+);
+if (publishError || !commentKey) {
+  throw publishError ?? new Error("评论发布失败");
 }
 
-//=====实际应用场景示例=====
-
-// 场景1：发送系统通知
-const sendSystemNotification = async (userPublicKey, title, content) => {
-  const notification = {
-    type: 'system_notification',
-    title: title,
-    content: content,
-    timestamp: Date.now(),
-    priority: 'normal'
-  };
-  
-  const [status, error] = await dc.message.sendMsgToUserBox(
-    userPublicKey,
-    JSON.stringify(notification)
-  );
-  
-  return { success: status === 0, error };
-};
-
-// 场景2：用户聊天功能
-const sendChatMessage = async (friendPublicKey, messageText) => {
-  const chatMessage = {
-    type: 'chat',
-    message: messageText,
-    sender: dc.publicKey.string(),
-    timestamp: Date.now()
-  };
-  
-  const [status, error] = await dc.message.sendMsgToUserBox(
-    friendPublicKey,
-    JSON.stringify(chatMessage)
-  );
-  
-  return { success: status === 0, error };
-};
-
-// 场景3：获取并分类处理消息
-const processInboxMessages = async () => {
-  const [messages, error] = await dc.message.getMsgFromUserBox(50);
-  
-  if (messages && !error) {
-    const notifications = [];
-    const chatMessages = [];
-    
-    messages.forEach(msg => {
-      try {
-        const parsed = JSON.parse(msg.content);
-        if (parsed.type === 'system_notification') {
-          notifications.push(parsed);
-        } else if (parsed.type === 'chat') {
-          chatMessages.push(parsed);
-        }
-      } catch (e) {
-        // 处理纯文本消息
-        chatMessages.push({
-          type: 'text',
-          message: msg.content,
-          sender: msg.sender,
-          timestamp: msg.timestamp
-        });
-      }
-    });
-    
-    console.log('系统通知:', notifications);
-    console.log('聊天消息:', chatMessages);
-  }
-};
-
-// 使用示例
-await sendSystemNotification('userPublicKey123', '订单更新', '您的订单已发货');
-await sendChatMessage('friendPublicKey456', '你好，最近怎么样？');
-await processInboxMessages();
+const [comments, listError] = await comment.getThemeComments(
+  theme,
+  themeAuthor,
+  0,
+  1,  // 0=从旧到新，1=从新到旧
+  0,
+  20,
+  "",
+);
+if (listError) throw listError;
+console.log(comments);
 ```
 
+评论开放标志的主要模式：
 
-## 7. AI 代理 (aiproxy)
+| 值 | 名称 | 行为 |
+| --- | --- | --- |
+| `0` | `PUBLIC` | 任何人可读写 |
+| `1` | `PRIVATE` | 登录用户可评论；评论默认仅评论者和主题作者可见，作者可精选公开 |
+| `2` | `AUTH` | 读写都需授权 |
+| `3` | `AUTH_WRITE` | 所有人可读，写入需授权 |
 
-### 创建代理配置
-```javascript
-// 创建AI代理配置,status=0表示成功
-const [status, error] = await dc.aiproxy.createProxyConfig(
-  dc.appInfo.appId,
-  'default'  // 配置主题名称
+点赞、踩和转发使用 `CommentType.Up`、`CommentType.Down`、`CommentType.Transfer`。权限主题使用 `configAuth`、`getThemeAuthList`；私密评论精选公开使用 `setObjCommentPublic`。
+
+平台代管多个应用命名空间时，`addThemeObj`、`publishCommentToTheme`、`getThemeComments` 和 `setObjCommentPublic` 支持可选 `appId` 覆盖当前 `dc.appInfo.appId`。普通应用不要传该参数，保持使用当前应用命名空间即可。回复评论仍使用 `CommentType.Comment`，并把被回复评论的 key 放在 `refercommentkey`。
+
+## 消息与 RTM
+
+### 离线消息箱 (`dc.message`)
+
+消息箱适合通知和无需保持在线的私信：
+
+```ts
+const message = dc.message;
+if (!message || !dc.userInfo || !dc.publicKey) {
+  throw new Error("请先完成钱包登录并确认 Message 模块可用");
+}
+
+const [messageId, sendError] = await message.sendMsgToUserBox(
+  "receiver-public-key",
+  JSON.stringify({ type: "notification", text: "订单已更新" }),
 );
+if (sendError) throw sendError;
+
+const [inbox, inboxError] = await message.getMsgFromUserBox(20);
+if (inboxError) throw inboxError;
+console.log(messageId, inbox);
 ```
 
-### 配置AI服务
-```javascript
+### 在线实时消息 (`dc.rtm`)
 
-// 配置AI模型参数
-const modelConfig = {
-    Model:         "deepseek-r1",// 模型名称
-    Temperature:   0.7,
-    MaxTokens:     10000,
-    TopP:          0.9, 
-    TopK:          40,
-    StopSequences: []string{},
-    SystemPrompt:  "你是一个软件开发专家.",
-    Stream:        true, // 启用流模式
-    Tools:         []ToolDefinition{},// 工具定义数组
-    Remark:        "这是一个AI代理配置"
+钱包已登录时，RTM 的 `userId` 固定使用当前 `dc.publicKey.string()`，此时传入其他 `userId` 会被覆盖。接收事件依赖 `login()` 建立的长连接；主动发送默认使用独立的短连接。
+
+```ts
+const rtm = dc.rtm;
+if (!rtm || !dc.userInfo || !dc.publicKey) {
+  throw new Error("请先完成钱包登录并确认 RTM 模块可用");
 }
 
-
-const serviceConfig =  {
-  service: 'ai代理服务', // 服务名称
-  isAIModel: 0,    // 0: AI模型 1: MCPServer
-  apiType: 0,      // 模型接口类型
-  authorization: "Bearer your-api-key", // 授权信息
-  endpoint: "https://api.openai.com/v1", // API端点
-  organization: "your-organization", // 组织名称或ID 
-  apiVersion: "v1",   // api版本号
-  modelConfig: modelConfig, // 模型配置
-  remark: ""
-}
-
-//配置AI服务
-const [success, error] = await dc.aiproxy.configAIProxy(
-  dc.appInfo.appId,
-  dc.publicKey.string(),  // 配置作者公钥
-  'default',              // 主题
-  'openai-gpt',          // 名称
-  serviceConfig          
-);
-
-if (success) {
-  console.log('AI服务配置成功');
-}
-```
-
-
-### 用户权限管理
-
-```javascript
-// 为用户分配AI服务访问权限
-const authConfig = {
-  maxTokensPerDay: 10000,     // 每日最大token数
-  allowedModels: ['gpt-3.5-turbo', 'gpt-4'],
-  rateLimitPerMinute: 10      // 每分钟调用次数限制
-};
-
-const authConfig: ProxyCallConfig = {
-    No: 1,
-    Tlim: 1000, // 总次数限制
-    Dlim: 100, // 日限制
-    Wlim: 500, // 周限制
-    Mlim: 2000, // 月限制
-    Ylim: 10000, // 年限制
-    Exp: 12345678 // 过期区块高度
-};
-
-const [status, error] = await dc.aiproxy.configAuth(
-  dc.appInfo.appId,
-  dc.publicKey.string(),      // 配置作者公钥
-  'default',                  // 主题
-  '用户',                 // 被授权的公钥,all表示所有用户
-  3,                          // 权限级别：3=写入权限
-  authConfig                  // 授权配置
-);
-
-if (status) {
-  console.log('配置成功');
-}
-```
-
-
-### 默认调用配置
-在AI请求调用前调用
-
-```javascript
-// 设置AI调用的默认参数
-const defaultConfig = {
+const rtmConfig = {
   appId: dc.appInfo.appId,
-  themeAuthor: dc.publicKey.string(),
-  configTheme: 'default',
-  serviceName: 'openai-gpt'
+  themeAuthor: "rtm-config-author-public-key",
+  configTheme: "realtime_services",
+  serviceName: "aliyun-rtm",
 };
-const error = await dc.aiproxy.SetAICallConfig(defaultConfig);
 
-if (!error) {
-  console.log('设置成功');
-}
-```
-
-
-### 执行AI调用
-
-```javascript
-
-const requestBody = JSON.stringify({
-  chatMessages: [
-    {
-      role: "user",
-      content: [
-        {
-          type: "text",
-          text: "你好，请介绍一下DC平台"
-        }
-      ]
-    }
-  ]
+rtm.on("onMessageReceived", ({ message, userId, sessionId }) => {
+  console.log("RTM message:", { message, userId, sessionId });
 });
 
-// MCP 通用服务流式调用时，需要显式打开 Dc-Stream
-const headers = {
-  "Dc-Stream": "true"
-};
+await rtm.login(rtmConfig);
 
+const status = await rtm.sendMessageToPeer(
+  "receiver-public-key",
+  JSON.stringify({ type: "chat", text: "hello" }),
+  true,
+  true,
+);
+console.log("send status:", status); // success | offline | failed
+
+const online = await rtm.queryPeerOnlineStatus("receiver-public-key");
+console.log("online:", online);
+
+// 不再接收实时消息时调用。
+await rtm.logout();
+```
+
+`sendMessageToPeer` 的第四个参数为 `true` 时，实时发送或 ACK 失败会尝试转入 `dc.message` 离线消息箱；返回 `offline` 表示走了该兜底路径，不表示对方已经实时收到。
+
+RTM 本身只提供登录、点对点发送、在线状态和事件监听。频道邀请、通话和群组会话由 RTC/白板模块提供，不存在 `rtm.createPeerChannel()` 或 `rtm.subscribeChannel()`。
+
+## AI 代理
+
+AI 代理把模型、MCP Server、鉴权和额度配置保存在 DC 侧。普通调用者只需要管理员提供的四元组：`appId`、`themeAuthor`、`theme`、`service`。
+
+### 设置默认服务并调用
+
+```ts
+import { AIStreamResponseFlag } from "web-dc-api";
+
+const ai = dc.aiproxy;
+if (!ai || !dc.userInfo || !dc.publicKey) {
+  throw new Error("请先完成钱包登录并确认 AIProxy 模块可用");
+}
+
+const configError = await ai.SetAICallConfig({
+  appId: dc.appInfo.appId,
+  themeAuthor: "ai-config-author-public-key",
+  theme: "default",
+  service: "openai-compatible-chat",
+  path: "/v1/chat/completions",
+  model: "your-model",
+});
+if (configError) throw configError;
 
 const controller = new AbortController();
-const context = { signal: controller.signal };
+let answer = "";
 
-// 流式响应处理
-// flag: 0表示开始接收数据, 1:权限不足 2:获取失败 3:关闭连接 4: 其他错误   content: 接收到的数据
-const handleStreamResponse = (flag, content, error) => {
-  if (error) {
-    console.warn('流式响应错误:', error);
-    return;
-  }
+const [status, callError] = await ai.DoAIProxyCall(
+  { signal: controller.signal, streamIdleTimeoutMs: 60_000 },
+  JSON.stringify({
+    messages: [{ role: "user", content: "介绍一下 DC API" }],
+    stream: true,
+  }),
+  false,
+  (flag, content, errorMessage) => {
+    if (
+      flag === AIStreamResponseFlag.STREAMING ||
+      flag === AIStreamResponseFlag.STREAMING_REASON
+    ) {
+      answer += content;
+    } else if (flag === AIStreamResponseFlag.CONNECTION_CLOSED) {
+      console.log("complete:", answer);
+    } else if (errorMessage) {
+      console.error("AI stream error:", flag, errorMessage);
+    }
+  },
+);
+if (callError) throw callError;
+console.log("call status:", status);
+```
 
-  if (flag === 3) {
-    console.log('响应完成');
-    return;
-  }
-  if (flag === 1) {
-    console.warn('权限不足');
-    return;
-  }
-  if (flag === 2) {
-    console.warn('获取AI服务失败:', content);
-    return;
-  }
-  if (flag === 4) {
-    console.warn('错误:', content);
-    return;
-  }
-  document.getElementById('ai-response').innerHTML += content;
+请求体由目标服务决定，并不统一限定为 OpenAI 格式。调用 MCP 通用服务且需要流式响应时，在 `SetAICallConfig.headers` 或单次调用的 `headers` 参数中设置 `"Dc-Stream": "true"`。
 
+### 其他 AI 能力
+
+- `GenerateAndPollAIResource`：提交图片、视频、文档等异步生成任务，自动轮询并提取资源。
+- `PollAITaskResult` / `DownloadAIResourceContent`：手动控制任务轮询和结果下载。
+- `GetUserAIProxyAuth` / `GetUserOwnAIProxyUsage`：查询授权和使用量。
+- `CreateSimpleRealtimeVoiceSession`：使用主题四元组快速创建实时语音会话。
+- `CreateAliyunTranscriptionSession`：实时转写/翻译和多模型协议适配。
+- `CreateConversationalVoiceSession`：OpenAI Realtime 协议风格的实时语音对话。
+- `CreateVoiceSession` / `CreateAudioSocket`：自定义运行时、WebSocket 和音频适配器。
+
+完整实时语音示例见 [实时语音调用.md](实时语音调用.md)。
+
+管理员可使用 `createProxyConfig`、`configAIProxy`、`configAuth` 管理服务和额度。不要把第三方 API Key 或模型服务密钥硬编码在公开前端源码中；应由受控管理员流程写入代理配置。
+
+## RTC 音视频
+
+RTC 的呼叫信令依赖全局 RTM。双方都应先登录钱包、调用 `rtm.login()`，再初始化 RTC。
+
+```ts
+const rtm = dc.rtm;
+const rtc = dc.rtc;
+if (!rtm || !rtc || !dc.userInfo || !dc.publicKey) {
+  throw new Error("请先完成钱包登录并确认 RTM/RTC 模块可用");
+}
+
+const realtimeConfig = {
+  appId: dc.appInfo.appId,
+  themeAuthor: "realtime-config-author-public-key",
+  configTheme: "realtime_services",
+  serviceName: "aliyun-rtc",
 };
 
-// 执行AI调用
-const [_, error] = await dc.aiproxy.DoAIProxyCall(
-  context,
-  requestBody,
-  false,                  // 不强制刷新
-  handleStreamResponse,   // 流式响应回调
-  // 以下参数为空时使用默认配置
-  undefined,              // appId
-  undefined,              // themeAuthor
-  undefined,              // configTheme
-  undefined,              // serviceName
-  headers,                // headers (MCP 流式返回时请设置 Dc-Stream: true)
-  undefined,              // path
-  undefined               // model
+await rtm.login({ ...realtimeConfig, serviceName: "aliyun-rtm" });
+await rtc.init({
+  ...realtimeConfig,
+  channelId: "rtc-bootstrap",
+  enableRTM: true,
+  videoProfile: "HD",
+});
+
+rtc.on("onCallRequest", async ({ callerId, channelId, mediaType }) => {
+  console.log("incoming call:", callerId, mediaType);
+  // 用户点击接听后执行：
+  await rtc.acceptCall(callerId, channelId);
+  await rtc.joinRoom(channelId, {
+    audioPublish: true,
+    videoPublish: true,
+    screenPublish: false,
+  });
+});
+
+// 主叫方：发送邀请后需要自己进入房间等待。
+const channelId = await rtc.callPeer("callee-public-key", "video");
+await rtc.joinRoom(channelId, {
+  audioPublish: true,
+  videoPublish: true,
+  screenPublish: false,
+});
+
+const localVideo = document.querySelector<HTMLElement>("#local-video");
+if (localVideo) await rtc.setDisplayLocalVideo(localVideo);
+
+await rtc.muteLocalMic(true);
+await rtc.muteLocalCamera(false);
+
+// 通话结束。
+await rtc.endCall("callee-public-key", channelId);
+await rtc.leaveChannel();
+rtc.destroy();
+```
+
+关键约束：
+
+- `callPeer` 只发送邀请并生成频道，不会自动 `init` 或 `joinRoom`。
+- 被叫方监听 `onCallRequest`，接听后调用 `acceptCall` 和 `joinRoom`。
+- `joinRoom` 的 `audioPublish`、`videoPublish` 和当前实现中的 `screenPublish` 默认均为 `true`。不需要屏幕共享时应显式传 `screenPublish: false`，避免预申请该权限；纯协作会话应将三项都设为 `false`。
+- `onCallAccept`、`onCallReject`、`onCallEnd` 用于同步 UI 状态。
+- 屏幕共享使用 `startScreenShare` / `stopScreenShare`。
+- 摄像头切换使用 `getCameras` / `switchCamera`。
+- 游戏或协作会话使用 `createPersistentSession` / `acceptPersistentSession`，再以关闭音视频发布的选项进入房间。
+- `fetchAuthInfo` 可让应用自行提供 Token；未提供时可通过 AI 代理配置自动获取。
+
+## 实时白板
+
+直接加入白板房间需要白板 Token 配置，不要求先登录 RTM；只有使用呼叫或邀请信令时才依赖全局 RTM。
+
+```ts
+const whiteboard = dc.whiteboard;
+if (!whiteboard) throw new Error("Whiteboard 模块不可用");
+const userId = dc.publicKey?.string();
+if (!dc.userInfo || !userId) throw new Error("请先完成钱包登录");
+
+const roomId = "design-review-room";
+await whiteboard.init({
+  appId: dc.appInfo.appId,
+  userId,
+  channelId: roomId,
+  themeAuthor: "realtime-config-author-public-key",
+  configTheme: "realtime_services",
+  serviceName: "aliyun-whiteboard",
+});
+
+await whiteboard.joinRoom(roomId);
+const board = await whiteboard.getWhiteboard(roomId);
+const container = document.querySelector<HTMLElement>("#whiteboard");
+if (!container) throw new Error("缺少白板容器");
+
+await board.open(container);
+board.setToolType(2); // 也可使用底层白板 SDK 的 ShapeType
+board.undo();
+board.redo();
+
+await whiteboard.leaveChannel();
+await whiteboard.clear();
+```
+
+白板实例支持绘图工具、图片/PDF、文档与页面、快照、上传、视角同步和事件监听。邀请能力使用 `callPeer` / `acceptCall` 或 `createWhiteboardSession` / `acceptWhiteboardInvite`；调用这些方法前应先完成 `dc.rtm.login()`。
+
+## 支付
+
+支付模块的方法大多直接返回结果或抛异常。使用前配置部署环境提供的地址：
+
+```ts
+import { PaymentPackageTypeValue } from "web-dc-api";
+
+const pay = dc.pay;
+const payAccount = dc.accountInfo?.account ?? dc.publicKey?.string();
+if (!pay || !dc.userInfo || !payAccount) {
+  throw new Error("请先完成钱包登录并确认 Pay 模块可用");
+}
+
+pay.config({
+  payPeerUrl: "/dns4/pay-peer.example.com/tcp/443/wss/p2p/PEER_ID",
+  hostedPayBaseUrl: "https://pay.example.com/pay",
+  payApiBaseUrl: "https://pay.example.com/api/v2/payments",
+});
+
+const packages = await pay.listRenewPackages(
+  PaymentPackageTypeValue.STORAGE_PURCHASE,
+  dc.appInfo.appId,
 );
 
-if (error) {
-  console.warn('调用失败', error);
-}
+const selected = packages[0];
+if (!selected?.amountCents) throw new Error("没有可购买套餐");
+
+const returnUrl = pay.markCurrentUrlAsPayReturn("STORAGE_PURCHASE");
+const checkoutUrl = pay.buildHostedCheckoutUrl({
+  account: payAccount,
+  packageCode: selected.packageCode,
+  packageName: selected.displayName,
+  amountCents: selected.amountCents,
+  returnUrl,
+});
+
+window.location.assign(checkoutUrl);
 ```
 
-实时语音输入输出接入说明和跨环境示例见：
+支付能力包括：
 
-- [实时语音调用.md](实时语音调用.md)
+- 套餐读取：`listRenewPackages`、`getPackageInfo`、`getRenewalDays`。
+- 原生扫码：`createPayOrder`、`getNativePrepayCodeUrl`、`queryPaymentResult`。
+- 订单列表：`listPaymentOrders`。
+- 托管收银台：`buildHostedCheckoutUrl` 和支付回跳/本地待支付状态辅助方法。
+- 开发者套餐管理：`applyBusinessPackage`、`getAllPackagesConfig`、`deleteBusinessPackage`。
+- 套餐类型：模型调用、应用发布、存储扩容、平台 SVIP、自由定价。
 
-## 8. 实时消息 (RTM)
+金额字段统一按“分”处理。套餐返回值会保留 `theme`、`themeAuthor`、`themeAppid` 以及 AI 套餐关联字段，业务侧应原样使用服务端返回的主题归属信息。`payPeerUrl` 必须是可被 libp2p 解析的 multiaddr，不是普通 HTTPS URL。
 
-RTM 模块提供了实时离线消息、在线状态查询、群聊以及点对点频道的创建和邀请能力。
+## 缓存与工具
 
-### RTM 使用示例
-
-#### 1. 创建端到端加密频道 (P2P Channel)
-
-此方法可用于创建安全私密的点对点通道：
-
-```typescript
-const { rtm } = dc;
-
-// 用户ID列表，当前仅支持两人或多人建立群聊
-const userIds = ["peerId_of_userB", "peerId_of_userC"]; 
-const description = "Private Chat Group";
-
-try {
-  // 这将生成随机通道ID，并向所有用户发送经过签名的加密邀请
-  const channelId = await rtm.createPeerChannel(userIds, description);
-  console.log("创建 RTM 频道成功:", channelId);
-} catch (error) {
-  console.error("创建失败:", error);
+```ts
+const cache = dc.cache;
+if (!cache || !dc.userInfo || !dc.publicKey) {
+  throw new Error("请先完成钱包登录并确认 Cache 模块可用");
 }
+
+// setCacheKey 接收 value 并返回生成的 key；expire 单位为秒，默认一天。
+const [cacheKey, setError] = await cache.setCacheKey(
+  JSON.stringify({ preview: true }),
+  3600,
+);
+if (setError || !cacheKey) throw setError ?? new Error("缓存失败");
+
+const [cachedValue, getError] = await cache.getCacheValue(cacheKey);
+if (getError) throw getError;
+console.log(cachedValue);
+
+const [host, hostError] = await dc.client?.getHostID() ?? [null, null];
+if (hostError) throw hostError;
+console.log(host?.peerID, host?.reqAddr);
+
+const symmetricKey = dc.util?.createSymmetricKey();
+console.log(symmetricKey?.toString());
 ```
 
-#### 2. 接收与接受频道邀请
+`dc.util` 还提供 Thread key 创建、链上应用信息设置/查询和 IPFS 请求处理。
 
-当用户被邀请时，会收到含有 `channelId` 的离线或在线加密消息。接收端只需校验签名和解密内容并接受：
+## 高级能力
 
-```typescript
-// 假设 message 是从 RTM / Message 模块收到的 invite 消息
-const inviteMessage = {
-  isInvite: true,
-  appId: "app123",
-  sourceUserId: "peerId_of_inviter",
-  messageType: "P2P",
-  content: "encrypted_base64_content",
-  timestamp: 1718290000000,
-  signature: "base64_signature..."
-};
+根入口还导出以下高级能力：
 
-try {
-  // 接受邀请，会自动验证签名、解密，并返回所属频道和加密通信密钥
-  const { channelId, channelDescription } = await rtm.acceptPeerChannelInvite(inviteMessage);
-  console.log("接受邀请成功，即将加入频道", channelId, channelDescription);
-  
-  // 主动订阅频道以接收该频道内其他人的消息
-  await rtm.subscribeChannel(channelId);
-} catch (error) {
-  console.error("处理邀请失败:", error);
-}
+- `registerServiceWorker`、`isServiceWorkerActive`、`updateServiceWorker`：配合包内 `sw.js` 让媒体 URL 支持 Range 请求和 seek；需要 HTTPS 或 localhost。
+- `exposeDC`、`wrapWorker`：通过 Comlink 在 Web Worker 中运行或访问 `DC`。
+- `ModuleSystem`、`CoreModuleName`、各核心 Module 类：自定义模块集成。
+- `KeyManager`、`Ed25519PrivKey`、`Ed25519PubKey`：底层密钥能力。
+- `createLogger`、`configureLogger`、`LogLevel`：日志配置。
+- `Errors`：SDK 公开错误集合。
+
+这些 API 面向基础设施或高级封装。普通业务优先使用 `dc.auth`、`dc.db`、`dc.keyValue` 等模块入口。
+
+## 常见问题
+
+### `dc.auth`、`dc.db` 等为什么是 `null`？
+
+模块 getter 只有在实例注册且 `dc.init()` 成功后可用。先检查 `await dc.init()` 的布尔返回值，不要继续使用初始化失败的实例。
+
+### 钱包窗口没有打开
+
+确保 `accountLoginWithWallet()` 由点击事件直接触发，页面允许弹窗，并检查 `appInfo.appUrl`、钱包域名和 HTTPS 配置。
+
+### 用户数据库升级没有生效
+
+`initUserDB` 的第二个参数必须是数字，并在 Schema 变化时递增。不要传应用版本字符串。生产环境不要通过 `reset=true` 强制升级。
+
+### KeyValue 能写但读取后 `JSON.parse` 失败
+
+`get` 返回的字符串尾部带 `$$$dckv_extra$$$` 元数据。先按本文的 `parseKVValue` 拆分，或使用 `EntityRepository`。
+
+### 找不到共享主题
+
+确认 `appId`、创建者公钥和主题名完全一致。共享主题应通过 `toSharedTheme()` 统一名称；公共主题还必须以 `_pub` 结尾。
+
+### 评论列表为空
+
+检查主题作者公钥是否为真正创建者，并确认主题/单条评论的开放标志与当前用户权限匹配。分页方向 `1` 表示从新到旧。
+
+### RTM 能发消息但收不到
+
+发送使用短连接不代表接收长连接已经建立。接收方必须成功执行 `rtm.login()` 并保持页面连接，同时注册 `onMessageReceived`。
+
+### RTC 邀请发出后没有画面
+
+`callPeer` 不会自动入房。主叫需要 `joinRoom(channelId)`；被叫需要在接听后 `acceptCall` 再 `joinRoom`，并为本地/远端视频设置 DOM 容器。
+
+### 页面退出后仍有连接或设备占用
+
+先执行模块级清理，例如 `rtm.logout()`、`rtc.leaveChannel()`、`rtc.destroy()`、`whiteboard.leaveChannel()`，应用彻底退出时再执行 `dc.shutdown()`。
+
+### 可以用 `clearBrowserCache()` 修复数据问题吗？
+
+该方法会关闭底层资源，清除 LocalStorage、SessionStorage、CacheStorage，并在浏览器支持数据库枚举时删除 IndexedDB；它还会尝试清除页面脚本可访问的 Cookie、注销当前源的全部 Service Worker，随后刷新页面。该操作不能清除 `HttpOnly` 等不可由 JavaScript 访问的 Cookie，且属于破坏性调试操作。不要作为普通登出逻辑，也不要在未向用户说明的情况下调用。
+
+## 从旧版 README 迁移
+
+| 旧写法/说明 | `0.2.71` 正确行为 |
+| --- | --- |
+| `appInfo.appDesc` | 当前 `APPInfo` 没有该字段；使用 `appName`、`appIcon`、`appUrl` 等 |
+| `initUserDB(collections, "1.0.0", false)` | 第二个参数为数字 schema 版本，例如 `1` |
+| 钱包登录返回 `AccountInfo` 且含 `appAccount` | `accountLoginWithWallet()` 返回 `Account`；公钥使用 `dc.publicKey` |
+| `const [stream, err] = createFileStream(...)` | 返回 `ReadableStream | null`，不是元组 |
+| `getFolderFileList(cid, false, true)` | 第二个参数是数字 flag：`0` 需要连接，`1` 不需要 |
+| `getWithIndex(..., null, options)` | 类型签名要求字符串；空字符串表示不限定索引值 |
+| 直接 `JSON.parse(await keyValue.get(...))` | 先拆分 `$$$dckv_extra$$$` 元数据 |
+| `SetAICallConfig({ configTheme, serviceName })` | 字段名为 `theme` 和 `service` |
+| AI 流状态 `3=完成` | 使用 `AIStreamResponseFlag`；`CONNECTION_CLOSED=4` |
+| `rtm.createPeerChannel` / `subscribeChannel` | RTM 无这些方法；实时点对点用 `sendMessageToPeer`，会话/频道用 RTC 或白板 |
+| 创建公共 KV 必须是固定应用作者 | 主题作者是实际创建该主题的当前登录用户；读取时必须使用该公钥 |
+
+## API 索引
+
+README 负责接入路径和常用模式，完整签名以 TypeScript 声明为准：
+
+- 主类与生命周期：[lib/dc.ts](lib/dc.ts)
+- 公开入口：[lib/index.ts](lib/index.ts)
+- 认证：[lib/interfaces/auth-interface.ts](lib/interfaces/auth-interface.ts)
+- 文件：[lib/interfaces/file-interface.ts](lib/interfaces/file-interface.ts)
+- Service Worker 脚本：[assets/sw.js](assets/sw.js)
+- ThreadDB：[lib/interfaces/database-interface.ts](lib/interfaces/database-interface.ts)
+- KeyValue：[lib/interfaces/keyvalue-interface.ts](lib/interfaces/keyvalue-interface.ts)
+- 评论：[lib/interfaces/comment-interface.ts](lib/interfaces/comment-interface.ts)
+- 消息：[lib/interfaces/message-interface.ts](lib/interfaces/message-interface.ts)
+- AI 代理：[lib/interfaces/aiproxy-interface.ts](lib/interfaces/aiproxy-interface.ts)
+- RTM：[lib/interfaces/rtm-interface.ts](lib/interfaces/rtm-interface.ts)
+- RTC：[lib/interfaces/rtc-interface.ts](lib/interfaces/rtc-interface.ts)
+- 白板：[lib/interfaces/whiteboard-interface.ts](lib/interfaces/whiteboard-interface.ts)
+- 支付：[lib/interfaces/pay-interface.ts](lib/interfaces/pay-interface.ts)
+- 缓存与工具：[lib/interfaces/cache-interface.ts](lib/interfaces/cache-interface.ts)、[lib/interfaces/util-interface.ts](lib/interfaces/util-interface.ts)
+- 完整打包声明：[dist/index.d.ts](dist/index.d.ts)
+
+## 本仓库开发
+
+```bash
+npm install
+npm run check:proto-sync
+npm run build
+bash scripts/check-browser-compat.sh
 ```
 
-## 9. 实时音视频 (RTC)
-
-RTC 模块复用了 RTM 通道进行的信令发送，能够提供跨设备的音视频通话能力。这依赖于 RTM 模块发出的加密邀请机制。
-
-### RTC 使用示例
-
-#### 1. 创建音视频通话邀请
-
-用户可以通过 `createRTCChannel` 生成一个安全的 RTC 频道并对指定好友发出邀请。
-
-```typescript
-const { rtc } = dc;
-
-const rtcConfig = { video: true, audio: true };
-const userIds = ["peerId_of_userB"]; 
-
-try {
-  // 此操作会在内部调用 rtm 模块发送包含 channelId 的 RTC_INVITE 加密消息
-  const channelId = await rtc.createRTCChannel(userIds, "Video Call", rtcConfig);
-  console.log("RTC 音视频频道创建成功，ID:", channelId);
-  
-  // 接下来调用 rtc.init / rtc.joinChannel 等进行媒体流绑定
-} catch (error) {
-  console.error("RTC 频道创建失败:", error);
-}
-```
-
-#### 2. 接收与接受音视频通话邀请
-
-```typescript
-try {
-  // 解析由于 createRTCChannel 发送过来的 RTC_INVITE 消息
-  const rtcInviteMessage = {
-    isInvite: true,
-    messageType: "RTC_INVITE",
-    sourceUserId: "peerId_of_inviter",
-    content: "encrypted_base64_content",
-    signature: "base64_signature...",
-    timestamp: 1718290000000,
-    appId: "app123"
-  };
-
-  // 通过安全校验和解密，获取通话 channelId
-  const { channelId, channelDescription, rtcConfig } = await rtc.parseRTCChannelInvite(rtcInviteMessage);
-  console.log("成功接收 RTC 邀请:", channelId, rtcConfig);
-  
-  // 后续使用该 channelId 初始化 RTC 实例，连接媒体流
-} catch(error) {
-  console.error("接受 RTC 邀请失败", error);
-}
-```
-
-## 模块选择指南
-- **ThreadDB用户数据库(db)**: 个人数据，隐私数据，跨设备同步
-- **keyValue DB**: 多用户共享数据，应用配置，商品信息，排行榜
-- **评论系统**: 时间线社交互动，评论回复，点赞功能
-- **消息系统**: 点对点私密通信，系统通知
-- **文件模块**: 加密文件存储，支持文件夹管理
-- **AI代理**: 应用中需要调用AI模型或者MCPServer时，使用AI代理模块进行配置和调用
+`npm run build` 还会把 `assets/sw.js` 复制到 `dist/sw.js`；发布前应确认二者内容一致，确保 npm/CDN 使用者能取得 Service Worker。`npm test` 当前没有自动化测试实现，会按 `package.json` 中的占位脚本退出失败；验证 SDK 请至少执行类型构建、协议同步检查和浏览器兼容检查。
