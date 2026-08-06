@@ -56,7 +56,7 @@ async function ipfsProxy(fetchEvent) {
         const hdrs = new Headers(cached.headers || {});
         if (!hdrs.has('Content-Type')) {
           // 回退 MIME
-          const ext = pathname.split('.').pop();
+          const ext = pathname.split('.').pop().toLowerCase();
           const mimeType = MimeTypes['.' + ext] || MimeTypes[ext] || 'application/octet-stream';
           hdrs.set('Content-Type', mimeType);
         }
@@ -120,7 +120,7 @@ async function ipfsProxy(fetchEvent) {
 
         if (success) {
           // 构建响应头
-          const ext = pathname.split('.').pop();
+          const ext = pathname.split('.').pop().toLowerCase();
           const mimeType = MimeTypes['.' + ext] || MimeTypes[ext] || 'application/octet-stream';
           headers['Content-Type'] = headers['Content-Type'] || mimeType;
           headers['Access-Control-Allow-Origin'] = '*';
@@ -129,7 +129,7 @@ async function ipfsProxy(fetchEvent) {
           removeNullishHeaders(headers);
 
           let responseStatus = status || 200;
-          if (range) responseStatus = 206;
+          if (range && responseStatus === 200) responseStatus = 206;
 
           // 仅缓存不含解密密钥、大小不超过 5 MiB 的完整响应。
           if (!range && !encryptedRequest && responseStatus === 200 && data && data.byteLength <= MAX_CACHE_BYTES) {
@@ -148,7 +148,10 @@ async function ipfsProxy(fetchEvent) {
         } else {
           settled = true;
           if (responseTimer) clearTimeout(responseTimer);
-          resolveResp(textResponse(error || 'IPFS fetch failed', 502));
+          const errorStatus = Number.isInteger(status) && status >= 400 && status <= 599
+            ? status
+            : 502;
+          resolveResp(textResponse(error || 'IPFS fetch failed', errorStatus, headers));
         }
       };
 
@@ -185,10 +188,14 @@ async function ipfsProxy(fetchEvent) {
   return responsePromise;
 }
 
-function textResponse(message, status) {
+function textResponse(message, status, headers = {}) {
+  const responseHeaders = new Headers(headers);
+  if (!responseHeaders.has('Content-Type')) {
+    responseHeaders.set('Content-Type', 'text/plain; charset=utf-8');
+  }
   return new Response(String(message), {
     status,
-    headers: { 'Content-Type': 'text/plain; charset=utf-8' }
+    headers: responseHeaders
   });
 }
 

@@ -2,7 +2,8 @@
 // 文件缓存管理工具
 
 import { createLogger } from "../../util/logger";
-import { SeekableFileStream } from "./seekableFileStream";
+import type { SeekableFileStream } from "./seekableFileStream";
+import { resolveFileCacheClearTarget } from "./file-cache-key";
 
 const logger = createLogger('FileCacheManager');
 
@@ -14,7 +15,9 @@ export class FileCacheManager {
   // 文件缓存相关属性
   private seekableFileStreamCache: Map<string, {
     stream: SeekableFileStream,
-    lastAccessTime: number
+    lastAccessTime: number,
+    ipfsPath: string,
+    decryptKey: string
   }> = new Map();
   
   private readonly CACHE_TIMEOUT: number;
@@ -62,7 +65,9 @@ export class FileCacheManager {
     // 将新创建的流保存到缓存，并记录访问时间
     this.seekableFileStreamCache.set(cacheKey, {
       stream: fileStream,
-      lastAccessTime: Date.now()
+      lastAccessTime: Date.now(),
+      ipfsPath,
+      decryptKey
     });
   }
   
@@ -72,17 +77,21 @@ export class FileCacheManager {
    */
   clearFileCache(pathname?: string): void {
     if (pathname) {
-      // 清理特定路径的缓存
-      const pathParts = pathname.split('/');
-      let ipfsPath = pathParts[3]; 
-      const keyParts = ipfsPath.split('_');
-      if (keyParts.length > 1) {
-        ipfsPath = keyParts[0];
-        const decryptKey = keyParts[1];
-        const cacheKey = `${ipfsPath}_${decryptKey}`;
-        this.seekableFileStreamCache.delete(cacheKey);
-        logger.info(`清理特定缓存: ${cacheKey}`);
+      const target = resolveFileCacheClearTarget(pathname);
+      const targets = new Set(target.paths);
+
+      let removedCount = 0;
+      for (const [cacheKey, cachedItem] of this.seekableFileStreamCache) {
+        if (
+          targets.has(cachedItem.ipfsPath) &&
+          (target.decryptKey === undefined ||
+            cachedItem.decryptKey === target.decryptKey)
+        ) {
+          this.seekableFileStreamCache.delete(cacheKey);
+          removedCount += 1;
+        }
       }
+      logger.info(`清理特定缓存: ${pathname}, 移除 ${removedCount} 项`);
     } else {
       // 清理所有缓存
       this.seekableFileStreamCache.clear();

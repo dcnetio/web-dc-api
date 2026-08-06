@@ -270,6 +270,7 @@ export class AIProxyClient {
     let timeoutTimer: NodeJS.Timeout | null = null;
     let isCompleted = false;
     let isAborted = false;
+    let activeStreamController: AbortController | null = null;
     let contentDecoder = new TextDecoder();
     let errDecoder = new TextDecoder();
     const requestedIdleTimeout = Number(context.streamIdleTimeoutMs);
@@ -319,6 +320,11 @@ export class AIProxyClient {
             `DoAIProxyCall 数据流超时，超过${streamIdleTimeoutMs / 1000}秒未收到数据`,
           );
           isAborted = true;
+
+          // STREAM_HANG is terminal for this attempt. Abort the actual gRPC
+          // call before the application starts a retry; notifying only the UI
+          // leaves the old stream alive for up to the one-hour call timeout.
+          activeStreamController?.abort();
 
           // 通知调用者超时
           if (onStreamResponse) {
@@ -405,7 +411,10 @@ export class AIProxyClient {
 
     const onErrorCallback = async (error: unknown) => {
       if (isAborted || checkAborted() || isCompleted) return;
-      //不要标记完成,和清理定时器,统一由onEndCallback处理
+      // gRPC error paths do not subsequently invoke onEndCallback. Mark this
+      // attempt terminal now so the idle timer cannot emit a second failure.
+      isCompleted = true;
+      clearTimeoutTimer();
       if (onStreamResponse) {
         onStreamResponse(
           AIStreamResponseFlag.OTHER_ERROR,
@@ -418,18 +427,30 @@ export class AIProxyClient {
     const executeStreamCall = async (client: Libp2pGrpcClient) => {
       resetAttemptState();
       setTimeoutTimer();
+      const streamController = new AbortController();
+      activeStreamController = streamController;
+      if (context.signal?.aborted) {
+        streamController.abort();
+      }
 
-      await client.Call(
-        "/dcnet.pb.Service/DoAIProxyCall",
-        messageBytes,
-        3600 * 1000,
-        "server-streaming",
-        onDataCallback,
-        undefined,
-        onEndCallback,
-        onErrorCallback,
-        context
-      );
+      try {
+        await client.Call(
+          "/dcnet.pb.Service/DoAIProxyCall",
+          messageBytes,
+          3600 * 1000,
+          "server-streaming",
+          onDataCallback,
+          undefined,
+          onEndCallback,
+          onErrorCallback,
+          { ...context, signal: streamController.signal }
+        );
+      } finally {
+        streamController.abort();
+        if (activeStreamController === streamController) {
+          activeStreamController = null;
+        }
+      }
     };
 
     // 监听外部中止信号 - 这不会拦截信号，只是添加监听器
@@ -446,6 +467,7 @@ export class AIProxyClient {
       abortListener = () => {
         isAborted = true;
         clearTimeoutTimer();
+        activeStreamController?.abort();
         console.log("DoAIProxyCall 被外部中止");
         if (abortListener && context.signal) {
           //确保只触发一次
@@ -506,7 +528,6 @@ export class AIProxyClient {
         return 0;
       }
       isCompleted = true;
-      console.warn("DoAIProxyCall error:", error);
       throw error;
     } finally {
       // 确保定时器被清理

@@ -54,8 +54,9 @@ declare global {
   }
 
   var AggregateError: {
-    new (errors: any[], message?: string): AggregateError;
-    prototype: AggregateError;
+    new (errors: Iterable<any>, message?: string): AggregateError;
+    (errors: Iterable<any>, message?: string): AggregateError;
+    readonly prototype: AggregateError;
   };
 
   function queueMicrotask(callback: () => void): void;
@@ -433,8 +434,13 @@ export {
 export * from "./common/types/types";
 export * from "./interfaces";
 export * from "./common/define";
-export { ThemePermission, QWEN_VOICE_OPTIONS } from "./common/constants";
-export { KeyValueDB } from "./implements/keyvalue/manager";
+export {
+  ThemePermission,
+  OpenFlag,
+  cidNeedConnect,
+  QWEN_VOICE_OPTIONS,
+} from "./common/constants";
+export { KeyValueDB, KeyValueStoreType } from "./implements/keyvalue/manager";
 export { SHARED_THEME_PREFIX, isSharedTheme, toSharedTheme } from "./implements/keyvalue/manager";
 
 // 导出模块系统

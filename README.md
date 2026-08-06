@@ -2,7 +2,7 @@
 
 `web-dc-api` 是面向浏览器的去中心化应用 SDK。它把钱包身份、用户私有数据库、共享 KeyValue、文件、评论、消息、AI 代理、实时通信、白板和支付能力统一在一个 `DC` 实例中。
 
-本文档对应仓库当前 SDK `0.2.71`，示例以当前 TypeScript 类型和实现为准。
+本文档对应仓库当前 SDK `0.2.72`，示例以当前 TypeScript 类型和实现为准。
 
 ## 目录
 
@@ -16,9 +16,14 @@
 - [认证](#认证)
 - [ThreadDB 用户数据库](#threaddb-用户数据库)
 - [KeyValue 共享存储](#keyvalue-共享存储)
+  - [主题权限设计技巧](#主题权限设计技巧)
 - [文件](#文件)
+  - [上传文件夹](#上传文件夹)
+  - [遍历目录并按路径读取](#遍历目录并按路径读取)
+  - [从代码生成目录](#从代码生成目录)
 - [Service Worker 媒体访问](#service-worker-媒体访问)
 - [评论](#评论)
+  - [鉴权评论主题](#鉴权评论主题)
 - [消息与 RTM](#消息与-rtm)
 - [AI 代理](#ai-代理)
 - [RTC 音视频](#rtc-音视频)
@@ -37,7 +42,7 @@
 | 用户私有结构化数据 | `dc.db` | 设置、笔记、草稿、个人记录 | `dc.initUserDB`、`create`、`find`、`save` | 登录后初始化数据库 |
 | 多用户共享数据 | `dc.keyValue` | 配置、商品、排行榜、全局状态 | `createStore`、`createSharedStore`、`set`、`getWithIndex` | 登录；创建者公钥和权限配置 |
 | 类型化 KV 仓储 | `EntityRepository` | 基于 KeyValue 的实体、索引查询 | `save`、`findById`、`findByIndex` | 已获得 `KeyValueDB` |
-| 文件与目录 | `dc.file` | 加密上传、CID 下载、流式读取 | `addFile`、`getFile`、`getSeekableFileStream` | 登录；保管好加密密钥 |
+| 文件与目录 | `dc.file` | 加密上传、CID 下载、目录遍历、流式读取 | `addFile`、`addFolder`、`getFileFromDir`、`getSeekableFileStream` | 登录；保管好加密密钥 |
 | 时间线与留言 | `dc.comment` | 动态、评论、回复、点赞/踩/转发 | `addThemeObj`、`publishCommentToTheme` | 登录；明确主题作者 |
 | 离线消息箱 | `dc.message` | 通知、私信、稍后拉取的消息 | `sendMsgToUserBox`、`getMsgFromUserBox` | 登录 |
 | 在线实时消息 | `dc.rtm` | 在线单聊、在线状态、信令接收 | `login`、`sendMessageToPeer` | RTM Token，或可自动取 Token 的 AI 代理配置 |
@@ -65,7 +70,7 @@
 - 文件流读取还需要 `ReadableStream`；`wrapWorker` / `exposeDC` 等 Worker 封装需要 Web Worker。只使用核心模块时不必把 Web Worker 视为强制前提。
 - 钱包登录会打开钱包页面，请从用户点击等真实交互中触发，避免被浏览器拦截弹窗。
 - 摄像头、麦克风、屏幕共享和 Service Worker 需要 HTTPS；本地开发可使用 `localhost`。
-- SSR 框架中只在客户端创建 `DC`，不要在服务端渲染阶段初始化。
+- 包入口包含依赖 `window` 等浏览器全局对象的 RTC/白板能力。SSR 框架中不要在服务端模块顶层导入 `web-dc-api`；应从客户端组件加载，或使用关闭 SSR 的动态导入，然后只在客户端创建 `DC`。
 - `appId` 是数据命名空间的一部分。上线后不要随意修改，否则应用会访问到不同的数据空间。
 
 ## 安装
@@ -90,7 +95,7 @@ yarn add web-dc-api
 import { DC, LogLevel, ThemePermission } from "web-dc-api";
 ```
 
-不要从 `web-dc-api/lib/...` 或 `web-dc-api/dist/...` 深层导入；包的公开 `exports` 只保证根入口和 `package.json`。
+不要从 `web-dc-api/lib/...` 或未声明的 `web-dc-api/dist/...` 路径深层导入；包的公开 `exports` 只保证根入口、`web-dc-api/sw.js` 和 `web-dc-api/package.json`。
 
 ### CDN
 
@@ -98,7 +103,7 @@ CDN 版本还需要先加载 `grpc-libp2p-client`。建议在生产环境固定�
 
 ```html
 <script src="https://cdn.jsdelivr.net/npm/grpc-libp2p-client@0.0.43/dist/grpc.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/web-dc-api@0.2.71/dist/dc.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/web-dc-api@0.2.72/dist/dc.min.js"></script>
 <script>
   const { DC } = WebDcApi;
 </script>
@@ -356,7 +361,7 @@ export function LoginButton() {
 }
 ```
 
-在 Next.js、Nuxt 等 SSR 项目中，将上述文件只从客户端组件加载，或使用关闭 SSR 的动态导入。
+在 Next.js、Nuxt 等 SSR 项目中，将上述文件只从客户端组件加载，或使用关闭 SSR 的动态导入。当前包入口不是 Node.js/SSR 安全入口：即使服务端不调用 `new DC()`，顶层导入也可能访问 `window`，因此不能先在服务端静态导入再延迟初始化。
 
 ## 认证
 
@@ -444,20 +449,20 @@ KeyValue 主题由 `(appId, theme, themeAuthor)` 唯一定位。`themeAuthor` �
 ### 命名、类型和权限
 
 - 普通主题会自动补 `keyvalue_` 前缀。
-- 公共主题类型为 `2`，主题名必须以 `_pub` 结尾；所有人默认可读，写入需要授权。
-- 鉴权主题类型为 `1`，读写都需要授权。
+- `KeyValueStoreType.Public` 主题名必须以 `_pub` 结尾；具备可用 SDK 身份的用户无需额外 `READ` 授权即可读取，写入仍需授权。
+- `KeyValueStoreType.Auth` 的读取和写入都需要相应授权。
 - `createStore` 为每个写入用户保留同 key 的独立值。
 - `createSharedStore` 自动规范化为 `keyvalue_shared_` 前缀，同 key 全局只保留时间戳最新值。
 - 创建时传入的空间小于 100 MiB 会在实现中提升到 100 MiB。
 
-权限使用 `ThemePermission`：`NONE`、`APPLY`、`READ`、`WRITE`、`ADMIN`、`ONLY_WRITE`、`DEVICE`、`QUERY`。
+权限使用 `ThemePermission` 枚举；主题创建者始终具有 `ADMIN` 权限。
 
 ### 创建或获取共享主题
 
 ```ts
 import {
   Direction,
-  ThemePermission,
+  KeyValueStoreType,
   toSharedTheme,
 } from "web-dc-api";
 
@@ -481,25 +486,12 @@ if (!store && dc.publicKey.string() === themeAuthor) {
     appId,
     theme,
     100 * 1024 * 1024,
-    2,
+    KeyValueStoreType.Public,
   );
 }
 
 if (storeError || !store) {
   throw storeError ?? new Error("主题不存在，且当前用户不是创建者");
-}
-
-// 只由主题作者在管理/部署流程中执行一次。"all" 表示给所有用户写权限。
-if (dc.publicKey.string() === themeAuthor) {
-  const [authStatus, authError] = await keyValue.configAuth(
-    store,
-    "all",
-    ThemePermission.WRITE,
-    "allow app users to update",
-  );
-  if (authError || authStatus !== 0) {
-    throw authError ?? new Error(`授权失败，状态码：${authStatus}`);
-  }
 }
 
 const settings = { theme: "dark", language: "zh-CN" };
@@ -508,18 +500,84 @@ const indexes = [
   { key: "updatedAt", type: "number", value: Date.now() },
 ];
 
-const [saved, timestamp, setError] = await keyValue.set(
-  store,
-  "app_settings",
-  JSON.stringify(settings),
-  JSON.stringify(indexes),
-);
-if (setError || !saved) throw setError ?? new Error("KV 写入失败");
-
-console.log("server timestamp:", timestamp);
+// 公共主题只代表“已登录用户无需额外 READ 授权”。这里仍只允许主题作者更新全局配置。
+if (dc.publicKey.string() === themeAuthor) {
+  const [saved, timestamp, setError] = await keyValue.set(
+    store,
+    "app_settings",
+    JSON.stringify(settings),
+    JSON.stringify(indexes),
+  );
+  if (setError || !saved) throw setError ?? new Error("KV 写入失败");
+  console.log("server timestamp:", timestamp);
+}
 ```
 
 获取共享主题时，必须把 `toSharedTheme(...)` 的结果传给 `getStore`。如果用普通主题名获取，再用 `createSharedStore` 创建，两次实际访问的主题名不同。
+
+### 主题权限设计技巧
+
+`ThemePermission` 是互斥状态枚举，不是位掩码。不要用 `READ | WRITE` 组合，也不要用数值大小比较权限：
+
+| 权限 | KeyValue 中的实际能力 | 建议用途 |
+| --- | --- | --- |
+| `NONE` | 无读写权限 | 撤销授权或用户主动退出 |
+| `APPLY` | 只有申请状态，不授予数据访问 | 用户申请加入，等待管理员审批 |
+| `READ` | 可读，不可写 | 观察者、审核员 |
+| `WRITE` | 可读写 | 编辑者、普通成员 |
+| `ADMIN` | 可读写，并可管理其他用户权限 | 主题管理员；按最小人数授予 |
+| `ONLY_WRITE` | 可写，但不获得主题读取权限，也不能修改授权信息 | 匿名投稿、设备上报、只收集不公开的数据 |
+| `DEVICE` | 物联网管理扩展权限 | 仅用于配套的 IoT 流程 |
+| `QUERY` | 查询服务专用权限 | AI/服务查询流程，不可替代 `READ` |
+| `NOT_EXIST` | 服务端表示“没有授权记录”的哨兵值 | 不要主动配置给用户 |
+
+存储类型决定读取边界，用户权限决定写入能力：
+
+| 存储类型 | 读取 | 写入 |
+| --- | --- | --- |
+| `KeyValueStoreType.Auth` | `READ`、`WRITE`、`ADMIN` | `WRITE`、`ADMIN`、`ONLY_WRITE` |
+| `KeyValueStoreType.Public` | 已登录用户无需额外 `READ` 授权 | `WRITE`、`ADMIN`、`ONLY_WRITE` |
+
+主题作者或已有 `ADMIN` 权限的用户可以配置其他用户。状态码 `0` 才表示成功：
+
+```ts
+import { ThemePermission } from "web-dc-api";
+
+const editorPubkey = "editor-public-key";
+const [authStatus, authError] = await keyValue.configAuth(
+  store,
+  editorPubkey,
+  ThemePermission.WRITE,
+  "content editor",
+);
+if (authError || authStatus !== 0) {
+  throw authError ?? new Error(`授权失败，状态码：${authStatus}`);
+}
+
+// 撤销该用户权限，并同样检查状态码。
+const [revokeStatus, revokeError] = await keyValue.configAuth(
+  store,
+  editorPubkey,
+  ThemePermission.NONE,
+  "revoked",
+);
+if (revokeError || revokeStatus !== 0) {
+  throw revokeError ?? new Error(`撤销失败，状态码：${revokeStatus}`);
+}
+
+// 当前用户可在界面展示操作按钮前查询自身权限；服务端仍会再次鉴权。
+const [ownAuth, ownAuthError] = await keyValue.GetUserOwnAuth(store);
+if (ownAuthError) throw ownAuthError;
+console.log("current permission:", ownAuth?.permission);
+```
+
+`authPubkey` 传 `"all"` 可设置未单独授权用户的默认权限；某个用户的单独记录优先于 `"all"`。这个能力应谨慎使用：
+
+- 共享配置不要授予 `"all" + WRITE`，否则任何登录用户都能覆盖同一个 key。
+- 收集型业务可使用 `KeyValueStoreType.Auth` 的普通存储，并授予 `"all" + ONLY_WRITE`；用户可提交数据，但不能枚举或读取其他用户数据。
+- 权限初始化应放在受控的管理员/部署流程中，不要在每次客户端启动时重复执行。
+- `remark` 适合角色、分组等业务元数据，不要存放密钥或其他敏感信息。
+- 权限列表可用 `store.getDbAuthList(limit, seekKey)`，或 `keyValue.getDbAuthList(store, limit, seekKey)` 分页读取；把返回的 `nextSeekKey` 传入下一页，直到它为空。
 
 ### 读取值和元数据
 
@@ -646,7 +704,123 @@ seekable.seek(1024 * 1024);
 const chunk = await seekable.read(256 * 1024);
 ```
 
-目录相关入口：`addFolder`、`getFolderFileList`、`getFolderFileListWithContent`、`getFileFromDir`、`getSeekableFileStreamFromDir`。`getFolderFileList(cid, flag, recursive)` 的 `flag` 是数字：`0` 表示需要连接节点，`1` 表示不需要；不是布尔值。
+可 seek 流会按“CID/目录路径 + 解密密钥”在内存中缓存约 100 秒；重复获取时可能返回同一个可变流实例。直接调用 `seek()` / `read()` 的多个消费者不要并发共享同一实例，需要重新开始时先 `seek(0)`，需要强制新建时可调用 `fileModule.clearFileCache(cid)`。`createReadableStream()` 默认从当前 `getPosition()` 开始，但之后使用独立的流位置，不会推进实例位置；必须从头读取时传 `{ start: 0 }`。
+
+### 上传文件夹
+
+浏览器选择文件夹时必须同时设置 `webkitdirectory` 和 `multiple`；SDK 使用每个文件的 `webkitRelativePath` 还原多级目录：
+
+```html
+<input id="folder" type="file" webkitdirectory multiple />
+```
+
+```ts
+import { UploadStatus } from "web-dc-api";
+
+const folderInput = document.querySelector<HTMLInputElement>("#folder");
+const folderFiles = folderInput?.files;
+if (!folderFiles?.length) throw new Error("请选择文件夹");
+
+// 整个目录共用一个密钥；不加密时传空字符串。
+const folderEncryptionKey = dc.util!.createSymmetricKey().toString();
+const [folderCid, folderError] = await dc.file!.addFolder(
+  folderFiles,
+  folderEncryptionKey,
+  (status, totalBlocks, processedBlocks) => {
+    if (status === UploadStatus.UPLOADING) {
+      console.log(`folder blocks: ${processedBlocks}/${totalBlocks}`);
+    }
+  },
+);
+if (folderError || !folderCid) {
+  throw folderError ?? new Error("文件夹上传失败");
+}
+```
+
+进度回调中的 `totalBlocks` / `processedBlocks` 是 DC 接收的数据块数量，不等同于用户选择的源文件数量。上传时 SDK 会在根目录加入内部所有者标记 `dc_ownuser`；目录列表会自动隐藏它，业务代码不要自行创建同名文件。
+
+### 遍历目录并按路径读取
+
+```ts
+import { cidNeedConnect } from "web-dc-api";
+
+// 首次读取一个独立根 CID 时使用 NEED，让 SDK 先连接保存该对象的节点。
+const [entries, listError] = await dc.file!.getFolderFileList(
+  folderCid,
+  cidNeedConnect.NEED,
+  true, // true=递归列出所有后代；false=只列当前层
+);
+if (listError || !entries) {
+  throw listError ?? new Error("目录读取失败");
+}
+
+const target = entries.find(
+  (entry) => entry.Type === 0 && entry.Path === "docs/readme.txt",
+);
+if (!target) throw new Error("目录内文件不存在");
+
+const [result, fileError] = await dc.file!.getFileFromDir(
+  folderCid,
+  target.Path,
+  folderEncryptionKey,
+);
+if (fileError || !(result instanceof Uint8Array)) {
+  throw fileError ?? new Error("目标路径不是文件");
+}
+console.log(new TextDecoder().decode(result));
+
+// 大文件、视频或 Range 请求优先使用可 seek 流，避免一次加载完整内容。
+const folderStream = await dc.file!.getSeekableFileStreamFromDir(
+  folderCid,
+  target.Path,
+  folderEncryptionKey,
+);
+folderStream.seek(1024 * 1024);
+const folderChunk = await folderStream.read(256 * 1024);
+console.log("file size:", folderStream.getSize(), "chunk:", folderChunk.length);
+```
+
+目录项字段含义：
+
+| 字段 | 含义 |
+| --- | --- |
+| `Name` | 当前文件或目录名 |
+| `Type` | `0` 为文件，`1` 为目录 |
+| `Hash` | 当前项的 CID |
+| `Path` | 相对根目录的路径，可直接传给 `getFileFromDir` / `getSeekableFileStreamFromDir` |
+| `Size` | 文件在 UnixFS 中的存储字节数；目录为 `0`，加密文件包含分块加密开销 |
+| `Content` | 仅 `getFolderFileListWithContent` 的文件项包含完整字节内容 |
+
+`getFileFromDir` 的路径指向文件时返回 `Uint8Array`，指向目录时返回该目录的一级列表，因此必须用 `instanceof Uint8Array` 收窄类型。`getFolderFileListWithContent(cid, key, recursive, peerAddr?)` 会逐个下载并把所有文件内容放进内存，只适合小目录；大目录应先获取列表，再按路径读取单个文件或使用可 seek 流。已通过其他目录操作连接到同一根 CID 时才使用 `cidNeedConnect.NOT_NEED`，普通业务的首次读取应使用 `NEED`。
+
+### 从代码生成目录
+
+没有原生文件夹选择框时，可把路径和内容转换成 `FileList`，再复用 `addFolder`：
+
+```ts
+const [generatedFiles, generateError] = dc.file!.createCustomFileList(
+  {
+    "docs/readme.txt": "hello DC",
+    "config/app.json": JSON.stringify({ language: "zh-CN" }),
+    "assets/data.bin": new Uint8Array([1, 2, 3]),
+  },
+  "release",
+);
+if (generateError || !generatedFiles) {
+  throw generateError ?? new Error("目录生成失败");
+}
+
+const [generatedFolderCid, generatedUploadError] = await dc.file!.addFolder(
+  generatedFiles,
+  "",
+  (status, total, processed) => console.log(status, total, processed),
+);
+if (generatedUploadError || !generatedFolderCid) {
+  throw generatedUploadError ?? new Error("生成目录上传失败");
+}
+```
+
+`addFolderInLocal` 只把目录构建到当前浏览器节点的本地块存储，不会向 DC 注册或持久化上传，适合本地预处理和调试，不能代替正式的 `addFolder`。拿到未知 CID 时可用 `isFileOrDir(cid)` 判断 `file`、`directory` 或 `unknown`；该判断需要相关 UnixFS 数据在当前连接中可访问。
 
 加密密钥一旦丢失，SDK 无法恢复加密文件。不要把密钥写进公开 KeyValue 或业务日志。使用下述 Service Worker URL 播放加密媒体时，协议会把密钥放在 URL 路径中；敏感内容应优先使用文件流 API，或确保网关、监控和访问日志不会记录 `/dc/ipfs/` 路径。
 
@@ -671,7 +845,7 @@ curl -L "https://cdn.jsdelivr.net/npm/web-dc-api@${VERSION}/dist/sw.js" \
   -o public/sw.js
 ```
 
-当前仓库新增该文件时 `package.json` 仍是 `0.2.71`；不要据此假设 npm 上既有的 `0.2.71` 已包含它。发布前应先更新包版本，再把这里和本文开头的版本号同步为实际发布版本。
+当前仓库构建并打包 `0.2.72` 时会包含 `dist/sw.js`；是否已发布到 npm 以实际 registry 版本为准。如果项目锁定在不包含该文件的旧版本，先升级依赖再执行复制；以后升级 SDK 时也应让应用内的 `/sw.js` 与依赖版本同步。
 
 脚本必须部署在站点根级路径，例如 `/sw.js` 或 `/dc-ipfs-sw.js`。如果放在 `/assets/sw.js`，浏览器默认只授予 `/assets/` 作用域，无法拦截 `/dc/ipfs/`。当前自动注册流程不适用于无法部署根级 Service Worker 的子路径应用；这类应用应直接使用 `getFile`、`createFileStream` 或 `getSeekableFileStream`。
 
@@ -693,7 +867,7 @@ if (!(await dc.init())) throw new Error("DC 初始化失败");
 console.log("Service Worker ready:", dc.swInited);
 ```
 
-`dc.swInited === false` 不会阻止其他模块工作。此时依次检查：页面是否为 HTTPS/localhost、脚本 URL 是否返回 JavaScript 而不是 SPA HTML、响应是否为同源、脚本是否位于根路径，以及浏览器控制台中的注册错误。更新已部署脚本后可调用根入口导出的 `updateServiceWorker()`；`isServiceWorkerActive()` 可检查当前注册是否已有 active worker。
+`dc.swInited` 表示注册流程是否取得 `ServiceWorkerRegistration`，不保证当前页面已经被 worker 控制；首次安装后如果控制台提示尚未接管，可等待 `controllerchange` 或刷新一次页面。`dc.swInited === false` 不会阻止其他模块工作。此时依次检查：页面是否为 HTTPS/localhost、脚本 URL 是否返回 JavaScript 而不是 SPA HTML、响应是否为同源、脚本是否位于根路径，以及浏览器控制台中的注册错误。更新已部署脚本后可调用根入口导出的 `updateServiceWorker()`；`isServiceWorkerActive()` 可检查当前页面作用域内的注册是否已有 active worker。
 
 ### 3. 构造媒体 URL
 
@@ -702,6 +876,17 @@ console.log("Service Worker ready:", dc.swInited);
 ```text
 /dc/ipfs/<cid>/<filename>
 /dc/ipfs/<folder-cid>/<relative/path/to/file>
+```
+
+目录 URL 的相对路径使用 `getFolderFileList` 返回的 `Path`，不要加上传时的根文件夹名。路径含空格、中文或 `#` 等字符时，应逐段编码，Service Worker 消息处理会在查找目录项前解码：
+
+```ts
+function encodeDcFilePath(path: string): string {
+  return path.split("/").map(encodeURIComponent).join("/");
+}
+
+const directoryMediaUrl =
+  `/dc/ipfs/${folderCid}/${encodeDcFilePath("videos/演示 01.mp4")}`;
 ```
 
 例如把已上传视频交给原生播放器：
@@ -722,14 +907,14 @@ const encryptedMediaUrl =
   `/dc/ipfs/${cid}_${encryptionKey}/${encodeURIComponent(file.name)}`;
 ```
 
-Service Worker 会透传 `Content-Range`、`Content-Length` 和 `Accept-Ranges`。页面中的文件处理失败时返回 `502`，找不到可处理请求的页面客户端时返回 `503`，最终响应等待超过 60 秒时返回 `504`。无 Range、未加密且不超过 5 MiB 的完整响应会缓存到 IndexedDB `dc-ipfs-cache`；Range 响应和带解密密钥的响应不会持久化，避免缓存解密后的内容。
+Service Worker 会透传 `Content-Range`、`Content-Length` 和 `Accept-Ranges`。它支持单段 `bytes=start-end`、`bytes=start-` 和 `bytes=-suffixLength`，每次响应最多读取 3 MiB；不支持多段 Range。语法错误、空文件或越界范围返回 `416`，页面中的其他文件处理失败返回 `502`，找不到可处理请求的页面客户端返回 `503`，最终响应等待超过 60 秒返回 `504`。无 Range、未加密且不超过 5 MiB 的完整响应会缓存到 IndexedDB `dc-ipfs-cache`；Range 响应和带解密密钥的响应不会持久化，避免缓存解密后的内容。
 
 ## 评论
 
 一个评论主题由 `appId + theme + themeAuthor` 定位。创建主题的当前登录用户就是 `themeAuthor`。
 
 ```ts
-import { CommentType } from "web-dc-api";
+import { CommentType, OpenFlag } from "web-dc-api";
 
 const comment = dc.comment;
 if (!comment || !dc.userInfo || !dc.publicKey) {
@@ -738,11 +923,10 @@ if (!comment || !dc.userInfo || !dc.publicKey) {
 
 const theme = "article_42_comments";
 const themeAuthor = dc.publicKey.string();
-const COMMENT_PUBLIC = 0;
 
 const [createStatus, createError] = await comment.addThemeObj(
   theme,
-  COMMENT_PUBLIC,
+  OpenFlag.PUBLIC,
   50 * 1024 * 1024,
 );
 if (createError) throw createError;
@@ -753,7 +937,7 @@ const [commentKey, publishError] = await comment.publishCommentToTheme(
   themeAuthor,
   CommentType.Comment,
   JSON.stringify({ text: "这是一条评论", createdAt: Date.now() }),
-  COMMENT_PUBLIC,
+  OpenFlag.PUBLIC,
   "", // refercommentkey：回复时传被引用评论的 key
 );
 if (publishError || !commentKey) {
@@ -775,14 +959,59 @@ console.log(comments);
 
 评论开放标志的主要模式：
 
-| 值 | 名称 | 行为 |
-| --- | --- | --- |
-| `0` | `PUBLIC` | 任何人可读写 |
-| `1` | `PRIVATE` | 登录用户可评论；评论默认仅评论者和主题作者可见，作者可精选公开 |
-| `2` | `AUTH` | 读写都需授权 |
-| `3` | `AUTH_WRITE` | 所有人可读，写入需授权 |
+下表描述普通主题名的行为。这里的“公开”指具备可用 SDK 身份的用户无需额外主题授权，并不代表匿名、无身份访问；`auth_` 前缀会额外强制读取鉴权，并使写入也进入权限检查。
 
-点赞、踩和转发使用 `CommentType.Up`、`CommentType.Down`、`CommentType.Transfer`。权限主题使用 `configAuth`、`getThemeAuthList`；私密评论精选公开使用 `setObjCommentPublic`。
+| 值 | 名称 | 主题行为 |
+| --- | --- | --- |
+| `0` | `PUBLIC` | 已登录用户无需额外主题授权即可读写 |
+| `1` | `PRIVATE` | 登录用户可评论；评论默认仅评论者和主题作者可见，作者可精选公开 |
+| `2` | `AUTH` | 建立权限列表并对写入鉴权；配合 `auth_` 主题名实现读写都鉴权 |
+| `3` | `AUTH_WRITE` | 写入需授权；使用非 `auth_` 主题名时已登录用户无需额外授权即可读 |
+| `4` | `REPORTED` | 服务端举报/审核状态，不要用它创建主题 |
+
+`addThemeObj` 的第二个参数是主题开放模式；`publishCommentToTheme` 的第五个参数只是当前评论的可见性，只应传 `OpenFlag.PUBLIC` 或 `OpenFlag.PRIVATE`，不要在这两个位置混用语义。点赞、踩和转发使用 `CommentType.Up`、`CommentType.Down`、`CommentType.Transfer`；私密评论精选公开使用 `setObjCommentPublic`。
+
+### 鉴权评论主题
+
+完全私有的成员主题应同时使用 `auth_` 前缀和 `OpenFlag.AUTH`。前缀负责触发读取鉴权，开放标志负责建立权限列表并触发写入鉴权：
+
+```ts
+import { OpenFlag, ThemePermission } from "web-dc-api";
+
+const authTheme = "auth_project_42";
+const authThemeAuthor = dc.publicKey!.string();
+
+const [themeStatus, themeError] = await dc.comment!.addThemeObj(
+  authTheme,
+  OpenFlag.AUTH,
+  50 * 1024 * 1024,
+);
+if (themeError || themeStatus !== 0) {
+  throw themeError ?? new Error(`主题创建失败，状态码：${themeStatus}`);
+}
+
+const memberPubkey = "member-public-key";
+const [memberStatus, memberError] = await dc.comment!.configAuth(
+  authThemeAuthor,
+  authTheme,
+  memberPubkey,
+  ThemePermission.WRITE,
+  "project member",
+);
+if (memberError || memberStatus !== 0) {
+  throw memberError ?? new Error(`成员授权失败，状态码：${memberStatus}`);
+}
+```
+
+常见权限模式：
+
+- 完全私有成员区：主题名使用 `auth_*`，开放模式使用 `OpenFlag.AUTH`；读成员授予 `READ`，可发言成员授予 `WRITE`。
+- 公开浏览、成员发言：主题名不要以 `auth_` 开头，开放模式使用 `OpenFlag.AUTH_WRITE`，发言成员授予 `WRITE`。
+- 只允许提交、不允许普通成员读取：使用 `auth_* + OpenFlag.AUTH`，提交者授予 `ONLY_WRITE`。
+- 用户申请加入：用户只能为自己配置 `APPLY`；管理员审核后再改成 `READ` 或 `WRITE`。`APPLY` 本身没有读写能力。
+- 移除成员：管理员把该用户配置为 `NONE`；普通 `READ` / `WRITE` 用户也可以把自己设为 `NONE` 退出。
+
+`comment.configAuth` 的参数顺序是 `(themeAuthor, theme, authPubkey, permission, remark)`，与 KeyValue 的 `(store, authPubkey, permission, remark)` 不同。`authPubkey="all"` 同样表示默认权限，用户单独授权会覆盖它。授权列表使用 `getThemeAuthList` 分页读取；权限判断必须以服务端结果为准，前端隐藏按钮只能改善交互，不能替代鉴权。
 
 平台代管多个应用命名空间时，`addThemeObj`、`publishCommentToTheme`、`getThemeComments` 和 `setObjCommentPublic` 支持可选 `appId` 覆盖当前 `dc.appInfo.appId`。普通应用不要传该参数，保持使用当前应用命名空间即可。回复评论仍使用 `CommentType.Comment`，并把被回复评论的 key 放在 `refercommentkey`。
 
@@ -1136,6 +1365,14 @@ console.log(symmetricKey?.toString());
 
 确认 `appId`、创建者公钥和主题名完全一致。共享主题应通过 `toSharedTheme()` 统一名称；公共主题还必须以 `_pub` 结尾。
 
+### 权限配置成功但仍然无法读写
+
+先确认 `configAuth` 返回状态码为 `0`，再核对 `(appId, theme, themeAuthor)` 是否与创建主题时完全一致。不要混用 `OpenFlag` 和 `ThemePermission`：前者是评论主题开放模式，后者才是用户权限。KeyValue 的 `Auth` / `Public` 类型和评论主题的 `auth_` 命名前缀还会影响读取边界，具体规则见“主题权限设计技巧”和“鉴权评论主题”。
+
+### 目录上传后找不到文件
+
+使用 `getFolderFileList` 返回的 `Path`，不要自行拼接上传时的根文件夹名；首次读取根 CID 使用 `cidNeedConnect.NEED`，并传回上传时相同的解密密钥。通过 Service Worker URL 访问含中文、空格或 `#` 的路径时，需要对每个路径段分别执行 `encodeURIComponent`。
+
 ### 评论列表为空
 
 检查主题作者公钥是否为真正创建者，并确认主题/单条评论的开放标志与当前用户权限匹配。分页方向 `1` 表示从新到旧。
@@ -1158,13 +1395,13 @@ console.log(symmetricKey?.toString());
 
 ## 从旧版 README 迁移
 
-| 旧写法/说明 | `0.2.71` 正确行为 |
+| 旧写法/说明 | `0.2.72` 正确行为 |
 | --- | --- |
 | `appInfo.appDesc` | 当前 `APPInfo` 没有该字段；使用 `appName`、`appIcon`、`appUrl` 等 |
 | `initUserDB(collections, "1.0.0", false)` | 第二个参数为数字 schema 版本，例如 `1` |
 | 钱包登录返回 `AccountInfo` 且含 `appAccount` | `accountLoginWithWallet()` 返回 `Account`；公钥使用 `dc.publicKey` |
 | `const [stream, err] = createFileStream(...)` | 返回 `ReadableStream | null`，不是元组 |
-| `getFolderFileList(cid, false, true)` | 第二个参数是数字 flag：`0` 需要连接，`1` 不需要 |
+| `getFolderFileList(cid, false, true)` | 第二个参数不是布尔值；使用 `cidNeedConnect.NEED` 或 `cidNeedConnect.NOT_NEED` |
 | `getWithIndex(..., null, options)` | 类型签名要求字符串；空字符串表示不限定索引值 |
 | 直接 `JSON.parse(await keyValue.get(...))` | 先拆分 `$$$dckv_extra$$$` 元数据 |
 | `SetAICallConfig({ configTheme, serviceName })` | 字段名为 `theme` 和 `service` |
@@ -1191,7 +1428,6 @@ README 负责接入路径和常用模式，完整签名以 TypeScript 声明为�
 - 白板：[lib/interfaces/whiteboard-interface.ts](lib/interfaces/whiteboard-interface.ts)
 - 支付：[lib/interfaces/pay-interface.ts](lib/interfaces/pay-interface.ts)
 - 缓存与工具：[lib/interfaces/cache-interface.ts](lib/interfaces/cache-interface.ts)、[lib/interfaces/util-interface.ts](lib/interfaces/util-interface.ts)
-- 完整打包声明：[dist/index.d.ts](dist/index.d.ts)
 
 ## 本仓库开发
 

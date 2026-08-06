@@ -1,5 +1,5 @@
-import { UnixFS } from "@helia/unixfs";
-import { CID } from "multiformats/cid";
+import type { UnixFS } from "@helia/unixfs";
+import type { CID } from "multiformats/cid";
 import { decryptContent } from "../../util/dccrypt";
 import { iterableToUint8Array } from "../../util/utils";
 
@@ -41,10 +41,12 @@ export class SeekableFileStream {
    * @param position 目标位置
    */
   seek(position: number): void {
-    if (position < 0) {
+    if (Number.isNaN(position) || position <= 0) {
       position = 0;
-    } else if (position > this.fileInfo.size) {
+    } else if (!Number.isFinite(position) || position > this.fileInfo.size) {
       position = this.fileInfo.size;
+    } else {
+      position = Math.floor(position);
     }
     this.position = position;
   }
@@ -61,6 +63,12 @@ export class SeekableFileStream {
    * @param length 要读取的字节数
    */
   async read(length: number): Promise<Uint8Array> {
+    if (!Number.isFinite(length)) {
+      return new Uint8Array(0);
+    }
+    const normalizedLength = Math.floor(length);
+    if (normalizedLength <= 0) return new Uint8Array(0);
+
     // 使用局部变量存储当前位置，避免并发问题
     const startPosition = this.position;
     
@@ -71,21 +79,18 @@ export class SeekableFileStream {
     
     // 计算实际读取长度（不超过文件末尾）
     const remainingBytes = this.fileInfo.size - startPosition;
-    const actualLength = Math.min(length, remainingBytes);
+    const actualLength = Math.min(normalizedLength, remainingBytes);
     
     let result: Uint8Array;
-    console.log("**************read actualLength:", actualLength);
     // 根据是否加密选择不同读取策略
     if (this.decryptKey) {
       result = await this.readEncrypted(startPosition, actualLength);
     } else {
       result = await this.readPlain(startPosition, actualLength);
     }
-    console.log("**************read result length:", result.length);
     // 仅在成功读取后更新位置
-    if(this.position  == startPosition) {  //表示没有seek过
+    if(this.position === startPosition) {  //表示没有seek过
       this.position = startPosition + result.length;
-      console.log("**************read this.position:", this.position);
     }
     return result;
    
@@ -134,8 +139,9 @@ private async readEncrypted(startPosition: number, length: number): Promise<Uint
   const offsetInBlock = startPosition % blockSize ;
   
   // 计算需要读取的块数
-  const endPosition = startPosition + length ;
-  const endBlockIndex = Math.floor(endPosition / blockSize);
+  const endPosition = startPosition + length;
+  // endPosition 是开区间边界；整块读取时不应额外读取下一块。
+  const endBlockIndex = Math.floor((endPosition - 1) / blockSize);
   const neededBlocks = endBlockIndex - blockIndex + 1;
   
   // 分配适当大小的内存
@@ -195,10 +201,12 @@ private async readEncrypted(startPosition: number, length: number): Promise<Uint
       currentOffset += bytesToCopy;
     }
     
-    // 从解密数据中提取请求的范围
-    let result = new Uint8Array(length);
-    result.set(decryptedData.subarray(offsetInBlock, offsetInBlock + length), 0);
-    return result;
+    // 只返回实际解密出的数据，避免损坏或截断的密文被零字节静默填充。
+    const availableLength = Math.max(
+      0,
+      Math.min(length, currentOffset - offsetInBlock),
+    );
+    return decryptedData.slice(offsetInBlock, offsetInBlock + availableLength);
   } catch (err) {
     clearTimeout(timeoutId);
     console.warn("Error reading encrypted data:", err);

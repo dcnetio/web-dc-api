@@ -157,13 +157,13 @@ export interface IFileOperations {
    * 获取文件夹下的所有文件,包括内容（支持多级目录递归）
    * @param cid 根目录的CID
    * @param decryptKey 解密密钥
-   * @param recursive 是否递归获取子目录，默认false（保持向后兼容）
-   * @returns 文件列表：[{Name:文件或目录名，Type：0-文件 1-目录，Size：大小，Hash：文件或目录cid，Path：完整路径}]
+   * @param recursive 是否递归获取子目录，默认true
+   * @returns 文件列表；Size 为 UnixFS 存储字节数（目录为0，加密文件包含分块开销）
    */
   getFolderFileListWithContent(
     cid: string,
     decryptKey: string,
-    recursive: boolean,
+    recursive?: boolean,
     peerAddr?: string,
   ): Promise<
     [
@@ -183,13 +183,13 @@ export interface IFileOperations {
    * 获取文件夹下的文件列表（支持多级目录递归）
    * @param cid 根目录的CID
    * @param flag 是否需要连接节点
-   * @param recursive 是否递归获取子目录，默认false（保持向后兼容）
-   * @returns 返回JSON格式的文件列表：[{Name:文件或目录名，Type：0-文件 1-目录，Size：大小，Hash：文件或目录cid，Path：完整路径}]
+   * @param recursive 是否递归获取子目录，默认true
+   * @returns 文件列表；Size 为 UnixFS 存储字节数（目录为0，加密文件包含分块开销）
    */
   getFolderFileList(
     cid: string,
-    flag: number,
-    recursive: boolean,
+    flag?: number,
+    recursive?: boolean,
   ): Promise<
     [
       Array<{
@@ -214,7 +214,7 @@ export interface IFileOperations {
     filesMap:
       | Map<string, string | Uint8Array | ArrayBuffer>
       | Record<string, string | Uint8Array | ArrayBuffer>,
-    rootFolderName: string,
+    rootFolderName?: string,
   ): [FileList | null, Error | null];
 
   /**

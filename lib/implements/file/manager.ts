@@ -775,45 +775,30 @@ export class FileManager {
 
   private fileToStream(file: File, enkey: string): ReadableStream<Uint8Array> {
     const symKey = enkey ? SymmetricKey.fromString(enkey) : null;
-    const { readable, writable } = new TransformStream<
-      Uint8Array,
-      Uint8Array
-    >();
-    const writer = writable.getWriter();
-    const fileReader = new FileReader();
     const chunkSize = 3 << 20; // 3MB chunks
     let offset = 0;
-    const processFile = async () => {
-      try {
-        while (offset < file.size) {
-          // Read chunk
-          const chunk = file.slice(offset, offset + chunkSize);
-          const buffer = await new Promise<ArrayBuffer>((resolve, reject) => {
-            fileReader.onload = () => resolve(fileReader.result as ArrayBuffer);
-            fileReader.onerror = reject;
-            fileReader.readAsArrayBuffer(chunk);
-          });
-          const content = new Uint8Array(buffer);
-          // Encrypt if needed
-          if (symKey && file.name !== "dc_ownuser") {
-            const encrypted = await symKey.encrypt(content);
-            await writer.write(encrypted);
-          } else {
-            await writer.write(content);
-          }
-          offset += chunkSize;
+
+    return new ReadableStream<Uint8Array>({
+      async pull(streamController) {
+        if (offset >= file.size) {
+          streamController.close();
+          return;
         }
-      } catch (error) {
-        console.warn("Error processing file:", error);
-      } finally {
-        await writer.close();
-      }
-    };
-    // Start processing the file
-    processFile().catch((error) => {
-      console.warn("Error in file processing:", error);
+
+        try {
+          const chunk = file.slice(offset, offset + chunkSize);
+          const content = new Uint8Array(await chunk.arrayBuffer());
+          const output =
+            symKey && file.name !== "dc_ownuser"
+              ? await symKey.encrypt(content)
+              : content;
+          offset += chunkSize;
+          streamController.enqueue(output);
+        } catch (error) {
+          streamController.error(error);
+        }
+      },
     });
-    return readable;
   }
   /**
    * Counts all blocks recursively in a directory structure
@@ -1117,8 +1102,8 @@ export class FileManager {
    * 获取文件夹下的所有文件,包括内容（支持多级目录递归）
    * @param cid 根目录的CID
    * @param decryptKey 解密密钥
-   * @param recursive 是否递归获取子目录，默认false（保持向后兼容）
-   * @returns 文件列表：[{Name:文件或目录名，Type：0-文件 1-目录，Size：大小，Hash：文件或目录cid，Path：完整路径}]
+   * @param recursive 是否递归获取子目录，默认true
+   * @returns 文件列表；Size 为 UnixFS 存储字节数（目录为0，加密文件包含分块开销）
    */
   async getFolderFileListWithContent(
     cid: string,
@@ -1147,11 +1132,15 @@ export class FileManager {
         }
       } catch (error) {
         console.warn("Error connecting to peer:", error);
+        return [
+          null,
+          error instanceof Error ? error : new Error(String(error)),
+        ];
       }
     }
     const [fileList, err] = await this.getFolderFileList(
       cid,
-      cidNeedConnect.NOT_NEED,
+      peerAddr ? cidNeedConnect.NOT_NEED : cidNeedConnect.NEED,
       recursive,
     );
     if (err || !fileList) return [null, err];
@@ -1180,8 +1169,8 @@ export class FileManager {
    * 获取文件夹下的文件列表（支持多级目录递归）
    * @param cid 根目录的CID
    * @param flag 是否需要连接节点
-   * @param recursive 是否递归获取子目录，默认false（保持向后兼容）
-   * @returns 返回JSON格式的文件列表：[{Name:文件或目录名，Type：0-文件 1-目录，Size：大小，Hash：文件或目录cid，Path：完整路径}]
+   * @param recursive 是否递归获取子目录，默认true
+   * @returns 文件列表；Size 为 UnixFS 存储字节数（目录为0，加密文件包含分块开销）
    */
   async getFolderFileList(
     cid: string,
@@ -1220,57 +1209,67 @@ export class FileManager {
         Content?: Uint8Array; // 可选内容字段，用于存储文件内容
       }> = [];
 
+      // 整次递归共享无活动超时；子目录有进展时也会续期，避免父目录误超时。
+      const controller = new AbortController();
+      let timeoutId = setTimeout(() => controller.abort(), 60000);
+      const resetTimeout = () => {
+        clearTimeout(timeoutId);
+        timeoutId = setTimeout(() => controller.abort(), 60000);
+      };
+
       // 递归获取目录内容的内部函数
       const traverseDirectory = async (
         dirCid: CID,
         currentPath: string = "",
       ) => {
-        // 遍历当前目录内容
-        const controller = new AbortController();
-        // 增加默认超时时间到60s，适应移动端网络
-        let timeoutId = setTimeout(() => controller.abort(), 60000);
-        const resetTimeout = () => {
-          clearTimeout(timeoutId);
-          timeoutId = setTimeout(() => controller.abort(), 60000);
-        };
-
-        try {
-          // @ts-ignore
-          for await (const entry of fs.ls(dirCid.toString(), {
-            signal: controller.signal,
-          })) {
-            resetTimeout();
-            const { name, cid, type } = entry as any;
-            if (name === "." || name === ".." || name === "dc_ownuser") {
-              continue; // 跳过当前目录和上级目录
-            }
-            // 构建完整路径
-            const fullPath = currentPath ? `${currentPath}/${name}` : name;
-
-            // 构造文件信息对象
-            const fileInfo = {
-              Name: name,
-              Type: type === "directory" ? 1 : 0, // 0-文件 1-目录
-              Size: 0,
-              Hash: cid.toString(),
-              Path: fullPath,
-            };
-
-            fileNodes.push(fileInfo);
-
-            // 如果是目录且需要递归，则继续遍历子目录
-            if (type === "directory" && recursive) {
-              await traverseDirectory(cid, fullPath);
-            }
+        for await (const entry of fs.ls(dirCid, {
+          signal: controller.signal,
+        })) {
+          resetTimeout();
+          const { name, cid: entryCid } = entry;
+          if (name === "." || name === ".." || name === "dc_ownuser") {
+            continue; // 跳过当前目录和上级目录
           }
-        } finally {
-          if (timeoutId) clearTimeout(timeoutId);
+
+          // Helia 的 ls 条目只保证包含 cid/name/path，类型和大小需通过 stat 获取。
+          const stats = await fs.stat(entryCid, {
+            signal: controller.signal,
+          });
+          resetTimeout();
+          const isDirectory = stats.type === "directory";
+          if (stats.size > BigInt(Number.MAX_SAFE_INTEGER)) {
+            throw new Error(`UnixFS 文件过大，无法安全表示大小: ${name}`);
+          }
+
+          // 构建完整路径
+          const fullPath = currentPath ? `${currentPath}/${name}` : name;
+
+          // 构造文件信息对象
+          const fileInfo = {
+            Name: name,
+            Type: isDirectory ? 1 : 0, // 0-文件 1-目录
+            // UnixFS 目录本身没有可用的内容大小；文件返回存储字节数。
+            Size: isDirectory ? 0 : Number(stats.size),
+            Hash: entryCid.toString(),
+            Path: fullPath,
+          };
+
+          fileNodes.push(fileInfo);
+
+          // 如果是目录且需要递归，则继续遍历子目录
+          if (isDirectory && recursive) {
+            await traverseDirectory(entryCid, fullPath);
+          }
         }
       };
 
       // 开始遍历
-      await traverseDirectory(id);
-      return [fileNodes, null];
+      try {
+        await traverseDirectory(id);
+        return [fileNodes, null];
+      } finally {
+        clearTimeout(timeoutId);
+      }
     } catch (error) {
       console.warn("获取文件夹列表失败:", error);
       return [null, error instanceof Error ? error : new Error(String(error))];
@@ -1528,6 +1527,7 @@ export class FileManager {
     cid: string,
     decryptKey: string,
     flag?: number,
+    folderFile: boolean = false,
   ): Promise<SeekableFileStream | null> {
     // 连接到节点
     if (flag !== cidNeedConnect.NOT_NEED) {
@@ -1555,18 +1555,40 @@ export class FileManager {
           signal: controller.signal,
         }),
       );
-      clearTimeout(timeoutId);
-
       // 检查是否有DC文件头
-      const hasHeader = compareByteArrays(
-        headerData.subarray(0, 10),
-        new TextEncoder().encode(dcFileHead),
-      );
+      const hasHeader =
+        !folderFile &&
+        headerData.length >= 32 &&
+        compareByteArrays(
+          headerData.subarray(0, 10),
+          new TextEncoder().encode(dcFileHead),
+        );
 
-      // 获取文件大小
-      // const stats = await fs.stat(CID.parse(cid));
-      // const totalSize = Number(stats.fileSize);
-      const fileSize = this.readUint64BE(headerData, 24);
+      let fileSize: number;
+      if (hasHeader) {
+        fileSize = this.readUint64BE(headerData, 24);
+      } else {
+        // 目录上传的文件没有 DC 文件头，必须从 UnixFS 元数据获取存储大小。
+        // 加密目录文件按 3 MiB 分块，每块包含 nonce 和认证标签开销。
+        const stats = await fs.stat(CID.parse(cid), {
+          signal: controller.signal,
+        });
+        const storedSize = Number(stats.size);
+        if (!Number.isSafeInteger(storedSize) || storedSize < 0) {
+          throw new Error(`Invalid UnixFS file size: ${stats.size.toString()}`);
+        }
+
+        if (decryptKey && storedSize > 0) {
+          const encryptChunkSize = (3 << 20) + NonceBytes + TagBytes;
+          const chunkCount = Math.ceil(storedSize / encryptChunkSize);
+          fileSize = storedSize - chunkCount * (NonceBytes + TagBytes);
+          if (fileSize < 0) {
+            throw new Error("Invalid encrypted UnixFS file size");
+          }
+        } else {
+          fileSize = storedSize;
+        }
+      }
 
       const fileInfo = {
         size: fileSize,
@@ -1583,9 +1605,10 @@ export class FileManager {
         encryptChunkSize: (3 << 20) + NonceBytes + TagBytes,
       });
     } catch (err) {
-      clearTimeout(timeoutId);
       console.warn("Failed to create seekable file stream:", err);
       return null;
+    } finally {
+      clearTimeout(timeoutId);
     }
   }
 
@@ -1658,10 +1681,14 @@ export class FileManager {
       fileCid,
       decryptKey,
       cidNeedConnect.NOT_NEED,
+      true,
     );
   }
 
   readUint64BE(buffer: Uint8Array, offset: number): number {
+    if (offset < 0 || offset + 8 > buffer.length) {
+      throw new RangeError("Uint64 数据长度不足");
+    }
     // JavaScript中Number可以安全表示的最大整数是2^53-1
     const high =
       buffer[offset]! * 2 ** 24 +
@@ -1674,7 +1701,11 @@ export class FileManager {
       buffer[offset + 6]! * 2 ** 8 +
       buffer[offset + 7]!;
 
-    return high * 2 ** 32 + low;
+    const value = high * 2 ** 32 + low;
+    if (!Number.isSafeInteger(value)) {
+      throw new RangeError("Uint64 超出 JavaScript 安全整数范围");
+    }
+    return value;
   }
 
   /**

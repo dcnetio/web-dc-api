@@ -11,6 +11,7 @@ import { createLogger } from "../util/logger";
 import { registerServiceWorker } from "../common/service-worker";
 import { cidNeedConnect } from "@/common/constants";
 import { Multiaddr } from "@multiformats/multiaddr";
+import { buildDirectoryCachePath } from "../implements/file/file-cache-key";
 
 const logger = createLogger("FileModule");
 
@@ -135,24 +136,28 @@ export class FileModule implements DCModule, IFileOperations {
   ): Promise<SeekableFileStream> {
     try {
       this.assertInitialized();
+      const normalizedPath = filePath.replace(/^\/+|\/+$/g, "");
+      const cachePath = buildDirectoryCachePath(rootCid, normalizedPath);
+      const cachedStream = this.fileCacheManager.getCachedFileStream(
+        cachePath,
+        decryptKey,
+      );
+      if (cachedStream) return cachedStream;
 
       const fileStream = await this.fileManager.createSeekableFileStreamFromDir(
         rootCid,
-        filePath,
+        normalizedPath,
         decryptKey,
       );
       if (!fileStream) {
         throw new Error(`获取文件流失败: ${rootCid}/${filePath}`);
       }
 
-      // 尝试缓存
-      if (fileStream.getCid()) {
-        this.fileCacheManager.cacheFileStream(
-          fileStream.getCid().toString(),
-          decryptKey,
-          fileStream,
-        );
-      }
+      this.fileCacheManager.cacheFileStream(
+        cachePath,
+        decryptKey,
+        fileStream,
+      );
 
       return fileStream;
     } catch (error) {
@@ -377,8 +382,8 @@ export class FileModule implements DCModule, IFileOperations {
    * 获取文件夹下的所有文件,包括内容（支持多级目录递归）
    * @param cid 根目录的CID
    * @param decryptKey 解密密钥
-   * @param recursive 是否递归获取子目录，默认false（保持向后兼容）
-   * @returns 文件列表：[{Name:文件或目录名，Type：0-文件 1-目录，Size：大小，Hash：文件或目录cid，Path：完整路径}]
+   * @param recursive 是否递归获取子目录，默认true
+   * @returns 文件列表；Size 为 UnixFS 存储字节数（目录为0，加密文件包含分块开销）
    */
   async getFolderFileListWithContent(
     cid: string,
@@ -411,8 +416,8 @@ export class FileModule implements DCModule, IFileOperations {
    * 获取文件夹下的文件列表（支持多级目录递归）
    * @param cid 根目录的CID
    * @param flag 是否需要连接节点
-   * @param recursive 是否递归获取子目录，默认false（保持向后兼容）
-   * @returns 返回JSON格式的文件列表：[{Name:文件或目录名，Type：0-文件 1-目录，Size：大小，Hash：文件或目录cid，Path：完整路径}]
+   * @param recursive 是否递归获取子目录，默认true
+   * @returns 文件列表；Size 为 UnixFS 存储字节数（目录为0，加密文件包含分块开销）
    */
   async getFolderFileList(
     cid: string,

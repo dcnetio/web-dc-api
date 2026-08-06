@@ -1,9 +1,10 @@
 // service-worker.ts
 // 负责处理 Service Worker 相关的功能
 
-import { SeekableFileStream } from "../implements/file/seekableFileStream";
-import { IFileOperations } from "../interfaces";
+import type { SeekableFileStream } from "../implements/file/seekableFileStream";
+import type { IFileOperations } from "../interfaces";
 import { createLogger } from "../util/logger";
+import { parseRangeHeader } from "./http-range";
 
 const logger = createLogger("ServiceWorker");
 
@@ -19,17 +20,11 @@ export async function registerServiceWorker(
   swUrl: string = "",
   swScope: string = ""
 ): Promise<ServiceWorkerRegistration | null> {
-  if (!("serviceWorker" in navigator))
-    return Promise.reject("Service Worker not supported");
-  if (location.protocol !== "https:" && location.hostname !== "localhost") {
-    logger.error("ServiceWorker 仅支持 https 或 localhost");
+  if (typeof navigator === "undefined" || !("serviceWorker" in navigator)) {
     return null;
   }
-  if (
-    window.location.protocol != "https:" &&
-    window.location.hostname != "localhost"
-  ) {
-    logger.error("ServiceWorker 仅支持https协议");
+  if (location.protocol !== "https:" && location.hostname !== "localhost") {
+    logger.error("ServiceWorker 仅支持 https 或 localhost");
     return null;
   }
   const swPath = new URL(swUrl || "/sw.js", location.origin).href;
@@ -66,17 +61,24 @@ export async function registerServiceWorker(
     }
   };
   navigator.serviceWorker.addEventListener("message", swMessageHandler);
-  // 确保 SW 已 active
-  await navigator.serviceWorker.ready;
-  // 确保当前页已被控制，否则等待接管
-  if (!navigator.serviceWorker.controller) {
-    await new Promise<void>((resolve) => {
-      navigator.serviceWorker.addEventListener(
-        "controllerchange",
-        () => resolve(),
-        { once: true }
-      );
-    });
+  // 激活或接管异常不应无限阻塞整个 SDK 初始化。
+  const ready = await new Promise<boolean>((resolve) => {
+    const timeout = setTimeout(() => resolve(false), 10000);
+    navigator.serviceWorker.ready.then(
+      () => {
+        clearTimeout(timeout);
+        resolve(true);
+      },
+      () => {
+        clearTimeout(timeout);
+        resolve(false);
+      }
+    );
+  });
+  if (!ready) {
+    logger.warn("ServiceWorker 激活等待超时，将在后续页面加载时继续接管");
+  } else if (!navigator.serviceWorker.controller) {
+    logger.warn("ServiceWorker 已注册但尚未控制当前页面");
   }
   return registration;
 }
@@ -88,25 +90,28 @@ export async function registerServiceWorker(
  * @param fileOps 文件操作对象
  */
 export async function handleIpfsRequest(
-  data: { id: string; pathname: string; range?: string },
+  data: { id: string; pathname: string; range?: string | null },
   port: MessagePort,
   fileOps?: IFileOperations
 ): Promise<void> {
-  const { id, pathname, range } = data;
+  const { pathname, range } = data;
   let fileSize = 0;
 
   try {
     // 从路径提取IPFS路径和解密密钥
     const pathParts = pathname.split("/");
-    let ipfsPath = pathParts[3]!; // <ipfs-hash>[_<key>]
+    const resource = pathParts[3]; // <ipfs-hash>[_<key>]
+    if (!resource) throw new Error("无效的 IPFS 请求路径");
+    let ipfsPath = resource;
 
     // 提取加密密钥（如果有）
     let decryptKey = "";
-    const keyParts = ipfsPath.split("_");
-    if (keyParts.length > 1) {
-      ipfsPath = keyParts[0]!;
-      decryptKey = keyParts[1]!;
+    const keySeparator = ipfsPath.indexOf("_");
+    if (keySeparator >= 0) {
+      decryptKey = ipfsPath.slice(keySeparator + 1);
+      ipfsPath = ipfsPath.slice(0, keySeparator);
     }
+    if (!ipfsPath) throw new Error("IPFS CID 不能为空");
 
     let fileData: Uint8Array | null = null;
     const DEFAULT_CHUNK_SIZE = 3 * 1024 * 1024; // 默认返回3MB数据块
@@ -114,7 +119,12 @@ export async function handleIpfsRequest(
     let end = 0;
     let subPath = "";
     if (pathParts.length > 4) {
-      subPath = pathParts.slice(4).join("/"); // 目录下的文件路径
+      const encodedSubPath = pathParts.slice(4).join("/");
+      try {
+        subPath = decodeURIComponent(encodedSubPath); // 目录下的文件路径
+      } catch {
+        subPath = encodedSubPath;
+      }
     }
 
     if (fileOps) {
@@ -142,29 +152,35 @@ export async function handleIpfsRequest(
             throw new Error(`获取文件流失败: ${ipfsPath}`);
           }
           fileSize = fileStream.getSize();
-          if (fileStream) {
-            const match = range.match(/bytes=(\d+)-(\d+)?/);
-            if (match) {
-              start = parseInt(match[1]!);
-              end = match[2]
-                ? parseInt(match[2])
-                : start + DEFAULT_CHUNK_SIZE - 1;
-              if (end >= fileSize) {
-                // 如果请求的结束范围超过文件大小，则调整为文件大小
-                end = fileSize - 1;
-              }
-              logger.info(
-                `处理范围请求: ${start}-${end}, 总大小: ${fileStream.getSize()}`
-              );
-              fileStream.seek(start);
-              fileData = await fileStream.read(end - start + 1);
+          const parsedRange = parseRangeHeader(
+            range,
+            fileSize,
+            DEFAULT_CHUNK_SIZE,
+          );
+          if (!parsedRange) {
+            fileOps.clearFileCache(pathname);
+            port.postMessage({
+              success: false,
+              status: 416,
+              error: "Range Not Satisfiable",
+              headers: { "Content-Range": `bytes */${fileSize}` },
+            });
+            return;
+          }
 
-              // 如果读取到文件末尾，清理缓存
-              if (end >= fileStream.getSize() - 1) {
-                logger.info(`文件读取完成，清理缓存: ${pathname}`);
-                fileOps.clearFileCache(pathname);
-              }
-            }
+          ({ start, end } = parsedRange);
+          logger.info(`处理范围请求: ${start}-${end}, 总大小: ${fileSize}`);
+          fileStream.seek(start);
+          fileData = await fileStream.read(end - start + 1);
+          if (fileData.length === 0) {
+            throw new Error(`范围读取未返回数据: ${start}-${end}`);
+          }
+          // 后端提前结束时按实际读取字节修正 Content-Range。
+          end = start + fileData.length - 1;
+
+          if (end >= fileSize - 1) {
+            logger.info(`文件读取完成，清理缓存: ${pathname}`);
+            fileOps.clearFileCache(pathname);
           }
         } catch (err) {
           logger.error("文件流操作失败:", err);
@@ -220,6 +236,8 @@ export async function handleIpfsRequest(
       }
 
       if (fileData && fileData.buffer) {
+        // 始终传递当前视图的精确字节，避免 subarray 把底层缓冲区的额外数据带给 SW。
+        const responseData = fileData.slice().buffer;
         // 创建不包含 buffer 的基本响应对象
         const responseObj = {
           success: true,
@@ -235,13 +253,13 @@ export async function handleIpfsRequest(
         };
 
         // 传递时才添加 data 字段
-        // 注意：在这个方法里 fileData.buffer 被转移后，fileData 将不再可用
+        // 传输复制后的精确缓冲区，不分离调用方持有的原始 Uint8Array。
         port.postMessage(
           {
             ...responseObj,
-            data: fileData.buffer,
+            data: responseData,
           },
-          [fileData.buffer]
+          [responseData]
         );
 
         // 手动清除引用
@@ -277,13 +295,13 @@ export async function handleIpfsRequest(
  * @returns Promise<boolean> Service Worker是否活跃
  */
 export async function isServiceWorkerActive(): Promise<boolean> {
-  if (!("serviceWorker" in navigator)) {
+  if (typeof navigator === "undefined" || !("serviceWorker" in navigator)) {
     return false;
   }
 
   try {
-    const registration = await navigator.serviceWorker.ready;
-    return !!registration.active;
+    const registration = await navigator.serviceWorker.getRegistration();
+    return !!registration?.active;
   } catch (error) {
     logger.error("检查Service Worker状态失败:", error);
     return false;
@@ -295,7 +313,7 @@ export async function isServiceWorkerActive(): Promise<boolean> {
  * @returns Promise<boolean> 是否成功更新
  */
 export async function updateServiceWorker(): Promise<boolean> {
-  if (!("serviceWorker" in navigator)) {
+  if (typeof navigator === "undefined" || !("serviceWorker" in navigator)) {
     return false;
   }
 
