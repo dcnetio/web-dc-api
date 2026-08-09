@@ -20,6 +20,10 @@ import { payProtocol } from "@/common/define";
 const logger = createLogger("PayModule");
 const packageMutationTokenPrefix = "pkgsig.";
 
+// 订单查询签名 op 名称，必须与网关 services/wxsvr/payments/order_query_auth.go 保持一致。
+const ORDER_QUERY_OP_BY_ACCOUNT = "list_orders_by_account";
+const ORDER_QUERY_OP_BY_DAPPID = "list_orders_by_dappid";
+
 export class PayModule implements DCModule, IPayOperations {
   readonly moduleName = CoreModuleName.PAY;
   private initialized: boolean = false;
@@ -146,6 +150,43 @@ export class PayModule implements DCModule, IPayOperations {
     return new Uint8Array(buffer);
   }
 
+  /**
+   * 构造订单查询签名载荷，与网关 BuildOrderQueryPayload 保持一致。
+   * 签名内容: op_name | account | dappid | timestamp（分页参数不参与签名）
+   */
+  private buildOrderQuerySignPayload(
+    op: string,
+    account: string,
+    dappid: string,
+    timestampSec: number,
+  ): Uint8Array {
+    const buffer: number[] = [];
+    this.writeStringField(buffer, op);
+    this.writeStringField(buffer, String(account || ""));
+    this.writeStringField(buffer, String(dappid || ""));
+    this.writeInt64Field(buffer, timestampSec);
+    return new Uint8Array(buffer);
+  }
+
+  /**
+   * 生成订单查询的 Authorization 头。订单由支付网关写入，用户无写权限，
+   * 此签名仅用于证明"读"的身份：查自己的订单，或作为应用 owner 查本应用订单。
+   */
+  private async buildOrderQueryAuthToken(
+    op: string,
+    account: string,
+    dappid: string,
+  ): Promise<string> {
+    const timestampSec = Math.floor(Date.now() / 1000);
+    const payload = this.buildOrderQuerySignPayload(
+      op,
+      account,
+      dappid,
+      timestampSec,
+    );
+    return this.buildPackageMutationAuthToken(payload, timestampSec);
+  }
+
   private async buildPackageMutationAuthToken(
     payload: Uint8Array,
     timestampSec: number,
@@ -207,11 +248,12 @@ export class PayModule implements DCModule, IPayOperations {
     }
   }
 
-  private async requestPayApi(path: string): Promise<any> {
+  private async requestPayApi(path: string, authToken?: string): Promise<any> {
     const targetUrl = `${this.getPayApiBaseUrl()}${path.startsWith("/") ? "" : "/"}${path}`;
     const response = await fetch(targetUrl, {
       method: "GET",
       credentials: "omit",
+      headers: authToken ? { Authorization: authToken } : undefined,
       signal: AbortSignal.timeout(15000),
     });
 
@@ -318,8 +360,14 @@ export class PayModule implements DCModule, IPayOperations {
     params.set("page_num", String(pageNum));
     params.set("page_size", String(pageSize));
 
+    const authToken = await this.buildOrderQueryAuthToken(
+      ORDER_QUERY_OP_BY_ACCOUNT,
+      account,
+      dappid,
+    );
     const orderPayload = await this.requestPayApi(
       `/order/list?${params.toString()}`,
+      authToken,
     );
     if (Number(orderPayload?.code || 0) !== 0) {
       throw new Error(orderPayload?.msg || "订单列表查询失败");
@@ -358,6 +406,14 @@ export class PayModule implements DCModule, IPayOperations {
       });
     }
 
+    return this.normalizeOrderRecords(orderList, billMap);
+  }
+
+  /** 将网关返回的原始订单行归一化为 IPaymentOrderRecord。 */
+  private normalizeOrderRecords(
+    orderList: any[],
+    billMap: Map<string, any>,
+  ): IPaymentOrderRecord[] {
     const normalizedRecords: Array<IPaymentOrderRecord | null> = orderList.map(
       (order: any) => {
         const outTradeNo = String(order?.out_trade_no || "").trim();
@@ -411,6 +467,200 @@ export class PayModule implements DCModule, IPayOperations {
     return normalizedRecords.filter(
       (item): item is IPaymentOrderRecord => item !== null,
     );
+  }
+
+  /**
+   * 应用维度订单查询条件（商品管理 / 统计分析用）。
+   * 与网关 PayOrderDappidFilter、账本索引维度对齐：
+   * 店铺(dappid) / 商品(price_key、pkg_id) / 状态(pay_status) / 时间(毫秒时间戳，左闭右开)。
+   * 时间为毫秒单位，与账本索引里的 created_at 口径一致。
+   */
+  private buildDappidOrderParams(
+    options: {
+      dappid?: string;
+      priceKey?: string;
+      pkgId?: number;
+      payStatus?: number;
+      startTime?: number;
+      endTime?: number;
+    },
+    pageNum: number,
+    pageSize: number,
+  ): URLSearchParams | null {
+    const dappid = String(
+      options.dappid || this.dcContext.appInfo.appId || "",
+    ).trim();
+    if (!dappid) {
+      return null;
+    }
+    const params = new URLSearchParams();
+    params.set("dappid", dappid);
+    params.set("page_num", String(pageNum));
+    params.set("page_size", String(pageSize));
+    const priceKey = String(options.priceKey || "").trim();
+    if (priceKey) {
+      params.set("price_key", priceKey);
+    }
+    const pkgId = Number(options.pkgId || 0);
+    if (Number.isInteger(pkgId) && pkgId > 0) {
+      params.set("pkg_id", String(pkgId));
+    }
+    const payStatus = Number(options.payStatus || 0);
+    if (Number.isInteger(payStatus) && payStatus >= 1) {
+      params.set("pay_status", String(payStatus));
+    }
+    const startTime = Math.trunc(Number(options.startTime || 0));
+    if (Number.isFinite(startTime) && startTime > 0) {
+      params.set("start_time", String(startTime));
+    }
+    const endTime = Math.trunc(Number(options.endTime || 0));
+    if (Number.isFinite(endTime) && endTime > 0) {
+      params.set("end_time", String(endTime));
+    }
+    return params;
+  }
+
+  /**
+   * 按应用维度查询订单（商品管理 / 统计分析用）。
+   * 返回该应用下所有买家的订单，因此网关要求调用者是应用 owner
+   * 或配置在 OrderStatsAdminPubkeys 中的统计管理员。
+   * 订单由支付网关写入，此接口只读，不存在用户篡改订单的路径。
+   */
+  async listOrdersByDappid(options: {
+    dappid?: string;
+    pageNum?: number;
+    pageSize?: number;
+    priceKey?: string;
+    pkgId?: number;
+    payStatus?: number;
+    startTime?: number;
+    endTime?: number;
+  }): Promise<IPaymentOrderRecord[]> {
+    const result = await this.fetchOrdersByDappid(options);
+    return result ? result.list : [];
+  }
+
+  /**
+   * 按应用维度分页查询订单，返回总数供分页 UI 使用。
+   * 过滤条件与 listOrdersByDappid 一致。
+   */
+  async listOrdersByDappidPage(options: {
+    dappid?: string;
+    pageNum?: number;
+    pageSize?: number;
+    priceKey?: string;
+    pkgId?: number;
+    payStatus?: number;
+    startTime?: number;
+    endTime?: number;
+  }): Promise<{
+    list: IPaymentOrderRecord[];
+    total: number;
+    pageNum: number;
+    pageSize: number;
+  }> {
+    return (
+      (await this.fetchOrdersByDappid(options)) || {
+        list: [],
+        total: 0,
+        pageNum: Math.max(1, Number(options.pageNum || 1)),
+        pageSize: Math.max(1, Math.min(100, Number(options.pageSize || 20))),
+      }
+    );
+  }
+
+  private async fetchOrdersByDappid(options: {
+    dappid?: string;
+    pageNum?: number;
+    pageSize?: number;
+    priceKey?: string;
+    pkgId?: number;
+    payStatus?: number;
+    startTime?: number;
+    endTime?: number;
+  }): Promise<{
+    list: IPaymentOrderRecord[];
+    total: number;
+    pageNum: number;
+    pageSize: number;
+  } | null> {
+    this.assertInitialized();
+    const pageNum = Math.max(1, Number(options.pageNum || 1));
+    const pageSize = Math.max(1, Math.min(100, Number(options.pageSize || 20)));
+    const params = this.buildDappidOrderParams(options, pageNum, pageSize);
+    if (!params) {
+      return null;
+    }
+    const dappid = params.get("dappid") || "";
+    const authToken = await this.buildOrderQueryAuthToken(
+      ORDER_QUERY_OP_BY_DAPPID,
+      "",
+      dappid,
+    );
+    const orderPayload = await this.requestPayApi(
+      `/order/getbydappid?${params.toString()}`,
+      authToken,
+    );
+    if (Number(orderPayload?.code || 0) !== 0) {
+      throw new Error(orderPayload?.msg || "应用订单查询失败");
+    }
+
+    const orderList = Array.isArray(orderPayload?.data?.list)
+      ? orderPayload.data.list
+      : [];
+    return {
+      list: this.normalizeOrderRecords(orderList, new Map()),
+      total: Number(orderPayload?.data?.total || 0),
+      pageNum: Number(orderPayload?.data?.page_num || pageNum),
+      pageSize: Number(orderPayload?.data?.page_size || pageSize),
+    };
+  }
+
+  /**
+   * 按应用维度统计订单（笔数/已支付笔数/已支付金额）。
+   * 与列表同过滤条件同口径，金额只统计已支付订单。
+   * 鉴权与订单列表一致：必须是应用 owner 或配置的统计管理员。
+   */
+  async statsOrdersByDappid(options: {
+    dappid?: string;
+    priceKey?: string;
+    pkgId?: number;
+    payStatus?: number;
+    startTime?: number;
+    endTime?: number;
+  }): Promise<{
+    totalOrders: number;
+    paidOrders: number;
+    paidAmount: number;
+  }> {
+    this.assertInitialized();
+    const params = this.buildDappidOrderParams(options, 1, 1);
+    if (!params) {
+      return { totalOrders: 0, paidOrders: 0, paidAmount: 0 };
+    }
+    const dappid = params.get("dappid") || "";
+    // 统计接口不看分页，去掉分页参数避免误导。
+    params.delete("page_num");
+    params.delete("page_size");
+
+    const authToken = await this.buildOrderQueryAuthToken(
+      ORDER_QUERY_OP_BY_DAPPID,
+      "",
+      dappid,
+    );
+    const statsPayload = await this.requestPayApi(
+      `/order/statsbydappid?${params.toString()}`,
+      authToken,
+    );
+    if (Number(statsPayload?.code || 0) !== 0) {
+      throw new Error(statsPayload?.msg || "应用订单统计失败");
+    }
+    const data = statsPayload?.data || {};
+    return {
+      totalOrders: Number(data.total_orders || 0),
+      paidOrders: Number(data.paid_orders || 0),
+      paidAmount: Number(data.paid_amount || 0),
+    };
   }
 
   private async getPayGrpcClient(

@@ -451,6 +451,85 @@ export interface IPayOperations {
   }): Promise<IPaymentOrderRecord[]>;
 
   /**
+   * 按应用维度查询订单（商品管理 / 统计分析用）。
+   * 返回该应用下所有买家的订单，因此网关要求调用者是应用 owner
+   * 或配置的统计管理员。订单由支付网关写入，此接口只读。
+   * @param options 查询条件（dappid / 分页 / 商品 / 状态 / 时间过滤）
+   * @returns 订单记录数组
+   */
+  listOrdersByDappid(options: {
+    /**
+     * 应用ID（可选，缺省用当前应用）。
+     */
+    dappid?: string;
+    /**
+     * 页码。
+     */
+    pageNum?: number;
+    /**
+     * 每页大小。
+     */
+    pageSize?: number;
+    /**
+     * 商品价格 key（可选）。
+     */
+    priceKey?: string;
+    /**
+     * 套餐/商品 ID（可选）。
+     */
+    pkgId?: number;
+    /**
+     * 支付状态（可选）。
+     */
+    payStatus?: number;
+    /**
+     * 起始时间（毫秒时间戳，可选）。
+     */
+    startTime?: number;
+    /**
+     * 结束时间（毫秒时间戳，左闭右开，可选）。
+     */
+    endTime?: number;
+  }): Promise<IPaymentOrderRecord[]>;
+
+  /**
+   * 按应用维度分页查询订单，返回总数供分页 UI 使用。
+   * 过滤条件与 listOrdersByDappid 一致。
+   */
+  listOrdersByDappidPage(options: {
+    dappid?: string;
+    pageNum?: number;
+    pageSize?: number;
+    priceKey?: string;
+    pkgId?: number;
+    payStatus?: number;
+    startTime?: number;
+    endTime?: number;
+  }): Promise<{
+    list: IPaymentOrderRecord[];
+    total: number;
+    pageNum: number;
+    pageSize: number;
+  }>;
+
+  /**
+   * 按应用维度统计订单（笔数/已支付笔数/已支付金额）。
+   * 与列表同过滤条件同口径，金额只统计已支付订单。
+   */
+  statsOrdersByDappid(options: {
+    dappid?: string;
+    priceKey?: string;
+    pkgId?: number;
+    payStatus?: number;
+    startTime?: number;
+    endTime?: number;
+  }): Promise<{
+    totalOrders: number;
+    paidOrders: number;
+    paidAmount: number;
+  }>;
+
+  /**
    * 创建支付订单。
    * @param options 下单参数
    * @returns 商户订单号 outTradeNo
