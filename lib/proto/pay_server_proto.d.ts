@@ -374,6 +374,20 @@ export namespace pb {
         public getPayOrdersByDappid(request: pb.IGetPayOrdersByDappidRequest): Promise<pb.ListPayOrdersResponse>;
 
         /**
+         * Calls GetPayOrderStatsByDappid.
+         * @param request GetPayOrderStatsByDappidRequest message or plain object
+         * @param callback Node-style callback called with the error, if any, and GetPayOrderStatsByDappidResponse
+         */
+        public getPayOrderStatsByDappid(request: pb.IGetPayOrderStatsByDappidRequest, callback: pb.PayService.GetPayOrderStatsByDappidCallback): void;
+
+        /**
+         * Calls GetPayOrderStatsByDappid.
+         * @param request GetPayOrderStatsByDappidRequest message or plain object
+         * @returns Promise
+         */
+        public getPayOrderStatsByDappid(request: pb.IGetPayOrderStatsByDappidRequest): Promise<pb.GetPayOrderStatsByDappidResponse>;
+
+        /**
          * Calls ListPayOrders.
          * @param request ListPayOrdersRequest message or plain object
          * @param callback Node-style callback called with the error, if any, and ListPayOrdersResponse
@@ -760,6 +774,13 @@ export namespace pb {
          * @param [response] ListPayOrdersResponse
          */
         type GetPayOrdersByDappidCallback = (error: (Error|null), response?: pb.ListPayOrdersResponse) => void;
+
+        /**
+         * Callback as used by {@link pb.PayService#getPayOrderStatsByDappid}.
+         * @param error Error, if any
+         * @param [response] GetPayOrderStatsByDappidResponse
+         */
+        type GetPayOrderStatsByDappidCallback = (error: (Error|null), response?: pb.GetPayOrderStatsByDappidResponse) => void;
 
         /**
          * Callback as used by {@link pb.PayService#listPayOrders}.
@@ -8266,6 +8287,12 @@ export namespace pb {
 
         /** GetPayOrdersByAccountRequest pageSize */
         pageSize?: (number|null);
+
+        /** GetPayOrdersByAccountRequest dappid */
+        dappid?: (string|null);
+
+        /** GetPayOrdersByAccountRequest payStatus */
+        payStatus?: (number|null);
     }
 
     /** Represents a GetPayOrdersByAccountRequest. */
@@ -8285,6 +8312,12 @@ export namespace pb {
 
         /** GetPayOrdersByAccountRequest pageSize. */
         public pageSize: number;
+
+        /** GetPayOrdersByAccountRequest dappid. */
+        public dappid: string;
+
+        /** GetPayOrdersByAccountRequest payStatus. */
+        public payStatus: number;
 
         /**
          * Creates a new GetPayOrdersByAccountRequest instance using the specified properties.
@@ -8364,6 +8397,127 @@ export namespace pb {
         public static getTypeUrl(typeUrlPrefix?: string): string;
     }
 
+    /** Properties of a PayOrderDappidFilter. */
+    interface IPayOrderDappidFilter {
+
+        /** PayOrderDappidFilter priceKey */
+        priceKey?: (string|null);
+
+        /** PayOrderDappidFilter pkgId */
+        pkgId?: (number|null);
+
+        /** PayOrderDappidFilter payStatus */
+        payStatus?: (number|null);
+
+        /** PayOrderDappidFilter startTime */
+        startTime?: (number|Long|null);
+
+        /** PayOrderDappidFilter endTime */
+        endTime?: (number|Long|null);
+    }
+
+    /** Represents a PayOrderDappidFilter. */
+    class PayOrderDappidFilter implements IPayOrderDappidFilter {
+
+        /**
+         * Constructs a new PayOrderDappidFilter.
+         * @param [properties] Properties to set
+         */
+        constructor(properties?: pb.IPayOrderDappidFilter);
+
+        /** PayOrderDappidFilter priceKey. */
+        public priceKey: string;
+
+        /** PayOrderDappidFilter pkgId. */
+        public pkgId: number;
+
+        /** PayOrderDappidFilter payStatus. */
+        public payStatus: number;
+
+        /** PayOrderDappidFilter startTime. */
+        public startTime: (number|Long);
+
+        /** PayOrderDappidFilter endTime. */
+        public endTime: (number|Long);
+
+        /**
+         * Creates a new PayOrderDappidFilter instance using the specified properties.
+         * @param [properties] Properties to set
+         * @returns PayOrderDappidFilter instance
+         */
+        public static create(properties?: pb.IPayOrderDappidFilter): pb.PayOrderDappidFilter;
+
+        /**
+         * Encodes the specified PayOrderDappidFilter message. Does not implicitly {@link pb.PayOrderDappidFilter.verify|verify} messages.
+         * @param message PayOrderDappidFilter message or plain object to encode
+         * @param [writer] Writer to encode to
+         * @returns Writer
+         */
+        public static encode(message: pb.IPayOrderDappidFilter, writer?: $protobuf.Writer): $protobuf.Writer;
+
+        /**
+         * Encodes the specified PayOrderDappidFilter message, length delimited. Does not implicitly {@link pb.PayOrderDappidFilter.verify|verify} messages.
+         * @param message PayOrderDappidFilter message or plain object to encode
+         * @param [writer] Writer to encode to
+         * @returns Writer
+         */
+        public static encodeDelimited(message: pb.IPayOrderDappidFilter, writer?: $protobuf.Writer): $protobuf.Writer;
+
+        /**
+         * Decodes a PayOrderDappidFilter message from the specified reader or buffer.
+         * @param reader Reader or buffer to decode from
+         * @param [length] Message length if known beforehand
+         * @returns PayOrderDappidFilter
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): pb.PayOrderDappidFilter;
+
+        /**
+         * Decodes a PayOrderDappidFilter message from the specified reader or buffer, length delimited.
+         * @param reader Reader or buffer to decode from
+         * @returns PayOrderDappidFilter
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): pb.PayOrderDappidFilter;
+
+        /**
+         * Verifies a PayOrderDappidFilter message.
+         * @param message Plain object to verify
+         * @returns `null` if valid, otherwise the reason why it is not
+         */
+        public static verify(message: { [k: string]: any }): (string|null);
+
+        /**
+         * Creates a PayOrderDappidFilter message from a plain object. Also converts values to their respective internal types.
+         * @param object Plain object
+         * @returns PayOrderDappidFilter
+         */
+        public static fromObject(object: { [k: string]: any }): pb.PayOrderDappidFilter;
+
+        /**
+         * Creates a plain object from a PayOrderDappidFilter message. Also converts values to other types if specified.
+         * @param message PayOrderDappidFilter
+         * @param [options] Conversion options
+         * @returns Plain object
+         */
+        public static toObject(message: pb.PayOrderDappidFilter, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+        /**
+         * Converts this PayOrderDappidFilter to JSON.
+         * @returns JSON object
+         */
+        public toJSON(): { [k: string]: any };
+
+        /**
+         * Gets the default type url for PayOrderDappidFilter
+         * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+         * @returns The default type url
+         */
+        public static getTypeUrl(typeUrlPrefix?: string): string;
+    }
+
     /** Properties of a GetPayOrdersByDappidRequest. */
     interface IGetPayOrdersByDappidRequest {
 
@@ -8375,6 +8529,9 @@ export namespace pb {
 
         /** GetPayOrdersByDappidRequest pageSize */
         pageSize?: (number|null);
+
+        /** GetPayOrdersByDappidRequest filter */
+        filter?: (pb.IPayOrderDappidFilter|null);
     }
 
     /** Represents a GetPayOrdersByDappidRequest. */
@@ -8394,6 +8551,9 @@ export namespace pb {
 
         /** GetPayOrdersByDappidRequest pageSize. */
         public pageSize: number;
+
+        /** GetPayOrdersByDappidRequest filter. */
+        public filter?: (pb.IPayOrderDappidFilter|null);
 
         /**
          * Creates a new GetPayOrdersByDappidRequest instance using the specified properties.
@@ -8467,6 +8627,327 @@ export namespace pb {
 
         /**
          * Gets the default type url for GetPayOrdersByDappidRequest
+         * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+         * @returns The default type url
+         */
+        public static getTypeUrl(typeUrlPrefix?: string): string;
+    }
+
+    /** Properties of a GetPayOrderStatsByDappidRequest. */
+    interface IGetPayOrderStatsByDappidRequest {
+
+        /** GetPayOrderStatsByDappidRequest dappid */
+        dappid?: (string|null);
+
+        /** GetPayOrderStatsByDappidRequest filter */
+        filter?: (pb.IPayOrderDappidFilter|null);
+    }
+
+    /** Represents a GetPayOrderStatsByDappidRequest. */
+    class GetPayOrderStatsByDappidRequest implements IGetPayOrderStatsByDappidRequest {
+
+        /**
+         * Constructs a new GetPayOrderStatsByDappidRequest.
+         * @param [properties] Properties to set
+         */
+        constructor(properties?: pb.IGetPayOrderStatsByDappidRequest);
+
+        /** GetPayOrderStatsByDappidRequest dappid. */
+        public dappid: string;
+
+        /** GetPayOrderStatsByDappidRequest filter. */
+        public filter?: (pb.IPayOrderDappidFilter|null);
+
+        /**
+         * Creates a new GetPayOrderStatsByDappidRequest instance using the specified properties.
+         * @param [properties] Properties to set
+         * @returns GetPayOrderStatsByDappidRequest instance
+         */
+        public static create(properties?: pb.IGetPayOrderStatsByDappidRequest): pb.GetPayOrderStatsByDappidRequest;
+
+        /**
+         * Encodes the specified GetPayOrderStatsByDappidRequest message. Does not implicitly {@link pb.GetPayOrderStatsByDappidRequest.verify|verify} messages.
+         * @param message GetPayOrderStatsByDappidRequest message or plain object to encode
+         * @param [writer] Writer to encode to
+         * @returns Writer
+         */
+        public static encode(message: pb.IGetPayOrderStatsByDappidRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+        /**
+         * Encodes the specified GetPayOrderStatsByDappidRequest message, length delimited. Does not implicitly {@link pb.GetPayOrderStatsByDappidRequest.verify|verify} messages.
+         * @param message GetPayOrderStatsByDappidRequest message or plain object to encode
+         * @param [writer] Writer to encode to
+         * @returns Writer
+         */
+        public static encodeDelimited(message: pb.IGetPayOrderStatsByDappidRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+        /**
+         * Decodes a GetPayOrderStatsByDappidRequest message from the specified reader or buffer.
+         * @param reader Reader or buffer to decode from
+         * @param [length] Message length if known beforehand
+         * @returns GetPayOrderStatsByDappidRequest
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): pb.GetPayOrderStatsByDappidRequest;
+
+        /**
+         * Decodes a GetPayOrderStatsByDappidRequest message from the specified reader or buffer, length delimited.
+         * @param reader Reader or buffer to decode from
+         * @returns GetPayOrderStatsByDappidRequest
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): pb.GetPayOrderStatsByDappidRequest;
+
+        /**
+         * Verifies a GetPayOrderStatsByDappidRequest message.
+         * @param message Plain object to verify
+         * @returns `null` if valid, otherwise the reason why it is not
+         */
+        public static verify(message: { [k: string]: any }): (string|null);
+
+        /**
+         * Creates a GetPayOrderStatsByDappidRequest message from a plain object. Also converts values to their respective internal types.
+         * @param object Plain object
+         * @returns GetPayOrderStatsByDappidRequest
+         */
+        public static fromObject(object: { [k: string]: any }): pb.GetPayOrderStatsByDappidRequest;
+
+        /**
+         * Creates a plain object from a GetPayOrderStatsByDappidRequest message. Also converts values to other types if specified.
+         * @param message GetPayOrderStatsByDappidRequest
+         * @param [options] Conversion options
+         * @returns Plain object
+         */
+        public static toObject(message: pb.GetPayOrderStatsByDappidRequest, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+        /**
+         * Converts this GetPayOrderStatsByDappidRequest to JSON.
+         * @returns JSON object
+         */
+        public toJSON(): { [k: string]: any };
+
+        /**
+         * Gets the default type url for GetPayOrderStatsByDappidRequest
+         * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+         * @returns The default type url
+         */
+        public static getTypeUrl(typeUrlPrefix?: string): string;
+    }
+
+    /** Properties of a PayOrderDappidStats. */
+    interface IPayOrderDappidStats {
+
+        /** PayOrderDappidStats totalOrders */
+        totalOrders?: (number|Long|null);
+
+        /** PayOrderDappidStats paidOrders */
+        paidOrders?: (number|Long|null);
+
+        /** PayOrderDappidStats paidAmount */
+        paidAmount?: (number|Long|null);
+    }
+
+    /** Represents a PayOrderDappidStats. */
+    class PayOrderDappidStats implements IPayOrderDappidStats {
+
+        /**
+         * Constructs a new PayOrderDappidStats.
+         * @param [properties] Properties to set
+         */
+        constructor(properties?: pb.IPayOrderDappidStats);
+
+        /** PayOrderDappidStats totalOrders. */
+        public totalOrders: (number|Long);
+
+        /** PayOrderDappidStats paidOrders. */
+        public paidOrders: (number|Long);
+
+        /** PayOrderDappidStats paidAmount. */
+        public paidAmount: (number|Long);
+
+        /**
+         * Creates a new PayOrderDappidStats instance using the specified properties.
+         * @param [properties] Properties to set
+         * @returns PayOrderDappidStats instance
+         */
+        public static create(properties?: pb.IPayOrderDappidStats): pb.PayOrderDappidStats;
+
+        /**
+         * Encodes the specified PayOrderDappidStats message. Does not implicitly {@link pb.PayOrderDappidStats.verify|verify} messages.
+         * @param message PayOrderDappidStats message or plain object to encode
+         * @param [writer] Writer to encode to
+         * @returns Writer
+         */
+        public static encode(message: pb.IPayOrderDappidStats, writer?: $protobuf.Writer): $protobuf.Writer;
+
+        /**
+         * Encodes the specified PayOrderDappidStats message, length delimited. Does not implicitly {@link pb.PayOrderDappidStats.verify|verify} messages.
+         * @param message PayOrderDappidStats message or plain object to encode
+         * @param [writer] Writer to encode to
+         * @returns Writer
+         */
+        public static encodeDelimited(message: pb.IPayOrderDappidStats, writer?: $protobuf.Writer): $protobuf.Writer;
+
+        /**
+         * Decodes a PayOrderDappidStats message from the specified reader or buffer.
+         * @param reader Reader or buffer to decode from
+         * @param [length] Message length if known beforehand
+         * @returns PayOrderDappidStats
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): pb.PayOrderDappidStats;
+
+        /**
+         * Decodes a PayOrderDappidStats message from the specified reader or buffer, length delimited.
+         * @param reader Reader or buffer to decode from
+         * @returns PayOrderDappidStats
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): pb.PayOrderDappidStats;
+
+        /**
+         * Verifies a PayOrderDappidStats message.
+         * @param message Plain object to verify
+         * @returns `null` if valid, otherwise the reason why it is not
+         */
+        public static verify(message: { [k: string]: any }): (string|null);
+
+        /**
+         * Creates a PayOrderDappidStats message from a plain object. Also converts values to their respective internal types.
+         * @param object Plain object
+         * @returns PayOrderDappidStats
+         */
+        public static fromObject(object: { [k: string]: any }): pb.PayOrderDappidStats;
+
+        /**
+         * Creates a plain object from a PayOrderDappidStats message. Also converts values to other types if specified.
+         * @param message PayOrderDappidStats
+         * @param [options] Conversion options
+         * @returns Plain object
+         */
+        public static toObject(message: pb.PayOrderDappidStats, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+        /**
+         * Converts this PayOrderDappidStats to JSON.
+         * @returns JSON object
+         */
+        public toJSON(): { [k: string]: any };
+
+        /**
+         * Gets the default type url for PayOrderDappidStats
+         * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+         * @returns The default type url
+         */
+        public static getTypeUrl(typeUrlPrefix?: string): string;
+    }
+
+    /** Properties of a GetPayOrderStatsByDappidResponse. */
+    interface IGetPayOrderStatsByDappidResponse {
+
+        /** GetPayOrderStatsByDappidResponse code */
+        code?: (number|null);
+
+        /** GetPayOrderStatsByDappidResponse msg */
+        msg?: (string|null);
+
+        /** GetPayOrderStatsByDappidResponse data */
+        data?: (pb.IPayOrderDappidStats|null);
+    }
+
+    /** Represents a GetPayOrderStatsByDappidResponse. */
+    class GetPayOrderStatsByDappidResponse implements IGetPayOrderStatsByDappidResponse {
+
+        /**
+         * Constructs a new GetPayOrderStatsByDappidResponse.
+         * @param [properties] Properties to set
+         */
+        constructor(properties?: pb.IGetPayOrderStatsByDappidResponse);
+
+        /** GetPayOrderStatsByDappidResponse code. */
+        public code: number;
+
+        /** GetPayOrderStatsByDappidResponse msg. */
+        public msg: string;
+
+        /** GetPayOrderStatsByDappidResponse data. */
+        public data?: (pb.IPayOrderDappidStats|null);
+
+        /**
+         * Creates a new GetPayOrderStatsByDappidResponse instance using the specified properties.
+         * @param [properties] Properties to set
+         * @returns GetPayOrderStatsByDappidResponse instance
+         */
+        public static create(properties?: pb.IGetPayOrderStatsByDappidResponse): pb.GetPayOrderStatsByDappidResponse;
+
+        /**
+         * Encodes the specified GetPayOrderStatsByDappidResponse message. Does not implicitly {@link pb.GetPayOrderStatsByDappidResponse.verify|verify} messages.
+         * @param message GetPayOrderStatsByDappidResponse message or plain object to encode
+         * @param [writer] Writer to encode to
+         * @returns Writer
+         */
+        public static encode(message: pb.IGetPayOrderStatsByDappidResponse, writer?: $protobuf.Writer): $protobuf.Writer;
+
+        /**
+         * Encodes the specified GetPayOrderStatsByDappidResponse message, length delimited. Does not implicitly {@link pb.GetPayOrderStatsByDappidResponse.verify|verify} messages.
+         * @param message GetPayOrderStatsByDappidResponse message or plain object to encode
+         * @param [writer] Writer to encode to
+         * @returns Writer
+         */
+        public static encodeDelimited(message: pb.IGetPayOrderStatsByDappidResponse, writer?: $protobuf.Writer): $protobuf.Writer;
+
+        /**
+         * Decodes a GetPayOrderStatsByDappidResponse message from the specified reader or buffer.
+         * @param reader Reader or buffer to decode from
+         * @param [length] Message length if known beforehand
+         * @returns GetPayOrderStatsByDappidResponse
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): pb.GetPayOrderStatsByDappidResponse;
+
+        /**
+         * Decodes a GetPayOrderStatsByDappidResponse message from the specified reader or buffer, length delimited.
+         * @param reader Reader or buffer to decode from
+         * @returns GetPayOrderStatsByDappidResponse
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): pb.GetPayOrderStatsByDappidResponse;
+
+        /**
+         * Verifies a GetPayOrderStatsByDappidResponse message.
+         * @param message Plain object to verify
+         * @returns `null` if valid, otherwise the reason why it is not
+         */
+        public static verify(message: { [k: string]: any }): (string|null);
+
+        /**
+         * Creates a GetPayOrderStatsByDappidResponse message from a plain object. Also converts values to their respective internal types.
+         * @param object Plain object
+         * @returns GetPayOrderStatsByDappidResponse
+         */
+        public static fromObject(object: { [k: string]: any }): pb.GetPayOrderStatsByDappidResponse;
+
+        /**
+         * Creates a plain object from a GetPayOrderStatsByDappidResponse message. Also converts values to other types if specified.
+         * @param message GetPayOrderStatsByDappidResponse
+         * @param [options] Conversion options
+         * @returns Plain object
+         */
+        public static toObject(message: pb.GetPayOrderStatsByDappidResponse, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+        /**
+         * Converts this GetPayOrderStatsByDappidResponse to JSON.
+         * @returns JSON object
+         */
+        public toJSON(): { [k: string]: any };
+
+        /**
+         * Gets the default type url for GetPayOrderStatsByDappidResponse
          * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
          * @returns The default type url
          */

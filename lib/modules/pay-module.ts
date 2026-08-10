@@ -31,7 +31,6 @@ export class PayModule implements DCModule, IPayOperations {
 
   private payPeerUrl: string = "";
   private hostedPayBaseUrl: string = "";
-  private payApiBaseUrl: string = "";
 
   private readonly pendingPaymentKey = "dcapi_pending_gateway_payment";
   private readonly returnFlagKey = "pay_return";
@@ -220,12 +219,12 @@ export class PayModule implements DCModule, IPayOperations {
   config(options: {
     payPeerUrl?: string;
     hostedPayBaseUrl?: string;
+    /** 兼容保留：订单查询已迁移到 gRPC，该地址不再使用。 */
     payApiBaseUrl?: string;
   }): void {
     if (options.payPeerUrl) this.payPeerUrl = options.payPeerUrl;
     if (options.hostedPayBaseUrl)
       this.hostedPayBaseUrl = options.hostedPayBaseUrl;
-    if (options.payApiBaseUrl) this.payApiBaseUrl = options.payApiBaseUrl;
   }
 
   private assertInitialized(): void {
@@ -234,47 +233,8 @@ export class PayModule implements DCModule, IPayOperations {
     }
   }
 
-  private getPayApiBaseUrl(): string {
-    if (this.payApiBaseUrl) {
-      return this.payApiBaseUrl.replace(/\/+$/, "");
-    }
-    try {
-      const hosted = new URL(
-        this.hostedPayBaseUrl || "https://bnpay.baybird.cn/pay",
-      );
-      return `${hosted.origin}/api/v2/payments`;
-    } catch {
-      return "/api/v2/payments";
-    }
-  }
-
-  private async requestPayApi(path: string, authToken?: string): Promise<any> {
-    const targetUrl = `${this.getPayApiBaseUrl()}${path.startsWith("/") ? "" : "/"}${path}`;
-    const response = await fetch(targetUrl, {
-      method: "GET",
-      credentials: "omit",
-      headers: authToken ? { Authorization: authToken } : undefined,
-      signal: AbortSignal.timeout(15000),
-    });
-
-    const text = await response.text();
-    let payload: any = null;
-    try {
-      payload = text ? JSON.parse(text) : null;
-    } catch {
-      payload = null;
-    }
-
-    if (!response.ok) {
-      throw new Error(
-        payload?.msg ||
-          payload?.error ||
-          `支付网关请求失败(${response.status})`,
-      );
-    }
-
-    return payload;
-  }
+  // 订单查询已全部迁移到支付网关的 libp2p gRPC 通道（getPayGrpcClient），
+  // 不再有 HTTP fetch 调用；hostedPayBaseUrl 仍用于 hosted 支付跳转。
 
   private buildOrderExpireTime(minutes = 10): string {
     const expiresAt = new Date(Date.now() + minutes * 60 * 1000);
@@ -354,52 +314,78 @@ export class PayModule implements DCModule, IPayOperations {
     const pageNum = Math.max(1, Number(options.pageNum || 1));
     const pageSize = Math.max(1, Math.min(100, Number(options.pageSize || 20)));
 
-    const params = new URLSearchParams();
-    params.set("account", account);
-    params.set("dappid", dappid);
-    params.set("page_num", String(pageNum));
-    params.set("page_size", String(pageSize));
-
+    // 订单查询走支付网关的 libp2p gRPC 通道，不再依赖 HTTP（浏览器直连时
+    // 网关的 CORS 白名单覆盖不到任意前端源）。鉴权与 HTTP /order/list 同口径：
+    // account 维度签名，可带应用过滤条件。
     const authToken = await this.buildOrderQueryAuthToken(
       ORDER_QUERY_OP_BY_ACCOUNT,
       account,
       dappid,
     );
-    const orderPayload = await this.requestPayApi(
-      `/order/list?${params.toString()}`,
-      authToken,
+    const grpcClient = await this.getPayGrpcClient(authToken);
+    const pbReq = pb.GetPayOrdersByAccountRequest.create({
+      account,
+      dappid,
+      pageNum,
+      pageSize,
+    });
+    const requestBytes = pb.GetPayOrdersByAccountRequest.encode(pbReq).finish();
+    const responseBytes = await grpcClient.unaryCall(
+      "/pb.PayService/GetPayOrdersByAccount",
+      requestBytes,
+      30000,
     );
-    if (Number(orderPayload?.code || 0) !== 0) {
-      throw new Error(orderPayload?.msg || "订单列表查询失败");
+    const listResp = pb.ListPayOrdersResponse.decode(responseBytes);
+    if (Number(listResp?.code || 0) !== 0) {
+      throw new Error(listResp?.msg || "订单列表查询失败");
     }
 
-    const orderList = Array.isArray(orderPayload?.data?.list)
-      ? orderPayload.data.list
-      : [];
+    const orderList = Array.isArray(listResp?.data) ? listResp.data : [];
 
     const billMap = new Map<string, any>();
-    if (!options.skipBillCheck) {
+    if (!options.skipBillCheck && orderList.length > 0) {
+      // 账单只跟账户绑定、不跟应用绑定，按 account+dappid="" 单独签名；
+      // 网关按订单归属账户校验，凭订单号枚举他人账单会被拒绝。
+      const billToken = await this.buildOrderQueryAuthToken(
+        ORDER_QUERY_OP_BY_ACCOUNT,
+        account,
+        "",
+      );
+      const billClient = await this.getPayGrpcClient(billToken);
       const billList = await Promise.all(
         orderList.map(async (order: any) => {
-          const outTradeNo = String(order?.out_trade_no || "").trim();
+          const outTradeNo = String(
+            this.pickRecordField(order, "outTradeNo", "out_trade_no") || "",
+          ).trim();
           if (!outTradeNo) {
             return null;
           }
           try {
-            const billPayload = await this.requestPayApi(
-              `/pbill/getbytradeno?out_trade_no=${encodeURIComponent(outTradeNo)}`,
+            const billReq = pb.GetPayBillByTradeNoRequest.create({
+              outTradeNo,
+            });
+            const billBytes = pb.GetPayBillByTradeNoRequest.encode(
+              billReq,
+            ).finish();
+            const billRespBytes = await billClient.unaryCall(
+              "/pb.PayService/GetPayBillByTradeNo",
+              billBytes,
+              30000,
             );
-            if (Number(billPayload?.code || 0) !== 0) {
+            const billResp = pb.GetPayBillResponse.decode(billRespBytes);
+            if (Number(billResp?.code || 0) !== 0) {
               return null;
             }
-            return billPayload?.data || null;
+            return billResp?.data || null;
           } catch {
             return null;
           }
         }),
       );
       billList.forEach((bill: any) => {
-        const outTradeNo = String(bill?.out_trade_no || "").trim();
+        const outTradeNo = String(
+          this.pickRecordField(bill, "outTradeNo", "out_trade_no") || "",
+        ).trim();
         if (outTradeNo) {
           billMap.set(outTradeNo, bill);
         }
@@ -409,6 +395,20 @@ export class PayModule implements DCModule, IPayOperations {
     return this.normalizeOrderRecords(orderList, billMap);
   }
 
+  /**
+   * 兼容读取网关字段：gRPC 通道返回 camelCase（PayOrderInfo/PayBillInfo），
+   * 历史 HTTP 通道返回 snake_case，两条路径共用同一份归一化。
+   */
+  private pickRecordField(
+    row: any,
+    camelKey: string,
+    snakeKey: string,
+  ): string {
+    if (!row) return "";
+    const value = row[camelKey] ?? row[snakeKey];
+    return value === undefined || value === null ? "" : String(value);
+  }
+
   /** 将网关返回的原始订单行归一化为 IPaymentOrderRecord。 */
   private normalizeOrderRecords(
     orderList: any[],
@@ -416,10 +416,14 @@ export class PayModule implements DCModule, IPayOperations {
   ): IPaymentOrderRecord[] {
     const normalizedRecords: Array<IPaymentOrderRecord | null> = orderList.map(
       (order: any) => {
-        const outTradeNo = String(order?.out_trade_no || "").trim();
+        const outTradeNo = String(
+          this.pickRecordField(order, "outTradeNo", "out_trade_no") || "",
+        ).trim();
         if (!outTradeNo) return null;
 
-        const reqTextRaw = String(order?.req_text || "").trim();
+        const reqTextRaw = String(
+          this.pickRecordField(order, "reqText", "req_text") || "",
+        ).trim();
         let reqText: any = {};
         if (reqTextRaw) {
           try {
@@ -430,35 +434,54 @@ export class PayModule implements DCModule, IPayOperations {
         }
 
         const bill = billMap.get(outTradeNo) || {};
-        const payStatus = Number(order?.pay_status || 0);
-        const tradeState = String(bill?.trade_state || "")
+        const payStatus = Number(
+          this.pickRecordField(order, "payStatus", "pay_status") || 0,
+        );
+        const tradeState = String(
+          this.pickRecordField(bill, "tradeState", "trade_state") || "",
+        )
           .trim()
           .toUpperCase();
         const attach = String(reqText?.attach || "").trim();
+        const pkgId = this.pickRecordField(order, "pkgId", "pkg_id");
 
         return {
           outTradeNo,
-          account: String(order?.account || ""),
-          dappid: String(order?.dappid || ""),
-          packageId: String(order?.pkg_id || ""),
+          account: String(
+            this.pickRecordField(order, "account", "account") || "",
+          ),
+          dappid: String(
+            this.pickRecordField(order, "dappid", "dappid") || "",
+          ),
+          packageId: pkgId,
           packageName: String(
-            reqText?.description || `套餐#${String(order?.pkg_id || "-")}`,
+            reqText?.description || `套餐#${pkgId || "-"}`,
           ),
           packageCode: attach.split(":")[1]
             ? String(attach.split(":")[1]).trim()
-            : String(order?.pkg_id || ""),
-          amountCents: Number(order?.total || 0),
+            : pkgId,
+          amountCents: Number(
+            this.pickRecordField(order, "total", "total") || 0,
+          ),
           priceKey: String(reqText?.price_key || "").trim() || undefined,
           payStatus,
           payStatusText: this.mapPayStatusText(payStatus),
           tradeState,
           tradeStateText: this.mapTradeStateText(tradeState, payStatus),
-          tradeType: String(bill?.trade_type || "")
+          tradeType: String(
+            this.pickRecordField(bill, "tradeType", "trade_type") || "",
+          )
             .trim()
             .toUpperCase(),
-          transactionId: String(bill?.transaction_id || "").trim(),
-          successTime: String(bill?.success_time || "").trim(),
-          createdAt: String(order?.create_time || "").trim(),
+          transactionId: String(
+            this.pickRecordField(bill, "transactionId", "transaction_id") || "",
+          ).trim(),
+          successTime: String(
+            this.pickRecordField(bill, "successTime", "success_time") || "",
+          ).trim(),
+          createdAt: String(
+            this.pickRecordField(order, "createTime", "create_time") || "",
+          ).trim(),
           scene: this.parseSceneFromAttach(attach),
         } as IPaymentOrderRecord;
       },
@@ -470,54 +493,47 @@ export class PayModule implements DCModule, IPayOperations {
   }
 
   /**
-   * 应用维度订单查询条件（商品管理 / 统计分析用）。
-   * 与网关 PayOrderDappidFilter、账本索引维度对齐：
+   * 应用维度订单查询条件（商品管理 / 统计分析用），映射为 gRPC 的
+   * PayOrderDappidFilter。与网关过滤口径、账本索引维度对齐：
    * 店铺(dappid) / 商品(price_key、pkg_id) / 状态(pay_status) / 时间(毫秒时间戳，左闭右开)。
    * 时间为毫秒单位，与账本索引里的 created_at 口径一致。
    */
-  private buildDappidOrderParams(
-    options: {
-      dappid?: string;
-      priceKey?: string;
-      pkgId?: number;
-      payStatus?: number;
-      startTime?: number;
-      endTime?: number;
-    },
-    pageNum: number,
-    pageSize: number,
-  ): URLSearchParams | null {
+  private buildDappidOrderFilter(options: {
+    dappid?: string;
+    priceKey?: string;
+    pkgId?: number;
+    payStatus?: number;
+    startTime?: number;
+    endTime?: number;
+  }): pb.IPayOrderDappidFilter | null {
     const dappid = String(
       options.dappid || this.dcContext.appInfo.appId || "",
     ).trim();
     if (!dappid) {
       return null;
     }
-    const params = new URLSearchParams();
-    params.set("dappid", dappid);
-    params.set("page_num", String(pageNum));
-    params.set("page_size", String(pageSize));
+    const filter: pb.IPayOrderDappidFilter = {};
     const priceKey = String(options.priceKey || "").trim();
     if (priceKey) {
-      params.set("price_key", priceKey);
+      filter.priceKey = priceKey;
     }
     const pkgId = Number(options.pkgId || 0);
     if (Number.isInteger(pkgId) && pkgId > 0) {
-      params.set("pkg_id", String(pkgId));
+      filter.pkgId = pkgId;
     }
     const payStatus = Number(options.payStatus || 0);
     if (Number.isInteger(payStatus) && payStatus >= 1) {
-      params.set("pay_status", String(payStatus));
+      filter.payStatus = payStatus;
     }
     const startTime = Math.trunc(Number(options.startTime || 0));
     if (Number.isFinite(startTime) && startTime > 0) {
-      params.set("start_time", String(startTime));
+      filter.startTime = startTime;
     }
     const endTime = Math.trunc(Number(options.endTime || 0));
     if (Number.isFinite(endTime) && endTime > 0) {
-      params.set("end_time", String(endTime));
+      filter.endTime = endTime;
     }
-    return params;
+    return filter;
   }
 
   /**
@@ -587,32 +603,42 @@ export class PayModule implements DCModule, IPayOperations {
     this.assertInitialized();
     const pageNum = Math.max(1, Number(options.pageNum || 1));
     const pageSize = Math.max(1, Math.min(100, Number(options.pageSize || 20)));
-    const params = this.buildDappidOrderParams(options, pageNum, pageSize);
-    if (!params) {
+    const filter = this.buildDappidOrderFilter(options);
+    if (!filter) {
       return null;
     }
-    const dappid = params.get("dappid") || "";
+    const dappid = String(
+      options.dappid || this.dcContext.appInfo.appId || "",
+    ).trim();
     const authToken = await this.buildOrderQueryAuthToken(
       ORDER_QUERY_OP_BY_DAPPID,
       "",
       dappid,
     );
-    const orderPayload = await this.requestPayApi(
-      `/order/getbydappid?${params.toString()}`,
-      authToken,
+    const grpcClient = await this.getPayGrpcClient(authToken);
+    const pbReq = pb.GetPayOrdersByDappidRequest.create({
+      dappid,
+      pageNum,
+      pageSize,
+      filter,
+    });
+    const requestBytes = pb.GetPayOrdersByDappidRequest.encode(pbReq).finish();
+    const responseBytes = await grpcClient.unaryCall(
+      "/pb.PayService/GetPayOrdersByDappid",
+      requestBytes,
+      30000,
     );
-    if (Number(orderPayload?.code || 0) !== 0) {
-      throw new Error(orderPayload?.msg || "应用订单查询失败");
+    const resp = pb.ListPayOrdersResponse.decode(responseBytes);
+    if (Number(resp?.code || 0) !== 0) {
+      throw new Error(resp?.msg || "应用订单查询失败");
     }
 
-    const orderList = Array.isArray(orderPayload?.data?.list)
-      ? orderPayload.data.list
-      : [];
+    const orderList = Array.isArray(resp?.data) ? resp.data : [];
     return {
       list: this.normalizeOrderRecords(orderList, new Map()),
-      total: Number(orderPayload?.data?.total || 0),
-      pageNum: Number(orderPayload?.data?.page_num || pageNum),
-      pageSize: Number(orderPayload?.data?.page_size || pageSize),
+      total: Number(resp?.total || 0),
+      pageNum,
+      pageSize,
     };
   }
 
@@ -634,32 +660,41 @@ export class PayModule implements DCModule, IPayOperations {
     paidAmount: number;
   }> {
     this.assertInitialized();
-    const params = this.buildDappidOrderParams(options, 1, 1);
-    if (!params) {
+    const filter = this.buildDappidOrderFilter(options);
+    if (!filter) {
       return { totalOrders: 0, paidOrders: 0, paidAmount: 0 };
     }
-    const dappid = params.get("dappid") || "";
-    // 统计接口不看分页，去掉分页参数避免误导。
-    params.delete("page_num");
-    params.delete("page_size");
+    const dappid = String(
+      options.dappid || this.dcContext.appInfo.appId || "",
+    ).trim();
 
     const authToken = await this.buildOrderQueryAuthToken(
       ORDER_QUERY_OP_BY_DAPPID,
       "",
       dappid,
     );
-    const statsPayload = await this.requestPayApi(
-      `/order/statsbydappid?${params.toString()}`,
-      authToken,
+    const grpcClient = await this.getPayGrpcClient(authToken);
+    const pbReq = pb.GetPayOrderStatsByDappidRequest.create({
+      dappid,
+      filter,
+    });
+    const requestBytes = pb.GetPayOrderStatsByDappidRequest.encode(
+      pbReq,
+    ).finish();
+    const responseBytes = await grpcClient.unaryCall(
+      "/pb.PayService/GetPayOrderStatsByDappid",
+      requestBytes,
+      30000,
     );
-    if (Number(statsPayload?.code || 0) !== 0) {
-      throw new Error(statsPayload?.msg || "应用订单统计失败");
+    const statsResp = pb.GetPayOrderStatsByDappidResponse.decode(responseBytes);
+    if (Number(statsResp?.code || 0) !== 0) {
+      throw new Error(statsResp?.msg || "应用订单统计失败");
     }
-    const data = statsPayload?.data || {};
+    const data = statsResp?.data || {};
     return {
-      totalOrders: Number(data.total_orders || 0),
-      paidOrders: Number(data.paid_orders || 0),
-      paidAmount: Number(data.paid_amount || 0),
+      totalOrders: Number(data.totalOrders || 0),
+      paidOrders: Number(data.paidOrders || 0),
+      paidAmount: Number(data.paidAmount || 0),
     };
   }
 
