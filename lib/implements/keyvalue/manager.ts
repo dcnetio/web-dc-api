@@ -12,6 +12,12 @@ import { sha256, uint32ToLittleEndianBytes } from "../../util/utils";
 import { base32 } from "multiformats/bases/base32";
 import { CommentType, Direction } from "../../common/define";
 import { DCContext } from "../../../lib/interfaces/DCContext";
+import {
+  normalizeThemeAuthPubkey,
+  parseThemeAuthorizationComments,
+  parseThemeAuthorizationInfo,
+  serializeThemeAuthPubkey,
+} from "../../common/theme-auth-pubkey";
 
 
 //定义Key-Value存储的数据类型
@@ -380,6 +386,13 @@ export class KeyValueManager {
       theme = theme + "_authlist";
     }
 
+    let forPubkeyHex: string;
+    try {
+      forPubkeyHex = serializeThemeAuthPubkey(authPubkey);
+    } catch (error) {
+      return [null, error instanceof Error ? error : new Error(String(error))];
+    }
+
     const userPubkey = this.context.getPublicKey();
     let userPubkeyStr = userPubkey.string();
 
@@ -412,23 +425,6 @@ export class KeyValueManager {
     }
     const themeAuthorPubkey: Ed25519PubKey =
       Ed25519PubKey.edPubkeyFromStr(themeAuthor);
-
-    let pubkeyFlag = true;
-    let forPubkey: Ed25519PubKey | null = null;
-    try {
-      forPubkey = Ed25519PubKey.edPubkeyFromStr(authPubkey);
-    } catch (error) {
-      pubkeyFlag = false;
-    }
-    let forPubkeyHex: string;
-    if (pubkeyFlag && forPubkey !== null) {
-      forPubkeyHex = "0x" + forPubkey.toString();
-    } else {
-      forPubkeyHex = authPubkey;
-      if (!authPubkey.startsWith("0x") && !authPubkey.startsWith("0X") && authPubkey != "all") {
-        forPubkeyHex = "0x" + authPubkey;
-      }
-    }
 
     const content = `${forPubkeyHex}:${permission}:${remark}`;
 
@@ -549,19 +545,11 @@ export class KeyValueManager {
         return [null, error];
       }
       if (authInfo) {
-        let authFields = authInfo.split("$$$");
-        if (authFields.length > 2) {
-          try{
-          const themeAuthInfo = {
-            pubkey: authFields[0]!,
-            permission: parseInt(authFields[1]!),
-            remark: authFields.length >= 3 ? authFields[2]! : "",
-          };
-          return [themeAuthInfo, null];
-        }catch(e){
+        try {
+          return [parseThemeAuthorizationInfo(authInfo), null];
+        } catch (e) {
           return [null, e instanceof Error ? e : new Error(String(e))];
         }
-        } 
       }
       return [null, null];
     }
@@ -580,6 +568,12 @@ export class KeyValueManager {
       }
       if (!configTheme.startsWith("keyvalue_")) {
         configTheme = "keyvalue_" + configTheme;
+      }
+
+      try {
+        userPubkeyStr = normalizeThemeAuthPubkey(userPubkeyStr);
+      } catch (error) {
+        return [null, error instanceof Error ? error : new Error(String(error))];
       }
   
       let client = this.context.AccountBackupDc?.client || null;
@@ -619,19 +613,11 @@ export class KeyValueManager {
         return [null, error];
       }
       if (authInfo) {
-        let authFields = authInfo.split("$$$");
-        if (authFields.length > 2) {
-          try{
-          const themeAuthInfo = {
-            pubkey: authFields[0]!,
-            permission: parseInt(authFields[1]!),
-            remark: authFields.length >=3 ? authFields[2]! : "",
-          };
-          return [themeAuthInfo, null];
-        }catch(e){
+        try {
+          return [parseThemeAuthorizationInfo(authInfo), null];
+        } catch (e) {
           return [null, e instanceof Error ? e : new Error(String(e))];
         }
-        } 
       }
       return [null, null];
     }
@@ -667,32 +653,10 @@ export class KeyValueManager {
       if (!themeComments || themeComments.length === 0) {
         return [[], [], null];
       }
-      for (const item of themeComments) {
-        originAuthList.push(item);
-        const content = item.comment;
-        const parts = content.split(":");
-        if (parts.length < 2) continue;
-        const authPubkey = parts[0]!;
-        let forPubkey: Ed25519PubKey | null = null;
-        try {
-          if (authPubkey.startsWith("0x") || authPubkey.startsWith("0X")) {
-            forPubkey = Ed25519PubKey.edPubkeyFromStr(authPubkey);
-          }
-        } catch (error) {
-          continue;
-        }
-        const authPubkeyStr = forPubkey != null ? forPubkey.string() : authPubkey;
-        const permission = parseInt(parts[1]!);
-        const remarkStart = parts[0]!.length + parts[1]!.length + 2;
-        const remark = content.length > remarkStart ? content.substring(remarkStart) : "";
-        authList.push({
-          pubkey: authPubkeyStr,
-          permission,
-          remark,
-          key: `${item.blockheight}/${item.commentCid}`,
-        });
-      }
-      return [authList, originAuthList, null];
+      originAuthList.push(...themeComments);
+      const parsed = parseThemeAuthorizationComments(themeComments);
+      authList.push(...parsed.authList);
+      return [authList, originAuthList, parsed.parseError];
     } catch (error: any) {
       return [authList, originAuthList, error];
     }
@@ -727,31 +691,14 @@ export class KeyValueManager {
       if (!themeComments || themeComments.length === 0) {
         return [[], userCount ?? 0, nextSeekKey ?? "", null];
       }
-      for (const item of themeComments) {
-        const content = item.comment;
-        const parts = content.split(":");
-        if (parts.length < 2) continue;
-        const authPubkey = parts[0]!;
-        let forPubkey: Ed25519PubKey | null = null;
-        try {
-          if (authPubkey.startsWith("0x") || authPubkey.startsWith("0X")) {
-            forPubkey = Ed25519PubKey.edPubkeyFromStr(authPubkey);
-          }
-        } catch (error) {
-          continue;
-        }
-        const authPubkeyStr = forPubkey != null ? forPubkey.string() : authPubkey;
-        const permission = parseInt(parts[1]!);
-        const remarkStart = parts[0]!.length + parts[1]!.length + 2;
-        const remark = content.length > remarkStart ? content.substring(remarkStart) : "";
-        authList.push({
-          pubkey: authPubkeyStr,
-          permission,
-          remark,
-          key: `${item.blockheight}/${item.commentCid}`,
-        });
-      }
-      return [authList, userCount ?? 0, nextSeekKey ?? "", null];
+      const parsed = parseThemeAuthorizationComments(themeComments);
+      authList.push(...parsed.authList);
+      return [
+        authList,
+        userCount ?? 0,
+        nextSeekKey ?? "",
+        parsed.parseError,
+      ];
     } catch (error: any) {
       return [authList, 0, "", error];
     }
