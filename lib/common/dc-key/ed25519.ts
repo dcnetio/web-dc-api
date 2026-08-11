@@ -146,8 +146,11 @@ export class Ed25519PubKey implements Ed25519PublicKey {
 
   // 从字符串创建公钥
   static unmarshalString(str: string): Ed25519PubKey {
-    const protoBytes = base32.decode(str);
-    return Ed25519PubKey.publicKeyFromProto(protoBytes);
+    const encoded = base32.decode(str);
+    if (encoded.length === 32) {
+      return new Ed25519PubKey(encoded);
+    }
+    return Ed25519PubKey.publicKeyFromProto(encoded);
   }
   /**
    * Returns this key as a multihash with base58btc encoding
