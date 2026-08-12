@@ -55,6 +55,33 @@ export const dial_timeout = 3000;
 // 直连指定节点（如编译服务器，走 WSS + TLS 握手）的拨号超时，
 // 比链上并行拨号的 dial_timeout 更宽松，避免弱网下握手未完成就超时。
 export const peer_dial_timeout = 10000;
+// WebRTC ICE 服务器。默认的 @libp2p/webrtc 内置 STUN（stun.l.google.com、
+// global.stun.twilio.com 等）在国内网络基本不可达，ICE 收集会一直卡住，
+// 表现为入站取 block 的 DataChannel "Blocks sent: 0" 写超时。
+// 这里显式覆盖为国内可达的 STUN，可通过 config.json 的 iceServers 追加 TURN。
+const _defaultStunUrls = [
+  "stun:stun.miwifi.com:3478",
+  "stun:stun.qq.com:3478",
+  "stun:turn.cloudflare.com:3478",
+  "stun:stun.l.google.com:19302",
+];
+export const iceServers: RTCIceServer[] =
+  (configInfo as any).iceServers?.length > 0
+    ? (configInfo as any).iceServers
+    : [{ urls: _defaultStunUrls }];
+export const rtcConfiguration: RTCConfiguration = {
+  iceServers,
+  iceCandidatePoolSize: 4,
+};
+// 连接心跳。libp2p 的 ConnectionMonitor 默认 abortConnectionOnPingFailure=true，
+// 一次 ping 超时就会 conn.abort() 掉整条连接上的所有流（AI 流、block 流一起死）。
+// 应用内本来就有按 peer 的存活探测，这里只保留 rtt 采样，不再授权它杀连接。
+export const connection_monitor_ping_interval = 30000;
+// 主动存活探测的超时。原值 3s，在大块传输造成队头阻塞时会把健康连接误判成
+// 半死，进而 hangUp 重连，反而放大抖动。
+export const liveness_ping_timeout = 10000;
+export const connection_monitor_min_timeout = 20000;
+export const connection_monitor_max_timeout = 60000;
 export const keyExpire = 60 * 60 * 24; // setcachekey 过期时间默认一天
 export const OffChainOpTimes = 20000; // 链下操作次数
 export const OffChainSpaceLimit = 1024 * 1024 * 10; // 评论空间下限10m

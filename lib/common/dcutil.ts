@@ -58,7 +58,16 @@ import { autoNAT } from "@libp2p/autonat";
 import { dcutr } from "@libp2p/dcutr";
 import { bitswap } from "@helia/block-brokers";
 import { Client } from "./dcapi";
-import { dc_protocol, dial_timeout, peer_dial_timeout } from "./define";
+import {
+  connection_monitor_max_timeout,
+  connection_monitor_min_timeout,
+  connection_monitor_ping_interval,
+  dc_protocol,
+  dial_timeout,
+  liveness_ping_timeout,
+  peer_dial_timeout,
+  rtcConfiguration,
+} from "./define";
 
 const controller = new AbortController();
 const { signal } = controller;
@@ -206,29 +215,48 @@ export class DcUtil {
     peerId: any,
     reason: string,
   ): Promise<void> => {
+    const stillOpenConnections = () =>
+      libp2p
+        .getConnections(peerId)
+        .filter((connection) => connection.status === "open");
+
     try {
       await libp2p.hangUp(peerId, {
         signal: AbortSignal.timeout(peer_close_timeout),
       });
     } catch (error) {
-      const stillOpen = libp2p
-        .getConnections(peerId)
-        .some((connection) => connection.status === "open");
-      if (stillOpen) {
+      if (stillOpenConnections().length > 0) {
         console.warn(
-          `connectToPeerWithAddr: hangUp ${reason} failed`,
+          `connectToPeerWithAddr: hangUp ${reason} failed, will abort forcefully`,
           error,
         );
-        throw error;
       }
     }
 
-    const stillOpen = libp2p
-      .getConnections(peerId)
-      .some((connection) => connection.status === "open");
-    if (stillOpen) {
+    // hangUp 是优雅关闭，要等对端确认；连接半死时这一步必然超时。
+    // 原实现在这里直接抛错，会让整个重连流程失败（表现为「AI 代理连接重建失败」），
+    // 且旧连接仍留着，后续重试继续撞同一条死连接——正是"断线后再也连不上"的一环。
+    // 优雅关闭失败就改用 abort：abort 是本地同步操作，不依赖对端响应。
+    const lingering = stillOpenConnections();
+    if (lingering.length > 0) {
+      const abortError = new Error(
+        `connectToPeerWithAddr: ${reason} forced abort`,
+      );
+      for (const connection of lingering) {
+        try {
+          connection.abort(abortError);
+        } catch (abortErr) {
+          console.warn(
+            `connectToPeerWithAddr: abort ${reason} failed`,
+            abortErr,
+          );
+        }
+      }
+    }
+
+    if (stillOpenConnections().length > 0) {
       throw new Error(
-        `connectToPeerWithAddr: ${reason} remained open after hangUp`,
+        `connectToPeerWithAddr: ${reason} remained open after hangUp and abort`,
       );
     }
   };
@@ -242,8 +270,22 @@ export class DcUtil {
       return true;
     }
 
+    // ConnectionMonitor 已在周期性采样 rtt。它成功采到过 rtt 说明连接确实通，
+    // 直接复用，避免再开一条竞争同一协议流槽的 ping。
+    const monitored = (this.dcNodeClient?.libp2p as Libp2p | undefined)
+      ?.getConnections(peerId)
+      ?.some(
+        (connection: any) =>
+          connection.status === "open" &&
+          typeof connection.rtt === "number" &&
+          connection.rtt >= 0,
+      );
+    if (monitored) {
+      return true;
+    }
+
     for (let attempt = 0; attempt < 3; attempt += 1) {
-      const signal = AbortSignal.timeout(3000);
+      const signal = AbortSignal.timeout(liveness_ping_timeout);
       try {
         await pingService.ping(peerId, { signal });
         return true;
@@ -271,11 +313,16 @@ export class DcUtil {
             );
             continue;
           }
+          // 流槽被占满只说明探测不了，不能证明连接本身失效；
+          // 误判成失效会触发不必要的 hangUp 重连，放大抖动。
+          const stillOpen = (this.dcNodeClient?.libp2p as Libp2p | undefined)
+            ?.getConnections(peerId)
+            ?.some((connection: any) => connection.status === "open");
           console.warn(
-            "connectToPeerWithAddr: liveness ping capacity stayed busy, will reconnect",
+            "connectToPeerWithAddr: liveness ping capacity stayed busy, fallback to connection status",
             e,
           );
-          return false;
+          return Boolean(stillOpen);
         }
 
         // 明确不支持 ping 协议只表示无法探测，不代表底层连接失效。
@@ -598,9 +645,9 @@ export class DcUtil {
       privateKey: keyPair,
       datastore: datastore as any,
       transports: [
-        webRTCDirect(),
+        webRTCDirect({ rtcConfiguration }),
         circuitRelayTransport(),
-        webRTC(),
+        webRTC({ rtcConfiguration }),
         webSockets(),
       ], //
       connectionEncrypters: [noise()],
@@ -612,6 +659,19 @@ export class DcUtil {
         maxParallelDials: 30,
         maxConnections: 30,
         inboundConnectionThreshold: 30,
+      },
+
+      // 心跳只用于采样 rtt，不允许它 abort 连接。默认行为是 ping 一旦超时
+      // （AdaptiveTimeout 下限仅 5s）就 conn.abort()，会把同一条连接上正在
+      // 传输的 AI 流和 block 流全部以 "TimeoutError: signal timed out" 中止。
+      // 大块传输造成的队头阻塞很容易触发，是级联断线的直接原因。
+      connectionMonitor: {
+        abortConnectionOnPingFailure: false,
+        pingInterval: connection_monitor_ping_interval,
+        pingTimeout: {
+          minTimeout: connection_monitor_min_timeout,
+          maxTimeout: connection_monitor_max_timeout,
+        },
       },
 
       streamMuxers: [
@@ -637,7 +697,10 @@ export class DcUtil {
         identifyPush: identifyPush(),
         // 应用同时包含构建、AI 与文件传输。保留有限并发余量，并由上层按
         // peer 合并主动存活探测，避免默认 1 条流导致 2/1 容量冲突。
-        ping: ping({ maxOutboundStreams: 4 }),
+        // ConnectionMonitor 会对每条连接周期性开同一个 ping 协议的流，和上层
+        // isConnectionAlive 抢流槽；4 条上限太容易触发
+        // TooManyOutboundProtocolStreams，故放宽。
+        ping: ping({ maxOutboundStreams: 32, maxInboundStreams: 32 }),
         autoRelay: (components) => ({
           // 使用函数式配置
           enabled: true, // 通过闭包传递参数
