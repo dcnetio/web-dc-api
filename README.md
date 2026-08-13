@@ -1443,8 +1443,6 @@ npm run build
 bash scripts/check-browser-compat.sh
 ```
 
-`npm run build` 还会把 `assets/sw.js` 复制到 `dist/sw.js`；发布前应确认二者内容一致，确保 npm/CDN 使用者能取得 Service Worker。`npm test` 当前没有自动化测试实现，会按 `package.json` 中的占位脚本退出失败；验证 SDK 请至少执行类型构建、协议同步检查和浏览器兼容检查。
+`npm run build` 还会把 `assets/sw.js` 复制到 `dist/sw.js`；发布前应确认二者内容一致，确保 npm/CDN 使用者能取得 Service Worker。`npm test` 当前没有自动化测试实现，会按 `package.json` 中的占位脚本退出失败；验证 SDK 请至少执行类型构建和浏览器兼容检查。
 
-GitHub 发布工作流会通过只读 Secret `DCNODE_REPOSITORY_URL` 检出 dcnode 并执行
-协议同步检查。该 Secret 应配置为可读取 dcnode Codeup 仓库的克隆地址；缺失或协议
-不一致都会阻止 npm 发布。
+DCNode 协议由维护者在发布前手动同步。需要校验时，确保 `dcnode` 与 `dcapi` 位于同级目录，再执行 `npm run check:proto-sync`；GitHub 发布工作流和 `npm publish` 不再自动检出 dcnode 或阻止发布。

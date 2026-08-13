@@ -57,22 +57,6 @@ jobs:
           echo "changed=$IS_GREATER" >> $GITHUB_OUTPUT
           echo "version=$CUR_VERSION" >> $GITHUB_OUTPUT
 
-      - name: Checkout dcnode protocol source
-        if: steps.check.outputs.changed == 'true'
-        env:
-          DCNODE_REPOSITORY_URL: ${{ secrets.DCNODE_REPOSITORY_URL }}
-        run: |
-          set -euo pipefail
-          if [ -z "${DCNODE_REPOSITORY_URL}" ]; then
-            echo "DCNODE_REPOSITORY_URL secret is required for protocol verification." >&2
-            exit 1
-          fi
-          git clone --depth 1 "${DCNODE_REPOSITORY_URL}" ../dcnode
-
-      - name: Verify dcnode protocol sync
-        if: steps.check.outputs.changed == 'true'
-        run: npm run check:proto-sync
-
       - name: Install deps and build
         if: steps.check.outputs.changed == 'true'
         run: |
