@@ -19,6 +19,7 @@ import {
   IRecommenderAppPolicy,
   IRecommenderAppPolicyAccess,
   IRecommenderAppPolicyInput,
+  IRecommenderLevelDefinition,
 } from "../interfaces/pay-interface";
 import { payProtocol } from "@/common/define";
 
@@ -248,6 +249,21 @@ export class PayModule implements DCModule, IPayOperations {
     this.writeStringField(buffer, serviceAppid);
     this.writeStringField(buffer, recommenderPubkey);
     this.writeInt32Field(buffer, recommenderLevel);
+    this.writeInt64Field(buffer, timestampSec);
+    return new Uint8Array(buffer);
+  }
+
+  private buildRecommenderLevelDefinitionListPayload(
+    serviceAppid: string,
+    pageNum: number,
+    pageSize: number,
+    timestampSec: number,
+  ): Uint8Array {
+    const buffer: number[] = [];
+    this.writeStringField(buffer, "list_recommender_level_definitions");
+    this.writeStringField(buffer, serviceAppid);
+    this.writeInt32Field(buffer, pageNum);
+    this.writeInt32Field(buffer, pageSize);
     this.writeInt64Field(buffer, timestampSec);
     return new Uint8Array(buffer);
   }
@@ -1579,6 +1595,43 @@ export class PayModule implements DCModule, IPayOperations {
       throw new Error(response?.msg || "保存推广比例失败");
     }
     return true;
+  }
+
+  async listRecommenderLevelDefinitions(options: {
+    serviceAppid: string;
+    pageNum?: number;
+    pageSize?: number;
+  }): Promise<{ list: IRecommenderLevelDefinition[]; total: number }> {
+    const serviceAppid = String(options?.serviceAppid || "").trim();
+    if (!serviceAppid) {
+      throw new Error("缺少应用 AppID，无法查询推荐等级目录");
+    }
+    const pageNum = Math.max(1, Math.trunc(Number(options?.pageNum || 1)));
+    const pageSize = Math.max(1, Math.min(100, Math.trunc(Number(options?.pageSize || 100))));
+    const timestampSec = Math.floor(Date.now() / 1000);
+    const payload = this.buildRecommenderLevelDefinitionListPayload(serviceAppid, pageNum, pageSize, timestampSec);
+    const authToken = await this.buildPackageMutationAuthToken(payload, timestampSec);
+    const grpcClient = await this.getPayGrpcClient(authToken);
+    const request = pb.ListRecommenderLevelDefinitionsRequest.create({ serviceAppid, pageNum, pageSize });
+    const responseBytes = await grpcClient.unaryCall(
+      "/pb.PayService/ListRecommenderLevelDefinitions",
+      pb.ListRecommenderLevelDefinitionsRequest.encode(request).finish(),
+      30000,
+    );
+    const response = pb.ListRecommenderLevelDefinitionsResponse.decode(responseBytes);
+    if (Number(response?.code || 0) !== 0) {
+      throw new Error(response?.msg || "查询推荐等级目录失败");
+    }
+    const list = Array.from(response.data || []).map((item) => ({
+      id: Number(item.id || 0),
+      level: Number(item.level || 0),
+      name: String(item.name || ""),
+      description: String(item.description || ""),
+      remark: String(item.remark || ""),
+      createTime: String(item.createTime || ""),
+      updateTime: String(item.updateTime || ""),
+    }));
+    return { list, total: Number(response.total || 0) };
   }
 
   async deleteRecommenderAppPolicy(

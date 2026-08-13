@@ -300,6 +300,17 @@ export interface IRecommenderAppPolicy {
   updateTime: string;
 }
 
+/** 支付网关应用管理中维护的推荐人等级定义。 */
+export interface IRecommenderLevelDefinition {
+  id: number;
+  level: number;
+  name: string;
+  description: string;
+  remark: string;
+  createTime: string;
+  updateTime: string;
+}
+
 /** 可管理某个应用推广比例的授权用户。 */
 export interface IRecommenderAppManager {
   id: number;
@@ -741,6 +752,13 @@ export interface IPayOperations {
     pageNum?: number;
     pageSize?: number;
   }): Promise<{ list: IRecommenderAppPolicy[]; total: number }>;
+
+  /** 查询应用奖励策略可引用的推荐人等级目录。 */
+  listRecommenderLevelDefinitions(options: {
+    serviceAppid: string;
+    pageNum?: number;
+    pageSize?: number;
+  }): Promise<{ list: IRecommenderLevelDefinition[]; total: number }>;
 
   /** Owner 或授权用户新增、更新指定应用的推广奖励比例。 */
   upsertRecommenderAppPolicy(

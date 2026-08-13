@@ -528,6 +528,48 @@ export namespace pb {
         public adminDeleteRecommenderLevel(request: pb.IAdminDeleteRecommenderLevelRequest): Promise<pb.AdminDeleteRecommenderLevelResponse>;
 
         /**
+         * Calls AdminUpsertRecommenderLevelDefinition.
+         * @param request AdminUpsertRecommenderLevelDefinitionRequest message or plain object
+         * @param callback Node-style callback called with the error, if any, and AdminUpsertRecommenderLevelDefinitionResponse
+         */
+        public adminUpsertRecommenderLevelDefinition(request: pb.IAdminUpsertRecommenderLevelDefinitionRequest, callback: pb.PayService.AdminUpsertRecommenderLevelDefinitionCallback): void;
+
+        /**
+         * Calls AdminUpsertRecommenderLevelDefinition.
+         * @param request AdminUpsertRecommenderLevelDefinitionRequest message or plain object
+         * @returns Promise
+         */
+        public adminUpsertRecommenderLevelDefinition(request: pb.IAdminUpsertRecommenderLevelDefinitionRequest): Promise<pb.AdminUpsertRecommenderLevelDefinitionResponse>;
+
+        /**
+         * Calls AdminListRecommenderLevelDefinitions.
+         * @param request AdminListRecommenderLevelDefinitionsRequest message or plain object
+         * @param callback Node-style callback called with the error, if any, and AdminListRecommenderLevelDefinitionsResponse
+         */
+        public adminListRecommenderLevelDefinitions(request: pb.IAdminListRecommenderLevelDefinitionsRequest, callback: pb.PayService.AdminListRecommenderLevelDefinitionsCallback): void;
+
+        /**
+         * Calls AdminListRecommenderLevelDefinitions.
+         * @param request AdminListRecommenderLevelDefinitionsRequest message or plain object
+         * @returns Promise
+         */
+        public adminListRecommenderLevelDefinitions(request: pb.IAdminListRecommenderLevelDefinitionsRequest): Promise<pb.AdminListRecommenderLevelDefinitionsResponse>;
+
+        /**
+         * Calls AdminDeleteRecommenderLevelDefinition.
+         * @param request AdminDeleteRecommenderLevelDefinitionRequest message or plain object
+         * @param callback Node-style callback called with the error, if any, and AdminDeleteRecommenderLevelDefinitionResponse
+         */
+        public adminDeleteRecommenderLevelDefinition(request: pb.IAdminDeleteRecommenderLevelDefinitionRequest, callback: pb.PayService.AdminDeleteRecommenderLevelDefinitionCallback): void;
+
+        /**
+         * Calls AdminDeleteRecommenderLevelDefinition.
+         * @param request AdminDeleteRecommenderLevelDefinitionRequest message or plain object
+         * @returns Promise
+         */
+        public adminDeleteRecommenderLevelDefinition(request: pb.IAdminDeleteRecommenderLevelDefinitionRequest): Promise<pb.AdminDeleteRecommenderLevelDefinitionResponse>;
+
+        /**
          * Calls AdminUpsertRecommenderAppPolicy.
          * @param request AdminUpsertRecommenderAppPolicyRequest message or plain object
          * @param callback Node-style callback called with the error, if any, and AdminUpsertRecommenderAppPolicyResponse
@@ -652,6 +694,20 @@ export namespace pb {
          * @returns Promise
          */
         public listRecommenderAppPolicies(request: pb.IListRecommenderAppPoliciesRequest): Promise<pb.ListRecommenderAppPoliciesResponse>;
+
+        /**
+         * Calls ListRecommenderLevelDefinitions.
+         * @param request ListRecommenderLevelDefinitionsRequest message or plain object
+         * @param callback Node-style callback called with the error, if any, and ListRecommenderLevelDefinitionsResponse
+         */
+        public listRecommenderLevelDefinitions(request: pb.IListRecommenderLevelDefinitionsRequest, callback: pb.PayService.ListRecommenderLevelDefinitionsCallback): void;
+
+        /**
+         * Calls ListRecommenderLevelDefinitions.
+         * @param request ListRecommenderLevelDefinitionsRequest message or plain object
+         * @returns Promise
+         */
+        public listRecommenderLevelDefinitions(request: pb.IListRecommenderLevelDefinitionsRequest): Promise<pb.ListRecommenderLevelDefinitionsResponse>;
 
         /**
          * Calls DeleteRecommenderAppPolicy.
@@ -1035,6 +1091,27 @@ export namespace pb {
         type AdminDeleteRecommenderLevelCallback = (error: (Error|null), response?: pb.AdminDeleteRecommenderLevelResponse) => void;
 
         /**
+         * Callback as used by {@link pb.PayService#adminUpsertRecommenderLevelDefinition}.
+         * @param error Error, if any
+         * @param [response] AdminUpsertRecommenderLevelDefinitionResponse
+         */
+        type AdminUpsertRecommenderLevelDefinitionCallback = (error: (Error|null), response?: pb.AdminUpsertRecommenderLevelDefinitionResponse) => void;
+
+        /**
+         * Callback as used by {@link pb.PayService#adminListRecommenderLevelDefinitions}.
+         * @param error Error, if any
+         * @param [response] AdminListRecommenderLevelDefinitionsResponse
+         */
+        type AdminListRecommenderLevelDefinitionsCallback = (error: (Error|null), response?: pb.AdminListRecommenderLevelDefinitionsResponse) => void;
+
+        /**
+         * Callback as used by {@link pb.PayService#adminDeleteRecommenderLevelDefinition}.
+         * @param error Error, if any
+         * @param [response] AdminDeleteRecommenderLevelDefinitionResponse
+         */
+        type AdminDeleteRecommenderLevelDefinitionCallback = (error: (Error|null), response?: pb.AdminDeleteRecommenderLevelDefinitionResponse) => void;
+
+        /**
          * Callback as used by {@link pb.PayService#adminUpsertRecommenderAppPolicy}.
          * @param error Error, if any
          * @param [response] AdminUpsertRecommenderAppPolicyResponse
@@ -1096,6 +1173,13 @@ export namespace pb {
          * @param [response] ListRecommenderAppPoliciesResponse
          */
         type ListRecommenderAppPoliciesCallback = (error: (Error|null), response?: pb.ListRecommenderAppPoliciesResponse) => void;
+
+        /**
+         * Callback as used by {@link pb.PayService#listRecommenderLevelDefinitions}.
+         * @param error Error, if any
+         * @param [response] ListRecommenderLevelDefinitionsResponse
+         */
+        type ListRecommenderLevelDefinitionsCallback = (error: (Error|null), response?: pb.ListRecommenderLevelDefinitionsResponse) => void;
 
         /**
          * Callback as used by {@link pb.PayService#deleteRecommenderAppPolicy}.
@@ -11787,6 +11871,999 @@ export namespace pb {
 
         /**
          * Gets the default type url for AdminDeleteRecommenderLevelResponse
+         * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+         * @returns The default type url
+         */
+        public static getTypeUrl(typeUrlPrefix?: string): string;
+    }
+
+    /** Properties of a RecommenderLevelDefinitionInfo. */
+    interface IRecommenderLevelDefinitionInfo {
+
+        /** RecommenderLevelDefinitionInfo id */
+        id?: (number|Long|null);
+
+        /** RecommenderLevelDefinitionInfo level */
+        level?: (number|null);
+
+        /** RecommenderLevelDefinitionInfo name */
+        name?: (string|null);
+
+        /** RecommenderLevelDefinitionInfo description */
+        description?: (string|null);
+
+        /** RecommenderLevelDefinitionInfo remark */
+        remark?: (string|null);
+
+        /** RecommenderLevelDefinitionInfo createTime */
+        createTime?: (string|null);
+
+        /** RecommenderLevelDefinitionInfo updateTime */
+        updateTime?: (string|null);
+    }
+
+    /** Represents a RecommenderLevelDefinitionInfo. */
+    class RecommenderLevelDefinitionInfo implements IRecommenderLevelDefinitionInfo {
+
+        /**
+         * Constructs a new RecommenderLevelDefinitionInfo.
+         * @param [properties] Properties to set
+         */
+        constructor(properties?: pb.IRecommenderLevelDefinitionInfo);
+
+        /** RecommenderLevelDefinitionInfo id. */
+        public id: (number|Long);
+
+        /** RecommenderLevelDefinitionInfo level. */
+        public level: number;
+
+        /** RecommenderLevelDefinitionInfo name. */
+        public name: string;
+
+        /** RecommenderLevelDefinitionInfo description. */
+        public description: string;
+
+        /** RecommenderLevelDefinitionInfo remark. */
+        public remark: string;
+
+        /** RecommenderLevelDefinitionInfo createTime. */
+        public createTime: string;
+
+        /** RecommenderLevelDefinitionInfo updateTime. */
+        public updateTime: string;
+
+        /**
+         * Creates a new RecommenderLevelDefinitionInfo instance using the specified properties.
+         * @param [properties] Properties to set
+         * @returns RecommenderLevelDefinitionInfo instance
+         */
+        public static create(properties?: pb.IRecommenderLevelDefinitionInfo): pb.RecommenderLevelDefinitionInfo;
+
+        /**
+         * Encodes the specified RecommenderLevelDefinitionInfo message. Does not implicitly {@link pb.RecommenderLevelDefinitionInfo.verify|verify} messages.
+         * @param message RecommenderLevelDefinitionInfo message or plain object to encode
+         * @param [writer] Writer to encode to
+         * @returns Writer
+         */
+        public static encode(message: pb.IRecommenderLevelDefinitionInfo, writer?: $protobuf.Writer): $protobuf.Writer;
+
+        /**
+         * Encodes the specified RecommenderLevelDefinitionInfo message, length delimited. Does not implicitly {@link pb.RecommenderLevelDefinitionInfo.verify|verify} messages.
+         * @param message RecommenderLevelDefinitionInfo message or plain object to encode
+         * @param [writer] Writer to encode to
+         * @returns Writer
+         */
+        public static encodeDelimited(message: pb.IRecommenderLevelDefinitionInfo, writer?: $protobuf.Writer): $protobuf.Writer;
+
+        /**
+         * Decodes a RecommenderLevelDefinitionInfo message from the specified reader or buffer.
+         * @param reader Reader or buffer to decode from
+         * @param [length] Message length if known beforehand
+         * @returns RecommenderLevelDefinitionInfo
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): pb.RecommenderLevelDefinitionInfo;
+
+        /**
+         * Decodes a RecommenderLevelDefinitionInfo message from the specified reader or buffer, length delimited.
+         * @param reader Reader or buffer to decode from
+         * @returns RecommenderLevelDefinitionInfo
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): pb.RecommenderLevelDefinitionInfo;
+
+        /**
+         * Verifies a RecommenderLevelDefinitionInfo message.
+         * @param message Plain object to verify
+         * @returns `null` if valid, otherwise the reason why it is not
+         */
+        public static verify(message: { [k: string]: any }): (string|null);
+
+        /**
+         * Creates a RecommenderLevelDefinitionInfo message from a plain object. Also converts values to their respective internal types.
+         * @param object Plain object
+         * @returns RecommenderLevelDefinitionInfo
+         */
+        public static fromObject(object: { [k: string]: any }): pb.RecommenderLevelDefinitionInfo;
+
+        /**
+         * Creates a plain object from a RecommenderLevelDefinitionInfo message. Also converts values to other types if specified.
+         * @param message RecommenderLevelDefinitionInfo
+         * @param [options] Conversion options
+         * @returns Plain object
+         */
+        public static toObject(message: pb.RecommenderLevelDefinitionInfo, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+        /**
+         * Converts this RecommenderLevelDefinitionInfo to JSON.
+         * @returns JSON object
+         */
+        public toJSON(): { [k: string]: any };
+
+        /**
+         * Gets the default type url for RecommenderLevelDefinitionInfo
+         * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+         * @returns The default type url
+         */
+        public static getTypeUrl(typeUrlPrefix?: string): string;
+    }
+
+    /** Properties of an AdminUpsertRecommenderLevelDefinitionRequest. */
+    interface IAdminUpsertRecommenderLevelDefinitionRequest {
+
+        /** AdminUpsertRecommenderLevelDefinitionRequest level */
+        level?: (number|null);
+
+        /** AdminUpsertRecommenderLevelDefinitionRequest name */
+        name?: (string|null);
+
+        /** AdminUpsertRecommenderLevelDefinitionRequest description */
+        description?: (string|null);
+
+        /** AdminUpsertRecommenderLevelDefinitionRequest remark */
+        remark?: (string|null);
+    }
+
+    /** Represents an AdminUpsertRecommenderLevelDefinitionRequest. */
+    class AdminUpsertRecommenderLevelDefinitionRequest implements IAdminUpsertRecommenderLevelDefinitionRequest {
+
+        /**
+         * Constructs a new AdminUpsertRecommenderLevelDefinitionRequest.
+         * @param [properties] Properties to set
+         */
+        constructor(properties?: pb.IAdminUpsertRecommenderLevelDefinitionRequest);
+
+        /** AdminUpsertRecommenderLevelDefinitionRequest level. */
+        public level: number;
+
+        /** AdminUpsertRecommenderLevelDefinitionRequest name. */
+        public name: string;
+
+        /** AdminUpsertRecommenderLevelDefinitionRequest description. */
+        public description: string;
+
+        /** AdminUpsertRecommenderLevelDefinitionRequest remark. */
+        public remark: string;
+
+        /**
+         * Creates a new AdminUpsertRecommenderLevelDefinitionRequest instance using the specified properties.
+         * @param [properties] Properties to set
+         * @returns AdminUpsertRecommenderLevelDefinitionRequest instance
+         */
+        public static create(properties?: pb.IAdminUpsertRecommenderLevelDefinitionRequest): pb.AdminUpsertRecommenderLevelDefinitionRequest;
+
+        /**
+         * Encodes the specified AdminUpsertRecommenderLevelDefinitionRequest message. Does not implicitly {@link pb.AdminUpsertRecommenderLevelDefinitionRequest.verify|verify} messages.
+         * @param message AdminUpsertRecommenderLevelDefinitionRequest message or plain object to encode
+         * @param [writer] Writer to encode to
+         * @returns Writer
+         */
+        public static encode(message: pb.IAdminUpsertRecommenderLevelDefinitionRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+        /**
+         * Encodes the specified AdminUpsertRecommenderLevelDefinitionRequest message, length delimited. Does not implicitly {@link pb.AdminUpsertRecommenderLevelDefinitionRequest.verify|verify} messages.
+         * @param message AdminUpsertRecommenderLevelDefinitionRequest message or plain object to encode
+         * @param [writer] Writer to encode to
+         * @returns Writer
+         */
+        public static encodeDelimited(message: pb.IAdminUpsertRecommenderLevelDefinitionRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+        /**
+         * Decodes an AdminUpsertRecommenderLevelDefinitionRequest message from the specified reader or buffer.
+         * @param reader Reader or buffer to decode from
+         * @param [length] Message length if known beforehand
+         * @returns AdminUpsertRecommenderLevelDefinitionRequest
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): pb.AdminUpsertRecommenderLevelDefinitionRequest;
+
+        /**
+         * Decodes an AdminUpsertRecommenderLevelDefinitionRequest message from the specified reader or buffer, length delimited.
+         * @param reader Reader or buffer to decode from
+         * @returns AdminUpsertRecommenderLevelDefinitionRequest
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): pb.AdminUpsertRecommenderLevelDefinitionRequest;
+
+        /**
+         * Verifies an AdminUpsertRecommenderLevelDefinitionRequest message.
+         * @param message Plain object to verify
+         * @returns `null` if valid, otherwise the reason why it is not
+         */
+        public static verify(message: { [k: string]: any }): (string|null);
+
+        /**
+         * Creates an AdminUpsertRecommenderLevelDefinitionRequest message from a plain object. Also converts values to their respective internal types.
+         * @param object Plain object
+         * @returns AdminUpsertRecommenderLevelDefinitionRequest
+         */
+        public static fromObject(object: { [k: string]: any }): pb.AdminUpsertRecommenderLevelDefinitionRequest;
+
+        /**
+         * Creates a plain object from an AdminUpsertRecommenderLevelDefinitionRequest message. Also converts values to other types if specified.
+         * @param message AdminUpsertRecommenderLevelDefinitionRequest
+         * @param [options] Conversion options
+         * @returns Plain object
+         */
+        public static toObject(message: pb.AdminUpsertRecommenderLevelDefinitionRequest, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+        /**
+         * Converts this AdminUpsertRecommenderLevelDefinitionRequest to JSON.
+         * @returns JSON object
+         */
+        public toJSON(): { [k: string]: any };
+
+        /**
+         * Gets the default type url for AdminUpsertRecommenderLevelDefinitionRequest
+         * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+         * @returns The default type url
+         */
+        public static getTypeUrl(typeUrlPrefix?: string): string;
+    }
+
+    /** Properties of an AdminUpsertRecommenderLevelDefinitionResponse. */
+    interface IAdminUpsertRecommenderLevelDefinitionResponse {
+
+        /** AdminUpsertRecommenderLevelDefinitionResponse code */
+        code?: (number|null);
+
+        /** AdminUpsertRecommenderLevelDefinitionResponse msg */
+        msg?: (string|null);
+    }
+
+    /** Represents an AdminUpsertRecommenderLevelDefinitionResponse. */
+    class AdminUpsertRecommenderLevelDefinitionResponse implements IAdminUpsertRecommenderLevelDefinitionResponse {
+
+        /**
+         * Constructs a new AdminUpsertRecommenderLevelDefinitionResponse.
+         * @param [properties] Properties to set
+         */
+        constructor(properties?: pb.IAdminUpsertRecommenderLevelDefinitionResponse);
+
+        /** AdminUpsertRecommenderLevelDefinitionResponse code. */
+        public code: number;
+
+        /** AdminUpsertRecommenderLevelDefinitionResponse msg. */
+        public msg: string;
+
+        /**
+         * Creates a new AdminUpsertRecommenderLevelDefinitionResponse instance using the specified properties.
+         * @param [properties] Properties to set
+         * @returns AdminUpsertRecommenderLevelDefinitionResponse instance
+         */
+        public static create(properties?: pb.IAdminUpsertRecommenderLevelDefinitionResponse): pb.AdminUpsertRecommenderLevelDefinitionResponse;
+
+        /**
+         * Encodes the specified AdminUpsertRecommenderLevelDefinitionResponse message. Does not implicitly {@link pb.AdminUpsertRecommenderLevelDefinitionResponse.verify|verify} messages.
+         * @param message AdminUpsertRecommenderLevelDefinitionResponse message or plain object to encode
+         * @param [writer] Writer to encode to
+         * @returns Writer
+         */
+        public static encode(message: pb.IAdminUpsertRecommenderLevelDefinitionResponse, writer?: $protobuf.Writer): $protobuf.Writer;
+
+        /**
+         * Encodes the specified AdminUpsertRecommenderLevelDefinitionResponse message, length delimited. Does not implicitly {@link pb.AdminUpsertRecommenderLevelDefinitionResponse.verify|verify} messages.
+         * @param message AdminUpsertRecommenderLevelDefinitionResponse message or plain object to encode
+         * @param [writer] Writer to encode to
+         * @returns Writer
+         */
+        public static encodeDelimited(message: pb.IAdminUpsertRecommenderLevelDefinitionResponse, writer?: $protobuf.Writer): $protobuf.Writer;
+
+        /**
+         * Decodes an AdminUpsertRecommenderLevelDefinitionResponse message from the specified reader or buffer.
+         * @param reader Reader or buffer to decode from
+         * @param [length] Message length if known beforehand
+         * @returns AdminUpsertRecommenderLevelDefinitionResponse
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): pb.AdminUpsertRecommenderLevelDefinitionResponse;
+
+        /**
+         * Decodes an AdminUpsertRecommenderLevelDefinitionResponse message from the specified reader or buffer, length delimited.
+         * @param reader Reader or buffer to decode from
+         * @returns AdminUpsertRecommenderLevelDefinitionResponse
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): pb.AdminUpsertRecommenderLevelDefinitionResponse;
+
+        /**
+         * Verifies an AdminUpsertRecommenderLevelDefinitionResponse message.
+         * @param message Plain object to verify
+         * @returns `null` if valid, otherwise the reason why it is not
+         */
+        public static verify(message: { [k: string]: any }): (string|null);
+
+        /**
+         * Creates an AdminUpsertRecommenderLevelDefinitionResponse message from a plain object. Also converts values to their respective internal types.
+         * @param object Plain object
+         * @returns AdminUpsertRecommenderLevelDefinitionResponse
+         */
+        public static fromObject(object: { [k: string]: any }): pb.AdminUpsertRecommenderLevelDefinitionResponse;
+
+        /**
+         * Creates a plain object from an AdminUpsertRecommenderLevelDefinitionResponse message. Also converts values to other types if specified.
+         * @param message AdminUpsertRecommenderLevelDefinitionResponse
+         * @param [options] Conversion options
+         * @returns Plain object
+         */
+        public static toObject(message: pb.AdminUpsertRecommenderLevelDefinitionResponse, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+        /**
+         * Converts this AdminUpsertRecommenderLevelDefinitionResponse to JSON.
+         * @returns JSON object
+         */
+        public toJSON(): { [k: string]: any };
+
+        /**
+         * Gets the default type url for AdminUpsertRecommenderLevelDefinitionResponse
+         * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+         * @returns The default type url
+         */
+        public static getTypeUrl(typeUrlPrefix?: string): string;
+    }
+
+    /** Properties of an AdminListRecommenderLevelDefinitionsRequest. */
+    interface IAdminListRecommenderLevelDefinitionsRequest {
+
+        /** AdminListRecommenderLevelDefinitionsRequest pageNum */
+        pageNum?: (number|null);
+
+        /** AdminListRecommenderLevelDefinitionsRequest pageSize */
+        pageSize?: (number|null);
+    }
+
+    /** Represents an AdminListRecommenderLevelDefinitionsRequest. */
+    class AdminListRecommenderLevelDefinitionsRequest implements IAdminListRecommenderLevelDefinitionsRequest {
+
+        /**
+         * Constructs a new AdminListRecommenderLevelDefinitionsRequest.
+         * @param [properties] Properties to set
+         */
+        constructor(properties?: pb.IAdminListRecommenderLevelDefinitionsRequest);
+
+        /** AdminListRecommenderLevelDefinitionsRequest pageNum. */
+        public pageNum: number;
+
+        /** AdminListRecommenderLevelDefinitionsRequest pageSize. */
+        public pageSize: number;
+
+        /**
+         * Creates a new AdminListRecommenderLevelDefinitionsRequest instance using the specified properties.
+         * @param [properties] Properties to set
+         * @returns AdminListRecommenderLevelDefinitionsRequest instance
+         */
+        public static create(properties?: pb.IAdminListRecommenderLevelDefinitionsRequest): pb.AdminListRecommenderLevelDefinitionsRequest;
+
+        /**
+         * Encodes the specified AdminListRecommenderLevelDefinitionsRequest message. Does not implicitly {@link pb.AdminListRecommenderLevelDefinitionsRequest.verify|verify} messages.
+         * @param message AdminListRecommenderLevelDefinitionsRequest message or plain object to encode
+         * @param [writer] Writer to encode to
+         * @returns Writer
+         */
+        public static encode(message: pb.IAdminListRecommenderLevelDefinitionsRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+        /**
+         * Encodes the specified AdminListRecommenderLevelDefinitionsRequest message, length delimited. Does not implicitly {@link pb.AdminListRecommenderLevelDefinitionsRequest.verify|verify} messages.
+         * @param message AdminListRecommenderLevelDefinitionsRequest message or plain object to encode
+         * @param [writer] Writer to encode to
+         * @returns Writer
+         */
+        public static encodeDelimited(message: pb.IAdminListRecommenderLevelDefinitionsRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+        /**
+         * Decodes an AdminListRecommenderLevelDefinitionsRequest message from the specified reader or buffer.
+         * @param reader Reader or buffer to decode from
+         * @param [length] Message length if known beforehand
+         * @returns AdminListRecommenderLevelDefinitionsRequest
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): pb.AdminListRecommenderLevelDefinitionsRequest;
+
+        /**
+         * Decodes an AdminListRecommenderLevelDefinitionsRequest message from the specified reader or buffer, length delimited.
+         * @param reader Reader or buffer to decode from
+         * @returns AdminListRecommenderLevelDefinitionsRequest
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): pb.AdminListRecommenderLevelDefinitionsRequest;
+
+        /**
+         * Verifies an AdminListRecommenderLevelDefinitionsRequest message.
+         * @param message Plain object to verify
+         * @returns `null` if valid, otherwise the reason why it is not
+         */
+        public static verify(message: { [k: string]: any }): (string|null);
+
+        /**
+         * Creates an AdminListRecommenderLevelDefinitionsRequest message from a plain object. Also converts values to their respective internal types.
+         * @param object Plain object
+         * @returns AdminListRecommenderLevelDefinitionsRequest
+         */
+        public static fromObject(object: { [k: string]: any }): pb.AdminListRecommenderLevelDefinitionsRequest;
+
+        /**
+         * Creates a plain object from an AdminListRecommenderLevelDefinitionsRequest message. Also converts values to other types if specified.
+         * @param message AdminListRecommenderLevelDefinitionsRequest
+         * @param [options] Conversion options
+         * @returns Plain object
+         */
+        public static toObject(message: pb.AdminListRecommenderLevelDefinitionsRequest, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+        /**
+         * Converts this AdminListRecommenderLevelDefinitionsRequest to JSON.
+         * @returns JSON object
+         */
+        public toJSON(): { [k: string]: any };
+
+        /**
+         * Gets the default type url for AdminListRecommenderLevelDefinitionsRequest
+         * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+         * @returns The default type url
+         */
+        public static getTypeUrl(typeUrlPrefix?: string): string;
+    }
+
+    /** Properties of an AdminListRecommenderLevelDefinitionsResponse. */
+    interface IAdminListRecommenderLevelDefinitionsResponse {
+
+        /** AdminListRecommenderLevelDefinitionsResponse code */
+        code?: (number|null);
+
+        /** AdminListRecommenderLevelDefinitionsResponse msg */
+        msg?: (string|null);
+
+        /** AdminListRecommenderLevelDefinitionsResponse total */
+        total?: (number|Long|null);
+
+        /** AdminListRecommenderLevelDefinitionsResponse data */
+        data?: (pb.IRecommenderLevelDefinitionInfo[]|null);
+    }
+
+    /** Represents an AdminListRecommenderLevelDefinitionsResponse. */
+    class AdminListRecommenderLevelDefinitionsResponse implements IAdminListRecommenderLevelDefinitionsResponse {
+
+        /**
+         * Constructs a new AdminListRecommenderLevelDefinitionsResponse.
+         * @param [properties] Properties to set
+         */
+        constructor(properties?: pb.IAdminListRecommenderLevelDefinitionsResponse);
+
+        /** AdminListRecommenderLevelDefinitionsResponse code. */
+        public code: number;
+
+        /** AdminListRecommenderLevelDefinitionsResponse msg. */
+        public msg: string;
+
+        /** AdminListRecommenderLevelDefinitionsResponse total. */
+        public total: (number|Long);
+
+        /** AdminListRecommenderLevelDefinitionsResponse data. */
+        public data: pb.IRecommenderLevelDefinitionInfo[];
+
+        /**
+         * Creates a new AdminListRecommenderLevelDefinitionsResponse instance using the specified properties.
+         * @param [properties] Properties to set
+         * @returns AdminListRecommenderLevelDefinitionsResponse instance
+         */
+        public static create(properties?: pb.IAdminListRecommenderLevelDefinitionsResponse): pb.AdminListRecommenderLevelDefinitionsResponse;
+
+        /**
+         * Encodes the specified AdminListRecommenderLevelDefinitionsResponse message. Does not implicitly {@link pb.AdminListRecommenderLevelDefinitionsResponse.verify|verify} messages.
+         * @param message AdminListRecommenderLevelDefinitionsResponse message or plain object to encode
+         * @param [writer] Writer to encode to
+         * @returns Writer
+         */
+        public static encode(message: pb.IAdminListRecommenderLevelDefinitionsResponse, writer?: $protobuf.Writer): $protobuf.Writer;
+
+        /**
+         * Encodes the specified AdminListRecommenderLevelDefinitionsResponse message, length delimited. Does not implicitly {@link pb.AdminListRecommenderLevelDefinitionsResponse.verify|verify} messages.
+         * @param message AdminListRecommenderLevelDefinitionsResponse message or plain object to encode
+         * @param [writer] Writer to encode to
+         * @returns Writer
+         */
+        public static encodeDelimited(message: pb.IAdminListRecommenderLevelDefinitionsResponse, writer?: $protobuf.Writer): $protobuf.Writer;
+
+        /**
+         * Decodes an AdminListRecommenderLevelDefinitionsResponse message from the specified reader or buffer.
+         * @param reader Reader or buffer to decode from
+         * @param [length] Message length if known beforehand
+         * @returns AdminListRecommenderLevelDefinitionsResponse
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): pb.AdminListRecommenderLevelDefinitionsResponse;
+
+        /**
+         * Decodes an AdminListRecommenderLevelDefinitionsResponse message from the specified reader or buffer, length delimited.
+         * @param reader Reader or buffer to decode from
+         * @returns AdminListRecommenderLevelDefinitionsResponse
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): pb.AdminListRecommenderLevelDefinitionsResponse;
+
+        /**
+         * Verifies an AdminListRecommenderLevelDefinitionsResponse message.
+         * @param message Plain object to verify
+         * @returns `null` if valid, otherwise the reason why it is not
+         */
+        public static verify(message: { [k: string]: any }): (string|null);
+
+        /**
+         * Creates an AdminListRecommenderLevelDefinitionsResponse message from a plain object. Also converts values to their respective internal types.
+         * @param object Plain object
+         * @returns AdminListRecommenderLevelDefinitionsResponse
+         */
+        public static fromObject(object: { [k: string]: any }): pb.AdminListRecommenderLevelDefinitionsResponse;
+
+        /**
+         * Creates a plain object from an AdminListRecommenderLevelDefinitionsResponse message. Also converts values to other types if specified.
+         * @param message AdminListRecommenderLevelDefinitionsResponse
+         * @param [options] Conversion options
+         * @returns Plain object
+         */
+        public static toObject(message: pb.AdminListRecommenderLevelDefinitionsResponse, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+        /**
+         * Converts this AdminListRecommenderLevelDefinitionsResponse to JSON.
+         * @returns JSON object
+         */
+        public toJSON(): { [k: string]: any };
+
+        /**
+         * Gets the default type url for AdminListRecommenderLevelDefinitionsResponse
+         * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+         * @returns The default type url
+         */
+        public static getTypeUrl(typeUrlPrefix?: string): string;
+    }
+
+    /** Properties of an AdminDeleteRecommenderLevelDefinitionRequest. */
+    interface IAdminDeleteRecommenderLevelDefinitionRequest {
+
+        /** AdminDeleteRecommenderLevelDefinitionRequest level */
+        level?: (number|null);
+    }
+
+    /** Represents an AdminDeleteRecommenderLevelDefinitionRequest. */
+    class AdminDeleteRecommenderLevelDefinitionRequest implements IAdminDeleteRecommenderLevelDefinitionRequest {
+
+        /**
+         * Constructs a new AdminDeleteRecommenderLevelDefinitionRequest.
+         * @param [properties] Properties to set
+         */
+        constructor(properties?: pb.IAdminDeleteRecommenderLevelDefinitionRequest);
+
+        /** AdminDeleteRecommenderLevelDefinitionRequest level. */
+        public level: number;
+
+        /**
+         * Creates a new AdminDeleteRecommenderLevelDefinitionRequest instance using the specified properties.
+         * @param [properties] Properties to set
+         * @returns AdminDeleteRecommenderLevelDefinitionRequest instance
+         */
+        public static create(properties?: pb.IAdminDeleteRecommenderLevelDefinitionRequest): pb.AdminDeleteRecommenderLevelDefinitionRequest;
+
+        /**
+         * Encodes the specified AdminDeleteRecommenderLevelDefinitionRequest message. Does not implicitly {@link pb.AdminDeleteRecommenderLevelDefinitionRequest.verify|verify} messages.
+         * @param message AdminDeleteRecommenderLevelDefinitionRequest message or plain object to encode
+         * @param [writer] Writer to encode to
+         * @returns Writer
+         */
+        public static encode(message: pb.IAdminDeleteRecommenderLevelDefinitionRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+        /**
+         * Encodes the specified AdminDeleteRecommenderLevelDefinitionRequest message, length delimited. Does not implicitly {@link pb.AdminDeleteRecommenderLevelDefinitionRequest.verify|verify} messages.
+         * @param message AdminDeleteRecommenderLevelDefinitionRequest message or plain object to encode
+         * @param [writer] Writer to encode to
+         * @returns Writer
+         */
+        public static encodeDelimited(message: pb.IAdminDeleteRecommenderLevelDefinitionRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+        /**
+         * Decodes an AdminDeleteRecommenderLevelDefinitionRequest message from the specified reader or buffer.
+         * @param reader Reader or buffer to decode from
+         * @param [length] Message length if known beforehand
+         * @returns AdminDeleteRecommenderLevelDefinitionRequest
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): pb.AdminDeleteRecommenderLevelDefinitionRequest;
+
+        /**
+         * Decodes an AdminDeleteRecommenderLevelDefinitionRequest message from the specified reader or buffer, length delimited.
+         * @param reader Reader or buffer to decode from
+         * @returns AdminDeleteRecommenderLevelDefinitionRequest
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): pb.AdminDeleteRecommenderLevelDefinitionRequest;
+
+        /**
+         * Verifies an AdminDeleteRecommenderLevelDefinitionRequest message.
+         * @param message Plain object to verify
+         * @returns `null` if valid, otherwise the reason why it is not
+         */
+        public static verify(message: { [k: string]: any }): (string|null);
+
+        /**
+         * Creates an AdminDeleteRecommenderLevelDefinitionRequest message from a plain object. Also converts values to their respective internal types.
+         * @param object Plain object
+         * @returns AdminDeleteRecommenderLevelDefinitionRequest
+         */
+        public static fromObject(object: { [k: string]: any }): pb.AdminDeleteRecommenderLevelDefinitionRequest;
+
+        /**
+         * Creates a plain object from an AdminDeleteRecommenderLevelDefinitionRequest message. Also converts values to other types if specified.
+         * @param message AdminDeleteRecommenderLevelDefinitionRequest
+         * @param [options] Conversion options
+         * @returns Plain object
+         */
+        public static toObject(message: pb.AdminDeleteRecommenderLevelDefinitionRequest, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+        /**
+         * Converts this AdminDeleteRecommenderLevelDefinitionRequest to JSON.
+         * @returns JSON object
+         */
+        public toJSON(): { [k: string]: any };
+
+        /**
+         * Gets the default type url for AdminDeleteRecommenderLevelDefinitionRequest
+         * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+         * @returns The default type url
+         */
+        public static getTypeUrl(typeUrlPrefix?: string): string;
+    }
+
+    /** Properties of an AdminDeleteRecommenderLevelDefinitionResponse. */
+    interface IAdminDeleteRecommenderLevelDefinitionResponse {
+
+        /** AdminDeleteRecommenderLevelDefinitionResponse code */
+        code?: (number|null);
+
+        /** AdminDeleteRecommenderLevelDefinitionResponse msg */
+        msg?: (string|null);
+    }
+
+    /** Represents an AdminDeleteRecommenderLevelDefinitionResponse. */
+    class AdminDeleteRecommenderLevelDefinitionResponse implements IAdminDeleteRecommenderLevelDefinitionResponse {
+
+        /**
+         * Constructs a new AdminDeleteRecommenderLevelDefinitionResponse.
+         * @param [properties] Properties to set
+         */
+        constructor(properties?: pb.IAdminDeleteRecommenderLevelDefinitionResponse);
+
+        /** AdminDeleteRecommenderLevelDefinitionResponse code. */
+        public code: number;
+
+        /** AdminDeleteRecommenderLevelDefinitionResponse msg. */
+        public msg: string;
+
+        /**
+         * Creates a new AdminDeleteRecommenderLevelDefinitionResponse instance using the specified properties.
+         * @param [properties] Properties to set
+         * @returns AdminDeleteRecommenderLevelDefinitionResponse instance
+         */
+        public static create(properties?: pb.IAdminDeleteRecommenderLevelDefinitionResponse): pb.AdminDeleteRecommenderLevelDefinitionResponse;
+
+        /**
+         * Encodes the specified AdminDeleteRecommenderLevelDefinitionResponse message. Does not implicitly {@link pb.AdminDeleteRecommenderLevelDefinitionResponse.verify|verify} messages.
+         * @param message AdminDeleteRecommenderLevelDefinitionResponse message or plain object to encode
+         * @param [writer] Writer to encode to
+         * @returns Writer
+         */
+        public static encode(message: pb.IAdminDeleteRecommenderLevelDefinitionResponse, writer?: $protobuf.Writer): $protobuf.Writer;
+
+        /**
+         * Encodes the specified AdminDeleteRecommenderLevelDefinitionResponse message, length delimited. Does not implicitly {@link pb.AdminDeleteRecommenderLevelDefinitionResponse.verify|verify} messages.
+         * @param message AdminDeleteRecommenderLevelDefinitionResponse message or plain object to encode
+         * @param [writer] Writer to encode to
+         * @returns Writer
+         */
+        public static encodeDelimited(message: pb.IAdminDeleteRecommenderLevelDefinitionResponse, writer?: $protobuf.Writer): $protobuf.Writer;
+
+        /**
+         * Decodes an AdminDeleteRecommenderLevelDefinitionResponse message from the specified reader or buffer.
+         * @param reader Reader or buffer to decode from
+         * @param [length] Message length if known beforehand
+         * @returns AdminDeleteRecommenderLevelDefinitionResponse
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): pb.AdminDeleteRecommenderLevelDefinitionResponse;
+
+        /**
+         * Decodes an AdminDeleteRecommenderLevelDefinitionResponse message from the specified reader or buffer, length delimited.
+         * @param reader Reader or buffer to decode from
+         * @returns AdminDeleteRecommenderLevelDefinitionResponse
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): pb.AdminDeleteRecommenderLevelDefinitionResponse;
+
+        /**
+         * Verifies an AdminDeleteRecommenderLevelDefinitionResponse message.
+         * @param message Plain object to verify
+         * @returns `null` if valid, otherwise the reason why it is not
+         */
+        public static verify(message: { [k: string]: any }): (string|null);
+
+        /**
+         * Creates an AdminDeleteRecommenderLevelDefinitionResponse message from a plain object. Also converts values to their respective internal types.
+         * @param object Plain object
+         * @returns AdminDeleteRecommenderLevelDefinitionResponse
+         */
+        public static fromObject(object: { [k: string]: any }): pb.AdminDeleteRecommenderLevelDefinitionResponse;
+
+        /**
+         * Creates a plain object from an AdminDeleteRecommenderLevelDefinitionResponse message. Also converts values to other types if specified.
+         * @param message AdminDeleteRecommenderLevelDefinitionResponse
+         * @param [options] Conversion options
+         * @returns Plain object
+         */
+        public static toObject(message: pb.AdminDeleteRecommenderLevelDefinitionResponse, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+        /**
+         * Converts this AdminDeleteRecommenderLevelDefinitionResponse to JSON.
+         * @returns JSON object
+         */
+        public toJSON(): { [k: string]: any };
+
+        /**
+         * Gets the default type url for AdminDeleteRecommenderLevelDefinitionResponse
+         * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+         * @returns The default type url
+         */
+        public static getTypeUrl(typeUrlPrefix?: string): string;
+    }
+
+    /** Properties of a ListRecommenderLevelDefinitionsRequest. */
+    interface IListRecommenderLevelDefinitionsRequest {
+
+        /** ListRecommenderLevelDefinitionsRequest serviceAppid */
+        serviceAppid?: (string|null);
+
+        /** ListRecommenderLevelDefinitionsRequest pageNum */
+        pageNum?: (number|null);
+
+        /** ListRecommenderLevelDefinitionsRequest pageSize */
+        pageSize?: (number|null);
+    }
+
+    /** Represents a ListRecommenderLevelDefinitionsRequest. */
+    class ListRecommenderLevelDefinitionsRequest implements IListRecommenderLevelDefinitionsRequest {
+
+        /**
+         * Constructs a new ListRecommenderLevelDefinitionsRequest.
+         * @param [properties] Properties to set
+         */
+        constructor(properties?: pb.IListRecommenderLevelDefinitionsRequest);
+
+        /** ListRecommenderLevelDefinitionsRequest serviceAppid. */
+        public serviceAppid: string;
+
+        /** ListRecommenderLevelDefinitionsRequest pageNum. */
+        public pageNum: number;
+
+        /** ListRecommenderLevelDefinitionsRequest pageSize. */
+        public pageSize: number;
+
+        /**
+         * Creates a new ListRecommenderLevelDefinitionsRequest instance using the specified properties.
+         * @param [properties] Properties to set
+         * @returns ListRecommenderLevelDefinitionsRequest instance
+         */
+        public static create(properties?: pb.IListRecommenderLevelDefinitionsRequest): pb.ListRecommenderLevelDefinitionsRequest;
+
+        /**
+         * Encodes the specified ListRecommenderLevelDefinitionsRequest message. Does not implicitly {@link pb.ListRecommenderLevelDefinitionsRequest.verify|verify} messages.
+         * @param message ListRecommenderLevelDefinitionsRequest message or plain object to encode
+         * @param [writer] Writer to encode to
+         * @returns Writer
+         */
+        public static encode(message: pb.IListRecommenderLevelDefinitionsRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+        /**
+         * Encodes the specified ListRecommenderLevelDefinitionsRequest message, length delimited. Does not implicitly {@link pb.ListRecommenderLevelDefinitionsRequest.verify|verify} messages.
+         * @param message ListRecommenderLevelDefinitionsRequest message or plain object to encode
+         * @param [writer] Writer to encode to
+         * @returns Writer
+         */
+        public static encodeDelimited(message: pb.IListRecommenderLevelDefinitionsRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+        /**
+         * Decodes a ListRecommenderLevelDefinitionsRequest message from the specified reader or buffer.
+         * @param reader Reader or buffer to decode from
+         * @param [length] Message length if known beforehand
+         * @returns ListRecommenderLevelDefinitionsRequest
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): pb.ListRecommenderLevelDefinitionsRequest;
+
+        /**
+         * Decodes a ListRecommenderLevelDefinitionsRequest message from the specified reader or buffer, length delimited.
+         * @param reader Reader or buffer to decode from
+         * @returns ListRecommenderLevelDefinitionsRequest
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): pb.ListRecommenderLevelDefinitionsRequest;
+
+        /**
+         * Verifies a ListRecommenderLevelDefinitionsRequest message.
+         * @param message Plain object to verify
+         * @returns `null` if valid, otherwise the reason why it is not
+         */
+        public static verify(message: { [k: string]: any }): (string|null);
+
+        /**
+         * Creates a ListRecommenderLevelDefinitionsRequest message from a plain object. Also converts values to their respective internal types.
+         * @param object Plain object
+         * @returns ListRecommenderLevelDefinitionsRequest
+         */
+        public static fromObject(object: { [k: string]: any }): pb.ListRecommenderLevelDefinitionsRequest;
+
+        /**
+         * Creates a plain object from a ListRecommenderLevelDefinitionsRequest message. Also converts values to other types if specified.
+         * @param message ListRecommenderLevelDefinitionsRequest
+         * @param [options] Conversion options
+         * @returns Plain object
+         */
+        public static toObject(message: pb.ListRecommenderLevelDefinitionsRequest, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+        /**
+         * Converts this ListRecommenderLevelDefinitionsRequest to JSON.
+         * @returns JSON object
+         */
+        public toJSON(): { [k: string]: any };
+
+        /**
+         * Gets the default type url for ListRecommenderLevelDefinitionsRequest
+         * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+         * @returns The default type url
+         */
+        public static getTypeUrl(typeUrlPrefix?: string): string;
+    }
+
+    /** Properties of a ListRecommenderLevelDefinitionsResponse. */
+    interface IListRecommenderLevelDefinitionsResponse {
+
+        /** ListRecommenderLevelDefinitionsResponse code */
+        code?: (number|null);
+
+        /** ListRecommenderLevelDefinitionsResponse msg */
+        msg?: (string|null);
+
+        /** ListRecommenderLevelDefinitionsResponse total */
+        total?: (number|Long|null);
+
+        /** ListRecommenderLevelDefinitionsResponse data */
+        data?: (pb.IRecommenderLevelDefinitionInfo[]|null);
+    }
+
+    /** Represents a ListRecommenderLevelDefinitionsResponse. */
+    class ListRecommenderLevelDefinitionsResponse implements IListRecommenderLevelDefinitionsResponse {
+
+        /**
+         * Constructs a new ListRecommenderLevelDefinitionsResponse.
+         * @param [properties] Properties to set
+         */
+        constructor(properties?: pb.IListRecommenderLevelDefinitionsResponse);
+
+        /** ListRecommenderLevelDefinitionsResponse code. */
+        public code: number;
+
+        /** ListRecommenderLevelDefinitionsResponse msg. */
+        public msg: string;
+
+        /** ListRecommenderLevelDefinitionsResponse total. */
+        public total: (number|Long);
+
+        /** ListRecommenderLevelDefinitionsResponse data. */
+        public data: pb.IRecommenderLevelDefinitionInfo[];
+
+        /**
+         * Creates a new ListRecommenderLevelDefinitionsResponse instance using the specified properties.
+         * @param [properties] Properties to set
+         * @returns ListRecommenderLevelDefinitionsResponse instance
+         */
+        public static create(properties?: pb.IListRecommenderLevelDefinitionsResponse): pb.ListRecommenderLevelDefinitionsResponse;
+
+        /**
+         * Encodes the specified ListRecommenderLevelDefinitionsResponse message. Does not implicitly {@link pb.ListRecommenderLevelDefinitionsResponse.verify|verify} messages.
+         * @param message ListRecommenderLevelDefinitionsResponse message or plain object to encode
+         * @param [writer] Writer to encode to
+         * @returns Writer
+         */
+        public static encode(message: pb.IListRecommenderLevelDefinitionsResponse, writer?: $protobuf.Writer): $protobuf.Writer;
+
+        /**
+         * Encodes the specified ListRecommenderLevelDefinitionsResponse message, length delimited. Does not implicitly {@link pb.ListRecommenderLevelDefinitionsResponse.verify|verify} messages.
+         * @param message ListRecommenderLevelDefinitionsResponse message or plain object to encode
+         * @param [writer] Writer to encode to
+         * @returns Writer
+         */
+        public static encodeDelimited(message: pb.IListRecommenderLevelDefinitionsResponse, writer?: $protobuf.Writer): $protobuf.Writer;
+
+        /**
+         * Decodes a ListRecommenderLevelDefinitionsResponse message from the specified reader or buffer.
+         * @param reader Reader or buffer to decode from
+         * @param [length] Message length if known beforehand
+         * @returns ListRecommenderLevelDefinitionsResponse
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): pb.ListRecommenderLevelDefinitionsResponse;
+
+        /**
+         * Decodes a ListRecommenderLevelDefinitionsResponse message from the specified reader or buffer, length delimited.
+         * @param reader Reader or buffer to decode from
+         * @returns ListRecommenderLevelDefinitionsResponse
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): pb.ListRecommenderLevelDefinitionsResponse;
+
+        /**
+         * Verifies a ListRecommenderLevelDefinitionsResponse message.
+         * @param message Plain object to verify
+         * @returns `null` if valid, otherwise the reason why it is not
+         */
+        public static verify(message: { [k: string]: any }): (string|null);
+
+        /**
+         * Creates a ListRecommenderLevelDefinitionsResponse message from a plain object. Also converts values to their respective internal types.
+         * @param object Plain object
+         * @returns ListRecommenderLevelDefinitionsResponse
+         */
+        public static fromObject(object: { [k: string]: any }): pb.ListRecommenderLevelDefinitionsResponse;
+
+        /**
+         * Creates a plain object from a ListRecommenderLevelDefinitionsResponse message. Also converts values to other types if specified.
+         * @param message ListRecommenderLevelDefinitionsResponse
+         * @param [options] Conversion options
+         * @returns Plain object
+         */
+        public static toObject(message: pb.ListRecommenderLevelDefinitionsResponse, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+        /**
+         * Converts this ListRecommenderLevelDefinitionsResponse to JSON.
+         * @returns JSON object
+         */
+        public toJSON(): { [k: string]: any };
+
+        /**
+         * Gets the default type url for ListRecommenderLevelDefinitionsResponse
          * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
          * @returns The default type url
          */
