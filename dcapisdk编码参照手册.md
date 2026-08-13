@@ -1193,19 +1193,25 @@ const [host, hostErr] = await dc.client.getHostID();
 3. `createPayOrder(options)`
 4. `getNativePrepayCodeUrl(outTradeNo)`
 5. `queryPaymentResult(outTradeNo)`
-6. `listRenewPackages(pkgType, serviceAppid?, scene?)`
-7. `getPackageInfo(packageCode, pkgType, serviceAppid?, scene?)`
-8. `getRenewalDays(packageCode, targetType, serviceAppid?, scene?)`
-9. `applyBusinessPackage(request)`
-10. `getAllPackagesConfig(filter)`
-11. `deleteBusinessPackage(packageId)`
-12. `markCurrentUrlAsPayReturn(scene?)`
-13. `isPayReturnUrl(scene?)`
-14. `clearPayReturnUrlParams()`
-15. `buildHostedCheckoutUrl(options)`
-16. `markPendingGatewayPayment(info)`
-17. `getPendingGatewayPayment()`
-18. `clearPendingGatewayPayment()`
+6. `listRenewPackages(pkgType, serviceAppid?, scene?, recommender?)`
+
+   买家套餐列表。SDK 会携带当前账号，并自动读取应用 URL 中的 `ref`、`recommender` 或 `referrer` 推荐参数；已绑定推荐人由服务端优先恢复。
+
+7. `listPromotablePackages(pkgType, serviceAppid, scene?, recommender?)`
+
+   推荐人可推广套餐目录。必须传 `serviceAppid`，按推荐人当前等级返回可推广套餐；不应用买家侧的自荐和首次付款历史过滤。`pkgType=0` 时返回该应用下全部类型。
+8. `getPackageInfo(packageCode, pkgType, serviceAppid?, scene?)`
+9. `getRenewalDays(packageCode, targetType, serviceAppid?, scene?)`
+10. `applyBusinessPackage(request)`
+11. `getAllPackagesConfig(filter)`
+12. `deleteBusinessPackage(packageId)`
+13. `markCurrentUrlAsPayReturn(scene?)`
+14. `isPayReturnUrl(scene?)`
+15. `clearPayReturnUrlParams()`
+16. `buildHostedCheckoutUrl(options)`
+17. `markPendingGatewayPayment(info)`
+18. `getPendingGatewayPayment()`
+19. `clearPendingGatewayPayment()`
 
 示例（创建订单并轮询支付结果）：
 

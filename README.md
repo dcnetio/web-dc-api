@@ -1292,7 +1292,7 @@ window.location.assign(checkoutUrl);
 
 支付能力包括：
 
-- 套餐读取：`listRenewPackages`、`getPackageInfo`、`getRenewalDays`。
+- 套餐读取：买家使用 `listRenewPackages`；推荐人查看自己按等级可推广的套餐使用 `listPromotablePackages`；单套餐与续期信息使用 `getPackageInfo`、`getRenewalDays`。
 - 原生扫码：`createPayOrder`、`getNativePrepayCodeUrl`、`queryPaymentResult`。
 - 订单列表：`listPaymentOrders`。
 - 托管收银台：`buildHostedCheckoutUrl` 和支付回跳/本地待支付状态辅助方法。
@@ -1431,11 +1431,20 @@ README 负责接入路径和常用模式，完整签名以 TypeScript 声明为�
 
 ## 本仓库开发
 
+`dcnode/net/pb/dcnet.proto` 是 DCNode RPC 协议的唯一来源。协议发生变化时，
+在 `dcnode` 与 `dcapi` 同级目录下执行 `npm run gen:dcnet-proto`，不要直接修改
+`dcapi/lib/proto/dcnet.proto` 或其生成文件。
+
 ```bash
 npm install
+npm run gen:dcnet-proto
 npm run check:proto-sync
 npm run build
 bash scripts/check-browser-compat.sh
 ```
 
 `npm run build` 还会把 `assets/sw.js` 复制到 `dist/sw.js`；发布前应确认二者内容一致，确保 npm/CDN 使用者能取得 Service Worker。`npm test` 当前没有自动化测试实现，会按 `package.json` 中的占位脚本退出失败；验证 SDK 请至少执行类型构建、协议同步检查和浏览器兼容检查。
+
+GitHub 发布工作流会通过只读 Secret `DCNODE_REPOSITORY_URL` 检出 dcnode 并执行
+协议同步检查。该 Secret 应配置为可读取 dcnode Codeup 仓库的克隆地址；缺失或协议
+不一致都会阻止 npm 发布。

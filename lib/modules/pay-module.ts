@@ -14,6 +14,11 @@ import {
   IPackageApplyRequest,
   IPackageConfigFilter,
   IPackageConfigListResult,
+  IRecommenderAppManager,
+  IRecommenderAppManagerInput,
+  IRecommenderAppPolicy,
+  IRecommenderAppPolicyAccess,
+  IRecommenderAppPolicyInput,
 } from "../interfaces/pay-interface";
 import { payProtocol } from "@/common/define";
 
@@ -37,6 +42,79 @@ export class PayModule implements DCModule, IPayOperations {
   private readonly returnSceneKey = "pay_scene";
   private readonly returnOrderKey = "pay_out_trade_no";
   private readonly returnOriginOrderKey = "pay_origin_out_trade_no";
+  private readonly recommenderStorageKey = "dcapi_payment_recommender";
+  private activeRecommenders = new Map<string, string>();
+
+  private getCurrentAccount(): string {
+    return String(
+      this.dcContext?.accountInfo?.nftAccount ||
+        this.dcContext?.publicKey?.string?.() ||
+        this.dcContext?.getPublicKey?.()?.string?.() ||
+        "",
+    ).trim();
+  }
+
+  private getCurrentPubkey(): string {
+    return String(
+      this.dcContext?.publicKey?.string?.() ||
+        this.dcContext?.getPublicKey?.()?.string?.() ||
+        "",
+    ).trim();
+  }
+
+  private resolveRecommender(explicit?: string, serviceAppid?: string): string {
+    let recommender = String(explicit || "").trim();
+    if (typeof window !== "undefined") {
+      try {
+        const scope = String(
+          serviceAppid || this.dcContext?.appInfo?.appId || "",
+        ).trim();
+        const scopes = scope ? [scope] : [];
+        const storageKeys = scopes.map(
+          (scope) => `${this.recommenderStorageKey}:${scope}`,
+        );
+        const params = new URLSearchParams(window.location.search || "");
+        const fromUrl = String(
+          params.get("ref") ||
+            params.get("recommender") ||
+            params.get("referrer") ||
+            "",
+        ).trim();
+        if (!recommender && fromUrl) {
+          recommender = fromUrl;
+        }
+        if (fromUrl && fromUrl.length <= 256) {
+          storageKeys.forEach((key) => window.localStorage.setItem(key, fromUrl));
+        }
+        if (!recommender) {
+          for (const scope of scopes) {
+            recommender = String(this.activeRecommenders.get(scope) || "").trim();
+            if (recommender) break;
+          }
+        }
+        if (!recommender) {
+          for (const key of storageKeys) {
+            recommender = String(window.localStorage.getItem(key) || "").trim();
+            if (recommender) break;
+          }
+        }
+      } catch {
+        // Browsers may disable storage; the explicit or URL value still works.
+      }
+    }
+    if (!recommender || recommender.length > 256) {
+      return "";
+    }
+    if (recommender === this.getCurrentAccount()) {
+      return "";
+    }
+    const activeScope = String(
+      serviceAppid || this.dcContext?.appInfo?.appId || "",
+    ).trim();
+    const activeScopes = activeScope ? [activeScope] : [];
+    activeScopes.forEach((scope) => this.activeRecommenders.set(scope, recommender));
+    return recommender;
+  }
 
   private getPackageMutationSignerPubkey(): string {
     const signer = String(
@@ -83,6 +161,10 @@ export class PayModule implements DCModule, IPayOperations {
     );
   }
 
+  private writeBoolField(buffer: number[], value: boolean): void {
+    buffer.push(value ? 1 : 0);
+  }
+
   private writeInt64Field(buffer: number[], value: number): void {
     const safeValue = Math.trunc(Number(value || 0));
     const low = safeValue >>> 0;
@@ -99,6 +181,118 @@ export class PayModule implements DCModule, IPayOperations {
       (high >>> 16) & 0xff,
       (high >>> 24) & 0xff,
     );
+  }
+
+  private writeFloat64Field(buffer: number[], value: number): void {
+    const bytes = new Uint8Array(8);
+    new DataView(bytes.buffer).setFloat64(0, Number(value || 0), true);
+    buffer.push(...bytes);
+  }
+
+  private buildRecommenderAppPolicyAccessPayload(
+    serviceAppid: string,
+    timestampSec: number,
+  ): Uint8Array {
+    const buffer: number[] = [];
+    this.writeStringField(buffer, "get_recommender_app_policy_access");
+    this.writeStringField(buffer, serviceAppid);
+    this.writeInt64Field(buffer, timestampSec);
+    return new Uint8Array(buffer);
+  }
+
+  private buildRecommenderAppPolicyUpsertPayload(
+    input: IRecommenderAppPolicyInput,
+    timestampSec: number,
+  ): Uint8Array {
+    const buffer: number[] = [];
+    this.writeStringField(buffer, "upsert_recommender_app_policy");
+    this.writeStringField(buffer, input.serviceAppid);
+    this.writeStringField(buffer, input.recommenderPubkey || "");
+    this.writeInt32Field(buffer, Number(input.recommenderLevel || 0));
+    this.writeBoolField(buffer, input.hasFirstPayRatio);
+    this.writeFloat64Field(buffer, Number(input.firstPayRatio || 0));
+    this.writeBoolField(buffer, input.hasSubsequentPayRatio);
+    this.writeFloat64Field(buffer, Number(input.subsequentPayRatio || 0));
+    this.writeStringField(buffer, input.remark || "");
+    this.writeInt64Field(buffer, timestampSec);
+    return new Uint8Array(buffer);
+  }
+
+  private buildRecommenderAppPolicyListPayload(
+    serviceAppid: string,
+    recommenderPubkey: string,
+    recommenderLevel: number,
+    pageNum: number,
+    pageSize: number,
+    timestampSec: number,
+  ): Uint8Array {
+    const buffer: number[] = [];
+    this.writeStringField(buffer, "list_recommender_app_policies");
+    this.writeStringField(buffer, serviceAppid);
+    this.writeStringField(buffer, recommenderPubkey);
+    this.writeInt32Field(buffer, recommenderLevel);
+    this.writeInt32Field(buffer, pageNum);
+    this.writeInt32Field(buffer, pageSize);
+    this.writeInt64Field(buffer, timestampSec);
+    return new Uint8Array(buffer);
+  }
+
+  private buildRecommenderAppPolicyDeletePayload(
+    serviceAppid: string,
+    recommenderPubkey: string,
+    recommenderLevel: number,
+    timestampSec: number,
+  ): Uint8Array {
+    const buffer: number[] = [];
+    this.writeStringField(buffer, "delete_recommender_app_policy");
+    this.writeStringField(buffer, serviceAppid);
+    this.writeStringField(buffer, recommenderPubkey);
+    this.writeInt32Field(buffer, recommenderLevel);
+    this.writeInt64Field(buffer, timestampSec);
+    return new Uint8Array(buffer);
+  }
+
+  private buildRecommenderAppManagerUpsertPayload(
+    input: IRecommenderAppManagerInput,
+    timestampSec: number,
+  ): Uint8Array {
+    const buffer: number[] = [];
+    this.writeStringField(buffer, "upsert_recommender_app_manager");
+    this.writeStringField(buffer, input.serviceAppid);
+    this.writeStringField(buffer, input.managerPubkey);
+    this.writeStringField(buffer, input.remark || "");
+    this.writeInt64Field(buffer, timestampSec);
+    return new Uint8Array(buffer);
+  }
+
+  private buildRecommenderAppManagerListPayload(
+    serviceAppid: string,
+    managerPubkey: string,
+    pageNum: number,
+    pageSize: number,
+    timestampSec: number,
+  ): Uint8Array {
+    const buffer: number[] = [];
+    this.writeStringField(buffer, "list_recommender_app_managers");
+    this.writeStringField(buffer, serviceAppid);
+    this.writeStringField(buffer, managerPubkey);
+    this.writeInt32Field(buffer, pageNum);
+    this.writeInt32Field(buffer, pageSize);
+    this.writeInt64Field(buffer, timestampSec);
+    return new Uint8Array(buffer);
+  }
+
+  private buildRecommenderAppManagerDeletePayload(
+    serviceAppid: string,
+    managerPubkey: string,
+    timestampSec: number,
+  ): Uint8Array {
+    const buffer: number[] = [];
+    this.writeStringField(buffer, "delete_recommender_app_manager");
+    this.writeStringField(buffer, serviceAppid);
+    this.writeStringField(buffer, managerPubkey);
+    this.writeInt64Field(buffer, timestampSec);
+    return new Uint8Array(buffer);
   }
 
   private buildApplyPackageSignPayload(
@@ -134,6 +328,20 @@ export class PayModule implements DCModule, IPayOperations {
     this.writeInt32Field(buffer, Number(request.chainPkgId || 0));
     this.writeInt32Field(buffer, Number(request.spaceSize || 0));
     this.writeStringField(buffer, String(request.remark || ""));
+    const recommenderLevel = Math.max(
+      0,
+      Math.trunc(Number(request.requireRecommenderLevel || 0)),
+    );
+    const referralPackage =
+      request.requireRecommender === true || recommenderLevel > 0;
+    if (request.firstPayOnly === true || referralPackage) {
+      this.writeBoolField(
+        buffer,
+        request.firstPayOnly === true || referralPackage,
+      );
+      this.writeBoolField(buffer, referralPackage);
+      this.writeInt32Field(buffer, recommenderLevel);
+    }
     this.writeInt64Field(buffer, timestampSec);
     return new Uint8Array(buffer);
   }
@@ -725,6 +933,8 @@ export class PayModule implements DCModule, IPayOperations {
     pkgType: number,
     appid?: string,
     scene?: string,
+    recommender?: string,
+    promotionCatalog: boolean = false,
   ): Promise<pb.PackageInfo[]> {
     const grpcClient = await this.getPayGrpcClient();
     const normalizedScene = String(scene || "").trim();
@@ -737,6 +947,11 @@ export class PayModule implements DCModule, IPayOperations {
       lang: isGlobalDomain ? "en" : "zh",
       currency: isGlobalDomain ? "USD" : "CNY",
       appid: appid || "",
+      account: promotionCatalog ? "" : this.getCurrentAccount(),
+      recommender: promotionCatalog
+        ? String(recommender || this.getCurrentPubkey()).trim()
+        : this.resolveRecommender(recommender, appid),
+      promotionCatalog,
     };
     if (normalizedScene) {
       requestObj.scene = normalizedScene;
@@ -750,6 +965,9 @@ export class PayModule implements DCModule, IPayOperations {
       30000,
     );
     const response = pb.GetPackagesResponse.decode(responseBytes);
+    if (Number(response?.code || 0) !== 0) {
+      throw new Error(response?.msg || "套餐列表查询失败");
+    }
     const list = (response.data as pb.PackageInfo[]) || [];
     if (normalizedScene) {
       return list.filter((p: any) => p.scene === normalizedScene);
@@ -772,6 +990,7 @@ export class PayModule implements DCModule, IPayOperations {
     isRenew?: boolean;
     oldNo?: number;
     priceKey?: string;
+    recommender?: string;
   }): Promise<string> {
     const pkgId = Number(options.packageId || 0);
     if (!Number.isFinite(pkgId) || pkgId <= 0) {
@@ -779,8 +998,12 @@ export class PayModule implements DCModule, IPayOperations {
     }
 
     const grpcClient = await this.getPayGrpcClient();
+    const account = String(options.account || this.getCurrentAccount()).trim();
+    if (!account) {
+      throw new Error("当前付款账号不可用，请先登录");
+    }
     const request = pb.CreateOrderRequest.create({
-      account: String(options.account || ""),
+      account,
       pkgId,
       description: String(options.packageName || "商品支付"),
       amount: pb.AmountInfo.create({
@@ -792,6 +1015,10 @@ export class PayModule implements DCModule, IPayOperations {
       isRenew: options.isRenew === true,
       oldNo: Number(options.oldNo || 0),
       priceKey: String(options.priceKey || ""),
+      recommender: this.resolveRecommender(
+        options.recommender,
+        options.dappid || this.dcContext.appInfo.appId,
+      ),
     });
     const requestBytes = pb.CreateOrderRequest.encode(request).finish();
     const responseBytes = await grpcClient.unaryCall(
@@ -879,6 +1106,13 @@ export class PayModule implements DCModule, IPayOperations {
       .map((item) => {
         const packageId = String(item.pkgId || "");
         const packageCode = String(item.pkgId || "");
+        const requireRecommenderLevel = Math.max(
+          0,
+          Math.trunc(Number((item as any).requireRecommenderLevel || 0)),
+        );
+        const requireRecommender =
+          Boolean((item as any).requireRecommender) ||
+          requireRecommenderLevel > 0;
         const rights = parseRights(String((item as any).pkgRights || ""));
         const aiAppid = String(
           rights.appid || rights.ai_appid || item.serviceAppid || "",
@@ -924,6 +1158,10 @@ export class PayModule implements DCModule, IPayOperations {
             typeof (item as any).remark !== "undefined"
               ? String((item as any).remark)
               : undefined,
+          firstPayOnly:
+            Boolean((item as any).firstPayOnly) || requireRecommender,
+          requireRecommender,
+          requireRecommenderLevel: requireRecommenderLevel || undefined,
         };
       })
       .filter((item: IRenewPackageInfo) => !!item.packageId);
@@ -939,11 +1177,13 @@ export class PayModule implements DCModule, IPayOperations {
     pkgType: PaymentPackageType,
     serviceAppid?: string,
     scene?: string,
+    recommender?: string,
   ): Promise<IRenewPackageInfo[]> {
     const list = await this.getPackagesFromPayPeer(
       pkgType,
       serviceAppid,
       scene,
+      recommender,
     );
     let normalized = this.normalizePackages(list);
 
@@ -953,7 +1193,46 @@ export class PayModule implements DCModule, IPayOperations {
         return !fromPackage || fromPackage === serviceAppid;
       });
     }
-    return normalized;
+    return normalized.filter(
+      (item: IRenewPackageInfo) => Number(item.pkgType || 0) === Number(pkgType),
+    );
+  }
+
+  /**
+   * 查询当前推荐人可推广的套餐。推广目录不把推荐人当作买家，
+   * 因此不会触发自荐或首次付款历史过滤。
+   */
+  async listPromotablePackages(
+    pkgType: PaymentPackageType | 0,
+    serviceAppid: string,
+    scene?: string,
+    recommender?: string,
+  ): Promise<IRenewPackageInfo[]> {
+    const normalizedAppid = String(serviceAppid || "").trim();
+    if (!normalizedAppid) {
+      throw new Error("查询可推广套餐必须提供 serviceAppid");
+    }
+    const normalizedRecommender = String(
+      recommender || this.getCurrentPubkey(),
+    ).trim();
+    if (!normalizedRecommender) {
+      throw new Error("当前推荐人公钥不可用");
+    }
+    const list = await this.getPackagesFromPayPeer(
+      pkgType,
+      normalizedAppid,
+      scene,
+      normalizedRecommender,
+      true,
+    );
+    return this.normalizePackages(list).filter((item: IRenewPackageInfo) => {
+      const fromPackage = String(item.serviceAppid || "").trim();
+      return (
+        (!fromPackage || fromPackage === normalizedAppid) &&
+        (Number(pkgType) === 0 ||
+          Number(item.pkgType || 0) === Number(pkgType))
+      );
+    });
   }
 
   /**
@@ -1007,9 +1286,21 @@ export class PayModule implements DCModule, IPayOperations {
    * @param request 套餐申请内容
    */
   async applyBusinessPackage(request: IPackageApplyRequest): Promise<boolean> {
+    const recommenderLevel = Math.max(
+      0,
+      Math.trunc(Number(request.requireRecommenderLevel || 0)),
+    );
+    const referralPackage =
+      request.requireRecommender === true || recommenderLevel > 0;
+    const normalizedRequest = {
+      ...request,
+      firstPayOnly: request.firstPayOnly === true || referralPackage,
+      requireRecommender: referralPackage,
+      requireRecommenderLevel: recommenderLevel,
+    };
     const timestampSec = Math.floor(Date.now() / 1000);
     const signPayload = this.buildApplyPackageSignPayload(
-      request,
+      normalizedRequest,
       timestampSec,
     );
     const authToken = await this.buildPackageMutationAuthToken(
@@ -1047,6 +1338,9 @@ export class PayModule implements DCModule, IPayOperations {
       chainPkgId: Number(request.chainPkgId || 0),
       spaceSize: Number(request.spaceSize || 0),
       remark: String(request.remark || ""),
+      firstPayOnly: normalizedRequest.firstPayOnly,
+      requireRecommender: normalizedRequest.requireRecommender,
+      requireRecommenderLevel: normalizedRequest.requireRecommenderLevel,
     });
 
     const requestBytes = pb.ApplyBussPackageRequest.encode(pbReq).finish();
@@ -1137,6 +1431,313 @@ export class PayModule implements DCModule, IPayOperations {
 
     if (Number(response?.code || 0) !== 0) {
       throw new Error(response?.msg || "删除套餐失败");
+    }
+    return true;
+  }
+
+  async getRecommenderAppPolicyAccess(
+    serviceAppid: string,
+  ): Promise<IRecommenderAppPolicyAccess> {
+    const normalizedAppid = String(serviceAppid || "").trim();
+    if (!normalizedAppid) {
+      throw new Error("缺少应用 AppID，无法查询推广配置权限");
+    }
+    const timestampSec = Math.floor(Date.now() / 1000);
+    const payload = this.buildRecommenderAppPolicyAccessPayload(
+      normalizedAppid,
+      timestampSec,
+    );
+    const authToken = await this.buildPackageMutationAuthToken(
+      payload,
+      timestampSec,
+    );
+    const grpcClient = await this.getPayGrpcClient(authToken);
+    const request = pb.GetRecommenderAppPolicyAccessRequest.create({
+      serviceAppid: normalizedAppid,
+    });
+    const responseBytes = await grpcClient.unaryCall(
+      "/pb.PayService/GetRecommenderAppPolicyAccess",
+      pb.GetRecommenderAppPolicyAccessRequest.encode(request).finish(),
+      30000,
+    );
+    const response = pb.GetRecommenderAppPolicyAccessResponse.decode(responseBytes);
+    if (Number(response?.code || 0) !== 0) {
+      throw new Error(response?.msg || "查询推广配置权限失败");
+    }
+    return {
+      role: String(response.role || ""),
+      canManagePolicy: Boolean(response.canManagePolicy),
+      canManageManagers: Boolean(response.canManageManagers),
+      ownerPubkey: String(response.ownerPubkey || ""),
+      signerPubkey: String(response.signerPubkey || ""),
+    };
+  }
+
+  async listRecommenderAppPolicies(options: {
+    serviceAppid: string;
+    recommenderPubkey?: string;
+    recommenderLevel?: number;
+    pageNum?: number;
+    pageSize?: number;
+  }): Promise<{ list: IRecommenderAppPolicy[]; total: number }> {
+    const serviceAppid = String(options?.serviceAppid || "").trim();
+    if (!serviceAppid) {
+      throw new Error("缺少应用 AppID，无法查询推广比例");
+    }
+    const recommenderPubkey = String(options?.recommenderPubkey || "").trim();
+    const recommenderLevel = recommenderPubkey
+      ? 0
+      : Math.max(0, Math.trunc(Number(options?.recommenderLevel || 0)));
+    const pageNum = Math.max(1, Math.trunc(Number(options?.pageNum || 1)));
+    const pageSize = Math.max(
+      1,
+      Math.min(100, Math.trunc(Number(options?.pageSize || 20))),
+    );
+    const timestampSec = Math.floor(Date.now() / 1000);
+    const payload = this.buildRecommenderAppPolicyListPayload(
+      serviceAppid,
+      recommenderPubkey,
+      recommenderLevel,
+      pageNum,
+      pageSize,
+      timestampSec,
+    );
+    const authToken = await this.buildPackageMutationAuthToken(payload, timestampSec);
+    const grpcClient = await this.getPayGrpcClient(authToken);
+    const request = pb.ListRecommenderAppPoliciesRequest.create({
+      serviceAppid,
+      recommenderPubkey,
+      recommenderLevel,
+      pageNum,
+      pageSize,
+    });
+    const responseBytes = await grpcClient.unaryCall(
+      "/pb.PayService/ListRecommenderAppPolicies",
+      pb.ListRecommenderAppPoliciesRequest.encode(request).finish(),
+      30000,
+    );
+    const response = pb.ListRecommenderAppPoliciesResponse.decode(responseBytes);
+    if (Number(response?.code || 0) !== 0) {
+      throw new Error(response?.msg || "查询推广比例失败");
+    }
+    const list = Array.from(response.data || []).map((item) => ({
+      id: Number(item.id || 0),
+      serviceAppid: String(item.serviceAppid || ""),
+      recommenderPubkey: String(item.recommenderPubkey || ""),
+      recommenderLevel: Number(item.recommenderLevel || 0),
+      hasFirstPayRatio: Boolean(item.hasFirstPayRatio),
+      firstPayRatio: Number(item.firstPayRatio || 0),
+      hasSubsequentPayRatio: Boolean(item.hasSubsequentPayRatio),
+      subsequentPayRatio: Number(item.subsequentPayRatio || 0),
+      remark: String(item.remark || ""),
+      createTime: String(item.createTime || ""),
+      updateTime: String(item.updateTime || ""),
+    }));
+    return { list, total: Number(response.total || 0) };
+  }
+
+  async upsertRecommenderAppPolicy(
+    input: IRecommenderAppPolicyInput,
+  ): Promise<boolean> {
+    const normalized: IRecommenderAppPolicyInput = {
+      serviceAppid: String(input?.serviceAppid || "").trim(),
+      recommenderPubkey: String(input?.recommenderPubkey || "").trim(),
+      recommenderLevel: Math.max(0, Math.trunc(Number(input?.recommenderLevel || 0))),
+      hasFirstPayRatio: input?.hasFirstPayRatio === true,
+      firstPayRatio: Number(input?.firstPayRatio || 0),
+      hasSubsequentPayRatio: input?.hasSubsequentPayRatio === true,
+      subsequentPayRatio: Number(input?.subsequentPayRatio || 0),
+      remark: String(input?.remark || "").trim(),
+    };
+    if (!normalized.serviceAppid) {
+      throw new Error("缺少应用 AppID，无法保存推广比例");
+    }
+    const timestampSec = Math.floor(Date.now() / 1000);
+    const payload = this.buildRecommenderAppPolicyUpsertPayload(
+      normalized,
+      timestampSec,
+    );
+    const authToken = await this.buildPackageMutationAuthToken(payload, timestampSec);
+    const grpcClient = await this.getPayGrpcClient(authToken);
+    const request = pb.UpsertRecommenderAppPolicyRequest.create({
+      serviceAppid: normalized.serviceAppid,
+      recommenderPubkey: normalized.recommenderPubkey,
+      recommenderLevel: normalized.recommenderLevel,
+      hasFirstPayRatio: normalized.hasFirstPayRatio,
+      firstPayRatio: normalized.firstPayRatio,
+      hasSubsequentPayRatio: normalized.hasSubsequentPayRatio,
+      subsequentPayRatio: normalized.subsequentPayRatio,
+      remark: normalized.remark,
+    });
+    const responseBytes = await grpcClient.unaryCall(
+      "/pb.PayService/UpsertRecommenderAppPolicy",
+      pb.UpsertRecommenderAppPolicyRequest.encode(request).finish(),
+      30000,
+    );
+    const response = pb.RecommenderAppPolicyMutationResponse.decode(responseBytes);
+    if (Number(response?.code || 0) !== 0) {
+      throw new Error(response?.msg || "保存推广比例失败");
+    }
+    return true;
+  }
+
+  async deleteRecommenderAppPolicy(
+    serviceAppid: string,
+    recommenderPubkey = "",
+    recommenderLevel = 0,
+  ): Promise<boolean> {
+    const normalizedAppid = String(serviceAppid || "").trim();
+    const normalizedPubkey = String(recommenderPubkey || "").trim();
+    const normalizedLevel = normalizedPubkey
+      ? 0
+      : Math.max(0, Math.trunc(Number(recommenderLevel || 0)));
+    if (!normalizedAppid) {
+      throw new Error("缺少应用 AppID，无法删除推广比例");
+    }
+    const timestampSec = Math.floor(Date.now() / 1000);
+    const payload = this.buildRecommenderAppPolicyDeletePayload(
+      normalizedAppid,
+      normalizedPubkey,
+      normalizedLevel,
+      timestampSec,
+    );
+    const authToken = await this.buildPackageMutationAuthToken(payload, timestampSec);
+    const grpcClient = await this.getPayGrpcClient(authToken);
+    const request = pb.DeleteRecommenderAppPolicyRequest.create({
+      serviceAppid: normalizedAppid,
+      recommenderPubkey: normalizedPubkey,
+      recommenderLevel: normalizedLevel,
+    });
+    const responseBytes = await grpcClient.unaryCall(
+      "/pb.PayService/DeleteRecommenderAppPolicy",
+      pb.DeleteRecommenderAppPolicyRequest.encode(request).finish(),
+      30000,
+    );
+    const response = pb.RecommenderAppPolicyMutationResponse.decode(responseBytes);
+    if (Number(response?.code || 0) !== 0) {
+      throw new Error(response?.msg || "删除推广比例失败");
+    }
+    return true;
+  }
+
+  async listRecommenderAppManagers(options: {
+    serviceAppid: string;
+    managerPubkey?: string;
+    pageNum?: number;
+    pageSize?: number;
+  }): Promise<{ list: IRecommenderAppManager[]; total: number }> {
+    const serviceAppid = String(options?.serviceAppid || "").trim();
+    const managerPubkey = String(options?.managerPubkey || "").trim();
+    const pageNum = Math.max(1, Math.trunc(Number(options?.pageNum || 1)));
+    const pageSize = Math.max(
+      1,
+      Math.min(100, Math.trunc(Number(options?.pageSize || 20))),
+    );
+    if (!serviceAppid) {
+      throw new Error("缺少应用 AppID，无法查询授权用户");
+    }
+    const timestampSec = Math.floor(Date.now() / 1000);
+    const payload = this.buildRecommenderAppManagerListPayload(
+      serviceAppid,
+      managerPubkey,
+      pageNum,
+      pageSize,
+      timestampSec,
+    );
+    const authToken = await this.buildPackageMutationAuthToken(payload, timestampSec);
+    const grpcClient = await this.getPayGrpcClient(authToken);
+    const request = pb.ListRecommenderAppManagersRequest.create({
+      serviceAppid,
+      managerPubkey,
+      pageNum,
+      pageSize,
+    });
+    const responseBytes = await grpcClient.unaryCall(
+      "/pb.PayService/ListRecommenderAppManagers",
+      pb.ListRecommenderAppManagersRequest.encode(request).finish(),
+      30000,
+    );
+    const response = pb.ListRecommenderAppManagersResponse.decode(responseBytes);
+    if (Number(response?.code || 0) !== 0) {
+      throw new Error(response?.msg || "查询推广配置授权用户失败");
+    }
+    const list = Array.from(response.data || []).map((item) => ({
+      id: Number(item.id || 0),
+      serviceAppid: String(item.serviceAppid || ""),
+      managerPubkey: String(item.managerPubkey || ""),
+      grantedBy: String(item.grantedBy || ""),
+      grantedByType: String(item.grantedByType || ""),
+      remark: String(item.remark || ""),
+      createTime: String(item.createTime || ""),
+      updateTime: String(item.updateTime || ""),
+    }));
+    return { list, total: Number(response.total || 0) };
+  }
+
+  async upsertRecommenderAppManager(
+    input: IRecommenderAppManagerInput,
+  ): Promise<boolean> {
+    const normalized: IRecommenderAppManagerInput = {
+      serviceAppid: String(input?.serviceAppid || "").trim(),
+      managerPubkey: String(input?.managerPubkey || "").trim(),
+      remark: String(input?.remark || "").trim(),
+    };
+    if (!normalized.serviceAppid || !normalized.managerPubkey) {
+      throw new Error("应用 AppID 和授权用户 Pubkey 不能为空");
+    }
+    const timestampSec = Math.floor(Date.now() / 1000);
+    const payload = this.buildRecommenderAppManagerUpsertPayload(
+      normalized,
+      timestampSec,
+    );
+    const authToken = await this.buildPackageMutationAuthToken(payload, timestampSec);
+    const grpcClient = await this.getPayGrpcClient(authToken);
+    const request = pb.UpsertRecommenderAppManagerRequest.create({
+      serviceAppid: normalized.serviceAppid,
+      managerPubkey: normalized.managerPubkey,
+      remark: normalized.remark,
+    });
+    const responseBytes = await grpcClient.unaryCall(
+      "/pb.PayService/UpsertRecommenderAppManager",
+      pb.UpsertRecommenderAppManagerRequest.encode(request).finish(),
+      30000,
+    );
+    const response = pb.RecommenderAppManagerMutationResponse.decode(responseBytes);
+    if (Number(response?.code || 0) !== 0) {
+      throw new Error(response?.msg || "授权推广配置管理员失败");
+    }
+    return true;
+  }
+
+  async deleteRecommenderAppManager(
+    serviceAppid: string,
+    managerPubkey: string,
+  ): Promise<boolean> {
+    const normalizedAppid = String(serviceAppid || "").trim();
+    const normalizedPubkey = String(managerPubkey || "").trim();
+    if (!normalizedAppid || !normalizedPubkey) {
+      throw new Error("应用 AppID 和授权用户 Pubkey 不能为空");
+    }
+    const timestampSec = Math.floor(Date.now() / 1000);
+    const payload = this.buildRecommenderAppManagerDeletePayload(
+      normalizedAppid,
+      normalizedPubkey,
+      timestampSec,
+    );
+    const authToken = await this.buildPackageMutationAuthToken(payload, timestampSec);
+    const grpcClient = await this.getPayGrpcClient(authToken);
+    const request = pb.DeleteRecommenderAppManagerRequest.create({
+      serviceAppid: normalizedAppid,
+      managerPubkey: normalizedPubkey,
+    });
+    const responseBytes = await grpcClient.unaryCall(
+      "/pb.PayService/DeleteRecommenderAppManager",
+      pb.DeleteRecommenderAppManagerRequest.encode(request).finish(),
+      30000,
+    );
+    const response = pb.RecommenderAppManagerMutationResponse.decode(responseBytes);
+    if (Number(response?.code || 0) !== 0) {
+      throw new Error(response?.msg || "取消推广配置管理员授权失败");
     }
     return true;
   }

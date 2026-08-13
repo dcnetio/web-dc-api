@@ -652,7 +652,7 @@ message PublishCommentToThemeRequest{
  	uint32 UpCount  = 12;    //顶或赞梳理
  	uint32 DownCount  = 13;    //踩数量
     uint32 TCount  = 14;    //推荐数量
-    uint32 type = 15; //评论的类型 0:普通评论 1:点赞 2:推荐 3:踩
+    uint32 type = 15; //评论的类型 0:普通评论 1:点赞 2:踩 3:推荐或转发；回复仍为0，通过refercommentkey关联父评论
     bytes signature = 16 ; //发送者私钥对sign(theme+appId+themeAuthor+blockheight+commentCid+Refercommentkey+type)的签名
     bytes vaccount = 17 ; //虚拟账号,可选,如果有虚拟账号
     uint64 timestamp = 18 ; //接收时的时间戳,由接收节点生成,单位为微秒
@@ -1744,4 +1744,3 @@ service Service {
    /*************************应用设置相关接口*************************/
    rpc SetAppInfo(SetAppInfoRequest) returns (SetAppInfoReply) {} //设置应用基本信息,发布应用或者更新发布信息时调用
 }
-

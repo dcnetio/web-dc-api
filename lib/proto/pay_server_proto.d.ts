@@ -528,6 +528,188 @@ export namespace pb {
         public adminDeleteRecommenderLevel(request: pb.IAdminDeleteRecommenderLevelRequest): Promise<pb.AdminDeleteRecommenderLevelResponse>;
 
         /**
+         * Calls AdminUpsertRecommenderAppPolicy.
+         * @param request AdminUpsertRecommenderAppPolicyRequest message or plain object
+         * @param callback Node-style callback called with the error, if any, and AdminUpsertRecommenderAppPolicyResponse
+         */
+        public adminUpsertRecommenderAppPolicy(request: pb.IAdminUpsertRecommenderAppPolicyRequest, callback: pb.PayService.AdminUpsertRecommenderAppPolicyCallback): void;
+
+        /**
+         * Calls AdminUpsertRecommenderAppPolicy.
+         * @param request AdminUpsertRecommenderAppPolicyRequest message or plain object
+         * @returns Promise
+         */
+        public adminUpsertRecommenderAppPolicy(request: pb.IAdminUpsertRecommenderAppPolicyRequest): Promise<pb.AdminUpsertRecommenderAppPolicyResponse>;
+
+        /**
+         * Calls AdminListRecommenderAppPolicies.
+         * @param request AdminListRecommenderAppPoliciesRequest message or plain object
+         * @param callback Node-style callback called with the error, if any, and AdminListRecommenderAppPoliciesResponse
+         */
+        public adminListRecommenderAppPolicies(request: pb.IAdminListRecommenderAppPoliciesRequest, callback: pb.PayService.AdminListRecommenderAppPoliciesCallback): void;
+
+        /**
+         * Calls AdminListRecommenderAppPolicies.
+         * @param request AdminListRecommenderAppPoliciesRequest message or plain object
+         * @returns Promise
+         */
+        public adminListRecommenderAppPolicies(request: pb.IAdminListRecommenderAppPoliciesRequest): Promise<pb.AdminListRecommenderAppPoliciesResponse>;
+
+        /**
+         * Calls AdminDeleteRecommenderAppPolicy.
+         * @param request AdminDeleteRecommenderAppPolicyRequest message or plain object
+         * @param callback Node-style callback called with the error, if any, and AdminDeleteRecommenderAppPolicyResponse
+         */
+        public adminDeleteRecommenderAppPolicy(request: pb.IAdminDeleteRecommenderAppPolicyRequest, callback: pb.PayService.AdminDeleteRecommenderAppPolicyCallback): void;
+
+        /**
+         * Calls AdminDeleteRecommenderAppPolicy.
+         * @param request AdminDeleteRecommenderAppPolicyRequest message or plain object
+         * @returns Promise
+         */
+        public adminDeleteRecommenderAppPolicy(request: pb.IAdminDeleteRecommenderAppPolicyRequest): Promise<pb.AdminDeleteRecommenderAppPolicyResponse>;
+
+        /**
+         * Calls AdminUpsertRecommenderAppManager.
+         * @param request UpsertRecommenderAppManagerRequest message or plain object
+         * @param callback Node-style callback called with the error, if any, and RecommenderAppManagerMutationResponse
+         */
+        public adminUpsertRecommenderAppManager(request: pb.IUpsertRecommenderAppManagerRequest, callback: pb.PayService.AdminUpsertRecommenderAppManagerCallback): void;
+
+        /**
+         * Calls AdminUpsertRecommenderAppManager.
+         * @param request UpsertRecommenderAppManagerRequest message or plain object
+         * @returns Promise
+         */
+        public adminUpsertRecommenderAppManager(request: pb.IUpsertRecommenderAppManagerRequest): Promise<pb.RecommenderAppManagerMutationResponse>;
+
+        /**
+         * Calls AdminListRecommenderAppManagers.
+         * @param request AdminListRecommenderAppManagersRequest message or plain object
+         * @param callback Node-style callback called with the error, if any, and ListRecommenderAppManagersResponse
+         */
+        public adminListRecommenderAppManagers(request: pb.IAdminListRecommenderAppManagersRequest, callback: pb.PayService.AdminListRecommenderAppManagersCallback): void;
+
+        /**
+         * Calls AdminListRecommenderAppManagers.
+         * @param request AdminListRecommenderAppManagersRequest message or plain object
+         * @returns Promise
+         */
+        public adminListRecommenderAppManagers(request: pb.IAdminListRecommenderAppManagersRequest): Promise<pb.ListRecommenderAppManagersResponse>;
+
+        /**
+         * Calls AdminDeleteRecommenderAppManager.
+         * @param request DeleteRecommenderAppManagerRequest message or plain object
+         * @param callback Node-style callback called with the error, if any, and RecommenderAppManagerMutationResponse
+         */
+        public adminDeleteRecommenderAppManager(request: pb.IDeleteRecommenderAppManagerRequest, callback: pb.PayService.AdminDeleteRecommenderAppManagerCallback): void;
+
+        /**
+         * Calls AdminDeleteRecommenderAppManager.
+         * @param request DeleteRecommenderAppManagerRequest message or plain object
+         * @returns Promise
+         */
+        public adminDeleteRecommenderAppManager(request: pb.IDeleteRecommenderAppManagerRequest): Promise<pb.RecommenderAppManagerMutationResponse>;
+
+        /**
+         * Calls GetRecommenderAppPolicyAccess.
+         * @param request GetRecommenderAppPolicyAccessRequest message or plain object
+         * @param callback Node-style callback called with the error, if any, and GetRecommenderAppPolicyAccessResponse
+         */
+        public getRecommenderAppPolicyAccess(request: pb.IGetRecommenderAppPolicyAccessRequest, callback: pb.PayService.GetRecommenderAppPolicyAccessCallback): void;
+
+        /**
+         * Calls GetRecommenderAppPolicyAccess.
+         * @param request GetRecommenderAppPolicyAccessRequest message or plain object
+         * @returns Promise
+         */
+        public getRecommenderAppPolicyAccess(request: pb.IGetRecommenderAppPolicyAccessRequest): Promise<pb.GetRecommenderAppPolicyAccessResponse>;
+
+        /**
+         * Calls UpsertRecommenderAppPolicy.
+         * @param request UpsertRecommenderAppPolicyRequest message or plain object
+         * @param callback Node-style callback called with the error, if any, and RecommenderAppPolicyMutationResponse
+         */
+        public upsertRecommenderAppPolicy(request: pb.IUpsertRecommenderAppPolicyRequest, callback: pb.PayService.UpsertRecommenderAppPolicyCallback): void;
+
+        /**
+         * Calls UpsertRecommenderAppPolicy.
+         * @param request UpsertRecommenderAppPolicyRequest message or plain object
+         * @returns Promise
+         */
+        public upsertRecommenderAppPolicy(request: pb.IUpsertRecommenderAppPolicyRequest): Promise<pb.RecommenderAppPolicyMutationResponse>;
+
+        /**
+         * Calls ListRecommenderAppPolicies.
+         * @param request ListRecommenderAppPoliciesRequest message or plain object
+         * @param callback Node-style callback called with the error, if any, and ListRecommenderAppPoliciesResponse
+         */
+        public listRecommenderAppPolicies(request: pb.IListRecommenderAppPoliciesRequest, callback: pb.PayService.ListRecommenderAppPoliciesCallback): void;
+
+        /**
+         * Calls ListRecommenderAppPolicies.
+         * @param request ListRecommenderAppPoliciesRequest message or plain object
+         * @returns Promise
+         */
+        public listRecommenderAppPolicies(request: pb.IListRecommenderAppPoliciesRequest): Promise<pb.ListRecommenderAppPoliciesResponse>;
+
+        /**
+         * Calls DeleteRecommenderAppPolicy.
+         * @param request DeleteRecommenderAppPolicyRequest message or plain object
+         * @param callback Node-style callback called with the error, if any, and RecommenderAppPolicyMutationResponse
+         */
+        public deleteRecommenderAppPolicy(request: pb.IDeleteRecommenderAppPolicyRequest, callback: pb.PayService.DeleteRecommenderAppPolicyCallback): void;
+
+        /**
+         * Calls DeleteRecommenderAppPolicy.
+         * @param request DeleteRecommenderAppPolicyRequest message or plain object
+         * @returns Promise
+         */
+        public deleteRecommenderAppPolicy(request: pb.IDeleteRecommenderAppPolicyRequest): Promise<pb.RecommenderAppPolicyMutationResponse>;
+
+        /**
+         * Calls ListRecommenderAppManagers.
+         * @param request ListRecommenderAppManagersRequest message or plain object
+         * @param callback Node-style callback called with the error, if any, and ListRecommenderAppManagersResponse
+         */
+        public listRecommenderAppManagers(request: pb.IListRecommenderAppManagersRequest, callback: pb.PayService.ListRecommenderAppManagersCallback): void;
+
+        /**
+         * Calls ListRecommenderAppManagers.
+         * @param request ListRecommenderAppManagersRequest message or plain object
+         * @returns Promise
+         */
+        public listRecommenderAppManagers(request: pb.IListRecommenderAppManagersRequest): Promise<pb.ListRecommenderAppManagersResponse>;
+
+        /**
+         * Calls UpsertRecommenderAppManager.
+         * @param request UpsertRecommenderAppManagerRequest message or plain object
+         * @param callback Node-style callback called with the error, if any, and RecommenderAppManagerMutationResponse
+         */
+        public upsertRecommenderAppManager(request: pb.IUpsertRecommenderAppManagerRequest, callback: pb.PayService.UpsertRecommenderAppManagerCallback): void;
+
+        /**
+         * Calls UpsertRecommenderAppManager.
+         * @param request UpsertRecommenderAppManagerRequest message or plain object
+         * @returns Promise
+         */
+        public upsertRecommenderAppManager(request: pb.IUpsertRecommenderAppManagerRequest): Promise<pb.RecommenderAppManagerMutationResponse>;
+
+        /**
+         * Calls DeleteRecommenderAppManager.
+         * @param request DeleteRecommenderAppManagerRequest message or plain object
+         * @param callback Node-style callback called with the error, if any, and RecommenderAppManagerMutationResponse
+         */
+        public deleteRecommenderAppManager(request: pb.IDeleteRecommenderAppManagerRequest, callback: pb.PayService.DeleteRecommenderAppManagerCallback): void;
+
+        /**
+         * Calls DeleteRecommenderAppManager.
+         * @param request DeleteRecommenderAppManagerRequest message or plain object
+         * @returns Promise
+         */
+        public deleteRecommenderAppManager(request: pb.IDeleteRecommenderAppManagerRequest): Promise<pb.RecommenderAppManagerMutationResponse>;
+
+        /**
          * Calls AdminAuditBussPackage.
          * @param request AdminAuditBussPackageRequest message or plain object
          * @param callback Node-style callback called with the error, if any, and ApplyBussPackageResponse
@@ -853,6 +1035,97 @@ export namespace pb {
         type AdminDeleteRecommenderLevelCallback = (error: (Error|null), response?: pb.AdminDeleteRecommenderLevelResponse) => void;
 
         /**
+         * Callback as used by {@link pb.PayService#adminUpsertRecommenderAppPolicy}.
+         * @param error Error, if any
+         * @param [response] AdminUpsertRecommenderAppPolicyResponse
+         */
+        type AdminUpsertRecommenderAppPolicyCallback = (error: (Error|null), response?: pb.AdminUpsertRecommenderAppPolicyResponse) => void;
+
+        /**
+         * Callback as used by {@link pb.PayService#adminListRecommenderAppPolicies}.
+         * @param error Error, if any
+         * @param [response] AdminListRecommenderAppPoliciesResponse
+         */
+        type AdminListRecommenderAppPoliciesCallback = (error: (Error|null), response?: pb.AdminListRecommenderAppPoliciesResponse) => void;
+
+        /**
+         * Callback as used by {@link pb.PayService#adminDeleteRecommenderAppPolicy}.
+         * @param error Error, if any
+         * @param [response] AdminDeleteRecommenderAppPolicyResponse
+         */
+        type AdminDeleteRecommenderAppPolicyCallback = (error: (Error|null), response?: pb.AdminDeleteRecommenderAppPolicyResponse) => void;
+
+        /**
+         * Callback as used by {@link pb.PayService#adminUpsertRecommenderAppManager}.
+         * @param error Error, if any
+         * @param [response] RecommenderAppManagerMutationResponse
+         */
+        type AdminUpsertRecommenderAppManagerCallback = (error: (Error|null), response?: pb.RecommenderAppManagerMutationResponse) => void;
+
+        /**
+         * Callback as used by {@link pb.PayService#adminListRecommenderAppManagers}.
+         * @param error Error, if any
+         * @param [response] ListRecommenderAppManagersResponse
+         */
+        type AdminListRecommenderAppManagersCallback = (error: (Error|null), response?: pb.ListRecommenderAppManagersResponse) => void;
+
+        /**
+         * Callback as used by {@link pb.PayService#adminDeleteRecommenderAppManager}.
+         * @param error Error, if any
+         * @param [response] RecommenderAppManagerMutationResponse
+         */
+        type AdminDeleteRecommenderAppManagerCallback = (error: (Error|null), response?: pb.RecommenderAppManagerMutationResponse) => void;
+
+        /**
+         * Callback as used by {@link pb.PayService#getRecommenderAppPolicyAccess}.
+         * @param error Error, if any
+         * @param [response] GetRecommenderAppPolicyAccessResponse
+         */
+        type GetRecommenderAppPolicyAccessCallback = (error: (Error|null), response?: pb.GetRecommenderAppPolicyAccessResponse) => void;
+
+        /**
+         * Callback as used by {@link pb.PayService#upsertRecommenderAppPolicy}.
+         * @param error Error, if any
+         * @param [response] RecommenderAppPolicyMutationResponse
+         */
+        type UpsertRecommenderAppPolicyCallback = (error: (Error|null), response?: pb.RecommenderAppPolicyMutationResponse) => void;
+
+        /**
+         * Callback as used by {@link pb.PayService#listRecommenderAppPolicies}.
+         * @param error Error, if any
+         * @param [response] ListRecommenderAppPoliciesResponse
+         */
+        type ListRecommenderAppPoliciesCallback = (error: (Error|null), response?: pb.ListRecommenderAppPoliciesResponse) => void;
+
+        /**
+         * Callback as used by {@link pb.PayService#deleteRecommenderAppPolicy}.
+         * @param error Error, if any
+         * @param [response] RecommenderAppPolicyMutationResponse
+         */
+        type DeleteRecommenderAppPolicyCallback = (error: (Error|null), response?: pb.RecommenderAppPolicyMutationResponse) => void;
+
+        /**
+         * Callback as used by {@link pb.PayService#listRecommenderAppManagers}.
+         * @param error Error, if any
+         * @param [response] ListRecommenderAppManagersResponse
+         */
+        type ListRecommenderAppManagersCallback = (error: (Error|null), response?: pb.ListRecommenderAppManagersResponse) => void;
+
+        /**
+         * Callback as used by {@link pb.PayService#upsertRecommenderAppManager}.
+         * @param error Error, if any
+         * @param [response] RecommenderAppManagerMutationResponse
+         */
+        type UpsertRecommenderAppManagerCallback = (error: (Error|null), response?: pb.RecommenderAppManagerMutationResponse) => void;
+
+        /**
+         * Callback as used by {@link pb.PayService#deleteRecommenderAppManager}.
+         * @param error Error, if any
+         * @param [response] RecommenderAppManagerMutationResponse
+         */
+        type DeleteRecommenderAppManagerCallback = (error: (Error|null), response?: pb.RecommenderAppManagerMutationResponse) => void;
+
+        /**
          * Callback as used by {@link pb.PayService#adminAuditBussPackage}.
          * @param error Error, if any
          * @param [response] ApplyBussPackageResponse
@@ -908,6 +1181,15 @@ export namespace pb {
 
         /** GetPackagesRequest scene */
         scene?: (string|null);
+
+        /** GetPackagesRequest account */
+        account?: (string|null);
+
+        /** GetPackagesRequest recommender */
+        recommender?: (string|null);
+
+        /** GetPackagesRequest promotionCatalog */
+        promotionCatalog?: (boolean|null);
     }
 
     /** Represents a GetPackagesRequest. */
@@ -936,6 +1218,15 @@ export namespace pb {
 
         /** GetPackagesRequest scene. */
         public scene: string;
+
+        /** GetPackagesRequest account. */
+        public account: string;
+
+        /** GetPackagesRequest recommender. */
+        public recommender: string;
+
+        /** GetPackagesRequest promotionCatalog. */
+        public promotionCatalog: boolean;
 
         /**
          * Creates a new GetPackagesRequest instance using the specified properties.
@@ -1195,6 +1486,15 @@ export namespace pb {
 
         /** PackageInfo remark */
         remark?: (string|null);
+
+        /** PackageInfo firstPayOnly */
+        firstPayOnly?: (boolean|null);
+
+        /** PackageInfo requireRecommender */
+        requireRecommender?: (boolean|null);
+
+        /** PackageInfo requireRecommenderLevel */
+        requireRecommenderLevel?: (number|null);
     }
 
     /** Represents a PackageInfo. */
@@ -1274,6 +1574,15 @@ export namespace pb {
 
         /** PackageInfo remark. */
         public remark: string;
+
+        /** PackageInfo firstPayOnly. */
+        public firstPayOnly: boolean;
+
+        /** PackageInfo requireRecommender. */
+        public requireRecommender: boolean;
+
+        /** PackageInfo requireRecommenderLevel. */
+        public requireRecommenderLevel: number;
 
         /**
          * Creates a new PackageInfo instance using the specified properties.
@@ -1409,6 +1718,15 @@ export namespace pb {
 
         /** ApplyBussPackageRequest remark */
         remark?: (string|null);
+
+        /** ApplyBussPackageRequest firstPayOnly */
+        firstPayOnly?: (boolean|null);
+
+        /** ApplyBussPackageRequest requireRecommender */
+        requireRecommender?: (boolean|null);
+
+        /** ApplyBussPackageRequest requireRecommenderLevel */
+        requireRecommenderLevel?: (number|null);
     }
 
     /** Represents an ApplyBussPackageRequest. */
@@ -1473,6 +1791,15 @@ export namespace pb {
 
         /** ApplyBussPackageRequest remark. */
         public remark: string;
+
+        /** ApplyBussPackageRequest firstPayOnly. */
+        public firstPayOnly: boolean;
+
+        /** ApplyBussPackageRequest requireRecommender. */
+        public requireRecommender: boolean;
+
+        /** ApplyBussPackageRequest requireRecommenderLevel. */
+        public requireRecommenderLevel: number;
 
         /**
          * Creates a new ApplyBussPackageRequest instance using the specified properties.
@@ -2044,6 +2371,9 @@ export namespace pb {
 
         /** CreateOrderRequest priceKey */
         priceKey?: (string|null);
+
+        /** CreateOrderRequest recommender */
+        recommender?: (string|null);
     }
 
     /** Represents a CreateOrderRequest. */
@@ -2090,6 +2420,9 @@ export namespace pb {
 
         /** CreateOrderRequest priceKey. */
         public priceKey: string;
+
+        /** CreateOrderRequest recommender. */
+        public recommender: string;
 
         /**
          * Creates a new CreateOrderRequest instance using the specified properties.
@@ -10493,6 +10826,12 @@ export namespace pb {
 
         /** RecommenderLevelInfo updateTime */
         updateTime?: (string|null);
+
+        /** RecommenderLevelInfo firstPayRatio */
+        firstPayRatio?: (number|null);
+
+        /** RecommenderLevelInfo subsequentPayRatio */
+        subsequentPayRatio?: (number|null);
     }
 
     /** Represents a RecommenderLevelInfo. */
@@ -10521,6 +10860,12 @@ export namespace pb {
 
         /** RecommenderLevelInfo updateTime. */
         public updateTime: string;
+
+        /** RecommenderLevelInfo firstPayRatio. */
+        public firstPayRatio: number;
+
+        /** RecommenderLevelInfo subsequentPayRatio. */
+        public subsequentPayRatio: number;
 
         /**
          * Creates a new RecommenderLevelInfo instance using the specified properties.
@@ -10611,6 +10956,12 @@ export namespace pb {
 
         /** AdminUpsertRecommenderLevelRequest remark */
         remark?: (string|null);
+
+        /** AdminUpsertRecommenderLevelRequest firstPayRatio */
+        firstPayRatio?: (number|null);
+
+        /** AdminUpsertRecommenderLevelRequest subsequentPayRatio */
+        subsequentPayRatio?: (number|null);
     }
 
     /** Represents an AdminUpsertRecommenderLevelRequest. */
@@ -10630,6 +10981,12 @@ export namespace pb {
 
         /** AdminUpsertRecommenderLevelRequest remark. */
         public remark: string;
+
+        /** AdminUpsertRecommenderLevelRequest firstPayRatio. */
+        public firstPayRatio: number;
+
+        /** AdminUpsertRecommenderLevelRequest subsequentPayRatio. */
+        public subsequentPayRatio: number;
 
         /**
          * Creates a new AdminUpsertRecommenderLevelRequest instance using the specified properties.
@@ -11430,6 +11787,2469 @@ export namespace pb {
 
         /**
          * Gets the default type url for AdminDeleteRecommenderLevelResponse
+         * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+         * @returns The default type url
+         */
+        public static getTypeUrl(typeUrlPrefix?: string): string;
+    }
+
+    /** Properties of a RecommenderAppPolicyInfo. */
+    interface IRecommenderAppPolicyInfo {
+
+        /** RecommenderAppPolicyInfo id */
+        id?: (number|Long|null);
+
+        /** RecommenderAppPolicyInfo serviceAppid */
+        serviceAppid?: (string|null);
+
+        /** RecommenderAppPolicyInfo recommenderPubkey */
+        recommenderPubkey?: (string|null);
+
+        /** RecommenderAppPolicyInfo hasFirstPayRatio */
+        hasFirstPayRatio?: (boolean|null);
+
+        /** RecommenderAppPolicyInfo firstPayRatio */
+        firstPayRatio?: (number|null);
+
+        /** RecommenderAppPolicyInfo hasSubsequentPayRatio */
+        hasSubsequentPayRatio?: (boolean|null);
+
+        /** RecommenderAppPolicyInfo subsequentPayRatio */
+        subsequentPayRatio?: (number|null);
+
+        /** RecommenderAppPolicyInfo remark */
+        remark?: (string|null);
+
+        /** RecommenderAppPolicyInfo createTime */
+        createTime?: (string|null);
+
+        /** RecommenderAppPolicyInfo updateTime */
+        updateTime?: (string|null);
+
+        /** RecommenderAppPolicyInfo recommenderLevel */
+        recommenderLevel?: (number|null);
+    }
+
+    /** Represents a RecommenderAppPolicyInfo. */
+    class RecommenderAppPolicyInfo implements IRecommenderAppPolicyInfo {
+
+        /**
+         * Constructs a new RecommenderAppPolicyInfo.
+         * @param [properties] Properties to set
+         */
+        constructor(properties?: pb.IRecommenderAppPolicyInfo);
+
+        /** RecommenderAppPolicyInfo id. */
+        public id: (number|Long);
+
+        /** RecommenderAppPolicyInfo serviceAppid. */
+        public serviceAppid: string;
+
+        /** RecommenderAppPolicyInfo recommenderPubkey. */
+        public recommenderPubkey: string;
+
+        /** RecommenderAppPolicyInfo hasFirstPayRatio. */
+        public hasFirstPayRatio: boolean;
+
+        /** RecommenderAppPolicyInfo firstPayRatio. */
+        public firstPayRatio: number;
+
+        /** RecommenderAppPolicyInfo hasSubsequentPayRatio. */
+        public hasSubsequentPayRatio: boolean;
+
+        /** RecommenderAppPolicyInfo subsequentPayRatio. */
+        public subsequentPayRatio: number;
+
+        /** RecommenderAppPolicyInfo remark. */
+        public remark: string;
+
+        /** RecommenderAppPolicyInfo createTime. */
+        public createTime: string;
+
+        /** RecommenderAppPolicyInfo updateTime. */
+        public updateTime: string;
+
+        /** RecommenderAppPolicyInfo recommenderLevel. */
+        public recommenderLevel: number;
+
+        /**
+         * Creates a new RecommenderAppPolicyInfo instance using the specified properties.
+         * @param [properties] Properties to set
+         * @returns RecommenderAppPolicyInfo instance
+         */
+        public static create(properties?: pb.IRecommenderAppPolicyInfo): pb.RecommenderAppPolicyInfo;
+
+        /**
+         * Encodes the specified RecommenderAppPolicyInfo message. Does not implicitly {@link pb.RecommenderAppPolicyInfo.verify|verify} messages.
+         * @param message RecommenderAppPolicyInfo message or plain object to encode
+         * @param [writer] Writer to encode to
+         * @returns Writer
+         */
+        public static encode(message: pb.IRecommenderAppPolicyInfo, writer?: $protobuf.Writer): $protobuf.Writer;
+
+        /**
+         * Encodes the specified RecommenderAppPolicyInfo message, length delimited. Does not implicitly {@link pb.RecommenderAppPolicyInfo.verify|verify} messages.
+         * @param message RecommenderAppPolicyInfo message or plain object to encode
+         * @param [writer] Writer to encode to
+         * @returns Writer
+         */
+        public static encodeDelimited(message: pb.IRecommenderAppPolicyInfo, writer?: $protobuf.Writer): $protobuf.Writer;
+
+        /**
+         * Decodes a RecommenderAppPolicyInfo message from the specified reader or buffer.
+         * @param reader Reader or buffer to decode from
+         * @param [length] Message length if known beforehand
+         * @returns RecommenderAppPolicyInfo
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): pb.RecommenderAppPolicyInfo;
+
+        /**
+         * Decodes a RecommenderAppPolicyInfo message from the specified reader or buffer, length delimited.
+         * @param reader Reader or buffer to decode from
+         * @returns RecommenderAppPolicyInfo
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): pb.RecommenderAppPolicyInfo;
+
+        /**
+         * Verifies a RecommenderAppPolicyInfo message.
+         * @param message Plain object to verify
+         * @returns `null` if valid, otherwise the reason why it is not
+         */
+        public static verify(message: { [k: string]: any }): (string|null);
+
+        /**
+         * Creates a RecommenderAppPolicyInfo message from a plain object. Also converts values to their respective internal types.
+         * @param object Plain object
+         * @returns RecommenderAppPolicyInfo
+         */
+        public static fromObject(object: { [k: string]: any }): pb.RecommenderAppPolicyInfo;
+
+        /**
+         * Creates a plain object from a RecommenderAppPolicyInfo message. Also converts values to other types if specified.
+         * @param message RecommenderAppPolicyInfo
+         * @param [options] Conversion options
+         * @returns Plain object
+         */
+        public static toObject(message: pb.RecommenderAppPolicyInfo, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+        /**
+         * Converts this RecommenderAppPolicyInfo to JSON.
+         * @returns JSON object
+         */
+        public toJSON(): { [k: string]: any };
+
+        /**
+         * Gets the default type url for RecommenderAppPolicyInfo
+         * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+         * @returns The default type url
+         */
+        public static getTypeUrl(typeUrlPrefix?: string): string;
+    }
+
+    /** Properties of an AdminUpsertRecommenderAppPolicyRequest. */
+    interface IAdminUpsertRecommenderAppPolicyRequest {
+
+        /** AdminUpsertRecommenderAppPolicyRequest serviceAppid */
+        serviceAppid?: (string|null);
+
+        /** AdminUpsertRecommenderAppPolicyRequest recommenderPubkey */
+        recommenderPubkey?: (string|null);
+
+        /** AdminUpsertRecommenderAppPolicyRequest hasFirstPayRatio */
+        hasFirstPayRatio?: (boolean|null);
+
+        /** AdminUpsertRecommenderAppPolicyRequest firstPayRatio */
+        firstPayRatio?: (number|null);
+
+        /** AdminUpsertRecommenderAppPolicyRequest hasSubsequentPayRatio */
+        hasSubsequentPayRatio?: (boolean|null);
+
+        /** AdminUpsertRecommenderAppPolicyRequest subsequentPayRatio */
+        subsequentPayRatio?: (number|null);
+
+        /** AdminUpsertRecommenderAppPolicyRequest remark */
+        remark?: (string|null);
+
+        /** AdminUpsertRecommenderAppPolicyRequest recommenderLevel */
+        recommenderLevel?: (number|null);
+    }
+
+    /** Represents an AdminUpsertRecommenderAppPolicyRequest. */
+    class AdminUpsertRecommenderAppPolicyRequest implements IAdminUpsertRecommenderAppPolicyRequest {
+
+        /**
+         * Constructs a new AdminUpsertRecommenderAppPolicyRequest.
+         * @param [properties] Properties to set
+         */
+        constructor(properties?: pb.IAdminUpsertRecommenderAppPolicyRequest);
+
+        /** AdminUpsertRecommenderAppPolicyRequest serviceAppid. */
+        public serviceAppid: string;
+
+        /** AdminUpsertRecommenderAppPolicyRequest recommenderPubkey. */
+        public recommenderPubkey: string;
+
+        /** AdminUpsertRecommenderAppPolicyRequest hasFirstPayRatio. */
+        public hasFirstPayRatio: boolean;
+
+        /** AdminUpsertRecommenderAppPolicyRequest firstPayRatio. */
+        public firstPayRatio: number;
+
+        /** AdminUpsertRecommenderAppPolicyRequest hasSubsequentPayRatio. */
+        public hasSubsequentPayRatio: boolean;
+
+        /** AdminUpsertRecommenderAppPolicyRequest subsequentPayRatio. */
+        public subsequentPayRatio: number;
+
+        /** AdminUpsertRecommenderAppPolicyRequest remark. */
+        public remark: string;
+
+        /** AdminUpsertRecommenderAppPolicyRequest recommenderLevel. */
+        public recommenderLevel: number;
+
+        /**
+         * Creates a new AdminUpsertRecommenderAppPolicyRequest instance using the specified properties.
+         * @param [properties] Properties to set
+         * @returns AdminUpsertRecommenderAppPolicyRequest instance
+         */
+        public static create(properties?: pb.IAdminUpsertRecommenderAppPolicyRequest): pb.AdminUpsertRecommenderAppPolicyRequest;
+
+        /**
+         * Encodes the specified AdminUpsertRecommenderAppPolicyRequest message. Does not implicitly {@link pb.AdminUpsertRecommenderAppPolicyRequest.verify|verify} messages.
+         * @param message AdminUpsertRecommenderAppPolicyRequest message or plain object to encode
+         * @param [writer] Writer to encode to
+         * @returns Writer
+         */
+        public static encode(message: pb.IAdminUpsertRecommenderAppPolicyRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+        /**
+         * Encodes the specified AdminUpsertRecommenderAppPolicyRequest message, length delimited. Does not implicitly {@link pb.AdminUpsertRecommenderAppPolicyRequest.verify|verify} messages.
+         * @param message AdminUpsertRecommenderAppPolicyRequest message or plain object to encode
+         * @param [writer] Writer to encode to
+         * @returns Writer
+         */
+        public static encodeDelimited(message: pb.IAdminUpsertRecommenderAppPolicyRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+        /**
+         * Decodes an AdminUpsertRecommenderAppPolicyRequest message from the specified reader or buffer.
+         * @param reader Reader or buffer to decode from
+         * @param [length] Message length if known beforehand
+         * @returns AdminUpsertRecommenderAppPolicyRequest
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): pb.AdminUpsertRecommenderAppPolicyRequest;
+
+        /**
+         * Decodes an AdminUpsertRecommenderAppPolicyRequest message from the specified reader or buffer, length delimited.
+         * @param reader Reader or buffer to decode from
+         * @returns AdminUpsertRecommenderAppPolicyRequest
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): pb.AdminUpsertRecommenderAppPolicyRequest;
+
+        /**
+         * Verifies an AdminUpsertRecommenderAppPolicyRequest message.
+         * @param message Plain object to verify
+         * @returns `null` if valid, otherwise the reason why it is not
+         */
+        public static verify(message: { [k: string]: any }): (string|null);
+
+        /**
+         * Creates an AdminUpsertRecommenderAppPolicyRequest message from a plain object. Also converts values to their respective internal types.
+         * @param object Plain object
+         * @returns AdminUpsertRecommenderAppPolicyRequest
+         */
+        public static fromObject(object: { [k: string]: any }): pb.AdminUpsertRecommenderAppPolicyRequest;
+
+        /**
+         * Creates a plain object from an AdminUpsertRecommenderAppPolicyRequest message. Also converts values to other types if specified.
+         * @param message AdminUpsertRecommenderAppPolicyRequest
+         * @param [options] Conversion options
+         * @returns Plain object
+         */
+        public static toObject(message: pb.AdminUpsertRecommenderAppPolicyRequest, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+        /**
+         * Converts this AdminUpsertRecommenderAppPolicyRequest to JSON.
+         * @returns JSON object
+         */
+        public toJSON(): { [k: string]: any };
+
+        /**
+         * Gets the default type url for AdminUpsertRecommenderAppPolicyRequest
+         * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+         * @returns The default type url
+         */
+        public static getTypeUrl(typeUrlPrefix?: string): string;
+    }
+
+    /** Properties of an AdminUpsertRecommenderAppPolicyResponse. */
+    interface IAdminUpsertRecommenderAppPolicyResponse {
+
+        /** AdminUpsertRecommenderAppPolicyResponse code */
+        code?: (number|null);
+
+        /** AdminUpsertRecommenderAppPolicyResponse msg */
+        msg?: (string|null);
+    }
+
+    /** Represents an AdminUpsertRecommenderAppPolicyResponse. */
+    class AdminUpsertRecommenderAppPolicyResponse implements IAdminUpsertRecommenderAppPolicyResponse {
+
+        /**
+         * Constructs a new AdminUpsertRecommenderAppPolicyResponse.
+         * @param [properties] Properties to set
+         */
+        constructor(properties?: pb.IAdminUpsertRecommenderAppPolicyResponse);
+
+        /** AdminUpsertRecommenderAppPolicyResponse code. */
+        public code: number;
+
+        /** AdminUpsertRecommenderAppPolicyResponse msg. */
+        public msg: string;
+
+        /**
+         * Creates a new AdminUpsertRecommenderAppPolicyResponse instance using the specified properties.
+         * @param [properties] Properties to set
+         * @returns AdminUpsertRecommenderAppPolicyResponse instance
+         */
+        public static create(properties?: pb.IAdminUpsertRecommenderAppPolicyResponse): pb.AdminUpsertRecommenderAppPolicyResponse;
+
+        /**
+         * Encodes the specified AdminUpsertRecommenderAppPolicyResponse message. Does not implicitly {@link pb.AdminUpsertRecommenderAppPolicyResponse.verify|verify} messages.
+         * @param message AdminUpsertRecommenderAppPolicyResponse message or plain object to encode
+         * @param [writer] Writer to encode to
+         * @returns Writer
+         */
+        public static encode(message: pb.IAdminUpsertRecommenderAppPolicyResponse, writer?: $protobuf.Writer): $protobuf.Writer;
+
+        /**
+         * Encodes the specified AdminUpsertRecommenderAppPolicyResponse message, length delimited. Does not implicitly {@link pb.AdminUpsertRecommenderAppPolicyResponse.verify|verify} messages.
+         * @param message AdminUpsertRecommenderAppPolicyResponse message or plain object to encode
+         * @param [writer] Writer to encode to
+         * @returns Writer
+         */
+        public static encodeDelimited(message: pb.IAdminUpsertRecommenderAppPolicyResponse, writer?: $protobuf.Writer): $protobuf.Writer;
+
+        /**
+         * Decodes an AdminUpsertRecommenderAppPolicyResponse message from the specified reader or buffer.
+         * @param reader Reader or buffer to decode from
+         * @param [length] Message length if known beforehand
+         * @returns AdminUpsertRecommenderAppPolicyResponse
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): pb.AdminUpsertRecommenderAppPolicyResponse;
+
+        /**
+         * Decodes an AdminUpsertRecommenderAppPolicyResponse message from the specified reader or buffer, length delimited.
+         * @param reader Reader or buffer to decode from
+         * @returns AdminUpsertRecommenderAppPolicyResponse
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): pb.AdminUpsertRecommenderAppPolicyResponse;
+
+        /**
+         * Verifies an AdminUpsertRecommenderAppPolicyResponse message.
+         * @param message Plain object to verify
+         * @returns `null` if valid, otherwise the reason why it is not
+         */
+        public static verify(message: { [k: string]: any }): (string|null);
+
+        /**
+         * Creates an AdminUpsertRecommenderAppPolicyResponse message from a plain object. Also converts values to their respective internal types.
+         * @param object Plain object
+         * @returns AdminUpsertRecommenderAppPolicyResponse
+         */
+        public static fromObject(object: { [k: string]: any }): pb.AdminUpsertRecommenderAppPolicyResponse;
+
+        /**
+         * Creates a plain object from an AdminUpsertRecommenderAppPolicyResponse message. Also converts values to other types if specified.
+         * @param message AdminUpsertRecommenderAppPolicyResponse
+         * @param [options] Conversion options
+         * @returns Plain object
+         */
+        public static toObject(message: pb.AdminUpsertRecommenderAppPolicyResponse, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+        /**
+         * Converts this AdminUpsertRecommenderAppPolicyResponse to JSON.
+         * @returns JSON object
+         */
+        public toJSON(): { [k: string]: any };
+
+        /**
+         * Gets the default type url for AdminUpsertRecommenderAppPolicyResponse
+         * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+         * @returns The default type url
+         */
+        public static getTypeUrl(typeUrlPrefix?: string): string;
+    }
+
+    /** Properties of an AdminListRecommenderAppPoliciesRequest. */
+    interface IAdminListRecommenderAppPoliciesRequest {
+
+        /** AdminListRecommenderAppPoliciesRequest serviceAppid */
+        serviceAppid?: (string|null);
+
+        /** AdminListRecommenderAppPoliciesRequest recommenderPubkey */
+        recommenderPubkey?: (string|null);
+
+        /** AdminListRecommenderAppPoliciesRequest pageNum */
+        pageNum?: (number|null);
+
+        /** AdminListRecommenderAppPoliciesRequest pageSize */
+        pageSize?: (number|null);
+
+        /** AdminListRecommenderAppPoliciesRequest recommenderLevel */
+        recommenderLevel?: (number|null);
+    }
+
+    /** Represents an AdminListRecommenderAppPoliciesRequest. */
+    class AdminListRecommenderAppPoliciesRequest implements IAdminListRecommenderAppPoliciesRequest {
+
+        /**
+         * Constructs a new AdminListRecommenderAppPoliciesRequest.
+         * @param [properties] Properties to set
+         */
+        constructor(properties?: pb.IAdminListRecommenderAppPoliciesRequest);
+
+        /** AdminListRecommenderAppPoliciesRequest serviceAppid. */
+        public serviceAppid: string;
+
+        /** AdminListRecommenderAppPoliciesRequest recommenderPubkey. */
+        public recommenderPubkey: string;
+
+        /** AdminListRecommenderAppPoliciesRequest pageNum. */
+        public pageNum: number;
+
+        /** AdminListRecommenderAppPoliciesRequest pageSize. */
+        public pageSize: number;
+
+        /** AdminListRecommenderAppPoliciesRequest recommenderLevel. */
+        public recommenderLevel: number;
+
+        /**
+         * Creates a new AdminListRecommenderAppPoliciesRequest instance using the specified properties.
+         * @param [properties] Properties to set
+         * @returns AdminListRecommenderAppPoliciesRequest instance
+         */
+        public static create(properties?: pb.IAdminListRecommenderAppPoliciesRequest): pb.AdminListRecommenderAppPoliciesRequest;
+
+        /**
+         * Encodes the specified AdminListRecommenderAppPoliciesRequest message. Does not implicitly {@link pb.AdminListRecommenderAppPoliciesRequest.verify|verify} messages.
+         * @param message AdminListRecommenderAppPoliciesRequest message or plain object to encode
+         * @param [writer] Writer to encode to
+         * @returns Writer
+         */
+        public static encode(message: pb.IAdminListRecommenderAppPoliciesRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+        /**
+         * Encodes the specified AdminListRecommenderAppPoliciesRequest message, length delimited. Does not implicitly {@link pb.AdminListRecommenderAppPoliciesRequest.verify|verify} messages.
+         * @param message AdminListRecommenderAppPoliciesRequest message or plain object to encode
+         * @param [writer] Writer to encode to
+         * @returns Writer
+         */
+        public static encodeDelimited(message: pb.IAdminListRecommenderAppPoliciesRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+        /**
+         * Decodes an AdminListRecommenderAppPoliciesRequest message from the specified reader or buffer.
+         * @param reader Reader or buffer to decode from
+         * @param [length] Message length if known beforehand
+         * @returns AdminListRecommenderAppPoliciesRequest
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): pb.AdminListRecommenderAppPoliciesRequest;
+
+        /**
+         * Decodes an AdminListRecommenderAppPoliciesRequest message from the specified reader or buffer, length delimited.
+         * @param reader Reader or buffer to decode from
+         * @returns AdminListRecommenderAppPoliciesRequest
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): pb.AdminListRecommenderAppPoliciesRequest;
+
+        /**
+         * Verifies an AdminListRecommenderAppPoliciesRequest message.
+         * @param message Plain object to verify
+         * @returns `null` if valid, otherwise the reason why it is not
+         */
+        public static verify(message: { [k: string]: any }): (string|null);
+
+        /**
+         * Creates an AdminListRecommenderAppPoliciesRequest message from a plain object. Also converts values to their respective internal types.
+         * @param object Plain object
+         * @returns AdminListRecommenderAppPoliciesRequest
+         */
+        public static fromObject(object: { [k: string]: any }): pb.AdminListRecommenderAppPoliciesRequest;
+
+        /**
+         * Creates a plain object from an AdminListRecommenderAppPoliciesRequest message. Also converts values to other types if specified.
+         * @param message AdminListRecommenderAppPoliciesRequest
+         * @param [options] Conversion options
+         * @returns Plain object
+         */
+        public static toObject(message: pb.AdminListRecommenderAppPoliciesRequest, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+        /**
+         * Converts this AdminListRecommenderAppPoliciesRequest to JSON.
+         * @returns JSON object
+         */
+        public toJSON(): { [k: string]: any };
+
+        /**
+         * Gets the default type url for AdminListRecommenderAppPoliciesRequest
+         * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+         * @returns The default type url
+         */
+        public static getTypeUrl(typeUrlPrefix?: string): string;
+    }
+
+    /** Properties of an AdminListRecommenderAppPoliciesResponse. */
+    interface IAdminListRecommenderAppPoliciesResponse {
+
+        /** AdminListRecommenderAppPoliciesResponse code */
+        code?: (number|null);
+
+        /** AdminListRecommenderAppPoliciesResponse msg */
+        msg?: (string|null);
+
+        /** AdminListRecommenderAppPoliciesResponse total */
+        total?: (number|Long|null);
+
+        /** AdminListRecommenderAppPoliciesResponse data */
+        data?: (pb.IRecommenderAppPolicyInfo[]|null);
+    }
+
+    /** Represents an AdminListRecommenderAppPoliciesResponse. */
+    class AdminListRecommenderAppPoliciesResponse implements IAdminListRecommenderAppPoliciesResponse {
+
+        /**
+         * Constructs a new AdminListRecommenderAppPoliciesResponse.
+         * @param [properties] Properties to set
+         */
+        constructor(properties?: pb.IAdminListRecommenderAppPoliciesResponse);
+
+        /** AdminListRecommenderAppPoliciesResponse code. */
+        public code: number;
+
+        /** AdminListRecommenderAppPoliciesResponse msg. */
+        public msg: string;
+
+        /** AdminListRecommenderAppPoliciesResponse total. */
+        public total: (number|Long);
+
+        /** AdminListRecommenderAppPoliciesResponse data. */
+        public data: pb.IRecommenderAppPolicyInfo[];
+
+        /**
+         * Creates a new AdminListRecommenderAppPoliciesResponse instance using the specified properties.
+         * @param [properties] Properties to set
+         * @returns AdminListRecommenderAppPoliciesResponse instance
+         */
+        public static create(properties?: pb.IAdminListRecommenderAppPoliciesResponse): pb.AdminListRecommenderAppPoliciesResponse;
+
+        /**
+         * Encodes the specified AdminListRecommenderAppPoliciesResponse message. Does not implicitly {@link pb.AdminListRecommenderAppPoliciesResponse.verify|verify} messages.
+         * @param message AdminListRecommenderAppPoliciesResponse message or plain object to encode
+         * @param [writer] Writer to encode to
+         * @returns Writer
+         */
+        public static encode(message: pb.IAdminListRecommenderAppPoliciesResponse, writer?: $protobuf.Writer): $protobuf.Writer;
+
+        /**
+         * Encodes the specified AdminListRecommenderAppPoliciesResponse message, length delimited. Does not implicitly {@link pb.AdminListRecommenderAppPoliciesResponse.verify|verify} messages.
+         * @param message AdminListRecommenderAppPoliciesResponse message or plain object to encode
+         * @param [writer] Writer to encode to
+         * @returns Writer
+         */
+        public static encodeDelimited(message: pb.IAdminListRecommenderAppPoliciesResponse, writer?: $protobuf.Writer): $protobuf.Writer;
+
+        /**
+         * Decodes an AdminListRecommenderAppPoliciesResponse message from the specified reader or buffer.
+         * @param reader Reader or buffer to decode from
+         * @param [length] Message length if known beforehand
+         * @returns AdminListRecommenderAppPoliciesResponse
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): pb.AdminListRecommenderAppPoliciesResponse;
+
+        /**
+         * Decodes an AdminListRecommenderAppPoliciesResponse message from the specified reader or buffer, length delimited.
+         * @param reader Reader or buffer to decode from
+         * @returns AdminListRecommenderAppPoliciesResponse
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): pb.AdminListRecommenderAppPoliciesResponse;
+
+        /**
+         * Verifies an AdminListRecommenderAppPoliciesResponse message.
+         * @param message Plain object to verify
+         * @returns `null` if valid, otherwise the reason why it is not
+         */
+        public static verify(message: { [k: string]: any }): (string|null);
+
+        /**
+         * Creates an AdminListRecommenderAppPoliciesResponse message from a plain object. Also converts values to their respective internal types.
+         * @param object Plain object
+         * @returns AdminListRecommenderAppPoliciesResponse
+         */
+        public static fromObject(object: { [k: string]: any }): pb.AdminListRecommenderAppPoliciesResponse;
+
+        /**
+         * Creates a plain object from an AdminListRecommenderAppPoliciesResponse message. Also converts values to other types if specified.
+         * @param message AdminListRecommenderAppPoliciesResponse
+         * @param [options] Conversion options
+         * @returns Plain object
+         */
+        public static toObject(message: pb.AdminListRecommenderAppPoliciesResponse, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+        /**
+         * Converts this AdminListRecommenderAppPoliciesResponse to JSON.
+         * @returns JSON object
+         */
+        public toJSON(): { [k: string]: any };
+
+        /**
+         * Gets the default type url for AdminListRecommenderAppPoliciesResponse
+         * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+         * @returns The default type url
+         */
+        public static getTypeUrl(typeUrlPrefix?: string): string;
+    }
+
+    /** Properties of an AdminDeleteRecommenderAppPolicyRequest. */
+    interface IAdminDeleteRecommenderAppPolicyRequest {
+
+        /** AdminDeleteRecommenderAppPolicyRequest serviceAppid */
+        serviceAppid?: (string|null);
+
+        /** AdminDeleteRecommenderAppPolicyRequest recommenderPubkey */
+        recommenderPubkey?: (string|null);
+
+        /** AdminDeleteRecommenderAppPolicyRequest recommenderLevel */
+        recommenderLevel?: (number|null);
+    }
+
+    /** Represents an AdminDeleteRecommenderAppPolicyRequest. */
+    class AdminDeleteRecommenderAppPolicyRequest implements IAdminDeleteRecommenderAppPolicyRequest {
+
+        /**
+         * Constructs a new AdminDeleteRecommenderAppPolicyRequest.
+         * @param [properties] Properties to set
+         */
+        constructor(properties?: pb.IAdminDeleteRecommenderAppPolicyRequest);
+
+        /** AdminDeleteRecommenderAppPolicyRequest serviceAppid. */
+        public serviceAppid: string;
+
+        /** AdminDeleteRecommenderAppPolicyRequest recommenderPubkey. */
+        public recommenderPubkey: string;
+
+        /** AdminDeleteRecommenderAppPolicyRequest recommenderLevel. */
+        public recommenderLevel: number;
+
+        /**
+         * Creates a new AdminDeleteRecommenderAppPolicyRequest instance using the specified properties.
+         * @param [properties] Properties to set
+         * @returns AdminDeleteRecommenderAppPolicyRequest instance
+         */
+        public static create(properties?: pb.IAdminDeleteRecommenderAppPolicyRequest): pb.AdminDeleteRecommenderAppPolicyRequest;
+
+        /**
+         * Encodes the specified AdminDeleteRecommenderAppPolicyRequest message. Does not implicitly {@link pb.AdminDeleteRecommenderAppPolicyRequest.verify|verify} messages.
+         * @param message AdminDeleteRecommenderAppPolicyRequest message or plain object to encode
+         * @param [writer] Writer to encode to
+         * @returns Writer
+         */
+        public static encode(message: pb.IAdminDeleteRecommenderAppPolicyRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+        /**
+         * Encodes the specified AdminDeleteRecommenderAppPolicyRequest message, length delimited. Does not implicitly {@link pb.AdminDeleteRecommenderAppPolicyRequest.verify|verify} messages.
+         * @param message AdminDeleteRecommenderAppPolicyRequest message or plain object to encode
+         * @param [writer] Writer to encode to
+         * @returns Writer
+         */
+        public static encodeDelimited(message: pb.IAdminDeleteRecommenderAppPolicyRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+        /**
+         * Decodes an AdminDeleteRecommenderAppPolicyRequest message from the specified reader or buffer.
+         * @param reader Reader or buffer to decode from
+         * @param [length] Message length if known beforehand
+         * @returns AdminDeleteRecommenderAppPolicyRequest
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): pb.AdminDeleteRecommenderAppPolicyRequest;
+
+        /**
+         * Decodes an AdminDeleteRecommenderAppPolicyRequest message from the specified reader or buffer, length delimited.
+         * @param reader Reader or buffer to decode from
+         * @returns AdminDeleteRecommenderAppPolicyRequest
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): pb.AdminDeleteRecommenderAppPolicyRequest;
+
+        /**
+         * Verifies an AdminDeleteRecommenderAppPolicyRequest message.
+         * @param message Plain object to verify
+         * @returns `null` if valid, otherwise the reason why it is not
+         */
+        public static verify(message: { [k: string]: any }): (string|null);
+
+        /**
+         * Creates an AdminDeleteRecommenderAppPolicyRequest message from a plain object. Also converts values to their respective internal types.
+         * @param object Plain object
+         * @returns AdminDeleteRecommenderAppPolicyRequest
+         */
+        public static fromObject(object: { [k: string]: any }): pb.AdminDeleteRecommenderAppPolicyRequest;
+
+        /**
+         * Creates a plain object from an AdminDeleteRecommenderAppPolicyRequest message. Also converts values to other types if specified.
+         * @param message AdminDeleteRecommenderAppPolicyRequest
+         * @param [options] Conversion options
+         * @returns Plain object
+         */
+        public static toObject(message: pb.AdminDeleteRecommenderAppPolicyRequest, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+        /**
+         * Converts this AdminDeleteRecommenderAppPolicyRequest to JSON.
+         * @returns JSON object
+         */
+        public toJSON(): { [k: string]: any };
+
+        /**
+         * Gets the default type url for AdminDeleteRecommenderAppPolicyRequest
+         * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+         * @returns The default type url
+         */
+        public static getTypeUrl(typeUrlPrefix?: string): string;
+    }
+
+    /** Properties of an AdminDeleteRecommenderAppPolicyResponse. */
+    interface IAdminDeleteRecommenderAppPolicyResponse {
+
+        /** AdminDeleteRecommenderAppPolicyResponse code */
+        code?: (number|null);
+
+        /** AdminDeleteRecommenderAppPolicyResponse msg */
+        msg?: (string|null);
+    }
+
+    /** Represents an AdminDeleteRecommenderAppPolicyResponse. */
+    class AdminDeleteRecommenderAppPolicyResponse implements IAdminDeleteRecommenderAppPolicyResponse {
+
+        /**
+         * Constructs a new AdminDeleteRecommenderAppPolicyResponse.
+         * @param [properties] Properties to set
+         */
+        constructor(properties?: pb.IAdminDeleteRecommenderAppPolicyResponse);
+
+        /** AdminDeleteRecommenderAppPolicyResponse code. */
+        public code: number;
+
+        /** AdminDeleteRecommenderAppPolicyResponse msg. */
+        public msg: string;
+
+        /**
+         * Creates a new AdminDeleteRecommenderAppPolicyResponse instance using the specified properties.
+         * @param [properties] Properties to set
+         * @returns AdminDeleteRecommenderAppPolicyResponse instance
+         */
+        public static create(properties?: pb.IAdminDeleteRecommenderAppPolicyResponse): pb.AdminDeleteRecommenderAppPolicyResponse;
+
+        /**
+         * Encodes the specified AdminDeleteRecommenderAppPolicyResponse message. Does not implicitly {@link pb.AdminDeleteRecommenderAppPolicyResponse.verify|verify} messages.
+         * @param message AdminDeleteRecommenderAppPolicyResponse message or plain object to encode
+         * @param [writer] Writer to encode to
+         * @returns Writer
+         */
+        public static encode(message: pb.IAdminDeleteRecommenderAppPolicyResponse, writer?: $protobuf.Writer): $protobuf.Writer;
+
+        /**
+         * Encodes the specified AdminDeleteRecommenderAppPolicyResponse message, length delimited. Does not implicitly {@link pb.AdminDeleteRecommenderAppPolicyResponse.verify|verify} messages.
+         * @param message AdminDeleteRecommenderAppPolicyResponse message or plain object to encode
+         * @param [writer] Writer to encode to
+         * @returns Writer
+         */
+        public static encodeDelimited(message: pb.IAdminDeleteRecommenderAppPolicyResponse, writer?: $protobuf.Writer): $protobuf.Writer;
+
+        /**
+         * Decodes an AdminDeleteRecommenderAppPolicyResponse message from the specified reader or buffer.
+         * @param reader Reader or buffer to decode from
+         * @param [length] Message length if known beforehand
+         * @returns AdminDeleteRecommenderAppPolicyResponse
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): pb.AdminDeleteRecommenderAppPolicyResponse;
+
+        /**
+         * Decodes an AdminDeleteRecommenderAppPolicyResponse message from the specified reader or buffer, length delimited.
+         * @param reader Reader or buffer to decode from
+         * @returns AdminDeleteRecommenderAppPolicyResponse
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): pb.AdminDeleteRecommenderAppPolicyResponse;
+
+        /**
+         * Verifies an AdminDeleteRecommenderAppPolicyResponse message.
+         * @param message Plain object to verify
+         * @returns `null` if valid, otherwise the reason why it is not
+         */
+        public static verify(message: { [k: string]: any }): (string|null);
+
+        /**
+         * Creates an AdminDeleteRecommenderAppPolicyResponse message from a plain object. Also converts values to their respective internal types.
+         * @param object Plain object
+         * @returns AdminDeleteRecommenderAppPolicyResponse
+         */
+        public static fromObject(object: { [k: string]: any }): pb.AdminDeleteRecommenderAppPolicyResponse;
+
+        /**
+         * Creates a plain object from an AdminDeleteRecommenderAppPolicyResponse message. Also converts values to other types if specified.
+         * @param message AdminDeleteRecommenderAppPolicyResponse
+         * @param [options] Conversion options
+         * @returns Plain object
+         */
+        public static toObject(message: pb.AdminDeleteRecommenderAppPolicyResponse, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+        /**
+         * Converts this AdminDeleteRecommenderAppPolicyResponse to JSON.
+         * @returns JSON object
+         */
+        public toJSON(): { [k: string]: any };
+
+        /**
+         * Gets the default type url for AdminDeleteRecommenderAppPolicyResponse
+         * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+         * @returns The default type url
+         */
+        public static getTypeUrl(typeUrlPrefix?: string): string;
+    }
+
+    /** Properties of a RecommenderAppManagerInfo. */
+    interface IRecommenderAppManagerInfo {
+
+        /** RecommenderAppManagerInfo id */
+        id?: (number|Long|null);
+
+        /** RecommenderAppManagerInfo serviceAppid */
+        serviceAppid?: (string|null);
+
+        /** RecommenderAppManagerInfo managerPubkey */
+        managerPubkey?: (string|null);
+
+        /** RecommenderAppManagerInfo grantedBy */
+        grantedBy?: (string|null);
+
+        /** RecommenderAppManagerInfo grantedByType */
+        grantedByType?: (string|null);
+
+        /** RecommenderAppManagerInfo remark */
+        remark?: (string|null);
+
+        /** RecommenderAppManagerInfo createTime */
+        createTime?: (string|null);
+
+        /** RecommenderAppManagerInfo updateTime */
+        updateTime?: (string|null);
+    }
+
+    /** Represents a RecommenderAppManagerInfo. */
+    class RecommenderAppManagerInfo implements IRecommenderAppManagerInfo {
+
+        /**
+         * Constructs a new RecommenderAppManagerInfo.
+         * @param [properties] Properties to set
+         */
+        constructor(properties?: pb.IRecommenderAppManagerInfo);
+
+        /** RecommenderAppManagerInfo id. */
+        public id: (number|Long);
+
+        /** RecommenderAppManagerInfo serviceAppid. */
+        public serviceAppid: string;
+
+        /** RecommenderAppManagerInfo managerPubkey. */
+        public managerPubkey: string;
+
+        /** RecommenderAppManagerInfo grantedBy. */
+        public grantedBy: string;
+
+        /** RecommenderAppManagerInfo grantedByType. */
+        public grantedByType: string;
+
+        /** RecommenderAppManagerInfo remark. */
+        public remark: string;
+
+        /** RecommenderAppManagerInfo createTime. */
+        public createTime: string;
+
+        /** RecommenderAppManagerInfo updateTime. */
+        public updateTime: string;
+
+        /**
+         * Creates a new RecommenderAppManagerInfo instance using the specified properties.
+         * @param [properties] Properties to set
+         * @returns RecommenderAppManagerInfo instance
+         */
+        public static create(properties?: pb.IRecommenderAppManagerInfo): pb.RecommenderAppManagerInfo;
+
+        /**
+         * Encodes the specified RecommenderAppManagerInfo message. Does not implicitly {@link pb.RecommenderAppManagerInfo.verify|verify} messages.
+         * @param message RecommenderAppManagerInfo message or plain object to encode
+         * @param [writer] Writer to encode to
+         * @returns Writer
+         */
+        public static encode(message: pb.IRecommenderAppManagerInfo, writer?: $protobuf.Writer): $protobuf.Writer;
+
+        /**
+         * Encodes the specified RecommenderAppManagerInfo message, length delimited. Does not implicitly {@link pb.RecommenderAppManagerInfo.verify|verify} messages.
+         * @param message RecommenderAppManagerInfo message or plain object to encode
+         * @param [writer] Writer to encode to
+         * @returns Writer
+         */
+        public static encodeDelimited(message: pb.IRecommenderAppManagerInfo, writer?: $protobuf.Writer): $protobuf.Writer;
+
+        /**
+         * Decodes a RecommenderAppManagerInfo message from the specified reader or buffer.
+         * @param reader Reader or buffer to decode from
+         * @param [length] Message length if known beforehand
+         * @returns RecommenderAppManagerInfo
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): pb.RecommenderAppManagerInfo;
+
+        /**
+         * Decodes a RecommenderAppManagerInfo message from the specified reader or buffer, length delimited.
+         * @param reader Reader or buffer to decode from
+         * @returns RecommenderAppManagerInfo
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): pb.RecommenderAppManagerInfo;
+
+        /**
+         * Verifies a RecommenderAppManagerInfo message.
+         * @param message Plain object to verify
+         * @returns `null` if valid, otherwise the reason why it is not
+         */
+        public static verify(message: { [k: string]: any }): (string|null);
+
+        /**
+         * Creates a RecommenderAppManagerInfo message from a plain object. Also converts values to their respective internal types.
+         * @param object Plain object
+         * @returns RecommenderAppManagerInfo
+         */
+        public static fromObject(object: { [k: string]: any }): pb.RecommenderAppManagerInfo;
+
+        /**
+         * Creates a plain object from a RecommenderAppManagerInfo message. Also converts values to other types if specified.
+         * @param message RecommenderAppManagerInfo
+         * @param [options] Conversion options
+         * @returns Plain object
+         */
+        public static toObject(message: pb.RecommenderAppManagerInfo, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+        /**
+         * Converts this RecommenderAppManagerInfo to JSON.
+         * @returns JSON object
+         */
+        public toJSON(): { [k: string]: any };
+
+        /**
+         * Gets the default type url for RecommenderAppManagerInfo
+         * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+         * @returns The default type url
+         */
+        public static getTypeUrl(typeUrlPrefix?: string): string;
+    }
+
+    /** Properties of a GetRecommenderAppPolicyAccessRequest. */
+    interface IGetRecommenderAppPolicyAccessRequest {
+
+        /** GetRecommenderAppPolicyAccessRequest serviceAppid */
+        serviceAppid?: (string|null);
+    }
+
+    /** Represents a GetRecommenderAppPolicyAccessRequest. */
+    class GetRecommenderAppPolicyAccessRequest implements IGetRecommenderAppPolicyAccessRequest {
+
+        /**
+         * Constructs a new GetRecommenderAppPolicyAccessRequest.
+         * @param [properties] Properties to set
+         */
+        constructor(properties?: pb.IGetRecommenderAppPolicyAccessRequest);
+
+        /** GetRecommenderAppPolicyAccessRequest serviceAppid. */
+        public serviceAppid: string;
+
+        /**
+         * Creates a new GetRecommenderAppPolicyAccessRequest instance using the specified properties.
+         * @param [properties] Properties to set
+         * @returns GetRecommenderAppPolicyAccessRequest instance
+         */
+        public static create(properties?: pb.IGetRecommenderAppPolicyAccessRequest): pb.GetRecommenderAppPolicyAccessRequest;
+
+        /**
+         * Encodes the specified GetRecommenderAppPolicyAccessRequest message. Does not implicitly {@link pb.GetRecommenderAppPolicyAccessRequest.verify|verify} messages.
+         * @param message GetRecommenderAppPolicyAccessRequest message or plain object to encode
+         * @param [writer] Writer to encode to
+         * @returns Writer
+         */
+        public static encode(message: pb.IGetRecommenderAppPolicyAccessRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+        /**
+         * Encodes the specified GetRecommenderAppPolicyAccessRequest message, length delimited. Does not implicitly {@link pb.GetRecommenderAppPolicyAccessRequest.verify|verify} messages.
+         * @param message GetRecommenderAppPolicyAccessRequest message or plain object to encode
+         * @param [writer] Writer to encode to
+         * @returns Writer
+         */
+        public static encodeDelimited(message: pb.IGetRecommenderAppPolicyAccessRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+        /**
+         * Decodes a GetRecommenderAppPolicyAccessRequest message from the specified reader or buffer.
+         * @param reader Reader or buffer to decode from
+         * @param [length] Message length if known beforehand
+         * @returns GetRecommenderAppPolicyAccessRequest
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): pb.GetRecommenderAppPolicyAccessRequest;
+
+        /**
+         * Decodes a GetRecommenderAppPolicyAccessRequest message from the specified reader or buffer, length delimited.
+         * @param reader Reader or buffer to decode from
+         * @returns GetRecommenderAppPolicyAccessRequest
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): pb.GetRecommenderAppPolicyAccessRequest;
+
+        /**
+         * Verifies a GetRecommenderAppPolicyAccessRequest message.
+         * @param message Plain object to verify
+         * @returns `null` if valid, otherwise the reason why it is not
+         */
+        public static verify(message: { [k: string]: any }): (string|null);
+
+        /**
+         * Creates a GetRecommenderAppPolicyAccessRequest message from a plain object. Also converts values to their respective internal types.
+         * @param object Plain object
+         * @returns GetRecommenderAppPolicyAccessRequest
+         */
+        public static fromObject(object: { [k: string]: any }): pb.GetRecommenderAppPolicyAccessRequest;
+
+        /**
+         * Creates a plain object from a GetRecommenderAppPolicyAccessRequest message. Also converts values to other types if specified.
+         * @param message GetRecommenderAppPolicyAccessRequest
+         * @param [options] Conversion options
+         * @returns Plain object
+         */
+        public static toObject(message: pb.GetRecommenderAppPolicyAccessRequest, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+        /**
+         * Converts this GetRecommenderAppPolicyAccessRequest to JSON.
+         * @returns JSON object
+         */
+        public toJSON(): { [k: string]: any };
+
+        /**
+         * Gets the default type url for GetRecommenderAppPolicyAccessRequest
+         * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+         * @returns The default type url
+         */
+        public static getTypeUrl(typeUrlPrefix?: string): string;
+    }
+
+    /** Properties of a GetRecommenderAppPolicyAccessResponse. */
+    interface IGetRecommenderAppPolicyAccessResponse {
+
+        /** GetRecommenderAppPolicyAccessResponse code */
+        code?: (number|null);
+
+        /** GetRecommenderAppPolicyAccessResponse msg */
+        msg?: (string|null);
+
+        /** GetRecommenderAppPolicyAccessResponse role */
+        role?: (string|null);
+
+        /** GetRecommenderAppPolicyAccessResponse canManagePolicy */
+        canManagePolicy?: (boolean|null);
+
+        /** GetRecommenderAppPolicyAccessResponse canManageManagers */
+        canManageManagers?: (boolean|null);
+
+        /** GetRecommenderAppPolicyAccessResponse ownerPubkey */
+        ownerPubkey?: (string|null);
+
+        /** GetRecommenderAppPolicyAccessResponse signerPubkey */
+        signerPubkey?: (string|null);
+    }
+
+    /** Represents a GetRecommenderAppPolicyAccessResponse. */
+    class GetRecommenderAppPolicyAccessResponse implements IGetRecommenderAppPolicyAccessResponse {
+
+        /**
+         * Constructs a new GetRecommenderAppPolicyAccessResponse.
+         * @param [properties] Properties to set
+         */
+        constructor(properties?: pb.IGetRecommenderAppPolicyAccessResponse);
+
+        /** GetRecommenderAppPolicyAccessResponse code. */
+        public code: number;
+
+        /** GetRecommenderAppPolicyAccessResponse msg. */
+        public msg: string;
+
+        /** GetRecommenderAppPolicyAccessResponse role. */
+        public role: string;
+
+        /** GetRecommenderAppPolicyAccessResponse canManagePolicy. */
+        public canManagePolicy: boolean;
+
+        /** GetRecommenderAppPolicyAccessResponse canManageManagers. */
+        public canManageManagers: boolean;
+
+        /** GetRecommenderAppPolicyAccessResponse ownerPubkey. */
+        public ownerPubkey: string;
+
+        /** GetRecommenderAppPolicyAccessResponse signerPubkey. */
+        public signerPubkey: string;
+
+        /**
+         * Creates a new GetRecommenderAppPolicyAccessResponse instance using the specified properties.
+         * @param [properties] Properties to set
+         * @returns GetRecommenderAppPolicyAccessResponse instance
+         */
+        public static create(properties?: pb.IGetRecommenderAppPolicyAccessResponse): pb.GetRecommenderAppPolicyAccessResponse;
+
+        /**
+         * Encodes the specified GetRecommenderAppPolicyAccessResponse message. Does not implicitly {@link pb.GetRecommenderAppPolicyAccessResponse.verify|verify} messages.
+         * @param message GetRecommenderAppPolicyAccessResponse message or plain object to encode
+         * @param [writer] Writer to encode to
+         * @returns Writer
+         */
+        public static encode(message: pb.IGetRecommenderAppPolicyAccessResponse, writer?: $protobuf.Writer): $protobuf.Writer;
+
+        /**
+         * Encodes the specified GetRecommenderAppPolicyAccessResponse message, length delimited. Does not implicitly {@link pb.GetRecommenderAppPolicyAccessResponse.verify|verify} messages.
+         * @param message GetRecommenderAppPolicyAccessResponse message or plain object to encode
+         * @param [writer] Writer to encode to
+         * @returns Writer
+         */
+        public static encodeDelimited(message: pb.IGetRecommenderAppPolicyAccessResponse, writer?: $protobuf.Writer): $protobuf.Writer;
+
+        /**
+         * Decodes a GetRecommenderAppPolicyAccessResponse message from the specified reader or buffer.
+         * @param reader Reader or buffer to decode from
+         * @param [length] Message length if known beforehand
+         * @returns GetRecommenderAppPolicyAccessResponse
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): pb.GetRecommenderAppPolicyAccessResponse;
+
+        /**
+         * Decodes a GetRecommenderAppPolicyAccessResponse message from the specified reader or buffer, length delimited.
+         * @param reader Reader or buffer to decode from
+         * @returns GetRecommenderAppPolicyAccessResponse
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): pb.GetRecommenderAppPolicyAccessResponse;
+
+        /**
+         * Verifies a GetRecommenderAppPolicyAccessResponse message.
+         * @param message Plain object to verify
+         * @returns `null` if valid, otherwise the reason why it is not
+         */
+        public static verify(message: { [k: string]: any }): (string|null);
+
+        /**
+         * Creates a GetRecommenderAppPolicyAccessResponse message from a plain object. Also converts values to their respective internal types.
+         * @param object Plain object
+         * @returns GetRecommenderAppPolicyAccessResponse
+         */
+        public static fromObject(object: { [k: string]: any }): pb.GetRecommenderAppPolicyAccessResponse;
+
+        /**
+         * Creates a plain object from a GetRecommenderAppPolicyAccessResponse message. Also converts values to other types if specified.
+         * @param message GetRecommenderAppPolicyAccessResponse
+         * @param [options] Conversion options
+         * @returns Plain object
+         */
+        public static toObject(message: pb.GetRecommenderAppPolicyAccessResponse, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+        /**
+         * Converts this GetRecommenderAppPolicyAccessResponse to JSON.
+         * @returns JSON object
+         */
+        public toJSON(): { [k: string]: any };
+
+        /**
+         * Gets the default type url for GetRecommenderAppPolicyAccessResponse
+         * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+         * @returns The default type url
+         */
+        public static getTypeUrl(typeUrlPrefix?: string): string;
+    }
+
+    /** Properties of an UpsertRecommenderAppPolicyRequest. */
+    interface IUpsertRecommenderAppPolicyRequest {
+
+        /** UpsertRecommenderAppPolicyRequest serviceAppid */
+        serviceAppid?: (string|null);
+
+        /** UpsertRecommenderAppPolicyRequest recommenderPubkey */
+        recommenderPubkey?: (string|null);
+
+        /** UpsertRecommenderAppPolicyRequest hasFirstPayRatio */
+        hasFirstPayRatio?: (boolean|null);
+
+        /** UpsertRecommenderAppPolicyRequest firstPayRatio */
+        firstPayRatio?: (number|null);
+
+        /** UpsertRecommenderAppPolicyRequest hasSubsequentPayRatio */
+        hasSubsequentPayRatio?: (boolean|null);
+
+        /** UpsertRecommenderAppPolicyRequest subsequentPayRatio */
+        subsequentPayRatio?: (number|null);
+
+        /** UpsertRecommenderAppPolicyRequest remark */
+        remark?: (string|null);
+
+        /** UpsertRecommenderAppPolicyRequest recommenderLevel */
+        recommenderLevel?: (number|null);
+    }
+
+    /** Represents an UpsertRecommenderAppPolicyRequest. */
+    class UpsertRecommenderAppPolicyRequest implements IUpsertRecommenderAppPolicyRequest {
+
+        /**
+         * Constructs a new UpsertRecommenderAppPolicyRequest.
+         * @param [properties] Properties to set
+         */
+        constructor(properties?: pb.IUpsertRecommenderAppPolicyRequest);
+
+        /** UpsertRecommenderAppPolicyRequest serviceAppid. */
+        public serviceAppid: string;
+
+        /** UpsertRecommenderAppPolicyRequest recommenderPubkey. */
+        public recommenderPubkey: string;
+
+        /** UpsertRecommenderAppPolicyRequest hasFirstPayRatio. */
+        public hasFirstPayRatio: boolean;
+
+        /** UpsertRecommenderAppPolicyRequest firstPayRatio. */
+        public firstPayRatio: number;
+
+        /** UpsertRecommenderAppPolicyRequest hasSubsequentPayRatio. */
+        public hasSubsequentPayRatio: boolean;
+
+        /** UpsertRecommenderAppPolicyRequest subsequentPayRatio. */
+        public subsequentPayRatio: number;
+
+        /** UpsertRecommenderAppPolicyRequest remark. */
+        public remark: string;
+
+        /** UpsertRecommenderAppPolicyRequest recommenderLevel. */
+        public recommenderLevel: number;
+
+        /**
+         * Creates a new UpsertRecommenderAppPolicyRequest instance using the specified properties.
+         * @param [properties] Properties to set
+         * @returns UpsertRecommenderAppPolicyRequest instance
+         */
+        public static create(properties?: pb.IUpsertRecommenderAppPolicyRequest): pb.UpsertRecommenderAppPolicyRequest;
+
+        /**
+         * Encodes the specified UpsertRecommenderAppPolicyRequest message. Does not implicitly {@link pb.UpsertRecommenderAppPolicyRequest.verify|verify} messages.
+         * @param message UpsertRecommenderAppPolicyRequest message or plain object to encode
+         * @param [writer] Writer to encode to
+         * @returns Writer
+         */
+        public static encode(message: pb.IUpsertRecommenderAppPolicyRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+        /**
+         * Encodes the specified UpsertRecommenderAppPolicyRequest message, length delimited. Does not implicitly {@link pb.UpsertRecommenderAppPolicyRequest.verify|verify} messages.
+         * @param message UpsertRecommenderAppPolicyRequest message or plain object to encode
+         * @param [writer] Writer to encode to
+         * @returns Writer
+         */
+        public static encodeDelimited(message: pb.IUpsertRecommenderAppPolicyRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+        /**
+         * Decodes an UpsertRecommenderAppPolicyRequest message from the specified reader or buffer.
+         * @param reader Reader or buffer to decode from
+         * @param [length] Message length if known beforehand
+         * @returns UpsertRecommenderAppPolicyRequest
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): pb.UpsertRecommenderAppPolicyRequest;
+
+        /**
+         * Decodes an UpsertRecommenderAppPolicyRequest message from the specified reader or buffer, length delimited.
+         * @param reader Reader or buffer to decode from
+         * @returns UpsertRecommenderAppPolicyRequest
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): pb.UpsertRecommenderAppPolicyRequest;
+
+        /**
+         * Verifies an UpsertRecommenderAppPolicyRequest message.
+         * @param message Plain object to verify
+         * @returns `null` if valid, otherwise the reason why it is not
+         */
+        public static verify(message: { [k: string]: any }): (string|null);
+
+        /**
+         * Creates an UpsertRecommenderAppPolicyRequest message from a plain object. Also converts values to their respective internal types.
+         * @param object Plain object
+         * @returns UpsertRecommenderAppPolicyRequest
+         */
+        public static fromObject(object: { [k: string]: any }): pb.UpsertRecommenderAppPolicyRequest;
+
+        /**
+         * Creates a plain object from an UpsertRecommenderAppPolicyRequest message. Also converts values to other types if specified.
+         * @param message UpsertRecommenderAppPolicyRequest
+         * @param [options] Conversion options
+         * @returns Plain object
+         */
+        public static toObject(message: pb.UpsertRecommenderAppPolicyRequest, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+        /**
+         * Converts this UpsertRecommenderAppPolicyRequest to JSON.
+         * @returns JSON object
+         */
+        public toJSON(): { [k: string]: any };
+
+        /**
+         * Gets the default type url for UpsertRecommenderAppPolicyRequest
+         * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+         * @returns The default type url
+         */
+        public static getTypeUrl(typeUrlPrefix?: string): string;
+    }
+
+    /** Properties of a ListRecommenderAppPoliciesRequest. */
+    interface IListRecommenderAppPoliciesRequest {
+
+        /** ListRecommenderAppPoliciesRequest serviceAppid */
+        serviceAppid?: (string|null);
+
+        /** ListRecommenderAppPoliciesRequest recommenderPubkey */
+        recommenderPubkey?: (string|null);
+
+        /** ListRecommenderAppPoliciesRequest pageNum */
+        pageNum?: (number|null);
+
+        /** ListRecommenderAppPoliciesRequest pageSize */
+        pageSize?: (number|null);
+
+        /** ListRecommenderAppPoliciesRequest recommenderLevel */
+        recommenderLevel?: (number|null);
+    }
+
+    /** Represents a ListRecommenderAppPoliciesRequest. */
+    class ListRecommenderAppPoliciesRequest implements IListRecommenderAppPoliciesRequest {
+
+        /**
+         * Constructs a new ListRecommenderAppPoliciesRequest.
+         * @param [properties] Properties to set
+         */
+        constructor(properties?: pb.IListRecommenderAppPoliciesRequest);
+
+        /** ListRecommenderAppPoliciesRequest serviceAppid. */
+        public serviceAppid: string;
+
+        /** ListRecommenderAppPoliciesRequest recommenderPubkey. */
+        public recommenderPubkey: string;
+
+        /** ListRecommenderAppPoliciesRequest pageNum. */
+        public pageNum: number;
+
+        /** ListRecommenderAppPoliciesRequest pageSize. */
+        public pageSize: number;
+
+        /** ListRecommenderAppPoliciesRequest recommenderLevel. */
+        public recommenderLevel: number;
+
+        /**
+         * Creates a new ListRecommenderAppPoliciesRequest instance using the specified properties.
+         * @param [properties] Properties to set
+         * @returns ListRecommenderAppPoliciesRequest instance
+         */
+        public static create(properties?: pb.IListRecommenderAppPoliciesRequest): pb.ListRecommenderAppPoliciesRequest;
+
+        /**
+         * Encodes the specified ListRecommenderAppPoliciesRequest message. Does not implicitly {@link pb.ListRecommenderAppPoliciesRequest.verify|verify} messages.
+         * @param message ListRecommenderAppPoliciesRequest message or plain object to encode
+         * @param [writer] Writer to encode to
+         * @returns Writer
+         */
+        public static encode(message: pb.IListRecommenderAppPoliciesRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+        /**
+         * Encodes the specified ListRecommenderAppPoliciesRequest message, length delimited. Does not implicitly {@link pb.ListRecommenderAppPoliciesRequest.verify|verify} messages.
+         * @param message ListRecommenderAppPoliciesRequest message or plain object to encode
+         * @param [writer] Writer to encode to
+         * @returns Writer
+         */
+        public static encodeDelimited(message: pb.IListRecommenderAppPoliciesRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+        /**
+         * Decodes a ListRecommenderAppPoliciesRequest message from the specified reader or buffer.
+         * @param reader Reader or buffer to decode from
+         * @param [length] Message length if known beforehand
+         * @returns ListRecommenderAppPoliciesRequest
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): pb.ListRecommenderAppPoliciesRequest;
+
+        /**
+         * Decodes a ListRecommenderAppPoliciesRequest message from the specified reader or buffer, length delimited.
+         * @param reader Reader or buffer to decode from
+         * @returns ListRecommenderAppPoliciesRequest
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): pb.ListRecommenderAppPoliciesRequest;
+
+        /**
+         * Verifies a ListRecommenderAppPoliciesRequest message.
+         * @param message Plain object to verify
+         * @returns `null` if valid, otherwise the reason why it is not
+         */
+        public static verify(message: { [k: string]: any }): (string|null);
+
+        /**
+         * Creates a ListRecommenderAppPoliciesRequest message from a plain object. Also converts values to their respective internal types.
+         * @param object Plain object
+         * @returns ListRecommenderAppPoliciesRequest
+         */
+        public static fromObject(object: { [k: string]: any }): pb.ListRecommenderAppPoliciesRequest;
+
+        /**
+         * Creates a plain object from a ListRecommenderAppPoliciesRequest message. Also converts values to other types if specified.
+         * @param message ListRecommenderAppPoliciesRequest
+         * @param [options] Conversion options
+         * @returns Plain object
+         */
+        public static toObject(message: pb.ListRecommenderAppPoliciesRequest, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+        /**
+         * Converts this ListRecommenderAppPoliciesRequest to JSON.
+         * @returns JSON object
+         */
+        public toJSON(): { [k: string]: any };
+
+        /**
+         * Gets the default type url for ListRecommenderAppPoliciesRequest
+         * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+         * @returns The default type url
+         */
+        public static getTypeUrl(typeUrlPrefix?: string): string;
+    }
+
+    /** Properties of a ListRecommenderAppPoliciesResponse. */
+    interface IListRecommenderAppPoliciesResponse {
+
+        /** ListRecommenderAppPoliciesResponse code */
+        code?: (number|null);
+
+        /** ListRecommenderAppPoliciesResponse msg */
+        msg?: (string|null);
+
+        /** ListRecommenderAppPoliciesResponse total */
+        total?: (number|Long|null);
+
+        /** ListRecommenderAppPoliciesResponse data */
+        data?: (pb.IRecommenderAppPolicyInfo[]|null);
+    }
+
+    /** Represents a ListRecommenderAppPoliciesResponse. */
+    class ListRecommenderAppPoliciesResponse implements IListRecommenderAppPoliciesResponse {
+
+        /**
+         * Constructs a new ListRecommenderAppPoliciesResponse.
+         * @param [properties] Properties to set
+         */
+        constructor(properties?: pb.IListRecommenderAppPoliciesResponse);
+
+        /** ListRecommenderAppPoliciesResponse code. */
+        public code: number;
+
+        /** ListRecommenderAppPoliciesResponse msg. */
+        public msg: string;
+
+        /** ListRecommenderAppPoliciesResponse total. */
+        public total: (number|Long);
+
+        /** ListRecommenderAppPoliciesResponse data. */
+        public data: pb.IRecommenderAppPolicyInfo[];
+
+        /**
+         * Creates a new ListRecommenderAppPoliciesResponse instance using the specified properties.
+         * @param [properties] Properties to set
+         * @returns ListRecommenderAppPoliciesResponse instance
+         */
+        public static create(properties?: pb.IListRecommenderAppPoliciesResponse): pb.ListRecommenderAppPoliciesResponse;
+
+        /**
+         * Encodes the specified ListRecommenderAppPoliciesResponse message. Does not implicitly {@link pb.ListRecommenderAppPoliciesResponse.verify|verify} messages.
+         * @param message ListRecommenderAppPoliciesResponse message or plain object to encode
+         * @param [writer] Writer to encode to
+         * @returns Writer
+         */
+        public static encode(message: pb.IListRecommenderAppPoliciesResponse, writer?: $protobuf.Writer): $protobuf.Writer;
+
+        /**
+         * Encodes the specified ListRecommenderAppPoliciesResponse message, length delimited. Does not implicitly {@link pb.ListRecommenderAppPoliciesResponse.verify|verify} messages.
+         * @param message ListRecommenderAppPoliciesResponse message or plain object to encode
+         * @param [writer] Writer to encode to
+         * @returns Writer
+         */
+        public static encodeDelimited(message: pb.IListRecommenderAppPoliciesResponse, writer?: $protobuf.Writer): $protobuf.Writer;
+
+        /**
+         * Decodes a ListRecommenderAppPoliciesResponse message from the specified reader or buffer.
+         * @param reader Reader or buffer to decode from
+         * @param [length] Message length if known beforehand
+         * @returns ListRecommenderAppPoliciesResponse
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): pb.ListRecommenderAppPoliciesResponse;
+
+        /**
+         * Decodes a ListRecommenderAppPoliciesResponse message from the specified reader or buffer, length delimited.
+         * @param reader Reader or buffer to decode from
+         * @returns ListRecommenderAppPoliciesResponse
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): pb.ListRecommenderAppPoliciesResponse;
+
+        /**
+         * Verifies a ListRecommenderAppPoliciesResponse message.
+         * @param message Plain object to verify
+         * @returns `null` if valid, otherwise the reason why it is not
+         */
+        public static verify(message: { [k: string]: any }): (string|null);
+
+        /**
+         * Creates a ListRecommenderAppPoliciesResponse message from a plain object. Also converts values to their respective internal types.
+         * @param object Plain object
+         * @returns ListRecommenderAppPoliciesResponse
+         */
+        public static fromObject(object: { [k: string]: any }): pb.ListRecommenderAppPoliciesResponse;
+
+        /**
+         * Creates a plain object from a ListRecommenderAppPoliciesResponse message. Also converts values to other types if specified.
+         * @param message ListRecommenderAppPoliciesResponse
+         * @param [options] Conversion options
+         * @returns Plain object
+         */
+        public static toObject(message: pb.ListRecommenderAppPoliciesResponse, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+        /**
+         * Converts this ListRecommenderAppPoliciesResponse to JSON.
+         * @returns JSON object
+         */
+        public toJSON(): { [k: string]: any };
+
+        /**
+         * Gets the default type url for ListRecommenderAppPoliciesResponse
+         * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+         * @returns The default type url
+         */
+        public static getTypeUrl(typeUrlPrefix?: string): string;
+    }
+
+    /** Properties of a DeleteRecommenderAppPolicyRequest. */
+    interface IDeleteRecommenderAppPolicyRequest {
+
+        /** DeleteRecommenderAppPolicyRequest serviceAppid */
+        serviceAppid?: (string|null);
+
+        /** DeleteRecommenderAppPolicyRequest recommenderPubkey */
+        recommenderPubkey?: (string|null);
+
+        /** DeleteRecommenderAppPolicyRequest recommenderLevel */
+        recommenderLevel?: (number|null);
+    }
+
+    /** Represents a DeleteRecommenderAppPolicyRequest. */
+    class DeleteRecommenderAppPolicyRequest implements IDeleteRecommenderAppPolicyRequest {
+
+        /**
+         * Constructs a new DeleteRecommenderAppPolicyRequest.
+         * @param [properties] Properties to set
+         */
+        constructor(properties?: pb.IDeleteRecommenderAppPolicyRequest);
+
+        /** DeleteRecommenderAppPolicyRequest serviceAppid. */
+        public serviceAppid: string;
+
+        /** DeleteRecommenderAppPolicyRequest recommenderPubkey. */
+        public recommenderPubkey: string;
+
+        /** DeleteRecommenderAppPolicyRequest recommenderLevel. */
+        public recommenderLevel: number;
+
+        /**
+         * Creates a new DeleteRecommenderAppPolicyRequest instance using the specified properties.
+         * @param [properties] Properties to set
+         * @returns DeleteRecommenderAppPolicyRequest instance
+         */
+        public static create(properties?: pb.IDeleteRecommenderAppPolicyRequest): pb.DeleteRecommenderAppPolicyRequest;
+
+        /**
+         * Encodes the specified DeleteRecommenderAppPolicyRequest message. Does not implicitly {@link pb.DeleteRecommenderAppPolicyRequest.verify|verify} messages.
+         * @param message DeleteRecommenderAppPolicyRequest message or plain object to encode
+         * @param [writer] Writer to encode to
+         * @returns Writer
+         */
+        public static encode(message: pb.IDeleteRecommenderAppPolicyRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+        /**
+         * Encodes the specified DeleteRecommenderAppPolicyRequest message, length delimited. Does not implicitly {@link pb.DeleteRecommenderAppPolicyRequest.verify|verify} messages.
+         * @param message DeleteRecommenderAppPolicyRequest message or plain object to encode
+         * @param [writer] Writer to encode to
+         * @returns Writer
+         */
+        public static encodeDelimited(message: pb.IDeleteRecommenderAppPolicyRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+        /**
+         * Decodes a DeleteRecommenderAppPolicyRequest message from the specified reader or buffer.
+         * @param reader Reader or buffer to decode from
+         * @param [length] Message length if known beforehand
+         * @returns DeleteRecommenderAppPolicyRequest
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): pb.DeleteRecommenderAppPolicyRequest;
+
+        /**
+         * Decodes a DeleteRecommenderAppPolicyRequest message from the specified reader or buffer, length delimited.
+         * @param reader Reader or buffer to decode from
+         * @returns DeleteRecommenderAppPolicyRequest
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): pb.DeleteRecommenderAppPolicyRequest;
+
+        /**
+         * Verifies a DeleteRecommenderAppPolicyRequest message.
+         * @param message Plain object to verify
+         * @returns `null` if valid, otherwise the reason why it is not
+         */
+        public static verify(message: { [k: string]: any }): (string|null);
+
+        /**
+         * Creates a DeleteRecommenderAppPolicyRequest message from a plain object. Also converts values to their respective internal types.
+         * @param object Plain object
+         * @returns DeleteRecommenderAppPolicyRequest
+         */
+        public static fromObject(object: { [k: string]: any }): pb.DeleteRecommenderAppPolicyRequest;
+
+        /**
+         * Creates a plain object from a DeleteRecommenderAppPolicyRequest message. Also converts values to other types if specified.
+         * @param message DeleteRecommenderAppPolicyRequest
+         * @param [options] Conversion options
+         * @returns Plain object
+         */
+        public static toObject(message: pb.DeleteRecommenderAppPolicyRequest, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+        /**
+         * Converts this DeleteRecommenderAppPolicyRequest to JSON.
+         * @returns JSON object
+         */
+        public toJSON(): { [k: string]: any };
+
+        /**
+         * Gets the default type url for DeleteRecommenderAppPolicyRequest
+         * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+         * @returns The default type url
+         */
+        public static getTypeUrl(typeUrlPrefix?: string): string;
+    }
+
+    /** Properties of a RecommenderAppPolicyMutationResponse. */
+    interface IRecommenderAppPolicyMutationResponse {
+
+        /** RecommenderAppPolicyMutationResponse code */
+        code?: (number|null);
+
+        /** RecommenderAppPolicyMutationResponse msg */
+        msg?: (string|null);
+    }
+
+    /** Represents a RecommenderAppPolicyMutationResponse. */
+    class RecommenderAppPolicyMutationResponse implements IRecommenderAppPolicyMutationResponse {
+
+        /**
+         * Constructs a new RecommenderAppPolicyMutationResponse.
+         * @param [properties] Properties to set
+         */
+        constructor(properties?: pb.IRecommenderAppPolicyMutationResponse);
+
+        /** RecommenderAppPolicyMutationResponse code. */
+        public code: number;
+
+        /** RecommenderAppPolicyMutationResponse msg. */
+        public msg: string;
+
+        /**
+         * Creates a new RecommenderAppPolicyMutationResponse instance using the specified properties.
+         * @param [properties] Properties to set
+         * @returns RecommenderAppPolicyMutationResponse instance
+         */
+        public static create(properties?: pb.IRecommenderAppPolicyMutationResponse): pb.RecommenderAppPolicyMutationResponse;
+
+        /**
+         * Encodes the specified RecommenderAppPolicyMutationResponse message. Does not implicitly {@link pb.RecommenderAppPolicyMutationResponse.verify|verify} messages.
+         * @param message RecommenderAppPolicyMutationResponse message or plain object to encode
+         * @param [writer] Writer to encode to
+         * @returns Writer
+         */
+        public static encode(message: pb.IRecommenderAppPolicyMutationResponse, writer?: $protobuf.Writer): $protobuf.Writer;
+
+        /**
+         * Encodes the specified RecommenderAppPolicyMutationResponse message, length delimited. Does not implicitly {@link pb.RecommenderAppPolicyMutationResponse.verify|verify} messages.
+         * @param message RecommenderAppPolicyMutationResponse message or plain object to encode
+         * @param [writer] Writer to encode to
+         * @returns Writer
+         */
+        public static encodeDelimited(message: pb.IRecommenderAppPolicyMutationResponse, writer?: $protobuf.Writer): $protobuf.Writer;
+
+        /**
+         * Decodes a RecommenderAppPolicyMutationResponse message from the specified reader or buffer.
+         * @param reader Reader or buffer to decode from
+         * @param [length] Message length if known beforehand
+         * @returns RecommenderAppPolicyMutationResponse
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): pb.RecommenderAppPolicyMutationResponse;
+
+        /**
+         * Decodes a RecommenderAppPolicyMutationResponse message from the specified reader or buffer, length delimited.
+         * @param reader Reader or buffer to decode from
+         * @returns RecommenderAppPolicyMutationResponse
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): pb.RecommenderAppPolicyMutationResponse;
+
+        /**
+         * Verifies a RecommenderAppPolicyMutationResponse message.
+         * @param message Plain object to verify
+         * @returns `null` if valid, otherwise the reason why it is not
+         */
+        public static verify(message: { [k: string]: any }): (string|null);
+
+        /**
+         * Creates a RecommenderAppPolicyMutationResponse message from a plain object. Also converts values to their respective internal types.
+         * @param object Plain object
+         * @returns RecommenderAppPolicyMutationResponse
+         */
+        public static fromObject(object: { [k: string]: any }): pb.RecommenderAppPolicyMutationResponse;
+
+        /**
+         * Creates a plain object from a RecommenderAppPolicyMutationResponse message. Also converts values to other types if specified.
+         * @param message RecommenderAppPolicyMutationResponse
+         * @param [options] Conversion options
+         * @returns Plain object
+         */
+        public static toObject(message: pb.RecommenderAppPolicyMutationResponse, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+        /**
+         * Converts this RecommenderAppPolicyMutationResponse to JSON.
+         * @returns JSON object
+         */
+        public toJSON(): { [k: string]: any };
+
+        /**
+         * Gets the default type url for RecommenderAppPolicyMutationResponse
+         * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+         * @returns The default type url
+         */
+        public static getTypeUrl(typeUrlPrefix?: string): string;
+    }
+
+    /** Properties of an UpsertRecommenderAppManagerRequest. */
+    interface IUpsertRecommenderAppManagerRequest {
+
+        /** UpsertRecommenderAppManagerRequest serviceAppid */
+        serviceAppid?: (string|null);
+
+        /** UpsertRecommenderAppManagerRequest managerPubkey */
+        managerPubkey?: (string|null);
+
+        /** UpsertRecommenderAppManagerRequest remark */
+        remark?: (string|null);
+    }
+
+    /** Represents an UpsertRecommenderAppManagerRequest. */
+    class UpsertRecommenderAppManagerRequest implements IUpsertRecommenderAppManagerRequest {
+
+        /**
+         * Constructs a new UpsertRecommenderAppManagerRequest.
+         * @param [properties] Properties to set
+         */
+        constructor(properties?: pb.IUpsertRecommenderAppManagerRequest);
+
+        /** UpsertRecommenderAppManagerRequest serviceAppid. */
+        public serviceAppid: string;
+
+        /** UpsertRecommenderAppManagerRequest managerPubkey. */
+        public managerPubkey: string;
+
+        /** UpsertRecommenderAppManagerRequest remark. */
+        public remark: string;
+
+        /**
+         * Creates a new UpsertRecommenderAppManagerRequest instance using the specified properties.
+         * @param [properties] Properties to set
+         * @returns UpsertRecommenderAppManagerRequest instance
+         */
+        public static create(properties?: pb.IUpsertRecommenderAppManagerRequest): pb.UpsertRecommenderAppManagerRequest;
+
+        /**
+         * Encodes the specified UpsertRecommenderAppManagerRequest message. Does not implicitly {@link pb.UpsertRecommenderAppManagerRequest.verify|verify} messages.
+         * @param message UpsertRecommenderAppManagerRequest message or plain object to encode
+         * @param [writer] Writer to encode to
+         * @returns Writer
+         */
+        public static encode(message: pb.IUpsertRecommenderAppManagerRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+        /**
+         * Encodes the specified UpsertRecommenderAppManagerRequest message, length delimited. Does not implicitly {@link pb.UpsertRecommenderAppManagerRequest.verify|verify} messages.
+         * @param message UpsertRecommenderAppManagerRequest message or plain object to encode
+         * @param [writer] Writer to encode to
+         * @returns Writer
+         */
+        public static encodeDelimited(message: pb.IUpsertRecommenderAppManagerRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+        /**
+         * Decodes an UpsertRecommenderAppManagerRequest message from the specified reader or buffer.
+         * @param reader Reader or buffer to decode from
+         * @param [length] Message length if known beforehand
+         * @returns UpsertRecommenderAppManagerRequest
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): pb.UpsertRecommenderAppManagerRequest;
+
+        /**
+         * Decodes an UpsertRecommenderAppManagerRequest message from the specified reader or buffer, length delimited.
+         * @param reader Reader or buffer to decode from
+         * @returns UpsertRecommenderAppManagerRequest
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): pb.UpsertRecommenderAppManagerRequest;
+
+        /**
+         * Verifies an UpsertRecommenderAppManagerRequest message.
+         * @param message Plain object to verify
+         * @returns `null` if valid, otherwise the reason why it is not
+         */
+        public static verify(message: { [k: string]: any }): (string|null);
+
+        /**
+         * Creates an UpsertRecommenderAppManagerRequest message from a plain object. Also converts values to their respective internal types.
+         * @param object Plain object
+         * @returns UpsertRecommenderAppManagerRequest
+         */
+        public static fromObject(object: { [k: string]: any }): pb.UpsertRecommenderAppManagerRequest;
+
+        /**
+         * Creates a plain object from an UpsertRecommenderAppManagerRequest message. Also converts values to other types if specified.
+         * @param message UpsertRecommenderAppManagerRequest
+         * @param [options] Conversion options
+         * @returns Plain object
+         */
+        public static toObject(message: pb.UpsertRecommenderAppManagerRequest, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+        /**
+         * Converts this UpsertRecommenderAppManagerRequest to JSON.
+         * @returns JSON object
+         */
+        public toJSON(): { [k: string]: any };
+
+        /**
+         * Gets the default type url for UpsertRecommenderAppManagerRequest
+         * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+         * @returns The default type url
+         */
+        public static getTypeUrl(typeUrlPrefix?: string): string;
+    }
+
+    /** Properties of an AdminListRecommenderAppManagersRequest. */
+    interface IAdminListRecommenderAppManagersRequest {
+
+        /** AdminListRecommenderAppManagersRequest serviceAppid */
+        serviceAppid?: (string|null);
+
+        /** AdminListRecommenderAppManagersRequest managerPubkey */
+        managerPubkey?: (string|null);
+
+        /** AdminListRecommenderAppManagersRequest pageNum */
+        pageNum?: (number|null);
+
+        /** AdminListRecommenderAppManagersRequest pageSize */
+        pageSize?: (number|null);
+    }
+
+    /** Represents an AdminListRecommenderAppManagersRequest. */
+    class AdminListRecommenderAppManagersRequest implements IAdminListRecommenderAppManagersRequest {
+
+        /**
+         * Constructs a new AdminListRecommenderAppManagersRequest.
+         * @param [properties] Properties to set
+         */
+        constructor(properties?: pb.IAdminListRecommenderAppManagersRequest);
+
+        /** AdminListRecommenderAppManagersRequest serviceAppid. */
+        public serviceAppid: string;
+
+        /** AdminListRecommenderAppManagersRequest managerPubkey. */
+        public managerPubkey: string;
+
+        /** AdminListRecommenderAppManagersRequest pageNum. */
+        public pageNum: number;
+
+        /** AdminListRecommenderAppManagersRequest pageSize. */
+        public pageSize: number;
+
+        /**
+         * Creates a new AdminListRecommenderAppManagersRequest instance using the specified properties.
+         * @param [properties] Properties to set
+         * @returns AdminListRecommenderAppManagersRequest instance
+         */
+        public static create(properties?: pb.IAdminListRecommenderAppManagersRequest): pb.AdminListRecommenderAppManagersRequest;
+
+        /**
+         * Encodes the specified AdminListRecommenderAppManagersRequest message. Does not implicitly {@link pb.AdminListRecommenderAppManagersRequest.verify|verify} messages.
+         * @param message AdminListRecommenderAppManagersRequest message or plain object to encode
+         * @param [writer] Writer to encode to
+         * @returns Writer
+         */
+        public static encode(message: pb.IAdminListRecommenderAppManagersRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+        /**
+         * Encodes the specified AdminListRecommenderAppManagersRequest message, length delimited. Does not implicitly {@link pb.AdminListRecommenderAppManagersRequest.verify|verify} messages.
+         * @param message AdminListRecommenderAppManagersRequest message or plain object to encode
+         * @param [writer] Writer to encode to
+         * @returns Writer
+         */
+        public static encodeDelimited(message: pb.IAdminListRecommenderAppManagersRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+        /**
+         * Decodes an AdminListRecommenderAppManagersRequest message from the specified reader or buffer.
+         * @param reader Reader or buffer to decode from
+         * @param [length] Message length if known beforehand
+         * @returns AdminListRecommenderAppManagersRequest
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): pb.AdminListRecommenderAppManagersRequest;
+
+        /**
+         * Decodes an AdminListRecommenderAppManagersRequest message from the specified reader or buffer, length delimited.
+         * @param reader Reader or buffer to decode from
+         * @returns AdminListRecommenderAppManagersRequest
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): pb.AdminListRecommenderAppManagersRequest;
+
+        /**
+         * Verifies an AdminListRecommenderAppManagersRequest message.
+         * @param message Plain object to verify
+         * @returns `null` if valid, otherwise the reason why it is not
+         */
+        public static verify(message: { [k: string]: any }): (string|null);
+
+        /**
+         * Creates an AdminListRecommenderAppManagersRequest message from a plain object. Also converts values to their respective internal types.
+         * @param object Plain object
+         * @returns AdminListRecommenderAppManagersRequest
+         */
+        public static fromObject(object: { [k: string]: any }): pb.AdminListRecommenderAppManagersRequest;
+
+        /**
+         * Creates a plain object from an AdminListRecommenderAppManagersRequest message. Also converts values to other types if specified.
+         * @param message AdminListRecommenderAppManagersRequest
+         * @param [options] Conversion options
+         * @returns Plain object
+         */
+        public static toObject(message: pb.AdminListRecommenderAppManagersRequest, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+        /**
+         * Converts this AdminListRecommenderAppManagersRequest to JSON.
+         * @returns JSON object
+         */
+        public toJSON(): { [k: string]: any };
+
+        /**
+         * Gets the default type url for AdminListRecommenderAppManagersRequest
+         * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+         * @returns The default type url
+         */
+        public static getTypeUrl(typeUrlPrefix?: string): string;
+    }
+
+    /** Properties of a ListRecommenderAppManagersRequest. */
+    interface IListRecommenderAppManagersRequest {
+
+        /** ListRecommenderAppManagersRequest serviceAppid */
+        serviceAppid?: (string|null);
+
+        /** ListRecommenderAppManagersRequest managerPubkey */
+        managerPubkey?: (string|null);
+
+        /** ListRecommenderAppManagersRequest pageNum */
+        pageNum?: (number|null);
+
+        /** ListRecommenderAppManagersRequest pageSize */
+        pageSize?: (number|null);
+    }
+
+    /** Represents a ListRecommenderAppManagersRequest. */
+    class ListRecommenderAppManagersRequest implements IListRecommenderAppManagersRequest {
+
+        /**
+         * Constructs a new ListRecommenderAppManagersRequest.
+         * @param [properties] Properties to set
+         */
+        constructor(properties?: pb.IListRecommenderAppManagersRequest);
+
+        /** ListRecommenderAppManagersRequest serviceAppid. */
+        public serviceAppid: string;
+
+        /** ListRecommenderAppManagersRequest managerPubkey. */
+        public managerPubkey: string;
+
+        /** ListRecommenderAppManagersRequest pageNum. */
+        public pageNum: number;
+
+        /** ListRecommenderAppManagersRequest pageSize. */
+        public pageSize: number;
+
+        /**
+         * Creates a new ListRecommenderAppManagersRequest instance using the specified properties.
+         * @param [properties] Properties to set
+         * @returns ListRecommenderAppManagersRequest instance
+         */
+        public static create(properties?: pb.IListRecommenderAppManagersRequest): pb.ListRecommenderAppManagersRequest;
+
+        /**
+         * Encodes the specified ListRecommenderAppManagersRequest message. Does not implicitly {@link pb.ListRecommenderAppManagersRequest.verify|verify} messages.
+         * @param message ListRecommenderAppManagersRequest message or plain object to encode
+         * @param [writer] Writer to encode to
+         * @returns Writer
+         */
+        public static encode(message: pb.IListRecommenderAppManagersRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+        /**
+         * Encodes the specified ListRecommenderAppManagersRequest message, length delimited. Does not implicitly {@link pb.ListRecommenderAppManagersRequest.verify|verify} messages.
+         * @param message ListRecommenderAppManagersRequest message or plain object to encode
+         * @param [writer] Writer to encode to
+         * @returns Writer
+         */
+        public static encodeDelimited(message: pb.IListRecommenderAppManagersRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+        /**
+         * Decodes a ListRecommenderAppManagersRequest message from the specified reader or buffer.
+         * @param reader Reader or buffer to decode from
+         * @param [length] Message length if known beforehand
+         * @returns ListRecommenderAppManagersRequest
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): pb.ListRecommenderAppManagersRequest;
+
+        /**
+         * Decodes a ListRecommenderAppManagersRequest message from the specified reader or buffer, length delimited.
+         * @param reader Reader or buffer to decode from
+         * @returns ListRecommenderAppManagersRequest
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): pb.ListRecommenderAppManagersRequest;
+
+        /**
+         * Verifies a ListRecommenderAppManagersRequest message.
+         * @param message Plain object to verify
+         * @returns `null` if valid, otherwise the reason why it is not
+         */
+        public static verify(message: { [k: string]: any }): (string|null);
+
+        /**
+         * Creates a ListRecommenderAppManagersRequest message from a plain object. Also converts values to their respective internal types.
+         * @param object Plain object
+         * @returns ListRecommenderAppManagersRequest
+         */
+        public static fromObject(object: { [k: string]: any }): pb.ListRecommenderAppManagersRequest;
+
+        /**
+         * Creates a plain object from a ListRecommenderAppManagersRequest message. Also converts values to other types if specified.
+         * @param message ListRecommenderAppManagersRequest
+         * @param [options] Conversion options
+         * @returns Plain object
+         */
+        public static toObject(message: pb.ListRecommenderAppManagersRequest, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+        /**
+         * Converts this ListRecommenderAppManagersRequest to JSON.
+         * @returns JSON object
+         */
+        public toJSON(): { [k: string]: any };
+
+        /**
+         * Gets the default type url for ListRecommenderAppManagersRequest
+         * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+         * @returns The default type url
+         */
+        public static getTypeUrl(typeUrlPrefix?: string): string;
+    }
+
+    /** Properties of a ListRecommenderAppManagersResponse. */
+    interface IListRecommenderAppManagersResponse {
+
+        /** ListRecommenderAppManagersResponse code */
+        code?: (number|null);
+
+        /** ListRecommenderAppManagersResponse msg */
+        msg?: (string|null);
+
+        /** ListRecommenderAppManagersResponse total */
+        total?: (number|Long|null);
+
+        /** ListRecommenderAppManagersResponse data */
+        data?: (pb.IRecommenderAppManagerInfo[]|null);
+    }
+
+    /** Represents a ListRecommenderAppManagersResponse. */
+    class ListRecommenderAppManagersResponse implements IListRecommenderAppManagersResponse {
+
+        /**
+         * Constructs a new ListRecommenderAppManagersResponse.
+         * @param [properties] Properties to set
+         */
+        constructor(properties?: pb.IListRecommenderAppManagersResponse);
+
+        /** ListRecommenderAppManagersResponse code. */
+        public code: number;
+
+        /** ListRecommenderAppManagersResponse msg. */
+        public msg: string;
+
+        /** ListRecommenderAppManagersResponse total. */
+        public total: (number|Long);
+
+        /** ListRecommenderAppManagersResponse data. */
+        public data: pb.IRecommenderAppManagerInfo[];
+
+        /**
+         * Creates a new ListRecommenderAppManagersResponse instance using the specified properties.
+         * @param [properties] Properties to set
+         * @returns ListRecommenderAppManagersResponse instance
+         */
+        public static create(properties?: pb.IListRecommenderAppManagersResponse): pb.ListRecommenderAppManagersResponse;
+
+        /**
+         * Encodes the specified ListRecommenderAppManagersResponse message. Does not implicitly {@link pb.ListRecommenderAppManagersResponse.verify|verify} messages.
+         * @param message ListRecommenderAppManagersResponse message or plain object to encode
+         * @param [writer] Writer to encode to
+         * @returns Writer
+         */
+        public static encode(message: pb.IListRecommenderAppManagersResponse, writer?: $protobuf.Writer): $protobuf.Writer;
+
+        /**
+         * Encodes the specified ListRecommenderAppManagersResponse message, length delimited. Does not implicitly {@link pb.ListRecommenderAppManagersResponse.verify|verify} messages.
+         * @param message ListRecommenderAppManagersResponse message or plain object to encode
+         * @param [writer] Writer to encode to
+         * @returns Writer
+         */
+        public static encodeDelimited(message: pb.IListRecommenderAppManagersResponse, writer?: $protobuf.Writer): $protobuf.Writer;
+
+        /**
+         * Decodes a ListRecommenderAppManagersResponse message from the specified reader or buffer.
+         * @param reader Reader or buffer to decode from
+         * @param [length] Message length if known beforehand
+         * @returns ListRecommenderAppManagersResponse
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): pb.ListRecommenderAppManagersResponse;
+
+        /**
+         * Decodes a ListRecommenderAppManagersResponse message from the specified reader or buffer, length delimited.
+         * @param reader Reader or buffer to decode from
+         * @returns ListRecommenderAppManagersResponse
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): pb.ListRecommenderAppManagersResponse;
+
+        /**
+         * Verifies a ListRecommenderAppManagersResponse message.
+         * @param message Plain object to verify
+         * @returns `null` if valid, otherwise the reason why it is not
+         */
+        public static verify(message: { [k: string]: any }): (string|null);
+
+        /**
+         * Creates a ListRecommenderAppManagersResponse message from a plain object. Also converts values to their respective internal types.
+         * @param object Plain object
+         * @returns ListRecommenderAppManagersResponse
+         */
+        public static fromObject(object: { [k: string]: any }): pb.ListRecommenderAppManagersResponse;
+
+        /**
+         * Creates a plain object from a ListRecommenderAppManagersResponse message. Also converts values to other types if specified.
+         * @param message ListRecommenderAppManagersResponse
+         * @param [options] Conversion options
+         * @returns Plain object
+         */
+        public static toObject(message: pb.ListRecommenderAppManagersResponse, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+        /**
+         * Converts this ListRecommenderAppManagersResponse to JSON.
+         * @returns JSON object
+         */
+        public toJSON(): { [k: string]: any };
+
+        /**
+         * Gets the default type url for ListRecommenderAppManagersResponse
+         * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+         * @returns The default type url
+         */
+        public static getTypeUrl(typeUrlPrefix?: string): string;
+    }
+
+    /** Properties of a DeleteRecommenderAppManagerRequest. */
+    interface IDeleteRecommenderAppManagerRequest {
+
+        /** DeleteRecommenderAppManagerRequest serviceAppid */
+        serviceAppid?: (string|null);
+
+        /** DeleteRecommenderAppManagerRequest managerPubkey */
+        managerPubkey?: (string|null);
+    }
+
+    /** Represents a DeleteRecommenderAppManagerRequest. */
+    class DeleteRecommenderAppManagerRequest implements IDeleteRecommenderAppManagerRequest {
+
+        /**
+         * Constructs a new DeleteRecommenderAppManagerRequest.
+         * @param [properties] Properties to set
+         */
+        constructor(properties?: pb.IDeleteRecommenderAppManagerRequest);
+
+        /** DeleteRecommenderAppManagerRequest serviceAppid. */
+        public serviceAppid: string;
+
+        /** DeleteRecommenderAppManagerRequest managerPubkey. */
+        public managerPubkey: string;
+
+        /**
+         * Creates a new DeleteRecommenderAppManagerRequest instance using the specified properties.
+         * @param [properties] Properties to set
+         * @returns DeleteRecommenderAppManagerRequest instance
+         */
+        public static create(properties?: pb.IDeleteRecommenderAppManagerRequest): pb.DeleteRecommenderAppManagerRequest;
+
+        /**
+         * Encodes the specified DeleteRecommenderAppManagerRequest message. Does not implicitly {@link pb.DeleteRecommenderAppManagerRequest.verify|verify} messages.
+         * @param message DeleteRecommenderAppManagerRequest message or plain object to encode
+         * @param [writer] Writer to encode to
+         * @returns Writer
+         */
+        public static encode(message: pb.IDeleteRecommenderAppManagerRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+        /**
+         * Encodes the specified DeleteRecommenderAppManagerRequest message, length delimited. Does not implicitly {@link pb.DeleteRecommenderAppManagerRequest.verify|verify} messages.
+         * @param message DeleteRecommenderAppManagerRequest message or plain object to encode
+         * @param [writer] Writer to encode to
+         * @returns Writer
+         */
+        public static encodeDelimited(message: pb.IDeleteRecommenderAppManagerRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+        /**
+         * Decodes a DeleteRecommenderAppManagerRequest message from the specified reader or buffer.
+         * @param reader Reader or buffer to decode from
+         * @param [length] Message length if known beforehand
+         * @returns DeleteRecommenderAppManagerRequest
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): pb.DeleteRecommenderAppManagerRequest;
+
+        /**
+         * Decodes a DeleteRecommenderAppManagerRequest message from the specified reader or buffer, length delimited.
+         * @param reader Reader or buffer to decode from
+         * @returns DeleteRecommenderAppManagerRequest
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): pb.DeleteRecommenderAppManagerRequest;
+
+        /**
+         * Verifies a DeleteRecommenderAppManagerRequest message.
+         * @param message Plain object to verify
+         * @returns `null` if valid, otherwise the reason why it is not
+         */
+        public static verify(message: { [k: string]: any }): (string|null);
+
+        /**
+         * Creates a DeleteRecommenderAppManagerRequest message from a plain object. Also converts values to their respective internal types.
+         * @param object Plain object
+         * @returns DeleteRecommenderAppManagerRequest
+         */
+        public static fromObject(object: { [k: string]: any }): pb.DeleteRecommenderAppManagerRequest;
+
+        /**
+         * Creates a plain object from a DeleteRecommenderAppManagerRequest message. Also converts values to other types if specified.
+         * @param message DeleteRecommenderAppManagerRequest
+         * @param [options] Conversion options
+         * @returns Plain object
+         */
+        public static toObject(message: pb.DeleteRecommenderAppManagerRequest, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+        /**
+         * Converts this DeleteRecommenderAppManagerRequest to JSON.
+         * @returns JSON object
+         */
+        public toJSON(): { [k: string]: any };
+
+        /**
+         * Gets the default type url for DeleteRecommenderAppManagerRequest
+         * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+         * @returns The default type url
+         */
+        public static getTypeUrl(typeUrlPrefix?: string): string;
+    }
+
+    /** Properties of a RecommenderAppManagerMutationResponse. */
+    interface IRecommenderAppManagerMutationResponse {
+
+        /** RecommenderAppManagerMutationResponse code */
+        code?: (number|null);
+
+        /** RecommenderAppManagerMutationResponse msg */
+        msg?: (string|null);
+    }
+
+    /** Represents a RecommenderAppManagerMutationResponse. */
+    class RecommenderAppManagerMutationResponse implements IRecommenderAppManagerMutationResponse {
+
+        /**
+         * Constructs a new RecommenderAppManagerMutationResponse.
+         * @param [properties] Properties to set
+         */
+        constructor(properties?: pb.IRecommenderAppManagerMutationResponse);
+
+        /** RecommenderAppManagerMutationResponse code. */
+        public code: number;
+
+        /** RecommenderAppManagerMutationResponse msg. */
+        public msg: string;
+
+        /**
+         * Creates a new RecommenderAppManagerMutationResponse instance using the specified properties.
+         * @param [properties] Properties to set
+         * @returns RecommenderAppManagerMutationResponse instance
+         */
+        public static create(properties?: pb.IRecommenderAppManagerMutationResponse): pb.RecommenderAppManagerMutationResponse;
+
+        /**
+         * Encodes the specified RecommenderAppManagerMutationResponse message. Does not implicitly {@link pb.RecommenderAppManagerMutationResponse.verify|verify} messages.
+         * @param message RecommenderAppManagerMutationResponse message or plain object to encode
+         * @param [writer] Writer to encode to
+         * @returns Writer
+         */
+        public static encode(message: pb.IRecommenderAppManagerMutationResponse, writer?: $protobuf.Writer): $protobuf.Writer;
+
+        /**
+         * Encodes the specified RecommenderAppManagerMutationResponse message, length delimited. Does not implicitly {@link pb.RecommenderAppManagerMutationResponse.verify|verify} messages.
+         * @param message RecommenderAppManagerMutationResponse message or plain object to encode
+         * @param [writer] Writer to encode to
+         * @returns Writer
+         */
+        public static encodeDelimited(message: pb.IRecommenderAppManagerMutationResponse, writer?: $protobuf.Writer): $protobuf.Writer;
+
+        /**
+         * Decodes a RecommenderAppManagerMutationResponse message from the specified reader or buffer.
+         * @param reader Reader or buffer to decode from
+         * @param [length] Message length if known beforehand
+         * @returns RecommenderAppManagerMutationResponse
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): pb.RecommenderAppManagerMutationResponse;
+
+        /**
+         * Decodes a RecommenderAppManagerMutationResponse message from the specified reader or buffer, length delimited.
+         * @param reader Reader or buffer to decode from
+         * @returns RecommenderAppManagerMutationResponse
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): pb.RecommenderAppManagerMutationResponse;
+
+        /**
+         * Verifies a RecommenderAppManagerMutationResponse message.
+         * @param message Plain object to verify
+         * @returns `null` if valid, otherwise the reason why it is not
+         */
+        public static verify(message: { [k: string]: any }): (string|null);
+
+        /**
+         * Creates a RecommenderAppManagerMutationResponse message from a plain object. Also converts values to their respective internal types.
+         * @param object Plain object
+         * @returns RecommenderAppManagerMutationResponse
+         */
+        public static fromObject(object: { [k: string]: any }): pb.RecommenderAppManagerMutationResponse;
+
+        /**
+         * Creates a plain object from a RecommenderAppManagerMutationResponse message. Also converts values to other types if specified.
+         * @param message RecommenderAppManagerMutationResponse
+         * @param [options] Conversion options
+         * @returns Plain object
+         */
+        public static toObject(message: pb.RecommenderAppManagerMutationResponse, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+        /**
+         * Converts this RecommenderAppManagerMutationResponse to JSON.
+         * @returns JSON object
+         */
+        public toJSON(): { [k: string]: any };
+
+        /**
+         * Gets the default type url for RecommenderAppManagerMutationResponse
          * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
          * @returns The default type url
          */

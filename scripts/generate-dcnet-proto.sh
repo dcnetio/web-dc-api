@@ -11,6 +11,11 @@ DCNET_PROTO_DTS="${DCAPI_ROOT}/lib/proto/dcnet_proto.d.ts"
 DCNODE_PROTO_DEFAULT="${DCAPI_ROOT}/../dcnode/net/pb/dcnet.proto"
 DCNODE_PROTO="${DCNODE_PROTO_PATH:-${DCNODE_PROTO_DEFAULT}}"
 
+TMP_DIR="$(mktemp -d "${TMPDIR:-/tmp}/dcnet-proto.XXXXXX")"
+trap 'rm -rf "${TMP_DIR}"' EXIT
+TMP_PROTO_JS="${TMP_DIR}/dcnet_proto.js"
+TMP_PROTO_DTS="${TMP_DIR}/dcnet_proto.d.ts"
+
 if [[ ! -f "${DCNODE_PROTO}" ]]; then
   echo "[proto-gen] ERROR: dcnode proto not found: ${DCNODE_PROTO}" >&2
   echo "[proto-gen] Hint: set DCNODE_PROTO_PATH=/absolute/path/to/dcnet.proto" >&2
@@ -31,21 +36,23 @@ else
   echo "[proto-gen] Local pbjs/pbts not found, fallback to npx protobufjs-cli@1.1.3"
 fi
 
-echo "[proto-gen] Syncing dcnet.proto from: ${DCNODE_PROTO}"
-cp "${DCNODE_PROTO}" "${DCAPI_PROTO}"
-
 echo "[proto-gen] Generating ${DCNET_PROTO_JS}"
 "${PBJS_CMD[@]}" \
   -t static-module \
   -w es6 \
   -r default \
-  -o "${DCNET_PROTO_JS}" \
-  "${DCAPI_PROTO}"
+  -o "${TMP_PROTO_JS}" \
+  "${DCNODE_PROTO}"
 
 echo "[proto-gen] Generating ${DCNET_PROTO_DTS}"
 "${PBTS_CMD[@]}" \
-  -o "${DCNET_PROTO_DTS}" \
-  "${DCNET_PROTO_JS}"
+  -o "${TMP_PROTO_DTS}" \
+  "${TMP_PROTO_JS}"
+
+echo "[proto-gen] Syncing generated artifacts from: ${DCNODE_PROTO}"
+cp "${DCNODE_PROTO}" "${DCAPI_PROTO}"
+cp "${TMP_PROTO_JS}" "${DCNET_PROTO_JS}"
+cp "${TMP_PROTO_DTS}" "${DCNET_PROTO_DTS}"
 
 echo "[proto-gen] Verifying proto sync"
 bash "${DCAPI_ROOT}/scripts/check-proto-sync.sh"

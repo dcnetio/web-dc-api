@@ -114,6 +114,12 @@ export interface IRenewPackageInfo {
    * 备注信息
    */
   remark?: string;
+  /** 是否仅限该应用下首次付款用户；推荐套餐会自动启用。 */
+  firstPayOnly?: boolean;
+  /** 是否必须通过推荐人购买；推荐套餐仅限本应用未购买且未绑定推荐人的用户。 */
+  requireRecommender?: boolean;
+  /** 推荐人的最低等级要求，0 表示公开套餐。 */
+  requireRecommenderLevel?: number;
 }
 
 /**
@@ -229,6 +235,12 @@ export interface IPackageApplyRequest {
    * 备注信息
    */
   remark?: string;
+  /** 是否仅限该应用下首次付款用户；推荐套餐会自动启用。 */
+  firstPayOnly?: boolean;
+  /** 是否必须通过推荐人购买；推荐套餐仅限本应用未购买且未绑定推荐人的用户。 */
+  requireRecommender?: boolean;
+  /** 推荐人的最低等级要求，0 表示公开套餐。 */
+  requireRecommenderLevel?: number;
 }
 
 /**
@@ -269,6 +281,61 @@ export interface IPackageConfigListResult {
    * 总记录数。
    */
   total: number;
+}
+
+/** 应用内的一条推广奖励比例策略。 */
+export interface IRecommenderAppPolicy {
+  id: number;
+  serviceAppid: string;
+  /** 非空表示单个推荐人的特殊覆盖策略。 */
+  recommenderPubkey: string;
+  /** 大于 0 表示应用的对应等级策略；特殊推荐人覆盖时为 0。 */
+  recommenderLevel: number;
+  hasFirstPayRatio: boolean;
+  firstPayRatio: number;
+  hasSubsequentPayRatio: boolean;
+  subsequentPayRatio: number;
+  remark: string;
+  createTime: string;
+  updateTime: string;
+}
+
+/** 可管理某个应用推广比例的授权用户。 */
+export interface IRecommenderAppManager {
+  id: number;
+  serviceAppid: string;
+  managerPubkey: string;
+  grantedBy: string;
+  grantedByType: "admin" | "owner" | string;
+  remark: string;
+  createTime: string;
+  updateTime: string;
+}
+
+/** 当前签名用户在应用推广配置中的权限。 */
+export interface IRecommenderAppPolicyAccess {
+  role: "owner" | "manager" | string;
+  canManagePolicy: boolean;
+  canManageManagers: boolean;
+  ownerPubkey: string;
+  signerPubkey: string;
+}
+
+export interface IRecommenderAppPolicyInput {
+  serviceAppid: string;
+  recommenderPubkey?: string;
+  recommenderLevel?: number;
+  hasFirstPayRatio: boolean;
+  firstPayRatio?: number;
+  hasSubsequentPayRatio: boolean;
+  subsequentPayRatio?: number;
+  remark?: string;
+}
+
+export interface IRecommenderAppManagerInput {
+  serviceAppid: string;
+  managerPubkey: string;
+  remark?: string;
 }
 
 /**
@@ -474,6 +541,8 @@ export interface IPayOperations {
      * 商品价格 key（可选）。
      */
     priceKey?: string;
+    /** 推荐人 pubkey；不传时 SDK 自动读取当前 URL 或本地已保存值。 */
+    recommender?: string;
     /**
      * 套餐/商品 ID（可选）。
      */
@@ -597,6 +666,18 @@ export interface IPayOperations {
     pkgType: PaymentPackageType,
     serviceAppid?: string,
     scene?: string,
+    recommender?: string,
+  ): Promise<IRenewPackageInfo[]>;
+
+  /**
+   * 查询指定推荐人在某应用下可推广的套餐。
+   * 该目录按推荐人等级筛选，不应用买家侧的自荐和首次付款校验。
+   */
+  listPromotablePackages(
+    pkgType: PaymentPackageType | 0,
+    serviceAppid: string,
+    scene?: string,
+    recommender?: string,
   ): Promise<IRenewPackageInfo[]>;
 
   /**
@@ -646,6 +727,51 @@ export interface IPayOperations {
    * @param packageId 套餐ID
    */
   deleteBusinessPackage(packageId: string): Promise<boolean>;
+
+  /** 查询当前账号是否可管理指定应用的推广比例。 */
+  getRecommenderAppPolicyAccess(
+    serviceAppid: string,
+  ): Promise<IRecommenderAppPolicyAccess>;
+
+  /** 查询指定应用的推广奖励比例配置。 */
+  listRecommenderAppPolicies(options: {
+    serviceAppid: string;
+    recommenderPubkey?: string;
+    recommenderLevel?: number;
+    pageNum?: number;
+    pageSize?: number;
+  }): Promise<{ list: IRecommenderAppPolicy[]; total: number }>;
+
+  /** Owner 或授权用户新增、更新指定应用的推广奖励比例。 */
+  upsertRecommenderAppPolicy(
+    input: IRecommenderAppPolicyInput,
+  ): Promise<boolean>;
+
+  /** Owner 或授权用户删除指定应用的推广奖励比例。 */
+  deleteRecommenderAppPolicy(
+    serviceAppid: string,
+    recommenderPubkey?: string,
+    recommenderLevel?: number,
+  ): Promise<boolean>;
+
+  /** Owner 查询指定应用的推广比例授权用户。 */
+  listRecommenderAppManagers(options: {
+    serviceAppid: string;
+    managerPubkey?: string;
+    pageNum?: number;
+    pageSize?: number;
+  }): Promise<{ list: IRecommenderAppManager[]; total: number }>;
+
+  /** Owner 为指定应用新增、更新推广比例授权用户。 */
+  upsertRecommenderAppManager(
+    input: IRecommenderAppManagerInput,
+  ): Promise<boolean>;
+
+  /** Owner 取消指定用户的推广比例管理权限。 */
+  deleteRecommenderAppManager(
+    serviceAppid: string,
+    managerPubkey: string,
+  ): Promise<boolean>;
 
   /**
    * 将当前页面标记为支付回跳页。
