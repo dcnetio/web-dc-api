@@ -57,6 +57,8 @@ export const Errors = {
   ErrNoNeedUpload: new FileError("no need upload"),
   ErrPublicKeyIsNull: new FileError("publickey is null"),
   ErrBuildServerConnect: new FileError("build server connect error"),
+  ErrCidIsNull: new FileError("cid is null"),
+  ErrDcNodeNotInitialized: new FileError("dcNodeClient is not initialized"),
 };
 
 export interface MediaController {
@@ -1336,7 +1338,9 @@ export class FileManager {
         console.warn("Error connecting to build server:", error);
         return [null, Errors.ErrBuildServerConnect];
       }
-      const fileContent = await this.getFileFromDcContent(
+      // 走会抛错的实现：调用方需要区分「块拉不到」「超时」「主动取消」，
+      // 老的 getFileFromDcContent 会把它们都吞成 null，返回 [null, null]。
+      const fileContent = await this.fetchFileFromDcContent(
         cid,
         decryptKey,
         false,
@@ -1344,7 +1348,13 @@ export class FileManager {
       );
       return [fileContent, null];
     } catch (error: any) {
-      return [null, error];
+      console.warn("getFileFromDcWithPeerAddr error", error, "cid:", cid);
+      return [
+        null,
+        error instanceof Error
+          ? error
+          : new FileError(`get file from dc failed: ${String(error)}`),
+      ];
     }
   };
 
@@ -1355,169 +1365,211 @@ export class FileManager {
     externalSignal?: AbortSignal,
   ): Promise<Uint8Array | null> => {
     try {
-      // 1. 验证 dcNodeClient
-      if (!this.dcNodeClient) {
-        console.warn("getFileFromDcContent: dcNodeClient is not initialized");
-        return null;
-      }
-
-      // 2. 验证 cid 参数
-      if (!cid) {
-        console.warn("getFileFromDcContent: cid is null or undefined");
-        return null;
-      }
-
-      // 3. 解析 CID
-      let cidObj: CID;
-      try {
-        // 首先检查是否已经是 CID 对象
-        const asCID = CID.asCID(cid);
-        if (asCID) {
-          cidObj = asCID;
-        } else if (typeof cid === "string") {
-          // 清理字符串并解析
-          const cleanCid = cid.trim();
-          if (!cleanCid) {
-            console.warn(
-              "getFileFromDcContent: cid is empty string after trim",
-            );
-            return null;
-          }
-          cidObj = CID.parse(cleanCid);
-        } else {
-          console.warn(
-            "getFileFromDcContent: invalid cid type",
-            "type:",
-            typeof cid,
-            "value:",
-            cid,
-          );
-          return null;
-        }
-      } catch (parseError) {
-        console.warn(
-          "getFileFromDcContent: CID parse failed",
-          "error:",
-          parseError,
-          "cid:",
-          cid,
-        );
-        return null;
-      }
-
-      // 4. 获取文件流
-      const fs = unixfs(this.dcNodeClient);
-      let stream: any;
-      const controller = new AbortController();
-      let timeoutId: any;
-      const resetTimeout = () => {
-        if (timeoutId) clearTimeout(timeoutId);
-        timeoutId = setTimeout(() => {
-          controller.abort();
-          console.warn("getFileFromDcContent: timeout fetching cid", cid);
-        }, 60000);
-      };
-
-      // 外部超时/取消信号联动：外层 abort 时真正中断底层 cat，避免“僵尸拉取”占用连接
-      if (externalSignal) {
-        if (externalSignal.aborted) {
-          controller.abort();
-        } else {
-          externalSignal.addEventListener("abort", () => controller.abort(), {
-            once: true,
-          });
-        }
-      }
-
-      try {
-        resetTimeout();
-        // 兼容处理：转换为字符串传入，解决 multiformats/cid 版本不一致导致的 instanceof 检查失败问题
-        // @ts-ignore
-        stream = fs.cat(cidObj.toString(), { signal: controller.signal });
-      } catch (catError) {
-        clearTimeout(timeoutId);
-        console.warn(
-          "getFileFromDcContent: fs.cat failed",
-          "error:",
-          catError,
-          "cid:",
-          cidObj.toString(),
-        );
-        return null;
-      }
-
-      let waitBuffer = new Uint8Array(0);
-      const fileChunks: Uint8Array[] = [];
-      let headDealed = false;
-
-      const encryptextLen = (3 << 20) + NonceBytes + TagBytes;
-      const headerLen = 32;
-
-      try {
-        for await (const chunk of stream) {
-          resetTimeout();
-          waitBuffer = mergeUInt8Arrays(waitBuffer, chunk) as any;
-
-          // 1. 处理头部 (仅处理一次)
-          if (!headDealed && !folderFlag) {
-            if (waitBuffer.length >= headerLen) {
-              // 检查头部标识 $$dcfile$$
-              const isDcFile = compareByteArrays(
-                waitBuffer.subarray(0, 10),
-                new TextEncoder().encode("$$dcfile$$"),
-              );
-
-              if (isDcFile) {
-                // 是标准头部，移除32字节头部
-                waitBuffer = waitBuffer.subarray(headerLen);
-              }
-              // 标记头部已处理
-              headDealed = true;
-            } else {
-              // 数据不足以判断头部，继续读取下一块
-              continue;
-            }
-          }
-
-          // 2. 处理内容分块解密
-          while (waitBuffer.length >= encryptextLen) {
-            const encryptBuffer = waitBuffer.subarray(0, encryptextLen);
-            waitBuffer = waitBuffer.subarray(encryptextLen);
-
-            if (decryptKey) {
-              const decrypted = await decryptContent(encryptBuffer, decryptKey);
-              fileChunks.push(decrypted);
-            } else {
-              fileChunks.push(encryptBuffer);
-            }
-          }
-        }
-
-        // 3. 处理剩余数据
-        if (waitBuffer.length > 0) {
-          if (decryptKey) {
-            const decrypted = await decryptContent(waitBuffer, decryptKey);
-            fileChunks.push(decrypted);
-          } else {
-            fileChunks.push(waitBuffer);
-          }
-        }
-
-        return concatenateUint8Arrays(...fileChunks);
-      } finally {
-        if (timeoutId) clearTimeout(timeoutId);
-        controller.abort();
-        if (stream && typeof stream.return === "function") {
-          try {
-            await stream.return();
-          } catch (closeError) {
-            console.warn("getFileFromDcContent: stream close failed", closeError);
-          }
-        }
-      }
+      return await this.fetchFileFromDcContent(
+        cid,
+        decryptKey,
+        folderFlag,
+        externalSignal,
+      );
     } catch (error) {
       console.warn("getFileFromDcContent error", error);
       return null;
+    }
+  };
+
+  // 真正的拉取实现：失败必须抛出真实原因（helia 的 LoadBlockFailedError、空闲超时、
+  // CID 非法等）。老实现把这些统一 catch 成 null，调用方只能拿到 [null, null]，
+  // 既分不清「块拉不到」和「连接断了」，上层也只能合成一条空错误文案。
+  // getFileFromDcContent 保留「失败返回 null」的旧语义给已有调用方，
+  // 需要错误原因的走这个方法（如 getFileFromDcWithPeerAddr）。
+  fetchFileFromDcContent = async (
+    cid: string,
+    decryptKey: string,
+    folderFlag?: boolean,
+    externalSignal?: AbortSignal,
+  ): Promise<Uint8Array> => {
+    // 1. 验证 dcNodeClient
+    if (!this.dcNodeClient) {
+      throw Errors.ErrDcNodeNotInitialized;
+    }
+
+    // 2. 验证 cid 参数
+    if (!cid) {
+      throw Errors.ErrCidIsNull;
+    }
+
+    // 3. 解析 CID
+    let cidObj: CID;
+    try {
+      // 首先检查是否已经是 CID 对象
+      const asCID = CID.asCID(cid);
+      if (asCID) {
+        cidObj = asCID;
+      } else if (typeof cid === "string") {
+        // 清理字符串并解析
+        const cleanCid = cid.trim();
+        if (!cleanCid) {
+          throw Errors.ErrCidIsNull;
+        }
+        cidObj = CID.parse(cleanCid);
+      } else {
+        throw new FileError(`invalid cid type: ${typeof cid}`);
+      }
+    } catch (parseError) {
+      if (parseError instanceof FileError) {
+        throw parseError;
+      }
+      throw new FileError(
+        `cid parse failed: ${String(cid)} (${
+          parseError instanceof Error ? parseError.message : String(parseError)
+        })`,
+      );
+    }
+
+    // 4. 获取文件流
+    const fs = unixfs(this.dcNodeClient);
+    let stream: any;
+    const controller = new AbortController();
+    let timeoutId: any;
+    // 空闲超时和外部取消都会 abort 同一个 controller，底层只会抛出语义模糊的
+    // AbortError；这里记录触发原因，才能把「等块超时」和「调用方主动取消」分开报。
+    const idleTimeoutMs = 60000;
+    let idleTimedOut = false;
+    const resetTimeout = () => {
+      if (timeoutId) clearTimeout(timeoutId);
+      timeoutId = setTimeout(() => {
+        idleTimedOut = true;
+        controller.abort();
+        console.warn("getFileFromDcContent: timeout fetching cid", cid);
+      }, idleTimeoutMs);
+    };
+
+    // 外部超时/取消信号联动：外层 abort 时真正中断底层 cat，避免“僵尸拉取”占用连接
+    const onExternalAbort = () => controller.abort();
+    if (externalSignal) {
+      if (externalSignal.aborted) {
+        controller.abort();
+      } else {
+        externalSignal.addEventListener("abort", onExternalAbort, {
+          once: true,
+        });
+      }
+    }
+    const detachExternalAbort = () => {
+      if (externalSignal) {
+        externalSignal.removeEventListener("abort", onExternalAbort);
+      }
+    };
+
+    // 把底层异常翻译成上层能直接展示、也能做关键字匹配的错误
+    const describeFailure = (error: unknown): Error => {
+      if (idleTimedOut) {
+        return new FileError(
+          `fetch dc content timeout after ${idleTimeoutMs}ms: ${cidObj.toString()}`,
+        );
+      }
+      if (externalSignal?.aborted) {
+        return new FileError(
+          `fetch dc content aborted: ${cidObj.toString()}`,
+        );
+      }
+      if (error instanceof Error) {
+        return error;
+      }
+      return new FileError(
+        `fetch dc content failed: ${cidObj.toString()} ${String(error)}`,
+      );
+    };
+
+    try {
+      resetTimeout();
+      // 兼容处理：转换为字符串传入，解决 multiformats/cid 版本不一致导致的 instanceof 检查失败问题
+      // @ts-ignore
+      stream = fs.cat(cidObj.toString(), { signal: controller.signal });
+    } catch (catError) {
+      clearTimeout(timeoutId);
+      detachExternalAbort();
+      console.warn(
+        "getFileFromDcContent: fs.cat failed",
+        "error:",
+        catError,
+        "cid:",
+        cidObj.toString(),
+      );
+      throw describeFailure(catError);
+    }
+
+    let waitBuffer = new Uint8Array(0);
+    const fileChunks: Uint8Array[] = [];
+    let headDealed = false;
+
+    const encryptextLen = (3 << 20) + NonceBytes + TagBytes;
+    const headerLen = 32;
+
+    try {
+      for await (const chunk of stream) {
+        resetTimeout();
+        waitBuffer = mergeUInt8Arrays(waitBuffer, chunk) as any;
+
+        // 1. 处理头部 (仅处理一次)
+        if (!headDealed && !folderFlag) {
+          if (waitBuffer.length >= headerLen) {
+            // 检查头部标识 $$dcfile$$
+            const isDcFile = compareByteArrays(
+              waitBuffer.subarray(0, 10),
+              new TextEncoder().encode("$$dcfile$$"),
+            );
+
+            if (isDcFile) {
+              // 是标准头部，移除32字节头部
+              waitBuffer = waitBuffer.subarray(headerLen);
+            }
+            // 标记头部已处理
+            headDealed = true;
+          } else {
+            // 数据不足以判断头部，继续读取下一块
+            continue;
+          }
+        }
+
+        // 2. 处理内容分块解密
+        while (waitBuffer.length >= encryptextLen) {
+          const encryptBuffer = waitBuffer.subarray(0, encryptextLen);
+          waitBuffer = waitBuffer.subarray(encryptextLen);
+
+          if (decryptKey) {
+            const decrypted = await decryptContent(encryptBuffer, decryptKey);
+            fileChunks.push(decrypted);
+          } else {
+            fileChunks.push(encryptBuffer);
+          }
+        }
+      }
+
+      // 3. 处理剩余数据
+      if (waitBuffer.length > 0) {
+        if (decryptKey) {
+          const decrypted = await decryptContent(waitBuffer, decryptKey);
+          fileChunks.push(decrypted);
+        } else {
+          fileChunks.push(waitBuffer);
+        }
+      }
+
+      return concatenateUint8Arrays(...fileChunks);
+    } catch (error) {
+      throw describeFailure(error);
+    } finally {
+      if (timeoutId) clearTimeout(timeoutId);
+      detachExternalAbort();
+      controller.abort();
+      if (stream && typeof stream.return === "function") {
+        try {
+          await stream.return();
+        } catch (closeError) {
+          console.warn("getFileFromDcContent: stream close failed", closeError);
+        }
+      }
     }
   };
   /**
