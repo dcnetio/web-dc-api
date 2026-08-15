@@ -44,7 +44,8 @@ export class FileClient {
     cid: string,
     peerId: string,
     onUpdateTransmitSize: (status: number, size: number) => void,
-    onErrorCallback: (error: Error) => void
+    onErrorCallback: (error: Error) => void,
+    signal?: AbortSignal
   ): Promise<void> {
 
       const sizeValue = uint64ToLittleEndianBytes(fileSize);
@@ -128,6 +129,11 @@ export class FileClient {
         100000,
         "server-streaming",
         onDataCallback,
+        undefined,
+        undefined,
+        undefined,
+        // 上传被放弃时靠这个信号把流收掉，否则它会一直占着槽位直到 100s 超时
+        { signal }
       );
       return;
       // const decoded = dcnet.pb.StroeFileReply.decode(responseData);

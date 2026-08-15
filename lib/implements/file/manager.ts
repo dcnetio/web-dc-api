@@ -34,11 +34,27 @@ import { SeekableFileStream } from "./seekableFileStream";
 import { AccountClient } from "../account/client";
 import { DCContext } from "../../../lib/interfaces/DCContext";
 import { multiaddr, Multiaddr } from "@multiformats/multiaddr";
+import * as dagPb from "@ipld/dag-pb";
 
 const NonceBytes = 12;
 const TagBytes = 16;
 const dcFileHead = "$$dcfile$$";
 const chunkSize = 3 * 1024 * 1024; // 3MB chunks
+
+// DAG 预取参数，见 prefetchFileDag 的说明。
+const dagBlockConcurrency = 6;
+// 根块单独用短超时：根块没到什么都开始不了，没必要陪着它等满空闲超时。
+const dagRootTimeoutMs = 5000;
+const dagRootAttempts = 4;
+// 子块的单次超时要明显宽于根块：此时连接已经验证过，慢通常是真的在传，而 bitswap
+// 没有块内断点续传——超时重来会丢掉已传的部分。弱网下 256KB 块本来就要十几秒，
+// 卡太紧就会出现「怎么刷都拉不下来」。整体上限交给外层 60s 空闲超时，它每收到一个
+// 块就重置，所以「有进展」时不会被这里的重试预算掐断。
+const dagChildTimeoutMs = 25000;
+const dagChildAttempts = 3;
+// 重试之间要等一下：块 broker 全失败时（LoadBlockFailedError）是立刻返回的，
+// 不退避的话几次重试会在同一毫秒内烧完，等于没重试。
+const dagRetryBackoffMs = 600;
 // 创建一个可以取消的信号
 const controller = new AbortController();
 const { signal } = controller;
@@ -59,7 +75,15 @@ export const Errors = {
   ErrBuildServerConnect: new FileError("build server connect error"),
   ErrCidIsNull: new FileError("cid is null"),
   ErrDcNodeNotInitialized: new FileError("dcNodeClient is not initialized"),
+  ErrUploadAborted: new FileError("upload aborted"),
 };
+
+/** 调用方已放弃这次上传时抛出，用来把各层的 await 一路解开 */
+function throwIfAborted(signal?: AbortSignal) {
+  if (signal?.aborted) {
+    throw Errors.ErrUploadAborted;
+  }
+}
 
 export interface MediaController {
   restart(): {
@@ -100,11 +124,13 @@ export class FileManager {
     type: number,
     oid: string,
     maxRetries: number = 1,
+    signal?: AbortSignal,
   ): Promise<void> {
     let attempt = 0;
     let lastError: unknown = null;
 
     while (attempt <= maxRetries) {
+      throwIfAborted(signal);
       try {
         await this.dc.createTransferStream(
           this.dcNodeClient.libp2p,
@@ -173,6 +199,7 @@ export class FileManager {
     resumeState = { offset: 0, chunkHashes: [] },
     pubkeyBytes?: Uint8Array,
     symKey?: SymmetricKey | null,
+    signal?: AbortSignal,
   ): Promise<CID | null> {
     const fs = unixfs(this.dcNodeClient);
 
@@ -184,10 +211,8 @@ export class FileManager {
     // 创建符合流式接口的内容生成器
     const contentStream = async function* () {
       while (offset < file.size) {
-        // // 检查取消信号（需要补充signal参数）
-        // if (_this.signal?.aborted) {
-        //   throw new AbortError('Upload cancelled')
-        // }
+        // 检查取消信号：调用方已经放弃时不要再读下一块，也不要再往节点写
+        throwIfAborted(signal);
 
         // 读取分块
         const chunk = file.slice(offset, offset + chunkSize);
@@ -217,6 +242,7 @@ export class FileManager {
       rawLeaves: false,
       leafType: "file",
       shardSplitThresholdBytes: 256 * 1024,
+      signal,
     });
     return cid;
   }
@@ -247,7 +273,11 @@ export class FileManager {
     enkey: string,
     onUpdateTransmitSize: (status: UploadStatus, size: number) => void,
     vaccount?: string,
+    signal?: AbortSignal,
   ): Promise<[string | null, Error | null]> {
+    if (signal?.aborted) {
+      return [null, Errors.ErrUploadAborted];
+    }
     if (!this.connectedDc?.client) {
       return [null, Errors.ErrNoDcPeerConnected];
     }
@@ -275,6 +305,9 @@ export class FileManager {
         //等待绑定信息上链,最多等待20秒
         let waitCount = 0;
         while (true) {
+          if (signal?.aborted) {
+            return [null, Errors.ErrUploadAborted];
+          }
           if (await this.isAccessPeerIdBinded()) {
             break;
           }
@@ -305,6 +338,7 @@ export class FileManager {
         { offset: 0, chunkHashes: [] },
         pubkeyBytes,
         symKey,
+        signal,
       );
       if (!cid) {
         return [resCid, Errors.ErrNoFileChose];
@@ -315,8 +349,12 @@ export class FileManager {
       const timeoutId = setTimeout(() => {
         controller.abort();
       }, 60000);
+      // 外部放弃时一并中断 stat，否则这里还会自己等满 60 秒
+      const onExternalAbort = () => controller.abort();
+      signal?.addEventListener("abort", onExternalAbort);
       let stats;
       try {
+        throwIfAborted(signal);
         // @ts-ignore
         stats = await fs.stat(cid.toString(), {
           signal: controller.signal,
@@ -324,6 +362,7 @@ export class FileManager {
         });
       } finally {
         clearTimeout(timeoutId);
+        signal?.removeEventListener("abort", onExternalAbort);
       }
       const dagFileSize = stats.dagSize ? Number(stats.dagSize) : 0;
       const fileClient = new FileClient(
@@ -334,6 +373,13 @@ export class FileManager {
       let resStatus = 0;
       let resFlag = false;
       let resError: Error | null = null;
+      // storeFile 是一条 server-streaming 的 gRPC 流，一直占着 libp2p 上的流槽位。
+      // 调用方（上层的响应超时）放弃时必须把这条流一起取消，否则超时的上传会把槽位
+      // 一直占到节点那边自己收尾——并发上传几次之后就没有可用流了。
+      // 监听器不在返回时摘掉：storeFile 的流在 addFile 返回之后还在继续推进度
+      // （上层正是靠它拿到 OK 才算上传完成），这之后才超时的调用同样要能收掉它。
+      const storeController = new AbortController();
+      signal?.addEventListener("abort", () => storeController.abort());
       fileClient.storeFile(
         dagFileSize,
         blockHeight ? blockHeight : 0,
@@ -348,9 +394,14 @@ export class FileManager {
           resFlag = true;
           resError = error;
         },
+        storeController.signal,
       );
       //等待storeRes 为true
       while (!resFlag) {
+        if (signal?.aborted) {
+          // 监听器已经 abort 过 storeController，这里只负责把调用方放出去
+          return [null, Errors.ErrUploadAborted];
+        }
         await sleep(100);
       }
       if (resError) {
@@ -368,7 +419,13 @@ export class FileManager {
         return [null, Errors.ErrNoNeedUpload];
       }
       //创建文件主动上报流
-      await this.createTransferStreamWithRetry(nodeAddr, BrowserType.File, resCid);
+      await this.createTransferStreamWithRetry(
+        nodeAddr,
+        BrowserType.File,
+        resCid,
+        1,
+        signal,
+      );
     } catch (error) {
       console.warn("=========stream close", error);
       throw error;
@@ -1377,6 +1434,272 @@ export class FileManager {
     }
   };
 
+  /**
+   * 预取整棵 unixfs DAG 到本地 blockstore：先拿根块，再逐层拉子块。
+   *
+   * 直接交给 fs.cat 有三个问题，预览产物（十几 MB 的单文件）上全会踩到：
+   * 1) exporter 的 walkDAG 用 it-parallel 且没传 blockReadConcurrency，默认并发是
+   *    Infinity——一个 15MB 的文件会一次性向同一个节点 want 60 个块，全挤在一条
+   *    yamux 连接上队头阻塞；
+   * 2) 根块拿不到时只能一路挂到 60s 空闲超时，可根块没到根本什么都开始不了；
+   * 3) 任意一块出错，整个流被 end 掉，已到的块虽然还在 blockstore 里，
+   *    整次遍历仍要从头再走一遍。
+   *
+   * 这里只负责把块搬进本地 blockstore，字节拼装仍旧交给 fs.cat（那时它读到的全是
+   * 本地块，不再发起网络请求），所以不必复刻 unixfs 的分块语义，顺着 dag-pb 的
+   * Links 走即可。
+   *
+   * 块持久化在 IDBBlockstore 里，中途失败后上层重试会跳过已经拿到的块，
+   * 天然就是「只重拉没成功的那块」。
+   */
+  private async prefetchFileDag(
+    rootCid: CID,
+    signal: AbortSignal,
+    onProgress?: () => void,
+  ): Promise<void> {
+    const blockstore = this.dcNodeClient?.blockstore;
+    if (!blockstore) {
+      throw Errors.ErrDcNodeNotInitialized;
+    }
+
+    // 只用于排障：块数少却很慢说明是链路问题，块数多说明产物本身太大。
+    let fetched = 0;
+    let reused = 0;
+
+    // 把父 signal 的取消传导到子 controller，返回解绑函数。
+    const linkAbort = (
+      parent: AbortSignal,
+      child: AbortController,
+    ): (() => void) => {
+      const onAbort = () => child.abort();
+      if (parent.aborted) {
+        child.abort();
+      } else {
+        parent.addEventListener("abort", onAbort, { once: true });
+      }
+      return () => parent.removeEventListener("abort", onAbort);
+    };
+
+    // 可被取消的等待，用于重试退避。
+    const delay = (ms: number, abortSignal: AbortSignal): Promise<void> =>
+      new Promise<void>((resolve) => {
+        if (abortSignal.aborted) {
+          resolve();
+          return;
+        }
+        const done = () => {
+          clearTimeout(timer);
+          abortSignal.removeEventListener("abort", done);
+          resolve();
+        };
+        const timer = setTimeout(done, ms);
+        abortSignal.addEventListener("abort", done, { once: true });
+      });
+
+    const loadBlock = async (
+      target: CID,
+      timeoutMs: number,
+      attempts: number,
+      role: string,
+      abortSignal: AbortSignal,
+    ): Promise<Uint8Array> => {
+      // blockstore.get 返回的是 AwaitIterable（块可能分片产出），要先收拢成字节。
+      const readBlock = (blockSignal: AbortSignal): Promise<Uint8Array> =>
+        iterableToUint8Array(
+          blockstore.get(target, {
+            signal: blockSignal,
+          }) as AsyncIterable<Uint8Array>,
+        );
+
+      // 已经落到本地的块直接读：上一次失败留下的进度就是在这里被复用的，
+      // 「只重拉没成功的那块」靠的是这一步，不必再走超时/重试那套。
+      let isLocal = false;
+      try {
+        isLocal = await blockstore.has(target, { signal: abortSignal });
+      } catch (hasError) {
+        isLocal = false;
+      }
+      if (isLocal) {
+        try {
+          const block = await readBlock(abortSignal);
+          reused += 1;
+          return block;
+        } catch (localError) {
+          // 本地读失败（IDB 被清理、块损坏）不能让整棵树失败，退回网络路径重取。
+          console.warn(
+            "prefetchFileDag: local block unreadable, refetching",
+            "cid:",
+            target.toString(),
+            "error:",
+            localError,
+          );
+        }
+      }
+
+      let lastError: unknown;
+      for (let attempt = 1; attempt <= attempts; attempt++) {
+        if (abortSignal.aborted) {
+          throw new FileError(`fetch dag aborted: ${rootCid.toString()}`);
+        }
+        // 每次尝试自己一个超时；外层取消时一并中断。
+        const attemptController = new AbortController();
+        const detachAttempt = linkAbort(abortSignal, attemptController);
+        const timer = setTimeout(() => attemptController.abort(), timeoutMs);
+        try {
+          const block = await readBlock(attemptController.signal);
+          // 有进展就给上层的空闲计时器续期，避免慢但在动的传输被误判超时。
+          fetched += 1;
+          onProgress?.();
+          return block;
+        } catch (error) {
+          lastError = error;
+          console.warn(
+            `prefetchFileDag: ${role} block failed`,
+            "cid:",
+            target.toString(),
+            "attempt:",
+            attempt,
+            "error:",
+            error,
+          );
+        } finally {
+          clearTimeout(timer);
+          detachAttempt();
+        }
+        if (attempt < attempts && !abortSignal.aborted) {
+          await delay(dagRetryBackoffMs * attempt, abortSignal);
+        }
+      }
+      throw new FileError(
+        `fetch dag ${role} block failed after ${attempts} attempts: ${target.toString()} (${
+          lastError instanceof Error ? lastError.message : String(lastError)
+        })`,
+      );
+    };
+
+    // 只有 dag-pb 节点才有子链接，raw 块就是内容本身。
+    const linksOf = (cid: CID, block: Uint8Array): dagPb.PBLink[] => {
+      if (cid.code !== dagPb.code) {
+        return [];
+      }
+      try {
+        return dagPb.decode(block).Links;
+      } catch (decodeError) {
+        console.warn(
+          "prefetchFileDag: decode dag-pb failed, treated as leaf",
+          "cid:",
+          cid.toString(),
+          "error:",
+          decodeError,
+        );
+        return [];
+      }
+    };
+
+    // 同一个块可能被多处引用（目录里重复文件、相同分块），只走一次。
+    const seen = new Set<string>([rootCid.toString()]);
+    const collectLinks = (links: dagPb.PBLink[], into: CID[]): void => {
+      for (const link of links) {
+        const key = link.Hash.toString();
+        if (seen.has(key)) {
+          continue;
+        }
+        seen.add(key);
+        into.push(link.Hash);
+      }
+    };
+
+    const rootBlock = await loadBlock(
+      rootCid,
+      dagRootTimeoutMs,
+      dagRootAttempts,
+      "root",
+      signal,
+    );
+
+    const rootLinks = linksOf(rootCid, rootBlock);
+    // 目录节点的 link 都带 Name（文件名），文件分块的 link 是匿名的。调用方把目录
+    // CID 当文件传进来时（getFile 用错），预取整棵目录树只是白等几十秒——交回
+    // fs.cat，让它按「这不是文件」立刻报错。
+    if (rootLinks.some((link) => (link.Name ?? "") !== "")) {
+      console.warn(
+        "prefetchFileDag: root looks like a directory, skip prefetch",
+        "cid:",
+        rootCid.toString(),
+      );
+      return;
+    }
+
+    // 逐层推进：层内并发有上限，层间要等上一层把链接解析出来。kubo 默认 256KB
+    // 分块、单节点最多 174 个 link，44MB 以下都是「根 + 叶子」一层，所以预览
+    // 产物走到这里就是「先根后子」。
+    const level0: CID[] = [];
+    collectLinks(rootLinks, level0);
+    let level: CID[] = level0;
+    while (level.length > 0) {
+      const currentLevel = level;
+      const nextLevel: CID[] = [];
+      let cursor = 0;
+      let failure: unknown;
+
+      // 某一块彻底失败后，同层其他块没必要再把自己的重试跑完（最多 45s），
+      // 直接取消整层，让错误尽快回到上层。
+      const levelController = new AbortController();
+      const detachLevel = linkAbort(signal, levelController);
+
+      const worker = async (): Promise<void> => {
+        while (cursor < currentLevel.length && failure === undefined) {
+          const childCid = currentLevel[cursor];
+          cursor += 1;
+          if (!childCid) {
+            continue;
+          }
+          try {
+            const block = await loadBlock(
+              childCid,
+              dagChildTimeoutMs,
+              dagChildAttempts,
+              "child",
+              levelController.signal,
+            );
+            collectLinks(linksOf(childCid, block), nextLevel);
+          } catch (error) {
+            // 保留第一个真实错误：取消整层后其他 worker 抛出的都是派生的取消错误。
+            if (failure === undefined) {
+              failure = error;
+            }
+            levelController.abort();
+          }
+        }
+      };
+
+      try {
+        await Promise.all(
+          Array.from(
+            { length: Math.min(dagBlockConcurrency, currentLevel.length) },
+            () => worker(),
+          ),
+        );
+      } finally {
+        detachLevel();
+      }
+      if (failure !== undefined) {
+        throw failure;
+      }
+      level = nextLevel;
+    }
+
+    console.debug(
+      "prefetchFileDag: done",
+      "cid:",
+      rootCid.toString(),
+      "fetched:",
+      fetched,
+      "reused:",
+      reused,
+    );
+  }
+
   // 真正的拉取实现：失败必须抛出真实原因（helia 的 LoadBlockFailedError、空闲超时、
   // CID 非法等）。老实现把这些统一 catch 成 null，调用方只能拿到 [null, null]，
   // 既分不清「块拉不到」和「连接断了」，上层也只能合成一条空错误文案。
@@ -1483,9 +1806,34 @@ export class FileManager {
 
     try {
       resetTimeout();
+      // 先把整棵 DAG 搬到本地（根块短超时快重试 + 子块有界并发 + 逐块重试），
+      // 之后 fs.cat 读到的全是本地块。
+      await this.prefetchFileDag(cidObj, controller.signal, resetTimeout);
+    } catch (prefetchError) {
+      clearTimeout(timeoutId);
+      detachExternalAbort();
+      // 这里是在主 try/finally 之前抛出的，收尾要自己做一遍。
+      controller.abort();
+      console.warn(
+        "getFileFromDcContent: prefetch dag failed",
+        "error:",
+        prefetchError,
+        "cid:",
+        cidObj.toString(),
+      );
+      throw describeFailure(prefetchError);
+    }
+
+    try {
+      resetTimeout();
       // 兼容处理：转换为字符串传入，解决 multiformats/cid 版本不一致导致的 instanceof 检查失败问题
       // @ts-ignore
-      stream = fs.cat(cidObj.toString(), { signal: controller.signal });
+      stream = fs.cat(cidObj.toString(), {
+        signal: controller.signal,
+        // 兜底：万一有块没被预取覆盖（未知 codec 等），也不要退回 exporter
+        // 默认的无限并发。
+        blockReadConcurrency: dagBlockConcurrency,
+      });
     } catch (catError) {
       clearTimeout(timeoutId);
       detachExternalAbort();

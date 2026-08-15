@@ -110,12 +110,17 @@ export interface IFileOperations {
    * @param file 要上传的文件对象
    * @param enkey 加密密钥
    * @param onUpdateTransmitSize 传输进度回调函数
+   * @param vaccount 虚拟账户
+   * @param signal 取消信号：调用方放弃这次上传时，用它收掉底层的上报流，
+   *               否则超时的上传会一直占着 libp2p 的流槽位
    * @returns 添加结果
    */
   addFile(
     file: File,
     enkey: string,
     onUpdateTransmitSize: (status: number, size: number) => void,
+    vaccount?: string,
+    signal?: AbortSignal,
   ): Promise<[string | null, Error | null]>;
 
   /**
