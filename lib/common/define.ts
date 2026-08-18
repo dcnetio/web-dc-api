@@ -82,6 +82,13 @@ export const connection_monitor_ping_interval = 30000;
 export const liveness_ping_timeout = 10000;
 export const connection_monitor_min_timeout = 20000;
 export const connection_monitor_max_timeout = 60000;
+// 公网发布环境的对象传输首包/写入时间不能沿用本地节点的 10 秒阈值。
+// 节点重连、TLS/Relay 建链和浏览器后台限速都会让首个可写窗口超过 10 秒；
+// 过早中止会进一步触发 gRPC 连接驱逐，形成连续的 Write timeout/newStream failed。
+export const transfer_stream_open_timeout = 30000;
+export const transfer_stream_first_chunk_timeout = 30000;
+export const transfer_stream_idle_timeout = 60000;
+export const transfer_stream_write_timeout = 30000;
 export const keyExpire = 60 * 60 * 24; // setcachekey 过期时间默认一天
 export const OffChainOpTimes = 20000; // 链下操作次数
 export const OffChainSpaceLimit = 1024 * 1024 * 10; // 评论空间下限10m

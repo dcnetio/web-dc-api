@@ -67,11 +67,43 @@ import {
   liveness_ping_timeout,
   peer_dial_timeout,
   rtcConfiguration,
+  transfer_stream_first_chunk_timeout,
+  transfer_stream_idle_timeout,
+  transfer_stream_open_timeout,
+  transfer_stream_write_timeout,
 } from "./define";
 
 const controller = new AbortController();
 const { signal } = controller;
 const peer_close_timeout = 5000;
+
+/**
+ * Race an async transfer operation against a timeout and clear the timer as
+ * soon as the operation settles. Transfer streams can process thousands of
+ * chunks, so retaining one timer per successful read/write creates avoidable
+ * main-thread work in a published browser app.
+ */
+const withTransferTimeout = async <T>(
+  operation: Promise<T>,
+  timeoutMs: number,
+  timeoutMessage: string,
+): Promise<T> => {
+  let timeoutId: ReturnType<typeof setTimeout> | undefined;
+  try {
+    return await Promise.race([
+      operation,
+      new Promise<T>((_, reject) => {
+        timeoutId = setTimeout(
+          () => reject(new Error(timeoutMessage)),
+          timeoutMs,
+        );
+      }),
+    ]);
+  } finally {
+    if (timeoutId !== undefined) clearTimeout(timeoutId);
+  }
+};
+
 // import {uPnPNAT} from '@libp2p/upnp-nat'
 export class DcUtil {
   dcChain: ChainUtil;
@@ -878,7 +910,7 @@ export class DcUtil {
       });
     }
     const stream = await nodeConn.newStream("/dc/transfer/1.0.0", {
-      signal: AbortSignal.timeout(10000),
+      signal: AbortSignal.timeout(transfer_stream_open_timeout),
     });
 
     // 使用新版 Stream 接口: stream.send / stream.close
@@ -888,23 +920,35 @@ export class DcUtil {
           const data =
             chunk instanceof Uint8Array ? chunk : (chunk as any).subarray();
           if (!stream.send(data)) {
-            await new Promise<void>((resolve, reject) => {
-              const cleanup = () => {
+            let cleanup = () => {};
+            const drainPromise = new Promise<void>((resolve, reject) => {
+              const removeListeners = () => {
                 stream.removeEventListener("drain", onDrain);
                 stream.removeEventListener("close", onClose);
               };
               const onDrain = () => {
-                cleanup();
+                removeListeners();
                 resolve();
               };
               const onClose = () => {
-                cleanup();
+                removeListeners();
                 reject(new Error("Stream closed"));
               };
+
+              cleanup = removeListeners;
 
               stream.addEventListener("drain", onDrain);
               stream.addEventListener("close", onClose);
             });
+            try {
+              await withTransferTimeout(
+                drainPromise,
+                transfer_stream_write_timeout,
+                "Stream drain timeout",
+              );
+            } finally {
+              cleanup();
+            }
           }
         }
       } catch (err) {
@@ -938,45 +982,42 @@ export class DcUtil {
 
       const chunkIterable = this.chunkGenerator(stream);
       let waitingForFirstChunk = true;
-      const IDLE_TIMEOUT = 30000;
+      const IDLE_TIMEOUT = transfer_stream_idle_timeout;
 
       while (true) {
         let iteratorResult: IteratorResult<Uint8Array>;
         if (waitingForFirstChunk) {
-          let timeoutId: ReturnType<typeof setTimeout> | undefined;
-          const timeoutPromise = new Promise<"timeout">((resolve) => {
-            timeoutId = setTimeout(() => resolve("timeout"), 10_000);
-          });
-          const raceResult = await Promise.race([
-            chunkIterable.next(),
-            timeoutPromise,
-          ]);
-          if (raceResult === "timeout") {
-            console.warn("Transfer stream: First chunk timed out after 10s");
-            break;
+          const firstChunkTimeoutMessage =
+            `Transfer stream: First chunk timed out after ${transfer_stream_first_chunk_timeout / 1000}s`;
+          try {
+            iteratorResult = await withTransferTimeout(
+              chunkIterable.next(),
+              transfer_stream_first_chunk_timeout,
+              firstChunkTimeoutMessage,
+            );
+          } catch (err) {
+            if ((err as Error).message === firstChunkTimeoutMessage) {
+              console.warn(firstChunkTimeoutMessage);
+              break;
+            }
+            throw err;
           }
-          if (timeoutId) {
-            clearTimeout(timeoutId);
-          }
-          iteratorResult = raceResult;
           waitingForFirstChunk = false;
         } else {
-          const readTimeout = new Promise<IteratorResult<Uint8Array>>(
-            (_, reject) => {
-              setTimeout(
-                () => reject(new Error("Read timeout after 30s")),
-                IDLE_TIMEOUT,
-              );
-            },
-          );
           try {
-            iteratorResult = await Promise.race([
+            iteratorResult = await withTransferTimeout(
               chunkIterable.next(),
-              readTimeout,
-            ]);
+              IDLE_TIMEOUT,
+              `Read timeout after ${transfer_stream_idle_timeout / 1000}s`,
+            );
           } catch (err) {
-            if ((err as Error).message === "Read timeout after 30s") {
-              console.warn("Stream read timeout after 30s idle");
+            if (
+              (err as Error).message ===
+              `Read timeout after ${transfer_stream_idle_timeout / 1000}s`
+            ) {
+              console.warn(
+                `Stream read timeout after ${transfer_stream_idle_timeout / 1000}s idle`,
+              );
               break;
             }
             throw err;
@@ -1034,10 +1075,11 @@ export class DcUtil {
                 payload: initReplyBytes,
               }) as any;
 
-              const writeTimeout = new Promise((_, reject) => {
-                setTimeout(() => reject(new Error("Write timeout")), 10000);
-              });
-              await Promise.race([writer.write(replyData), writeTimeout]);
+              await withTransferTimeout(
+                writer.write(replyData),
+                transfer_stream_write_timeout,
+                "Write timeout",
+              );
               handshakeFlag = true;
             } else if (
               handshakeFlag &&
@@ -1068,10 +1110,11 @@ export class DcUtil {
                   payload: fetchReplyBytes,
                 }) as any;
 
-                const writeTimeout = new Promise((_, reject) => {
-                  setTimeout(() => reject(new Error("Write timeout")), 10000);
-                });
-                await Promise.race([writer.write(responseData), writeTimeout]);
+                await withTransferTimeout(
+                  writer.write(responseData),
+                  transfer_stream_write_timeout,
+                  "Write timeout",
+                );
                 blocksSent++;
                 bytesSent += responseData.length;
               } catch (error) {
