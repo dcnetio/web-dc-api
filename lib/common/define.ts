@@ -92,11 +92,12 @@ export const transfer_stream_write_timeout = 30000;
 // 关闭半开传输流时也必须有界；否则一次写入超时会把 muxer 流槽长期占住，
 // 后续 gRPC newStream 会在同一条连接上持续排队并最终 signal timed out。
 export const transfer_stream_close_timeout = 5000;
-// 传输闸门排队等待另一方向释放的最长时限。超过后不再死等，宁可让后台
-// 拉取/回推与前台 AI 长流短暂重叠，也不能让“拉取内容”无限期卡住。
-// 前台 AI 流（/proxy 的 DoAIProxyCall）是分钟级长流，若它卡住/很长，
-// 后台 ThreadDB 拉取和构建源码回推会永远等不到 foreground 计数归零。
-export const transfer_gate_wait_timeout = 15000;
+// 传输闸门排队等待另一方向释放的最长累计时限。超过后不再死等，宁可让后台
+// 拉取/回推与前台 AI 长流短暂重叠，也不能让”拉取内容”无限期卡住。
+// 取 30s（与 transfer_stream_open_timeout 一致）：大多数 AI/蓝图 流在此期间
+// 自然结束；更短的值会在 AI 流仍在进行时触发并行传输，反而制造主线程和
+// muxer 负载（表现为 Chrome [Violation] message handler took <N>ms）。
+export const transfer_gate_wait_timeout = 30000;
 export const keyExpire = 60 * 60 * 24; // setcachekey 过期时间默认一天
 export const OffChainOpTimes = 20000; // 链下操作次数
 export const OffChainSpaceLimit = 1024 * 1024 * 10; // 评论空间下限10m

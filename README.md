@@ -1439,10 +1439,15 @@ README 负责接入路径和常用模式，完整签名以 TypeScript 声明为�
 npm install
 npm run gen:dcnet-proto
 npm run check:proto-sync
+npm test
 npm run build
 bash scripts/check-browser-compat.sh
 ```
 
-`npm run build` 还会把 `assets/sw.js` 复制到 `dist/sw.js`；发布前应确认二者内容一致，确保 npm/CDN 使用者能取得 Service Worker。`npm test` 当前没有自动化测试实现，会按 `package.json` 中的占位脚本退出失败；验证 SDK 请至少执行类型构建和浏览器兼容检查。
+`npm test` 使用 Node.js 内置测试运行器（要求 Node.js 22 或更高），只运行不需要链节点、钱包、Token 或服务端配置的单元测试。目前覆盖 HTTP Range 解析、文件缓存路径、编码、行读取和基础实体行为；它适合在每次提交和发布工作流中稳定执行。`npm run test:build` 会执行构建和浏览器兼容检查。
+
+完整集成验证不包含在默认测试中：它需要部署环境提供 `wssUrl`、`backWssUrl`、应用信息、可登录的钱包，以及按功能启用的 AI/RTM/RTC/白板/支付服务与 Token 配置。涉及真实链上数据、权限、文件、消息或实时通话时，应使用隔离的测试应用 ID、测试账户和测试服务端环境执行端到端验证，避免依赖生产数据或把密钥写入仓库。
+
+`npm run build` 还会把 `assets/sw.js` 复制到 `dist/sw.js`；发布前应确认二者内容一致，确保 npm/CDN 使用者能取得 Service Worker。
 
 DCNode 协议由维护者在发布前手动同步。需要校验时，确保 `dcnode` 与 `dcapi` 位于同级目录，再执行 `npm run check:proto-sync`；GitHub 发布工作流和 `npm publish` 不再自动检出 dcnode 或阻止发布。

@@ -57,10 +57,11 @@ jobs:
           echo "changed=$IS_GREATER" >> $GITHUB_OUTPUT
           echo "version=$CUR_VERSION" >> $GITHUB_OUTPUT
 
-      - name: Install deps and build
+      - name: Install deps, test, and build
         if: steps.check.outputs.changed == 'true'
         run: |
           npm ci
+          npm test
           npm run build --if-present
 
       # ---------------------------------------------------

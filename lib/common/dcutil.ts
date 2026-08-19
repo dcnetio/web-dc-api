@@ -308,20 +308,26 @@ export class DcUtil {
    * 标记一个前台长连接（AI/蓝图）开始。前台请求会等待已经在进行的
    * 后台传输完成；同一 DC 实例上的多个前台请求可以并行共享 muxer。
    *
-   * 等待有界（transfer_gate_wait_timeout）：超过后宁可让前台与后台短暂
-   * 重叠，也不能让前台 AI 流在后台闸门占住时永远得不到执行。
+   * 等待有界（transfer_gate_wait_timeout，累计）：超过后宁可让前台与后台
+   * 短暂重叠，也不能让前台 AI 流在后台闸门占住时永远得不到执行。
    */
   async acquireForegroundTransport(signal?: AbortSignal): Promise<() => void> {
+    const deadline = Date.now() + transfer_gate_wait_timeout;
     while (this.backgroundTransportCount > 0) {
-      const idle = await this.waitForTransportIdle(
-        transfer_gate_wait_timeout,
-        signal,
-      );
+      const remaining = deadline - Date.now();
+      if (remaining <= 0) {
+        if (signal?.aborted) {
+          throw new Error("acquireForegroundTransport cancelled");
+        }
+        console.info("传输闸门等待后台释放超时（累计），前台流提前开始");
+        break;
+      }
+      const idle = await this.waitForTransportIdle(remaining, signal);
       if (!idle) {
         if (signal?.aborted) {
           throw new Error("acquireForegroundTransport cancelled");
         }
-        console.warn("传输闸门等待后台释放超时，前台流提前开始");
+        console.info("传输闸门等待后台释放超时（累计），前台流提前开始");
         break;
       }
     }
@@ -342,21 +348,27 @@ export class DcUtil {
    * 标记一个后台传输（ThreadDB/文件/区块/构建源码回推）开始。后台传输不会
    * 插队到前台 AI 流中，避免回推流的背压把 AI 的 gRPC 开流一起拖死。
    *
-   * 等待有界（transfer_gate_wait_timeout）：前台 AI 流（/proxy 的
+   * 等待有界（transfer_gate_wait_timeout，累计）：前台 AI 流（/proxy 的
    * DoAIProxyCall）是分钟级长流，若它卡住/很长，后台拉取绝不能无限期等它。
-   * 超时后强制开始，宁可短暂重叠，也不能让“拉取内容 / 源码回推”卡死。
+   * 超时后强制开始，宁可短暂重叠，也不能让”拉取内容 / 源码回推”卡死。
    */
   async acquireBackgroundTransport(signal?: AbortSignal): Promise<() => void> {
+    const deadline = Date.now() + transfer_gate_wait_timeout;
     while (this.foregroundTransportCount > 0) {
-      const idle = await this.waitForTransportIdle(
-        transfer_gate_wait_timeout,
-        signal,
-      );
+      const remaining = deadline - Date.now();
+      if (remaining <= 0) {
+        if (signal?.aborted) {
+          throw new Error("acquireBackgroundTransport cancelled");
+        }
+        console.info("传输闸门等待前台释放超时（累计），后台传输提前开始");
+        break;
+      }
+      const idle = await this.waitForTransportIdle(remaining, signal);
       if (!idle) {
         if (signal?.aborted) {
           throw new Error("acquireBackgroundTransport cancelled");
         }
-        console.warn("传输闸门等待前台释放超时，后台传输提前开始");
+        console.info("传输闸门等待前台释放超时（累计），后台传输提前开始");
         break;
       }
     }
@@ -375,11 +387,11 @@ export class DcUtil {
 
   /** 有界地等待当前前台流结束，用于已创建的后台任务在真正开流前让路。 */
   async waitForForegroundTransport(signal?: AbortSignal): Promise<void> {
+    const deadline = Date.now() + transfer_gate_wait_timeout;
     while (this.foregroundTransportCount > 0) {
-      const idle = await this.waitForTransportIdle(
-        transfer_gate_wait_timeout,
-        signal,
-      );
+      const remaining = deadline - Date.now();
+      if (remaining <= 0) break;
+      const idle = await this.waitForTransportIdle(remaining, signal);
       if (!idle) break;
     }
   }

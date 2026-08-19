@@ -31,7 +31,9 @@
     "gen:dcnet-proto": "bash scripts/generate-dcnet-proto.sh",
     "check:proto-sync": "bash scripts/check-proto-sync.sh",
     "fix:pb": "node scripts/fix-pb.cjs",
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "node --test test/unit/*.test.mjs",
+    "test:unit": "npm test",
+    "test:build": "npm run build && bash scripts/check-browser-compat.sh",
     "dev": "nodemon --watch lib --ext ts,tsx,js,jsx,json --ignore 'src/**/*.test.ts' --exec 'npx yalc publish --push'"
   },
   "author": "",

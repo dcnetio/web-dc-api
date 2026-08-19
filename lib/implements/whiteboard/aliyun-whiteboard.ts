@@ -22,8 +22,8 @@ export class AliyunWhiteboardOperations implements IWhiteboardOperations {
         Manager = (DingRTC as any).WhiteboardManager || (DingRTC as any).default?.WhiteboardManager || (DingRTC as any).default || DingRTC;
       } catch (e) {
         try {
-            const DingRTC = require('dingrtc');
-            Manager = DingRTC.WhiteboardManager;
+            const DingRTC = await import('dingrtc');
+            Manager = (DingRTC as any).WhiteboardManager || (DingRTC as any).default?.WhiteboardManager;
         } catch (err) {
             Manager = (window as any).WhiteboardManager || (window as any).DingRTC?.WhiteboardManager;
         }
