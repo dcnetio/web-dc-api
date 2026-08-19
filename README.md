@@ -1204,16 +1204,64 @@ await rtc.leaveChannel();
 rtc.destroy();
 ```
 
+### 原生 WebRTC 点对点模式
+
+将 `transport` 设为 `"p2p"` 后，SDK 不会申请阿里云 RTC Token、不会加入阿里云 RTC 房间，也不会触发 RTC 计费。全局 RTM 仅负责交换已加密且签名的 offer、answer 和 ICE candidate；音视频、屏幕共享及已连通后的定向消息均通过浏览器的 `RTCPeerConnection` 承载。
+
+双方都必须先完成 RTM 登录和 `rtc.init()`，然后沿用现有 `callPeer -> joinRoom` / `onCallRequest -> acceptCall -> joinRoom` 调用顺序：
+
+```ts
+const rtm = dc.rtm;
+const rtc = dc.rtc;
+if (!rtm || !rtc || !dc.publicKey) throw new Error("请先完成钱包登录");
+
+// RTM 仍是信令通道；此处配置为应用现有的 RTM 服务。
+await rtm.login({
+  appId: dc.appInfo.appId,
+  themeAuthor: "realtime-config-author-public-key",
+  configTheme: "realtime_services",
+  serviceName: "aliyun-rtm",
+});
+
+await rtc.init({
+  appId: dc.appInfo.appId,
+  channelId: "p2p-bootstrap",
+  transport: "p2p",
+  webrtc: {
+    // 使用自己部署、短期凭证的 STUN/TURN。不要把长期 TURN 密码写进浏览器代码。
+    iceServers: [
+      { urls: "stun:stun.example.com:3478" },
+      { urls: "turn:turn.example.com:3478", username: "short-lived-user", credential: "short-lived-password" },
+    ],
+    encryptSignaling: true, // 默认 true：使用钱包 Ed25519 身份加密并签名信令
+  },
+});
+
+rtc.on("onCallRequest", async ({ callerId, channelId }) => {
+  // 在用户确认接听后执行。
+  await rtc.acceptCall(callerId, channelId);
+  await rtc.joinRoom(channelId, { audioPublish: true, videoPublish: true, screenPublish: true });
+});
+
+const channelId = await rtc.callPeer("callee-public-key", "video");
+await rtc.joinRoom(channelId, { audioPublish: true, videoPublish: true, screenPublish: true });
+```
+
+连接成功后可监听 `onSelectedCandidatePair`：`transport: "direct"` 表示选中的 ICE 候选不是 relay；`"turn-relay"` 表示 NAT 环境要求 TURN 中继。WebRTC 的媒体始终使用 DTLS-SRTP 加密，但 TURN 中继不是物理直连，因此“去中心化”不应理解为可以在对称 NAT、企业防火墙或移动网络下完全省去中继基础设施。`iceServers` 为空时只会尝试 host candidate，通常仅适用于同一局域网或具备公网直连条件的双方。
+
+点对点模式的 `sendMessageToPeer(peerId, message)` 在 data channel 建立后优先直连发送；未建立或断开期间自动回退到 RTM。`sendMessageToSession` 在 P2P 模式只发给当前唯一对端，不具备阿里云房间的多人广播/混音能力；三人以上会议应继续使用现有 `transport: "aliyun"`，或引入 SFU 架构。
+
 关键约束：
 
 - `callPeer` 只发送邀请并生成频道，不会自动 `init` 或 `joinRoom`。
 - 被叫方监听 `onCallRequest`，接听后调用 `acceptCall` 和 `joinRoom`。
-- `joinRoom` 的 `audioPublish`、`videoPublish` 和当前实现中的 `screenPublish` 默认均为 `true`。不需要屏幕共享时应显式传 `screenPublish: false`，避免预申请该权限；纯协作会话应将三项都设为 `false`。
+- `joinRoom` 的 `audioPublish`、`videoPublish` 和当前实现中的 `screenPublish` 默认均为 `true`。在阿里云模式，不需要屏幕共享时应显式传 `screenPublish: false`，避免预申请该权限；P2P 模式不会因 `screenPublish` 采集屏幕，仍须显式调用 `startScreenShare`。纯协作会话应将三项都设为 `false`。
 - `onCallAccept`、`onCallReject`、`onCallEnd` 用于同步 UI 状态。
 - 屏幕共享使用 `startScreenShare` / `stopScreenShare`。
 - 摄像头切换使用 `getCameras` / `switchCamera`。
 - 游戏或协作会话使用 `createPersistentSession` / `acceptPersistentSession`，再以关闭音视频发布的选项进入房间。
 - `fetchAuthInfo` 可让应用自行提供 Token；未提供时可通过 AI 代理配置自动获取。
+- `transport` 省略时仍为 `"aliyun"`，现有 RTC 调用保持原有行为。P2P 模式必须显式配置 `transport: "p2p"`，且双方版本都需支持该信令协议。
 
 ## 实时白板
 

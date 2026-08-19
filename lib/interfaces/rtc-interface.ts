@@ -16,7 +16,7 @@ export interface IRTCJoinRoomOptions {
   audioPublish?: boolean;
   /** 是否允许发布视频，默认 true */
   videoPublish?: boolean;
-  /** 是否声明会使用屏幕共享，默认 false */
+  /** 是否声明会使用屏幕共享，默认 true；仅阿里云模式用于 Token 预授权，P2P 模式不采集屏幕直到 startScreenShare。 */
   screenPublish?: boolean;
 }
 
@@ -82,6 +82,23 @@ export interface IRTCCameraDevice {
 export type IRTCScreenShareConfig = Record<string, unknown>;
 export type RTCGenericEventCallback = (...args: unknown[]) => void;
 
+/** RTC 媒体承载方式。默认 aliyun 以保持历史兼容；p2p 使用浏览器原生 WebRTC。 */
+export type RTCTransport = 'aliyun' | 'p2p';
+
+/** 原生 WebRTC 点对点连接配置。ICE 服务器由应用自行决定，避免 SDK 绑定任何 RTC 云厂商。 */
+export interface IRTCWebRTCConfig {
+  /** STUN/TURN 列表。为空时仅尝试 host candidate，适合局域网或已具备公网直连的场景。 */
+  iceServers?: RTCIceServer[];
+  /** 是否启用 trickle ICE。默认 true；关闭时会等待 gathering 完成后一次性发送 SDP。 */
+  trickleIce?: boolean;
+  /** 可选连接超时时间，默认 20 秒。 */
+  connectionTimeoutMs?: number;
+  /** 是否在本地没有 RTM 信令时抛出明确错误。默认 true。 */
+  requireRTM?: boolean;
+  /** 是否加密并签名 SDP/ICE 信令，默认 true。关闭仅用于与旧实现互通的受控环境。 */
+  encryptSignaling?: boolean;
+}
+
 // RTC 视频计费档位（对齐阿里云「集合分辨率」分档，取 DingRTC 可用预设的子集）。
 // 说明：DingRTC 的 dimension 预设最高到 VD_2560x1440(2K)，故摄像头不提供 2K+(4K) 档；
 // 屏幕共享采集的是显示器原生分辨率，单独计价，不走本档位。
@@ -130,6 +147,12 @@ export interface IRTCAuthInfo {
   // 供后端按分辨率档查表计价。未设置时取 DEFAULT_RTC_VIDEO_PROFILE（HD，与历史行为一致）。
   // 注意：仅影响摄像头视频流；屏幕共享按其单独单价计费，不受此档位影响。
   videoProfile?: RtcVideoProfile;
+  /** 媒体承载方式，省略时使用历史默认的阿里云 RTC。 */
+  transport?: RTCTransport;
+  /** transport='p2p' 时使用的原生 WebRTC 配置。 */
+  webrtc?: IRTCWebRTCConfig;
+  /** 直接 joinRoom 时可提供对端公钥；callPeer/acceptCall 会自动设置。 */
+  peerUserId?: string;
 }
 
 export interface IRTCOperations {

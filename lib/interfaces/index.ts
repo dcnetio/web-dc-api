@@ -8,7 +8,7 @@ export type {IKeyValueOperations} from './keyvalue-interface';
 export type {ICommentOperations} from './comment-interface';
 export type {ICacheOperations} from './cache-interface';
 export type {IPayOperations} from './pay-interface';
-export type {IRTCOperations, IRTCAuthInfo, IRTCMember, IRTCStreamConfig, RtcVideoProfile, RtcVideoProfileSpec} from './rtc-interface';
+export type {IRTCOperations, IRTCAuthInfo, IRTCMember, IRTCStreamConfig, IRTCWebRTCConfig, RTCTransport, RtcVideoProfile, RtcVideoProfileSpec} from './rtc-interface';
 export {RTC_VIDEO_PROFILES, DEFAULT_RTC_VIDEO_PROFILE} from './rtc-interface';
 export type {IRTMOperations, IRTMAuthInfo, IRTMMetadata, IRTMStandardMessage} from './rtm-interface';
 export * from './whiteboard-interface';

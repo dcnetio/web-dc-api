@@ -3,6 +3,7 @@ import { DCContext } from '../interfaces/DCContext';
 import { IRTCOperations, IRTCAuthInfo, IRTCJoinRoomOptions, IRTCStreamConfig, CallSignalEvent, CallSignalEventPayloadMap, IRTCCameraDevice, IRTCScreenShareConfig, RTCGenericEventCallback, RTC_VIDEO_PROFILES, DEFAULT_RTC_VIDEO_PROFILE } from '../interfaces/rtc-interface';
 import { RTCChannelInviteMessage } from '../interfaces/rtc-interface';
 import { AliyunRTCOperations } from '../implements/rtc/aliyun-rtc';
+import { WebRTCP2POperations } from '../implements/rtc/webrtc-p2p';
 import { Encryption } from '../util/curve25519Encryption';
 import { Ed25519PubKey } from "../common/dc-key/ed25519";
 import { toString as uint8ArrayToString } from "uint8arrays/to-string";
@@ -11,11 +12,13 @@ import { IRTMStandardMessage } from '../interfaces/rtm-interface';
 
 export class RTCModule implements DCModule, IRTCOperations {
   public readonly moduleName = CoreModuleName.RTC;
-  private readonly rtcOps: AliyunRTCOperations;
+  private rtcOps: IRTCOperations;
 
   private context?: DCContext;
   private customEventListeners: Map<CallSignalEvent, Array<(payload: CallSignalEventPayloadMap[CallSignalEvent]) => void>> = new Map();
+  private rtcEventListeners: Map<string, RTCGenericEventCallback[]> = new Map();
   private rtmListenerAttached: boolean = false;
+  private rtmListenerRetryTimer: ReturnType<typeof setTimeout> | null = null;
   private static readonly CALL_SIGNAL_EVENTS: ReadonlySet<CallSignalEvent> = new Set<CallSignalEvent>([
     'onCallRequest',
     'onCallAccept',
@@ -35,6 +38,7 @@ export class RTCModule implements DCModule, IRTCOperations {
 
   public async initialize(context: DCContext): Promise<boolean> {
     this.context = context;
+    (this.rtcOps as any).initializeContext?.(context);
     return true;
   }
   
@@ -71,6 +75,11 @@ export class RTCModule implements DCModule, IRTCOperations {
   private settleInFlight: boolean = false;
   // 页面卸载兜底（方案B）：pagehide/beforeunload 时尽力补最后一笔结算，覆盖"直接关标签"场景。
   private unloadListenerAttached: boolean = false;
+  private pendingP2PPeer: { userId: string; channelId: string; role: 'offerer' | 'answerer' } | null = null;
+
+  private isP2PTransport(): boolean {
+    return this.authInfo?.transport === 'p2p';
+  }
 
   private handleLocalScreenShareStopped = () => {
     // 用户通过浏览器原生 UI 停止共享：先按屏幕档结算已发生用量，再降档。
@@ -150,6 +159,7 @@ export class RTCModule implements DCModule, IRTCOperations {
   // 以保证这段经过时间按其真实生效的媒体档计费。
   private async settleCurrentUsageInterval(): Promise<void> {
     if (!this.hasJoinedChannel) return;
+    if (this.isP2PTransport()) return;
     // 应用自管 token（fetchAuthInfo）不由 SDK 计费结算；仅 aliyun（themeAuthor）签发路径参与。
     if (this.authInfo?.fetchAuthInfo || !this.authInfo?.themeAuthor) return;
     if (this.settleInFlight) return;
@@ -194,6 +204,7 @@ export class RTCModule implements DCModule, IRTCOperations {
   // 若该媒体已在当前 token 中授权（如默认入会已声明），则不刷新，避免重复计费。
   private async ensureMediaPrivilege(): Promise<void> {
     if (!this.hasJoinedChannel) return;
+    if (this.isP2PTransport()) return;
     // 仅 aliyun（themeAuthor）签发路径由 SDK 构造能力头；fetchAuthInfo 由应用自管，跳过。
     if (this.authInfo?.fetchAuthInfo || !this.authInfo?.themeAuthor) return;
     const needAudio = this.shouldPublishAudio && !this.tokenGrantedAudio;
@@ -278,7 +289,7 @@ export class RTCModule implements DCModule, IRTCOperations {
   // (RtcBaseCost) 计费，故只要入房即启动心跳；服务端在未配置底价时对该区间结算返回 0（无害）。
   // 本方法在多处被调用以重新评估媒体状态，需保持幂等：已在运行则不重启定时器。
   private syncActiveMediaRefreshTask() {
-    const isAliyunBilled = !this.authInfo?.fetchAuthInfo && !!this.authInfo?.themeAuthor;
+    const isAliyunBilled = !this.isP2PTransport() && !this.authInfo?.fetchAuthInfo && !!this.authInfo?.themeAuthor;
     const shouldHeartbeat = this.hasJoinedChannel && isAliyunBilled;
 
     if (!shouldHeartbeat) {
@@ -326,19 +337,46 @@ export class RTCModule implements DCModule, IRTCOperations {
       appId: authInfo.appId || this.context?.appInfo?.appId || ""
     };
 
+    // Keep the historical provider unless the caller explicitly opts into
+    // native WebRTC. Switching happens before any token lookup so p2p never
+    // contacts the Aliyun token/charging endpoint.
+    const wantsP2P = this.authInfo.transport === 'p2p';
+    if (wantsP2P && !(this.rtcOps instanceof WebRTCP2POperations)) {
+      try { this.rtcOps.destroy(); } catch { /* provider may be uninitialized */ }
+      this.detachRTCStateListener();
+      this.rtcOps = new WebRTCP2POperations();
+      (this.rtcOps as any).initializeContext?.(this.context);
+      this.bindRTCEventListeners();
+    } else if (!wantsP2P && this.rtcOps instanceof WebRTCP2POperations) {
+      try { this.rtcOps.destroy(); } catch { /* provider may be uninitialized */ }
+      this.detachRTCStateListener();
+      this.rtcOps = new AliyunRTCOperations();
+      (this.rtcOps as any).initializeContext?.(this.context);
+      this.bindRTCEventListeners();
+    }
+    if (wantsP2P && this.pendingP2PPeer) {
+      this.authInfo.peerUserId = this.pendingP2PPeer.userId;
+      this.authInfo.channelId = this.pendingP2PPeer.channelId;
+      (this.rtcOps as WebRTCP2POperations).preparePeer(
+        this.pendingP2PPeer.userId,
+        this.pendingP2PPeer.channelId,
+        this.pendingP2PPeer.role,
+      );
+    }
+
     if (!this.authInfo.userId) {
       throw new Error(
         '[RTC] Init failed: no logged-in user. Ensure the user is logged in (dc.publicKey ready) before calling dc.rtc.init.'
       );
     }
 
-    if (!this.authInfo.token && this.authInfo.fetchAuthInfo) {
+    if (!wantsP2P && !this.authInfo.token && this.authInfo.fetchAuthInfo) {
       const res = await this.authInfo.fetchAuthInfo(true);
       this.authInfo.token = res.token;
       this.mainTokenExpireAt = res.expiresAt ? res.expiresAt * 1000 : (Date.now() + 24 * 60 * 60 * 1000);
     }
 
-    if (!this.authInfo.token && (this.context as any)?.aiproxy && this.authInfo.themeAuthor) {
+    if (!wantsP2P && !this.authInfo.token && (this.context as any)?.aiproxy && this.authInfo.themeAuthor) {
       try {
         const headers = this.buildAliyunTokenRefreshHeaders();
         const [authRes, err] = await (this.context as any).aiproxy.GetAliyunV3Token({
@@ -363,7 +401,7 @@ export class RTCModule implements DCModule, IRTCOperations {
       }
     }
 
-    if (!this.mainTokenExpireAt) this.mainTokenExpireAt = Date.now() + 24 * 60 * 60 * 1000;
+    if (!this.mainTokenExpireAt && !wantsP2P) this.mainTokenExpireAt = Date.now() + 24 * 60 * 60 * 1000;
 
     // 默认按 RTC 行为，入房后会推音视频；屏幕共享默认关闭。
     this.hasJoinedChannel = false;
@@ -384,6 +422,11 @@ export class RTCModule implements DCModule, IRTCOperations {
 
   private startMaintainTask() {
     if (this.maintainTimer) clearInterval(this.maintainTimer);
+    if (this.isP2PTransport()) {
+      this.maintainTimer = null;
+      this.syncActiveMediaRefreshTask();
+      return;
+    }
     this.maintainTimer = setInterval(async () => {
       const now = Date.now();
       const threshold = 20 * 1000; // 前20秒去刷新
@@ -451,18 +494,19 @@ export class RTCModule implements DCModule, IRTCOperations {
     this.syncActiveMediaRefreshTask();
 
     this.authInfo.channelId = channelId;
-    this.authInfo.token = undefined; // force refresh
+    if (!this.isP2PTransport()) this.authInfo.token = undefined; // force refresh
     this.mainTokenExpireAt = 0;
 
-    // refetch token for the new channel
-    if (this.authInfo.fetchAuthInfo) {
+    // refetch token for the new channel. Native p2p has no cloud token or
+    // usage settlement; RTM remains the signaling transport only.
+    if (!this.isP2PTransport() && this.authInfo.fetchAuthInfo) {
       const res = await this.authInfo.fetchAuthInfo(true);
       this.authInfo.token = res.token;
       this.mainTokenExpireAt = res.expiresAt ? res.expiresAt * 1000 : (Date.now() + 24 * 60 * 60 * 1000);
       // fetchAuthInfo 由应用自行签发 token（SDK 不构造能力头），视为已授予全部推流权限，不触发补权限续期。
       this.tokenGrantedAudio = this.tokenGrantedVideo = this.tokenGrantedScreen = true;
       this.lastBilledAt = Date.now();
-    } else if ((this.context as any)?.aiproxy && this.authInfo.themeAuthor) {
+    } else if (!this.isP2PTransport() && (this.context as any)?.aiproxy && this.authInfo.themeAuthor) {
       // 入会时直接声明能力，不经 buildAliyunTokenRefreshHeaders（后者仅用于续期场景，
       // 因 hasJoinedChannel=false 时会短路返回 undefined，导致能力头丢失）。
       // 后端 RTC 动态计费按"每次签发新 Token 都计费"：入会及后续每次续期（临近过期时）均按声明的媒体计费。
@@ -504,9 +548,9 @@ export class RTCModule implements DCModule, IRTCOperations {
       }
     }
 
-    if (this.rtcOps && typeof (this.rtcOps as any).renewToken === 'function' && this.authInfo.token) {
+    if (!this.isP2PTransport() && this.rtcOps && typeof (this.rtcOps as any).renewToken === 'function' && this.authInfo.token) {
       (this.rtcOps as any).renewToken(this.authInfo.token);
-    } else if (this.rtcOps) {
+    } else if (!this.isP2PTransport() && this.rtcOps) {
       console.warn('The RTC provider does not explicitly implement renewToken, hoping SDK accepts token in join()');
     }
 
@@ -544,6 +588,7 @@ export class RTCModule implements DCModule, IRTCOperations {
     } finally {
       this.hasJoinedChannel = false;
       this.isScreenSharing = false;
+      if (this.isP2PTransport()) this.pendingP2PPeer = null;
       this.syncActiveMediaRefreshTask();
     }
   }
@@ -692,6 +737,7 @@ export class RTCModule implements DCModule, IRTCOperations {
     // 常在 init 失败 / 从未入房的半初始化状态下调用 destroy，任何一步抛错都会变成
     // "Leave game error" 二次异常。这里逐步包裹，确保即便某模块未就绪也能完成清理。
     this.joinRoomInFlight = null;
+    this.pendingP2PPeer = null;
     try {
       if (this.context) {
         const rtmModule = (this.context as any)?.getModule(CoreModuleName.RTM);
@@ -703,6 +749,8 @@ export class RTCModule implements DCModule, IRTCOperations {
       /* RTM 模块未初始化，安全跳过 */
     }
     this.rtmListenerAttached = false;
+    if (this.rtmListenerRetryTimer) clearTimeout(this.rtmListenerRetryTimer);
+    this.rtmListenerRetryTimer = null;
     try { this.detachRTCStateListener(); } catch { /* 未注册监听，安全跳过 */ }
     try {
       if (typeof window !== 'undefined' && this.unloadListenerAttached) {
@@ -723,6 +771,7 @@ export class RTCModule implements DCModule, IRTCOperations {
     this.isScreenSharing = false;
     try { this.syncActiveMediaRefreshTask(); } catch { /* 安全跳过 */ }
     this.customEventListeners.clear();
+    this.rtcEventListeners.clear();
     try {
       this.rtcOps.destroy();
     } catch {
@@ -827,6 +876,11 @@ export class RTCModule implements DCModule, IRTCOperations {
     const channelId = this.generateChannelId();
     const rtmModule = (this.context as any).getModule(CoreModuleName.RTM);
     if (!rtmModule) throw new Error("RTM module is required for signaling");
+    this.ensureRTMListener();
+    if (this.rtcOps instanceof WebRTCP2POperations) {
+      this.pendingP2PPeer = { userId: targetUserId, channelId, role: 'offerer' };
+      this.rtcOps.preparePeer(targetUserId, channelId, 'offerer');
+    }
 
     const payload = {
       type: 'DC_RTC_CALL_REQUEST',
@@ -844,6 +898,11 @@ export class RTCModule implements DCModule, IRTCOperations {
     const payload = { type: 'DC_RTC_CALL_ACCEPT', channelId };
     const rtmModule = (this.context as any).getModule(CoreModuleName.RTM);
     if (rtmModule) {
+      this.ensureRTMListener();
+      if (this.rtcOps instanceof WebRTCP2POperations) {
+        this.pendingP2PPeer = { userId: targetUserId, channelId, role: 'answerer' };
+        this.rtcOps.preparePeer(targetUserId, channelId, 'answerer');
+      }
       await rtmModule.sendMessageToPeer(targetUserId, JSON.stringify(payload), true, true);
     }
   }
@@ -869,6 +928,11 @@ export class RTCModule implements DCModule, IRTCOperations {
     const channelId = this.generateChannelId();
     const rtmModule = (this.context as any).getModule(CoreModuleName.RTM);
     if (!rtmModule) throw new Error("RTM module is required for signaling");
+    this.ensureRTMListener();
+    if (this.rtcOps instanceof WebRTCP2POperations) {
+      this.pendingP2PPeer = { userId: targetUserId, channelId, role: 'offerer' };
+      this.rtcOps.preparePeer(targetUserId, channelId, 'offerer');
+    }
 
     const payload = {
       type: 'DC_RTC_PERSISTENT_SESSION_REQUEST',
@@ -885,6 +949,11 @@ export class RTCModule implements DCModule, IRTCOperations {
     const payload = { type: 'DC_RTC_PERSISTENT_SESSION_ACCEPT', channelId };
     const rtmModule = (this.context as any).getModule(CoreModuleName.RTM);
     if (rtmModule) {
+      this.ensureRTMListener();
+      if (this.rtcOps instanceof WebRTCP2POperations) {
+        this.pendingP2PPeer = { userId: targetUserId, channelId, role: 'answerer' };
+        this.rtcOps.preparePeer(targetUserId, channelId, 'answerer');
+      }
       await rtmModule.sendMessageToPeer(targetUserId, JSON.stringify(payload), true, true);
     }
   }
@@ -959,6 +1028,9 @@ export class RTCModule implements DCModule, IRTCOperations {
       }
       this.customEventListeners.get(event)!.push(callback as (payload: CallSignalEventPayloadMap[CallSignalEvent]) => void);
     } else {
+      const callbacks = this.rtcEventListeners.get(event) || [];
+      callbacks.push(callback);
+      this.rtcEventListeners.set(event, callbacks);
       this.rtcOps.on(event, callback);
     }
   }
@@ -973,6 +1045,12 @@ export class RTCModule implements DCModule, IRTCOperations {
         if (idx > -1) callbacks.splice(idx, 1);
       }
     } else {
+      const callbacks = this.rtcEventListeners.get(event);
+      if (callbacks) {
+        const idx = callbacks.indexOf(callback);
+        if (idx >= 0) callbacks.splice(idx, 1);
+        if (callbacks.length === 0) this.rtcEventListeners.delete(event);
+      }
       this.rtcOps.off(event, callback);
     }
   }
@@ -987,13 +1065,26 @@ export class RTCModule implements DCModule, IRTCOperations {
     try {
       const payload = JSON.parse(msgEvent.message);
       if (payload && payload.type) {
-        const uid = msgEvent.publisher || msgEvent.uid || '';
-        const sigKey = `${payload.type}_${payload.channelId || ''}_${uid}_${payload.timestamp || ''}`;
-        if (this.processedSignals.has(sigKey)) return;
-        this.processedSignals.add(sigKey);
-        setTimeout(() => this.processedSignals.delete(sigKey), 10000);
+        // RTMModule normalizes transient sender identities ("<user>_s") into
+        // userId. Prefer it so WebRTC signaling is always bound to the actual
+        // wallet public key rather than a short-lived sending identity.
+        const uid = msgEvent.userId || msgEvent.publisher || msgEvent.uid || '';
+        const isNativeP2PSignal = payload.type === 'DC_RTC_WEBRTC_SIGNAL' || payload.type === 'DC_RTC_WEBRTC_SIGNAL_CHUNK';
+        // Native WebRTC messages are deduplicated only after the provider has
+        // authenticated them. Doing it here would let an unverified fragment
+        // suppress a valid fragment with the same signalId.
+        if (!isNativeP2PSignal) {
+          const sigKey = `${payload.type}_${payload.channelId || ''}_${uid}_${payload.signalId || payload.timestamp || ''}`;
+          if (this.processedSignals.has(sigKey)) return;
+          this.processedSignals.add(sigKey);
+          setTimeout(() => this.processedSignals.delete(sigKey), 10000);
+        }
 
         if (payload.type === 'DC_RTC_CALL_REQUEST') {
+          if (this.rtcOps instanceof WebRTCP2POperations && payload.channelId) {
+            this.pendingP2PPeer = { userId: uid, channelId: payload.channelId, role: 'answerer' };
+            this.rtcOps.preparePeer(uid, payload.channelId, 'answerer');
+          }
           this.emitCustomEvent('onCallRequest', {
             callerId: uid,
             channelId: payload.channelId,
@@ -1001,6 +1092,10 @@ export class RTCModule implements DCModule, IRTCOperations {
             timestamp: payload.timestamp
           });
         } else if (payload.type === 'DC_RTC_CALL_ACCEPT') {
+          if (this.rtcOps instanceof WebRTCP2POperations && payload.channelId) {
+            this.pendingP2PPeer = { userId: uid, channelId: payload.channelId, role: 'offerer' };
+            this.rtcOps.preparePeer(uid, payload.channelId, 'offerer');
+          }
           this.emitCustomEvent('onCallAccept', {
             calleeId: uid,
             channelId: payload.channelId
@@ -1015,6 +1110,10 @@ export class RTCModule implements DCModule, IRTCOperations {
             channelId: payload.channelId
           });
         } else if (payload.type === 'DC_RTC_PERSISTENT_SESSION_REQUEST') {
+          if (this.rtcOps instanceof WebRTCP2POperations && payload.channelId) {
+            this.pendingP2PPeer = { userId: uid, channelId: payload.channelId, role: 'answerer' };
+            this.rtcOps.preparePeer(uid, payload.channelId, 'answerer');
+          }
           this.emitCustomEvent('onPersistentSessionRequest', {
             callerId: uid,
             channelId: payload.channelId,
@@ -1022,9 +1121,21 @@ export class RTCModule implements DCModule, IRTCOperations {
             timestamp: payload.timestamp
           });
         } else if (payload.type === 'DC_RTC_PERSISTENT_SESSION_ACCEPT') {
+          if (this.rtcOps instanceof WebRTCP2POperations && payload.channelId) {
+            this.pendingP2PPeer = { userId: uid, channelId: payload.channelId, role: 'offerer' };
+            this.rtcOps.preparePeer(uid, payload.channelId, 'offerer');
+          }
           this.emitCustomEvent('onPersistentSessionAccept', {
             calleeId: uid,
             channelId: payload.channelId
+          });
+        } else if (payload.type === 'DC_RTC_WEBRTC_SIGNAL' && this.rtcOps instanceof WebRTCP2POperations) {
+          void this.rtcOps.handleSignalEnvelope(payload, uid, payload.channelId).catch((error: unknown) => {
+            console.warn('[RTC:p2p] Failed to apply WebRTC signal:', error);
+          });
+        } else if (payload.type === 'DC_RTC_WEBRTC_SIGNAL_CHUNK' && this.rtcOps instanceof WebRTCP2POperations) {
+          void this.rtcOps.handleSignalChunk(payload, uid, payload.channelId).catch((error: unknown) => {
+            console.warn('[RTC:p2p] Failed to reassemble WebRTC signal:', error);
           });
         }
       }
@@ -1035,17 +1146,30 @@ export class RTCModule implements DCModule, IRTCOperations {
 
   private ensureRTMListener() {
     if (this.rtmListenerAttached) return;
-    this.rtmListenerAttached = true;
-    
-    // We defer attaching slightly or rely on DCContext being fully initialized
-    setTimeout(() => {
-      const rtmModule = (this.context as any)?.getModule(CoreModuleName.RTM);
-      if (rtmModule) {
-        rtmModule.on('onMessageReceived', this.handleRTMMessage);
-      } else {
-        this.rtmListenerAttached = false; // try again next time if RTM is missing
+    const rtmModule = (this.context as any)?.getModule(CoreModuleName.RTM);
+    if (rtmModule) {
+      rtmModule.on('onMessageReceived', this.handleRTMMessage);
+      this.rtmListenerAttached = true;
+      return;
+    }
+
+    // RTM can be registered after RTC in custom module setups. Retry once the
+    // module graph has settled, but do not delay the normal initialized path.
+    if (this.rtmListenerRetryTimer) return;
+    this.rtmListenerRetryTimer = setTimeout(() => {
+      this.rtmListenerRetryTimer = null;
+      const delayedRTMModule = (this.context as any)?.getModule(CoreModuleName.RTM);
+      if (delayedRTMModule && !this.rtmListenerAttached) {
+        delayedRTMModule.on('onMessageReceived', this.handleRTMMessage);
+        this.rtmListenerAttached = true;
       }
     }, 100);
+  }
+
+  private bindRTCEventListeners(): void {
+    this.rtcEventListeners.forEach((callbacks, event) => {
+      callbacks.forEach(callback => this.rtcOps.on(event, callback));
+    });
   }
 
   private emitCustomEvent<E extends CallSignalEvent>(event: E, payload: CallSignalEventPayloadMap[E]) {
