@@ -771,28 +771,33 @@ export class AIProxyManager {
       ...modelValue,
       ...headersValue,
     ]);
-    if (!this.context.AccountBackupDc.client) {
-      throw new Error("ErrConnectToAccountPeersFail");
-    }
-    if (!this.context.publicKey) {
-      throw new Error("ErrConnectToAccountPeersFail");
-    }
-
-    if (this.context.AccountBackupDc.client.token == "") {
-      await this.context.AccountBackupDc.client.GetToken(
-        this.context.appInfo.appId || "",
-        this.context.publicKey.string(),
-        this.context.sign,
-      );
-    }
-    const signature = await this.context.sign(preSign);
-    const proxyClient = new AIProxyClient(
-      this.context.AccountBackupDc.client,
-      this.context,
-    );
+    // AI/蓝图是前台长连接。让它先于登录后的 ThreadDB 回推、文件上报
+    // 获取传输闸门，覆盖令牌获取、签名和代理调用，避免首次请求的
+    // GetToken 仍在后台回推期间抢占同一条 muxer 连接。
+    const releaseForegroundTransport =
+      await this.dc.acquireForegroundTransport();
     let res: number;
     let callError: unknown;
     try {
+      if (!this.context.AccountBackupDc.client) {
+        throw new Error("ErrConnectToAccountPeersFail");
+      }
+      if (!this.context.publicKey) {
+        throw new Error("ErrConnectToAccountPeersFail");
+      }
+
+      if (this.context.AccountBackupDc.client.token == "") {
+        await this.context.AccountBackupDc.client.GetToken(
+          this.context.appInfo.appId || "",
+          this.context.publicKey.string(),
+          this.context.sign,
+        );
+      }
+      const signature = await this.context.sign(preSign);
+      const proxyClient = new AIProxyClient(
+        this.context.AccountBackupDc.client,
+        this.context,
+      );
       res = await proxyClient.DoAIProxyCall(
         context,
         appId,
@@ -812,6 +817,8 @@ export class AIProxyManager {
     } catch (e) {
       callError = e;
       res = -1;
+    } finally {
+      releaseForegroundTransport();
     }
     if (callError !== undefined) throw callError;
     return res;

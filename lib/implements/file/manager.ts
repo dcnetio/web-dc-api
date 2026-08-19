@@ -1405,7 +1405,11 @@ export class FileManager {
       );
       return [fileContent, null];
     } catch (error: any) {
-      console.warn("getFileFromDcWithPeerAddr error", error, "cid:", cid);
+      // 调用方自己取消（切换预览、点刷新、重试前中止上一次）是预期路径，
+      // 按 warn 打出来会和真正拉不到块的故障混在一起，无法排查。
+      if (!options?.signal?.aborted) {
+        console.warn("getFileFromDcWithPeerAddr error", error, "cid:", cid);
+      }
       return [
         null,
         error instanceof Error

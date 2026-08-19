@@ -403,6 +403,17 @@ export interface IPendingGatewayPayment {
 }
 
 /**
+ * 支付网关订单账本写入者配置。
+ * 由支付网关通过 libp2p gRPC 返回，供应用初始化共享订单账本权限。
+ */
+export interface IPaymentLedgerWriterConfig {
+  /** 订单账本主题。 */
+  theme: string;
+  /** 支付网关写入订单事实时使用的 DC 公钥。 */
+  writerPubkey: string;
+}
+
+/**
  * 支付订单记录。
  * 来自支付系统查询结果，用于订单列表和状态展示。
  */
@@ -499,6 +510,11 @@ export interface IPayOperations {
      */
     payApiBaseUrl?: string;
   }): void;
+
+  /**
+   * 通过支付网关 libp2p gRPC 获取订单账本写入者配置。
+   */
+  getPaymentLedgerWriter(): Promise<IPaymentLedgerWriterConfig>;
 
   /**
    * 查询支付订单列表。

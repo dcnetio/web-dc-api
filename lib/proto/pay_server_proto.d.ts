@@ -1,5 +1,4 @@
 import * as $protobuf from "protobufjs";
-import Long = require("long");
 /** Namespace pb. */
 export namespace pb {
 
@@ -64,6 +63,20 @@ export namespace pb {
          * @returns Promise
          */
         public getAllPackagesConfig(request: pb.IGetAllPackagesConfigRequest): Promise<pb.GetAllPackagesConfigResponse>;
+
+        /**
+         * Calls GetPaymentLedgerWriter.
+         * @param request GetPaymentLedgerWriterRequest message or plain object
+         * @param callback Node-style callback called with the error, if any, and GetPaymentLedgerWriterResponse
+         */
+        public getPaymentLedgerWriter(request: pb.IGetPaymentLedgerWriterRequest, callback: pb.PayService.GetPaymentLedgerWriterCallback): void;
+
+        /**
+         * Calls GetPaymentLedgerWriter.
+         * @param request GetPaymentLedgerWriterRequest message or plain object
+         * @returns Promise
+         */
+        public getPaymentLedgerWriter(request: pb.IGetPaymentLedgerWriterRequest): Promise<pb.GetPaymentLedgerWriterResponse>;
 
         /**
          * Calls DeleteBussPackage.
@@ -860,6 +873,13 @@ export namespace pb {
         type GetAllPackagesConfigCallback = (error: (Error|null), response?: pb.GetAllPackagesConfigResponse) => void;
 
         /**
+         * Callback as used by {@link pb.PayService#getPaymentLedgerWriter}.
+         * @param error Error, if any
+         * @param [response] GetPaymentLedgerWriterResponse
+         */
+        type GetPaymentLedgerWriterCallback = (error: (Error|null), response?: pb.GetPaymentLedgerWriterResponse) => void;
+
+        /**
          * Callback as used by {@link pb.PayService#deleteBussPackage}.
          * @param error Error, if any
          * @param [response] ApplyBussPackageResponse
@@ -1281,9 +1301,9 @@ export namespace pb {
 
         /**
          * Constructs a new GetPackagesRequest.
-         * @param [properties] Properties to set
+         * @param [p] Properties to set
          */
-        constructor(properties?: pb.IGetPackagesRequest);
+        constructor(p?: pb.IGetPackagesRequest);
 
         /** GetPackagesRequest pkgType. */
         public pkgType: number;
@@ -1321,11 +1341,11 @@ export namespace pb {
 
         /**
          * Encodes the specified GetPackagesRequest message. Does not implicitly {@link pb.GetPackagesRequest.verify|verify} messages.
-         * @param message GetPackagesRequest message or plain object to encode
-         * @param [writer] Writer to encode to
+         * @param m GetPackagesRequest message or plain object to encode
+         * @param [w] Writer to encode to
          * @returns Writer
          */
-        public static encode(message: pb.IGetPackagesRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+        public static encode(m: pb.IGetPackagesRequest, w?: $protobuf.Writer): $protobuf.Writer;
 
         /**
          * Encodes the specified GetPackagesRequest message, length delimited. Does not implicitly {@link pb.GetPackagesRequest.verify|verify} messages.
@@ -1337,13 +1357,13 @@ export namespace pb {
 
         /**
          * Decodes a GetPackagesRequest message from the specified reader or buffer.
-         * @param reader Reader or buffer to decode from
-         * @param [length] Message length if known beforehand
+         * @param r Reader or buffer to decode from
+         * @param [l] Message length if known beforehand
          * @returns GetPackagesRequest
          * @throws {Error} If the payload is not a reader or valid buffer
          * @throws {$protobuf.util.ProtocolError} If required fields are missing
          */
-        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): pb.GetPackagesRequest;
+        public static decode(r: ($protobuf.Reader|Uint8Array), l?: number): pb.GetPackagesRequest;
 
         /**
          * Decodes a GetPackagesRequest message from the specified reader or buffer, length delimited.
@@ -1356,38 +1376,31 @@ export namespace pb {
 
         /**
          * Verifies a GetPackagesRequest message.
-         * @param message Plain object to verify
+         * @param m Plain object to verify
          * @returns `null` if valid, otherwise the reason why it is not
          */
-        public static verify(message: { [k: string]: any }): (string|null);
+        public static verify(m: { [k: string]: any }): (string|null);
 
         /**
          * Creates a GetPackagesRequest message from a plain object. Also converts values to their respective internal types.
-         * @param object Plain object
+         * @param d Plain object
          * @returns GetPackagesRequest
          */
-        public static fromObject(object: { [k: string]: any }): pb.GetPackagesRequest;
+        public static fromObject(d: { [k: string]: any }): pb.GetPackagesRequest;
 
         /**
          * Creates a plain object from a GetPackagesRequest message. Also converts values to other types if specified.
-         * @param message GetPackagesRequest
-         * @param [options] Conversion options
+         * @param m GetPackagesRequest
+         * @param [o] Conversion options
          * @returns Plain object
          */
-        public static toObject(message: pb.GetPackagesRequest, options?: $protobuf.IConversionOptions): { [k: string]: any };
+        public static toObject(m: pb.GetPackagesRequest, o?: $protobuf.IConversionOptions): { [k: string]: any };
 
         /**
          * Converts this GetPackagesRequest to JSON.
          * @returns JSON object
          */
         public toJSON(): { [k: string]: any };
-
-        /**
-         * Gets the default type url for GetPackagesRequest
-         * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
-         * @returns The default type url
-         */
-        public static getTypeUrl(typeUrlPrefix?: string): string;
     }
 
     /** Properties of a GetPackagesResponse. */
@@ -1408,9 +1421,9 @@ export namespace pb {
 
         /**
          * Constructs a new GetPackagesResponse.
-         * @param [properties] Properties to set
+         * @param [p] Properties to set
          */
-        constructor(properties?: pb.IGetPackagesResponse);
+        constructor(p?: pb.IGetPackagesResponse);
 
         /** GetPackagesResponse code. */
         public code: number;
@@ -1430,11 +1443,11 @@ export namespace pb {
 
         /**
          * Encodes the specified GetPackagesResponse message. Does not implicitly {@link pb.GetPackagesResponse.verify|verify} messages.
-         * @param message GetPackagesResponse message or plain object to encode
-         * @param [writer] Writer to encode to
+         * @param m GetPackagesResponse message or plain object to encode
+         * @param [w] Writer to encode to
          * @returns Writer
          */
-        public static encode(message: pb.IGetPackagesResponse, writer?: $protobuf.Writer): $protobuf.Writer;
+        public static encode(m: pb.IGetPackagesResponse, w?: $protobuf.Writer): $protobuf.Writer;
 
         /**
          * Encodes the specified GetPackagesResponse message, length delimited. Does not implicitly {@link pb.GetPackagesResponse.verify|verify} messages.
@@ -1446,13 +1459,13 @@ export namespace pb {
 
         /**
          * Decodes a GetPackagesResponse message from the specified reader or buffer.
-         * @param reader Reader or buffer to decode from
-         * @param [length] Message length if known beforehand
+         * @param r Reader or buffer to decode from
+         * @param [l] Message length if known beforehand
          * @returns GetPackagesResponse
          * @throws {Error} If the payload is not a reader or valid buffer
          * @throws {$protobuf.util.ProtocolError} If required fields are missing
          */
-        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): pb.GetPackagesResponse;
+        public static decode(r: ($protobuf.Reader|Uint8Array), l?: number): pb.GetPackagesResponse;
 
         /**
          * Decodes a GetPackagesResponse message from the specified reader or buffer, length delimited.
@@ -1465,38 +1478,31 @@ export namespace pb {
 
         /**
          * Verifies a GetPackagesResponse message.
-         * @param message Plain object to verify
+         * @param m Plain object to verify
          * @returns `null` if valid, otherwise the reason why it is not
          */
-        public static verify(message: { [k: string]: any }): (string|null);
+        public static verify(m: { [k: string]: any }): (string|null);
 
         /**
          * Creates a GetPackagesResponse message from a plain object. Also converts values to their respective internal types.
-         * @param object Plain object
+         * @param d Plain object
          * @returns GetPackagesResponse
          */
-        public static fromObject(object: { [k: string]: any }): pb.GetPackagesResponse;
+        public static fromObject(d: { [k: string]: any }): pb.GetPackagesResponse;
 
         /**
          * Creates a plain object from a GetPackagesResponse message. Also converts values to other types if specified.
-         * @param message GetPackagesResponse
-         * @param [options] Conversion options
+         * @param m GetPackagesResponse
+         * @param [o] Conversion options
          * @returns Plain object
          */
-        public static toObject(message: pb.GetPackagesResponse, options?: $protobuf.IConversionOptions): { [k: string]: any };
+        public static toObject(m: pb.GetPackagesResponse, o?: $protobuf.IConversionOptions): { [k: string]: any };
 
         /**
          * Converts this GetPackagesResponse to JSON.
          * @returns JSON object
          */
         public toJSON(): { [k: string]: any };
-
-        /**
-         * Gets the default type url for GetPackagesResponse
-         * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
-         * @returns The default type url
-         */
-        public static getTypeUrl(typeUrlPrefix?: string): string;
     }
 
     /** Properties of a PackageInfo. */
@@ -1586,9 +1592,9 @@ export namespace pb {
 
         /**
          * Constructs a new PackageInfo.
-         * @param [properties] Properties to set
+         * @param [p] Properties to set
          */
-        constructor(properties?: pb.IPackageInfo);
+        constructor(p?: pb.IPackageInfo);
 
         /** PackageInfo pkgId. */
         public pkgId: number;
@@ -1677,11 +1683,11 @@ export namespace pb {
 
         /**
          * Encodes the specified PackageInfo message. Does not implicitly {@link pb.PackageInfo.verify|verify} messages.
-         * @param message PackageInfo message or plain object to encode
-         * @param [writer] Writer to encode to
+         * @param m PackageInfo message or plain object to encode
+         * @param [w] Writer to encode to
          * @returns Writer
          */
-        public static encode(message: pb.IPackageInfo, writer?: $protobuf.Writer): $protobuf.Writer;
+        public static encode(m: pb.IPackageInfo, w?: $protobuf.Writer): $protobuf.Writer;
 
         /**
          * Encodes the specified PackageInfo message, length delimited. Does not implicitly {@link pb.PackageInfo.verify|verify} messages.
@@ -1693,13 +1699,13 @@ export namespace pb {
 
         /**
          * Decodes a PackageInfo message from the specified reader or buffer.
-         * @param reader Reader or buffer to decode from
-         * @param [length] Message length if known beforehand
+         * @param r Reader or buffer to decode from
+         * @param [l] Message length if known beforehand
          * @returns PackageInfo
          * @throws {Error} If the payload is not a reader or valid buffer
          * @throws {$protobuf.util.ProtocolError} If required fields are missing
          */
-        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): pb.PackageInfo;
+        public static decode(r: ($protobuf.Reader|Uint8Array), l?: number): pb.PackageInfo;
 
         /**
          * Decodes a PackageInfo message from the specified reader or buffer, length delimited.
@@ -1712,38 +1718,31 @@ export namespace pb {
 
         /**
          * Verifies a PackageInfo message.
-         * @param message Plain object to verify
+         * @param m Plain object to verify
          * @returns `null` if valid, otherwise the reason why it is not
          */
-        public static verify(message: { [k: string]: any }): (string|null);
+        public static verify(m: { [k: string]: any }): (string|null);
 
         /**
          * Creates a PackageInfo message from a plain object. Also converts values to their respective internal types.
-         * @param object Plain object
+         * @param d Plain object
          * @returns PackageInfo
          */
-        public static fromObject(object: { [k: string]: any }): pb.PackageInfo;
+        public static fromObject(d: { [k: string]: any }): pb.PackageInfo;
 
         /**
          * Creates a plain object from a PackageInfo message. Also converts values to other types if specified.
-         * @param message PackageInfo
-         * @param [options] Conversion options
+         * @param m PackageInfo
+         * @param [o] Conversion options
          * @returns Plain object
          */
-        public static toObject(message: pb.PackageInfo, options?: $protobuf.IConversionOptions): { [k: string]: any };
+        public static toObject(m: pb.PackageInfo, o?: $protobuf.IConversionOptions): { [k: string]: any };
 
         /**
          * Converts this PackageInfo to JSON.
          * @returns JSON object
          */
         public toJSON(): { [k: string]: any };
-
-        /**
-         * Gets the default type url for PackageInfo
-         * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
-         * @returns The default type url
-         */
-        public static getTypeUrl(typeUrlPrefix?: string): string;
     }
 
     /** Properties of an ApplyBussPackageRequest. */
@@ -1818,9 +1817,9 @@ export namespace pb {
 
         /**
          * Constructs a new ApplyBussPackageRequest.
-         * @param [properties] Properties to set
+         * @param [p] Properties to set
          */
-        constructor(properties?: pb.IApplyBussPackageRequest);
+        constructor(p?: pb.IApplyBussPackageRequest);
 
         /** ApplyBussPackageRequest pkgType. */
         public pkgType: number;
@@ -1894,11 +1893,11 @@ export namespace pb {
 
         /**
          * Encodes the specified ApplyBussPackageRequest message. Does not implicitly {@link pb.ApplyBussPackageRequest.verify|verify} messages.
-         * @param message ApplyBussPackageRequest message or plain object to encode
-         * @param [writer] Writer to encode to
+         * @param m ApplyBussPackageRequest message or plain object to encode
+         * @param [w] Writer to encode to
          * @returns Writer
          */
-        public static encode(message: pb.IApplyBussPackageRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+        public static encode(m: pb.IApplyBussPackageRequest, w?: $protobuf.Writer): $protobuf.Writer;
 
         /**
          * Encodes the specified ApplyBussPackageRequest message, length delimited. Does not implicitly {@link pb.ApplyBussPackageRequest.verify|verify} messages.
@@ -1910,13 +1909,13 @@ export namespace pb {
 
         /**
          * Decodes an ApplyBussPackageRequest message from the specified reader or buffer.
-         * @param reader Reader or buffer to decode from
-         * @param [length] Message length if known beforehand
+         * @param r Reader or buffer to decode from
+         * @param [l] Message length if known beforehand
          * @returns ApplyBussPackageRequest
          * @throws {Error} If the payload is not a reader or valid buffer
          * @throws {$protobuf.util.ProtocolError} If required fields are missing
          */
-        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): pb.ApplyBussPackageRequest;
+        public static decode(r: ($protobuf.Reader|Uint8Array), l?: number): pb.ApplyBussPackageRequest;
 
         /**
          * Decodes an ApplyBussPackageRequest message from the specified reader or buffer, length delimited.
@@ -1929,38 +1928,31 @@ export namespace pb {
 
         /**
          * Verifies an ApplyBussPackageRequest message.
-         * @param message Plain object to verify
+         * @param m Plain object to verify
          * @returns `null` if valid, otherwise the reason why it is not
          */
-        public static verify(message: { [k: string]: any }): (string|null);
+        public static verify(m: { [k: string]: any }): (string|null);
 
         /**
          * Creates an ApplyBussPackageRequest message from a plain object. Also converts values to their respective internal types.
-         * @param object Plain object
+         * @param d Plain object
          * @returns ApplyBussPackageRequest
          */
-        public static fromObject(object: { [k: string]: any }): pb.ApplyBussPackageRequest;
+        public static fromObject(d: { [k: string]: any }): pb.ApplyBussPackageRequest;
 
         /**
          * Creates a plain object from an ApplyBussPackageRequest message. Also converts values to other types if specified.
-         * @param message ApplyBussPackageRequest
-         * @param [options] Conversion options
+         * @param m ApplyBussPackageRequest
+         * @param [o] Conversion options
          * @returns Plain object
          */
-        public static toObject(message: pb.ApplyBussPackageRequest, options?: $protobuf.IConversionOptions): { [k: string]: any };
+        public static toObject(m: pb.ApplyBussPackageRequest, o?: $protobuf.IConversionOptions): { [k: string]: any };
 
         /**
          * Converts this ApplyBussPackageRequest to JSON.
          * @returns JSON object
          */
         public toJSON(): { [k: string]: any };
-
-        /**
-         * Gets the default type url for ApplyBussPackageRequest
-         * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
-         * @returns The default type url
-         */
-        public static getTypeUrl(typeUrlPrefix?: string): string;
     }
 
     /** Properties of an ApplyBussPackageResponse. */
@@ -1981,9 +1973,9 @@ export namespace pb {
 
         /**
          * Constructs a new ApplyBussPackageResponse.
-         * @param [properties] Properties to set
+         * @param [p] Properties to set
          */
-        constructor(properties?: pb.IApplyBussPackageResponse);
+        constructor(p?: pb.IApplyBussPackageResponse);
 
         /** ApplyBussPackageResponse code. */
         public code: number;
@@ -2003,11 +1995,11 @@ export namespace pb {
 
         /**
          * Encodes the specified ApplyBussPackageResponse message. Does not implicitly {@link pb.ApplyBussPackageResponse.verify|verify} messages.
-         * @param message ApplyBussPackageResponse message or plain object to encode
-         * @param [writer] Writer to encode to
+         * @param m ApplyBussPackageResponse message or plain object to encode
+         * @param [w] Writer to encode to
          * @returns Writer
          */
-        public static encode(message: pb.IApplyBussPackageResponse, writer?: $protobuf.Writer): $protobuf.Writer;
+        public static encode(m: pb.IApplyBussPackageResponse, w?: $protobuf.Writer): $protobuf.Writer;
 
         /**
          * Encodes the specified ApplyBussPackageResponse message, length delimited. Does not implicitly {@link pb.ApplyBussPackageResponse.verify|verify} messages.
@@ -2019,13 +2011,13 @@ export namespace pb {
 
         /**
          * Decodes an ApplyBussPackageResponse message from the specified reader or buffer.
-         * @param reader Reader or buffer to decode from
-         * @param [length] Message length if known beforehand
+         * @param r Reader or buffer to decode from
+         * @param [l] Message length if known beforehand
          * @returns ApplyBussPackageResponse
          * @throws {Error} If the payload is not a reader or valid buffer
          * @throws {$protobuf.util.ProtocolError} If required fields are missing
          */
-        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): pb.ApplyBussPackageResponse;
+        public static decode(r: ($protobuf.Reader|Uint8Array), l?: number): pb.ApplyBussPackageResponse;
 
         /**
          * Decodes an ApplyBussPackageResponse message from the specified reader or buffer, length delimited.
@@ -2038,38 +2030,31 @@ export namespace pb {
 
         /**
          * Verifies an ApplyBussPackageResponse message.
-         * @param message Plain object to verify
+         * @param m Plain object to verify
          * @returns `null` if valid, otherwise the reason why it is not
          */
-        public static verify(message: { [k: string]: any }): (string|null);
+        public static verify(m: { [k: string]: any }): (string|null);
 
         /**
          * Creates an ApplyBussPackageResponse message from a plain object. Also converts values to their respective internal types.
-         * @param object Plain object
+         * @param d Plain object
          * @returns ApplyBussPackageResponse
          */
-        public static fromObject(object: { [k: string]: any }): pb.ApplyBussPackageResponse;
+        public static fromObject(d: { [k: string]: any }): pb.ApplyBussPackageResponse;
 
         /**
          * Creates a plain object from an ApplyBussPackageResponse message. Also converts values to other types if specified.
-         * @param message ApplyBussPackageResponse
-         * @param [options] Conversion options
+         * @param m ApplyBussPackageResponse
+         * @param [o] Conversion options
          * @returns Plain object
          */
-        public static toObject(message: pb.ApplyBussPackageResponse, options?: $protobuf.IConversionOptions): { [k: string]: any };
+        public static toObject(m: pb.ApplyBussPackageResponse, o?: $protobuf.IConversionOptions): { [k: string]: any };
 
         /**
          * Converts this ApplyBussPackageResponse to JSON.
          * @returns JSON object
          */
         public toJSON(): { [k: string]: any };
-
-        /**
-         * Gets the default type url for ApplyBussPackageResponse
-         * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
-         * @returns The default type url
-         */
-        public static getTypeUrl(typeUrlPrefix?: string): string;
     }
 
     /** Properties of a GetAllPackagesConfigRequest. */
@@ -2096,9 +2081,9 @@ export namespace pb {
 
         /**
          * Constructs a new GetAllPackagesConfigRequest.
-         * @param [properties] Properties to set
+         * @param [p] Properties to set
          */
-        constructor(properties?: pb.IGetAllPackagesConfigRequest);
+        constructor(p?: pb.IGetAllPackagesConfigRequest);
 
         /** GetAllPackagesConfigRequest pageNum. */
         public pageNum: number;
@@ -2124,11 +2109,11 @@ export namespace pb {
 
         /**
          * Encodes the specified GetAllPackagesConfigRequest message. Does not implicitly {@link pb.GetAllPackagesConfigRequest.verify|verify} messages.
-         * @param message GetAllPackagesConfigRequest message or plain object to encode
-         * @param [writer] Writer to encode to
+         * @param m GetAllPackagesConfigRequest message or plain object to encode
+         * @param [w] Writer to encode to
          * @returns Writer
          */
-        public static encode(message: pb.IGetAllPackagesConfigRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+        public static encode(m: pb.IGetAllPackagesConfigRequest, w?: $protobuf.Writer): $protobuf.Writer;
 
         /**
          * Encodes the specified GetAllPackagesConfigRequest message, length delimited. Does not implicitly {@link pb.GetAllPackagesConfigRequest.verify|verify} messages.
@@ -2140,13 +2125,13 @@ export namespace pb {
 
         /**
          * Decodes a GetAllPackagesConfigRequest message from the specified reader or buffer.
-         * @param reader Reader or buffer to decode from
-         * @param [length] Message length if known beforehand
+         * @param r Reader or buffer to decode from
+         * @param [l] Message length if known beforehand
          * @returns GetAllPackagesConfigRequest
          * @throws {Error} If the payload is not a reader or valid buffer
          * @throws {$protobuf.util.ProtocolError} If required fields are missing
          */
-        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): pb.GetAllPackagesConfigRequest;
+        public static decode(r: ($protobuf.Reader|Uint8Array), l?: number): pb.GetAllPackagesConfigRequest;
 
         /**
          * Decodes a GetAllPackagesConfigRequest message from the specified reader or buffer, length delimited.
@@ -2159,38 +2144,31 @@ export namespace pb {
 
         /**
          * Verifies a GetAllPackagesConfigRequest message.
-         * @param message Plain object to verify
+         * @param m Plain object to verify
          * @returns `null` if valid, otherwise the reason why it is not
          */
-        public static verify(message: { [k: string]: any }): (string|null);
+        public static verify(m: { [k: string]: any }): (string|null);
 
         /**
          * Creates a GetAllPackagesConfigRequest message from a plain object. Also converts values to their respective internal types.
-         * @param object Plain object
+         * @param d Plain object
          * @returns GetAllPackagesConfigRequest
          */
-        public static fromObject(object: { [k: string]: any }): pb.GetAllPackagesConfigRequest;
+        public static fromObject(d: { [k: string]: any }): pb.GetAllPackagesConfigRequest;
 
         /**
          * Creates a plain object from a GetAllPackagesConfigRequest message. Also converts values to other types if specified.
-         * @param message GetAllPackagesConfigRequest
-         * @param [options] Conversion options
+         * @param m GetAllPackagesConfigRequest
+         * @param [o] Conversion options
          * @returns Plain object
          */
-        public static toObject(message: pb.GetAllPackagesConfigRequest, options?: $protobuf.IConversionOptions): { [k: string]: any };
+        public static toObject(m: pb.GetAllPackagesConfigRequest, o?: $protobuf.IConversionOptions): { [k: string]: any };
 
         /**
          * Converts this GetAllPackagesConfigRequest to JSON.
          * @returns JSON object
          */
         public toJSON(): { [k: string]: any };
-
-        /**
-         * Gets the default type url for GetAllPackagesConfigRequest
-         * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
-         * @returns The default type url
-         */
-        public static getTypeUrl(typeUrlPrefix?: string): string;
     }
 
     /** Properties of a GetAllPackagesConfigData. */
@@ -2214,9 +2192,9 @@ export namespace pb {
 
         /**
          * Constructs a new GetAllPackagesConfigData.
-         * @param [properties] Properties to set
+         * @param [p] Properties to set
          */
-        constructor(properties?: pb.IGetAllPackagesConfigData);
+        constructor(p?: pb.IGetAllPackagesConfigData);
 
         /** GetAllPackagesConfigData list. */
         public list: pb.IPackageInfo[];
@@ -2239,11 +2217,11 @@ export namespace pb {
 
         /**
          * Encodes the specified GetAllPackagesConfigData message. Does not implicitly {@link pb.GetAllPackagesConfigData.verify|verify} messages.
-         * @param message GetAllPackagesConfigData message or plain object to encode
-         * @param [writer] Writer to encode to
+         * @param m GetAllPackagesConfigData message or plain object to encode
+         * @param [w] Writer to encode to
          * @returns Writer
          */
-        public static encode(message: pb.IGetAllPackagesConfigData, writer?: $protobuf.Writer): $protobuf.Writer;
+        public static encode(m: pb.IGetAllPackagesConfigData, w?: $protobuf.Writer): $protobuf.Writer;
 
         /**
          * Encodes the specified GetAllPackagesConfigData message, length delimited. Does not implicitly {@link pb.GetAllPackagesConfigData.verify|verify} messages.
@@ -2255,13 +2233,13 @@ export namespace pb {
 
         /**
          * Decodes a GetAllPackagesConfigData message from the specified reader or buffer.
-         * @param reader Reader or buffer to decode from
-         * @param [length] Message length if known beforehand
+         * @param r Reader or buffer to decode from
+         * @param [l] Message length if known beforehand
          * @returns GetAllPackagesConfigData
          * @throws {Error} If the payload is not a reader or valid buffer
          * @throws {$protobuf.util.ProtocolError} If required fields are missing
          */
-        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): pb.GetAllPackagesConfigData;
+        public static decode(r: ($protobuf.Reader|Uint8Array), l?: number): pb.GetAllPackagesConfigData;
 
         /**
          * Decodes a GetAllPackagesConfigData message from the specified reader or buffer, length delimited.
@@ -2274,38 +2252,31 @@ export namespace pb {
 
         /**
          * Verifies a GetAllPackagesConfigData message.
-         * @param message Plain object to verify
+         * @param m Plain object to verify
          * @returns `null` if valid, otherwise the reason why it is not
          */
-        public static verify(message: { [k: string]: any }): (string|null);
+        public static verify(m: { [k: string]: any }): (string|null);
 
         /**
          * Creates a GetAllPackagesConfigData message from a plain object. Also converts values to their respective internal types.
-         * @param object Plain object
+         * @param d Plain object
          * @returns GetAllPackagesConfigData
          */
-        public static fromObject(object: { [k: string]: any }): pb.GetAllPackagesConfigData;
+        public static fromObject(d: { [k: string]: any }): pb.GetAllPackagesConfigData;
 
         /**
          * Creates a plain object from a GetAllPackagesConfigData message. Also converts values to other types if specified.
-         * @param message GetAllPackagesConfigData
-         * @param [options] Conversion options
+         * @param m GetAllPackagesConfigData
+         * @param [o] Conversion options
          * @returns Plain object
          */
-        public static toObject(message: pb.GetAllPackagesConfigData, options?: $protobuf.IConversionOptions): { [k: string]: any };
+        public static toObject(m: pb.GetAllPackagesConfigData, o?: $protobuf.IConversionOptions): { [k: string]: any };
 
         /**
          * Converts this GetAllPackagesConfigData to JSON.
          * @returns JSON object
          */
         public toJSON(): { [k: string]: any };
-
-        /**
-         * Gets the default type url for GetAllPackagesConfigData
-         * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
-         * @returns The default type url
-         */
-        public static getTypeUrl(typeUrlPrefix?: string): string;
     }
 
     /** Properties of a GetAllPackagesConfigResponse. */
@@ -2326,9 +2297,9 @@ export namespace pb {
 
         /**
          * Constructs a new GetAllPackagesConfigResponse.
-         * @param [properties] Properties to set
+         * @param [p] Properties to set
          */
-        constructor(properties?: pb.IGetAllPackagesConfigResponse);
+        constructor(p?: pb.IGetAllPackagesConfigResponse);
 
         /** GetAllPackagesConfigResponse code. */
         public code: number;
@@ -2348,11 +2319,11 @@ export namespace pb {
 
         /**
          * Encodes the specified GetAllPackagesConfigResponse message. Does not implicitly {@link pb.GetAllPackagesConfigResponse.verify|verify} messages.
-         * @param message GetAllPackagesConfigResponse message or plain object to encode
-         * @param [writer] Writer to encode to
+         * @param m GetAllPackagesConfigResponse message or plain object to encode
+         * @param [w] Writer to encode to
          * @returns Writer
          */
-        public static encode(message: pb.IGetAllPackagesConfigResponse, writer?: $protobuf.Writer): $protobuf.Writer;
+        public static encode(m: pb.IGetAllPackagesConfigResponse, w?: $protobuf.Writer): $protobuf.Writer;
 
         /**
          * Encodes the specified GetAllPackagesConfigResponse message, length delimited. Does not implicitly {@link pb.GetAllPackagesConfigResponse.verify|verify} messages.
@@ -2364,13 +2335,13 @@ export namespace pb {
 
         /**
          * Decodes a GetAllPackagesConfigResponse message from the specified reader or buffer.
-         * @param reader Reader or buffer to decode from
-         * @param [length] Message length if known beforehand
+         * @param r Reader or buffer to decode from
+         * @param [l] Message length if known beforehand
          * @returns GetAllPackagesConfigResponse
          * @throws {Error} If the payload is not a reader or valid buffer
          * @throws {$protobuf.util.ProtocolError} If required fields are missing
          */
-        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): pb.GetAllPackagesConfigResponse;
+        public static decode(r: ($protobuf.Reader|Uint8Array), l?: number): pb.GetAllPackagesConfigResponse;
 
         /**
          * Decodes a GetAllPackagesConfigResponse message from the specified reader or buffer, length delimited.
@@ -2383,38 +2354,31 @@ export namespace pb {
 
         /**
          * Verifies a GetAllPackagesConfigResponse message.
-         * @param message Plain object to verify
+         * @param m Plain object to verify
          * @returns `null` if valid, otherwise the reason why it is not
          */
-        public static verify(message: { [k: string]: any }): (string|null);
+        public static verify(m: { [k: string]: any }): (string|null);
 
         /**
          * Creates a GetAllPackagesConfigResponse message from a plain object. Also converts values to their respective internal types.
-         * @param object Plain object
+         * @param d Plain object
          * @returns GetAllPackagesConfigResponse
          */
-        public static fromObject(object: { [k: string]: any }): pb.GetAllPackagesConfigResponse;
+        public static fromObject(d: { [k: string]: any }): pb.GetAllPackagesConfigResponse;
 
         /**
          * Creates a plain object from a GetAllPackagesConfigResponse message. Also converts values to other types if specified.
-         * @param message GetAllPackagesConfigResponse
-         * @param [options] Conversion options
+         * @param m GetAllPackagesConfigResponse
+         * @param [o] Conversion options
          * @returns Plain object
          */
-        public static toObject(message: pb.GetAllPackagesConfigResponse, options?: $protobuf.IConversionOptions): { [k: string]: any };
+        public static toObject(m: pb.GetAllPackagesConfigResponse, o?: $protobuf.IConversionOptions): { [k: string]: any };
 
         /**
          * Converts this GetAllPackagesConfigResponse to JSON.
          * @returns JSON object
          */
         public toJSON(): { [k: string]: any };
-
-        /**
-         * Gets the default type url for GetAllPackagesConfigResponse
-         * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
-         * @returns The default type url
-         */
-        public static getTypeUrl(typeUrlPrefix?: string): string;
     }
 
     /** Properties of a CreateOrderRequest. */
@@ -2465,9 +2429,9 @@ export namespace pb {
 
         /**
          * Constructs a new CreateOrderRequest.
-         * @param [properties] Properties to set
+         * @param [p] Properties to set
          */
-        constructor(properties?: pb.ICreateOrderRequest);
+        constructor(p?: pb.ICreateOrderRequest);
 
         /** CreateOrderRequest account. */
         public account: string;
@@ -2517,11 +2481,11 @@ export namespace pb {
 
         /**
          * Encodes the specified CreateOrderRequest message. Does not implicitly {@link pb.CreateOrderRequest.verify|verify} messages.
-         * @param message CreateOrderRequest message or plain object to encode
-         * @param [writer] Writer to encode to
+         * @param m CreateOrderRequest message or plain object to encode
+         * @param [w] Writer to encode to
          * @returns Writer
          */
-        public static encode(message: pb.ICreateOrderRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+        public static encode(m: pb.ICreateOrderRequest, w?: $protobuf.Writer): $protobuf.Writer;
 
         /**
          * Encodes the specified CreateOrderRequest message, length delimited. Does not implicitly {@link pb.CreateOrderRequest.verify|verify} messages.
@@ -2533,13 +2497,13 @@ export namespace pb {
 
         /**
          * Decodes a CreateOrderRequest message from the specified reader or buffer.
-         * @param reader Reader or buffer to decode from
-         * @param [length] Message length if known beforehand
+         * @param r Reader or buffer to decode from
+         * @param [l] Message length if known beforehand
          * @returns CreateOrderRequest
          * @throws {Error} If the payload is not a reader or valid buffer
          * @throws {$protobuf.util.ProtocolError} If required fields are missing
          */
-        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): pb.CreateOrderRequest;
+        public static decode(r: ($protobuf.Reader|Uint8Array), l?: number): pb.CreateOrderRequest;
 
         /**
          * Decodes a CreateOrderRequest message from the specified reader or buffer, length delimited.
@@ -2552,38 +2516,31 @@ export namespace pb {
 
         /**
          * Verifies a CreateOrderRequest message.
-         * @param message Plain object to verify
+         * @param m Plain object to verify
          * @returns `null` if valid, otherwise the reason why it is not
          */
-        public static verify(message: { [k: string]: any }): (string|null);
+        public static verify(m: { [k: string]: any }): (string|null);
 
         /**
          * Creates a CreateOrderRequest message from a plain object. Also converts values to their respective internal types.
-         * @param object Plain object
+         * @param d Plain object
          * @returns CreateOrderRequest
          */
-        public static fromObject(object: { [k: string]: any }): pb.CreateOrderRequest;
+        public static fromObject(d: { [k: string]: any }): pb.CreateOrderRequest;
 
         /**
          * Creates a plain object from a CreateOrderRequest message. Also converts values to other types if specified.
-         * @param message CreateOrderRequest
-         * @param [options] Conversion options
+         * @param m CreateOrderRequest
+         * @param [o] Conversion options
          * @returns Plain object
          */
-        public static toObject(message: pb.CreateOrderRequest, options?: $protobuf.IConversionOptions): { [k: string]: any };
+        public static toObject(m: pb.CreateOrderRequest, o?: $protobuf.IConversionOptions): { [k: string]: any };
 
         /**
          * Converts this CreateOrderRequest to JSON.
          * @returns JSON object
          */
         public toJSON(): { [k: string]: any };
-
-        /**
-         * Gets the default type url for CreateOrderRequest
-         * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
-         * @returns The default type url
-         */
-        public static getTypeUrl(typeUrlPrefix?: string): string;
     }
 
     /** Properties of an AmountInfo. */
@@ -2598,9 +2555,9 @@ export namespace pb {
 
         /**
          * Constructs a new AmountInfo.
-         * @param [properties] Properties to set
+         * @param [p] Properties to set
          */
-        constructor(properties?: pb.IAmountInfo);
+        constructor(p?: pb.IAmountInfo);
 
         /** AmountInfo total. */
         public total: number;
@@ -2614,11 +2571,11 @@ export namespace pb {
 
         /**
          * Encodes the specified AmountInfo message. Does not implicitly {@link pb.AmountInfo.verify|verify} messages.
-         * @param message AmountInfo message or plain object to encode
-         * @param [writer] Writer to encode to
+         * @param m AmountInfo message or plain object to encode
+         * @param [w] Writer to encode to
          * @returns Writer
          */
-        public static encode(message: pb.IAmountInfo, writer?: $protobuf.Writer): $protobuf.Writer;
+        public static encode(m: pb.IAmountInfo, w?: $protobuf.Writer): $protobuf.Writer;
 
         /**
          * Encodes the specified AmountInfo message, length delimited. Does not implicitly {@link pb.AmountInfo.verify|verify} messages.
@@ -2630,13 +2587,13 @@ export namespace pb {
 
         /**
          * Decodes an AmountInfo message from the specified reader or buffer.
-         * @param reader Reader or buffer to decode from
-         * @param [length] Message length if known beforehand
+         * @param r Reader or buffer to decode from
+         * @param [l] Message length if known beforehand
          * @returns AmountInfo
          * @throws {Error} If the payload is not a reader or valid buffer
          * @throws {$protobuf.util.ProtocolError} If required fields are missing
          */
-        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): pb.AmountInfo;
+        public static decode(r: ($protobuf.Reader|Uint8Array), l?: number): pb.AmountInfo;
 
         /**
          * Decodes an AmountInfo message from the specified reader or buffer, length delimited.
@@ -2649,38 +2606,31 @@ export namespace pb {
 
         /**
          * Verifies an AmountInfo message.
-         * @param message Plain object to verify
+         * @param m Plain object to verify
          * @returns `null` if valid, otherwise the reason why it is not
          */
-        public static verify(message: { [k: string]: any }): (string|null);
+        public static verify(m: { [k: string]: any }): (string|null);
 
         /**
          * Creates an AmountInfo message from a plain object. Also converts values to their respective internal types.
-         * @param object Plain object
+         * @param d Plain object
          * @returns AmountInfo
          */
-        public static fromObject(object: { [k: string]: any }): pb.AmountInfo;
+        public static fromObject(d: { [k: string]: any }): pb.AmountInfo;
 
         /**
          * Creates a plain object from an AmountInfo message. Also converts values to other types if specified.
-         * @param message AmountInfo
-         * @param [options] Conversion options
+         * @param m AmountInfo
+         * @param [o] Conversion options
          * @returns Plain object
          */
-        public static toObject(message: pb.AmountInfo, options?: $protobuf.IConversionOptions): { [k: string]: any };
+        public static toObject(m: pb.AmountInfo, o?: $protobuf.IConversionOptions): { [k: string]: any };
 
         /**
          * Converts this AmountInfo to JSON.
          * @returns JSON object
          */
         public toJSON(): { [k: string]: any };
-
-        /**
-         * Gets the default type url for AmountInfo
-         * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
-         * @returns The default type url
-         */
-        public static getTypeUrl(typeUrlPrefix?: string): string;
     }
 
     /** Properties of a CreateOrderResponse. */
@@ -2701,9 +2651,9 @@ export namespace pb {
 
         /**
          * Constructs a new CreateOrderResponse.
-         * @param [properties] Properties to set
+         * @param [p] Properties to set
          */
-        constructor(properties?: pb.ICreateOrderResponse);
+        constructor(p?: pb.ICreateOrderResponse);
 
         /** CreateOrderResponse code. */
         public code: number;
@@ -2723,11 +2673,11 @@ export namespace pb {
 
         /**
          * Encodes the specified CreateOrderResponse message. Does not implicitly {@link pb.CreateOrderResponse.verify|verify} messages.
-         * @param message CreateOrderResponse message or plain object to encode
-         * @param [writer] Writer to encode to
+         * @param m CreateOrderResponse message or plain object to encode
+         * @param [w] Writer to encode to
          * @returns Writer
          */
-        public static encode(message: pb.ICreateOrderResponse, writer?: $protobuf.Writer): $protobuf.Writer;
+        public static encode(m: pb.ICreateOrderResponse, w?: $protobuf.Writer): $protobuf.Writer;
 
         /**
          * Encodes the specified CreateOrderResponse message, length delimited. Does not implicitly {@link pb.CreateOrderResponse.verify|verify} messages.
@@ -2739,13 +2689,13 @@ export namespace pb {
 
         /**
          * Decodes a CreateOrderResponse message from the specified reader or buffer.
-         * @param reader Reader or buffer to decode from
-         * @param [length] Message length if known beforehand
+         * @param r Reader or buffer to decode from
+         * @param [l] Message length if known beforehand
          * @returns CreateOrderResponse
          * @throws {Error} If the payload is not a reader or valid buffer
          * @throws {$protobuf.util.ProtocolError} If required fields are missing
          */
-        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): pb.CreateOrderResponse;
+        public static decode(r: ($protobuf.Reader|Uint8Array), l?: number): pb.CreateOrderResponse;
 
         /**
          * Decodes a CreateOrderResponse message from the specified reader or buffer, length delimited.
@@ -2758,38 +2708,31 @@ export namespace pb {
 
         /**
          * Verifies a CreateOrderResponse message.
-         * @param message Plain object to verify
+         * @param m Plain object to verify
          * @returns `null` if valid, otherwise the reason why it is not
          */
-        public static verify(message: { [k: string]: any }): (string|null);
+        public static verify(m: { [k: string]: any }): (string|null);
 
         /**
          * Creates a CreateOrderResponse message from a plain object. Also converts values to their respective internal types.
-         * @param object Plain object
+         * @param d Plain object
          * @returns CreateOrderResponse
          */
-        public static fromObject(object: { [k: string]: any }): pb.CreateOrderResponse;
+        public static fromObject(d: { [k: string]: any }): pb.CreateOrderResponse;
 
         /**
          * Creates a plain object from a CreateOrderResponse message. Also converts values to other types if specified.
-         * @param message CreateOrderResponse
-         * @param [options] Conversion options
+         * @param m CreateOrderResponse
+         * @param [o] Conversion options
          * @returns Plain object
          */
-        public static toObject(message: pb.CreateOrderResponse, options?: $protobuf.IConversionOptions): { [k: string]: any };
+        public static toObject(m: pb.CreateOrderResponse, o?: $protobuf.IConversionOptions): { [k: string]: any };
 
         /**
          * Converts this CreateOrderResponse to JSON.
          * @returns JSON object
          */
         public toJSON(): { [k: string]: any };
-
-        /**
-         * Gets the default type url for CreateOrderResponse
-         * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
-         * @returns The default type url
-         */
-        public static getTypeUrl(typeUrlPrefix?: string): string;
     }
 
     /** Properties of a CreateOrderData. */
@@ -2804,9 +2747,9 @@ export namespace pb {
 
         /**
          * Constructs a new CreateOrderData.
-         * @param [properties] Properties to set
+         * @param [p] Properties to set
          */
-        constructor(properties?: pb.ICreateOrderData);
+        constructor(p?: pb.ICreateOrderData);
 
         /** CreateOrderData outTradeNo. */
         public outTradeNo: string;
@@ -2820,11 +2763,11 @@ export namespace pb {
 
         /**
          * Encodes the specified CreateOrderData message. Does not implicitly {@link pb.CreateOrderData.verify|verify} messages.
-         * @param message CreateOrderData message or plain object to encode
-         * @param [writer] Writer to encode to
+         * @param m CreateOrderData message or plain object to encode
+         * @param [w] Writer to encode to
          * @returns Writer
          */
-        public static encode(message: pb.ICreateOrderData, writer?: $protobuf.Writer): $protobuf.Writer;
+        public static encode(m: pb.ICreateOrderData, w?: $protobuf.Writer): $protobuf.Writer;
 
         /**
          * Encodes the specified CreateOrderData message, length delimited. Does not implicitly {@link pb.CreateOrderData.verify|verify} messages.
@@ -2836,13 +2779,13 @@ export namespace pb {
 
         /**
          * Decodes a CreateOrderData message from the specified reader or buffer.
-         * @param reader Reader or buffer to decode from
-         * @param [length] Message length if known beforehand
+         * @param r Reader or buffer to decode from
+         * @param [l] Message length if known beforehand
          * @returns CreateOrderData
          * @throws {Error} If the payload is not a reader or valid buffer
          * @throws {$protobuf.util.ProtocolError} If required fields are missing
          */
-        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): pb.CreateOrderData;
+        public static decode(r: ($protobuf.Reader|Uint8Array), l?: number): pb.CreateOrderData;
 
         /**
          * Decodes a CreateOrderData message from the specified reader or buffer, length delimited.
@@ -2855,38 +2798,31 @@ export namespace pb {
 
         /**
          * Verifies a CreateOrderData message.
-         * @param message Plain object to verify
+         * @param m Plain object to verify
          * @returns `null` if valid, otherwise the reason why it is not
          */
-        public static verify(message: { [k: string]: any }): (string|null);
+        public static verify(m: { [k: string]: any }): (string|null);
 
         /**
          * Creates a CreateOrderData message from a plain object. Also converts values to their respective internal types.
-         * @param object Plain object
+         * @param d Plain object
          * @returns CreateOrderData
          */
-        public static fromObject(object: { [k: string]: any }): pb.CreateOrderData;
+        public static fromObject(d: { [k: string]: any }): pb.CreateOrderData;
 
         /**
          * Creates a plain object from a CreateOrderData message. Also converts values to other types if specified.
-         * @param message CreateOrderData
-         * @param [options] Conversion options
+         * @param m CreateOrderData
+         * @param [o] Conversion options
          * @returns Plain object
          */
-        public static toObject(message: pb.CreateOrderData, options?: $protobuf.IConversionOptions): { [k: string]: any };
+        public static toObject(m: pb.CreateOrderData, o?: $protobuf.IConversionOptions): { [k: string]: any };
 
         /**
          * Converts this CreateOrderData to JSON.
          * @returns JSON object
          */
         public toJSON(): { [k: string]: any };
-
-        /**
-         * Gets the default type url for CreateOrderData
-         * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
-         * @returns The default type url
-         */
-        public static getTypeUrl(typeUrlPrefix?: string): string;
     }
 
     /** Properties of a GetNativePrepayRequest. */
@@ -2901,9 +2837,9 @@ export namespace pb {
 
         /**
          * Constructs a new GetNativePrepayRequest.
-         * @param [properties] Properties to set
+         * @param [p] Properties to set
          */
-        constructor(properties?: pb.IGetNativePrepayRequest);
+        constructor(p?: pb.IGetNativePrepayRequest);
 
         /** GetNativePrepayRequest outTradeNo. */
         public outTradeNo: string;
@@ -2917,11 +2853,11 @@ export namespace pb {
 
         /**
          * Encodes the specified GetNativePrepayRequest message. Does not implicitly {@link pb.GetNativePrepayRequest.verify|verify} messages.
-         * @param message GetNativePrepayRequest message or plain object to encode
-         * @param [writer] Writer to encode to
+         * @param m GetNativePrepayRequest message or plain object to encode
+         * @param [w] Writer to encode to
          * @returns Writer
          */
-        public static encode(message: pb.IGetNativePrepayRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+        public static encode(m: pb.IGetNativePrepayRequest, w?: $protobuf.Writer): $protobuf.Writer;
 
         /**
          * Encodes the specified GetNativePrepayRequest message, length delimited. Does not implicitly {@link pb.GetNativePrepayRequest.verify|verify} messages.
@@ -2933,13 +2869,13 @@ export namespace pb {
 
         /**
          * Decodes a GetNativePrepayRequest message from the specified reader or buffer.
-         * @param reader Reader or buffer to decode from
-         * @param [length] Message length if known beforehand
+         * @param r Reader or buffer to decode from
+         * @param [l] Message length if known beforehand
          * @returns GetNativePrepayRequest
          * @throws {Error} If the payload is not a reader or valid buffer
          * @throws {$protobuf.util.ProtocolError} If required fields are missing
          */
-        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): pb.GetNativePrepayRequest;
+        public static decode(r: ($protobuf.Reader|Uint8Array), l?: number): pb.GetNativePrepayRequest;
 
         /**
          * Decodes a GetNativePrepayRequest message from the specified reader or buffer, length delimited.
@@ -2952,38 +2888,31 @@ export namespace pb {
 
         /**
          * Verifies a GetNativePrepayRequest message.
-         * @param message Plain object to verify
+         * @param m Plain object to verify
          * @returns `null` if valid, otherwise the reason why it is not
          */
-        public static verify(message: { [k: string]: any }): (string|null);
+        public static verify(m: { [k: string]: any }): (string|null);
 
         /**
          * Creates a GetNativePrepayRequest message from a plain object. Also converts values to their respective internal types.
-         * @param object Plain object
+         * @param d Plain object
          * @returns GetNativePrepayRequest
          */
-        public static fromObject(object: { [k: string]: any }): pb.GetNativePrepayRequest;
+        public static fromObject(d: { [k: string]: any }): pb.GetNativePrepayRequest;
 
         /**
          * Creates a plain object from a GetNativePrepayRequest message. Also converts values to other types if specified.
-         * @param message GetNativePrepayRequest
-         * @param [options] Conversion options
+         * @param m GetNativePrepayRequest
+         * @param [o] Conversion options
          * @returns Plain object
          */
-        public static toObject(message: pb.GetNativePrepayRequest, options?: $protobuf.IConversionOptions): { [k: string]: any };
+        public static toObject(m: pb.GetNativePrepayRequest, o?: $protobuf.IConversionOptions): { [k: string]: any };
 
         /**
          * Converts this GetNativePrepayRequest to JSON.
          * @returns JSON object
          */
         public toJSON(): { [k: string]: any };
-
-        /**
-         * Gets the default type url for GetNativePrepayRequest
-         * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
-         * @returns The default type url
-         */
-        public static getTypeUrl(typeUrlPrefix?: string): string;
     }
 
     /** Properties of a GetNativePrepayResponse. */
@@ -3004,9 +2933,9 @@ export namespace pb {
 
         /**
          * Constructs a new GetNativePrepayResponse.
-         * @param [properties] Properties to set
+         * @param [p] Properties to set
          */
-        constructor(properties?: pb.IGetNativePrepayResponse);
+        constructor(p?: pb.IGetNativePrepayResponse);
 
         /** GetNativePrepayResponse code. */
         public code: number;
@@ -3026,11 +2955,11 @@ export namespace pb {
 
         /**
          * Encodes the specified GetNativePrepayResponse message. Does not implicitly {@link pb.GetNativePrepayResponse.verify|verify} messages.
-         * @param message GetNativePrepayResponse message or plain object to encode
-         * @param [writer] Writer to encode to
+         * @param m GetNativePrepayResponse message or plain object to encode
+         * @param [w] Writer to encode to
          * @returns Writer
          */
-        public static encode(message: pb.IGetNativePrepayResponse, writer?: $protobuf.Writer): $protobuf.Writer;
+        public static encode(m: pb.IGetNativePrepayResponse, w?: $protobuf.Writer): $protobuf.Writer;
 
         /**
          * Encodes the specified GetNativePrepayResponse message, length delimited. Does not implicitly {@link pb.GetNativePrepayResponse.verify|verify} messages.
@@ -3042,13 +2971,13 @@ export namespace pb {
 
         /**
          * Decodes a GetNativePrepayResponse message from the specified reader or buffer.
-         * @param reader Reader or buffer to decode from
-         * @param [length] Message length if known beforehand
+         * @param r Reader or buffer to decode from
+         * @param [l] Message length if known beforehand
          * @returns GetNativePrepayResponse
          * @throws {Error} If the payload is not a reader or valid buffer
          * @throws {$protobuf.util.ProtocolError} If required fields are missing
          */
-        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): pb.GetNativePrepayResponse;
+        public static decode(r: ($protobuf.Reader|Uint8Array), l?: number): pb.GetNativePrepayResponse;
 
         /**
          * Decodes a GetNativePrepayResponse message from the specified reader or buffer, length delimited.
@@ -3061,38 +2990,31 @@ export namespace pb {
 
         /**
          * Verifies a GetNativePrepayResponse message.
-         * @param message Plain object to verify
+         * @param m Plain object to verify
          * @returns `null` if valid, otherwise the reason why it is not
          */
-        public static verify(message: { [k: string]: any }): (string|null);
+        public static verify(m: { [k: string]: any }): (string|null);
 
         /**
          * Creates a GetNativePrepayResponse message from a plain object. Also converts values to their respective internal types.
-         * @param object Plain object
+         * @param d Plain object
          * @returns GetNativePrepayResponse
          */
-        public static fromObject(object: { [k: string]: any }): pb.GetNativePrepayResponse;
+        public static fromObject(d: { [k: string]: any }): pb.GetNativePrepayResponse;
 
         /**
          * Creates a plain object from a GetNativePrepayResponse message. Also converts values to other types if specified.
-         * @param message GetNativePrepayResponse
-         * @param [options] Conversion options
+         * @param m GetNativePrepayResponse
+         * @param [o] Conversion options
          * @returns Plain object
          */
-        public static toObject(message: pb.GetNativePrepayResponse, options?: $protobuf.IConversionOptions): { [k: string]: any };
+        public static toObject(m: pb.GetNativePrepayResponse, o?: $protobuf.IConversionOptions): { [k: string]: any };
 
         /**
          * Converts this GetNativePrepayResponse to JSON.
          * @returns JSON object
          */
         public toJSON(): { [k: string]: any };
-
-        /**
-         * Gets the default type url for GetNativePrepayResponse
-         * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
-         * @returns The default type url
-         */
-        public static getTypeUrl(typeUrlPrefix?: string): string;
     }
 
     /** Properties of a NativePrepayData. */
@@ -3107,9 +3029,9 @@ export namespace pb {
 
         /**
          * Constructs a new NativePrepayData.
-         * @param [properties] Properties to set
+         * @param [p] Properties to set
          */
-        constructor(properties?: pb.INativePrepayData);
+        constructor(p?: pb.INativePrepayData);
 
         /** NativePrepayData codeUrl. */
         public codeUrl: string;
@@ -3123,11 +3045,11 @@ export namespace pb {
 
         /**
          * Encodes the specified NativePrepayData message. Does not implicitly {@link pb.NativePrepayData.verify|verify} messages.
-         * @param message NativePrepayData message or plain object to encode
-         * @param [writer] Writer to encode to
+         * @param m NativePrepayData message or plain object to encode
+         * @param [w] Writer to encode to
          * @returns Writer
          */
-        public static encode(message: pb.INativePrepayData, writer?: $protobuf.Writer): $protobuf.Writer;
+        public static encode(m: pb.INativePrepayData, w?: $protobuf.Writer): $protobuf.Writer;
 
         /**
          * Encodes the specified NativePrepayData message, length delimited. Does not implicitly {@link pb.NativePrepayData.verify|verify} messages.
@@ -3139,13 +3061,13 @@ export namespace pb {
 
         /**
          * Decodes a NativePrepayData message from the specified reader or buffer.
-         * @param reader Reader or buffer to decode from
-         * @param [length] Message length if known beforehand
+         * @param r Reader or buffer to decode from
+         * @param [l] Message length if known beforehand
          * @returns NativePrepayData
          * @throws {Error} If the payload is not a reader or valid buffer
          * @throws {$protobuf.util.ProtocolError} If required fields are missing
          */
-        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): pb.NativePrepayData;
+        public static decode(r: ($protobuf.Reader|Uint8Array), l?: number): pb.NativePrepayData;
 
         /**
          * Decodes a NativePrepayData message from the specified reader or buffer, length delimited.
@@ -3158,38 +3080,31 @@ export namespace pb {
 
         /**
          * Verifies a NativePrepayData message.
-         * @param message Plain object to verify
+         * @param m Plain object to verify
          * @returns `null` if valid, otherwise the reason why it is not
          */
-        public static verify(message: { [k: string]: any }): (string|null);
+        public static verify(m: { [k: string]: any }): (string|null);
 
         /**
          * Creates a NativePrepayData message from a plain object. Also converts values to their respective internal types.
-         * @param object Plain object
+         * @param d Plain object
          * @returns NativePrepayData
          */
-        public static fromObject(object: { [k: string]: any }): pb.NativePrepayData;
+        public static fromObject(d: { [k: string]: any }): pb.NativePrepayData;
 
         /**
          * Creates a plain object from a NativePrepayData message. Also converts values to other types if specified.
-         * @param message NativePrepayData
-         * @param [options] Conversion options
+         * @param m NativePrepayData
+         * @param [o] Conversion options
          * @returns Plain object
          */
-        public static toObject(message: pb.NativePrepayData, options?: $protobuf.IConversionOptions): { [k: string]: any };
+        public static toObject(m: pb.NativePrepayData, o?: $protobuf.IConversionOptions): { [k: string]: any };
 
         /**
          * Converts this NativePrepayData to JSON.
          * @returns JSON object
          */
         public toJSON(): { [k: string]: any };
-
-        /**
-         * Gets the default type url for NativePrepayData
-         * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
-         * @returns The default type url
-         */
-        public static getTypeUrl(typeUrlPrefix?: string): string;
     }
 
     /** Properties of a GetH5PrepayRequest. */
@@ -3213,9 +3128,9 @@ export namespace pb {
 
         /**
          * Constructs a new GetH5PrepayRequest.
-         * @param [properties] Properties to set
+         * @param [p] Properties to set
          */
-        constructor(properties?: pb.IGetH5PrepayRequest);
+        constructor(p?: pb.IGetH5PrepayRequest);
 
         /** GetH5PrepayRequest outTradeNo. */
         public outTradeNo: string;
@@ -3238,11 +3153,11 @@ export namespace pb {
 
         /**
          * Encodes the specified GetH5PrepayRequest message. Does not implicitly {@link pb.GetH5PrepayRequest.verify|verify} messages.
-         * @param message GetH5PrepayRequest message or plain object to encode
-         * @param [writer] Writer to encode to
+         * @param m GetH5PrepayRequest message or plain object to encode
+         * @param [w] Writer to encode to
          * @returns Writer
          */
-        public static encode(message: pb.IGetH5PrepayRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+        public static encode(m: pb.IGetH5PrepayRequest, w?: $protobuf.Writer): $protobuf.Writer;
 
         /**
          * Encodes the specified GetH5PrepayRequest message, length delimited. Does not implicitly {@link pb.GetH5PrepayRequest.verify|verify} messages.
@@ -3254,13 +3169,13 @@ export namespace pb {
 
         /**
          * Decodes a GetH5PrepayRequest message from the specified reader or buffer.
-         * @param reader Reader or buffer to decode from
-         * @param [length] Message length if known beforehand
+         * @param r Reader or buffer to decode from
+         * @param [l] Message length if known beforehand
          * @returns GetH5PrepayRequest
          * @throws {Error} If the payload is not a reader or valid buffer
          * @throws {$protobuf.util.ProtocolError} If required fields are missing
          */
-        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): pb.GetH5PrepayRequest;
+        public static decode(r: ($protobuf.Reader|Uint8Array), l?: number): pb.GetH5PrepayRequest;
 
         /**
          * Decodes a GetH5PrepayRequest message from the specified reader or buffer, length delimited.
@@ -3273,38 +3188,31 @@ export namespace pb {
 
         /**
          * Verifies a GetH5PrepayRequest message.
-         * @param message Plain object to verify
+         * @param m Plain object to verify
          * @returns `null` if valid, otherwise the reason why it is not
          */
-        public static verify(message: { [k: string]: any }): (string|null);
+        public static verify(m: { [k: string]: any }): (string|null);
 
         /**
          * Creates a GetH5PrepayRequest message from a plain object. Also converts values to their respective internal types.
-         * @param object Plain object
+         * @param d Plain object
          * @returns GetH5PrepayRequest
          */
-        public static fromObject(object: { [k: string]: any }): pb.GetH5PrepayRequest;
+        public static fromObject(d: { [k: string]: any }): pb.GetH5PrepayRequest;
 
         /**
          * Creates a plain object from a GetH5PrepayRequest message. Also converts values to other types if specified.
-         * @param message GetH5PrepayRequest
-         * @param [options] Conversion options
+         * @param m GetH5PrepayRequest
+         * @param [o] Conversion options
          * @returns Plain object
          */
-        public static toObject(message: pb.GetH5PrepayRequest, options?: $protobuf.IConversionOptions): { [k: string]: any };
+        public static toObject(m: pb.GetH5PrepayRequest, o?: $protobuf.IConversionOptions): { [k: string]: any };
 
         /**
          * Converts this GetH5PrepayRequest to JSON.
          * @returns JSON object
          */
         public toJSON(): { [k: string]: any };
-
-        /**
-         * Gets the default type url for GetH5PrepayRequest
-         * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
-         * @returns The default type url
-         */
-        public static getTypeUrl(typeUrlPrefix?: string): string;
     }
 
     /** Properties of a GetH5PrepayResponse. */
@@ -3325,9 +3233,9 @@ export namespace pb {
 
         /**
          * Constructs a new GetH5PrepayResponse.
-         * @param [properties] Properties to set
+         * @param [p] Properties to set
          */
-        constructor(properties?: pb.IGetH5PrepayResponse);
+        constructor(p?: pb.IGetH5PrepayResponse);
 
         /** GetH5PrepayResponse code. */
         public code: number;
@@ -3347,11 +3255,11 @@ export namespace pb {
 
         /**
          * Encodes the specified GetH5PrepayResponse message. Does not implicitly {@link pb.GetH5PrepayResponse.verify|verify} messages.
-         * @param message GetH5PrepayResponse message or plain object to encode
-         * @param [writer] Writer to encode to
+         * @param m GetH5PrepayResponse message or plain object to encode
+         * @param [w] Writer to encode to
          * @returns Writer
          */
-        public static encode(message: pb.IGetH5PrepayResponse, writer?: $protobuf.Writer): $protobuf.Writer;
+        public static encode(m: pb.IGetH5PrepayResponse, w?: $protobuf.Writer): $protobuf.Writer;
 
         /**
          * Encodes the specified GetH5PrepayResponse message, length delimited. Does not implicitly {@link pb.GetH5PrepayResponse.verify|verify} messages.
@@ -3363,13 +3271,13 @@ export namespace pb {
 
         /**
          * Decodes a GetH5PrepayResponse message from the specified reader or buffer.
-         * @param reader Reader or buffer to decode from
-         * @param [length] Message length if known beforehand
+         * @param r Reader or buffer to decode from
+         * @param [l] Message length if known beforehand
          * @returns GetH5PrepayResponse
          * @throws {Error} If the payload is not a reader or valid buffer
          * @throws {$protobuf.util.ProtocolError} If required fields are missing
          */
-        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): pb.GetH5PrepayResponse;
+        public static decode(r: ($protobuf.Reader|Uint8Array), l?: number): pb.GetH5PrepayResponse;
 
         /**
          * Decodes a GetH5PrepayResponse message from the specified reader or buffer, length delimited.
@@ -3382,38 +3290,31 @@ export namespace pb {
 
         /**
          * Verifies a GetH5PrepayResponse message.
-         * @param message Plain object to verify
+         * @param m Plain object to verify
          * @returns `null` if valid, otherwise the reason why it is not
          */
-        public static verify(message: { [k: string]: any }): (string|null);
+        public static verify(m: { [k: string]: any }): (string|null);
 
         /**
          * Creates a GetH5PrepayResponse message from a plain object. Also converts values to their respective internal types.
-         * @param object Plain object
+         * @param d Plain object
          * @returns GetH5PrepayResponse
          */
-        public static fromObject(object: { [k: string]: any }): pb.GetH5PrepayResponse;
+        public static fromObject(d: { [k: string]: any }): pb.GetH5PrepayResponse;
 
         /**
          * Creates a plain object from a GetH5PrepayResponse message. Also converts values to other types if specified.
-         * @param message GetH5PrepayResponse
-         * @param [options] Conversion options
+         * @param m GetH5PrepayResponse
+         * @param [o] Conversion options
          * @returns Plain object
          */
-        public static toObject(message: pb.GetH5PrepayResponse, options?: $protobuf.IConversionOptions): { [k: string]: any };
+        public static toObject(m: pb.GetH5PrepayResponse, o?: $protobuf.IConversionOptions): { [k: string]: any };
 
         /**
          * Converts this GetH5PrepayResponse to JSON.
          * @returns JSON object
          */
         public toJSON(): { [k: string]: any };
-
-        /**
-         * Gets the default type url for GetH5PrepayResponse
-         * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
-         * @returns The default type url
-         */
-        public static getTypeUrl(typeUrlPrefix?: string): string;
     }
 
     /** Properties of a H5PrepayData. */
@@ -3428,9 +3329,9 @@ export namespace pb {
 
         /**
          * Constructs a new H5PrepayData.
-         * @param [properties] Properties to set
+         * @param [p] Properties to set
          */
-        constructor(properties?: pb.IH5PrepayData);
+        constructor(p?: pb.IH5PrepayData);
 
         /** H5PrepayData h5Url. */
         public h5Url: string;
@@ -3444,11 +3345,11 @@ export namespace pb {
 
         /**
          * Encodes the specified H5PrepayData message. Does not implicitly {@link pb.H5PrepayData.verify|verify} messages.
-         * @param message H5PrepayData message or plain object to encode
-         * @param [writer] Writer to encode to
+         * @param m H5PrepayData message or plain object to encode
+         * @param [w] Writer to encode to
          * @returns Writer
          */
-        public static encode(message: pb.IH5PrepayData, writer?: $protobuf.Writer): $protobuf.Writer;
+        public static encode(m: pb.IH5PrepayData, w?: $protobuf.Writer): $protobuf.Writer;
 
         /**
          * Encodes the specified H5PrepayData message, length delimited. Does not implicitly {@link pb.H5PrepayData.verify|verify} messages.
@@ -3460,13 +3361,13 @@ export namespace pb {
 
         /**
          * Decodes a H5PrepayData message from the specified reader or buffer.
-         * @param reader Reader or buffer to decode from
-         * @param [length] Message length if known beforehand
+         * @param r Reader or buffer to decode from
+         * @param [l] Message length if known beforehand
          * @returns H5PrepayData
          * @throws {Error} If the payload is not a reader or valid buffer
          * @throws {$protobuf.util.ProtocolError} If required fields are missing
          */
-        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): pb.H5PrepayData;
+        public static decode(r: ($protobuf.Reader|Uint8Array), l?: number): pb.H5PrepayData;
 
         /**
          * Decodes a H5PrepayData message from the specified reader or buffer, length delimited.
@@ -3479,38 +3380,31 @@ export namespace pb {
 
         /**
          * Verifies a H5PrepayData message.
-         * @param message Plain object to verify
+         * @param m Plain object to verify
          * @returns `null` if valid, otherwise the reason why it is not
          */
-        public static verify(message: { [k: string]: any }): (string|null);
+        public static verify(m: { [k: string]: any }): (string|null);
 
         /**
          * Creates a H5PrepayData message from a plain object. Also converts values to their respective internal types.
-         * @param object Plain object
+         * @param d Plain object
          * @returns H5PrepayData
          */
-        public static fromObject(object: { [k: string]: any }): pb.H5PrepayData;
+        public static fromObject(d: { [k: string]: any }): pb.H5PrepayData;
 
         /**
          * Creates a plain object from a H5PrepayData message. Also converts values to other types if specified.
-         * @param message H5PrepayData
-         * @param [options] Conversion options
+         * @param m H5PrepayData
+         * @param [o] Conversion options
          * @returns Plain object
          */
-        public static toObject(message: pb.H5PrepayData, options?: $protobuf.IConversionOptions): { [k: string]: any };
+        public static toObject(m: pb.H5PrepayData, o?: $protobuf.IConversionOptions): { [k: string]: any };
 
         /**
          * Converts this H5PrepayData to JSON.
          * @returns JSON object
          */
         public toJSON(): { [k: string]: any };
-
-        /**
-         * Gets the default type url for H5PrepayData
-         * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
-         * @returns The default type url
-         */
-        public static getTypeUrl(typeUrlPrefix?: string): string;
     }
 
     /** Properties of a GetJSAPIPrepayRequest. */
@@ -3525,9 +3419,9 @@ export namespace pb {
 
         /**
          * Constructs a new GetJSAPIPrepayRequest.
-         * @param [properties] Properties to set
+         * @param [p] Properties to set
          */
-        constructor(properties?: pb.IGetJSAPIPrepayRequest);
+        constructor(p?: pb.IGetJSAPIPrepayRequest);
 
         /** GetJSAPIPrepayRequest outTradeNo. */
         public outTradeNo: string;
@@ -3541,11 +3435,11 @@ export namespace pb {
 
         /**
          * Encodes the specified GetJSAPIPrepayRequest message. Does not implicitly {@link pb.GetJSAPIPrepayRequest.verify|verify} messages.
-         * @param message GetJSAPIPrepayRequest message or plain object to encode
-         * @param [writer] Writer to encode to
+         * @param m GetJSAPIPrepayRequest message or plain object to encode
+         * @param [w] Writer to encode to
          * @returns Writer
          */
-        public static encode(message: pb.IGetJSAPIPrepayRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+        public static encode(m: pb.IGetJSAPIPrepayRequest, w?: $protobuf.Writer): $protobuf.Writer;
 
         /**
          * Encodes the specified GetJSAPIPrepayRequest message, length delimited. Does not implicitly {@link pb.GetJSAPIPrepayRequest.verify|verify} messages.
@@ -3557,13 +3451,13 @@ export namespace pb {
 
         /**
          * Decodes a GetJSAPIPrepayRequest message from the specified reader or buffer.
-         * @param reader Reader or buffer to decode from
-         * @param [length] Message length if known beforehand
+         * @param r Reader or buffer to decode from
+         * @param [l] Message length if known beforehand
          * @returns GetJSAPIPrepayRequest
          * @throws {Error} If the payload is not a reader or valid buffer
          * @throws {$protobuf.util.ProtocolError} If required fields are missing
          */
-        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): pb.GetJSAPIPrepayRequest;
+        public static decode(r: ($protobuf.Reader|Uint8Array), l?: number): pb.GetJSAPIPrepayRequest;
 
         /**
          * Decodes a GetJSAPIPrepayRequest message from the specified reader or buffer, length delimited.
@@ -3576,38 +3470,31 @@ export namespace pb {
 
         /**
          * Verifies a GetJSAPIPrepayRequest message.
-         * @param message Plain object to verify
+         * @param m Plain object to verify
          * @returns `null` if valid, otherwise the reason why it is not
          */
-        public static verify(message: { [k: string]: any }): (string|null);
+        public static verify(m: { [k: string]: any }): (string|null);
 
         /**
          * Creates a GetJSAPIPrepayRequest message from a plain object. Also converts values to their respective internal types.
-         * @param object Plain object
+         * @param d Plain object
          * @returns GetJSAPIPrepayRequest
          */
-        public static fromObject(object: { [k: string]: any }): pb.GetJSAPIPrepayRequest;
+        public static fromObject(d: { [k: string]: any }): pb.GetJSAPIPrepayRequest;
 
         /**
          * Creates a plain object from a GetJSAPIPrepayRequest message. Also converts values to other types if specified.
-         * @param message GetJSAPIPrepayRequest
-         * @param [options] Conversion options
+         * @param m GetJSAPIPrepayRequest
+         * @param [o] Conversion options
          * @returns Plain object
          */
-        public static toObject(message: pb.GetJSAPIPrepayRequest, options?: $protobuf.IConversionOptions): { [k: string]: any };
+        public static toObject(m: pb.GetJSAPIPrepayRequest, o?: $protobuf.IConversionOptions): { [k: string]: any };
 
         /**
          * Converts this GetJSAPIPrepayRequest to JSON.
          * @returns JSON object
          */
         public toJSON(): { [k: string]: any };
-
-        /**
-         * Gets the default type url for GetJSAPIPrepayRequest
-         * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
-         * @returns The default type url
-         */
-        public static getTypeUrl(typeUrlPrefix?: string): string;
     }
 
     /** Properties of a GetJSAPIPrepayResponse. */
@@ -3634,9 +3521,9 @@ export namespace pb {
 
         /**
          * Constructs a new GetJSAPIPrepayResponse.
-         * @param [properties] Properties to set
+         * @param [p] Properties to set
          */
-        constructor(properties?: pb.IGetJSAPIPrepayResponse);
+        constructor(p?: pb.IGetJSAPIPrepayResponse);
 
         /** GetJSAPIPrepayResponse code. */
         public code: number;
@@ -3662,11 +3549,11 @@ export namespace pb {
 
         /**
          * Encodes the specified GetJSAPIPrepayResponse message. Does not implicitly {@link pb.GetJSAPIPrepayResponse.verify|verify} messages.
-         * @param message GetJSAPIPrepayResponse message or plain object to encode
-         * @param [writer] Writer to encode to
+         * @param m GetJSAPIPrepayResponse message or plain object to encode
+         * @param [w] Writer to encode to
          * @returns Writer
          */
-        public static encode(message: pb.IGetJSAPIPrepayResponse, writer?: $protobuf.Writer): $protobuf.Writer;
+        public static encode(m: pb.IGetJSAPIPrepayResponse, w?: $protobuf.Writer): $protobuf.Writer;
 
         /**
          * Encodes the specified GetJSAPIPrepayResponse message, length delimited. Does not implicitly {@link pb.GetJSAPIPrepayResponse.verify|verify} messages.
@@ -3678,13 +3565,13 @@ export namespace pb {
 
         /**
          * Decodes a GetJSAPIPrepayResponse message from the specified reader or buffer.
-         * @param reader Reader or buffer to decode from
-         * @param [length] Message length if known beforehand
+         * @param r Reader or buffer to decode from
+         * @param [l] Message length if known beforehand
          * @returns GetJSAPIPrepayResponse
          * @throws {Error} If the payload is not a reader or valid buffer
          * @throws {$protobuf.util.ProtocolError} If required fields are missing
          */
-        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): pb.GetJSAPIPrepayResponse;
+        public static decode(r: ($protobuf.Reader|Uint8Array), l?: number): pb.GetJSAPIPrepayResponse;
 
         /**
          * Decodes a GetJSAPIPrepayResponse message from the specified reader or buffer, length delimited.
@@ -3697,38 +3584,31 @@ export namespace pb {
 
         /**
          * Verifies a GetJSAPIPrepayResponse message.
-         * @param message Plain object to verify
+         * @param m Plain object to verify
          * @returns `null` if valid, otherwise the reason why it is not
          */
-        public static verify(message: { [k: string]: any }): (string|null);
+        public static verify(m: { [k: string]: any }): (string|null);
 
         /**
          * Creates a GetJSAPIPrepayResponse message from a plain object. Also converts values to their respective internal types.
-         * @param object Plain object
+         * @param d Plain object
          * @returns GetJSAPIPrepayResponse
          */
-        public static fromObject(object: { [k: string]: any }): pb.GetJSAPIPrepayResponse;
+        public static fromObject(d: { [k: string]: any }): pb.GetJSAPIPrepayResponse;
 
         /**
          * Creates a plain object from a GetJSAPIPrepayResponse message. Also converts values to other types if specified.
-         * @param message GetJSAPIPrepayResponse
-         * @param [options] Conversion options
+         * @param m GetJSAPIPrepayResponse
+         * @param [o] Conversion options
          * @returns Plain object
          */
-        public static toObject(message: pb.GetJSAPIPrepayResponse, options?: $protobuf.IConversionOptions): { [k: string]: any };
+        public static toObject(m: pb.GetJSAPIPrepayResponse, o?: $protobuf.IConversionOptions): { [k: string]: any };
 
         /**
          * Converts this GetJSAPIPrepayResponse to JSON.
          * @returns JSON object
          */
         public toJSON(): { [k: string]: any };
-
-        /**
-         * Gets the default type url for GetJSAPIPrepayResponse
-         * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
-         * @returns The default type url
-         */
-        public static getTypeUrl(typeUrlPrefix?: string): string;
     }
 
     /** Properties of a JSAPIPrepayData. */
@@ -3761,9 +3641,9 @@ export namespace pb {
 
         /**
          * Constructs a new JSAPIPrepayData.
-         * @param [properties] Properties to set
+         * @param [p] Properties to set
          */
-        constructor(properties?: pb.IJSAPIPrepayData);
+        constructor(p?: pb.IJSAPIPrepayData);
 
         /** JSAPIPrepayData prepayId. */
         public prepayId: string;
@@ -3795,11 +3675,11 @@ export namespace pb {
 
         /**
          * Encodes the specified JSAPIPrepayData message. Does not implicitly {@link pb.JSAPIPrepayData.verify|verify} messages.
-         * @param message JSAPIPrepayData message or plain object to encode
-         * @param [writer] Writer to encode to
+         * @param m JSAPIPrepayData message or plain object to encode
+         * @param [w] Writer to encode to
          * @returns Writer
          */
-        public static encode(message: pb.IJSAPIPrepayData, writer?: $protobuf.Writer): $protobuf.Writer;
+        public static encode(m: pb.IJSAPIPrepayData, w?: $protobuf.Writer): $protobuf.Writer;
 
         /**
          * Encodes the specified JSAPIPrepayData message, length delimited. Does not implicitly {@link pb.JSAPIPrepayData.verify|verify} messages.
@@ -3811,13 +3691,13 @@ export namespace pb {
 
         /**
          * Decodes a JSAPIPrepayData message from the specified reader or buffer.
-         * @param reader Reader or buffer to decode from
-         * @param [length] Message length if known beforehand
+         * @param r Reader or buffer to decode from
+         * @param [l] Message length if known beforehand
          * @returns JSAPIPrepayData
          * @throws {Error} If the payload is not a reader or valid buffer
          * @throws {$protobuf.util.ProtocolError} If required fields are missing
          */
-        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): pb.JSAPIPrepayData;
+        public static decode(r: ($protobuf.Reader|Uint8Array), l?: number): pb.JSAPIPrepayData;
 
         /**
          * Decodes a JSAPIPrepayData message from the specified reader or buffer, length delimited.
@@ -3830,38 +3710,31 @@ export namespace pb {
 
         /**
          * Verifies a JSAPIPrepayData message.
-         * @param message Plain object to verify
+         * @param m Plain object to verify
          * @returns `null` if valid, otherwise the reason why it is not
          */
-        public static verify(message: { [k: string]: any }): (string|null);
+        public static verify(m: { [k: string]: any }): (string|null);
 
         /**
          * Creates a JSAPIPrepayData message from a plain object. Also converts values to their respective internal types.
-         * @param object Plain object
+         * @param d Plain object
          * @returns JSAPIPrepayData
          */
-        public static fromObject(object: { [k: string]: any }): pb.JSAPIPrepayData;
+        public static fromObject(d: { [k: string]: any }): pb.JSAPIPrepayData;
 
         /**
          * Creates a plain object from a JSAPIPrepayData message. Also converts values to other types if specified.
-         * @param message JSAPIPrepayData
-         * @param [options] Conversion options
+         * @param m JSAPIPrepayData
+         * @param [o] Conversion options
          * @returns Plain object
          */
-        public static toObject(message: pb.JSAPIPrepayData, options?: $protobuf.IConversionOptions): { [k: string]: any };
+        public static toObject(m: pb.JSAPIPrepayData, o?: $protobuf.IConversionOptions): { [k: string]: any };
 
         /**
          * Converts this JSAPIPrepayData to JSON.
          * @returns JSON object
          */
         public toJSON(): { [k: string]: any };
-
-        /**
-         * Gets the default type url for JSAPIPrepayData
-         * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
-         * @returns The default type url
-         */
-        public static getTypeUrl(typeUrlPrefix?: string): string;
     }
 
     /** Properties of a GetStoragePurchaseStatusRequest. */
@@ -3876,9 +3749,9 @@ export namespace pb {
 
         /**
          * Constructs a new GetStoragePurchaseStatusRequest.
-         * @param [properties] Properties to set
+         * @param [p] Properties to set
          */
-        constructor(properties?: pb.IGetStoragePurchaseStatusRequest);
+        constructor(p?: pb.IGetStoragePurchaseStatusRequest);
 
         /** GetStoragePurchaseStatusRequest outTradeNo. */
         public outTradeNo: string;
@@ -3892,11 +3765,11 @@ export namespace pb {
 
         /**
          * Encodes the specified GetStoragePurchaseStatusRequest message. Does not implicitly {@link pb.GetStoragePurchaseStatusRequest.verify|verify} messages.
-         * @param message GetStoragePurchaseStatusRequest message or plain object to encode
-         * @param [writer] Writer to encode to
+         * @param m GetStoragePurchaseStatusRequest message or plain object to encode
+         * @param [w] Writer to encode to
          * @returns Writer
          */
-        public static encode(message: pb.IGetStoragePurchaseStatusRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+        public static encode(m: pb.IGetStoragePurchaseStatusRequest, w?: $protobuf.Writer): $protobuf.Writer;
 
         /**
          * Encodes the specified GetStoragePurchaseStatusRequest message, length delimited. Does not implicitly {@link pb.GetStoragePurchaseStatusRequest.verify|verify} messages.
@@ -3908,13 +3781,13 @@ export namespace pb {
 
         /**
          * Decodes a GetStoragePurchaseStatusRequest message from the specified reader or buffer.
-         * @param reader Reader or buffer to decode from
-         * @param [length] Message length if known beforehand
+         * @param r Reader or buffer to decode from
+         * @param [l] Message length if known beforehand
          * @returns GetStoragePurchaseStatusRequest
          * @throws {Error} If the payload is not a reader or valid buffer
          * @throws {$protobuf.util.ProtocolError} If required fields are missing
          */
-        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): pb.GetStoragePurchaseStatusRequest;
+        public static decode(r: ($protobuf.Reader|Uint8Array), l?: number): pb.GetStoragePurchaseStatusRequest;
 
         /**
          * Decodes a GetStoragePurchaseStatusRequest message from the specified reader or buffer, length delimited.
@@ -3927,38 +3800,31 @@ export namespace pb {
 
         /**
          * Verifies a GetStoragePurchaseStatusRequest message.
-         * @param message Plain object to verify
+         * @param m Plain object to verify
          * @returns `null` if valid, otherwise the reason why it is not
          */
-        public static verify(message: { [k: string]: any }): (string|null);
+        public static verify(m: { [k: string]: any }): (string|null);
 
         /**
          * Creates a GetStoragePurchaseStatusRequest message from a plain object. Also converts values to their respective internal types.
-         * @param object Plain object
+         * @param d Plain object
          * @returns GetStoragePurchaseStatusRequest
          */
-        public static fromObject(object: { [k: string]: any }): pb.GetStoragePurchaseStatusRequest;
+        public static fromObject(d: { [k: string]: any }): pb.GetStoragePurchaseStatusRequest;
 
         /**
          * Creates a plain object from a GetStoragePurchaseStatusRequest message. Also converts values to other types if specified.
-         * @param message GetStoragePurchaseStatusRequest
-         * @param [options] Conversion options
+         * @param m GetStoragePurchaseStatusRequest
+         * @param [o] Conversion options
          * @returns Plain object
          */
-        public static toObject(message: pb.GetStoragePurchaseStatusRequest, options?: $protobuf.IConversionOptions): { [k: string]: any };
+        public static toObject(m: pb.GetStoragePurchaseStatusRequest, o?: $protobuf.IConversionOptions): { [k: string]: any };
 
         /**
          * Converts this GetStoragePurchaseStatusRequest to JSON.
          * @returns JSON object
          */
         public toJSON(): { [k: string]: any };
-
-        /**
-         * Gets the default type url for GetStoragePurchaseStatusRequest
-         * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
-         * @returns The default type url
-         */
-        public static getTypeUrl(typeUrlPrefix?: string): string;
     }
 
     /** Properties of a GetStoragePurchaseStatusResponse. */
@@ -3979,9 +3845,9 @@ export namespace pb {
 
         /**
          * Constructs a new GetStoragePurchaseStatusResponse.
-         * @param [properties] Properties to set
+         * @param [p] Properties to set
          */
-        constructor(properties?: pb.IGetStoragePurchaseStatusResponse);
+        constructor(p?: pb.IGetStoragePurchaseStatusResponse);
 
         /** GetStoragePurchaseStatusResponse code. */
         public code: number;
@@ -4001,11 +3867,11 @@ export namespace pb {
 
         /**
          * Encodes the specified GetStoragePurchaseStatusResponse message. Does not implicitly {@link pb.GetStoragePurchaseStatusResponse.verify|verify} messages.
-         * @param message GetStoragePurchaseStatusResponse message or plain object to encode
-         * @param [writer] Writer to encode to
+         * @param m GetStoragePurchaseStatusResponse message or plain object to encode
+         * @param [w] Writer to encode to
          * @returns Writer
          */
-        public static encode(message: pb.IGetStoragePurchaseStatusResponse, writer?: $protobuf.Writer): $protobuf.Writer;
+        public static encode(m: pb.IGetStoragePurchaseStatusResponse, w?: $protobuf.Writer): $protobuf.Writer;
 
         /**
          * Encodes the specified GetStoragePurchaseStatusResponse message, length delimited. Does not implicitly {@link pb.GetStoragePurchaseStatusResponse.verify|verify} messages.
@@ -4017,13 +3883,13 @@ export namespace pb {
 
         /**
          * Decodes a GetStoragePurchaseStatusResponse message from the specified reader or buffer.
-         * @param reader Reader or buffer to decode from
-         * @param [length] Message length if known beforehand
+         * @param r Reader or buffer to decode from
+         * @param [l] Message length if known beforehand
          * @returns GetStoragePurchaseStatusResponse
          * @throws {Error} If the payload is not a reader or valid buffer
          * @throws {$protobuf.util.ProtocolError} If required fields are missing
          */
-        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): pb.GetStoragePurchaseStatusResponse;
+        public static decode(r: ($protobuf.Reader|Uint8Array), l?: number): pb.GetStoragePurchaseStatusResponse;
 
         /**
          * Decodes a GetStoragePurchaseStatusResponse message from the specified reader or buffer, length delimited.
@@ -4036,38 +3902,31 @@ export namespace pb {
 
         /**
          * Verifies a GetStoragePurchaseStatusResponse message.
-         * @param message Plain object to verify
+         * @param m Plain object to verify
          * @returns `null` if valid, otherwise the reason why it is not
          */
-        public static verify(message: { [k: string]: any }): (string|null);
+        public static verify(m: { [k: string]: any }): (string|null);
 
         /**
          * Creates a GetStoragePurchaseStatusResponse message from a plain object. Also converts values to their respective internal types.
-         * @param object Plain object
+         * @param d Plain object
          * @returns GetStoragePurchaseStatusResponse
          */
-        public static fromObject(object: { [k: string]: any }): pb.GetStoragePurchaseStatusResponse;
+        public static fromObject(d: { [k: string]: any }): pb.GetStoragePurchaseStatusResponse;
 
         /**
          * Creates a plain object from a GetStoragePurchaseStatusResponse message. Also converts values to other types if specified.
-         * @param message GetStoragePurchaseStatusResponse
-         * @param [options] Conversion options
+         * @param m GetStoragePurchaseStatusResponse
+         * @param [o] Conversion options
          * @returns Plain object
          */
-        public static toObject(message: pb.GetStoragePurchaseStatusResponse, options?: $protobuf.IConversionOptions): { [k: string]: any };
+        public static toObject(m: pb.GetStoragePurchaseStatusResponse, o?: $protobuf.IConversionOptions): { [k: string]: any };
 
         /**
          * Converts this GetStoragePurchaseStatusResponse to JSON.
          * @returns JSON object
          */
         public toJSON(): { [k: string]: any };
-
-        /**
-         * Gets the default type url for GetStoragePurchaseStatusResponse
-         * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
-         * @returns The default type url
-         */
-        public static getTypeUrl(typeUrlPrefix?: string): string;
     }
 
     /** Properties of a GetStoragePurchaseStatusData. */
@@ -4082,9 +3941,9 @@ export namespace pb {
 
         /**
          * Constructs a new GetStoragePurchaseStatusData.
-         * @param [properties] Properties to set
+         * @param [p] Properties to set
          */
-        constructor(properties?: pb.IGetStoragePurchaseStatusData);
+        constructor(p?: pb.IGetStoragePurchaseStatusData);
 
         /** GetStoragePurchaseStatusData status. */
         public status: number;
@@ -4098,11 +3957,11 @@ export namespace pb {
 
         /**
          * Encodes the specified GetStoragePurchaseStatusData message. Does not implicitly {@link pb.GetStoragePurchaseStatusData.verify|verify} messages.
-         * @param message GetStoragePurchaseStatusData message or plain object to encode
-         * @param [writer] Writer to encode to
+         * @param m GetStoragePurchaseStatusData message or plain object to encode
+         * @param [w] Writer to encode to
          * @returns Writer
          */
-        public static encode(message: pb.IGetStoragePurchaseStatusData, writer?: $protobuf.Writer): $protobuf.Writer;
+        public static encode(m: pb.IGetStoragePurchaseStatusData, w?: $protobuf.Writer): $protobuf.Writer;
 
         /**
          * Encodes the specified GetStoragePurchaseStatusData message, length delimited. Does not implicitly {@link pb.GetStoragePurchaseStatusData.verify|verify} messages.
@@ -4114,13 +3973,13 @@ export namespace pb {
 
         /**
          * Decodes a GetStoragePurchaseStatusData message from the specified reader or buffer.
-         * @param reader Reader or buffer to decode from
-         * @param [length] Message length if known beforehand
+         * @param r Reader or buffer to decode from
+         * @param [l] Message length if known beforehand
          * @returns GetStoragePurchaseStatusData
          * @throws {Error} If the payload is not a reader or valid buffer
          * @throws {$protobuf.util.ProtocolError} If required fields are missing
          */
-        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): pb.GetStoragePurchaseStatusData;
+        public static decode(r: ($protobuf.Reader|Uint8Array), l?: number): pb.GetStoragePurchaseStatusData;
 
         /**
          * Decodes a GetStoragePurchaseStatusData message from the specified reader or buffer, length delimited.
@@ -4133,38 +3992,31 @@ export namespace pb {
 
         /**
          * Verifies a GetStoragePurchaseStatusData message.
-         * @param message Plain object to verify
+         * @param m Plain object to verify
          * @returns `null` if valid, otherwise the reason why it is not
          */
-        public static verify(message: { [k: string]: any }): (string|null);
+        public static verify(m: { [k: string]: any }): (string|null);
 
         /**
          * Creates a GetStoragePurchaseStatusData message from a plain object. Also converts values to their respective internal types.
-         * @param object Plain object
+         * @param d Plain object
          * @returns GetStoragePurchaseStatusData
          */
-        public static fromObject(object: { [k: string]: any }): pb.GetStoragePurchaseStatusData;
+        public static fromObject(d: { [k: string]: any }): pb.GetStoragePurchaseStatusData;
 
         /**
          * Creates a plain object from a GetStoragePurchaseStatusData message. Also converts values to other types if specified.
-         * @param message GetStoragePurchaseStatusData
-         * @param [options] Conversion options
+         * @param m GetStoragePurchaseStatusData
+         * @param [o] Conversion options
          * @returns Plain object
          */
-        public static toObject(message: pb.GetStoragePurchaseStatusData, options?: $protobuf.IConversionOptions): { [k: string]: any };
+        public static toObject(m: pb.GetStoragePurchaseStatusData, o?: $protobuf.IConversionOptions): { [k: string]: any };
 
         /**
          * Converts this GetStoragePurchaseStatusData to JSON.
          * @returns JSON object
          */
         public toJSON(): { [k: string]: any };
-
-        /**
-         * Gets the default type url for GetStoragePurchaseStatusData
-         * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
-         * @returns The default type url
-         */
-        public static getTypeUrl(typeUrlPrefix?: string): string;
     }
 
     /** Properties of a CidInfo. */
@@ -4206,9 +4058,9 @@ export namespace pb {
 
         /**
          * Constructs a new CidInfo.
-         * @param [properties] Properties to set
+         * @param [p] Properties to set
          */
-        constructor(properties?: pb.ICidInfo);
+        constructor(p?: pb.ICidInfo);
 
         /** CidInfo cid. */
         public cid: string;
@@ -4249,11 +4101,11 @@ export namespace pb {
 
         /**
          * Encodes the specified CidInfo message. Does not implicitly {@link pb.CidInfo.verify|verify} messages.
-         * @param message CidInfo message or plain object to encode
-         * @param [writer] Writer to encode to
+         * @param m CidInfo message or plain object to encode
+         * @param [w] Writer to encode to
          * @returns Writer
          */
-        public static encode(message: pb.ICidInfo, writer?: $protobuf.Writer): $protobuf.Writer;
+        public static encode(m: pb.ICidInfo, w?: $protobuf.Writer): $protobuf.Writer;
 
         /**
          * Encodes the specified CidInfo message, length delimited. Does not implicitly {@link pb.CidInfo.verify|verify} messages.
@@ -4265,13 +4117,13 @@ export namespace pb {
 
         /**
          * Decodes a CidInfo message from the specified reader or buffer.
-         * @param reader Reader or buffer to decode from
-         * @param [length] Message length if known beforehand
+         * @param r Reader or buffer to decode from
+         * @param [l] Message length if known beforehand
          * @returns CidInfo
          * @throws {Error} If the payload is not a reader or valid buffer
          * @throws {$protobuf.util.ProtocolError} If required fields are missing
          */
-        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): pb.CidInfo;
+        public static decode(r: ($protobuf.Reader|Uint8Array), l?: number): pb.CidInfo;
 
         /**
          * Decodes a CidInfo message from the specified reader or buffer, length delimited.
@@ -4284,38 +4136,31 @@ export namespace pb {
 
         /**
          * Verifies a CidInfo message.
-         * @param message Plain object to verify
+         * @param m Plain object to verify
          * @returns `null` if valid, otherwise the reason why it is not
          */
-        public static verify(message: { [k: string]: any }): (string|null);
+        public static verify(m: { [k: string]: any }): (string|null);
 
         /**
          * Creates a CidInfo message from a plain object. Also converts values to their respective internal types.
-         * @param object Plain object
+         * @param d Plain object
          * @returns CidInfo
          */
-        public static fromObject(object: { [k: string]: any }): pb.CidInfo;
+        public static fromObject(d: { [k: string]: any }): pb.CidInfo;
 
         /**
          * Creates a plain object from a CidInfo message. Also converts values to other types if specified.
-         * @param message CidInfo
-         * @param [options] Conversion options
+         * @param m CidInfo
+         * @param [o] Conversion options
          * @returns Plain object
          */
-        public static toObject(message: pb.CidInfo, options?: $protobuf.IConversionOptions): { [k: string]: any };
+        public static toObject(m: pb.CidInfo, o?: $protobuf.IConversionOptions): { [k: string]: any };
 
         /**
          * Converts this CidInfo to JSON.
          * @returns JSON object
          */
         public toJSON(): { [k: string]: any };
-
-        /**
-         * Gets the default type url for CidInfo
-         * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
-         * @returns The default type url
-         */
-        public static getTypeUrl(typeUrlPrefix?: string): string;
     }
 
     /** Properties of a CreateCidInfoRequest. */
@@ -4336,9 +4181,9 @@ export namespace pb {
 
         /**
          * Constructs a new CreateCidInfoRequest.
-         * @param [properties] Properties to set
+         * @param [p] Properties to set
          */
-        constructor(properties?: pb.ICreateCidInfoRequest);
+        constructor(p?: pb.ICreateCidInfoRequest);
 
         /** CreateCidInfoRequest cid. */
         public cid: string;
@@ -4358,11 +4203,11 @@ export namespace pb {
 
         /**
          * Encodes the specified CreateCidInfoRequest message. Does not implicitly {@link pb.CreateCidInfoRequest.verify|verify} messages.
-         * @param message CreateCidInfoRequest message or plain object to encode
-         * @param [writer] Writer to encode to
+         * @param m CreateCidInfoRequest message or plain object to encode
+         * @param [w] Writer to encode to
          * @returns Writer
          */
-        public static encode(message: pb.ICreateCidInfoRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+        public static encode(m: pb.ICreateCidInfoRequest, w?: $protobuf.Writer): $protobuf.Writer;
 
         /**
          * Encodes the specified CreateCidInfoRequest message, length delimited. Does not implicitly {@link pb.CreateCidInfoRequest.verify|verify} messages.
@@ -4374,13 +4219,13 @@ export namespace pb {
 
         /**
          * Decodes a CreateCidInfoRequest message from the specified reader or buffer.
-         * @param reader Reader or buffer to decode from
-         * @param [length] Message length if known beforehand
+         * @param r Reader or buffer to decode from
+         * @param [l] Message length if known beforehand
          * @returns CreateCidInfoRequest
          * @throws {Error} If the payload is not a reader or valid buffer
          * @throws {$protobuf.util.ProtocolError} If required fields are missing
          */
-        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): pb.CreateCidInfoRequest;
+        public static decode(r: ($protobuf.Reader|Uint8Array), l?: number): pb.CreateCidInfoRequest;
 
         /**
          * Decodes a CreateCidInfoRequest message from the specified reader or buffer, length delimited.
@@ -4393,38 +4238,31 @@ export namespace pb {
 
         /**
          * Verifies a CreateCidInfoRequest message.
-         * @param message Plain object to verify
+         * @param m Plain object to verify
          * @returns `null` if valid, otherwise the reason why it is not
          */
-        public static verify(message: { [k: string]: any }): (string|null);
+        public static verify(m: { [k: string]: any }): (string|null);
 
         /**
          * Creates a CreateCidInfoRequest message from a plain object. Also converts values to their respective internal types.
-         * @param object Plain object
+         * @param d Plain object
          * @returns CreateCidInfoRequest
          */
-        public static fromObject(object: { [k: string]: any }): pb.CreateCidInfoRequest;
+        public static fromObject(d: { [k: string]: any }): pb.CreateCidInfoRequest;
 
         /**
          * Creates a plain object from a CreateCidInfoRequest message. Also converts values to other types if specified.
-         * @param message CreateCidInfoRequest
-         * @param [options] Conversion options
+         * @param m CreateCidInfoRequest
+         * @param [o] Conversion options
          * @returns Plain object
          */
-        public static toObject(message: pb.CreateCidInfoRequest, options?: $protobuf.IConversionOptions): { [k: string]: any };
+        public static toObject(m: pb.CreateCidInfoRequest, o?: $protobuf.IConversionOptions): { [k: string]: any };
 
         /**
          * Converts this CreateCidInfoRequest to JSON.
          * @returns JSON object
          */
         public toJSON(): { [k: string]: any };
-
-        /**
-         * Gets the default type url for CreateCidInfoRequest
-         * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
-         * @returns The default type url
-         */
-        public static getTypeUrl(typeUrlPrefix?: string): string;
     }
 
     /** Properties of a CreateCidInfoResponse. */
@@ -4442,9 +4280,9 @@ export namespace pb {
 
         /**
          * Constructs a new CreateCidInfoResponse.
-         * @param [properties] Properties to set
+         * @param [p] Properties to set
          */
-        constructor(properties?: pb.ICreateCidInfoResponse);
+        constructor(p?: pb.ICreateCidInfoResponse);
 
         /** CreateCidInfoResponse code. */
         public code: number;
@@ -4461,11 +4299,11 @@ export namespace pb {
 
         /**
          * Encodes the specified CreateCidInfoResponse message. Does not implicitly {@link pb.CreateCidInfoResponse.verify|verify} messages.
-         * @param message CreateCidInfoResponse message or plain object to encode
-         * @param [writer] Writer to encode to
+         * @param m CreateCidInfoResponse message or plain object to encode
+         * @param [w] Writer to encode to
          * @returns Writer
          */
-        public static encode(message: pb.ICreateCidInfoResponse, writer?: $protobuf.Writer): $protobuf.Writer;
+        public static encode(m: pb.ICreateCidInfoResponse, w?: $protobuf.Writer): $protobuf.Writer;
 
         /**
          * Encodes the specified CreateCidInfoResponse message, length delimited. Does not implicitly {@link pb.CreateCidInfoResponse.verify|verify} messages.
@@ -4477,13 +4315,13 @@ export namespace pb {
 
         /**
          * Decodes a CreateCidInfoResponse message from the specified reader or buffer.
-         * @param reader Reader or buffer to decode from
-         * @param [length] Message length if known beforehand
+         * @param r Reader or buffer to decode from
+         * @param [l] Message length if known beforehand
          * @returns CreateCidInfoResponse
          * @throws {Error} If the payload is not a reader or valid buffer
          * @throws {$protobuf.util.ProtocolError} If required fields are missing
          */
-        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): pb.CreateCidInfoResponse;
+        public static decode(r: ($protobuf.Reader|Uint8Array), l?: number): pb.CreateCidInfoResponse;
 
         /**
          * Decodes a CreateCidInfoResponse message from the specified reader or buffer, length delimited.
@@ -4496,38 +4334,31 @@ export namespace pb {
 
         /**
          * Verifies a CreateCidInfoResponse message.
-         * @param message Plain object to verify
+         * @param m Plain object to verify
          * @returns `null` if valid, otherwise the reason why it is not
          */
-        public static verify(message: { [k: string]: any }): (string|null);
+        public static verify(m: { [k: string]: any }): (string|null);
 
         /**
          * Creates a CreateCidInfoResponse message from a plain object. Also converts values to their respective internal types.
-         * @param object Plain object
+         * @param d Plain object
          * @returns CreateCidInfoResponse
          */
-        public static fromObject(object: { [k: string]: any }): pb.CreateCidInfoResponse;
+        public static fromObject(d: { [k: string]: any }): pb.CreateCidInfoResponse;
 
         /**
          * Creates a plain object from a CreateCidInfoResponse message. Also converts values to other types if specified.
-         * @param message CreateCidInfoResponse
-         * @param [options] Conversion options
+         * @param m CreateCidInfoResponse
+         * @param [o] Conversion options
          * @returns Plain object
          */
-        public static toObject(message: pb.CreateCidInfoResponse, options?: $protobuf.IConversionOptions): { [k: string]: any };
+        public static toObject(m: pb.CreateCidInfoResponse, o?: $protobuf.IConversionOptions): { [k: string]: any };
 
         /**
          * Converts this CreateCidInfoResponse to JSON.
          * @returns JSON object
          */
         public toJSON(): { [k: string]: any };
-
-        /**
-         * Gets the default type url for CreateCidInfoResponse
-         * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
-         * @returns The default type url
-         */
-        public static getTypeUrl(typeUrlPrefix?: string): string;
     }
 
     /** Properties of a GetCidInfoRequest. */
@@ -4542,9 +4373,9 @@ export namespace pb {
 
         /**
          * Constructs a new GetCidInfoRequest.
-         * @param [properties] Properties to set
+         * @param [p] Properties to set
          */
-        constructor(properties?: pb.IGetCidInfoRequest);
+        constructor(p?: pb.IGetCidInfoRequest);
 
         /** GetCidInfoRequest cid. */
         public cid: string;
@@ -4558,11 +4389,11 @@ export namespace pb {
 
         /**
          * Encodes the specified GetCidInfoRequest message. Does not implicitly {@link pb.GetCidInfoRequest.verify|verify} messages.
-         * @param message GetCidInfoRequest message or plain object to encode
-         * @param [writer] Writer to encode to
+         * @param m GetCidInfoRequest message or plain object to encode
+         * @param [w] Writer to encode to
          * @returns Writer
          */
-        public static encode(message: pb.IGetCidInfoRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+        public static encode(m: pb.IGetCidInfoRequest, w?: $protobuf.Writer): $protobuf.Writer;
 
         /**
          * Encodes the specified GetCidInfoRequest message, length delimited. Does not implicitly {@link pb.GetCidInfoRequest.verify|verify} messages.
@@ -4574,13 +4405,13 @@ export namespace pb {
 
         /**
          * Decodes a GetCidInfoRequest message from the specified reader or buffer.
-         * @param reader Reader or buffer to decode from
-         * @param [length] Message length if known beforehand
+         * @param r Reader or buffer to decode from
+         * @param [l] Message length if known beforehand
          * @returns GetCidInfoRequest
          * @throws {Error} If the payload is not a reader or valid buffer
          * @throws {$protobuf.util.ProtocolError} If required fields are missing
          */
-        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): pb.GetCidInfoRequest;
+        public static decode(r: ($protobuf.Reader|Uint8Array), l?: number): pb.GetCidInfoRequest;
 
         /**
          * Decodes a GetCidInfoRequest message from the specified reader or buffer, length delimited.
@@ -4593,38 +4424,31 @@ export namespace pb {
 
         /**
          * Verifies a GetCidInfoRequest message.
-         * @param message Plain object to verify
+         * @param m Plain object to verify
          * @returns `null` if valid, otherwise the reason why it is not
          */
-        public static verify(message: { [k: string]: any }): (string|null);
+        public static verify(m: { [k: string]: any }): (string|null);
 
         /**
          * Creates a GetCidInfoRequest message from a plain object. Also converts values to their respective internal types.
-         * @param object Plain object
+         * @param d Plain object
          * @returns GetCidInfoRequest
          */
-        public static fromObject(object: { [k: string]: any }): pb.GetCidInfoRequest;
+        public static fromObject(d: { [k: string]: any }): pb.GetCidInfoRequest;
 
         /**
          * Creates a plain object from a GetCidInfoRequest message. Also converts values to other types if specified.
-         * @param message GetCidInfoRequest
-         * @param [options] Conversion options
+         * @param m GetCidInfoRequest
+         * @param [o] Conversion options
          * @returns Plain object
          */
-        public static toObject(message: pb.GetCidInfoRequest, options?: $protobuf.IConversionOptions): { [k: string]: any };
+        public static toObject(m: pb.GetCidInfoRequest, o?: $protobuf.IConversionOptions): { [k: string]: any };
 
         /**
          * Converts this GetCidInfoRequest to JSON.
          * @returns JSON object
          */
         public toJSON(): { [k: string]: any };
-
-        /**
-         * Gets the default type url for GetCidInfoRequest
-         * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
-         * @returns The default type url
-         */
-        public static getTypeUrl(typeUrlPrefix?: string): string;
     }
 
     /** Properties of a GetCidInfoResponse. */
@@ -4645,9 +4469,9 @@ export namespace pb {
 
         /**
          * Constructs a new GetCidInfoResponse.
-         * @param [properties] Properties to set
+         * @param [p] Properties to set
          */
-        constructor(properties?: pb.IGetCidInfoResponse);
+        constructor(p?: pb.IGetCidInfoResponse);
 
         /** GetCidInfoResponse code. */
         public code: number;
@@ -4667,11 +4491,11 @@ export namespace pb {
 
         /**
          * Encodes the specified GetCidInfoResponse message. Does not implicitly {@link pb.GetCidInfoResponse.verify|verify} messages.
-         * @param message GetCidInfoResponse message or plain object to encode
-         * @param [writer] Writer to encode to
+         * @param m GetCidInfoResponse message or plain object to encode
+         * @param [w] Writer to encode to
          * @returns Writer
          */
-        public static encode(message: pb.IGetCidInfoResponse, writer?: $protobuf.Writer): $protobuf.Writer;
+        public static encode(m: pb.IGetCidInfoResponse, w?: $protobuf.Writer): $protobuf.Writer;
 
         /**
          * Encodes the specified GetCidInfoResponse message, length delimited. Does not implicitly {@link pb.GetCidInfoResponse.verify|verify} messages.
@@ -4683,13 +4507,13 @@ export namespace pb {
 
         /**
          * Decodes a GetCidInfoResponse message from the specified reader or buffer.
-         * @param reader Reader or buffer to decode from
-         * @param [length] Message length if known beforehand
+         * @param r Reader or buffer to decode from
+         * @param [l] Message length if known beforehand
          * @returns GetCidInfoResponse
          * @throws {Error} If the payload is not a reader or valid buffer
          * @throws {$protobuf.util.ProtocolError} If required fields are missing
          */
-        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): pb.GetCidInfoResponse;
+        public static decode(r: ($protobuf.Reader|Uint8Array), l?: number): pb.GetCidInfoResponse;
 
         /**
          * Decodes a GetCidInfoResponse message from the specified reader or buffer, length delimited.
@@ -4702,38 +4526,31 @@ export namespace pb {
 
         /**
          * Verifies a GetCidInfoResponse message.
-         * @param message Plain object to verify
+         * @param m Plain object to verify
          * @returns `null` if valid, otherwise the reason why it is not
          */
-        public static verify(message: { [k: string]: any }): (string|null);
+        public static verify(m: { [k: string]: any }): (string|null);
 
         /**
          * Creates a GetCidInfoResponse message from a plain object. Also converts values to their respective internal types.
-         * @param object Plain object
+         * @param d Plain object
          * @returns GetCidInfoResponse
          */
-        public static fromObject(object: { [k: string]: any }): pb.GetCidInfoResponse;
+        public static fromObject(d: { [k: string]: any }): pb.GetCidInfoResponse;
 
         /**
          * Creates a plain object from a GetCidInfoResponse message. Also converts values to other types if specified.
-         * @param message GetCidInfoResponse
-         * @param [options] Conversion options
+         * @param m GetCidInfoResponse
+         * @param [o] Conversion options
          * @returns Plain object
          */
-        public static toObject(message: pb.GetCidInfoResponse, options?: $protobuf.IConversionOptions): { [k: string]: any };
+        public static toObject(m: pb.GetCidInfoResponse, o?: $protobuf.IConversionOptions): { [k: string]: any };
 
         /**
          * Converts this GetCidInfoResponse to JSON.
          * @returns JSON object
          */
         public toJSON(): { [k: string]: any };
-
-        /**
-         * Gets the default type url for GetCidInfoResponse
-         * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
-         * @returns The default type url
-         */
-        public static getTypeUrl(typeUrlPrefix?: string): string;
     }
 
     /** Properties of a PageQueryRequest. */
@@ -4769,9 +4586,9 @@ export namespace pb {
 
         /**
          * Constructs a new PageQueryRequest.
-         * @param [properties] Properties to set
+         * @param [p] Properties to set
          */
-        constructor(properties?: pb.IPageQueryRequest);
+        constructor(p?: pb.IPageQueryRequest);
 
         /** PageQueryRequest page. */
         public page: number;
@@ -4806,11 +4623,11 @@ export namespace pb {
 
         /**
          * Encodes the specified PageQueryRequest message. Does not implicitly {@link pb.PageQueryRequest.verify|verify} messages.
-         * @param message PageQueryRequest message or plain object to encode
-         * @param [writer] Writer to encode to
+         * @param m PageQueryRequest message or plain object to encode
+         * @param [w] Writer to encode to
          * @returns Writer
          */
-        public static encode(message: pb.IPageQueryRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+        public static encode(m: pb.IPageQueryRequest, w?: $protobuf.Writer): $protobuf.Writer;
 
         /**
          * Encodes the specified PageQueryRequest message, length delimited. Does not implicitly {@link pb.PageQueryRequest.verify|verify} messages.
@@ -4822,13 +4639,13 @@ export namespace pb {
 
         /**
          * Decodes a PageQueryRequest message from the specified reader or buffer.
-         * @param reader Reader or buffer to decode from
-         * @param [length] Message length if known beforehand
+         * @param r Reader or buffer to decode from
+         * @param [l] Message length if known beforehand
          * @returns PageQueryRequest
          * @throws {Error} If the payload is not a reader or valid buffer
          * @throws {$protobuf.util.ProtocolError} If required fields are missing
          */
-        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): pb.PageQueryRequest;
+        public static decode(r: ($protobuf.Reader|Uint8Array), l?: number): pb.PageQueryRequest;
 
         /**
          * Decodes a PageQueryRequest message from the specified reader or buffer, length delimited.
@@ -4841,38 +4658,31 @@ export namespace pb {
 
         /**
          * Verifies a PageQueryRequest message.
-         * @param message Plain object to verify
+         * @param m Plain object to verify
          * @returns `null` if valid, otherwise the reason why it is not
          */
-        public static verify(message: { [k: string]: any }): (string|null);
+        public static verify(m: { [k: string]: any }): (string|null);
 
         /**
          * Creates a PageQueryRequest message from a plain object. Also converts values to their respective internal types.
-         * @param object Plain object
+         * @param d Plain object
          * @returns PageQueryRequest
          */
-        public static fromObject(object: { [k: string]: any }): pb.PageQueryRequest;
+        public static fromObject(d: { [k: string]: any }): pb.PageQueryRequest;
 
         /**
          * Creates a plain object from a PageQueryRequest message. Also converts values to other types if specified.
-         * @param message PageQueryRequest
-         * @param [options] Conversion options
+         * @param m PageQueryRequest
+         * @param [o] Conversion options
          * @returns Plain object
          */
-        public static toObject(message: pb.PageQueryRequest, options?: $protobuf.IConversionOptions): { [k: string]: any };
+        public static toObject(m: pb.PageQueryRequest, o?: $protobuf.IConversionOptions): { [k: string]: any };
 
         /**
          * Converts this PageQueryRequest to JSON.
          * @returns JSON object
          */
         public toJSON(): { [k: string]: any };
-
-        /**
-         * Gets the default type url for PageQueryRequest
-         * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
-         * @returns The default type url
-         */
-        public static getTypeUrl(typeUrlPrefix?: string): string;
     }
 
     /** Properties of a PageQueryResponse. */
@@ -4893,9 +4703,9 @@ export namespace pb {
 
         /**
          * Constructs a new PageQueryResponse.
-         * @param [properties] Properties to set
+         * @param [p] Properties to set
          */
-        constructor(properties?: pb.IPageQueryResponse);
+        constructor(p?: pb.IPageQueryResponse);
 
         /** PageQueryResponse code. */
         public code: number;
@@ -4915,11 +4725,11 @@ export namespace pb {
 
         /**
          * Encodes the specified PageQueryResponse message. Does not implicitly {@link pb.PageQueryResponse.verify|verify} messages.
-         * @param message PageQueryResponse message or plain object to encode
-         * @param [writer] Writer to encode to
+         * @param m PageQueryResponse message or plain object to encode
+         * @param [w] Writer to encode to
          * @returns Writer
          */
-        public static encode(message: pb.IPageQueryResponse, writer?: $protobuf.Writer): $protobuf.Writer;
+        public static encode(m: pb.IPageQueryResponse, w?: $protobuf.Writer): $protobuf.Writer;
 
         /**
          * Encodes the specified PageQueryResponse message, length delimited. Does not implicitly {@link pb.PageQueryResponse.verify|verify} messages.
@@ -4931,13 +4741,13 @@ export namespace pb {
 
         /**
          * Decodes a PageQueryResponse message from the specified reader or buffer.
-         * @param reader Reader or buffer to decode from
-         * @param [length] Message length if known beforehand
+         * @param r Reader or buffer to decode from
+         * @param [l] Message length if known beforehand
          * @returns PageQueryResponse
          * @throws {Error} If the payload is not a reader or valid buffer
          * @throws {$protobuf.util.ProtocolError} If required fields are missing
          */
-        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): pb.PageQueryResponse;
+        public static decode(r: ($protobuf.Reader|Uint8Array), l?: number): pb.PageQueryResponse;
 
         /**
          * Decodes a PageQueryResponse message from the specified reader or buffer, length delimited.
@@ -4950,38 +4760,31 @@ export namespace pb {
 
         /**
          * Verifies a PageQueryResponse message.
-         * @param message Plain object to verify
+         * @param m Plain object to verify
          * @returns `null` if valid, otherwise the reason why it is not
          */
-        public static verify(message: { [k: string]: any }): (string|null);
+        public static verify(m: { [k: string]: any }): (string|null);
 
         /**
          * Creates a PageQueryResponse message from a plain object. Also converts values to their respective internal types.
-         * @param object Plain object
+         * @param d Plain object
          * @returns PageQueryResponse
          */
-        public static fromObject(object: { [k: string]: any }): pb.PageQueryResponse;
+        public static fromObject(d: { [k: string]: any }): pb.PageQueryResponse;
 
         /**
          * Creates a plain object from a PageQueryResponse message. Also converts values to other types if specified.
-         * @param message PageQueryResponse
-         * @param [options] Conversion options
+         * @param m PageQueryResponse
+         * @param [o] Conversion options
          * @returns Plain object
          */
-        public static toObject(message: pb.PageQueryResponse, options?: $protobuf.IConversionOptions): { [k: string]: any };
+        public static toObject(m: pb.PageQueryResponse, o?: $protobuf.IConversionOptions): { [k: string]: any };
 
         /**
          * Converts this PageQueryResponse to JSON.
          * @returns JSON object
          */
         public toJSON(): { [k: string]: any };
-
-        /**
-         * Gets the default type url for PageQueryResponse
-         * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
-         * @returns The default type url
-         */
-        public static getTypeUrl(typeUrlPrefix?: string): string;
     }
 
     /** Properties of a CIDPageResult. */
@@ -5008,9 +4811,9 @@ export namespace pb {
 
         /**
          * Constructs a new CIDPageResult.
-         * @param [properties] Properties to set
+         * @param [p] Properties to set
          */
-        constructor(properties?: pb.ICIDPageResult);
+        constructor(p?: pb.ICIDPageResult);
 
         /** CIDPageResult total. */
         public total: (number|Long);
@@ -5036,11 +4839,11 @@ export namespace pb {
 
         /**
          * Encodes the specified CIDPageResult message. Does not implicitly {@link pb.CIDPageResult.verify|verify} messages.
-         * @param message CIDPageResult message or plain object to encode
-         * @param [writer] Writer to encode to
+         * @param m CIDPageResult message or plain object to encode
+         * @param [w] Writer to encode to
          * @returns Writer
          */
-        public static encode(message: pb.ICIDPageResult, writer?: $protobuf.Writer): $protobuf.Writer;
+        public static encode(m: pb.ICIDPageResult, w?: $protobuf.Writer): $protobuf.Writer;
 
         /**
          * Encodes the specified CIDPageResult message, length delimited. Does not implicitly {@link pb.CIDPageResult.verify|verify} messages.
@@ -5052,13 +4855,13 @@ export namespace pb {
 
         /**
          * Decodes a CIDPageResult message from the specified reader or buffer.
-         * @param reader Reader or buffer to decode from
-         * @param [length] Message length if known beforehand
+         * @param r Reader or buffer to decode from
+         * @param [l] Message length if known beforehand
          * @returns CIDPageResult
          * @throws {Error} If the payload is not a reader or valid buffer
          * @throws {$protobuf.util.ProtocolError} If required fields are missing
          */
-        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): pb.CIDPageResult;
+        public static decode(r: ($protobuf.Reader|Uint8Array), l?: number): pb.CIDPageResult;
 
         /**
          * Decodes a CIDPageResult message from the specified reader or buffer, length delimited.
@@ -5071,38 +4874,31 @@ export namespace pb {
 
         /**
          * Verifies a CIDPageResult message.
-         * @param message Plain object to verify
+         * @param m Plain object to verify
          * @returns `null` if valid, otherwise the reason why it is not
          */
-        public static verify(message: { [k: string]: any }): (string|null);
+        public static verify(m: { [k: string]: any }): (string|null);
 
         /**
          * Creates a CIDPageResult message from a plain object. Also converts values to their respective internal types.
-         * @param object Plain object
+         * @param d Plain object
          * @returns CIDPageResult
          */
-        public static fromObject(object: { [k: string]: any }): pb.CIDPageResult;
+        public static fromObject(d: { [k: string]: any }): pb.CIDPageResult;
 
         /**
          * Creates a plain object from a CIDPageResult message. Also converts values to other types if specified.
-         * @param message CIDPageResult
-         * @param [options] Conversion options
+         * @param m CIDPageResult
+         * @param [o] Conversion options
          * @returns Plain object
          */
-        public static toObject(message: pb.CIDPageResult, options?: $protobuf.IConversionOptions): { [k: string]: any };
+        public static toObject(m: pb.CIDPageResult, o?: $protobuf.IConversionOptions): { [k: string]: any };
 
         /**
          * Converts this CIDPageResult to JSON.
          * @returns JSON object
          */
         public toJSON(): { [k: string]: any };
-
-        /**
-         * Gets the default type url for CIDPageResult
-         * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
-         * @returns The default type url
-         */
-        public static getTypeUrl(typeUrlPrefix?: string): string;
     }
 
     /** Properties of an UpdateCheckStatusRequest. */
@@ -5126,9 +4922,9 @@ export namespace pb {
 
         /**
          * Constructs a new UpdateCheckStatusRequest.
-         * @param [properties] Properties to set
+         * @param [p] Properties to set
          */
-        constructor(properties?: pb.IUpdateCheckStatusRequest);
+        constructor(p?: pb.IUpdateCheckStatusRequest);
 
         /** UpdateCheckStatusRequest cid. */
         public cid: string;
@@ -5151,11 +4947,11 @@ export namespace pb {
 
         /**
          * Encodes the specified UpdateCheckStatusRequest message. Does not implicitly {@link pb.UpdateCheckStatusRequest.verify|verify} messages.
-         * @param message UpdateCheckStatusRequest message or plain object to encode
-         * @param [writer] Writer to encode to
+         * @param m UpdateCheckStatusRequest message or plain object to encode
+         * @param [w] Writer to encode to
          * @returns Writer
          */
-        public static encode(message: pb.IUpdateCheckStatusRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+        public static encode(m: pb.IUpdateCheckStatusRequest, w?: $protobuf.Writer): $protobuf.Writer;
 
         /**
          * Encodes the specified UpdateCheckStatusRequest message, length delimited. Does not implicitly {@link pb.UpdateCheckStatusRequest.verify|verify} messages.
@@ -5167,13 +4963,13 @@ export namespace pb {
 
         /**
          * Decodes an UpdateCheckStatusRequest message from the specified reader or buffer.
-         * @param reader Reader or buffer to decode from
-         * @param [length] Message length if known beforehand
+         * @param r Reader or buffer to decode from
+         * @param [l] Message length if known beforehand
          * @returns UpdateCheckStatusRequest
          * @throws {Error} If the payload is not a reader or valid buffer
          * @throws {$protobuf.util.ProtocolError} If required fields are missing
          */
-        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): pb.UpdateCheckStatusRequest;
+        public static decode(r: ($protobuf.Reader|Uint8Array), l?: number): pb.UpdateCheckStatusRequest;
 
         /**
          * Decodes an UpdateCheckStatusRequest message from the specified reader or buffer, length delimited.
@@ -5186,38 +4982,31 @@ export namespace pb {
 
         /**
          * Verifies an UpdateCheckStatusRequest message.
-         * @param message Plain object to verify
+         * @param m Plain object to verify
          * @returns `null` if valid, otherwise the reason why it is not
          */
-        public static verify(message: { [k: string]: any }): (string|null);
+        public static verify(m: { [k: string]: any }): (string|null);
 
         /**
          * Creates an UpdateCheckStatusRequest message from a plain object. Also converts values to their respective internal types.
-         * @param object Plain object
+         * @param d Plain object
          * @returns UpdateCheckStatusRequest
          */
-        public static fromObject(object: { [k: string]: any }): pb.UpdateCheckStatusRequest;
+        public static fromObject(d: { [k: string]: any }): pb.UpdateCheckStatusRequest;
 
         /**
          * Creates a plain object from an UpdateCheckStatusRequest message. Also converts values to other types if specified.
-         * @param message UpdateCheckStatusRequest
-         * @param [options] Conversion options
+         * @param m UpdateCheckStatusRequest
+         * @param [o] Conversion options
          * @returns Plain object
          */
-        public static toObject(message: pb.UpdateCheckStatusRequest, options?: $protobuf.IConversionOptions): { [k: string]: any };
+        public static toObject(m: pb.UpdateCheckStatusRequest, o?: $protobuf.IConversionOptions): { [k: string]: any };
 
         /**
          * Converts this UpdateCheckStatusRequest to JSON.
          * @returns JSON object
          */
         public toJSON(): { [k: string]: any };
-
-        /**
-         * Gets the default type url for UpdateCheckStatusRequest
-         * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
-         * @returns The default type url
-         */
-        public static getTypeUrl(typeUrlPrefix?: string): string;
     }
 
     /** Properties of an UpdateCheckStatusResponse. */
@@ -5235,9 +5024,9 @@ export namespace pb {
 
         /**
          * Constructs a new UpdateCheckStatusResponse.
-         * @param [properties] Properties to set
+         * @param [p] Properties to set
          */
-        constructor(properties?: pb.IUpdateCheckStatusResponse);
+        constructor(p?: pb.IUpdateCheckStatusResponse);
 
         /** UpdateCheckStatusResponse code. */
         public code: number;
@@ -5254,11 +5043,11 @@ export namespace pb {
 
         /**
          * Encodes the specified UpdateCheckStatusResponse message. Does not implicitly {@link pb.UpdateCheckStatusResponse.verify|verify} messages.
-         * @param message UpdateCheckStatusResponse message or plain object to encode
-         * @param [writer] Writer to encode to
+         * @param m UpdateCheckStatusResponse message or plain object to encode
+         * @param [w] Writer to encode to
          * @returns Writer
          */
-        public static encode(message: pb.IUpdateCheckStatusResponse, writer?: $protobuf.Writer): $protobuf.Writer;
+        public static encode(m: pb.IUpdateCheckStatusResponse, w?: $protobuf.Writer): $protobuf.Writer;
 
         /**
          * Encodes the specified UpdateCheckStatusResponse message, length delimited. Does not implicitly {@link pb.UpdateCheckStatusResponse.verify|verify} messages.
@@ -5270,13 +5059,13 @@ export namespace pb {
 
         /**
          * Decodes an UpdateCheckStatusResponse message from the specified reader or buffer.
-         * @param reader Reader or buffer to decode from
-         * @param [length] Message length if known beforehand
+         * @param r Reader or buffer to decode from
+         * @param [l] Message length if known beforehand
          * @returns UpdateCheckStatusResponse
          * @throws {Error} If the payload is not a reader or valid buffer
          * @throws {$protobuf.util.ProtocolError} If required fields are missing
          */
-        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): pb.UpdateCheckStatusResponse;
+        public static decode(r: ($protobuf.Reader|Uint8Array), l?: number): pb.UpdateCheckStatusResponse;
 
         /**
          * Decodes an UpdateCheckStatusResponse message from the specified reader or buffer, length delimited.
@@ -5289,38 +5078,31 @@ export namespace pb {
 
         /**
          * Verifies an UpdateCheckStatusResponse message.
-         * @param message Plain object to verify
+         * @param m Plain object to verify
          * @returns `null` if valid, otherwise the reason why it is not
          */
-        public static verify(message: { [k: string]: any }): (string|null);
+        public static verify(m: { [k: string]: any }): (string|null);
 
         /**
          * Creates an UpdateCheckStatusResponse message from a plain object. Also converts values to their respective internal types.
-         * @param object Plain object
+         * @param d Plain object
          * @returns UpdateCheckStatusResponse
          */
-        public static fromObject(object: { [k: string]: any }): pb.UpdateCheckStatusResponse;
+        public static fromObject(d: { [k: string]: any }): pb.UpdateCheckStatusResponse;
 
         /**
          * Creates a plain object from an UpdateCheckStatusResponse message. Also converts values to other types if specified.
-         * @param message UpdateCheckStatusResponse
-         * @param [options] Conversion options
+         * @param m UpdateCheckStatusResponse
+         * @param [o] Conversion options
          * @returns Plain object
          */
-        public static toObject(message: pb.UpdateCheckStatusResponse, options?: $protobuf.IConversionOptions): { [k: string]: any };
+        public static toObject(m: pb.UpdateCheckStatusResponse, o?: $protobuf.IConversionOptions): { [k: string]: any };
 
         /**
          * Converts this UpdateCheckStatusResponse to JSON.
          * @returns JSON object
          */
         public toJSON(): { [k: string]: any };
-
-        /**
-         * Gets the default type url for UpdateCheckStatusResponse
-         * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
-         * @returns The default type url
-         */
-        public static getTypeUrl(typeUrlPrefix?: string): string;
     }
 
     /** Properties of a DeleteCidInfoRequest. */
@@ -5335,9 +5117,9 @@ export namespace pb {
 
         /**
          * Constructs a new DeleteCidInfoRequest.
-         * @param [properties] Properties to set
+         * @param [p] Properties to set
          */
-        constructor(properties?: pb.IDeleteCidInfoRequest);
+        constructor(p?: pb.IDeleteCidInfoRequest);
 
         /** DeleteCidInfoRequest cid. */
         public cid: string;
@@ -5351,11 +5133,11 @@ export namespace pb {
 
         /**
          * Encodes the specified DeleteCidInfoRequest message. Does not implicitly {@link pb.DeleteCidInfoRequest.verify|verify} messages.
-         * @param message DeleteCidInfoRequest message or plain object to encode
-         * @param [writer] Writer to encode to
+         * @param m DeleteCidInfoRequest message or plain object to encode
+         * @param [w] Writer to encode to
          * @returns Writer
          */
-        public static encode(message: pb.IDeleteCidInfoRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+        public static encode(m: pb.IDeleteCidInfoRequest, w?: $protobuf.Writer): $protobuf.Writer;
 
         /**
          * Encodes the specified DeleteCidInfoRequest message, length delimited. Does not implicitly {@link pb.DeleteCidInfoRequest.verify|verify} messages.
@@ -5367,13 +5149,13 @@ export namespace pb {
 
         /**
          * Decodes a DeleteCidInfoRequest message from the specified reader or buffer.
-         * @param reader Reader or buffer to decode from
-         * @param [length] Message length if known beforehand
+         * @param r Reader or buffer to decode from
+         * @param [l] Message length if known beforehand
          * @returns DeleteCidInfoRequest
          * @throws {Error} If the payload is not a reader or valid buffer
          * @throws {$protobuf.util.ProtocolError} If required fields are missing
          */
-        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): pb.DeleteCidInfoRequest;
+        public static decode(r: ($protobuf.Reader|Uint8Array), l?: number): pb.DeleteCidInfoRequest;
 
         /**
          * Decodes a DeleteCidInfoRequest message from the specified reader or buffer, length delimited.
@@ -5386,38 +5168,31 @@ export namespace pb {
 
         /**
          * Verifies a DeleteCidInfoRequest message.
-         * @param message Plain object to verify
+         * @param m Plain object to verify
          * @returns `null` if valid, otherwise the reason why it is not
          */
-        public static verify(message: { [k: string]: any }): (string|null);
+        public static verify(m: { [k: string]: any }): (string|null);
 
         /**
          * Creates a DeleteCidInfoRequest message from a plain object. Also converts values to their respective internal types.
-         * @param object Plain object
+         * @param d Plain object
          * @returns DeleteCidInfoRequest
          */
-        public static fromObject(object: { [k: string]: any }): pb.DeleteCidInfoRequest;
+        public static fromObject(d: { [k: string]: any }): pb.DeleteCidInfoRequest;
 
         /**
          * Creates a plain object from a DeleteCidInfoRequest message. Also converts values to other types if specified.
-         * @param message DeleteCidInfoRequest
-         * @param [options] Conversion options
+         * @param m DeleteCidInfoRequest
+         * @param [o] Conversion options
          * @returns Plain object
          */
-        public static toObject(message: pb.DeleteCidInfoRequest, options?: $protobuf.IConversionOptions): { [k: string]: any };
+        public static toObject(m: pb.DeleteCidInfoRequest, o?: $protobuf.IConversionOptions): { [k: string]: any };
 
         /**
          * Converts this DeleteCidInfoRequest to JSON.
          * @returns JSON object
          */
         public toJSON(): { [k: string]: any };
-
-        /**
-         * Gets the default type url for DeleteCidInfoRequest
-         * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
-         * @returns The default type url
-         */
-        public static getTypeUrl(typeUrlPrefix?: string): string;
     }
 
     /** Properties of a DeleteCidInfoResponse. */
@@ -5435,9 +5210,9 @@ export namespace pb {
 
         /**
          * Constructs a new DeleteCidInfoResponse.
-         * @param [properties] Properties to set
+         * @param [p] Properties to set
          */
-        constructor(properties?: pb.IDeleteCidInfoResponse);
+        constructor(p?: pb.IDeleteCidInfoResponse);
 
         /** DeleteCidInfoResponse code. */
         public code: number;
@@ -5454,11 +5229,11 @@ export namespace pb {
 
         /**
          * Encodes the specified DeleteCidInfoResponse message. Does not implicitly {@link pb.DeleteCidInfoResponse.verify|verify} messages.
-         * @param message DeleteCidInfoResponse message or plain object to encode
-         * @param [writer] Writer to encode to
+         * @param m DeleteCidInfoResponse message or plain object to encode
+         * @param [w] Writer to encode to
          * @returns Writer
          */
-        public static encode(message: pb.IDeleteCidInfoResponse, writer?: $protobuf.Writer): $protobuf.Writer;
+        public static encode(m: pb.IDeleteCidInfoResponse, w?: $protobuf.Writer): $protobuf.Writer;
 
         /**
          * Encodes the specified DeleteCidInfoResponse message, length delimited. Does not implicitly {@link pb.DeleteCidInfoResponse.verify|verify} messages.
@@ -5470,13 +5245,13 @@ export namespace pb {
 
         /**
          * Decodes a DeleteCidInfoResponse message from the specified reader or buffer.
-         * @param reader Reader or buffer to decode from
-         * @param [length] Message length if known beforehand
+         * @param r Reader or buffer to decode from
+         * @param [l] Message length if known beforehand
          * @returns DeleteCidInfoResponse
          * @throws {Error} If the payload is not a reader or valid buffer
          * @throws {$protobuf.util.ProtocolError} If required fields are missing
          */
-        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): pb.DeleteCidInfoResponse;
+        public static decode(r: ($protobuf.Reader|Uint8Array), l?: number): pb.DeleteCidInfoResponse;
 
         /**
          * Decodes a DeleteCidInfoResponse message from the specified reader or buffer, length delimited.
@@ -5489,38 +5264,31 @@ export namespace pb {
 
         /**
          * Verifies a DeleteCidInfoResponse message.
-         * @param message Plain object to verify
+         * @param m Plain object to verify
          * @returns `null` if valid, otherwise the reason why it is not
          */
-        public static verify(message: { [k: string]: any }): (string|null);
+        public static verify(m: { [k: string]: any }): (string|null);
 
         /**
          * Creates a DeleteCidInfoResponse message from a plain object. Also converts values to their respective internal types.
-         * @param object Plain object
+         * @param d Plain object
          * @returns DeleteCidInfoResponse
          */
-        public static fromObject(object: { [k: string]: any }): pb.DeleteCidInfoResponse;
+        public static fromObject(d: { [k: string]: any }): pb.DeleteCidInfoResponse;
 
         /**
          * Creates a plain object from a DeleteCidInfoResponse message. Also converts values to other types if specified.
-         * @param message DeleteCidInfoResponse
-         * @param [options] Conversion options
+         * @param m DeleteCidInfoResponse
+         * @param [o] Conversion options
          * @returns Plain object
          */
-        public static toObject(message: pb.DeleteCidInfoResponse, options?: $protobuf.IConversionOptions): { [k: string]: any };
+        public static toObject(m: pb.DeleteCidInfoResponse, o?: $protobuf.IConversionOptions): { [k: string]: any };
 
         /**
          * Converts this DeleteCidInfoResponse to JSON.
          * @returns JSON object
          */
         public toJSON(): { [k: string]: any };
-
-        /**
-         * Gets the default type url for DeleteCidInfoResponse
-         * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
-         * @returns The default type url
-         */
-        public static getTypeUrl(typeUrlPrefix?: string): string;
     }
 
     /** Properties of a GetEarningsSummaryRequest. */
@@ -5538,9 +5306,9 @@ export namespace pb {
 
         /**
          * Constructs a new GetEarningsSummaryRequest.
-         * @param [properties] Properties to set
+         * @param [p] Properties to set
          */
-        constructor(properties?: pb.IGetEarningsSummaryRequest);
+        constructor(p?: pb.IGetEarningsSummaryRequest);
 
         /** GetEarningsSummaryRequest pubkey. */
         public pubkey: string;
@@ -5557,11 +5325,11 @@ export namespace pb {
 
         /**
          * Encodes the specified GetEarningsSummaryRequest message. Does not implicitly {@link pb.GetEarningsSummaryRequest.verify|verify} messages.
-         * @param message GetEarningsSummaryRequest message or plain object to encode
-         * @param [writer] Writer to encode to
+         * @param m GetEarningsSummaryRequest message or plain object to encode
+         * @param [w] Writer to encode to
          * @returns Writer
          */
-        public static encode(message: pb.IGetEarningsSummaryRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+        public static encode(m: pb.IGetEarningsSummaryRequest, w?: $protobuf.Writer): $protobuf.Writer;
 
         /**
          * Encodes the specified GetEarningsSummaryRequest message, length delimited. Does not implicitly {@link pb.GetEarningsSummaryRequest.verify|verify} messages.
@@ -5573,13 +5341,13 @@ export namespace pb {
 
         /**
          * Decodes a GetEarningsSummaryRequest message from the specified reader or buffer.
-         * @param reader Reader or buffer to decode from
-         * @param [length] Message length if known beforehand
+         * @param r Reader or buffer to decode from
+         * @param [l] Message length if known beforehand
          * @returns GetEarningsSummaryRequest
          * @throws {Error} If the payload is not a reader or valid buffer
          * @throws {$protobuf.util.ProtocolError} If required fields are missing
          */
-        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): pb.GetEarningsSummaryRequest;
+        public static decode(r: ($protobuf.Reader|Uint8Array), l?: number): pb.GetEarningsSummaryRequest;
 
         /**
          * Decodes a GetEarningsSummaryRequest message from the specified reader or buffer, length delimited.
@@ -5592,38 +5360,31 @@ export namespace pb {
 
         /**
          * Verifies a GetEarningsSummaryRequest message.
-         * @param message Plain object to verify
+         * @param m Plain object to verify
          * @returns `null` if valid, otherwise the reason why it is not
          */
-        public static verify(message: { [k: string]: any }): (string|null);
+        public static verify(m: { [k: string]: any }): (string|null);
 
         /**
          * Creates a GetEarningsSummaryRequest message from a plain object. Also converts values to their respective internal types.
-         * @param object Plain object
+         * @param d Plain object
          * @returns GetEarningsSummaryRequest
          */
-        public static fromObject(object: { [k: string]: any }): pb.GetEarningsSummaryRequest;
+        public static fromObject(d: { [k: string]: any }): pb.GetEarningsSummaryRequest;
 
         /**
          * Creates a plain object from a GetEarningsSummaryRequest message. Also converts values to other types if specified.
-         * @param message GetEarningsSummaryRequest
-         * @param [options] Conversion options
+         * @param m GetEarningsSummaryRequest
+         * @param [o] Conversion options
          * @returns Plain object
          */
-        public static toObject(message: pb.GetEarningsSummaryRequest, options?: $protobuf.IConversionOptions): { [k: string]: any };
+        public static toObject(m: pb.GetEarningsSummaryRequest, o?: $protobuf.IConversionOptions): { [k: string]: any };
 
         /**
          * Converts this GetEarningsSummaryRequest to JSON.
          * @returns JSON object
          */
         public toJSON(): { [k: string]: any };
-
-        /**
-         * Gets the default type url for GetEarningsSummaryRequest
-         * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
-         * @returns The default type url
-         */
-        public static getTypeUrl(typeUrlPrefix?: string): string;
     }
 
     /** Properties of an EarningsSummaryData. */
@@ -5653,9 +5414,9 @@ export namespace pb {
 
         /**
          * Constructs a new EarningsSummaryData.
-         * @param [properties] Properties to set
+         * @param [p] Properties to set
          */
-        constructor(properties?: pb.IEarningsSummaryData);
+        constructor(p?: pb.IEarningsSummaryData);
 
         /** EarningsSummaryData totalAmount. */
         public totalAmount: (number|Long);
@@ -5684,11 +5445,11 @@ export namespace pb {
 
         /**
          * Encodes the specified EarningsSummaryData message. Does not implicitly {@link pb.EarningsSummaryData.verify|verify} messages.
-         * @param message EarningsSummaryData message or plain object to encode
-         * @param [writer] Writer to encode to
+         * @param m EarningsSummaryData message or plain object to encode
+         * @param [w] Writer to encode to
          * @returns Writer
          */
-        public static encode(message: pb.IEarningsSummaryData, writer?: $protobuf.Writer): $protobuf.Writer;
+        public static encode(m: pb.IEarningsSummaryData, w?: $protobuf.Writer): $protobuf.Writer;
 
         /**
          * Encodes the specified EarningsSummaryData message, length delimited. Does not implicitly {@link pb.EarningsSummaryData.verify|verify} messages.
@@ -5700,13 +5461,13 @@ export namespace pb {
 
         /**
          * Decodes an EarningsSummaryData message from the specified reader or buffer.
-         * @param reader Reader or buffer to decode from
-         * @param [length] Message length if known beforehand
+         * @param r Reader or buffer to decode from
+         * @param [l] Message length if known beforehand
          * @returns EarningsSummaryData
          * @throws {Error} If the payload is not a reader or valid buffer
          * @throws {$protobuf.util.ProtocolError} If required fields are missing
          */
-        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): pb.EarningsSummaryData;
+        public static decode(r: ($protobuf.Reader|Uint8Array), l?: number): pb.EarningsSummaryData;
 
         /**
          * Decodes an EarningsSummaryData message from the specified reader or buffer, length delimited.
@@ -5719,38 +5480,31 @@ export namespace pb {
 
         /**
          * Verifies an EarningsSummaryData message.
-         * @param message Plain object to verify
+         * @param m Plain object to verify
          * @returns `null` if valid, otherwise the reason why it is not
          */
-        public static verify(message: { [k: string]: any }): (string|null);
+        public static verify(m: { [k: string]: any }): (string|null);
 
         /**
          * Creates an EarningsSummaryData message from a plain object. Also converts values to their respective internal types.
-         * @param object Plain object
+         * @param d Plain object
          * @returns EarningsSummaryData
          */
-        public static fromObject(object: { [k: string]: any }): pb.EarningsSummaryData;
+        public static fromObject(d: { [k: string]: any }): pb.EarningsSummaryData;
 
         /**
          * Creates a plain object from an EarningsSummaryData message. Also converts values to other types if specified.
-         * @param message EarningsSummaryData
-         * @param [options] Conversion options
+         * @param m EarningsSummaryData
+         * @param [o] Conversion options
          * @returns Plain object
          */
-        public static toObject(message: pb.EarningsSummaryData, options?: $protobuf.IConversionOptions): { [k: string]: any };
+        public static toObject(m: pb.EarningsSummaryData, o?: $protobuf.IConversionOptions): { [k: string]: any };
 
         /**
          * Converts this EarningsSummaryData to JSON.
          * @returns JSON object
          */
         public toJSON(): { [k: string]: any };
-
-        /**
-         * Gets the default type url for EarningsSummaryData
-         * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
-         * @returns The default type url
-         */
-        public static getTypeUrl(typeUrlPrefix?: string): string;
     }
 
     /** Properties of a GetEarningsSummaryResponse. */
@@ -5771,9 +5525,9 @@ export namespace pb {
 
         /**
          * Constructs a new GetEarningsSummaryResponse.
-         * @param [properties] Properties to set
+         * @param [p] Properties to set
          */
-        constructor(properties?: pb.IGetEarningsSummaryResponse);
+        constructor(p?: pb.IGetEarningsSummaryResponse);
 
         /** GetEarningsSummaryResponse code. */
         public code: number;
@@ -5793,11 +5547,11 @@ export namespace pb {
 
         /**
          * Encodes the specified GetEarningsSummaryResponse message. Does not implicitly {@link pb.GetEarningsSummaryResponse.verify|verify} messages.
-         * @param message GetEarningsSummaryResponse message or plain object to encode
-         * @param [writer] Writer to encode to
+         * @param m GetEarningsSummaryResponse message or plain object to encode
+         * @param [w] Writer to encode to
          * @returns Writer
          */
-        public static encode(message: pb.IGetEarningsSummaryResponse, writer?: $protobuf.Writer): $protobuf.Writer;
+        public static encode(m: pb.IGetEarningsSummaryResponse, w?: $protobuf.Writer): $protobuf.Writer;
 
         /**
          * Encodes the specified GetEarningsSummaryResponse message, length delimited. Does not implicitly {@link pb.GetEarningsSummaryResponse.verify|verify} messages.
@@ -5809,13 +5563,13 @@ export namespace pb {
 
         /**
          * Decodes a GetEarningsSummaryResponse message from the specified reader or buffer.
-         * @param reader Reader or buffer to decode from
-         * @param [length] Message length if known beforehand
+         * @param r Reader or buffer to decode from
+         * @param [l] Message length if known beforehand
          * @returns GetEarningsSummaryResponse
          * @throws {Error} If the payload is not a reader or valid buffer
          * @throws {$protobuf.util.ProtocolError} If required fields are missing
          */
-        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): pb.GetEarningsSummaryResponse;
+        public static decode(r: ($protobuf.Reader|Uint8Array), l?: number): pb.GetEarningsSummaryResponse;
 
         /**
          * Decodes a GetEarningsSummaryResponse message from the specified reader or buffer, length delimited.
@@ -5828,38 +5582,31 @@ export namespace pb {
 
         /**
          * Verifies a GetEarningsSummaryResponse message.
-         * @param message Plain object to verify
+         * @param m Plain object to verify
          * @returns `null` if valid, otherwise the reason why it is not
          */
-        public static verify(message: { [k: string]: any }): (string|null);
+        public static verify(m: { [k: string]: any }): (string|null);
 
         /**
          * Creates a GetEarningsSummaryResponse message from a plain object. Also converts values to their respective internal types.
-         * @param object Plain object
+         * @param d Plain object
          * @returns GetEarningsSummaryResponse
          */
-        public static fromObject(object: { [k: string]: any }): pb.GetEarningsSummaryResponse;
+        public static fromObject(d: { [k: string]: any }): pb.GetEarningsSummaryResponse;
 
         /**
          * Creates a plain object from a GetEarningsSummaryResponse message. Also converts values to other types if specified.
-         * @param message GetEarningsSummaryResponse
-         * @param [options] Conversion options
+         * @param m GetEarningsSummaryResponse
+         * @param [o] Conversion options
          * @returns Plain object
          */
-        public static toObject(message: pb.GetEarningsSummaryResponse, options?: $protobuf.IConversionOptions): { [k: string]: any };
+        public static toObject(m: pb.GetEarningsSummaryResponse, o?: $protobuf.IConversionOptions): { [k: string]: any };
 
         /**
          * Converts this GetEarningsSummaryResponse to JSON.
          * @returns JSON object
          */
         public toJSON(): { [k: string]: any };
-
-        /**
-         * Gets the default type url for GetEarningsSummaryResponse
-         * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
-         * @returns The default type url
-         */
-        public static getTypeUrl(typeUrlPrefix?: string): string;
     }
 
     /** Properties of a ListEarningsRequest. */
@@ -5883,9 +5630,9 @@ export namespace pb {
 
         /**
          * Constructs a new ListEarningsRequest.
-         * @param [properties] Properties to set
+         * @param [p] Properties to set
          */
-        constructor(properties?: pb.IListEarningsRequest);
+        constructor(p?: pb.IListEarningsRequest);
 
         /** ListEarningsRequest pubkey. */
         public pubkey: string;
@@ -5908,11 +5655,11 @@ export namespace pb {
 
         /**
          * Encodes the specified ListEarningsRequest message. Does not implicitly {@link pb.ListEarningsRequest.verify|verify} messages.
-         * @param message ListEarningsRequest message or plain object to encode
-         * @param [writer] Writer to encode to
+         * @param m ListEarningsRequest message or plain object to encode
+         * @param [w] Writer to encode to
          * @returns Writer
          */
-        public static encode(message: pb.IListEarningsRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+        public static encode(m: pb.IListEarningsRequest, w?: $protobuf.Writer): $protobuf.Writer;
 
         /**
          * Encodes the specified ListEarningsRequest message, length delimited. Does not implicitly {@link pb.ListEarningsRequest.verify|verify} messages.
@@ -5924,13 +5671,13 @@ export namespace pb {
 
         /**
          * Decodes a ListEarningsRequest message from the specified reader or buffer.
-         * @param reader Reader or buffer to decode from
-         * @param [length] Message length if known beforehand
+         * @param r Reader or buffer to decode from
+         * @param [l] Message length if known beforehand
          * @returns ListEarningsRequest
          * @throws {Error} If the payload is not a reader or valid buffer
          * @throws {$protobuf.util.ProtocolError} If required fields are missing
          */
-        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): pb.ListEarningsRequest;
+        public static decode(r: ($protobuf.Reader|Uint8Array), l?: number): pb.ListEarningsRequest;
 
         /**
          * Decodes a ListEarningsRequest message from the specified reader or buffer, length delimited.
@@ -5943,38 +5690,31 @@ export namespace pb {
 
         /**
          * Verifies a ListEarningsRequest message.
-         * @param message Plain object to verify
+         * @param m Plain object to verify
          * @returns `null` if valid, otherwise the reason why it is not
          */
-        public static verify(message: { [k: string]: any }): (string|null);
+        public static verify(m: { [k: string]: any }): (string|null);
 
         /**
          * Creates a ListEarningsRequest message from a plain object. Also converts values to their respective internal types.
-         * @param object Plain object
+         * @param d Plain object
          * @returns ListEarningsRequest
          */
-        public static fromObject(object: { [k: string]: any }): pb.ListEarningsRequest;
+        public static fromObject(d: { [k: string]: any }): pb.ListEarningsRequest;
 
         /**
          * Creates a plain object from a ListEarningsRequest message. Also converts values to other types if specified.
-         * @param message ListEarningsRequest
-         * @param [options] Conversion options
+         * @param m ListEarningsRequest
+         * @param [o] Conversion options
          * @returns Plain object
          */
-        public static toObject(message: pb.ListEarningsRequest, options?: $protobuf.IConversionOptions): { [k: string]: any };
+        public static toObject(m: pb.ListEarningsRequest, o?: $protobuf.IConversionOptions): { [k: string]: any };
 
         /**
          * Converts this ListEarningsRequest to JSON.
          * @returns JSON object
          */
         public toJSON(): { [k: string]: any };
-
-        /**
-         * Gets the default type url for ListEarningsRequest
-         * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
-         * @returns The default type url
-         */
-        public static getTypeUrl(typeUrlPrefix?: string): string;
     }
 
     /** Properties of an EarningsRecordInfo. */
@@ -6031,9 +5771,9 @@ export namespace pb {
 
         /**
          * Constructs a new EarningsRecordInfo.
-         * @param [properties] Properties to set
+         * @param [p] Properties to set
          */
-        constructor(properties?: pb.IEarningsRecordInfo);
+        constructor(p?: pb.IEarningsRecordInfo);
 
         /** EarningsRecordInfo id. */
         public id: (number|Long);
@@ -6089,11 +5829,11 @@ export namespace pb {
 
         /**
          * Encodes the specified EarningsRecordInfo message. Does not implicitly {@link pb.EarningsRecordInfo.verify|verify} messages.
-         * @param message EarningsRecordInfo message or plain object to encode
-         * @param [writer] Writer to encode to
+         * @param m EarningsRecordInfo message or plain object to encode
+         * @param [w] Writer to encode to
          * @returns Writer
          */
-        public static encode(message: pb.IEarningsRecordInfo, writer?: $protobuf.Writer): $protobuf.Writer;
+        public static encode(m: pb.IEarningsRecordInfo, w?: $protobuf.Writer): $protobuf.Writer;
 
         /**
          * Encodes the specified EarningsRecordInfo message, length delimited. Does not implicitly {@link pb.EarningsRecordInfo.verify|verify} messages.
@@ -6105,13 +5845,13 @@ export namespace pb {
 
         /**
          * Decodes an EarningsRecordInfo message from the specified reader or buffer.
-         * @param reader Reader or buffer to decode from
-         * @param [length] Message length if known beforehand
+         * @param r Reader or buffer to decode from
+         * @param [l] Message length if known beforehand
          * @returns EarningsRecordInfo
          * @throws {Error} If the payload is not a reader or valid buffer
          * @throws {$protobuf.util.ProtocolError} If required fields are missing
          */
-        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): pb.EarningsRecordInfo;
+        public static decode(r: ($protobuf.Reader|Uint8Array), l?: number): pb.EarningsRecordInfo;
 
         /**
          * Decodes an EarningsRecordInfo message from the specified reader or buffer, length delimited.
@@ -6124,38 +5864,31 @@ export namespace pb {
 
         /**
          * Verifies an EarningsRecordInfo message.
-         * @param message Plain object to verify
+         * @param m Plain object to verify
          * @returns `null` if valid, otherwise the reason why it is not
          */
-        public static verify(message: { [k: string]: any }): (string|null);
+        public static verify(m: { [k: string]: any }): (string|null);
 
         /**
          * Creates an EarningsRecordInfo message from a plain object. Also converts values to their respective internal types.
-         * @param object Plain object
+         * @param d Plain object
          * @returns EarningsRecordInfo
          */
-        public static fromObject(object: { [k: string]: any }): pb.EarningsRecordInfo;
+        public static fromObject(d: { [k: string]: any }): pb.EarningsRecordInfo;
 
         /**
          * Creates a plain object from an EarningsRecordInfo message. Also converts values to other types if specified.
-         * @param message EarningsRecordInfo
-         * @param [options] Conversion options
+         * @param m EarningsRecordInfo
+         * @param [o] Conversion options
          * @returns Plain object
          */
-        public static toObject(message: pb.EarningsRecordInfo, options?: $protobuf.IConversionOptions): { [k: string]: any };
+        public static toObject(m: pb.EarningsRecordInfo, o?: $protobuf.IConversionOptions): { [k: string]: any };
 
         /**
          * Converts this EarningsRecordInfo to JSON.
          * @returns JSON object
          */
         public toJSON(): { [k: string]: any };
-
-        /**
-         * Gets the default type url for EarningsRecordInfo
-         * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
-         * @returns The default type url
-         */
-        public static getTypeUrl(typeUrlPrefix?: string): string;
     }
 
     /** Properties of a ListEarningsResponse. */
@@ -6179,9 +5912,9 @@ export namespace pb {
 
         /**
          * Constructs a new ListEarningsResponse.
-         * @param [properties] Properties to set
+         * @param [p] Properties to set
          */
-        constructor(properties?: pb.IListEarningsResponse);
+        constructor(p?: pb.IListEarningsResponse);
 
         /** ListEarningsResponse code. */
         public code: number;
@@ -6204,11 +5937,11 @@ export namespace pb {
 
         /**
          * Encodes the specified ListEarningsResponse message. Does not implicitly {@link pb.ListEarningsResponse.verify|verify} messages.
-         * @param message ListEarningsResponse message or plain object to encode
-         * @param [writer] Writer to encode to
+         * @param m ListEarningsResponse message or plain object to encode
+         * @param [w] Writer to encode to
          * @returns Writer
          */
-        public static encode(message: pb.IListEarningsResponse, writer?: $protobuf.Writer): $protobuf.Writer;
+        public static encode(m: pb.IListEarningsResponse, w?: $protobuf.Writer): $protobuf.Writer;
 
         /**
          * Encodes the specified ListEarningsResponse message, length delimited. Does not implicitly {@link pb.ListEarningsResponse.verify|verify} messages.
@@ -6220,13 +5953,13 @@ export namespace pb {
 
         /**
          * Decodes a ListEarningsResponse message from the specified reader or buffer.
-         * @param reader Reader or buffer to decode from
-         * @param [length] Message length if known beforehand
+         * @param r Reader or buffer to decode from
+         * @param [l] Message length if known beforehand
          * @returns ListEarningsResponse
          * @throws {Error} If the payload is not a reader or valid buffer
          * @throws {$protobuf.util.ProtocolError} If required fields are missing
          */
-        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): pb.ListEarningsResponse;
+        public static decode(r: ($protobuf.Reader|Uint8Array), l?: number): pb.ListEarningsResponse;
 
         /**
          * Decodes a ListEarningsResponse message from the specified reader or buffer, length delimited.
@@ -6239,38 +5972,31 @@ export namespace pb {
 
         /**
          * Verifies a ListEarningsResponse message.
-         * @param message Plain object to verify
+         * @param m Plain object to verify
          * @returns `null` if valid, otherwise the reason why it is not
          */
-        public static verify(message: { [k: string]: any }): (string|null);
+        public static verify(m: { [k: string]: any }): (string|null);
 
         /**
          * Creates a ListEarningsResponse message from a plain object. Also converts values to their respective internal types.
-         * @param object Plain object
+         * @param d Plain object
          * @returns ListEarningsResponse
          */
-        public static fromObject(object: { [k: string]: any }): pb.ListEarningsResponse;
+        public static fromObject(d: { [k: string]: any }): pb.ListEarningsResponse;
 
         /**
          * Creates a plain object from a ListEarningsResponse message. Also converts values to other types if specified.
-         * @param message ListEarningsResponse
-         * @param [options] Conversion options
+         * @param m ListEarningsResponse
+         * @param [o] Conversion options
          * @returns Plain object
          */
-        public static toObject(message: pb.ListEarningsResponse, options?: $protobuf.IConversionOptions): { [k: string]: any };
+        public static toObject(m: pb.ListEarningsResponse, o?: $protobuf.IConversionOptions): { [k: string]: any };
 
         /**
          * Converts this ListEarningsResponse to JSON.
          * @returns JSON object
          */
         public toJSON(): { [k: string]: any };
-
-        /**
-         * Gets the default type url for ListEarningsResponse
-         * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
-         * @returns The default type url
-         */
-        public static getTypeUrl(typeUrlPrefix?: string): string;
     }
 
     /** Properties of a GetPayeeInfoRequest. */
@@ -6285,9 +6011,9 @@ export namespace pb {
 
         /**
          * Constructs a new GetPayeeInfoRequest.
-         * @param [properties] Properties to set
+         * @param [p] Properties to set
          */
-        constructor(properties?: pb.IGetPayeeInfoRequest);
+        constructor(p?: pb.IGetPayeeInfoRequest);
 
         /** GetPayeeInfoRequest pubkey. */
         public pubkey: string;
@@ -6301,11 +6027,11 @@ export namespace pb {
 
         /**
          * Encodes the specified GetPayeeInfoRequest message. Does not implicitly {@link pb.GetPayeeInfoRequest.verify|verify} messages.
-         * @param message GetPayeeInfoRequest message or plain object to encode
-         * @param [writer] Writer to encode to
+         * @param m GetPayeeInfoRequest message or plain object to encode
+         * @param [w] Writer to encode to
          * @returns Writer
          */
-        public static encode(message: pb.IGetPayeeInfoRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+        public static encode(m: pb.IGetPayeeInfoRequest, w?: $protobuf.Writer): $protobuf.Writer;
 
         /**
          * Encodes the specified GetPayeeInfoRequest message, length delimited. Does not implicitly {@link pb.GetPayeeInfoRequest.verify|verify} messages.
@@ -6317,13 +6043,13 @@ export namespace pb {
 
         /**
          * Decodes a GetPayeeInfoRequest message from the specified reader or buffer.
-         * @param reader Reader or buffer to decode from
-         * @param [length] Message length if known beforehand
+         * @param r Reader or buffer to decode from
+         * @param [l] Message length if known beforehand
          * @returns GetPayeeInfoRequest
          * @throws {Error} If the payload is not a reader or valid buffer
          * @throws {$protobuf.util.ProtocolError} If required fields are missing
          */
-        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): pb.GetPayeeInfoRequest;
+        public static decode(r: ($protobuf.Reader|Uint8Array), l?: number): pb.GetPayeeInfoRequest;
 
         /**
          * Decodes a GetPayeeInfoRequest message from the specified reader or buffer, length delimited.
@@ -6336,38 +6062,31 @@ export namespace pb {
 
         /**
          * Verifies a GetPayeeInfoRequest message.
-         * @param message Plain object to verify
+         * @param m Plain object to verify
          * @returns `null` if valid, otherwise the reason why it is not
          */
-        public static verify(message: { [k: string]: any }): (string|null);
+        public static verify(m: { [k: string]: any }): (string|null);
 
         /**
          * Creates a GetPayeeInfoRequest message from a plain object. Also converts values to their respective internal types.
-         * @param object Plain object
+         * @param d Plain object
          * @returns GetPayeeInfoRequest
          */
-        public static fromObject(object: { [k: string]: any }): pb.GetPayeeInfoRequest;
+        public static fromObject(d: { [k: string]: any }): pb.GetPayeeInfoRequest;
 
         /**
          * Creates a plain object from a GetPayeeInfoRequest message. Also converts values to other types if specified.
-         * @param message GetPayeeInfoRequest
-         * @param [options] Conversion options
+         * @param m GetPayeeInfoRequest
+         * @param [o] Conversion options
          * @returns Plain object
          */
-        public static toObject(message: pb.GetPayeeInfoRequest, options?: $protobuf.IConversionOptions): { [k: string]: any };
+        public static toObject(m: pb.GetPayeeInfoRequest, o?: $protobuf.IConversionOptions): { [k: string]: any };
 
         /**
          * Converts this GetPayeeInfoRequest to JSON.
          * @returns JSON object
          */
         public toJSON(): { [k: string]: any };
-
-        /**
-         * Gets the default type url for GetPayeeInfoRequest
-         * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
-         * @returns The default type url
-         */
-        public static getTypeUrl(typeUrlPrefix?: string): string;
     }
 
     /** Properties of a PayeeInfoData. */
@@ -6418,9 +6137,9 @@ export namespace pb {
 
         /**
          * Constructs a new PayeeInfoData.
-         * @param [properties] Properties to set
+         * @param [p] Properties to set
          */
-        constructor(properties?: pb.IPayeeInfoData);
+        constructor(p?: pb.IPayeeInfoData);
 
         /** PayeeInfoData id. */
         public id: (number|Long);
@@ -6470,11 +6189,11 @@ export namespace pb {
 
         /**
          * Encodes the specified PayeeInfoData message. Does not implicitly {@link pb.PayeeInfoData.verify|verify} messages.
-         * @param message PayeeInfoData message or plain object to encode
-         * @param [writer] Writer to encode to
+         * @param m PayeeInfoData message or plain object to encode
+         * @param [w] Writer to encode to
          * @returns Writer
          */
-        public static encode(message: pb.IPayeeInfoData, writer?: $protobuf.Writer): $protobuf.Writer;
+        public static encode(m: pb.IPayeeInfoData, w?: $protobuf.Writer): $protobuf.Writer;
 
         /**
          * Encodes the specified PayeeInfoData message, length delimited. Does not implicitly {@link pb.PayeeInfoData.verify|verify} messages.
@@ -6486,13 +6205,13 @@ export namespace pb {
 
         /**
          * Decodes a PayeeInfoData message from the specified reader or buffer.
-         * @param reader Reader or buffer to decode from
-         * @param [length] Message length if known beforehand
+         * @param r Reader or buffer to decode from
+         * @param [l] Message length if known beforehand
          * @returns PayeeInfoData
          * @throws {Error} If the payload is not a reader or valid buffer
          * @throws {$protobuf.util.ProtocolError} If required fields are missing
          */
-        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): pb.PayeeInfoData;
+        public static decode(r: ($protobuf.Reader|Uint8Array), l?: number): pb.PayeeInfoData;
 
         /**
          * Decodes a PayeeInfoData message from the specified reader or buffer, length delimited.
@@ -6505,38 +6224,31 @@ export namespace pb {
 
         /**
          * Verifies a PayeeInfoData message.
-         * @param message Plain object to verify
+         * @param m Plain object to verify
          * @returns `null` if valid, otherwise the reason why it is not
          */
-        public static verify(message: { [k: string]: any }): (string|null);
+        public static verify(m: { [k: string]: any }): (string|null);
 
         /**
          * Creates a PayeeInfoData message from a plain object. Also converts values to their respective internal types.
-         * @param object Plain object
+         * @param d Plain object
          * @returns PayeeInfoData
          */
-        public static fromObject(object: { [k: string]: any }): pb.PayeeInfoData;
+        public static fromObject(d: { [k: string]: any }): pb.PayeeInfoData;
 
         /**
          * Creates a plain object from a PayeeInfoData message. Also converts values to other types if specified.
-         * @param message PayeeInfoData
-         * @param [options] Conversion options
+         * @param m PayeeInfoData
+         * @param [o] Conversion options
          * @returns Plain object
          */
-        public static toObject(message: pb.PayeeInfoData, options?: $protobuf.IConversionOptions): { [k: string]: any };
+        public static toObject(m: pb.PayeeInfoData, o?: $protobuf.IConversionOptions): { [k: string]: any };
 
         /**
          * Converts this PayeeInfoData to JSON.
          * @returns JSON object
          */
         public toJSON(): { [k: string]: any };
-
-        /**
-         * Gets the default type url for PayeeInfoData
-         * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
-         * @returns The default type url
-         */
-        public static getTypeUrl(typeUrlPrefix?: string): string;
     }
 
     /** Properties of a GetPayeeInfoResponse. */
@@ -6557,9 +6269,9 @@ export namespace pb {
 
         /**
          * Constructs a new GetPayeeInfoResponse.
-         * @param [properties] Properties to set
+         * @param [p] Properties to set
          */
-        constructor(properties?: pb.IGetPayeeInfoResponse);
+        constructor(p?: pb.IGetPayeeInfoResponse);
 
         /** GetPayeeInfoResponse code. */
         public code: number;
@@ -6579,11 +6291,11 @@ export namespace pb {
 
         /**
          * Encodes the specified GetPayeeInfoResponse message. Does not implicitly {@link pb.GetPayeeInfoResponse.verify|verify} messages.
-         * @param message GetPayeeInfoResponse message or plain object to encode
-         * @param [writer] Writer to encode to
+         * @param m GetPayeeInfoResponse message or plain object to encode
+         * @param [w] Writer to encode to
          * @returns Writer
          */
-        public static encode(message: pb.IGetPayeeInfoResponse, writer?: $protobuf.Writer): $protobuf.Writer;
+        public static encode(m: pb.IGetPayeeInfoResponse, w?: $protobuf.Writer): $protobuf.Writer;
 
         /**
          * Encodes the specified GetPayeeInfoResponse message, length delimited. Does not implicitly {@link pb.GetPayeeInfoResponse.verify|verify} messages.
@@ -6595,13 +6307,13 @@ export namespace pb {
 
         /**
          * Decodes a GetPayeeInfoResponse message from the specified reader or buffer.
-         * @param reader Reader or buffer to decode from
-         * @param [length] Message length if known beforehand
+         * @param r Reader or buffer to decode from
+         * @param [l] Message length if known beforehand
          * @returns GetPayeeInfoResponse
          * @throws {Error} If the payload is not a reader or valid buffer
          * @throws {$protobuf.util.ProtocolError} If required fields are missing
          */
-        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): pb.GetPayeeInfoResponse;
+        public static decode(r: ($protobuf.Reader|Uint8Array), l?: number): pb.GetPayeeInfoResponse;
 
         /**
          * Decodes a GetPayeeInfoResponse message from the specified reader or buffer, length delimited.
@@ -6614,38 +6326,31 @@ export namespace pb {
 
         /**
          * Verifies a GetPayeeInfoResponse message.
-         * @param message Plain object to verify
+         * @param m Plain object to verify
          * @returns `null` if valid, otherwise the reason why it is not
          */
-        public static verify(message: { [k: string]: any }): (string|null);
+        public static verify(m: { [k: string]: any }): (string|null);
 
         /**
          * Creates a GetPayeeInfoResponse message from a plain object. Also converts values to their respective internal types.
-         * @param object Plain object
+         * @param d Plain object
          * @returns GetPayeeInfoResponse
          */
-        public static fromObject(object: { [k: string]: any }): pb.GetPayeeInfoResponse;
+        public static fromObject(d: { [k: string]: any }): pb.GetPayeeInfoResponse;
 
         /**
          * Creates a plain object from a GetPayeeInfoResponse message. Also converts values to other types if specified.
-         * @param message GetPayeeInfoResponse
-         * @param [options] Conversion options
+         * @param m GetPayeeInfoResponse
+         * @param [o] Conversion options
          * @returns Plain object
          */
-        public static toObject(message: pb.GetPayeeInfoResponse, options?: $protobuf.IConversionOptions): { [k: string]: any };
+        public static toObject(m: pb.GetPayeeInfoResponse, o?: $protobuf.IConversionOptions): { [k: string]: any };
 
         /**
          * Converts this GetPayeeInfoResponse to JSON.
          * @returns JSON object
          */
         public toJSON(): { [k: string]: any };
-
-        /**
-         * Gets the default type url for GetPayeeInfoResponse
-         * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
-         * @returns The default type url
-         */
-        public static getTypeUrl(typeUrlPrefix?: string): string;
     }
 
     /** Properties of a SavePayeeInfoRequest. */
@@ -6687,9 +6392,9 @@ export namespace pb {
 
         /**
          * Constructs a new SavePayeeInfoRequest.
-         * @param [properties] Properties to set
+         * @param [p] Properties to set
          */
-        constructor(properties?: pb.ISavePayeeInfoRequest);
+        constructor(p?: pb.ISavePayeeInfoRequest);
 
         /** SavePayeeInfoRequest pubkey. */
         public pubkey: string;
@@ -6730,11 +6435,11 @@ export namespace pb {
 
         /**
          * Encodes the specified SavePayeeInfoRequest message. Does not implicitly {@link pb.SavePayeeInfoRequest.verify|verify} messages.
-         * @param message SavePayeeInfoRequest message or plain object to encode
-         * @param [writer] Writer to encode to
+         * @param m SavePayeeInfoRequest message or plain object to encode
+         * @param [w] Writer to encode to
          * @returns Writer
          */
-        public static encode(message: pb.ISavePayeeInfoRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+        public static encode(m: pb.ISavePayeeInfoRequest, w?: $protobuf.Writer): $protobuf.Writer;
 
         /**
          * Encodes the specified SavePayeeInfoRequest message, length delimited. Does not implicitly {@link pb.SavePayeeInfoRequest.verify|verify} messages.
@@ -6746,13 +6451,13 @@ export namespace pb {
 
         /**
          * Decodes a SavePayeeInfoRequest message from the specified reader or buffer.
-         * @param reader Reader or buffer to decode from
-         * @param [length] Message length if known beforehand
+         * @param r Reader or buffer to decode from
+         * @param [l] Message length if known beforehand
          * @returns SavePayeeInfoRequest
          * @throws {Error} If the payload is not a reader or valid buffer
          * @throws {$protobuf.util.ProtocolError} If required fields are missing
          */
-        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): pb.SavePayeeInfoRequest;
+        public static decode(r: ($protobuf.Reader|Uint8Array), l?: number): pb.SavePayeeInfoRequest;
 
         /**
          * Decodes a SavePayeeInfoRequest message from the specified reader or buffer, length delimited.
@@ -6765,38 +6470,31 @@ export namespace pb {
 
         /**
          * Verifies a SavePayeeInfoRequest message.
-         * @param message Plain object to verify
+         * @param m Plain object to verify
          * @returns `null` if valid, otherwise the reason why it is not
          */
-        public static verify(message: { [k: string]: any }): (string|null);
+        public static verify(m: { [k: string]: any }): (string|null);
 
         /**
          * Creates a SavePayeeInfoRequest message from a plain object. Also converts values to their respective internal types.
-         * @param object Plain object
+         * @param d Plain object
          * @returns SavePayeeInfoRequest
          */
-        public static fromObject(object: { [k: string]: any }): pb.SavePayeeInfoRequest;
+        public static fromObject(d: { [k: string]: any }): pb.SavePayeeInfoRequest;
 
         /**
          * Creates a plain object from a SavePayeeInfoRequest message. Also converts values to other types if specified.
-         * @param message SavePayeeInfoRequest
-         * @param [options] Conversion options
+         * @param m SavePayeeInfoRequest
+         * @param [o] Conversion options
          * @returns Plain object
          */
-        public static toObject(message: pb.SavePayeeInfoRequest, options?: $protobuf.IConversionOptions): { [k: string]: any };
+        public static toObject(m: pb.SavePayeeInfoRequest, o?: $protobuf.IConversionOptions): { [k: string]: any };
 
         /**
          * Converts this SavePayeeInfoRequest to JSON.
          * @returns JSON object
          */
         public toJSON(): { [k: string]: any };
-
-        /**
-         * Gets the default type url for SavePayeeInfoRequest
-         * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
-         * @returns The default type url
-         */
-        public static getTypeUrl(typeUrlPrefix?: string): string;
     }
 
     /** Properties of a SavePayeeInfoResponse. */
@@ -6817,9 +6515,9 @@ export namespace pb {
 
         /**
          * Constructs a new SavePayeeInfoResponse.
-         * @param [properties] Properties to set
+         * @param [p] Properties to set
          */
-        constructor(properties?: pb.ISavePayeeInfoResponse);
+        constructor(p?: pb.ISavePayeeInfoResponse);
 
         /** SavePayeeInfoResponse code. */
         public code: number;
@@ -6839,11 +6537,11 @@ export namespace pb {
 
         /**
          * Encodes the specified SavePayeeInfoResponse message. Does not implicitly {@link pb.SavePayeeInfoResponse.verify|verify} messages.
-         * @param message SavePayeeInfoResponse message or plain object to encode
-         * @param [writer] Writer to encode to
+         * @param m SavePayeeInfoResponse message or plain object to encode
+         * @param [w] Writer to encode to
          * @returns Writer
          */
-        public static encode(message: pb.ISavePayeeInfoResponse, writer?: $protobuf.Writer): $protobuf.Writer;
+        public static encode(m: pb.ISavePayeeInfoResponse, w?: $protobuf.Writer): $protobuf.Writer;
 
         /**
          * Encodes the specified SavePayeeInfoResponse message, length delimited. Does not implicitly {@link pb.SavePayeeInfoResponse.verify|verify} messages.
@@ -6855,13 +6553,13 @@ export namespace pb {
 
         /**
          * Decodes a SavePayeeInfoResponse message from the specified reader or buffer.
-         * @param reader Reader or buffer to decode from
-         * @param [length] Message length if known beforehand
+         * @param r Reader or buffer to decode from
+         * @param [l] Message length if known beforehand
          * @returns SavePayeeInfoResponse
          * @throws {Error} If the payload is not a reader or valid buffer
          * @throws {$protobuf.util.ProtocolError} If required fields are missing
          */
-        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): pb.SavePayeeInfoResponse;
+        public static decode(r: ($protobuf.Reader|Uint8Array), l?: number): pb.SavePayeeInfoResponse;
 
         /**
          * Decodes a SavePayeeInfoResponse message from the specified reader or buffer, length delimited.
@@ -6874,38 +6572,31 @@ export namespace pb {
 
         /**
          * Verifies a SavePayeeInfoResponse message.
-         * @param message Plain object to verify
+         * @param m Plain object to verify
          * @returns `null` if valid, otherwise the reason why it is not
          */
-        public static verify(message: { [k: string]: any }): (string|null);
+        public static verify(m: { [k: string]: any }): (string|null);
 
         /**
          * Creates a SavePayeeInfoResponse message from a plain object. Also converts values to their respective internal types.
-         * @param object Plain object
+         * @param d Plain object
          * @returns SavePayeeInfoResponse
          */
-        public static fromObject(object: { [k: string]: any }): pb.SavePayeeInfoResponse;
+        public static fromObject(d: { [k: string]: any }): pb.SavePayeeInfoResponse;
 
         /**
          * Creates a plain object from a SavePayeeInfoResponse message. Also converts values to other types if specified.
-         * @param message SavePayeeInfoResponse
-         * @param [options] Conversion options
+         * @param m SavePayeeInfoResponse
+         * @param [o] Conversion options
          * @returns Plain object
          */
-        public static toObject(message: pb.SavePayeeInfoResponse, options?: $protobuf.IConversionOptions): { [k: string]: any };
+        public static toObject(m: pb.SavePayeeInfoResponse, o?: $protobuf.IConversionOptions): { [k: string]: any };
 
         /**
          * Converts this SavePayeeInfoResponse to JSON.
          * @returns JSON object
          */
         public toJSON(): { [k: string]: any };
-
-        /**
-         * Gets the default type url for SavePayeeInfoResponse
-         * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
-         * @returns The default type url
-         */
-        public static getTypeUrl(typeUrlPrefix?: string): string;
     }
 
     /** Properties of an ApplyWithdrawalRequest. */
@@ -6926,9 +6617,9 @@ export namespace pb {
 
         /**
          * Constructs a new ApplyWithdrawalRequest.
-         * @param [properties] Properties to set
+         * @param [p] Properties to set
          */
-        constructor(properties?: pb.IApplyWithdrawalRequest);
+        constructor(p?: pb.IApplyWithdrawalRequest);
 
         /** ApplyWithdrawalRequest pubkey. */
         public pubkey: string;
@@ -6948,11 +6639,11 @@ export namespace pb {
 
         /**
          * Encodes the specified ApplyWithdrawalRequest message. Does not implicitly {@link pb.ApplyWithdrawalRequest.verify|verify} messages.
-         * @param message ApplyWithdrawalRequest message or plain object to encode
-         * @param [writer] Writer to encode to
+         * @param m ApplyWithdrawalRequest message or plain object to encode
+         * @param [w] Writer to encode to
          * @returns Writer
          */
-        public static encode(message: pb.IApplyWithdrawalRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+        public static encode(m: pb.IApplyWithdrawalRequest, w?: $protobuf.Writer): $protobuf.Writer;
 
         /**
          * Encodes the specified ApplyWithdrawalRequest message, length delimited. Does not implicitly {@link pb.ApplyWithdrawalRequest.verify|verify} messages.
@@ -6964,13 +6655,13 @@ export namespace pb {
 
         /**
          * Decodes an ApplyWithdrawalRequest message from the specified reader or buffer.
-         * @param reader Reader or buffer to decode from
-         * @param [length] Message length if known beforehand
+         * @param r Reader or buffer to decode from
+         * @param [l] Message length if known beforehand
          * @returns ApplyWithdrawalRequest
          * @throws {Error} If the payload is not a reader or valid buffer
          * @throws {$protobuf.util.ProtocolError} If required fields are missing
          */
-        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): pb.ApplyWithdrawalRequest;
+        public static decode(r: ($protobuf.Reader|Uint8Array), l?: number): pb.ApplyWithdrawalRequest;
 
         /**
          * Decodes an ApplyWithdrawalRequest message from the specified reader or buffer, length delimited.
@@ -6983,38 +6674,31 @@ export namespace pb {
 
         /**
          * Verifies an ApplyWithdrawalRequest message.
-         * @param message Plain object to verify
+         * @param m Plain object to verify
          * @returns `null` if valid, otherwise the reason why it is not
          */
-        public static verify(message: { [k: string]: any }): (string|null);
+        public static verify(m: { [k: string]: any }): (string|null);
 
         /**
          * Creates an ApplyWithdrawalRequest message from a plain object. Also converts values to their respective internal types.
-         * @param object Plain object
+         * @param d Plain object
          * @returns ApplyWithdrawalRequest
          */
-        public static fromObject(object: { [k: string]: any }): pb.ApplyWithdrawalRequest;
+        public static fromObject(d: { [k: string]: any }): pb.ApplyWithdrawalRequest;
 
         /**
          * Creates a plain object from an ApplyWithdrawalRequest message. Also converts values to other types if specified.
-         * @param message ApplyWithdrawalRequest
-         * @param [options] Conversion options
+         * @param m ApplyWithdrawalRequest
+         * @param [o] Conversion options
          * @returns Plain object
          */
-        public static toObject(message: pb.ApplyWithdrawalRequest, options?: $protobuf.IConversionOptions): { [k: string]: any };
+        public static toObject(m: pb.ApplyWithdrawalRequest, o?: $protobuf.IConversionOptions): { [k: string]: any };
 
         /**
          * Converts this ApplyWithdrawalRequest to JSON.
          * @returns JSON object
          */
         public toJSON(): { [k: string]: any };
-
-        /**
-         * Gets the default type url for ApplyWithdrawalRequest
-         * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
-         * @returns The default type url
-         */
-        public static getTypeUrl(typeUrlPrefix?: string): string;
     }
 
     /** Properties of a WithdrawalApplicationInfo. */
@@ -7059,9 +6743,9 @@ export namespace pb {
 
         /**
          * Constructs a new WithdrawalApplicationInfo.
-         * @param [properties] Properties to set
+         * @param [p] Properties to set
          */
-        constructor(properties?: pb.IWithdrawalApplicationInfo);
+        constructor(p?: pb.IWithdrawalApplicationInfo);
 
         /** WithdrawalApplicationInfo id. */
         public id: (number|Long);
@@ -7105,11 +6789,11 @@ export namespace pb {
 
         /**
          * Encodes the specified WithdrawalApplicationInfo message. Does not implicitly {@link pb.WithdrawalApplicationInfo.verify|verify} messages.
-         * @param message WithdrawalApplicationInfo message or plain object to encode
-         * @param [writer] Writer to encode to
+         * @param m WithdrawalApplicationInfo message or plain object to encode
+         * @param [w] Writer to encode to
          * @returns Writer
          */
-        public static encode(message: pb.IWithdrawalApplicationInfo, writer?: $protobuf.Writer): $protobuf.Writer;
+        public static encode(m: pb.IWithdrawalApplicationInfo, w?: $protobuf.Writer): $protobuf.Writer;
 
         /**
          * Encodes the specified WithdrawalApplicationInfo message, length delimited. Does not implicitly {@link pb.WithdrawalApplicationInfo.verify|verify} messages.
@@ -7121,13 +6805,13 @@ export namespace pb {
 
         /**
          * Decodes a WithdrawalApplicationInfo message from the specified reader or buffer.
-         * @param reader Reader or buffer to decode from
-         * @param [length] Message length if known beforehand
+         * @param r Reader or buffer to decode from
+         * @param [l] Message length if known beforehand
          * @returns WithdrawalApplicationInfo
          * @throws {Error} If the payload is not a reader or valid buffer
          * @throws {$protobuf.util.ProtocolError} If required fields are missing
          */
-        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): pb.WithdrawalApplicationInfo;
+        public static decode(r: ($protobuf.Reader|Uint8Array), l?: number): pb.WithdrawalApplicationInfo;
 
         /**
          * Decodes a WithdrawalApplicationInfo message from the specified reader or buffer, length delimited.
@@ -7140,38 +6824,31 @@ export namespace pb {
 
         /**
          * Verifies a WithdrawalApplicationInfo message.
-         * @param message Plain object to verify
+         * @param m Plain object to verify
          * @returns `null` if valid, otherwise the reason why it is not
          */
-        public static verify(message: { [k: string]: any }): (string|null);
+        public static verify(m: { [k: string]: any }): (string|null);
 
         /**
          * Creates a WithdrawalApplicationInfo message from a plain object. Also converts values to their respective internal types.
-         * @param object Plain object
+         * @param d Plain object
          * @returns WithdrawalApplicationInfo
          */
-        public static fromObject(object: { [k: string]: any }): pb.WithdrawalApplicationInfo;
+        public static fromObject(d: { [k: string]: any }): pb.WithdrawalApplicationInfo;
 
         /**
          * Creates a plain object from a WithdrawalApplicationInfo message. Also converts values to other types if specified.
-         * @param message WithdrawalApplicationInfo
-         * @param [options] Conversion options
+         * @param m WithdrawalApplicationInfo
+         * @param [o] Conversion options
          * @returns Plain object
          */
-        public static toObject(message: pb.WithdrawalApplicationInfo, options?: $protobuf.IConversionOptions): { [k: string]: any };
+        public static toObject(m: pb.WithdrawalApplicationInfo, o?: $protobuf.IConversionOptions): { [k: string]: any };
 
         /**
          * Converts this WithdrawalApplicationInfo to JSON.
          * @returns JSON object
          */
         public toJSON(): { [k: string]: any };
-
-        /**
-         * Gets the default type url for WithdrawalApplicationInfo
-         * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
-         * @returns The default type url
-         */
-        public static getTypeUrl(typeUrlPrefix?: string): string;
     }
 
     /** Properties of an ApplyWithdrawalResponse. */
@@ -7195,9 +6872,9 @@ export namespace pb {
 
         /**
          * Constructs a new ApplyWithdrawalResponse.
-         * @param [properties] Properties to set
+         * @param [p] Properties to set
          */
-        constructor(properties?: pb.IApplyWithdrawalResponse);
+        constructor(p?: pb.IApplyWithdrawalResponse);
 
         /** ApplyWithdrawalResponse code. */
         public code: number;
@@ -7220,11 +6897,11 @@ export namespace pb {
 
         /**
          * Encodes the specified ApplyWithdrawalResponse message. Does not implicitly {@link pb.ApplyWithdrawalResponse.verify|verify} messages.
-         * @param message ApplyWithdrawalResponse message or plain object to encode
-         * @param [writer] Writer to encode to
+         * @param m ApplyWithdrawalResponse message or plain object to encode
+         * @param [w] Writer to encode to
          * @returns Writer
          */
-        public static encode(message: pb.IApplyWithdrawalResponse, writer?: $protobuf.Writer): $protobuf.Writer;
+        public static encode(m: pb.IApplyWithdrawalResponse, w?: $protobuf.Writer): $protobuf.Writer;
 
         /**
          * Encodes the specified ApplyWithdrawalResponse message, length delimited. Does not implicitly {@link pb.ApplyWithdrawalResponse.verify|verify} messages.
@@ -7236,13 +6913,13 @@ export namespace pb {
 
         /**
          * Decodes an ApplyWithdrawalResponse message from the specified reader or buffer.
-         * @param reader Reader or buffer to decode from
-         * @param [length] Message length if known beforehand
+         * @param r Reader or buffer to decode from
+         * @param [l] Message length if known beforehand
          * @returns ApplyWithdrawalResponse
          * @throws {Error} If the payload is not a reader or valid buffer
          * @throws {$protobuf.util.ProtocolError} If required fields are missing
          */
-        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): pb.ApplyWithdrawalResponse;
+        public static decode(r: ($protobuf.Reader|Uint8Array), l?: number): pb.ApplyWithdrawalResponse;
 
         /**
          * Decodes an ApplyWithdrawalResponse message from the specified reader or buffer, length delimited.
@@ -7255,38 +6932,31 @@ export namespace pb {
 
         /**
          * Verifies an ApplyWithdrawalResponse message.
-         * @param message Plain object to verify
+         * @param m Plain object to verify
          * @returns `null` if valid, otherwise the reason why it is not
          */
-        public static verify(message: { [k: string]: any }): (string|null);
+        public static verify(m: { [k: string]: any }): (string|null);
 
         /**
          * Creates an ApplyWithdrawalResponse message from a plain object. Also converts values to their respective internal types.
-         * @param object Plain object
+         * @param d Plain object
          * @returns ApplyWithdrawalResponse
          */
-        public static fromObject(object: { [k: string]: any }): pb.ApplyWithdrawalResponse;
+        public static fromObject(d: { [k: string]: any }): pb.ApplyWithdrawalResponse;
 
         /**
          * Creates a plain object from an ApplyWithdrawalResponse message. Also converts values to other types if specified.
-         * @param message ApplyWithdrawalResponse
-         * @param [options] Conversion options
+         * @param m ApplyWithdrawalResponse
+         * @param [o] Conversion options
          * @returns Plain object
          */
-        public static toObject(message: pb.ApplyWithdrawalResponse, options?: $protobuf.IConversionOptions): { [k: string]: any };
+        public static toObject(m: pb.ApplyWithdrawalResponse, o?: $protobuf.IConversionOptions): { [k: string]: any };
 
         /**
          * Converts this ApplyWithdrawalResponse to JSON.
          * @returns JSON object
          */
         public toJSON(): { [k: string]: any };
-
-        /**
-         * Gets the default type url for ApplyWithdrawalResponse
-         * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
-         * @returns The default type url
-         */
-        public static getTypeUrl(typeUrlPrefix?: string): string;
     }
 
     /** Properties of a ListWithdrawalsRequest. */
@@ -7307,9 +6977,9 @@ export namespace pb {
 
         /**
          * Constructs a new ListWithdrawalsRequest.
-         * @param [properties] Properties to set
+         * @param [p] Properties to set
          */
-        constructor(properties?: pb.IListWithdrawalsRequest);
+        constructor(p?: pb.IListWithdrawalsRequest);
 
         /** ListWithdrawalsRequest pubkey. */
         public pubkey: string;
@@ -7329,11 +6999,11 @@ export namespace pb {
 
         /**
          * Encodes the specified ListWithdrawalsRequest message. Does not implicitly {@link pb.ListWithdrawalsRequest.verify|verify} messages.
-         * @param message ListWithdrawalsRequest message or plain object to encode
-         * @param [writer] Writer to encode to
+         * @param m ListWithdrawalsRequest message or plain object to encode
+         * @param [w] Writer to encode to
          * @returns Writer
          */
-        public static encode(message: pb.IListWithdrawalsRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+        public static encode(m: pb.IListWithdrawalsRequest, w?: $protobuf.Writer): $protobuf.Writer;
 
         /**
          * Encodes the specified ListWithdrawalsRequest message, length delimited. Does not implicitly {@link pb.ListWithdrawalsRequest.verify|verify} messages.
@@ -7345,13 +7015,13 @@ export namespace pb {
 
         /**
          * Decodes a ListWithdrawalsRequest message from the specified reader or buffer.
-         * @param reader Reader or buffer to decode from
-         * @param [length] Message length if known beforehand
+         * @param r Reader or buffer to decode from
+         * @param [l] Message length if known beforehand
          * @returns ListWithdrawalsRequest
          * @throws {Error} If the payload is not a reader or valid buffer
          * @throws {$protobuf.util.ProtocolError} If required fields are missing
          */
-        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): pb.ListWithdrawalsRequest;
+        public static decode(r: ($protobuf.Reader|Uint8Array), l?: number): pb.ListWithdrawalsRequest;
 
         /**
          * Decodes a ListWithdrawalsRequest message from the specified reader or buffer, length delimited.
@@ -7364,38 +7034,31 @@ export namespace pb {
 
         /**
          * Verifies a ListWithdrawalsRequest message.
-         * @param message Plain object to verify
+         * @param m Plain object to verify
          * @returns `null` if valid, otherwise the reason why it is not
          */
-        public static verify(message: { [k: string]: any }): (string|null);
+        public static verify(m: { [k: string]: any }): (string|null);
 
         /**
          * Creates a ListWithdrawalsRequest message from a plain object. Also converts values to their respective internal types.
-         * @param object Plain object
+         * @param d Plain object
          * @returns ListWithdrawalsRequest
          */
-        public static fromObject(object: { [k: string]: any }): pb.ListWithdrawalsRequest;
+        public static fromObject(d: { [k: string]: any }): pb.ListWithdrawalsRequest;
 
         /**
          * Creates a plain object from a ListWithdrawalsRequest message. Also converts values to other types if specified.
-         * @param message ListWithdrawalsRequest
-         * @param [options] Conversion options
+         * @param m ListWithdrawalsRequest
+         * @param [o] Conversion options
          * @returns Plain object
          */
-        public static toObject(message: pb.ListWithdrawalsRequest, options?: $protobuf.IConversionOptions): { [k: string]: any };
+        public static toObject(m: pb.ListWithdrawalsRequest, o?: $protobuf.IConversionOptions): { [k: string]: any };
 
         /**
          * Converts this ListWithdrawalsRequest to JSON.
          * @returns JSON object
          */
         public toJSON(): { [k: string]: any };
-
-        /**
-         * Gets the default type url for ListWithdrawalsRequest
-         * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
-         * @returns The default type url
-         */
-        public static getTypeUrl(typeUrlPrefix?: string): string;
     }
 
     /** Properties of a ListWithdrawalsResponse. */
@@ -7419,9 +7082,9 @@ export namespace pb {
 
         /**
          * Constructs a new ListWithdrawalsResponse.
-         * @param [properties] Properties to set
+         * @param [p] Properties to set
          */
-        constructor(properties?: pb.IListWithdrawalsResponse);
+        constructor(p?: pb.IListWithdrawalsResponse);
 
         /** ListWithdrawalsResponse code. */
         public code: number;
@@ -7444,11 +7107,11 @@ export namespace pb {
 
         /**
          * Encodes the specified ListWithdrawalsResponse message. Does not implicitly {@link pb.ListWithdrawalsResponse.verify|verify} messages.
-         * @param message ListWithdrawalsResponse message or plain object to encode
-         * @param [writer] Writer to encode to
+         * @param m ListWithdrawalsResponse message or plain object to encode
+         * @param [w] Writer to encode to
          * @returns Writer
          */
-        public static encode(message: pb.IListWithdrawalsResponse, writer?: $protobuf.Writer): $protobuf.Writer;
+        public static encode(m: pb.IListWithdrawalsResponse, w?: $protobuf.Writer): $protobuf.Writer;
 
         /**
          * Encodes the specified ListWithdrawalsResponse message, length delimited. Does not implicitly {@link pb.ListWithdrawalsResponse.verify|verify} messages.
@@ -7460,13 +7123,13 @@ export namespace pb {
 
         /**
          * Decodes a ListWithdrawalsResponse message from the specified reader or buffer.
-         * @param reader Reader or buffer to decode from
-         * @param [length] Message length if known beforehand
+         * @param r Reader or buffer to decode from
+         * @param [l] Message length if known beforehand
          * @returns ListWithdrawalsResponse
          * @throws {Error} If the payload is not a reader or valid buffer
          * @throws {$protobuf.util.ProtocolError} If required fields are missing
          */
-        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): pb.ListWithdrawalsResponse;
+        public static decode(r: ($protobuf.Reader|Uint8Array), l?: number): pb.ListWithdrawalsResponse;
 
         /**
          * Decodes a ListWithdrawalsResponse message from the specified reader or buffer, length delimited.
@@ -7479,38 +7142,31 @@ export namespace pb {
 
         /**
          * Verifies a ListWithdrawalsResponse message.
-         * @param message Plain object to verify
+         * @param m Plain object to verify
          * @returns `null` if valid, otherwise the reason why it is not
          */
-        public static verify(message: { [k: string]: any }): (string|null);
+        public static verify(m: { [k: string]: any }): (string|null);
 
         /**
          * Creates a ListWithdrawalsResponse message from a plain object. Also converts values to their respective internal types.
-         * @param object Plain object
+         * @param d Plain object
          * @returns ListWithdrawalsResponse
          */
-        public static fromObject(object: { [k: string]: any }): pb.ListWithdrawalsResponse;
+        public static fromObject(d: { [k: string]: any }): pb.ListWithdrawalsResponse;
 
         /**
          * Creates a plain object from a ListWithdrawalsResponse message. Also converts values to other types if specified.
-         * @param message ListWithdrawalsResponse
-         * @param [options] Conversion options
+         * @param m ListWithdrawalsResponse
+         * @param [o] Conversion options
          * @returns Plain object
          */
-        public static toObject(message: pb.ListWithdrawalsResponse, options?: $protobuf.IConversionOptions): { [k: string]: any };
+        public static toObject(m: pb.ListWithdrawalsResponse, o?: $protobuf.IConversionOptions): { [k: string]: any };
 
         /**
          * Converts this ListWithdrawalsResponse to JSON.
          * @returns JSON object
          */
         public toJSON(): { [k: string]: any };
-
-        /**
-         * Gets the default type url for ListWithdrawalsResponse
-         * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
-         * @returns The default type url
-         */
-        public static getTypeUrl(typeUrlPrefix?: string): string;
     }
 
     /** Properties of a GetPayBillByTradeNoRequest. */
@@ -7525,9 +7181,9 @@ export namespace pb {
 
         /**
          * Constructs a new GetPayBillByTradeNoRequest.
-         * @param [properties] Properties to set
+         * @param [p] Properties to set
          */
-        constructor(properties?: pb.IGetPayBillByTradeNoRequest);
+        constructor(p?: pb.IGetPayBillByTradeNoRequest);
 
         /** GetPayBillByTradeNoRequest outTradeNo. */
         public outTradeNo: string;
@@ -7541,11 +7197,11 @@ export namespace pb {
 
         /**
          * Encodes the specified GetPayBillByTradeNoRequest message. Does not implicitly {@link pb.GetPayBillByTradeNoRequest.verify|verify} messages.
-         * @param message GetPayBillByTradeNoRequest message or plain object to encode
-         * @param [writer] Writer to encode to
+         * @param m GetPayBillByTradeNoRequest message or plain object to encode
+         * @param [w] Writer to encode to
          * @returns Writer
          */
-        public static encode(message: pb.IGetPayBillByTradeNoRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+        public static encode(m: pb.IGetPayBillByTradeNoRequest, w?: $protobuf.Writer): $protobuf.Writer;
 
         /**
          * Encodes the specified GetPayBillByTradeNoRequest message, length delimited. Does not implicitly {@link pb.GetPayBillByTradeNoRequest.verify|verify} messages.
@@ -7557,13 +7213,13 @@ export namespace pb {
 
         /**
          * Decodes a GetPayBillByTradeNoRequest message from the specified reader or buffer.
-         * @param reader Reader or buffer to decode from
-         * @param [length] Message length if known beforehand
+         * @param r Reader or buffer to decode from
+         * @param [l] Message length if known beforehand
          * @returns GetPayBillByTradeNoRequest
          * @throws {Error} If the payload is not a reader or valid buffer
          * @throws {$protobuf.util.ProtocolError} If required fields are missing
          */
-        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): pb.GetPayBillByTradeNoRequest;
+        public static decode(r: ($protobuf.Reader|Uint8Array), l?: number): pb.GetPayBillByTradeNoRequest;
 
         /**
          * Decodes a GetPayBillByTradeNoRequest message from the specified reader or buffer, length delimited.
@@ -7576,38 +7232,31 @@ export namespace pb {
 
         /**
          * Verifies a GetPayBillByTradeNoRequest message.
-         * @param message Plain object to verify
+         * @param m Plain object to verify
          * @returns `null` if valid, otherwise the reason why it is not
          */
-        public static verify(message: { [k: string]: any }): (string|null);
+        public static verify(m: { [k: string]: any }): (string|null);
 
         /**
          * Creates a GetPayBillByTradeNoRequest message from a plain object. Also converts values to their respective internal types.
-         * @param object Plain object
+         * @param d Plain object
          * @returns GetPayBillByTradeNoRequest
          */
-        public static fromObject(object: { [k: string]: any }): pb.GetPayBillByTradeNoRequest;
+        public static fromObject(d: { [k: string]: any }): pb.GetPayBillByTradeNoRequest;
 
         /**
          * Creates a plain object from a GetPayBillByTradeNoRequest message. Also converts values to other types if specified.
-         * @param message GetPayBillByTradeNoRequest
-         * @param [options] Conversion options
+         * @param m GetPayBillByTradeNoRequest
+         * @param [o] Conversion options
          * @returns Plain object
          */
-        public static toObject(message: pb.GetPayBillByTradeNoRequest, options?: $protobuf.IConversionOptions): { [k: string]: any };
+        public static toObject(m: pb.GetPayBillByTradeNoRequest, o?: $protobuf.IConversionOptions): { [k: string]: any };
 
         /**
          * Converts this GetPayBillByTradeNoRequest to JSON.
          * @returns JSON object
          */
         public toJSON(): { [k: string]: any };
-
-        /**
-         * Gets the default type url for GetPayBillByTradeNoRequest
-         * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
-         * @returns The default type url
-         */
-        public static getTypeUrl(typeUrlPrefix?: string): string;
     }
 
     /** Properties of a GetPayBillByTransactionIdRequest. */
@@ -7622,9 +7271,9 @@ export namespace pb {
 
         /**
          * Constructs a new GetPayBillByTransactionIdRequest.
-         * @param [properties] Properties to set
+         * @param [p] Properties to set
          */
-        constructor(properties?: pb.IGetPayBillByTransactionIdRequest);
+        constructor(p?: pb.IGetPayBillByTransactionIdRequest);
 
         /** GetPayBillByTransactionIdRequest transactionId. */
         public transactionId: string;
@@ -7638,11 +7287,11 @@ export namespace pb {
 
         /**
          * Encodes the specified GetPayBillByTransactionIdRequest message. Does not implicitly {@link pb.GetPayBillByTransactionIdRequest.verify|verify} messages.
-         * @param message GetPayBillByTransactionIdRequest message or plain object to encode
-         * @param [writer] Writer to encode to
+         * @param m GetPayBillByTransactionIdRequest message or plain object to encode
+         * @param [w] Writer to encode to
          * @returns Writer
          */
-        public static encode(message: pb.IGetPayBillByTransactionIdRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+        public static encode(m: pb.IGetPayBillByTransactionIdRequest, w?: $protobuf.Writer): $protobuf.Writer;
 
         /**
          * Encodes the specified GetPayBillByTransactionIdRequest message, length delimited. Does not implicitly {@link pb.GetPayBillByTransactionIdRequest.verify|verify} messages.
@@ -7654,13 +7303,13 @@ export namespace pb {
 
         /**
          * Decodes a GetPayBillByTransactionIdRequest message from the specified reader or buffer.
-         * @param reader Reader or buffer to decode from
-         * @param [length] Message length if known beforehand
+         * @param r Reader or buffer to decode from
+         * @param [l] Message length if known beforehand
          * @returns GetPayBillByTransactionIdRequest
          * @throws {Error} If the payload is not a reader or valid buffer
          * @throws {$protobuf.util.ProtocolError} If required fields are missing
          */
-        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): pb.GetPayBillByTransactionIdRequest;
+        public static decode(r: ($protobuf.Reader|Uint8Array), l?: number): pb.GetPayBillByTransactionIdRequest;
 
         /**
          * Decodes a GetPayBillByTransactionIdRequest message from the specified reader or buffer, length delimited.
@@ -7673,38 +7322,31 @@ export namespace pb {
 
         /**
          * Verifies a GetPayBillByTransactionIdRequest message.
-         * @param message Plain object to verify
+         * @param m Plain object to verify
          * @returns `null` if valid, otherwise the reason why it is not
          */
-        public static verify(message: { [k: string]: any }): (string|null);
+        public static verify(m: { [k: string]: any }): (string|null);
 
         /**
          * Creates a GetPayBillByTransactionIdRequest message from a plain object. Also converts values to their respective internal types.
-         * @param object Plain object
+         * @param d Plain object
          * @returns GetPayBillByTransactionIdRequest
          */
-        public static fromObject(object: { [k: string]: any }): pb.GetPayBillByTransactionIdRequest;
+        public static fromObject(d: { [k: string]: any }): pb.GetPayBillByTransactionIdRequest;
 
         /**
          * Creates a plain object from a GetPayBillByTransactionIdRequest message. Also converts values to other types if specified.
-         * @param message GetPayBillByTransactionIdRequest
-         * @param [options] Conversion options
+         * @param m GetPayBillByTransactionIdRequest
+         * @param [o] Conversion options
          * @returns Plain object
          */
-        public static toObject(message: pb.GetPayBillByTransactionIdRequest, options?: $protobuf.IConversionOptions): { [k: string]: any };
+        public static toObject(m: pb.GetPayBillByTransactionIdRequest, o?: $protobuf.IConversionOptions): { [k: string]: any };
 
         /**
          * Converts this GetPayBillByTransactionIdRequest to JSON.
          * @returns JSON object
          */
         public toJSON(): { [k: string]: any };
-
-        /**
-         * Gets the default type url for GetPayBillByTransactionIdRequest
-         * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
-         * @returns The default type url
-         */
-        public static getTypeUrl(typeUrlPrefix?: string): string;
     }
 
     /** Properties of a PayBillInfo. */
@@ -7749,9 +7391,9 @@ export namespace pb {
 
         /**
          * Constructs a new PayBillInfo.
-         * @param [properties] Properties to set
+         * @param [p] Properties to set
          */
-        constructor(properties?: pb.IPayBillInfo);
+        constructor(p?: pb.IPayBillInfo);
 
         /** PayBillInfo outTradeNo. */
         public outTradeNo: string;
@@ -7795,11 +7437,11 @@ export namespace pb {
 
         /**
          * Encodes the specified PayBillInfo message. Does not implicitly {@link pb.PayBillInfo.verify|verify} messages.
-         * @param message PayBillInfo message or plain object to encode
-         * @param [writer] Writer to encode to
+         * @param m PayBillInfo message or plain object to encode
+         * @param [w] Writer to encode to
          * @returns Writer
          */
-        public static encode(message: pb.IPayBillInfo, writer?: $protobuf.Writer): $protobuf.Writer;
+        public static encode(m: pb.IPayBillInfo, w?: $protobuf.Writer): $protobuf.Writer;
 
         /**
          * Encodes the specified PayBillInfo message, length delimited. Does not implicitly {@link pb.PayBillInfo.verify|verify} messages.
@@ -7811,13 +7453,13 @@ export namespace pb {
 
         /**
          * Decodes a PayBillInfo message from the specified reader or buffer.
-         * @param reader Reader or buffer to decode from
-         * @param [length] Message length if known beforehand
+         * @param r Reader or buffer to decode from
+         * @param [l] Message length if known beforehand
          * @returns PayBillInfo
          * @throws {Error} If the payload is not a reader or valid buffer
          * @throws {$protobuf.util.ProtocolError} If required fields are missing
          */
-        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): pb.PayBillInfo;
+        public static decode(r: ($protobuf.Reader|Uint8Array), l?: number): pb.PayBillInfo;
 
         /**
          * Decodes a PayBillInfo message from the specified reader or buffer, length delimited.
@@ -7830,38 +7472,31 @@ export namespace pb {
 
         /**
          * Verifies a PayBillInfo message.
-         * @param message Plain object to verify
+         * @param m Plain object to verify
          * @returns `null` if valid, otherwise the reason why it is not
          */
-        public static verify(message: { [k: string]: any }): (string|null);
+        public static verify(m: { [k: string]: any }): (string|null);
 
         /**
          * Creates a PayBillInfo message from a plain object. Also converts values to their respective internal types.
-         * @param object Plain object
+         * @param d Plain object
          * @returns PayBillInfo
          */
-        public static fromObject(object: { [k: string]: any }): pb.PayBillInfo;
+        public static fromObject(d: { [k: string]: any }): pb.PayBillInfo;
 
         /**
          * Creates a plain object from a PayBillInfo message. Also converts values to other types if specified.
-         * @param message PayBillInfo
-         * @param [options] Conversion options
+         * @param m PayBillInfo
+         * @param [o] Conversion options
          * @returns Plain object
          */
-        public static toObject(message: pb.PayBillInfo, options?: $protobuf.IConversionOptions): { [k: string]: any };
+        public static toObject(m: pb.PayBillInfo, o?: $protobuf.IConversionOptions): { [k: string]: any };
 
         /**
          * Converts this PayBillInfo to JSON.
          * @returns JSON object
          */
         public toJSON(): { [k: string]: any };
-
-        /**
-         * Gets the default type url for PayBillInfo
-         * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
-         * @returns The default type url
-         */
-        public static getTypeUrl(typeUrlPrefix?: string): string;
     }
 
     /** Properties of a GetPayBillResponse. */
@@ -7882,9 +7517,9 @@ export namespace pb {
 
         /**
          * Constructs a new GetPayBillResponse.
-         * @param [properties] Properties to set
+         * @param [p] Properties to set
          */
-        constructor(properties?: pb.IGetPayBillResponse);
+        constructor(p?: pb.IGetPayBillResponse);
 
         /** GetPayBillResponse code. */
         public code: number;
@@ -7904,11 +7539,11 @@ export namespace pb {
 
         /**
          * Encodes the specified GetPayBillResponse message. Does not implicitly {@link pb.GetPayBillResponse.verify|verify} messages.
-         * @param message GetPayBillResponse message or plain object to encode
-         * @param [writer] Writer to encode to
+         * @param m GetPayBillResponse message or plain object to encode
+         * @param [w] Writer to encode to
          * @returns Writer
          */
-        public static encode(message: pb.IGetPayBillResponse, writer?: $protobuf.Writer): $protobuf.Writer;
+        public static encode(m: pb.IGetPayBillResponse, w?: $protobuf.Writer): $protobuf.Writer;
 
         /**
          * Encodes the specified GetPayBillResponse message, length delimited. Does not implicitly {@link pb.GetPayBillResponse.verify|verify} messages.
@@ -7920,13 +7555,13 @@ export namespace pb {
 
         /**
          * Decodes a GetPayBillResponse message from the specified reader or buffer.
-         * @param reader Reader or buffer to decode from
-         * @param [length] Message length if known beforehand
+         * @param r Reader or buffer to decode from
+         * @param [l] Message length if known beforehand
          * @returns GetPayBillResponse
          * @throws {Error} If the payload is not a reader or valid buffer
          * @throws {$protobuf.util.ProtocolError} If required fields are missing
          */
-        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): pb.GetPayBillResponse;
+        public static decode(r: ($protobuf.Reader|Uint8Array), l?: number): pb.GetPayBillResponse;
 
         /**
          * Decodes a GetPayBillResponse message from the specified reader or buffer, length delimited.
@@ -7939,38 +7574,31 @@ export namespace pb {
 
         /**
          * Verifies a GetPayBillResponse message.
-         * @param message Plain object to verify
+         * @param m Plain object to verify
          * @returns `null` if valid, otherwise the reason why it is not
          */
-        public static verify(message: { [k: string]: any }): (string|null);
+        public static verify(m: { [k: string]: any }): (string|null);
 
         /**
          * Creates a GetPayBillResponse message from a plain object. Also converts values to their respective internal types.
-         * @param object Plain object
+         * @param d Plain object
          * @returns GetPayBillResponse
          */
-        public static fromObject(object: { [k: string]: any }): pb.GetPayBillResponse;
+        public static fromObject(d: { [k: string]: any }): pb.GetPayBillResponse;
 
         /**
          * Creates a plain object from a GetPayBillResponse message. Also converts values to other types if specified.
-         * @param message GetPayBillResponse
-         * @param [options] Conversion options
+         * @param m GetPayBillResponse
+         * @param [o] Conversion options
          * @returns Plain object
          */
-        public static toObject(message: pb.GetPayBillResponse, options?: $protobuf.IConversionOptions): { [k: string]: any };
+        public static toObject(m: pb.GetPayBillResponse, o?: $protobuf.IConversionOptions): { [k: string]: any };
 
         /**
          * Converts this GetPayBillResponse to JSON.
          * @returns JSON object
          */
         public toJSON(): { [k: string]: any };
-
-        /**
-         * Gets the default type url for GetPayBillResponse
-         * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
-         * @returns The default type url
-         */
-        public static getTypeUrl(typeUrlPrefix?: string): string;
     }
 
     /** Properties of a ListPayBillsByOpenidRequest. */
@@ -7991,9 +7619,9 @@ export namespace pb {
 
         /**
          * Constructs a new ListPayBillsByOpenidRequest.
-         * @param [properties] Properties to set
+         * @param [p] Properties to set
          */
-        constructor(properties?: pb.IListPayBillsByOpenidRequest);
+        constructor(p?: pb.IListPayBillsByOpenidRequest);
 
         /** ListPayBillsByOpenidRequest openid. */
         public openid: string;
@@ -8013,11 +7641,11 @@ export namespace pb {
 
         /**
          * Encodes the specified ListPayBillsByOpenidRequest message. Does not implicitly {@link pb.ListPayBillsByOpenidRequest.verify|verify} messages.
-         * @param message ListPayBillsByOpenidRequest message or plain object to encode
-         * @param [writer] Writer to encode to
+         * @param m ListPayBillsByOpenidRequest message or plain object to encode
+         * @param [w] Writer to encode to
          * @returns Writer
          */
-        public static encode(message: pb.IListPayBillsByOpenidRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+        public static encode(m: pb.IListPayBillsByOpenidRequest, w?: $protobuf.Writer): $protobuf.Writer;
 
         /**
          * Encodes the specified ListPayBillsByOpenidRequest message, length delimited. Does not implicitly {@link pb.ListPayBillsByOpenidRequest.verify|verify} messages.
@@ -8029,13 +7657,13 @@ export namespace pb {
 
         /**
          * Decodes a ListPayBillsByOpenidRequest message from the specified reader or buffer.
-         * @param reader Reader or buffer to decode from
-         * @param [length] Message length if known beforehand
+         * @param r Reader or buffer to decode from
+         * @param [l] Message length if known beforehand
          * @returns ListPayBillsByOpenidRequest
          * @throws {Error} If the payload is not a reader or valid buffer
          * @throws {$protobuf.util.ProtocolError} If required fields are missing
          */
-        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): pb.ListPayBillsByOpenidRequest;
+        public static decode(r: ($protobuf.Reader|Uint8Array), l?: number): pb.ListPayBillsByOpenidRequest;
 
         /**
          * Decodes a ListPayBillsByOpenidRequest message from the specified reader or buffer, length delimited.
@@ -8048,38 +7676,31 @@ export namespace pb {
 
         /**
          * Verifies a ListPayBillsByOpenidRequest message.
-         * @param message Plain object to verify
+         * @param m Plain object to verify
          * @returns `null` if valid, otherwise the reason why it is not
          */
-        public static verify(message: { [k: string]: any }): (string|null);
+        public static verify(m: { [k: string]: any }): (string|null);
 
         /**
          * Creates a ListPayBillsByOpenidRequest message from a plain object. Also converts values to their respective internal types.
-         * @param object Plain object
+         * @param d Plain object
          * @returns ListPayBillsByOpenidRequest
          */
-        public static fromObject(object: { [k: string]: any }): pb.ListPayBillsByOpenidRequest;
+        public static fromObject(d: { [k: string]: any }): pb.ListPayBillsByOpenidRequest;
 
         /**
          * Creates a plain object from a ListPayBillsByOpenidRequest message. Also converts values to other types if specified.
-         * @param message ListPayBillsByOpenidRequest
-         * @param [options] Conversion options
+         * @param m ListPayBillsByOpenidRequest
+         * @param [o] Conversion options
          * @returns Plain object
          */
-        public static toObject(message: pb.ListPayBillsByOpenidRequest, options?: $protobuf.IConversionOptions): { [k: string]: any };
+        public static toObject(m: pb.ListPayBillsByOpenidRequest, o?: $protobuf.IConversionOptions): { [k: string]: any };
 
         /**
          * Converts this ListPayBillsByOpenidRequest to JSON.
          * @returns JSON object
          */
         public toJSON(): { [k: string]: any };
-
-        /**
-         * Gets the default type url for ListPayBillsByOpenidRequest
-         * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
-         * @returns The default type url
-         */
-        public static getTypeUrl(typeUrlPrefix?: string): string;
     }
 
     /** Properties of a ListPayBillsRequest. */
@@ -8106,9 +7727,9 @@ export namespace pb {
 
         /**
          * Constructs a new ListPayBillsRequest.
-         * @param [properties] Properties to set
+         * @param [p] Properties to set
          */
-        constructor(properties?: pb.IListPayBillsRequest);
+        constructor(p?: pb.IListPayBillsRequest);
 
         /** ListPayBillsRequest appid. */
         public appid: string;
@@ -8134,11 +7755,11 @@ export namespace pb {
 
         /**
          * Encodes the specified ListPayBillsRequest message. Does not implicitly {@link pb.ListPayBillsRequest.verify|verify} messages.
-         * @param message ListPayBillsRequest message or plain object to encode
-         * @param [writer] Writer to encode to
+         * @param m ListPayBillsRequest message or plain object to encode
+         * @param [w] Writer to encode to
          * @returns Writer
          */
-        public static encode(message: pb.IListPayBillsRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+        public static encode(m: pb.IListPayBillsRequest, w?: $protobuf.Writer): $protobuf.Writer;
 
         /**
          * Encodes the specified ListPayBillsRequest message, length delimited. Does not implicitly {@link pb.ListPayBillsRequest.verify|verify} messages.
@@ -8150,13 +7771,13 @@ export namespace pb {
 
         /**
          * Decodes a ListPayBillsRequest message from the specified reader or buffer.
-         * @param reader Reader or buffer to decode from
-         * @param [length] Message length if known beforehand
+         * @param r Reader or buffer to decode from
+         * @param [l] Message length if known beforehand
          * @returns ListPayBillsRequest
          * @throws {Error} If the payload is not a reader or valid buffer
          * @throws {$protobuf.util.ProtocolError} If required fields are missing
          */
-        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): pb.ListPayBillsRequest;
+        public static decode(r: ($protobuf.Reader|Uint8Array), l?: number): pb.ListPayBillsRequest;
 
         /**
          * Decodes a ListPayBillsRequest message from the specified reader or buffer, length delimited.
@@ -8169,38 +7790,31 @@ export namespace pb {
 
         /**
          * Verifies a ListPayBillsRequest message.
-         * @param message Plain object to verify
+         * @param m Plain object to verify
          * @returns `null` if valid, otherwise the reason why it is not
          */
-        public static verify(message: { [k: string]: any }): (string|null);
+        public static verify(m: { [k: string]: any }): (string|null);
 
         /**
          * Creates a ListPayBillsRequest message from a plain object. Also converts values to their respective internal types.
-         * @param object Plain object
+         * @param d Plain object
          * @returns ListPayBillsRequest
          */
-        public static fromObject(object: { [k: string]: any }): pb.ListPayBillsRequest;
+        public static fromObject(d: { [k: string]: any }): pb.ListPayBillsRequest;
 
         /**
          * Creates a plain object from a ListPayBillsRequest message. Also converts values to other types if specified.
-         * @param message ListPayBillsRequest
-         * @param [options] Conversion options
+         * @param m ListPayBillsRequest
+         * @param [o] Conversion options
          * @returns Plain object
          */
-        public static toObject(message: pb.ListPayBillsRequest, options?: $protobuf.IConversionOptions): { [k: string]: any };
+        public static toObject(m: pb.ListPayBillsRequest, o?: $protobuf.IConversionOptions): { [k: string]: any };
 
         /**
          * Converts this ListPayBillsRequest to JSON.
          * @returns JSON object
          */
         public toJSON(): { [k: string]: any };
-
-        /**
-         * Gets the default type url for ListPayBillsRequest
-         * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
-         * @returns The default type url
-         */
-        public static getTypeUrl(typeUrlPrefix?: string): string;
     }
 
     /** Properties of a ListPayBillsResponse. */
@@ -8224,9 +7838,9 @@ export namespace pb {
 
         /**
          * Constructs a new ListPayBillsResponse.
-         * @param [properties] Properties to set
+         * @param [p] Properties to set
          */
-        constructor(properties?: pb.IListPayBillsResponse);
+        constructor(p?: pb.IListPayBillsResponse);
 
         /** ListPayBillsResponse code. */
         public code: number;
@@ -8249,11 +7863,11 @@ export namespace pb {
 
         /**
          * Encodes the specified ListPayBillsResponse message. Does not implicitly {@link pb.ListPayBillsResponse.verify|verify} messages.
-         * @param message ListPayBillsResponse message or plain object to encode
-         * @param [writer] Writer to encode to
+         * @param m ListPayBillsResponse message or plain object to encode
+         * @param [w] Writer to encode to
          * @returns Writer
          */
-        public static encode(message: pb.IListPayBillsResponse, writer?: $protobuf.Writer): $protobuf.Writer;
+        public static encode(m: pb.IListPayBillsResponse, w?: $protobuf.Writer): $protobuf.Writer;
 
         /**
          * Encodes the specified ListPayBillsResponse message, length delimited. Does not implicitly {@link pb.ListPayBillsResponse.verify|verify} messages.
@@ -8265,13 +7879,13 @@ export namespace pb {
 
         /**
          * Decodes a ListPayBillsResponse message from the specified reader or buffer.
-         * @param reader Reader or buffer to decode from
-         * @param [length] Message length if known beforehand
+         * @param r Reader or buffer to decode from
+         * @param [l] Message length if known beforehand
          * @returns ListPayBillsResponse
          * @throws {Error} If the payload is not a reader or valid buffer
          * @throws {$protobuf.util.ProtocolError} If required fields are missing
          */
-        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): pb.ListPayBillsResponse;
+        public static decode(r: ($protobuf.Reader|Uint8Array), l?: number): pb.ListPayBillsResponse;
 
         /**
          * Decodes a ListPayBillsResponse message from the specified reader or buffer, length delimited.
@@ -8284,38 +7898,31 @@ export namespace pb {
 
         /**
          * Verifies a ListPayBillsResponse message.
-         * @param message Plain object to verify
+         * @param m Plain object to verify
          * @returns `null` if valid, otherwise the reason why it is not
          */
-        public static verify(message: { [k: string]: any }): (string|null);
+        public static verify(m: { [k: string]: any }): (string|null);
 
         /**
          * Creates a ListPayBillsResponse message from a plain object. Also converts values to their respective internal types.
-         * @param object Plain object
+         * @param d Plain object
          * @returns ListPayBillsResponse
          */
-        public static fromObject(object: { [k: string]: any }): pb.ListPayBillsResponse;
+        public static fromObject(d: { [k: string]: any }): pb.ListPayBillsResponse;
 
         /**
          * Creates a plain object from a ListPayBillsResponse message. Also converts values to other types if specified.
-         * @param message ListPayBillsResponse
-         * @param [options] Conversion options
+         * @param m ListPayBillsResponse
+         * @param [o] Conversion options
          * @returns Plain object
          */
-        public static toObject(message: pb.ListPayBillsResponse, options?: $protobuf.IConversionOptions): { [k: string]: any };
+        public static toObject(m: pb.ListPayBillsResponse, o?: $protobuf.IConversionOptions): { [k: string]: any };
 
         /**
          * Converts this ListPayBillsResponse to JSON.
          * @returns JSON object
          */
         public toJSON(): { [k: string]: any };
-
-        /**
-         * Gets the default type url for ListPayBillsResponse
-         * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
-         * @returns The default type url
-         */
-        public static getTypeUrl(typeUrlPrefix?: string): string;
     }
 
     /** Properties of a GetPayOrderByTradeNoRequest. */
@@ -8330,9 +7937,9 @@ export namespace pb {
 
         /**
          * Constructs a new GetPayOrderByTradeNoRequest.
-         * @param [properties] Properties to set
+         * @param [p] Properties to set
          */
-        constructor(properties?: pb.IGetPayOrderByTradeNoRequest);
+        constructor(p?: pb.IGetPayOrderByTradeNoRequest);
 
         /** GetPayOrderByTradeNoRequest outTradeNo. */
         public outTradeNo: string;
@@ -8346,11 +7953,11 @@ export namespace pb {
 
         /**
          * Encodes the specified GetPayOrderByTradeNoRequest message. Does not implicitly {@link pb.GetPayOrderByTradeNoRequest.verify|verify} messages.
-         * @param message GetPayOrderByTradeNoRequest message or plain object to encode
-         * @param [writer] Writer to encode to
+         * @param m GetPayOrderByTradeNoRequest message or plain object to encode
+         * @param [w] Writer to encode to
          * @returns Writer
          */
-        public static encode(message: pb.IGetPayOrderByTradeNoRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+        public static encode(m: pb.IGetPayOrderByTradeNoRequest, w?: $protobuf.Writer): $protobuf.Writer;
 
         /**
          * Encodes the specified GetPayOrderByTradeNoRequest message, length delimited. Does not implicitly {@link pb.GetPayOrderByTradeNoRequest.verify|verify} messages.
@@ -8362,13 +7969,13 @@ export namespace pb {
 
         /**
          * Decodes a GetPayOrderByTradeNoRequest message from the specified reader or buffer.
-         * @param reader Reader or buffer to decode from
-         * @param [length] Message length if known beforehand
+         * @param r Reader or buffer to decode from
+         * @param [l] Message length if known beforehand
          * @returns GetPayOrderByTradeNoRequest
          * @throws {Error} If the payload is not a reader or valid buffer
          * @throws {$protobuf.util.ProtocolError} If required fields are missing
          */
-        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): pb.GetPayOrderByTradeNoRequest;
+        public static decode(r: ($protobuf.Reader|Uint8Array), l?: number): pb.GetPayOrderByTradeNoRequest;
 
         /**
          * Decodes a GetPayOrderByTradeNoRequest message from the specified reader or buffer, length delimited.
@@ -8381,38 +7988,31 @@ export namespace pb {
 
         /**
          * Verifies a GetPayOrderByTradeNoRequest message.
-         * @param message Plain object to verify
+         * @param m Plain object to verify
          * @returns `null` if valid, otherwise the reason why it is not
          */
-        public static verify(message: { [k: string]: any }): (string|null);
+        public static verify(m: { [k: string]: any }): (string|null);
 
         /**
          * Creates a GetPayOrderByTradeNoRequest message from a plain object. Also converts values to their respective internal types.
-         * @param object Plain object
+         * @param d Plain object
          * @returns GetPayOrderByTradeNoRequest
          */
-        public static fromObject(object: { [k: string]: any }): pb.GetPayOrderByTradeNoRequest;
+        public static fromObject(d: { [k: string]: any }): pb.GetPayOrderByTradeNoRequest;
 
         /**
          * Creates a plain object from a GetPayOrderByTradeNoRequest message. Also converts values to other types if specified.
-         * @param message GetPayOrderByTradeNoRequest
-         * @param [options] Conversion options
+         * @param m GetPayOrderByTradeNoRequest
+         * @param [o] Conversion options
          * @returns Plain object
          */
-        public static toObject(message: pb.GetPayOrderByTradeNoRequest, options?: $protobuf.IConversionOptions): { [k: string]: any };
+        public static toObject(m: pb.GetPayOrderByTradeNoRequest, o?: $protobuf.IConversionOptions): { [k: string]: any };
 
         /**
          * Converts this GetPayOrderByTradeNoRequest to JSON.
          * @returns JSON object
          */
         public toJSON(): { [k: string]: any };
-
-        /**
-         * Gets the default type url for GetPayOrderByTradeNoRequest
-         * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
-         * @returns The default type url
-         */
-        public static getTypeUrl(typeUrlPrefix?: string): string;
     }
 
     /** Properties of a PayOrderInfo. */
@@ -8463,9 +8063,9 @@ export namespace pb {
 
         /**
          * Constructs a new PayOrderInfo.
-         * @param [properties] Properties to set
+         * @param [p] Properties to set
          */
-        constructor(properties?: pb.IPayOrderInfo);
+        constructor(p?: pb.IPayOrderInfo);
 
         /** PayOrderInfo outTradeNo. */
         public outTradeNo: string;
@@ -8515,11 +8115,11 @@ export namespace pb {
 
         /**
          * Encodes the specified PayOrderInfo message. Does not implicitly {@link pb.PayOrderInfo.verify|verify} messages.
-         * @param message PayOrderInfo message or plain object to encode
-         * @param [writer] Writer to encode to
+         * @param m PayOrderInfo message or plain object to encode
+         * @param [w] Writer to encode to
          * @returns Writer
          */
-        public static encode(message: pb.IPayOrderInfo, writer?: $protobuf.Writer): $protobuf.Writer;
+        public static encode(m: pb.IPayOrderInfo, w?: $protobuf.Writer): $protobuf.Writer;
 
         /**
          * Encodes the specified PayOrderInfo message, length delimited. Does not implicitly {@link pb.PayOrderInfo.verify|verify} messages.
@@ -8531,13 +8131,13 @@ export namespace pb {
 
         /**
          * Decodes a PayOrderInfo message from the specified reader or buffer.
-         * @param reader Reader or buffer to decode from
-         * @param [length] Message length if known beforehand
+         * @param r Reader or buffer to decode from
+         * @param [l] Message length if known beforehand
          * @returns PayOrderInfo
          * @throws {Error} If the payload is not a reader or valid buffer
          * @throws {$protobuf.util.ProtocolError} If required fields are missing
          */
-        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): pb.PayOrderInfo;
+        public static decode(r: ($protobuf.Reader|Uint8Array), l?: number): pb.PayOrderInfo;
 
         /**
          * Decodes a PayOrderInfo message from the specified reader or buffer, length delimited.
@@ -8550,38 +8150,31 @@ export namespace pb {
 
         /**
          * Verifies a PayOrderInfo message.
-         * @param message Plain object to verify
+         * @param m Plain object to verify
          * @returns `null` if valid, otherwise the reason why it is not
          */
-        public static verify(message: { [k: string]: any }): (string|null);
+        public static verify(m: { [k: string]: any }): (string|null);
 
         /**
          * Creates a PayOrderInfo message from a plain object. Also converts values to their respective internal types.
-         * @param object Plain object
+         * @param d Plain object
          * @returns PayOrderInfo
          */
-        public static fromObject(object: { [k: string]: any }): pb.PayOrderInfo;
+        public static fromObject(d: { [k: string]: any }): pb.PayOrderInfo;
 
         /**
          * Creates a plain object from a PayOrderInfo message. Also converts values to other types if specified.
-         * @param message PayOrderInfo
-         * @param [options] Conversion options
+         * @param m PayOrderInfo
+         * @param [o] Conversion options
          * @returns Plain object
          */
-        public static toObject(message: pb.PayOrderInfo, options?: $protobuf.IConversionOptions): { [k: string]: any };
+        public static toObject(m: pb.PayOrderInfo, o?: $protobuf.IConversionOptions): { [k: string]: any };
 
         /**
          * Converts this PayOrderInfo to JSON.
          * @returns JSON object
          */
         public toJSON(): { [k: string]: any };
-
-        /**
-         * Gets the default type url for PayOrderInfo
-         * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
-         * @returns The default type url
-         */
-        public static getTypeUrl(typeUrlPrefix?: string): string;
     }
 
     /** Properties of a GetPayOrderResponse. */
@@ -8602,9 +8195,9 @@ export namespace pb {
 
         /**
          * Constructs a new GetPayOrderResponse.
-         * @param [properties] Properties to set
+         * @param [p] Properties to set
          */
-        constructor(properties?: pb.IGetPayOrderResponse);
+        constructor(p?: pb.IGetPayOrderResponse);
 
         /** GetPayOrderResponse code. */
         public code: number;
@@ -8624,11 +8217,11 @@ export namespace pb {
 
         /**
          * Encodes the specified GetPayOrderResponse message. Does not implicitly {@link pb.GetPayOrderResponse.verify|verify} messages.
-         * @param message GetPayOrderResponse message or plain object to encode
-         * @param [writer] Writer to encode to
+         * @param m GetPayOrderResponse message or plain object to encode
+         * @param [w] Writer to encode to
          * @returns Writer
          */
-        public static encode(message: pb.IGetPayOrderResponse, writer?: $protobuf.Writer): $protobuf.Writer;
+        public static encode(m: pb.IGetPayOrderResponse, w?: $protobuf.Writer): $protobuf.Writer;
 
         /**
          * Encodes the specified GetPayOrderResponse message, length delimited. Does not implicitly {@link pb.GetPayOrderResponse.verify|verify} messages.
@@ -8640,13 +8233,13 @@ export namespace pb {
 
         /**
          * Decodes a GetPayOrderResponse message from the specified reader or buffer.
-         * @param reader Reader or buffer to decode from
-         * @param [length] Message length if known beforehand
+         * @param r Reader or buffer to decode from
+         * @param [l] Message length if known beforehand
          * @returns GetPayOrderResponse
          * @throws {Error} If the payload is not a reader or valid buffer
          * @throws {$protobuf.util.ProtocolError} If required fields are missing
          */
-        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): pb.GetPayOrderResponse;
+        public static decode(r: ($protobuf.Reader|Uint8Array), l?: number): pb.GetPayOrderResponse;
 
         /**
          * Decodes a GetPayOrderResponse message from the specified reader or buffer, length delimited.
@@ -8659,38 +8252,31 @@ export namespace pb {
 
         /**
          * Verifies a GetPayOrderResponse message.
-         * @param message Plain object to verify
+         * @param m Plain object to verify
          * @returns `null` if valid, otherwise the reason why it is not
          */
-        public static verify(message: { [k: string]: any }): (string|null);
+        public static verify(m: { [k: string]: any }): (string|null);
 
         /**
          * Creates a GetPayOrderResponse message from a plain object. Also converts values to their respective internal types.
-         * @param object Plain object
+         * @param d Plain object
          * @returns GetPayOrderResponse
          */
-        public static fromObject(object: { [k: string]: any }): pb.GetPayOrderResponse;
+        public static fromObject(d: { [k: string]: any }): pb.GetPayOrderResponse;
 
         /**
          * Creates a plain object from a GetPayOrderResponse message. Also converts values to other types if specified.
-         * @param message GetPayOrderResponse
-         * @param [options] Conversion options
+         * @param m GetPayOrderResponse
+         * @param [o] Conversion options
          * @returns Plain object
          */
-        public static toObject(message: pb.GetPayOrderResponse, options?: $protobuf.IConversionOptions): { [k: string]: any };
+        public static toObject(m: pb.GetPayOrderResponse, o?: $protobuf.IConversionOptions): { [k: string]: any };
 
         /**
          * Converts this GetPayOrderResponse to JSON.
          * @returns JSON object
          */
         public toJSON(): { [k: string]: any };
-
-        /**
-         * Gets the default type url for GetPayOrderResponse
-         * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
-         * @returns The default type url
-         */
-        public static getTypeUrl(typeUrlPrefix?: string): string;
     }
 
     /** Properties of a GetPayOrdersByAccountRequest. */
@@ -8717,9 +8303,9 @@ export namespace pb {
 
         /**
          * Constructs a new GetPayOrdersByAccountRequest.
-         * @param [properties] Properties to set
+         * @param [p] Properties to set
          */
-        constructor(properties?: pb.IGetPayOrdersByAccountRequest);
+        constructor(p?: pb.IGetPayOrdersByAccountRequest);
 
         /** GetPayOrdersByAccountRequest account. */
         public account: string;
@@ -8745,11 +8331,11 @@ export namespace pb {
 
         /**
          * Encodes the specified GetPayOrdersByAccountRequest message. Does not implicitly {@link pb.GetPayOrdersByAccountRequest.verify|verify} messages.
-         * @param message GetPayOrdersByAccountRequest message or plain object to encode
-         * @param [writer] Writer to encode to
+         * @param m GetPayOrdersByAccountRequest message or plain object to encode
+         * @param [w] Writer to encode to
          * @returns Writer
          */
-        public static encode(message: pb.IGetPayOrdersByAccountRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+        public static encode(m: pb.IGetPayOrdersByAccountRequest, w?: $protobuf.Writer): $protobuf.Writer;
 
         /**
          * Encodes the specified GetPayOrdersByAccountRequest message, length delimited. Does not implicitly {@link pb.GetPayOrdersByAccountRequest.verify|verify} messages.
@@ -8761,13 +8347,13 @@ export namespace pb {
 
         /**
          * Decodes a GetPayOrdersByAccountRequest message from the specified reader or buffer.
-         * @param reader Reader or buffer to decode from
-         * @param [length] Message length if known beforehand
+         * @param r Reader or buffer to decode from
+         * @param [l] Message length if known beforehand
          * @returns GetPayOrdersByAccountRequest
          * @throws {Error} If the payload is not a reader or valid buffer
          * @throws {$protobuf.util.ProtocolError} If required fields are missing
          */
-        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): pb.GetPayOrdersByAccountRequest;
+        public static decode(r: ($protobuf.Reader|Uint8Array), l?: number): pb.GetPayOrdersByAccountRequest;
 
         /**
          * Decodes a GetPayOrdersByAccountRequest message from the specified reader or buffer, length delimited.
@@ -8780,38 +8366,31 @@ export namespace pb {
 
         /**
          * Verifies a GetPayOrdersByAccountRequest message.
-         * @param message Plain object to verify
+         * @param m Plain object to verify
          * @returns `null` if valid, otherwise the reason why it is not
          */
-        public static verify(message: { [k: string]: any }): (string|null);
+        public static verify(m: { [k: string]: any }): (string|null);
 
         /**
          * Creates a GetPayOrdersByAccountRequest message from a plain object. Also converts values to their respective internal types.
-         * @param object Plain object
+         * @param d Plain object
          * @returns GetPayOrdersByAccountRequest
          */
-        public static fromObject(object: { [k: string]: any }): pb.GetPayOrdersByAccountRequest;
+        public static fromObject(d: { [k: string]: any }): pb.GetPayOrdersByAccountRequest;
 
         /**
          * Creates a plain object from a GetPayOrdersByAccountRequest message. Also converts values to other types if specified.
-         * @param message GetPayOrdersByAccountRequest
-         * @param [options] Conversion options
+         * @param m GetPayOrdersByAccountRequest
+         * @param [o] Conversion options
          * @returns Plain object
          */
-        public static toObject(message: pb.GetPayOrdersByAccountRequest, options?: $protobuf.IConversionOptions): { [k: string]: any };
+        public static toObject(m: pb.GetPayOrdersByAccountRequest, o?: $protobuf.IConversionOptions): { [k: string]: any };
 
         /**
          * Converts this GetPayOrdersByAccountRequest to JSON.
          * @returns JSON object
          */
         public toJSON(): { [k: string]: any };
-
-        /**
-         * Gets the default type url for GetPayOrdersByAccountRequest
-         * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
-         * @returns The default type url
-         */
-        public static getTypeUrl(typeUrlPrefix?: string): string;
     }
 
     /** Properties of a PayOrderDappidFilter. */
@@ -8838,9 +8417,9 @@ export namespace pb {
 
         /**
          * Constructs a new PayOrderDappidFilter.
-         * @param [properties] Properties to set
+         * @param [p] Properties to set
          */
-        constructor(properties?: pb.IPayOrderDappidFilter);
+        constructor(p?: pb.IPayOrderDappidFilter);
 
         /** PayOrderDappidFilter priceKey. */
         public priceKey: string;
@@ -8866,11 +8445,11 @@ export namespace pb {
 
         /**
          * Encodes the specified PayOrderDappidFilter message. Does not implicitly {@link pb.PayOrderDappidFilter.verify|verify} messages.
-         * @param message PayOrderDappidFilter message or plain object to encode
-         * @param [writer] Writer to encode to
+         * @param m PayOrderDappidFilter message or plain object to encode
+         * @param [w] Writer to encode to
          * @returns Writer
          */
-        public static encode(message: pb.IPayOrderDappidFilter, writer?: $protobuf.Writer): $protobuf.Writer;
+        public static encode(m: pb.IPayOrderDappidFilter, w?: $protobuf.Writer): $protobuf.Writer;
 
         /**
          * Encodes the specified PayOrderDappidFilter message, length delimited. Does not implicitly {@link pb.PayOrderDappidFilter.verify|verify} messages.
@@ -8882,13 +8461,13 @@ export namespace pb {
 
         /**
          * Decodes a PayOrderDappidFilter message from the specified reader or buffer.
-         * @param reader Reader or buffer to decode from
-         * @param [length] Message length if known beforehand
+         * @param r Reader or buffer to decode from
+         * @param [l] Message length if known beforehand
          * @returns PayOrderDappidFilter
          * @throws {Error} If the payload is not a reader or valid buffer
          * @throws {$protobuf.util.ProtocolError} If required fields are missing
          */
-        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): pb.PayOrderDappidFilter;
+        public static decode(r: ($protobuf.Reader|Uint8Array), l?: number): pb.PayOrderDappidFilter;
 
         /**
          * Decodes a PayOrderDappidFilter message from the specified reader or buffer, length delimited.
@@ -8901,38 +8480,31 @@ export namespace pb {
 
         /**
          * Verifies a PayOrderDappidFilter message.
-         * @param message Plain object to verify
+         * @param m Plain object to verify
          * @returns `null` if valid, otherwise the reason why it is not
          */
-        public static verify(message: { [k: string]: any }): (string|null);
+        public static verify(m: { [k: string]: any }): (string|null);
 
         /**
          * Creates a PayOrderDappidFilter message from a plain object. Also converts values to their respective internal types.
-         * @param object Plain object
+         * @param d Plain object
          * @returns PayOrderDappidFilter
          */
-        public static fromObject(object: { [k: string]: any }): pb.PayOrderDappidFilter;
+        public static fromObject(d: { [k: string]: any }): pb.PayOrderDappidFilter;
 
         /**
          * Creates a plain object from a PayOrderDappidFilter message. Also converts values to other types if specified.
-         * @param message PayOrderDappidFilter
-         * @param [options] Conversion options
+         * @param m PayOrderDappidFilter
+         * @param [o] Conversion options
          * @returns Plain object
          */
-        public static toObject(message: pb.PayOrderDappidFilter, options?: $protobuf.IConversionOptions): { [k: string]: any };
+        public static toObject(m: pb.PayOrderDappidFilter, o?: $protobuf.IConversionOptions): { [k: string]: any };
 
         /**
          * Converts this PayOrderDappidFilter to JSON.
          * @returns JSON object
          */
         public toJSON(): { [k: string]: any };
-
-        /**
-         * Gets the default type url for PayOrderDappidFilter
-         * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
-         * @returns The default type url
-         */
-        public static getTypeUrl(typeUrlPrefix?: string): string;
     }
 
     /** Properties of a GetPayOrdersByDappidRequest. */
@@ -8956,9 +8528,9 @@ export namespace pb {
 
         /**
          * Constructs a new GetPayOrdersByDappidRequest.
-         * @param [properties] Properties to set
+         * @param [p] Properties to set
          */
-        constructor(properties?: pb.IGetPayOrdersByDappidRequest);
+        constructor(p?: pb.IGetPayOrdersByDappidRequest);
 
         /** GetPayOrdersByDappidRequest dappid. */
         public dappid: string;
@@ -8981,11 +8553,11 @@ export namespace pb {
 
         /**
          * Encodes the specified GetPayOrdersByDappidRequest message. Does not implicitly {@link pb.GetPayOrdersByDappidRequest.verify|verify} messages.
-         * @param message GetPayOrdersByDappidRequest message or plain object to encode
-         * @param [writer] Writer to encode to
+         * @param m GetPayOrdersByDappidRequest message or plain object to encode
+         * @param [w] Writer to encode to
          * @returns Writer
          */
-        public static encode(message: pb.IGetPayOrdersByDappidRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+        public static encode(m: pb.IGetPayOrdersByDappidRequest, w?: $protobuf.Writer): $protobuf.Writer;
 
         /**
          * Encodes the specified GetPayOrdersByDappidRequest message, length delimited. Does not implicitly {@link pb.GetPayOrdersByDappidRequest.verify|verify} messages.
@@ -8997,13 +8569,13 @@ export namespace pb {
 
         /**
          * Decodes a GetPayOrdersByDappidRequest message from the specified reader or buffer.
-         * @param reader Reader or buffer to decode from
-         * @param [length] Message length if known beforehand
+         * @param r Reader or buffer to decode from
+         * @param [l] Message length if known beforehand
          * @returns GetPayOrdersByDappidRequest
          * @throws {Error} If the payload is not a reader or valid buffer
          * @throws {$protobuf.util.ProtocolError} If required fields are missing
          */
-        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): pb.GetPayOrdersByDappidRequest;
+        public static decode(r: ($protobuf.Reader|Uint8Array), l?: number): pb.GetPayOrdersByDappidRequest;
 
         /**
          * Decodes a GetPayOrdersByDappidRequest message from the specified reader or buffer, length delimited.
@@ -9016,38 +8588,31 @@ export namespace pb {
 
         /**
          * Verifies a GetPayOrdersByDappidRequest message.
-         * @param message Plain object to verify
+         * @param m Plain object to verify
          * @returns `null` if valid, otherwise the reason why it is not
          */
-        public static verify(message: { [k: string]: any }): (string|null);
+        public static verify(m: { [k: string]: any }): (string|null);
 
         /**
          * Creates a GetPayOrdersByDappidRequest message from a plain object. Also converts values to their respective internal types.
-         * @param object Plain object
+         * @param d Plain object
          * @returns GetPayOrdersByDappidRequest
          */
-        public static fromObject(object: { [k: string]: any }): pb.GetPayOrdersByDappidRequest;
+        public static fromObject(d: { [k: string]: any }): pb.GetPayOrdersByDappidRequest;
 
         /**
          * Creates a plain object from a GetPayOrdersByDappidRequest message. Also converts values to other types if specified.
-         * @param message GetPayOrdersByDappidRequest
-         * @param [options] Conversion options
+         * @param m GetPayOrdersByDappidRequest
+         * @param [o] Conversion options
          * @returns Plain object
          */
-        public static toObject(message: pb.GetPayOrdersByDappidRequest, options?: $protobuf.IConversionOptions): { [k: string]: any };
+        public static toObject(m: pb.GetPayOrdersByDappidRequest, o?: $protobuf.IConversionOptions): { [k: string]: any };
 
         /**
          * Converts this GetPayOrdersByDappidRequest to JSON.
          * @returns JSON object
          */
         public toJSON(): { [k: string]: any };
-
-        /**
-         * Gets the default type url for GetPayOrdersByDappidRequest
-         * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
-         * @returns The default type url
-         */
-        public static getTypeUrl(typeUrlPrefix?: string): string;
     }
 
     /** Properties of a GetPayOrderStatsByDappidRequest. */
@@ -9065,9 +8630,9 @@ export namespace pb {
 
         /**
          * Constructs a new GetPayOrderStatsByDappidRequest.
-         * @param [properties] Properties to set
+         * @param [p] Properties to set
          */
-        constructor(properties?: pb.IGetPayOrderStatsByDappidRequest);
+        constructor(p?: pb.IGetPayOrderStatsByDappidRequest);
 
         /** GetPayOrderStatsByDappidRequest dappid. */
         public dappid: string;
@@ -9084,11 +8649,11 @@ export namespace pb {
 
         /**
          * Encodes the specified GetPayOrderStatsByDappidRequest message. Does not implicitly {@link pb.GetPayOrderStatsByDappidRequest.verify|verify} messages.
-         * @param message GetPayOrderStatsByDappidRequest message or plain object to encode
-         * @param [writer] Writer to encode to
+         * @param m GetPayOrderStatsByDappidRequest message or plain object to encode
+         * @param [w] Writer to encode to
          * @returns Writer
          */
-        public static encode(message: pb.IGetPayOrderStatsByDappidRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+        public static encode(m: pb.IGetPayOrderStatsByDappidRequest, w?: $protobuf.Writer): $protobuf.Writer;
 
         /**
          * Encodes the specified GetPayOrderStatsByDappidRequest message, length delimited. Does not implicitly {@link pb.GetPayOrderStatsByDappidRequest.verify|verify} messages.
@@ -9100,13 +8665,13 @@ export namespace pb {
 
         /**
          * Decodes a GetPayOrderStatsByDappidRequest message from the specified reader or buffer.
-         * @param reader Reader or buffer to decode from
-         * @param [length] Message length if known beforehand
+         * @param r Reader or buffer to decode from
+         * @param [l] Message length if known beforehand
          * @returns GetPayOrderStatsByDappidRequest
          * @throws {Error} If the payload is not a reader or valid buffer
          * @throws {$protobuf.util.ProtocolError} If required fields are missing
          */
-        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): pb.GetPayOrderStatsByDappidRequest;
+        public static decode(r: ($protobuf.Reader|Uint8Array), l?: number): pb.GetPayOrderStatsByDappidRequest;
 
         /**
          * Decodes a GetPayOrderStatsByDappidRequest message from the specified reader or buffer, length delimited.
@@ -9119,38 +8684,31 @@ export namespace pb {
 
         /**
          * Verifies a GetPayOrderStatsByDappidRequest message.
-         * @param message Plain object to verify
+         * @param m Plain object to verify
          * @returns `null` if valid, otherwise the reason why it is not
          */
-        public static verify(message: { [k: string]: any }): (string|null);
+        public static verify(m: { [k: string]: any }): (string|null);
 
         /**
          * Creates a GetPayOrderStatsByDappidRequest message from a plain object. Also converts values to their respective internal types.
-         * @param object Plain object
+         * @param d Plain object
          * @returns GetPayOrderStatsByDappidRequest
          */
-        public static fromObject(object: { [k: string]: any }): pb.GetPayOrderStatsByDappidRequest;
+        public static fromObject(d: { [k: string]: any }): pb.GetPayOrderStatsByDappidRequest;
 
         /**
          * Creates a plain object from a GetPayOrderStatsByDappidRequest message. Also converts values to other types if specified.
-         * @param message GetPayOrderStatsByDappidRequest
-         * @param [options] Conversion options
+         * @param m GetPayOrderStatsByDappidRequest
+         * @param [o] Conversion options
          * @returns Plain object
          */
-        public static toObject(message: pb.GetPayOrderStatsByDappidRequest, options?: $protobuf.IConversionOptions): { [k: string]: any };
+        public static toObject(m: pb.GetPayOrderStatsByDappidRequest, o?: $protobuf.IConversionOptions): { [k: string]: any };
 
         /**
          * Converts this GetPayOrderStatsByDappidRequest to JSON.
          * @returns JSON object
          */
         public toJSON(): { [k: string]: any };
-
-        /**
-         * Gets the default type url for GetPayOrderStatsByDappidRequest
-         * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
-         * @returns The default type url
-         */
-        public static getTypeUrl(typeUrlPrefix?: string): string;
     }
 
     /** Properties of a PayOrderDappidStats. */
@@ -9171,9 +8729,9 @@ export namespace pb {
 
         /**
          * Constructs a new PayOrderDappidStats.
-         * @param [properties] Properties to set
+         * @param [p] Properties to set
          */
-        constructor(properties?: pb.IPayOrderDappidStats);
+        constructor(p?: pb.IPayOrderDappidStats);
 
         /** PayOrderDappidStats totalOrders. */
         public totalOrders: (number|Long);
@@ -9193,11 +8751,11 @@ export namespace pb {
 
         /**
          * Encodes the specified PayOrderDappidStats message. Does not implicitly {@link pb.PayOrderDappidStats.verify|verify} messages.
-         * @param message PayOrderDappidStats message or plain object to encode
-         * @param [writer] Writer to encode to
+         * @param m PayOrderDappidStats message or plain object to encode
+         * @param [w] Writer to encode to
          * @returns Writer
          */
-        public static encode(message: pb.IPayOrderDappidStats, writer?: $protobuf.Writer): $protobuf.Writer;
+        public static encode(m: pb.IPayOrderDappidStats, w?: $protobuf.Writer): $protobuf.Writer;
 
         /**
          * Encodes the specified PayOrderDappidStats message, length delimited. Does not implicitly {@link pb.PayOrderDappidStats.verify|verify} messages.
@@ -9209,13 +8767,13 @@ export namespace pb {
 
         /**
          * Decodes a PayOrderDappidStats message from the specified reader or buffer.
-         * @param reader Reader or buffer to decode from
-         * @param [length] Message length if known beforehand
+         * @param r Reader or buffer to decode from
+         * @param [l] Message length if known beforehand
          * @returns PayOrderDappidStats
          * @throws {Error} If the payload is not a reader or valid buffer
          * @throws {$protobuf.util.ProtocolError} If required fields are missing
          */
-        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): pb.PayOrderDappidStats;
+        public static decode(r: ($protobuf.Reader|Uint8Array), l?: number): pb.PayOrderDappidStats;
 
         /**
          * Decodes a PayOrderDappidStats message from the specified reader or buffer, length delimited.
@@ -9228,38 +8786,31 @@ export namespace pb {
 
         /**
          * Verifies a PayOrderDappidStats message.
-         * @param message Plain object to verify
+         * @param m Plain object to verify
          * @returns `null` if valid, otherwise the reason why it is not
          */
-        public static verify(message: { [k: string]: any }): (string|null);
+        public static verify(m: { [k: string]: any }): (string|null);
 
         /**
          * Creates a PayOrderDappidStats message from a plain object. Also converts values to their respective internal types.
-         * @param object Plain object
+         * @param d Plain object
          * @returns PayOrderDappidStats
          */
-        public static fromObject(object: { [k: string]: any }): pb.PayOrderDappidStats;
+        public static fromObject(d: { [k: string]: any }): pb.PayOrderDappidStats;
 
         /**
          * Creates a plain object from a PayOrderDappidStats message. Also converts values to other types if specified.
-         * @param message PayOrderDappidStats
-         * @param [options] Conversion options
+         * @param m PayOrderDappidStats
+         * @param [o] Conversion options
          * @returns Plain object
          */
-        public static toObject(message: pb.PayOrderDappidStats, options?: $protobuf.IConversionOptions): { [k: string]: any };
+        public static toObject(m: pb.PayOrderDappidStats, o?: $protobuf.IConversionOptions): { [k: string]: any };
 
         /**
          * Converts this PayOrderDappidStats to JSON.
          * @returns JSON object
          */
         public toJSON(): { [k: string]: any };
-
-        /**
-         * Gets the default type url for PayOrderDappidStats
-         * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
-         * @returns The default type url
-         */
-        public static getTypeUrl(typeUrlPrefix?: string): string;
     }
 
     /** Properties of a GetPayOrderStatsByDappidResponse. */
@@ -9280,9 +8831,9 @@ export namespace pb {
 
         /**
          * Constructs a new GetPayOrderStatsByDappidResponse.
-         * @param [properties] Properties to set
+         * @param [p] Properties to set
          */
-        constructor(properties?: pb.IGetPayOrderStatsByDappidResponse);
+        constructor(p?: pb.IGetPayOrderStatsByDappidResponse);
 
         /** GetPayOrderStatsByDappidResponse code. */
         public code: number;
@@ -9302,11 +8853,11 @@ export namespace pb {
 
         /**
          * Encodes the specified GetPayOrderStatsByDappidResponse message. Does not implicitly {@link pb.GetPayOrderStatsByDappidResponse.verify|verify} messages.
-         * @param message GetPayOrderStatsByDappidResponse message or plain object to encode
-         * @param [writer] Writer to encode to
+         * @param m GetPayOrderStatsByDappidResponse message or plain object to encode
+         * @param [w] Writer to encode to
          * @returns Writer
          */
-        public static encode(message: pb.IGetPayOrderStatsByDappidResponse, writer?: $protobuf.Writer): $protobuf.Writer;
+        public static encode(m: pb.IGetPayOrderStatsByDappidResponse, w?: $protobuf.Writer): $protobuf.Writer;
 
         /**
          * Encodes the specified GetPayOrderStatsByDappidResponse message, length delimited. Does not implicitly {@link pb.GetPayOrderStatsByDappidResponse.verify|verify} messages.
@@ -9318,13 +8869,13 @@ export namespace pb {
 
         /**
          * Decodes a GetPayOrderStatsByDappidResponse message from the specified reader or buffer.
-         * @param reader Reader or buffer to decode from
-         * @param [length] Message length if known beforehand
+         * @param r Reader or buffer to decode from
+         * @param [l] Message length if known beforehand
          * @returns GetPayOrderStatsByDappidResponse
          * @throws {Error} If the payload is not a reader or valid buffer
          * @throws {$protobuf.util.ProtocolError} If required fields are missing
          */
-        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): pb.GetPayOrderStatsByDappidResponse;
+        public static decode(r: ($protobuf.Reader|Uint8Array), l?: number): pb.GetPayOrderStatsByDappidResponse;
 
         /**
          * Decodes a GetPayOrderStatsByDappidResponse message from the specified reader or buffer, length delimited.
@@ -9337,38 +8888,31 @@ export namespace pb {
 
         /**
          * Verifies a GetPayOrderStatsByDappidResponse message.
-         * @param message Plain object to verify
+         * @param m Plain object to verify
          * @returns `null` if valid, otherwise the reason why it is not
          */
-        public static verify(message: { [k: string]: any }): (string|null);
+        public static verify(m: { [k: string]: any }): (string|null);
 
         /**
          * Creates a GetPayOrderStatsByDappidResponse message from a plain object. Also converts values to their respective internal types.
-         * @param object Plain object
+         * @param d Plain object
          * @returns GetPayOrderStatsByDappidResponse
          */
-        public static fromObject(object: { [k: string]: any }): pb.GetPayOrderStatsByDappidResponse;
+        public static fromObject(d: { [k: string]: any }): pb.GetPayOrderStatsByDappidResponse;
 
         /**
          * Creates a plain object from a GetPayOrderStatsByDappidResponse message. Also converts values to other types if specified.
-         * @param message GetPayOrderStatsByDappidResponse
-         * @param [options] Conversion options
+         * @param m GetPayOrderStatsByDappidResponse
+         * @param [o] Conversion options
          * @returns Plain object
          */
-        public static toObject(message: pb.GetPayOrderStatsByDappidResponse, options?: $protobuf.IConversionOptions): { [k: string]: any };
+        public static toObject(m: pb.GetPayOrderStatsByDappidResponse, o?: $protobuf.IConversionOptions): { [k: string]: any };
 
         /**
          * Converts this GetPayOrderStatsByDappidResponse to JSON.
          * @returns JSON object
          */
         public toJSON(): { [k: string]: any };
-
-        /**
-         * Gets the default type url for GetPayOrderStatsByDappidResponse
-         * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
-         * @returns The default type url
-         */
-        public static getTypeUrl(typeUrlPrefix?: string): string;
     }
 
     /** Properties of a ListPayOrdersRequest. */
@@ -9395,9 +8939,9 @@ export namespace pb {
 
         /**
          * Constructs a new ListPayOrdersRequest.
-         * @param [properties] Properties to set
+         * @param [p] Properties to set
          */
-        constructor(properties?: pb.IListPayOrdersRequest);
+        constructor(p?: pb.IListPayOrdersRequest);
 
         /** ListPayOrdersRequest account. */
         public account: string;
@@ -9423,11 +8967,11 @@ export namespace pb {
 
         /**
          * Encodes the specified ListPayOrdersRequest message. Does not implicitly {@link pb.ListPayOrdersRequest.verify|verify} messages.
-         * @param message ListPayOrdersRequest message or plain object to encode
-         * @param [writer] Writer to encode to
+         * @param m ListPayOrdersRequest message or plain object to encode
+         * @param [w] Writer to encode to
          * @returns Writer
          */
-        public static encode(message: pb.IListPayOrdersRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+        public static encode(m: pb.IListPayOrdersRequest, w?: $protobuf.Writer): $protobuf.Writer;
 
         /**
          * Encodes the specified ListPayOrdersRequest message, length delimited. Does not implicitly {@link pb.ListPayOrdersRequest.verify|verify} messages.
@@ -9439,13 +8983,13 @@ export namespace pb {
 
         /**
          * Decodes a ListPayOrdersRequest message from the specified reader or buffer.
-         * @param reader Reader or buffer to decode from
-         * @param [length] Message length if known beforehand
+         * @param r Reader or buffer to decode from
+         * @param [l] Message length if known beforehand
          * @returns ListPayOrdersRequest
          * @throws {Error} If the payload is not a reader or valid buffer
          * @throws {$protobuf.util.ProtocolError} If required fields are missing
          */
-        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): pb.ListPayOrdersRequest;
+        public static decode(r: ($protobuf.Reader|Uint8Array), l?: number): pb.ListPayOrdersRequest;
 
         /**
          * Decodes a ListPayOrdersRequest message from the specified reader or buffer, length delimited.
@@ -9458,38 +9002,31 @@ export namespace pb {
 
         /**
          * Verifies a ListPayOrdersRequest message.
-         * @param message Plain object to verify
+         * @param m Plain object to verify
          * @returns `null` if valid, otherwise the reason why it is not
          */
-        public static verify(message: { [k: string]: any }): (string|null);
+        public static verify(m: { [k: string]: any }): (string|null);
 
         /**
          * Creates a ListPayOrdersRequest message from a plain object. Also converts values to their respective internal types.
-         * @param object Plain object
+         * @param d Plain object
          * @returns ListPayOrdersRequest
          */
-        public static fromObject(object: { [k: string]: any }): pb.ListPayOrdersRequest;
+        public static fromObject(d: { [k: string]: any }): pb.ListPayOrdersRequest;
 
         /**
          * Creates a plain object from a ListPayOrdersRequest message. Also converts values to other types if specified.
-         * @param message ListPayOrdersRequest
-         * @param [options] Conversion options
+         * @param m ListPayOrdersRequest
+         * @param [o] Conversion options
          * @returns Plain object
          */
-        public static toObject(message: pb.ListPayOrdersRequest, options?: $protobuf.IConversionOptions): { [k: string]: any };
+        public static toObject(m: pb.ListPayOrdersRequest, o?: $protobuf.IConversionOptions): { [k: string]: any };
 
         /**
          * Converts this ListPayOrdersRequest to JSON.
          * @returns JSON object
          */
         public toJSON(): { [k: string]: any };
-
-        /**
-         * Gets the default type url for ListPayOrdersRequest
-         * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
-         * @returns The default type url
-         */
-        public static getTypeUrl(typeUrlPrefix?: string): string;
     }
 
     /** Properties of a ListPayOrdersResponse. */
@@ -9513,9 +9050,9 @@ export namespace pb {
 
         /**
          * Constructs a new ListPayOrdersResponse.
-         * @param [properties] Properties to set
+         * @param [p] Properties to set
          */
-        constructor(properties?: pb.IListPayOrdersResponse);
+        constructor(p?: pb.IListPayOrdersResponse);
 
         /** ListPayOrdersResponse code. */
         public code: number;
@@ -9538,11 +9075,11 @@ export namespace pb {
 
         /**
          * Encodes the specified ListPayOrdersResponse message. Does not implicitly {@link pb.ListPayOrdersResponse.verify|verify} messages.
-         * @param message ListPayOrdersResponse message or plain object to encode
-         * @param [writer] Writer to encode to
+         * @param m ListPayOrdersResponse message or plain object to encode
+         * @param [w] Writer to encode to
          * @returns Writer
          */
-        public static encode(message: pb.IListPayOrdersResponse, writer?: $protobuf.Writer): $protobuf.Writer;
+        public static encode(m: pb.IListPayOrdersResponse, w?: $protobuf.Writer): $protobuf.Writer;
 
         /**
          * Encodes the specified ListPayOrdersResponse message, length delimited. Does not implicitly {@link pb.ListPayOrdersResponse.verify|verify} messages.
@@ -9554,13 +9091,13 @@ export namespace pb {
 
         /**
          * Decodes a ListPayOrdersResponse message from the specified reader or buffer.
-         * @param reader Reader or buffer to decode from
-         * @param [length] Message length if known beforehand
+         * @param r Reader or buffer to decode from
+         * @param [l] Message length if known beforehand
          * @returns ListPayOrdersResponse
          * @throws {Error} If the payload is not a reader or valid buffer
          * @throws {$protobuf.util.ProtocolError} If required fields are missing
          */
-        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): pb.ListPayOrdersResponse;
+        public static decode(r: ($protobuf.Reader|Uint8Array), l?: number): pb.ListPayOrdersResponse;
 
         /**
          * Decodes a ListPayOrdersResponse message from the specified reader or buffer, length delimited.
@@ -9573,38 +9110,31 @@ export namespace pb {
 
         /**
          * Verifies a ListPayOrdersResponse message.
-         * @param message Plain object to verify
+         * @param m Plain object to verify
          * @returns `null` if valid, otherwise the reason why it is not
          */
-        public static verify(message: { [k: string]: any }): (string|null);
+        public static verify(m: { [k: string]: any }): (string|null);
 
         /**
          * Creates a ListPayOrdersResponse message from a plain object. Also converts values to their respective internal types.
-         * @param object Plain object
+         * @param d Plain object
          * @returns ListPayOrdersResponse
          */
-        public static fromObject(object: { [k: string]: any }): pb.ListPayOrdersResponse;
+        public static fromObject(d: { [k: string]: any }): pb.ListPayOrdersResponse;
 
         /**
          * Creates a plain object from a ListPayOrdersResponse message. Also converts values to other types if specified.
-         * @param message ListPayOrdersResponse
-         * @param [options] Conversion options
+         * @param m ListPayOrdersResponse
+         * @param [o] Conversion options
          * @returns Plain object
          */
-        public static toObject(message: pb.ListPayOrdersResponse, options?: $protobuf.IConversionOptions): { [k: string]: any };
+        public static toObject(m: pb.ListPayOrdersResponse, o?: $protobuf.IConversionOptions): { [k: string]: any };
 
         /**
          * Converts this ListPayOrdersResponse to JSON.
          * @returns JSON object
          */
         public toJSON(): { [k: string]: any };
-
-        /**
-         * Gets the default type url for ListPayOrdersResponse
-         * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
-         * @returns The default type url
-         */
-        public static getTypeUrl(typeUrlPrefix?: string): string;
     }
 
     /** Properties of an AdminListWithdrawalsRequest. */
@@ -9628,9 +9158,9 @@ export namespace pb {
 
         /**
          * Constructs a new AdminListWithdrawalsRequest.
-         * @param [properties] Properties to set
+         * @param [p] Properties to set
          */
-        constructor(properties?: pb.IAdminListWithdrawalsRequest);
+        constructor(p?: pb.IAdminListWithdrawalsRequest);
 
         /** AdminListWithdrawalsRequest pubkey. */
         public pubkey: string;
@@ -9653,11 +9183,11 @@ export namespace pb {
 
         /**
          * Encodes the specified AdminListWithdrawalsRequest message. Does not implicitly {@link pb.AdminListWithdrawalsRequest.verify|verify} messages.
-         * @param message AdminListWithdrawalsRequest message or plain object to encode
-         * @param [writer] Writer to encode to
+         * @param m AdminListWithdrawalsRequest message or plain object to encode
+         * @param [w] Writer to encode to
          * @returns Writer
          */
-        public static encode(message: pb.IAdminListWithdrawalsRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+        public static encode(m: pb.IAdminListWithdrawalsRequest, w?: $protobuf.Writer): $protobuf.Writer;
 
         /**
          * Encodes the specified AdminListWithdrawalsRequest message, length delimited. Does not implicitly {@link pb.AdminListWithdrawalsRequest.verify|verify} messages.
@@ -9669,13 +9199,13 @@ export namespace pb {
 
         /**
          * Decodes an AdminListWithdrawalsRequest message from the specified reader or buffer.
-         * @param reader Reader or buffer to decode from
-         * @param [length] Message length if known beforehand
+         * @param r Reader or buffer to decode from
+         * @param [l] Message length if known beforehand
          * @returns AdminListWithdrawalsRequest
          * @throws {Error} If the payload is not a reader or valid buffer
          * @throws {$protobuf.util.ProtocolError} If required fields are missing
          */
-        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): pb.AdminListWithdrawalsRequest;
+        public static decode(r: ($protobuf.Reader|Uint8Array), l?: number): pb.AdminListWithdrawalsRequest;
 
         /**
          * Decodes an AdminListWithdrawalsRequest message from the specified reader or buffer, length delimited.
@@ -9688,38 +9218,31 @@ export namespace pb {
 
         /**
          * Verifies an AdminListWithdrawalsRequest message.
-         * @param message Plain object to verify
+         * @param m Plain object to verify
          * @returns `null` if valid, otherwise the reason why it is not
          */
-        public static verify(message: { [k: string]: any }): (string|null);
+        public static verify(m: { [k: string]: any }): (string|null);
 
         /**
          * Creates an AdminListWithdrawalsRequest message from a plain object. Also converts values to their respective internal types.
-         * @param object Plain object
+         * @param d Plain object
          * @returns AdminListWithdrawalsRequest
          */
-        public static fromObject(object: { [k: string]: any }): pb.AdminListWithdrawalsRequest;
+        public static fromObject(d: { [k: string]: any }): pb.AdminListWithdrawalsRequest;
 
         /**
          * Creates a plain object from an AdminListWithdrawalsRequest message. Also converts values to other types if specified.
-         * @param message AdminListWithdrawalsRequest
-         * @param [options] Conversion options
+         * @param m AdminListWithdrawalsRequest
+         * @param [o] Conversion options
          * @returns Plain object
          */
-        public static toObject(message: pb.AdminListWithdrawalsRequest, options?: $protobuf.IConversionOptions): { [k: string]: any };
+        public static toObject(m: pb.AdminListWithdrawalsRequest, o?: $protobuf.IConversionOptions): { [k: string]: any };
 
         /**
          * Converts this AdminListWithdrawalsRequest to JSON.
          * @returns JSON object
          */
         public toJSON(): { [k: string]: any };
-
-        /**
-         * Gets the default type url for AdminListWithdrawalsRequest
-         * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
-         * @returns The default type url
-         */
-        public static getTypeUrl(typeUrlPrefix?: string): string;
     }
 
     /** Properties of an AdminListWithdrawalsResponse. */
@@ -9743,9 +9266,9 @@ export namespace pb {
 
         /**
          * Constructs a new AdminListWithdrawalsResponse.
-         * @param [properties] Properties to set
+         * @param [p] Properties to set
          */
-        constructor(properties?: pb.IAdminListWithdrawalsResponse);
+        constructor(p?: pb.IAdminListWithdrawalsResponse);
 
         /** AdminListWithdrawalsResponse code. */
         public code: number;
@@ -9768,11 +9291,11 @@ export namespace pb {
 
         /**
          * Encodes the specified AdminListWithdrawalsResponse message. Does not implicitly {@link pb.AdminListWithdrawalsResponse.verify|verify} messages.
-         * @param message AdminListWithdrawalsResponse message or plain object to encode
-         * @param [writer] Writer to encode to
+         * @param m AdminListWithdrawalsResponse message or plain object to encode
+         * @param [w] Writer to encode to
          * @returns Writer
          */
-        public static encode(message: pb.IAdminListWithdrawalsResponse, writer?: $protobuf.Writer): $protobuf.Writer;
+        public static encode(m: pb.IAdminListWithdrawalsResponse, w?: $protobuf.Writer): $protobuf.Writer;
 
         /**
          * Encodes the specified AdminListWithdrawalsResponse message, length delimited. Does not implicitly {@link pb.AdminListWithdrawalsResponse.verify|verify} messages.
@@ -9784,13 +9307,13 @@ export namespace pb {
 
         /**
          * Decodes an AdminListWithdrawalsResponse message from the specified reader or buffer.
-         * @param reader Reader or buffer to decode from
-         * @param [length] Message length if known beforehand
+         * @param r Reader or buffer to decode from
+         * @param [l] Message length if known beforehand
          * @returns AdminListWithdrawalsResponse
          * @throws {Error} If the payload is not a reader or valid buffer
          * @throws {$protobuf.util.ProtocolError} If required fields are missing
          */
-        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): pb.AdminListWithdrawalsResponse;
+        public static decode(r: ($protobuf.Reader|Uint8Array), l?: number): pb.AdminListWithdrawalsResponse;
 
         /**
          * Decodes an AdminListWithdrawalsResponse message from the specified reader or buffer, length delimited.
@@ -9803,38 +9326,31 @@ export namespace pb {
 
         /**
          * Verifies an AdminListWithdrawalsResponse message.
-         * @param message Plain object to verify
+         * @param m Plain object to verify
          * @returns `null` if valid, otherwise the reason why it is not
          */
-        public static verify(message: { [k: string]: any }): (string|null);
+        public static verify(m: { [k: string]: any }): (string|null);
 
         /**
          * Creates an AdminListWithdrawalsResponse message from a plain object. Also converts values to their respective internal types.
-         * @param object Plain object
+         * @param d Plain object
          * @returns AdminListWithdrawalsResponse
          */
-        public static fromObject(object: { [k: string]: any }): pb.AdminListWithdrawalsResponse;
+        public static fromObject(d: { [k: string]: any }): pb.AdminListWithdrawalsResponse;
 
         /**
          * Creates a plain object from an AdminListWithdrawalsResponse message. Also converts values to other types if specified.
-         * @param message AdminListWithdrawalsResponse
-         * @param [options] Conversion options
+         * @param m AdminListWithdrawalsResponse
+         * @param [o] Conversion options
          * @returns Plain object
          */
-        public static toObject(message: pb.AdminListWithdrawalsResponse, options?: $protobuf.IConversionOptions): { [k: string]: any };
+        public static toObject(m: pb.AdminListWithdrawalsResponse, o?: $protobuf.IConversionOptions): { [k: string]: any };
 
         /**
          * Converts this AdminListWithdrawalsResponse to JSON.
          * @returns JSON object
          */
         public toJSON(): { [k: string]: any };
-
-        /**
-         * Gets the default type url for AdminListWithdrawalsResponse
-         * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
-         * @returns The default type url
-         */
-        public static getTypeUrl(typeUrlPrefix?: string): string;
     }
 
     /** Properties of an AdminAuditWithdrawalRequest. */
@@ -9861,9 +9377,9 @@ export namespace pb {
 
         /**
          * Constructs a new AdminAuditWithdrawalRequest.
-         * @param [properties] Properties to set
+         * @param [p] Properties to set
          */
-        constructor(properties?: pb.IAdminAuditWithdrawalRequest);
+        constructor(p?: pb.IAdminAuditWithdrawalRequest);
 
         /** AdminAuditWithdrawalRequest id. */
         public id: (number|Long);
@@ -9889,11 +9405,11 @@ export namespace pb {
 
         /**
          * Encodes the specified AdminAuditWithdrawalRequest message. Does not implicitly {@link pb.AdminAuditWithdrawalRequest.verify|verify} messages.
-         * @param message AdminAuditWithdrawalRequest message or plain object to encode
-         * @param [writer] Writer to encode to
+         * @param m AdminAuditWithdrawalRequest message or plain object to encode
+         * @param [w] Writer to encode to
          * @returns Writer
          */
-        public static encode(message: pb.IAdminAuditWithdrawalRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+        public static encode(m: pb.IAdminAuditWithdrawalRequest, w?: $protobuf.Writer): $protobuf.Writer;
 
         /**
          * Encodes the specified AdminAuditWithdrawalRequest message, length delimited. Does not implicitly {@link pb.AdminAuditWithdrawalRequest.verify|verify} messages.
@@ -9905,13 +9421,13 @@ export namespace pb {
 
         /**
          * Decodes an AdminAuditWithdrawalRequest message from the specified reader or buffer.
-         * @param reader Reader or buffer to decode from
-         * @param [length] Message length if known beforehand
+         * @param r Reader or buffer to decode from
+         * @param [l] Message length if known beforehand
          * @returns AdminAuditWithdrawalRequest
          * @throws {Error} If the payload is not a reader or valid buffer
          * @throws {$protobuf.util.ProtocolError} If required fields are missing
          */
-        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): pb.AdminAuditWithdrawalRequest;
+        public static decode(r: ($protobuf.Reader|Uint8Array), l?: number): pb.AdminAuditWithdrawalRequest;
 
         /**
          * Decodes an AdminAuditWithdrawalRequest message from the specified reader or buffer, length delimited.
@@ -9924,38 +9440,31 @@ export namespace pb {
 
         /**
          * Verifies an AdminAuditWithdrawalRequest message.
-         * @param message Plain object to verify
+         * @param m Plain object to verify
          * @returns `null` if valid, otherwise the reason why it is not
          */
-        public static verify(message: { [k: string]: any }): (string|null);
+        public static verify(m: { [k: string]: any }): (string|null);
 
         /**
          * Creates an AdminAuditWithdrawalRequest message from a plain object. Also converts values to their respective internal types.
-         * @param object Plain object
+         * @param d Plain object
          * @returns AdminAuditWithdrawalRequest
          */
-        public static fromObject(object: { [k: string]: any }): pb.AdminAuditWithdrawalRequest;
+        public static fromObject(d: { [k: string]: any }): pb.AdminAuditWithdrawalRequest;
 
         /**
          * Creates a plain object from an AdminAuditWithdrawalRequest message. Also converts values to other types if specified.
-         * @param message AdminAuditWithdrawalRequest
-         * @param [options] Conversion options
+         * @param m AdminAuditWithdrawalRequest
+         * @param [o] Conversion options
          * @returns Plain object
          */
-        public static toObject(message: pb.AdminAuditWithdrawalRequest, options?: $protobuf.IConversionOptions): { [k: string]: any };
+        public static toObject(m: pb.AdminAuditWithdrawalRequest, o?: $protobuf.IConversionOptions): { [k: string]: any };
 
         /**
          * Converts this AdminAuditWithdrawalRequest to JSON.
          * @returns JSON object
          */
         public toJSON(): { [k: string]: any };
-
-        /**
-         * Gets the default type url for AdminAuditWithdrawalRequest
-         * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
-         * @returns The default type url
-         */
-        public static getTypeUrl(typeUrlPrefix?: string): string;
     }
 
     /** Properties of an AdminAuditWithdrawalResponse. */
@@ -9973,9 +9482,9 @@ export namespace pb {
 
         /**
          * Constructs a new AdminAuditWithdrawalResponse.
-         * @param [properties] Properties to set
+         * @param [p] Properties to set
          */
-        constructor(properties?: pb.IAdminAuditWithdrawalResponse);
+        constructor(p?: pb.IAdminAuditWithdrawalResponse);
 
         /** AdminAuditWithdrawalResponse code. */
         public code: number;
@@ -9992,11 +9501,11 @@ export namespace pb {
 
         /**
          * Encodes the specified AdminAuditWithdrawalResponse message. Does not implicitly {@link pb.AdminAuditWithdrawalResponse.verify|verify} messages.
-         * @param message AdminAuditWithdrawalResponse message or plain object to encode
-         * @param [writer] Writer to encode to
+         * @param m AdminAuditWithdrawalResponse message or plain object to encode
+         * @param [w] Writer to encode to
          * @returns Writer
          */
-        public static encode(message: pb.IAdminAuditWithdrawalResponse, writer?: $protobuf.Writer): $protobuf.Writer;
+        public static encode(m: pb.IAdminAuditWithdrawalResponse, w?: $protobuf.Writer): $protobuf.Writer;
 
         /**
          * Encodes the specified AdminAuditWithdrawalResponse message, length delimited. Does not implicitly {@link pb.AdminAuditWithdrawalResponse.verify|verify} messages.
@@ -10008,13 +9517,13 @@ export namespace pb {
 
         /**
          * Decodes an AdminAuditWithdrawalResponse message from the specified reader or buffer.
-         * @param reader Reader or buffer to decode from
-         * @param [length] Message length if known beforehand
+         * @param r Reader or buffer to decode from
+         * @param [l] Message length if known beforehand
          * @returns AdminAuditWithdrawalResponse
          * @throws {Error} If the payload is not a reader or valid buffer
          * @throws {$protobuf.util.ProtocolError} If required fields are missing
          */
-        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): pb.AdminAuditWithdrawalResponse;
+        public static decode(r: ($protobuf.Reader|Uint8Array), l?: number): pb.AdminAuditWithdrawalResponse;
 
         /**
          * Decodes an AdminAuditWithdrawalResponse message from the specified reader or buffer, length delimited.
@@ -10027,38 +9536,31 @@ export namespace pb {
 
         /**
          * Verifies an AdminAuditWithdrawalResponse message.
-         * @param message Plain object to verify
+         * @param m Plain object to verify
          * @returns `null` if valid, otherwise the reason why it is not
          */
-        public static verify(message: { [k: string]: any }): (string|null);
+        public static verify(m: { [k: string]: any }): (string|null);
 
         /**
          * Creates an AdminAuditWithdrawalResponse message from a plain object. Also converts values to their respective internal types.
-         * @param object Plain object
+         * @param d Plain object
          * @returns AdminAuditWithdrawalResponse
          */
-        public static fromObject(object: { [k: string]: any }): pb.AdminAuditWithdrawalResponse;
+        public static fromObject(d: { [k: string]: any }): pb.AdminAuditWithdrawalResponse;
 
         /**
          * Creates a plain object from an AdminAuditWithdrawalResponse message. Also converts values to other types if specified.
-         * @param message AdminAuditWithdrawalResponse
-         * @param [options] Conversion options
+         * @param m AdminAuditWithdrawalResponse
+         * @param [o] Conversion options
          * @returns Plain object
          */
-        public static toObject(message: pb.AdminAuditWithdrawalResponse, options?: $protobuf.IConversionOptions): { [k: string]: any };
+        public static toObject(m: pb.AdminAuditWithdrawalResponse, o?: $protobuf.IConversionOptions): { [k: string]: any };
 
         /**
          * Converts this AdminAuditWithdrawalResponse to JSON.
          * @returns JSON object
          */
         public toJSON(): { [k: string]: any };
-
-        /**
-         * Gets the default type url for AdminAuditWithdrawalResponse
-         * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
-         * @returns The default type url
-         */
-        public static getTypeUrl(typeUrlPrefix?: string): string;
     }
 
     /** Properties of an AdminListEarningsRequest. */
@@ -10088,9 +9590,9 @@ export namespace pb {
 
         /**
          * Constructs a new AdminListEarningsRequest.
-         * @param [properties] Properties to set
+         * @param [p] Properties to set
          */
-        constructor(properties?: pb.IAdminListEarningsRequest);
+        constructor(p?: pb.IAdminListEarningsRequest);
 
         /** AdminListEarningsRequest pubkey. */
         public pubkey: string;
@@ -10119,11 +9621,11 @@ export namespace pb {
 
         /**
          * Encodes the specified AdminListEarningsRequest message. Does not implicitly {@link pb.AdminListEarningsRequest.verify|verify} messages.
-         * @param message AdminListEarningsRequest message or plain object to encode
-         * @param [writer] Writer to encode to
+         * @param m AdminListEarningsRequest message or plain object to encode
+         * @param [w] Writer to encode to
          * @returns Writer
          */
-        public static encode(message: pb.IAdminListEarningsRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+        public static encode(m: pb.IAdminListEarningsRequest, w?: $protobuf.Writer): $protobuf.Writer;
 
         /**
          * Encodes the specified AdminListEarningsRequest message, length delimited. Does not implicitly {@link pb.AdminListEarningsRequest.verify|verify} messages.
@@ -10135,13 +9637,13 @@ export namespace pb {
 
         /**
          * Decodes an AdminListEarningsRequest message from the specified reader or buffer.
-         * @param reader Reader or buffer to decode from
-         * @param [length] Message length if known beforehand
+         * @param r Reader or buffer to decode from
+         * @param [l] Message length if known beforehand
          * @returns AdminListEarningsRequest
          * @throws {Error} If the payload is not a reader or valid buffer
          * @throws {$protobuf.util.ProtocolError} If required fields are missing
          */
-        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): pb.AdminListEarningsRequest;
+        public static decode(r: ($protobuf.Reader|Uint8Array), l?: number): pb.AdminListEarningsRequest;
 
         /**
          * Decodes an AdminListEarningsRequest message from the specified reader or buffer, length delimited.
@@ -10154,38 +9656,31 @@ export namespace pb {
 
         /**
          * Verifies an AdminListEarningsRequest message.
-         * @param message Plain object to verify
+         * @param m Plain object to verify
          * @returns `null` if valid, otherwise the reason why it is not
          */
-        public static verify(message: { [k: string]: any }): (string|null);
+        public static verify(m: { [k: string]: any }): (string|null);
 
         /**
          * Creates an AdminListEarningsRequest message from a plain object. Also converts values to their respective internal types.
-         * @param object Plain object
+         * @param d Plain object
          * @returns AdminListEarningsRequest
          */
-        public static fromObject(object: { [k: string]: any }): pb.AdminListEarningsRequest;
+        public static fromObject(d: { [k: string]: any }): pb.AdminListEarningsRequest;
 
         /**
          * Creates a plain object from an AdminListEarningsRequest message. Also converts values to other types if specified.
-         * @param message AdminListEarningsRequest
-         * @param [options] Conversion options
+         * @param m AdminListEarningsRequest
+         * @param [o] Conversion options
          * @returns Plain object
          */
-        public static toObject(message: pb.AdminListEarningsRequest, options?: $protobuf.IConversionOptions): { [k: string]: any };
+        public static toObject(m: pb.AdminListEarningsRequest, o?: $protobuf.IConversionOptions): { [k: string]: any };
 
         /**
          * Converts this AdminListEarningsRequest to JSON.
          * @returns JSON object
          */
         public toJSON(): { [k: string]: any };
-
-        /**
-         * Gets the default type url for AdminListEarningsRequest
-         * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
-         * @returns The default type url
-         */
-        public static getTypeUrl(typeUrlPrefix?: string): string;
     }
 
     /** Properties of an AdminListEarningsResponse. */
@@ -10209,9 +9704,9 @@ export namespace pb {
 
         /**
          * Constructs a new AdminListEarningsResponse.
-         * @param [properties] Properties to set
+         * @param [p] Properties to set
          */
-        constructor(properties?: pb.IAdminListEarningsResponse);
+        constructor(p?: pb.IAdminListEarningsResponse);
 
         /** AdminListEarningsResponse code. */
         public code: number;
@@ -10234,11 +9729,11 @@ export namespace pb {
 
         /**
          * Encodes the specified AdminListEarningsResponse message. Does not implicitly {@link pb.AdminListEarningsResponse.verify|verify} messages.
-         * @param message AdminListEarningsResponse message or plain object to encode
-         * @param [writer] Writer to encode to
+         * @param m AdminListEarningsResponse message or plain object to encode
+         * @param [w] Writer to encode to
          * @returns Writer
          */
-        public static encode(message: pb.IAdminListEarningsResponse, writer?: $protobuf.Writer): $protobuf.Writer;
+        public static encode(m: pb.IAdminListEarningsResponse, w?: $protobuf.Writer): $protobuf.Writer;
 
         /**
          * Encodes the specified AdminListEarningsResponse message, length delimited. Does not implicitly {@link pb.AdminListEarningsResponse.verify|verify} messages.
@@ -10250,13 +9745,13 @@ export namespace pb {
 
         /**
          * Decodes an AdminListEarningsResponse message from the specified reader or buffer.
-         * @param reader Reader or buffer to decode from
-         * @param [length] Message length if known beforehand
+         * @param r Reader or buffer to decode from
+         * @param [l] Message length if known beforehand
          * @returns AdminListEarningsResponse
          * @throws {Error} If the payload is not a reader or valid buffer
          * @throws {$protobuf.util.ProtocolError} If required fields are missing
          */
-        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): pb.AdminListEarningsResponse;
+        public static decode(r: ($protobuf.Reader|Uint8Array), l?: number): pb.AdminListEarningsResponse;
 
         /**
          * Decodes an AdminListEarningsResponse message from the specified reader or buffer, length delimited.
@@ -10269,38 +9764,31 @@ export namespace pb {
 
         /**
          * Verifies an AdminListEarningsResponse message.
-         * @param message Plain object to verify
+         * @param m Plain object to verify
          * @returns `null` if valid, otherwise the reason why it is not
          */
-        public static verify(message: { [k: string]: any }): (string|null);
+        public static verify(m: { [k: string]: any }): (string|null);
 
         /**
          * Creates an AdminListEarningsResponse message from a plain object. Also converts values to their respective internal types.
-         * @param object Plain object
+         * @param d Plain object
          * @returns AdminListEarningsResponse
          */
-        public static fromObject(object: { [k: string]: any }): pb.AdminListEarningsResponse;
+        public static fromObject(d: { [k: string]: any }): pb.AdminListEarningsResponse;
 
         /**
          * Creates a plain object from an AdminListEarningsResponse message. Also converts values to other types if specified.
-         * @param message AdminListEarningsResponse
-         * @param [options] Conversion options
+         * @param m AdminListEarningsResponse
+         * @param [o] Conversion options
          * @returns Plain object
          */
-        public static toObject(message: pb.AdminListEarningsResponse, options?: $protobuf.IConversionOptions): { [k: string]: any };
+        public static toObject(m: pb.AdminListEarningsResponse, o?: $protobuf.IConversionOptions): { [k: string]: any };
 
         /**
          * Converts this AdminListEarningsResponse to JSON.
          * @returns JSON object
          */
         public toJSON(): { [k: string]: any };
-
-        /**
-         * Gets the default type url for AdminListEarningsResponse
-         * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
-         * @returns The default type url
-         */
-        public static getTypeUrl(typeUrlPrefix?: string): string;
     }
 
     /** Properties of an AdminGetStatsRequest. */
@@ -10318,9 +9806,9 @@ export namespace pb {
 
         /**
          * Constructs a new AdminGetStatsRequest.
-         * @param [properties] Properties to set
+         * @param [p] Properties to set
          */
-        constructor(properties?: pb.IAdminGetStatsRequest);
+        constructor(p?: pb.IAdminGetStatsRequest);
 
         /** AdminGetStatsRequest fromDate. */
         public fromDate: string;
@@ -10337,11 +9825,11 @@ export namespace pb {
 
         /**
          * Encodes the specified AdminGetStatsRequest message. Does not implicitly {@link pb.AdminGetStatsRequest.verify|verify} messages.
-         * @param message AdminGetStatsRequest message or plain object to encode
-         * @param [writer] Writer to encode to
+         * @param m AdminGetStatsRequest message or plain object to encode
+         * @param [w] Writer to encode to
          * @returns Writer
          */
-        public static encode(message: pb.IAdminGetStatsRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+        public static encode(m: pb.IAdminGetStatsRequest, w?: $protobuf.Writer): $protobuf.Writer;
 
         /**
          * Encodes the specified AdminGetStatsRequest message, length delimited. Does not implicitly {@link pb.AdminGetStatsRequest.verify|verify} messages.
@@ -10353,13 +9841,13 @@ export namespace pb {
 
         /**
          * Decodes an AdminGetStatsRequest message from the specified reader or buffer.
-         * @param reader Reader or buffer to decode from
-         * @param [length] Message length if known beforehand
+         * @param r Reader or buffer to decode from
+         * @param [l] Message length if known beforehand
          * @returns AdminGetStatsRequest
          * @throws {Error} If the payload is not a reader or valid buffer
          * @throws {$protobuf.util.ProtocolError} If required fields are missing
          */
-        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): pb.AdminGetStatsRequest;
+        public static decode(r: ($protobuf.Reader|Uint8Array), l?: number): pb.AdminGetStatsRequest;
 
         /**
          * Decodes an AdminGetStatsRequest message from the specified reader or buffer, length delimited.
@@ -10372,38 +9860,31 @@ export namespace pb {
 
         /**
          * Verifies an AdminGetStatsRequest message.
-         * @param message Plain object to verify
+         * @param m Plain object to verify
          * @returns `null` if valid, otherwise the reason why it is not
          */
-        public static verify(message: { [k: string]: any }): (string|null);
+        public static verify(m: { [k: string]: any }): (string|null);
 
         /**
          * Creates an AdminGetStatsRequest message from a plain object. Also converts values to their respective internal types.
-         * @param object Plain object
+         * @param d Plain object
          * @returns AdminGetStatsRequest
          */
-        public static fromObject(object: { [k: string]: any }): pb.AdminGetStatsRequest;
+        public static fromObject(d: { [k: string]: any }): pb.AdminGetStatsRequest;
 
         /**
          * Creates a plain object from an AdminGetStatsRequest message. Also converts values to other types if specified.
-         * @param message AdminGetStatsRequest
-         * @param [options] Conversion options
+         * @param m AdminGetStatsRequest
+         * @param [o] Conversion options
          * @returns Plain object
          */
-        public static toObject(message: pb.AdminGetStatsRequest, options?: $protobuf.IConversionOptions): { [k: string]: any };
+        public static toObject(m: pb.AdminGetStatsRequest, o?: $protobuf.IConversionOptions): { [k: string]: any };
 
         /**
          * Converts this AdminGetStatsRequest to JSON.
          * @returns JSON object
          */
         public toJSON(): { [k: string]: any };
-
-        /**
-         * Gets the default type url for AdminGetStatsRequest
-         * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
-         * @returns The default type url
-         */
-        public static getTypeUrl(typeUrlPrefix?: string): string;
     }
 
     /** Properties of an AdminStatsData. */
@@ -10448,9 +9929,9 @@ export namespace pb {
 
         /**
          * Constructs a new AdminStatsData.
-         * @param [properties] Properties to set
+         * @param [p] Properties to set
          */
-        constructor(properties?: pb.IAdminStatsData);
+        constructor(p?: pb.IAdminStatsData);
 
         /** AdminStatsData totalEarnings. */
         public totalEarnings: (number|Long);
@@ -10494,11 +9975,11 @@ export namespace pb {
 
         /**
          * Encodes the specified AdminStatsData message. Does not implicitly {@link pb.AdminStatsData.verify|verify} messages.
-         * @param message AdminStatsData message or plain object to encode
-         * @param [writer] Writer to encode to
+         * @param m AdminStatsData message or plain object to encode
+         * @param [w] Writer to encode to
          * @returns Writer
          */
-        public static encode(message: pb.IAdminStatsData, writer?: $protobuf.Writer): $protobuf.Writer;
+        public static encode(m: pb.IAdminStatsData, w?: $protobuf.Writer): $protobuf.Writer;
 
         /**
          * Encodes the specified AdminStatsData message, length delimited. Does not implicitly {@link pb.AdminStatsData.verify|verify} messages.
@@ -10510,13 +9991,13 @@ export namespace pb {
 
         /**
          * Decodes an AdminStatsData message from the specified reader or buffer.
-         * @param reader Reader or buffer to decode from
-         * @param [length] Message length if known beforehand
+         * @param r Reader or buffer to decode from
+         * @param [l] Message length if known beforehand
          * @returns AdminStatsData
          * @throws {Error} If the payload is not a reader or valid buffer
          * @throws {$protobuf.util.ProtocolError} If required fields are missing
          */
-        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): pb.AdminStatsData;
+        public static decode(r: ($protobuf.Reader|Uint8Array), l?: number): pb.AdminStatsData;
 
         /**
          * Decodes an AdminStatsData message from the specified reader or buffer, length delimited.
@@ -10529,38 +10010,31 @@ export namespace pb {
 
         /**
          * Verifies an AdminStatsData message.
-         * @param message Plain object to verify
+         * @param m Plain object to verify
          * @returns `null` if valid, otherwise the reason why it is not
          */
-        public static verify(message: { [k: string]: any }): (string|null);
+        public static verify(m: { [k: string]: any }): (string|null);
 
         /**
          * Creates an AdminStatsData message from a plain object. Also converts values to their respective internal types.
-         * @param object Plain object
+         * @param d Plain object
          * @returns AdminStatsData
          */
-        public static fromObject(object: { [k: string]: any }): pb.AdminStatsData;
+        public static fromObject(d: { [k: string]: any }): pb.AdminStatsData;
 
         /**
          * Creates a plain object from an AdminStatsData message. Also converts values to other types if specified.
-         * @param message AdminStatsData
-         * @param [options] Conversion options
+         * @param m AdminStatsData
+         * @param [o] Conversion options
          * @returns Plain object
          */
-        public static toObject(message: pb.AdminStatsData, options?: $protobuf.IConversionOptions): { [k: string]: any };
+        public static toObject(m: pb.AdminStatsData, o?: $protobuf.IConversionOptions): { [k: string]: any };
 
         /**
          * Converts this AdminStatsData to JSON.
          * @returns JSON object
          */
         public toJSON(): { [k: string]: any };
-
-        /**
-         * Gets the default type url for AdminStatsData
-         * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
-         * @returns The default type url
-         */
-        public static getTypeUrl(typeUrlPrefix?: string): string;
     }
 
     /** Properties of an AdminGetStatsResponse. */
@@ -10581,9 +10055,9 @@ export namespace pb {
 
         /**
          * Constructs a new AdminGetStatsResponse.
-         * @param [properties] Properties to set
+         * @param [p] Properties to set
          */
-        constructor(properties?: pb.IAdminGetStatsResponse);
+        constructor(p?: pb.IAdminGetStatsResponse);
 
         /** AdminGetStatsResponse code. */
         public code: number;
@@ -10603,11 +10077,11 @@ export namespace pb {
 
         /**
          * Encodes the specified AdminGetStatsResponse message. Does not implicitly {@link pb.AdminGetStatsResponse.verify|verify} messages.
-         * @param message AdminGetStatsResponse message or plain object to encode
-         * @param [writer] Writer to encode to
+         * @param m AdminGetStatsResponse message or plain object to encode
+         * @param [w] Writer to encode to
          * @returns Writer
          */
-        public static encode(message: pb.IAdminGetStatsResponse, writer?: $protobuf.Writer): $protobuf.Writer;
+        public static encode(m: pb.IAdminGetStatsResponse, w?: $protobuf.Writer): $protobuf.Writer;
 
         /**
          * Encodes the specified AdminGetStatsResponse message, length delimited. Does not implicitly {@link pb.AdminGetStatsResponse.verify|verify} messages.
@@ -10619,13 +10093,13 @@ export namespace pb {
 
         /**
          * Decodes an AdminGetStatsResponse message from the specified reader or buffer.
-         * @param reader Reader or buffer to decode from
-         * @param [length] Message length if known beforehand
+         * @param r Reader or buffer to decode from
+         * @param [l] Message length if known beforehand
          * @returns AdminGetStatsResponse
          * @throws {Error} If the payload is not a reader or valid buffer
          * @throws {$protobuf.util.ProtocolError} If required fields are missing
          */
-        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): pb.AdminGetStatsResponse;
+        public static decode(r: ($protobuf.Reader|Uint8Array), l?: number): pb.AdminGetStatsResponse;
 
         /**
          * Decodes an AdminGetStatsResponse message from the specified reader or buffer, length delimited.
@@ -10638,38 +10112,31 @@ export namespace pb {
 
         /**
          * Verifies an AdminGetStatsResponse message.
-         * @param message Plain object to verify
+         * @param m Plain object to verify
          * @returns `null` if valid, otherwise the reason why it is not
          */
-        public static verify(message: { [k: string]: any }): (string|null);
+        public static verify(m: { [k: string]: any }): (string|null);
 
         /**
          * Creates an AdminGetStatsResponse message from a plain object. Also converts values to their respective internal types.
-         * @param object Plain object
+         * @param d Plain object
          * @returns AdminGetStatsResponse
          */
-        public static fromObject(object: { [k: string]: any }): pb.AdminGetStatsResponse;
+        public static fromObject(d: { [k: string]: any }): pb.AdminGetStatsResponse;
 
         /**
          * Creates a plain object from an AdminGetStatsResponse message. Also converts values to other types if specified.
-         * @param message AdminGetStatsResponse
-         * @param [options] Conversion options
+         * @param m AdminGetStatsResponse
+         * @param [o] Conversion options
          * @returns Plain object
          */
-        public static toObject(message: pb.AdminGetStatsResponse, options?: $protobuf.IConversionOptions): { [k: string]: any };
+        public static toObject(m: pb.AdminGetStatsResponse, o?: $protobuf.IConversionOptions): { [k: string]: any };
 
         /**
          * Converts this AdminGetStatsResponse to JSON.
          * @returns JSON object
          */
         public toJSON(): { [k: string]: any };
-
-        /**
-         * Gets the default type url for AdminGetStatsResponse
-         * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
-         * @returns The default type url
-         */
-        public static getTypeUrl(typeUrlPrefix?: string): string;
     }
 
     /** Properties of an AdminListPayeeInfoRequest. */
@@ -10687,9 +10154,9 @@ export namespace pb {
 
         /**
          * Constructs a new AdminListPayeeInfoRequest.
-         * @param [properties] Properties to set
+         * @param [p] Properties to set
          */
-        constructor(properties?: pb.IAdminListPayeeInfoRequest);
+        constructor(p?: pb.IAdminListPayeeInfoRequest);
 
         /** AdminListPayeeInfoRequest pageNum. */
         public pageNum: number;
@@ -10706,11 +10173,11 @@ export namespace pb {
 
         /**
          * Encodes the specified AdminListPayeeInfoRequest message. Does not implicitly {@link pb.AdminListPayeeInfoRequest.verify|verify} messages.
-         * @param message AdminListPayeeInfoRequest message or plain object to encode
-         * @param [writer] Writer to encode to
+         * @param m AdminListPayeeInfoRequest message or plain object to encode
+         * @param [w] Writer to encode to
          * @returns Writer
          */
-        public static encode(message: pb.IAdminListPayeeInfoRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+        public static encode(m: pb.IAdminListPayeeInfoRequest, w?: $protobuf.Writer): $protobuf.Writer;
 
         /**
          * Encodes the specified AdminListPayeeInfoRequest message, length delimited. Does not implicitly {@link pb.AdminListPayeeInfoRequest.verify|verify} messages.
@@ -10722,13 +10189,13 @@ export namespace pb {
 
         /**
          * Decodes an AdminListPayeeInfoRequest message from the specified reader or buffer.
-         * @param reader Reader or buffer to decode from
-         * @param [length] Message length if known beforehand
+         * @param r Reader or buffer to decode from
+         * @param [l] Message length if known beforehand
          * @returns AdminListPayeeInfoRequest
          * @throws {Error} If the payload is not a reader or valid buffer
          * @throws {$protobuf.util.ProtocolError} If required fields are missing
          */
-        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): pb.AdminListPayeeInfoRequest;
+        public static decode(r: ($protobuf.Reader|Uint8Array), l?: number): pb.AdminListPayeeInfoRequest;
 
         /**
          * Decodes an AdminListPayeeInfoRequest message from the specified reader or buffer, length delimited.
@@ -10741,38 +10208,31 @@ export namespace pb {
 
         /**
          * Verifies an AdminListPayeeInfoRequest message.
-         * @param message Plain object to verify
+         * @param m Plain object to verify
          * @returns `null` if valid, otherwise the reason why it is not
          */
-        public static verify(message: { [k: string]: any }): (string|null);
+        public static verify(m: { [k: string]: any }): (string|null);
 
         /**
          * Creates an AdminListPayeeInfoRequest message from a plain object. Also converts values to their respective internal types.
-         * @param object Plain object
+         * @param d Plain object
          * @returns AdminListPayeeInfoRequest
          */
-        public static fromObject(object: { [k: string]: any }): pb.AdminListPayeeInfoRequest;
+        public static fromObject(d: { [k: string]: any }): pb.AdminListPayeeInfoRequest;
 
         /**
          * Creates a plain object from an AdminListPayeeInfoRequest message. Also converts values to other types if specified.
-         * @param message AdminListPayeeInfoRequest
-         * @param [options] Conversion options
+         * @param m AdminListPayeeInfoRequest
+         * @param [o] Conversion options
          * @returns Plain object
          */
-        public static toObject(message: pb.AdminListPayeeInfoRequest, options?: $protobuf.IConversionOptions): { [k: string]: any };
+        public static toObject(m: pb.AdminListPayeeInfoRequest, o?: $protobuf.IConversionOptions): { [k: string]: any };
 
         /**
          * Converts this AdminListPayeeInfoRequest to JSON.
          * @returns JSON object
          */
         public toJSON(): { [k: string]: any };
-
-        /**
-         * Gets the default type url for AdminListPayeeInfoRequest
-         * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
-         * @returns The default type url
-         */
-        public static getTypeUrl(typeUrlPrefix?: string): string;
     }
 
     /** Properties of an AdminListPayeeInfoResponse. */
@@ -10796,9 +10256,9 @@ export namespace pb {
 
         /**
          * Constructs a new AdminListPayeeInfoResponse.
-         * @param [properties] Properties to set
+         * @param [p] Properties to set
          */
-        constructor(properties?: pb.IAdminListPayeeInfoResponse);
+        constructor(p?: pb.IAdminListPayeeInfoResponse);
 
         /** AdminListPayeeInfoResponse code. */
         public code: number;
@@ -10821,11 +10281,11 @@ export namespace pb {
 
         /**
          * Encodes the specified AdminListPayeeInfoResponse message. Does not implicitly {@link pb.AdminListPayeeInfoResponse.verify|verify} messages.
-         * @param message AdminListPayeeInfoResponse message or plain object to encode
-         * @param [writer] Writer to encode to
+         * @param m AdminListPayeeInfoResponse message or plain object to encode
+         * @param [w] Writer to encode to
          * @returns Writer
          */
-        public static encode(message: pb.IAdminListPayeeInfoResponse, writer?: $protobuf.Writer): $protobuf.Writer;
+        public static encode(m: pb.IAdminListPayeeInfoResponse, w?: $protobuf.Writer): $protobuf.Writer;
 
         /**
          * Encodes the specified AdminListPayeeInfoResponse message, length delimited. Does not implicitly {@link pb.AdminListPayeeInfoResponse.verify|verify} messages.
@@ -10837,13 +10297,13 @@ export namespace pb {
 
         /**
          * Decodes an AdminListPayeeInfoResponse message from the specified reader or buffer.
-         * @param reader Reader or buffer to decode from
-         * @param [length] Message length if known beforehand
+         * @param r Reader or buffer to decode from
+         * @param [l] Message length if known beforehand
          * @returns AdminListPayeeInfoResponse
          * @throws {Error} If the payload is not a reader or valid buffer
          * @throws {$protobuf.util.ProtocolError} If required fields are missing
          */
-        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): pb.AdminListPayeeInfoResponse;
+        public static decode(r: ($protobuf.Reader|Uint8Array), l?: number): pb.AdminListPayeeInfoResponse;
 
         /**
          * Decodes an AdminListPayeeInfoResponse message from the specified reader or buffer, length delimited.
@@ -10856,38 +10316,31 @@ export namespace pb {
 
         /**
          * Verifies an AdminListPayeeInfoResponse message.
-         * @param message Plain object to verify
+         * @param m Plain object to verify
          * @returns `null` if valid, otherwise the reason why it is not
          */
-        public static verify(message: { [k: string]: any }): (string|null);
+        public static verify(m: { [k: string]: any }): (string|null);
 
         /**
          * Creates an AdminListPayeeInfoResponse message from a plain object. Also converts values to their respective internal types.
-         * @param object Plain object
+         * @param d Plain object
          * @returns AdminListPayeeInfoResponse
          */
-        public static fromObject(object: { [k: string]: any }): pb.AdminListPayeeInfoResponse;
+        public static fromObject(d: { [k: string]: any }): pb.AdminListPayeeInfoResponse;
 
         /**
          * Creates a plain object from an AdminListPayeeInfoResponse message. Also converts values to other types if specified.
-         * @param message AdminListPayeeInfoResponse
-         * @param [options] Conversion options
+         * @param m AdminListPayeeInfoResponse
+         * @param [o] Conversion options
          * @returns Plain object
          */
-        public static toObject(message: pb.AdminListPayeeInfoResponse, options?: $protobuf.IConversionOptions): { [k: string]: any };
+        public static toObject(m: pb.AdminListPayeeInfoResponse, o?: $protobuf.IConversionOptions): { [k: string]: any };
 
         /**
          * Converts this AdminListPayeeInfoResponse to JSON.
          * @returns JSON object
          */
         public toJSON(): { [k: string]: any };
-
-        /**
-         * Gets the default type url for AdminListPayeeInfoResponse
-         * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
-         * @returns The default type url
-         */
-        public static getTypeUrl(typeUrlPrefix?: string): string;
     }
 
     /** Properties of a RecommenderLevelInfo. */
@@ -10923,9 +10376,9 @@ export namespace pb {
 
         /**
          * Constructs a new RecommenderLevelInfo.
-         * @param [properties] Properties to set
+         * @param [p] Properties to set
          */
-        constructor(properties?: pb.IRecommenderLevelInfo);
+        constructor(p?: pb.IRecommenderLevelInfo);
 
         /** RecommenderLevelInfo id. */
         public id: (number|Long);
@@ -10960,11 +10413,11 @@ export namespace pb {
 
         /**
          * Encodes the specified RecommenderLevelInfo message. Does not implicitly {@link pb.RecommenderLevelInfo.verify|verify} messages.
-         * @param message RecommenderLevelInfo message or plain object to encode
-         * @param [writer] Writer to encode to
+         * @param m RecommenderLevelInfo message or plain object to encode
+         * @param [w] Writer to encode to
          * @returns Writer
          */
-        public static encode(message: pb.IRecommenderLevelInfo, writer?: $protobuf.Writer): $protobuf.Writer;
+        public static encode(m: pb.IRecommenderLevelInfo, w?: $protobuf.Writer): $protobuf.Writer;
 
         /**
          * Encodes the specified RecommenderLevelInfo message, length delimited. Does not implicitly {@link pb.RecommenderLevelInfo.verify|verify} messages.
@@ -10976,13 +10429,13 @@ export namespace pb {
 
         /**
          * Decodes a RecommenderLevelInfo message from the specified reader or buffer.
-         * @param reader Reader or buffer to decode from
-         * @param [length] Message length if known beforehand
+         * @param r Reader or buffer to decode from
+         * @param [l] Message length if known beforehand
          * @returns RecommenderLevelInfo
          * @throws {Error} If the payload is not a reader or valid buffer
          * @throws {$protobuf.util.ProtocolError} If required fields are missing
          */
-        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): pb.RecommenderLevelInfo;
+        public static decode(r: ($protobuf.Reader|Uint8Array), l?: number): pb.RecommenderLevelInfo;
 
         /**
          * Decodes a RecommenderLevelInfo message from the specified reader or buffer, length delimited.
@@ -10995,38 +10448,31 @@ export namespace pb {
 
         /**
          * Verifies a RecommenderLevelInfo message.
-         * @param message Plain object to verify
+         * @param m Plain object to verify
          * @returns `null` if valid, otherwise the reason why it is not
          */
-        public static verify(message: { [k: string]: any }): (string|null);
+        public static verify(m: { [k: string]: any }): (string|null);
 
         /**
          * Creates a RecommenderLevelInfo message from a plain object. Also converts values to their respective internal types.
-         * @param object Plain object
+         * @param d Plain object
          * @returns RecommenderLevelInfo
          */
-        public static fromObject(object: { [k: string]: any }): pb.RecommenderLevelInfo;
+        public static fromObject(d: { [k: string]: any }): pb.RecommenderLevelInfo;
 
         /**
          * Creates a plain object from a RecommenderLevelInfo message. Also converts values to other types if specified.
-         * @param message RecommenderLevelInfo
-         * @param [options] Conversion options
+         * @param m RecommenderLevelInfo
+         * @param [o] Conversion options
          * @returns Plain object
          */
-        public static toObject(message: pb.RecommenderLevelInfo, options?: $protobuf.IConversionOptions): { [k: string]: any };
+        public static toObject(m: pb.RecommenderLevelInfo, o?: $protobuf.IConversionOptions): { [k: string]: any };
 
         /**
          * Converts this RecommenderLevelInfo to JSON.
          * @returns JSON object
          */
         public toJSON(): { [k: string]: any };
-
-        /**
-         * Gets the default type url for RecommenderLevelInfo
-         * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
-         * @returns The default type url
-         */
-        public static getTypeUrl(typeUrlPrefix?: string): string;
     }
 
     /** Properties of an AdminUpsertRecommenderLevelRequest. */
@@ -11053,9 +10499,9 @@ export namespace pb {
 
         /**
          * Constructs a new AdminUpsertRecommenderLevelRequest.
-         * @param [properties] Properties to set
+         * @param [p] Properties to set
          */
-        constructor(properties?: pb.IAdminUpsertRecommenderLevelRequest);
+        constructor(p?: pb.IAdminUpsertRecommenderLevelRequest);
 
         /** AdminUpsertRecommenderLevelRequest recommenderPubkey. */
         public recommenderPubkey: string;
@@ -11081,11 +10527,11 @@ export namespace pb {
 
         /**
          * Encodes the specified AdminUpsertRecommenderLevelRequest message. Does not implicitly {@link pb.AdminUpsertRecommenderLevelRequest.verify|verify} messages.
-         * @param message AdminUpsertRecommenderLevelRequest message or plain object to encode
-         * @param [writer] Writer to encode to
+         * @param m AdminUpsertRecommenderLevelRequest message or plain object to encode
+         * @param [w] Writer to encode to
          * @returns Writer
          */
-        public static encode(message: pb.IAdminUpsertRecommenderLevelRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+        public static encode(m: pb.IAdminUpsertRecommenderLevelRequest, w?: $protobuf.Writer): $protobuf.Writer;
 
         /**
          * Encodes the specified AdminUpsertRecommenderLevelRequest message, length delimited. Does not implicitly {@link pb.AdminUpsertRecommenderLevelRequest.verify|verify} messages.
@@ -11097,13 +10543,13 @@ export namespace pb {
 
         /**
          * Decodes an AdminUpsertRecommenderLevelRequest message from the specified reader or buffer.
-         * @param reader Reader or buffer to decode from
-         * @param [length] Message length if known beforehand
+         * @param r Reader or buffer to decode from
+         * @param [l] Message length if known beforehand
          * @returns AdminUpsertRecommenderLevelRequest
          * @throws {Error} If the payload is not a reader or valid buffer
          * @throws {$protobuf.util.ProtocolError} If required fields are missing
          */
-        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): pb.AdminUpsertRecommenderLevelRequest;
+        public static decode(r: ($protobuf.Reader|Uint8Array), l?: number): pb.AdminUpsertRecommenderLevelRequest;
 
         /**
          * Decodes an AdminUpsertRecommenderLevelRequest message from the specified reader or buffer, length delimited.
@@ -11116,38 +10562,31 @@ export namespace pb {
 
         /**
          * Verifies an AdminUpsertRecommenderLevelRequest message.
-         * @param message Plain object to verify
+         * @param m Plain object to verify
          * @returns `null` if valid, otherwise the reason why it is not
          */
-        public static verify(message: { [k: string]: any }): (string|null);
+        public static verify(m: { [k: string]: any }): (string|null);
 
         /**
          * Creates an AdminUpsertRecommenderLevelRequest message from a plain object. Also converts values to their respective internal types.
-         * @param object Plain object
+         * @param d Plain object
          * @returns AdminUpsertRecommenderLevelRequest
          */
-        public static fromObject(object: { [k: string]: any }): pb.AdminUpsertRecommenderLevelRequest;
+        public static fromObject(d: { [k: string]: any }): pb.AdminUpsertRecommenderLevelRequest;
 
         /**
          * Creates a plain object from an AdminUpsertRecommenderLevelRequest message. Also converts values to other types if specified.
-         * @param message AdminUpsertRecommenderLevelRequest
-         * @param [options] Conversion options
+         * @param m AdminUpsertRecommenderLevelRequest
+         * @param [o] Conversion options
          * @returns Plain object
          */
-        public static toObject(message: pb.AdminUpsertRecommenderLevelRequest, options?: $protobuf.IConversionOptions): { [k: string]: any };
+        public static toObject(m: pb.AdminUpsertRecommenderLevelRequest, o?: $protobuf.IConversionOptions): { [k: string]: any };
 
         /**
          * Converts this AdminUpsertRecommenderLevelRequest to JSON.
          * @returns JSON object
          */
         public toJSON(): { [k: string]: any };
-
-        /**
-         * Gets the default type url for AdminUpsertRecommenderLevelRequest
-         * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
-         * @returns The default type url
-         */
-        public static getTypeUrl(typeUrlPrefix?: string): string;
     }
 
     /** Properties of an AdminUpsertRecommenderLevelResponse. */
@@ -11165,9 +10604,9 @@ export namespace pb {
 
         /**
          * Constructs a new AdminUpsertRecommenderLevelResponse.
-         * @param [properties] Properties to set
+         * @param [p] Properties to set
          */
-        constructor(properties?: pb.IAdminUpsertRecommenderLevelResponse);
+        constructor(p?: pb.IAdminUpsertRecommenderLevelResponse);
 
         /** AdminUpsertRecommenderLevelResponse code. */
         public code: number;
@@ -11184,11 +10623,11 @@ export namespace pb {
 
         /**
          * Encodes the specified AdminUpsertRecommenderLevelResponse message. Does not implicitly {@link pb.AdminUpsertRecommenderLevelResponse.verify|verify} messages.
-         * @param message AdminUpsertRecommenderLevelResponse message or plain object to encode
-         * @param [writer] Writer to encode to
+         * @param m AdminUpsertRecommenderLevelResponse message or plain object to encode
+         * @param [w] Writer to encode to
          * @returns Writer
          */
-        public static encode(message: pb.IAdminUpsertRecommenderLevelResponse, writer?: $protobuf.Writer): $protobuf.Writer;
+        public static encode(m: pb.IAdminUpsertRecommenderLevelResponse, w?: $protobuf.Writer): $protobuf.Writer;
 
         /**
          * Encodes the specified AdminUpsertRecommenderLevelResponse message, length delimited. Does not implicitly {@link pb.AdminUpsertRecommenderLevelResponse.verify|verify} messages.
@@ -11200,13 +10639,13 @@ export namespace pb {
 
         /**
          * Decodes an AdminUpsertRecommenderLevelResponse message from the specified reader or buffer.
-         * @param reader Reader or buffer to decode from
-         * @param [length] Message length if known beforehand
+         * @param r Reader or buffer to decode from
+         * @param [l] Message length if known beforehand
          * @returns AdminUpsertRecommenderLevelResponse
          * @throws {Error} If the payload is not a reader or valid buffer
          * @throws {$protobuf.util.ProtocolError} If required fields are missing
          */
-        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): pb.AdminUpsertRecommenderLevelResponse;
+        public static decode(r: ($protobuf.Reader|Uint8Array), l?: number): pb.AdminUpsertRecommenderLevelResponse;
 
         /**
          * Decodes an AdminUpsertRecommenderLevelResponse message from the specified reader or buffer, length delimited.
@@ -11219,38 +10658,31 @@ export namespace pb {
 
         /**
          * Verifies an AdminUpsertRecommenderLevelResponse message.
-         * @param message Plain object to verify
+         * @param m Plain object to verify
          * @returns `null` if valid, otherwise the reason why it is not
          */
-        public static verify(message: { [k: string]: any }): (string|null);
+        public static verify(m: { [k: string]: any }): (string|null);
 
         /**
          * Creates an AdminUpsertRecommenderLevelResponse message from a plain object. Also converts values to their respective internal types.
-         * @param object Plain object
+         * @param d Plain object
          * @returns AdminUpsertRecommenderLevelResponse
          */
-        public static fromObject(object: { [k: string]: any }): pb.AdminUpsertRecommenderLevelResponse;
+        public static fromObject(d: { [k: string]: any }): pb.AdminUpsertRecommenderLevelResponse;
 
         /**
          * Creates a plain object from an AdminUpsertRecommenderLevelResponse message. Also converts values to other types if specified.
-         * @param message AdminUpsertRecommenderLevelResponse
-         * @param [options] Conversion options
+         * @param m AdminUpsertRecommenderLevelResponse
+         * @param [o] Conversion options
          * @returns Plain object
          */
-        public static toObject(message: pb.AdminUpsertRecommenderLevelResponse, options?: $protobuf.IConversionOptions): { [k: string]: any };
+        public static toObject(m: pb.AdminUpsertRecommenderLevelResponse, o?: $protobuf.IConversionOptions): { [k: string]: any };
 
         /**
          * Converts this AdminUpsertRecommenderLevelResponse to JSON.
          * @returns JSON object
          */
         public toJSON(): { [k: string]: any };
-
-        /**
-         * Gets the default type url for AdminUpsertRecommenderLevelResponse
-         * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
-         * @returns The default type url
-         */
-        public static getTypeUrl(typeUrlPrefix?: string): string;
     }
 
     /** Properties of an AdminGetRecommenderLevelRequest. */
@@ -11265,9 +10697,9 @@ export namespace pb {
 
         /**
          * Constructs a new AdminGetRecommenderLevelRequest.
-         * @param [properties] Properties to set
+         * @param [p] Properties to set
          */
-        constructor(properties?: pb.IAdminGetRecommenderLevelRequest);
+        constructor(p?: pb.IAdminGetRecommenderLevelRequest);
 
         /** AdminGetRecommenderLevelRequest recommenderPubkey. */
         public recommenderPubkey: string;
@@ -11281,11 +10713,11 @@ export namespace pb {
 
         /**
          * Encodes the specified AdminGetRecommenderLevelRequest message. Does not implicitly {@link pb.AdminGetRecommenderLevelRequest.verify|verify} messages.
-         * @param message AdminGetRecommenderLevelRequest message or plain object to encode
-         * @param [writer] Writer to encode to
+         * @param m AdminGetRecommenderLevelRequest message or plain object to encode
+         * @param [w] Writer to encode to
          * @returns Writer
          */
-        public static encode(message: pb.IAdminGetRecommenderLevelRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+        public static encode(m: pb.IAdminGetRecommenderLevelRequest, w?: $protobuf.Writer): $protobuf.Writer;
 
         /**
          * Encodes the specified AdminGetRecommenderLevelRequest message, length delimited. Does not implicitly {@link pb.AdminGetRecommenderLevelRequest.verify|verify} messages.
@@ -11297,13 +10729,13 @@ export namespace pb {
 
         /**
          * Decodes an AdminGetRecommenderLevelRequest message from the specified reader or buffer.
-         * @param reader Reader or buffer to decode from
-         * @param [length] Message length if known beforehand
+         * @param r Reader or buffer to decode from
+         * @param [l] Message length if known beforehand
          * @returns AdminGetRecommenderLevelRequest
          * @throws {Error} If the payload is not a reader or valid buffer
          * @throws {$protobuf.util.ProtocolError} If required fields are missing
          */
-        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): pb.AdminGetRecommenderLevelRequest;
+        public static decode(r: ($protobuf.Reader|Uint8Array), l?: number): pb.AdminGetRecommenderLevelRequest;
 
         /**
          * Decodes an AdminGetRecommenderLevelRequest message from the specified reader or buffer, length delimited.
@@ -11316,38 +10748,31 @@ export namespace pb {
 
         /**
          * Verifies an AdminGetRecommenderLevelRequest message.
-         * @param message Plain object to verify
+         * @param m Plain object to verify
          * @returns `null` if valid, otherwise the reason why it is not
          */
-        public static verify(message: { [k: string]: any }): (string|null);
+        public static verify(m: { [k: string]: any }): (string|null);
 
         /**
          * Creates an AdminGetRecommenderLevelRequest message from a plain object. Also converts values to their respective internal types.
-         * @param object Plain object
+         * @param d Plain object
          * @returns AdminGetRecommenderLevelRequest
          */
-        public static fromObject(object: { [k: string]: any }): pb.AdminGetRecommenderLevelRequest;
+        public static fromObject(d: { [k: string]: any }): pb.AdminGetRecommenderLevelRequest;
 
         /**
          * Creates a plain object from an AdminGetRecommenderLevelRequest message. Also converts values to other types if specified.
-         * @param message AdminGetRecommenderLevelRequest
-         * @param [options] Conversion options
+         * @param m AdminGetRecommenderLevelRequest
+         * @param [o] Conversion options
          * @returns Plain object
          */
-        public static toObject(message: pb.AdminGetRecommenderLevelRequest, options?: $protobuf.IConversionOptions): { [k: string]: any };
+        public static toObject(m: pb.AdminGetRecommenderLevelRequest, o?: $protobuf.IConversionOptions): { [k: string]: any };
 
         /**
          * Converts this AdminGetRecommenderLevelRequest to JSON.
          * @returns JSON object
          */
         public toJSON(): { [k: string]: any };
-
-        /**
-         * Gets the default type url for AdminGetRecommenderLevelRequest
-         * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
-         * @returns The default type url
-         */
-        public static getTypeUrl(typeUrlPrefix?: string): string;
     }
 
     /** Properties of an AdminGetRecommenderLevelResponse. */
@@ -11368,9 +10793,9 @@ export namespace pb {
 
         /**
          * Constructs a new AdminGetRecommenderLevelResponse.
-         * @param [properties] Properties to set
+         * @param [p] Properties to set
          */
-        constructor(properties?: pb.IAdminGetRecommenderLevelResponse);
+        constructor(p?: pb.IAdminGetRecommenderLevelResponse);
 
         /** AdminGetRecommenderLevelResponse code. */
         public code: number;
@@ -11390,11 +10815,11 @@ export namespace pb {
 
         /**
          * Encodes the specified AdminGetRecommenderLevelResponse message. Does not implicitly {@link pb.AdminGetRecommenderLevelResponse.verify|verify} messages.
-         * @param message AdminGetRecommenderLevelResponse message or plain object to encode
-         * @param [writer] Writer to encode to
+         * @param m AdminGetRecommenderLevelResponse message or plain object to encode
+         * @param [w] Writer to encode to
          * @returns Writer
          */
-        public static encode(message: pb.IAdminGetRecommenderLevelResponse, writer?: $protobuf.Writer): $protobuf.Writer;
+        public static encode(m: pb.IAdminGetRecommenderLevelResponse, w?: $protobuf.Writer): $protobuf.Writer;
 
         /**
          * Encodes the specified AdminGetRecommenderLevelResponse message, length delimited. Does not implicitly {@link pb.AdminGetRecommenderLevelResponse.verify|verify} messages.
@@ -11406,13 +10831,13 @@ export namespace pb {
 
         /**
          * Decodes an AdminGetRecommenderLevelResponse message from the specified reader or buffer.
-         * @param reader Reader or buffer to decode from
-         * @param [length] Message length if known beforehand
+         * @param r Reader or buffer to decode from
+         * @param [l] Message length if known beforehand
          * @returns AdminGetRecommenderLevelResponse
          * @throws {Error} If the payload is not a reader or valid buffer
          * @throws {$protobuf.util.ProtocolError} If required fields are missing
          */
-        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): pb.AdminGetRecommenderLevelResponse;
+        public static decode(r: ($protobuf.Reader|Uint8Array), l?: number): pb.AdminGetRecommenderLevelResponse;
 
         /**
          * Decodes an AdminGetRecommenderLevelResponse message from the specified reader or buffer, length delimited.
@@ -11425,38 +10850,31 @@ export namespace pb {
 
         /**
          * Verifies an AdminGetRecommenderLevelResponse message.
-         * @param message Plain object to verify
+         * @param m Plain object to verify
          * @returns `null` if valid, otherwise the reason why it is not
          */
-        public static verify(message: { [k: string]: any }): (string|null);
+        public static verify(m: { [k: string]: any }): (string|null);
 
         /**
          * Creates an AdminGetRecommenderLevelResponse message from a plain object. Also converts values to their respective internal types.
-         * @param object Plain object
+         * @param d Plain object
          * @returns AdminGetRecommenderLevelResponse
          */
-        public static fromObject(object: { [k: string]: any }): pb.AdminGetRecommenderLevelResponse;
+        public static fromObject(d: { [k: string]: any }): pb.AdminGetRecommenderLevelResponse;
 
         /**
          * Creates a plain object from an AdminGetRecommenderLevelResponse message. Also converts values to other types if specified.
-         * @param message AdminGetRecommenderLevelResponse
-         * @param [options] Conversion options
+         * @param m AdminGetRecommenderLevelResponse
+         * @param [o] Conversion options
          * @returns Plain object
          */
-        public static toObject(message: pb.AdminGetRecommenderLevelResponse, options?: $protobuf.IConversionOptions): { [k: string]: any };
+        public static toObject(m: pb.AdminGetRecommenderLevelResponse, o?: $protobuf.IConversionOptions): { [k: string]: any };
 
         /**
          * Converts this AdminGetRecommenderLevelResponse to JSON.
          * @returns JSON object
          */
         public toJSON(): { [k: string]: any };
-
-        /**
-         * Gets the default type url for AdminGetRecommenderLevelResponse
-         * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
-         * @returns The default type url
-         */
-        public static getTypeUrl(typeUrlPrefix?: string): string;
     }
 
     /** Properties of an AdminListRecommenderLevelsRequest. */
@@ -11474,9 +10892,9 @@ export namespace pb {
 
         /**
          * Constructs a new AdminListRecommenderLevelsRequest.
-         * @param [properties] Properties to set
+         * @param [p] Properties to set
          */
-        constructor(properties?: pb.IAdminListRecommenderLevelsRequest);
+        constructor(p?: pb.IAdminListRecommenderLevelsRequest);
 
         /** AdminListRecommenderLevelsRequest pageNum. */
         public pageNum: number;
@@ -11493,11 +10911,11 @@ export namespace pb {
 
         /**
          * Encodes the specified AdminListRecommenderLevelsRequest message. Does not implicitly {@link pb.AdminListRecommenderLevelsRequest.verify|verify} messages.
-         * @param message AdminListRecommenderLevelsRequest message or plain object to encode
-         * @param [writer] Writer to encode to
+         * @param m AdminListRecommenderLevelsRequest message or plain object to encode
+         * @param [w] Writer to encode to
          * @returns Writer
          */
-        public static encode(message: pb.IAdminListRecommenderLevelsRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+        public static encode(m: pb.IAdminListRecommenderLevelsRequest, w?: $protobuf.Writer): $protobuf.Writer;
 
         /**
          * Encodes the specified AdminListRecommenderLevelsRequest message, length delimited. Does not implicitly {@link pb.AdminListRecommenderLevelsRequest.verify|verify} messages.
@@ -11509,13 +10927,13 @@ export namespace pb {
 
         /**
          * Decodes an AdminListRecommenderLevelsRequest message from the specified reader or buffer.
-         * @param reader Reader or buffer to decode from
-         * @param [length] Message length if known beforehand
+         * @param r Reader or buffer to decode from
+         * @param [l] Message length if known beforehand
          * @returns AdminListRecommenderLevelsRequest
          * @throws {Error} If the payload is not a reader or valid buffer
          * @throws {$protobuf.util.ProtocolError} If required fields are missing
          */
-        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): pb.AdminListRecommenderLevelsRequest;
+        public static decode(r: ($protobuf.Reader|Uint8Array), l?: number): pb.AdminListRecommenderLevelsRequest;
 
         /**
          * Decodes an AdminListRecommenderLevelsRequest message from the specified reader or buffer, length delimited.
@@ -11528,38 +10946,31 @@ export namespace pb {
 
         /**
          * Verifies an AdminListRecommenderLevelsRequest message.
-         * @param message Plain object to verify
+         * @param m Plain object to verify
          * @returns `null` if valid, otherwise the reason why it is not
          */
-        public static verify(message: { [k: string]: any }): (string|null);
+        public static verify(m: { [k: string]: any }): (string|null);
 
         /**
          * Creates an AdminListRecommenderLevelsRequest message from a plain object. Also converts values to their respective internal types.
-         * @param object Plain object
+         * @param d Plain object
          * @returns AdminListRecommenderLevelsRequest
          */
-        public static fromObject(object: { [k: string]: any }): pb.AdminListRecommenderLevelsRequest;
+        public static fromObject(d: { [k: string]: any }): pb.AdminListRecommenderLevelsRequest;
 
         /**
          * Creates a plain object from an AdminListRecommenderLevelsRequest message. Also converts values to other types if specified.
-         * @param message AdminListRecommenderLevelsRequest
-         * @param [options] Conversion options
+         * @param m AdminListRecommenderLevelsRequest
+         * @param [o] Conversion options
          * @returns Plain object
          */
-        public static toObject(message: pb.AdminListRecommenderLevelsRequest, options?: $protobuf.IConversionOptions): { [k: string]: any };
+        public static toObject(m: pb.AdminListRecommenderLevelsRequest, o?: $protobuf.IConversionOptions): { [k: string]: any };
 
         /**
          * Converts this AdminListRecommenderLevelsRequest to JSON.
          * @returns JSON object
          */
         public toJSON(): { [k: string]: any };
-
-        /**
-         * Gets the default type url for AdminListRecommenderLevelsRequest
-         * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
-         * @returns The default type url
-         */
-        public static getTypeUrl(typeUrlPrefix?: string): string;
     }
 
     /** Properties of an AdminListRecommenderLevelsResponse. */
@@ -11583,9 +10994,9 @@ export namespace pb {
 
         /**
          * Constructs a new AdminListRecommenderLevelsResponse.
-         * @param [properties] Properties to set
+         * @param [p] Properties to set
          */
-        constructor(properties?: pb.IAdminListRecommenderLevelsResponse);
+        constructor(p?: pb.IAdminListRecommenderLevelsResponse);
 
         /** AdminListRecommenderLevelsResponse code. */
         public code: number;
@@ -11608,11 +11019,11 @@ export namespace pb {
 
         /**
          * Encodes the specified AdminListRecommenderLevelsResponse message. Does not implicitly {@link pb.AdminListRecommenderLevelsResponse.verify|verify} messages.
-         * @param message AdminListRecommenderLevelsResponse message or plain object to encode
-         * @param [writer] Writer to encode to
+         * @param m AdminListRecommenderLevelsResponse message or plain object to encode
+         * @param [w] Writer to encode to
          * @returns Writer
          */
-        public static encode(message: pb.IAdminListRecommenderLevelsResponse, writer?: $protobuf.Writer): $protobuf.Writer;
+        public static encode(m: pb.IAdminListRecommenderLevelsResponse, w?: $protobuf.Writer): $protobuf.Writer;
 
         /**
          * Encodes the specified AdminListRecommenderLevelsResponse message, length delimited. Does not implicitly {@link pb.AdminListRecommenderLevelsResponse.verify|verify} messages.
@@ -11624,13 +11035,13 @@ export namespace pb {
 
         /**
          * Decodes an AdminListRecommenderLevelsResponse message from the specified reader or buffer.
-         * @param reader Reader or buffer to decode from
-         * @param [length] Message length if known beforehand
+         * @param r Reader or buffer to decode from
+         * @param [l] Message length if known beforehand
          * @returns AdminListRecommenderLevelsResponse
          * @throws {Error} If the payload is not a reader or valid buffer
          * @throws {$protobuf.util.ProtocolError} If required fields are missing
          */
-        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): pb.AdminListRecommenderLevelsResponse;
+        public static decode(r: ($protobuf.Reader|Uint8Array), l?: number): pb.AdminListRecommenderLevelsResponse;
 
         /**
          * Decodes an AdminListRecommenderLevelsResponse message from the specified reader or buffer, length delimited.
@@ -11643,38 +11054,31 @@ export namespace pb {
 
         /**
          * Verifies an AdminListRecommenderLevelsResponse message.
-         * @param message Plain object to verify
+         * @param m Plain object to verify
          * @returns `null` if valid, otherwise the reason why it is not
          */
-        public static verify(message: { [k: string]: any }): (string|null);
+        public static verify(m: { [k: string]: any }): (string|null);
 
         /**
          * Creates an AdminListRecommenderLevelsResponse message from a plain object. Also converts values to their respective internal types.
-         * @param object Plain object
+         * @param d Plain object
          * @returns AdminListRecommenderLevelsResponse
          */
-        public static fromObject(object: { [k: string]: any }): pb.AdminListRecommenderLevelsResponse;
+        public static fromObject(d: { [k: string]: any }): pb.AdminListRecommenderLevelsResponse;
 
         /**
          * Creates a plain object from an AdminListRecommenderLevelsResponse message. Also converts values to other types if specified.
-         * @param message AdminListRecommenderLevelsResponse
-         * @param [options] Conversion options
+         * @param m AdminListRecommenderLevelsResponse
+         * @param [o] Conversion options
          * @returns Plain object
          */
-        public static toObject(message: pb.AdminListRecommenderLevelsResponse, options?: $protobuf.IConversionOptions): { [k: string]: any };
+        public static toObject(m: pb.AdminListRecommenderLevelsResponse, o?: $protobuf.IConversionOptions): { [k: string]: any };
 
         /**
          * Converts this AdminListRecommenderLevelsResponse to JSON.
          * @returns JSON object
          */
         public toJSON(): { [k: string]: any };
-
-        /**
-         * Gets the default type url for AdminListRecommenderLevelsResponse
-         * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
-         * @returns The default type url
-         */
-        public static getTypeUrl(typeUrlPrefix?: string): string;
     }
 
     /** Properties of an AdminDeleteRecommenderLevelRequest. */
@@ -11689,9 +11093,9 @@ export namespace pb {
 
         /**
          * Constructs a new AdminDeleteRecommenderLevelRequest.
-         * @param [properties] Properties to set
+         * @param [p] Properties to set
          */
-        constructor(properties?: pb.IAdminDeleteRecommenderLevelRequest);
+        constructor(p?: pb.IAdminDeleteRecommenderLevelRequest);
 
         /** AdminDeleteRecommenderLevelRequest recommenderPubkey. */
         public recommenderPubkey: string;
@@ -11705,11 +11109,11 @@ export namespace pb {
 
         /**
          * Encodes the specified AdminDeleteRecommenderLevelRequest message. Does not implicitly {@link pb.AdminDeleteRecommenderLevelRequest.verify|verify} messages.
-         * @param message AdminDeleteRecommenderLevelRequest message or plain object to encode
-         * @param [writer] Writer to encode to
+         * @param m AdminDeleteRecommenderLevelRequest message or plain object to encode
+         * @param [w] Writer to encode to
          * @returns Writer
          */
-        public static encode(message: pb.IAdminDeleteRecommenderLevelRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+        public static encode(m: pb.IAdminDeleteRecommenderLevelRequest, w?: $protobuf.Writer): $protobuf.Writer;
 
         /**
          * Encodes the specified AdminDeleteRecommenderLevelRequest message, length delimited. Does not implicitly {@link pb.AdminDeleteRecommenderLevelRequest.verify|verify} messages.
@@ -11721,13 +11125,13 @@ export namespace pb {
 
         /**
          * Decodes an AdminDeleteRecommenderLevelRequest message from the specified reader or buffer.
-         * @param reader Reader or buffer to decode from
-         * @param [length] Message length if known beforehand
+         * @param r Reader or buffer to decode from
+         * @param [l] Message length if known beforehand
          * @returns AdminDeleteRecommenderLevelRequest
          * @throws {Error} If the payload is not a reader or valid buffer
          * @throws {$protobuf.util.ProtocolError} If required fields are missing
          */
-        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): pb.AdminDeleteRecommenderLevelRequest;
+        public static decode(r: ($protobuf.Reader|Uint8Array), l?: number): pb.AdminDeleteRecommenderLevelRequest;
 
         /**
          * Decodes an AdminDeleteRecommenderLevelRequest message from the specified reader or buffer, length delimited.
@@ -11740,38 +11144,31 @@ export namespace pb {
 
         /**
          * Verifies an AdminDeleteRecommenderLevelRequest message.
-         * @param message Plain object to verify
+         * @param m Plain object to verify
          * @returns `null` if valid, otherwise the reason why it is not
          */
-        public static verify(message: { [k: string]: any }): (string|null);
+        public static verify(m: { [k: string]: any }): (string|null);
 
         /**
          * Creates an AdminDeleteRecommenderLevelRequest message from a plain object. Also converts values to their respective internal types.
-         * @param object Plain object
+         * @param d Plain object
          * @returns AdminDeleteRecommenderLevelRequest
          */
-        public static fromObject(object: { [k: string]: any }): pb.AdminDeleteRecommenderLevelRequest;
+        public static fromObject(d: { [k: string]: any }): pb.AdminDeleteRecommenderLevelRequest;
 
         /**
          * Creates a plain object from an AdminDeleteRecommenderLevelRequest message. Also converts values to other types if specified.
-         * @param message AdminDeleteRecommenderLevelRequest
-         * @param [options] Conversion options
+         * @param m AdminDeleteRecommenderLevelRequest
+         * @param [o] Conversion options
          * @returns Plain object
          */
-        public static toObject(message: pb.AdminDeleteRecommenderLevelRequest, options?: $protobuf.IConversionOptions): { [k: string]: any };
+        public static toObject(m: pb.AdminDeleteRecommenderLevelRequest, o?: $protobuf.IConversionOptions): { [k: string]: any };
 
         /**
          * Converts this AdminDeleteRecommenderLevelRequest to JSON.
          * @returns JSON object
          */
         public toJSON(): { [k: string]: any };
-
-        /**
-         * Gets the default type url for AdminDeleteRecommenderLevelRequest
-         * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
-         * @returns The default type url
-         */
-        public static getTypeUrl(typeUrlPrefix?: string): string;
     }
 
     /** Properties of an AdminDeleteRecommenderLevelResponse. */
@@ -11789,9 +11186,9 @@ export namespace pb {
 
         /**
          * Constructs a new AdminDeleteRecommenderLevelResponse.
-         * @param [properties] Properties to set
+         * @param [p] Properties to set
          */
-        constructor(properties?: pb.IAdminDeleteRecommenderLevelResponse);
+        constructor(p?: pb.IAdminDeleteRecommenderLevelResponse);
 
         /** AdminDeleteRecommenderLevelResponse code. */
         public code: number;
@@ -11808,11 +11205,11 @@ export namespace pb {
 
         /**
          * Encodes the specified AdminDeleteRecommenderLevelResponse message. Does not implicitly {@link pb.AdminDeleteRecommenderLevelResponse.verify|verify} messages.
-         * @param message AdminDeleteRecommenderLevelResponse message or plain object to encode
-         * @param [writer] Writer to encode to
+         * @param m AdminDeleteRecommenderLevelResponse message or plain object to encode
+         * @param [w] Writer to encode to
          * @returns Writer
          */
-        public static encode(message: pb.IAdminDeleteRecommenderLevelResponse, writer?: $protobuf.Writer): $protobuf.Writer;
+        public static encode(m: pb.IAdminDeleteRecommenderLevelResponse, w?: $protobuf.Writer): $protobuf.Writer;
 
         /**
          * Encodes the specified AdminDeleteRecommenderLevelResponse message, length delimited. Does not implicitly {@link pb.AdminDeleteRecommenderLevelResponse.verify|verify} messages.
@@ -11824,13 +11221,13 @@ export namespace pb {
 
         /**
          * Decodes an AdminDeleteRecommenderLevelResponse message from the specified reader or buffer.
-         * @param reader Reader or buffer to decode from
-         * @param [length] Message length if known beforehand
+         * @param r Reader or buffer to decode from
+         * @param [l] Message length if known beforehand
          * @returns AdminDeleteRecommenderLevelResponse
          * @throws {Error} If the payload is not a reader or valid buffer
          * @throws {$protobuf.util.ProtocolError} If required fields are missing
          */
-        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): pb.AdminDeleteRecommenderLevelResponse;
+        public static decode(r: ($protobuf.Reader|Uint8Array), l?: number): pb.AdminDeleteRecommenderLevelResponse;
 
         /**
          * Decodes an AdminDeleteRecommenderLevelResponse message from the specified reader or buffer, length delimited.
@@ -11843,38 +11240,31 @@ export namespace pb {
 
         /**
          * Verifies an AdminDeleteRecommenderLevelResponse message.
-         * @param message Plain object to verify
+         * @param m Plain object to verify
          * @returns `null` if valid, otherwise the reason why it is not
          */
-        public static verify(message: { [k: string]: any }): (string|null);
+        public static verify(m: { [k: string]: any }): (string|null);
 
         /**
          * Creates an AdminDeleteRecommenderLevelResponse message from a plain object. Also converts values to their respective internal types.
-         * @param object Plain object
+         * @param d Plain object
          * @returns AdminDeleteRecommenderLevelResponse
          */
-        public static fromObject(object: { [k: string]: any }): pb.AdminDeleteRecommenderLevelResponse;
+        public static fromObject(d: { [k: string]: any }): pb.AdminDeleteRecommenderLevelResponse;
 
         /**
          * Creates a plain object from an AdminDeleteRecommenderLevelResponse message. Also converts values to other types if specified.
-         * @param message AdminDeleteRecommenderLevelResponse
-         * @param [options] Conversion options
+         * @param m AdminDeleteRecommenderLevelResponse
+         * @param [o] Conversion options
          * @returns Plain object
          */
-        public static toObject(message: pb.AdminDeleteRecommenderLevelResponse, options?: $protobuf.IConversionOptions): { [k: string]: any };
+        public static toObject(m: pb.AdminDeleteRecommenderLevelResponse, o?: $protobuf.IConversionOptions): { [k: string]: any };
 
         /**
          * Converts this AdminDeleteRecommenderLevelResponse to JSON.
          * @returns JSON object
          */
         public toJSON(): { [k: string]: any };
-
-        /**
-         * Gets the default type url for AdminDeleteRecommenderLevelResponse
-         * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
-         * @returns The default type url
-         */
-        public static getTypeUrl(typeUrlPrefix?: string): string;
     }
 
     /** Properties of a RecommenderLevelDefinitionInfo. */
@@ -11907,9 +11297,9 @@ export namespace pb {
 
         /**
          * Constructs a new RecommenderLevelDefinitionInfo.
-         * @param [properties] Properties to set
+         * @param [p] Properties to set
          */
-        constructor(properties?: pb.IRecommenderLevelDefinitionInfo);
+        constructor(p?: pb.IRecommenderLevelDefinitionInfo);
 
         /** RecommenderLevelDefinitionInfo id. */
         public id: (number|Long);
@@ -11941,11 +11331,11 @@ export namespace pb {
 
         /**
          * Encodes the specified RecommenderLevelDefinitionInfo message. Does not implicitly {@link pb.RecommenderLevelDefinitionInfo.verify|verify} messages.
-         * @param message RecommenderLevelDefinitionInfo message or plain object to encode
-         * @param [writer] Writer to encode to
+         * @param m RecommenderLevelDefinitionInfo message or plain object to encode
+         * @param [w] Writer to encode to
          * @returns Writer
          */
-        public static encode(message: pb.IRecommenderLevelDefinitionInfo, writer?: $protobuf.Writer): $protobuf.Writer;
+        public static encode(m: pb.IRecommenderLevelDefinitionInfo, w?: $protobuf.Writer): $protobuf.Writer;
 
         /**
          * Encodes the specified RecommenderLevelDefinitionInfo message, length delimited. Does not implicitly {@link pb.RecommenderLevelDefinitionInfo.verify|verify} messages.
@@ -11957,13 +11347,13 @@ export namespace pb {
 
         /**
          * Decodes a RecommenderLevelDefinitionInfo message from the specified reader or buffer.
-         * @param reader Reader or buffer to decode from
-         * @param [length] Message length if known beforehand
+         * @param r Reader or buffer to decode from
+         * @param [l] Message length if known beforehand
          * @returns RecommenderLevelDefinitionInfo
          * @throws {Error} If the payload is not a reader or valid buffer
          * @throws {$protobuf.util.ProtocolError} If required fields are missing
          */
-        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): pb.RecommenderLevelDefinitionInfo;
+        public static decode(r: ($protobuf.Reader|Uint8Array), l?: number): pb.RecommenderLevelDefinitionInfo;
 
         /**
          * Decodes a RecommenderLevelDefinitionInfo message from the specified reader or buffer, length delimited.
@@ -11976,38 +11366,31 @@ export namespace pb {
 
         /**
          * Verifies a RecommenderLevelDefinitionInfo message.
-         * @param message Plain object to verify
+         * @param m Plain object to verify
          * @returns `null` if valid, otherwise the reason why it is not
          */
-        public static verify(message: { [k: string]: any }): (string|null);
+        public static verify(m: { [k: string]: any }): (string|null);
 
         /**
          * Creates a RecommenderLevelDefinitionInfo message from a plain object. Also converts values to their respective internal types.
-         * @param object Plain object
+         * @param d Plain object
          * @returns RecommenderLevelDefinitionInfo
          */
-        public static fromObject(object: { [k: string]: any }): pb.RecommenderLevelDefinitionInfo;
+        public static fromObject(d: { [k: string]: any }): pb.RecommenderLevelDefinitionInfo;
 
         /**
          * Creates a plain object from a RecommenderLevelDefinitionInfo message. Also converts values to other types if specified.
-         * @param message RecommenderLevelDefinitionInfo
-         * @param [options] Conversion options
+         * @param m RecommenderLevelDefinitionInfo
+         * @param [o] Conversion options
          * @returns Plain object
          */
-        public static toObject(message: pb.RecommenderLevelDefinitionInfo, options?: $protobuf.IConversionOptions): { [k: string]: any };
+        public static toObject(m: pb.RecommenderLevelDefinitionInfo, o?: $protobuf.IConversionOptions): { [k: string]: any };
 
         /**
          * Converts this RecommenderLevelDefinitionInfo to JSON.
          * @returns JSON object
          */
         public toJSON(): { [k: string]: any };
-
-        /**
-         * Gets the default type url for RecommenderLevelDefinitionInfo
-         * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
-         * @returns The default type url
-         */
-        public static getTypeUrl(typeUrlPrefix?: string): string;
     }
 
     /** Properties of an AdminUpsertRecommenderLevelDefinitionRequest. */
@@ -12031,9 +11414,9 @@ export namespace pb {
 
         /**
          * Constructs a new AdminUpsertRecommenderLevelDefinitionRequest.
-         * @param [properties] Properties to set
+         * @param [p] Properties to set
          */
-        constructor(properties?: pb.IAdminUpsertRecommenderLevelDefinitionRequest);
+        constructor(p?: pb.IAdminUpsertRecommenderLevelDefinitionRequest);
 
         /** AdminUpsertRecommenderLevelDefinitionRequest level. */
         public level: number;
@@ -12056,11 +11439,11 @@ export namespace pb {
 
         /**
          * Encodes the specified AdminUpsertRecommenderLevelDefinitionRequest message. Does not implicitly {@link pb.AdminUpsertRecommenderLevelDefinitionRequest.verify|verify} messages.
-         * @param message AdminUpsertRecommenderLevelDefinitionRequest message or plain object to encode
-         * @param [writer] Writer to encode to
+         * @param m AdminUpsertRecommenderLevelDefinitionRequest message or plain object to encode
+         * @param [w] Writer to encode to
          * @returns Writer
          */
-        public static encode(message: pb.IAdminUpsertRecommenderLevelDefinitionRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+        public static encode(m: pb.IAdminUpsertRecommenderLevelDefinitionRequest, w?: $protobuf.Writer): $protobuf.Writer;
 
         /**
          * Encodes the specified AdminUpsertRecommenderLevelDefinitionRequest message, length delimited. Does not implicitly {@link pb.AdminUpsertRecommenderLevelDefinitionRequest.verify|verify} messages.
@@ -12072,13 +11455,13 @@ export namespace pb {
 
         /**
          * Decodes an AdminUpsertRecommenderLevelDefinitionRequest message from the specified reader or buffer.
-         * @param reader Reader or buffer to decode from
-         * @param [length] Message length if known beforehand
+         * @param r Reader or buffer to decode from
+         * @param [l] Message length if known beforehand
          * @returns AdminUpsertRecommenderLevelDefinitionRequest
          * @throws {Error} If the payload is not a reader or valid buffer
          * @throws {$protobuf.util.ProtocolError} If required fields are missing
          */
-        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): pb.AdminUpsertRecommenderLevelDefinitionRequest;
+        public static decode(r: ($protobuf.Reader|Uint8Array), l?: number): pb.AdminUpsertRecommenderLevelDefinitionRequest;
 
         /**
          * Decodes an AdminUpsertRecommenderLevelDefinitionRequest message from the specified reader or buffer, length delimited.
@@ -12091,38 +11474,31 @@ export namespace pb {
 
         /**
          * Verifies an AdminUpsertRecommenderLevelDefinitionRequest message.
-         * @param message Plain object to verify
+         * @param m Plain object to verify
          * @returns `null` if valid, otherwise the reason why it is not
          */
-        public static verify(message: { [k: string]: any }): (string|null);
+        public static verify(m: { [k: string]: any }): (string|null);
 
         /**
          * Creates an AdminUpsertRecommenderLevelDefinitionRequest message from a plain object. Also converts values to their respective internal types.
-         * @param object Plain object
+         * @param d Plain object
          * @returns AdminUpsertRecommenderLevelDefinitionRequest
          */
-        public static fromObject(object: { [k: string]: any }): pb.AdminUpsertRecommenderLevelDefinitionRequest;
+        public static fromObject(d: { [k: string]: any }): pb.AdminUpsertRecommenderLevelDefinitionRequest;
 
         /**
          * Creates a plain object from an AdminUpsertRecommenderLevelDefinitionRequest message. Also converts values to other types if specified.
-         * @param message AdminUpsertRecommenderLevelDefinitionRequest
-         * @param [options] Conversion options
+         * @param m AdminUpsertRecommenderLevelDefinitionRequest
+         * @param [o] Conversion options
          * @returns Plain object
          */
-        public static toObject(message: pb.AdminUpsertRecommenderLevelDefinitionRequest, options?: $protobuf.IConversionOptions): { [k: string]: any };
+        public static toObject(m: pb.AdminUpsertRecommenderLevelDefinitionRequest, o?: $protobuf.IConversionOptions): { [k: string]: any };
 
         /**
          * Converts this AdminUpsertRecommenderLevelDefinitionRequest to JSON.
          * @returns JSON object
          */
         public toJSON(): { [k: string]: any };
-
-        /**
-         * Gets the default type url for AdminUpsertRecommenderLevelDefinitionRequest
-         * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
-         * @returns The default type url
-         */
-        public static getTypeUrl(typeUrlPrefix?: string): string;
     }
 
     /** Properties of an AdminUpsertRecommenderLevelDefinitionResponse. */
@@ -12140,9 +11516,9 @@ export namespace pb {
 
         /**
          * Constructs a new AdminUpsertRecommenderLevelDefinitionResponse.
-         * @param [properties] Properties to set
+         * @param [p] Properties to set
          */
-        constructor(properties?: pb.IAdminUpsertRecommenderLevelDefinitionResponse);
+        constructor(p?: pb.IAdminUpsertRecommenderLevelDefinitionResponse);
 
         /** AdminUpsertRecommenderLevelDefinitionResponse code. */
         public code: number;
@@ -12159,11 +11535,11 @@ export namespace pb {
 
         /**
          * Encodes the specified AdminUpsertRecommenderLevelDefinitionResponse message. Does not implicitly {@link pb.AdminUpsertRecommenderLevelDefinitionResponse.verify|verify} messages.
-         * @param message AdminUpsertRecommenderLevelDefinitionResponse message or plain object to encode
-         * @param [writer] Writer to encode to
+         * @param m AdminUpsertRecommenderLevelDefinitionResponse message or plain object to encode
+         * @param [w] Writer to encode to
          * @returns Writer
          */
-        public static encode(message: pb.IAdminUpsertRecommenderLevelDefinitionResponse, writer?: $protobuf.Writer): $protobuf.Writer;
+        public static encode(m: pb.IAdminUpsertRecommenderLevelDefinitionResponse, w?: $protobuf.Writer): $protobuf.Writer;
 
         /**
          * Encodes the specified AdminUpsertRecommenderLevelDefinitionResponse message, length delimited. Does not implicitly {@link pb.AdminUpsertRecommenderLevelDefinitionResponse.verify|verify} messages.
@@ -12175,13 +11551,13 @@ export namespace pb {
 
         /**
          * Decodes an AdminUpsertRecommenderLevelDefinitionResponse message from the specified reader or buffer.
-         * @param reader Reader or buffer to decode from
-         * @param [length] Message length if known beforehand
+         * @param r Reader or buffer to decode from
+         * @param [l] Message length if known beforehand
          * @returns AdminUpsertRecommenderLevelDefinitionResponse
          * @throws {Error} If the payload is not a reader or valid buffer
          * @throws {$protobuf.util.ProtocolError} If required fields are missing
          */
-        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): pb.AdminUpsertRecommenderLevelDefinitionResponse;
+        public static decode(r: ($protobuf.Reader|Uint8Array), l?: number): pb.AdminUpsertRecommenderLevelDefinitionResponse;
 
         /**
          * Decodes an AdminUpsertRecommenderLevelDefinitionResponse message from the specified reader or buffer, length delimited.
@@ -12194,38 +11570,31 @@ export namespace pb {
 
         /**
          * Verifies an AdminUpsertRecommenderLevelDefinitionResponse message.
-         * @param message Plain object to verify
+         * @param m Plain object to verify
          * @returns `null` if valid, otherwise the reason why it is not
          */
-        public static verify(message: { [k: string]: any }): (string|null);
+        public static verify(m: { [k: string]: any }): (string|null);
 
         /**
          * Creates an AdminUpsertRecommenderLevelDefinitionResponse message from a plain object. Also converts values to their respective internal types.
-         * @param object Plain object
+         * @param d Plain object
          * @returns AdminUpsertRecommenderLevelDefinitionResponse
          */
-        public static fromObject(object: { [k: string]: any }): pb.AdminUpsertRecommenderLevelDefinitionResponse;
+        public static fromObject(d: { [k: string]: any }): pb.AdminUpsertRecommenderLevelDefinitionResponse;
 
         /**
          * Creates a plain object from an AdminUpsertRecommenderLevelDefinitionResponse message. Also converts values to other types if specified.
-         * @param message AdminUpsertRecommenderLevelDefinitionResponse
-         * @param [options] Conversion options
+         * @param m AdminUpsertRecommenderLevelDefinitionResponse
+         * @param [o] Conversion options
          * @returns Plain object
          */
-        public static toObject(message: pb.AdminUpsertRecommenderLevelDefinitionResponse, options?: $protobuf.IConversionOptions): { [k: string]: any };
+        public static toObject(m: pb.AdminUpsertRecommenderLevelDefinitionResponse, o?: $protobuf.IConversionOptions): { [k: string]: any };
 
         /**
          * Converts this AdminUpsertRecommenderLevelDefinitionResponse to JSON.
          * @returns JSON object
          */
         public toJSON(): { [k: string]: any };
-
-        /**
-         * Gets the default type url for AdminUpsertRecommenderLevelDefinitionResponse
-         * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
-         * @returns The default type url
-         */
-        public static getTypeUrl(typeUrlPrefix?: string): string;
     }
 
     /** Properties of an AdminListRecommenderLevelDefinitionsRequest. */
@@ -12243,9 +11612,9 @@ export namespace pb {
 
         /**
          * Constructs a new AdminListRecommenderLevelDefinitionsRequest.
-         * @param [properties] Properties to set
+         * @param [p] Properties to set
          */
-        constructor(properties?: pb.IAdminListRecommenderLevelDefinitionsRequest);
+        constructor(p?: pb.IAdminListRecommenderLevelDefinitionsRequest);
 
         /** AdminListRecommenderLevelDefinitionsRequest pageNum. */
         public pageNum: number;
@@ -12262,11 +11631,11 @@ export namespace pb {
 
         /**
          * Encodes the specified AdminListRecommenderLevelDefinitionsRequest message. Does not implicitly {@link pb.AdminListRecommenderLevelDefinitionsRequest.verify|verify} messages.
-         * @param message AdminListRecommenderLevelDefinitionsRequest message or plain object to encode
-         * @param [writer] Writer to encode to
+         * @param m AdminListRecommenderLevelDefinitionsRequest message or plain object to encode
+         * @param [w] Writer to encode to
          * @returns Writer
          */
-        public static encode(message: pb.IAdminListRecommenderLevelDefinitionsRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+        public static encode(m: pb.IAdminListRecommenderLevelDefinitionsRequest, w?: $protobuf.Writer): $protobuf.Writer;
 
         /**
          * Encodes the specified AdminListRecommenderLevelDefinitionsRequest message, length delimited. Does not implicitly {@link pb.AdminListRecommenderLevelDefinitionsRequest.verify|verify} messages.
@@ -12278,13 +11647,13 @@ export namespace pb {
 
         /**
          * Decodes an AdminListRecommenderLevelDefinitionsRequest message from the specified reader or buffer.
-         * @param reader Reader or buffer to decode from
-         * @param [length] Message length if known beforehand
+         * @param r Reader or buffer to decode from
+         * @param [l] Message length if known beforehand
          * @returns AdminListRecommenderLevelDefinitionsRequest
          * @throws {Error} If the payload is not a reader or valid buffer
          * @throws {$protobuf.util.ProtocolError} If required fields are missing
          */
-        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): pb.AdminListRecommenderLevelDefinitionsRequest;
+        public static decode(r: ($protobuf.Reader|Uint8Array), l?: number): pb.AdminListRecommenderLevelDefinitionsRequest;
 
         /**
          * Decodes an AdminListRecommenderLevelDefinitionsRequest message from the specified reader or buffer, length delimited.
@@ -12297,38 +11666,31 @@ export namespace pb {
 
         /**
          * Verifies an AdminListRecommenderLevelDefinitionsRequest message.
-         * @param message Plain object to verify
+         * @param m Plain object to verify
          * @returns `null` if valid, otherwise the reason why it is not
          */
-        public static verify(message: { [k: string]: any }): (string|null);
+        public static verify(m: { [k: string]: any }): (string|null);
 
         /**
          * Creates an AdminListRecommenderLevelDefinitionsRequest message from a plain object. Also converts values to their respective internal types.
-         * @param object Plain object
+         * @param d Plain object
          * @returns AdminListRecommenderLevelDefinitionsRequest
          */
-        public static fromObject(object: { [k: string]: any }): pb.AdminListRecommenderLevelDefinitionsRequest;
+        public static fromObject(d: { [k: string]: any }): pb.AdminListRecommenderLevelDefinitionsRequest;
 
         /**
          * Creates a plain object from an AdminListRecommenderLevelDefinitionsRequest message. Also converts values to other types if specified.
-         * @param message AdminListRecommenderLevelDefinitionsRequest
-         * @param [options] Conversion options
+         * @param m AdminListRecommenderLevelDefinitionsRequest
+         * @param [o] Conversion options
          * @returns Plain object
          */
-        public static toObject(message: pb.AdminListRecommenderLevelDefinitionsRequest, options?: $protobuf.IConversionOptions): { [k: string]: any };
+        public static toObject(m: pb.AdminListRecommenderLevelDefinitionsRequest, o?: $protobuf.IConversionOptions): { [k: string]: any };
 
         /**
          * Converts this AdminListRecommenderLevelDefinitionsRequest to JSON.
          * @returns JSON object
          */
         public toJSON(): { [k: string]: any };
-
-        /**
-         * Gets the default type url for AdminListRecommenderLevelDefinitionsRequest
-         * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
-         * @returns The default type url
-         */
-        public static getTypeUrl(typeUrlPrefix?: string): string;
     }
 
     /** Properties of an AdminListRecommenderLevelDefinitionsResponse. */
@@ -12352,9 +11714,9 @@ export namespace pb {
 
         /**
          * Constructs a new AdminListRecommenderLevelDefinitionsResponse.
-         * @param [properties] Properties to set
+         * @param [p] Properties to set
          */
-        constructor(properties?: pb.IAdminListRecommenderLevelDefinitionsResponse);
+        constructor(p?: pb.IAdminListRecommenderLevelDefinitionsResponse);
 
         /** AdminListRecommenderLevelDefinitionsResponse code. */
         public code: number;
@@ -12377,11 +11739,11 @@ export namespace pb {
 
         /**
          * Encodes the specified AdminListRecommenderLevelDefinitionsResponse message. Does not implicitly {@link pb.AdminListRecommenderLevelDefinitionsResponse.verify|verify} messages.
-         * @param message AdminListRecommenderLevelDefinitionsResponse message or plain object to encode
-         * @param [writer] Writer to encode to
+         * @param m AdminListRecommenderLevelDefinitionsResponse message or plain object to encode
+         * @param [w] Writer to encode to
          * @returns Writer
          */
-        public static encode(message: pb.IAdminListRecommenderLevelDefinitionsResponse, writer?: $protobuf.Writer): $protobuf.Writer;
+        public static encode(m: pb.IAdminListRecommenderLevelDefinitionsResponse, w?: $protobuf.Writer): $protobuf.Writer;
 
         /**
          * Encodes the specified AdminListRecommenderLevelDefinitionsResponse message, length delimited. Does not implicitly {@link pb.AdminListRecommenderLevelDefinitionsResponse.verify|verify} messages.
@@ -12393,13 +11755,13 @@ export namespace pb {
 
         /**
          * Decodes an AdminListRecommenderLevelDefinitionsResponse message from the specified reader or buffer.
-         * @param reader Reader or buffer to decode from
-         * @param [length] Message length if known beforehand
+         * @param r Reader or buffer to decode from
+         * @param [l] Message length if known beforehand
          * @returns AdminListRecommenderLevelDefinitionsResponse
          * @throws {Error} If the payload is not a reader or valid buffer
          * @throws {$protobuf.util.ProtocolError} If required fields are missing
          */
-        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): pb.AdminListRecommenderLevelDefinitionsResponse;
+        public static decode(r: ($protobuf.Reader|Uint8Array), l?: number): pb.AdminListRecommenderLevelDefinitionsResponse;
 
         /**
          * Decodes an AdminListRecommenderLevelDefinitionsResponse message from the specified reader or buffer, length delimited.
@@ -12412,38 +11774,31 @@ export namespace pb {
 
         /**
          * Verifies an AdminListRecommenderLevelDefinitionsResponse message.
-         * @param message Plain object to verify
+         * @param m Plain object to verify
          * @returns `null` if valid, otherwise the reason why it is not
          */
-        public static verify(message: { [k: string]: any }): (string|null);
+        public static verify(m: { [k: string]: any }): (string|null);
 
         /**
          * Creates an AdminListRecommenderLevelDefinitionsResponse message from a plain object. Also converts values to their respective internal types.
-         * @param object Plain object
+         * @param d Plain object
          * @returns AdminListRecommenderLevelDefinitionsResponse
          */
-        public static fromObject(object: { [k: string]: any }): pb.AdminListRecommenderLevelDefinitionsResponse;
+        public static fromObject(d: { [k: string]: any }): pb.AdminListRecommenderLevelDefinitionsResponse;
 
         /**
          * Creates a plain object from an AdminListRecommenderLevelDefinitionsResponse message. Also converts values to other types if specified.
-         * @param message AdminListRecommenderLevelDefinitionsResponse
-         * @param [options] Conversion options
+         * @param m AdminListRecommenderLevelDefinitionsResponse
+         * @param [o] Conversion options
          * @returns Plain object
          */
-        public static toObject(message: pb.AdminListRecommenderLevelDefinitionsResponse, options?: $protobuf.IConversionOptions): { [k: string]: any };
+        public static toObject(m: pb.AdminListRecommenderLevelDefinitionsResponse, o?: $protobuf.IConversionOptions): { [k: string]: any };
 
         /**
          * Converts this AdminListRecommenderLevelDefinitionsResponse to JSON.
          * @returns JSON object
          */
         public toJSON(): { [k: string]: any };
-
-        /**
-         * Gets the default type url for AdminListRecommenderLevelDefinitionsResponse
-         * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
-         * @returns The default type url
-         */
-        public static getTypeUrl(typeUrlPrefix?: string): string;
     }
 
     /** Properties of an AdminDeleteRecommenderLevelDefinitionRequest. */
@@ -12458,9 +11813,9 @@ export namespace pb {
 
         /**
          * Constructs a new AdminDeleteRecommenderLevelDefinitionRequest.
-         * @param [properties] Properties to set
+         * @param [p] Properties to set
          */
-        constructor(properties?: pb.IAdminDeleteRecommenderLevelDefinitionRequest);
+        constructor(p?: pb.IAdminDeleteRecommenderLevelDefinitionRequest);
 
         /** AdminDeleteRecommenderLevelDefinitionRequest level. */
         public level: number;
@@ -12474,11 +11829,11 @@ export namespace pb {
 
         /**
          * Encodes the specified AdminDeleteRecommenderLevelDefinitionRequest message. Does not implicitly {@link pb.AdminDeleteRecommenderLevelDefinitionRequest.verify|verify} messages.
-         * @param message AdminDeleteRecommenderLevelDefinitionRequest message or plain object to encode
-         * @param [writer] Writer to encode to
+         * @param m AdminDeleteRecommenderLevelDefinitionRequest message or plain object to encode
+         * @param [w] Writer to encode to
          * @returns Writer
          */
-        public static encode(message: pb.IAdminDeleteRecommenderLevelDefinitionRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+        public static encode(m: pb.IAdminDeleteRecommenderLevelDefinitionRequest, w?: $protobuf.Writer): $protobuf.Writer;
 
         /**
          * Encodes the specified AdminDeleteRecommenderLevelDefinitionRequest message, length delimited. Does not implicitly {@link pb.AdminDeleteRecommenderLevelDefinitionRequest.verify|verify} messages.
@@ -12490,13 +11845,13 @@ export namespace pb {
 
         /**
          * Decodes an AdminDeleteRecommenderLevelDefinitionRequest message from the specified reader or buffer.
-         * @param reader Reader or buffer to decode from
-         * @param [length] Message length if known beforehand
+         * @param r Reader or buffer to decode from
+         * @param [l] Message length if known beforehand
          * @returns AdminDeleteRecommenderLevelDefinitionRequest
          * @throws {Error} If the payload is not a reader or valid buffer
          * @throws {$protobuf.util.ProtocolError} If required fields are missing
          */
-        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): pb.AdminDeleteRecommenderLevelDefinitionRequest;
+        public static decode(r: ($protobuf.Reader|Uint8Array), l?: number): pb.AdminDeleteRecommenderLevelDefinitionRequest;
 
         /**
          * Decodes an AdminDeleteRecommenderLevelDefinitionRequest message from the specified reader or buffer, length delimited.
@@ -12509,38 +11864,31 @@ export namespace pb {
 
         /**
          * Verifies an AdminDeleteRecommenderLevelDefinitionRequest message.
-         * @param message Plain object to verify
+         * @param m Plain object to verify
          * @returns `null` if valid, otherwise the reason why it is not
          */
-        public static verify(message: { [k: string]: any }): (string|null);
+        public static verify(m: { [k: string]: any }): (string|null);
 
         /**
          * Creates an AdminDeleteRecommenderLevelDefinitionRequest message from a plain object. Also converts values to their respective internal types.
-         * @param object Plain object
+         * @param d Plain object
          * @returns AdminDeleteRecommenderLevelDefinitionRequest
          */
-        public static fromObject(object: { [k: string]: any }): pb.AdminDeleteRecommenderLevelDefinitionRequest;
+        public static fromObject(d: { [k: string]: any }): pb.AdminDeleteRecommenderLevelDefinitionRequest;
 
         /**
          * Creates a plain object from an AdminDeleteRecommenderLevelDefinitionRequest message. Also converts values to other types if specified.
-         * @param message AdminDeleteRecommenderLevelDefinitionRequest
-         * @param [options] Conversion options
+         * @param m AdminDeleteRecommenderLevelDefinitionRequest
+         * @param [o] Conversion options
          * @returns Plain object
          */
-        public static toObject(message: pb.AdminDeleteRecommenderLevelDefinitionRequest, options?: $protobuf.IConversionOptions): { [k: string]: any };
+        public static toObject(m: pb.AdminDeleteRecommenderLevelDefinitionRequest, o?: $protobuf.IConversionOptions): { [k: string]: any };
 
         /**
          * Converts this AdminDeleteRecommenderLevelDefinitionRequest to JSON.
          * @returns JSON object
          */
         public toJSON(): { [k: string]: any };
-
-        /**
-         * Gets the default type url for AdminDeleteRecommenderLevelDefinitionRequest
-         * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
-         * @returns The default type url
-         */
-        public static getTypeUrl(typeUrlPrefix?: string): string;
     }
 
     /** Properties of an AdminDeleteRecommenderLevelDefinitionResponse. */
@@ -12558,9 +11906,9 @@ export namespace pb {
 
         /**
          * Constructs a new AdminDeleteRecommenderLevelDefinitionResponse.
-         * @param [properties] Properties to set
+         * @param [p] Properties to set
          */
-        constructor(properties?: pb.IAdminDeleteRecommenderLevelDefinitionResponse);
+        constructor(p?: pb.IAdminDeleteRecommenderLevelDefinitionResponse);
 
         /** AdminDeleteRecommenderLevelDefinitionResponse code. */
         public code: number;
@@ -12577,11 +11925,11 @@ export namespace pb {
 
         /**
          * Encodes the specified AdminDeleteRecommenderLevelDefinitionResponse message. Does not implicitly {@link pb.AdminDeleteRecommenderLevelDefinitionResponse.verify|verify} messages.
-         * @param message AdminDeleteRecommenderLevelDefinitionResponse message or plain object to encode
-         * @param [writer] Writer to encode to
+         * @param m AdminDeleteRecommenderLevelDefinitionResponse message or plain object to encode
+         * @param [w] Writer to encode to
          * @returns Writer
          */
-        public static encode(message: pb.IAdminDeleteRecommenderLevelDefinitionResponse, writer?: $protobuf.Writer): $protobuf.Writer;
+        public static encode(m: pb.IAdminDeleteRecommenderLevelDefinitionResponse, w?: $protobuf.Writer): $protobuf.Writer;
 
         /**
          * Encodes the specified AdminDeleteRecommenderLevelDefinitionResponse message, length delimited. Does not implicitly {@link pb.AdminDeleteRecommenderLevelDefinitionResponse.verify|verify} messages.
@@ -12593,13 +11941,13 @@ export namespace pb {
 
         /**
          * Decodes an AdminDeleteRecommenderLevelDefinitionResponse message from the specified reader or buffer.
-         * @param reader Reader or buffer to decode from
-         * @param [length] Message length if known beforehand
+         * @param r Reader or buffer to decode from
+         * @param [l] Message length if known beforehand
          * @returns AdminDeleteRecommenderLevelDefinitionResponse
          * @throws {Error} If the payload is not a reader or valid buffer
          * @throws {$protobuf.util.ProtocolError} If required fields are missing
          */
-        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): pb.AdminDeleteRecommenderLevelDefinitionResponse;
+        public static decode(r: ($protobuf.Reader|Uint8Array), l?: number): pb.AdminDeleteRecommenderLevelDefinitionResponse;
 
         /**
          * Decodes an AdminDeleteRecommenderLevelDefinitionResponse message from the specified reader or buffer, length delimited.
@@ -12612,38 +11960,31 @@ export namespace pb {
 
         /**
          * Verifies an AdminDeleteRecommenderLevelDefinitionResponse message.
-         * @param message Plain object to verify
+         * @param m Plain object to verify
          * @returns `null` if valid, otherwise the reason why it is not
          */
-        public static verify(message: { [k: string]: any }): (string|null);
+        public static verify(m: { [k: string]: any }): (string|null);
 
         /**
          * Creates an AdminDeleteRecommenderLevelDefinitionResponse message from a plain object. Also converts values to their respective internal types.
-         * @param object Plain object
+         * @param d Plain object
          * @returns AdminDeleteRecommenderLevelDefinitionResponse
          */
-        public static fromObject(object: { [k: string]: any }): pb.AdminDeleteRecommenderLevelDefinitionResponse;
+        public static fromObject(d: { [k: string]: any }): pb.AdminDeleteRecommenderLevelDefinitionResponse;
 
         /**
          * Creates a plain object from an AdminDeleteRecommenderLevelDefinitionResponse message. Also converts values to other types if specified.
-         * @param message AdminDeleteRecommenderLevelDefinitionResponse
-         * @param [options] Conversion options
+         * @param m AdminDeleteRecommenderLevelDefinitionResponse
+         * @param [o] Conversion options
          * @returns Plain object
          */
-        public static toObject(message: pb.AdminDeleteRecommenderLevelDefinitionResponse, options?: $protobuf.IConversionOptions): { [k: string]: any };
+        public static toObject(m: pb.AdminDeleteRecommenderLevelDefinitionResponse, o?: $protobuf.IConversionOptions): { [k: string]: any };
 
         /**
          * Converts this AdminDeleteRecommenderLevelDefinitionResponse to JSON.
          * @returns JSON object
          */
         public toJSON(): { [k: string]: any };
-
-        /**
-         * Gets the default type url for AdminDeleteRecommenderLevelDefinitionResponse
-         * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
-         * @returns The default type url
-         */
-        public static getTypeUrl(typeUrlPrefix?: string): string;
     }
 
     /** Properties of a ListRecommenderLevelDefinitionsRequest. */
@@ -12664,9 +12005,9 @@ export namespace pb {
 
         /**
          * Constructs a new ListRecommenderLevelDefinitionsRequest.
-         * @param [properties] Properties to set
+         * @param [p] Properties to set
          */
-        constructor(properties?: pb.IListRecommenderLevelDefinitionsRequest);
+        constructor(p?: pb.IListRecommenderLevelDefinitionsRequest);
 
         /** ListRecommenderLevelDefinitionsRequest serviceAppid. */
         public serviceAppid: string;
@@ -12686,11 +12027,11 @@ export namespace pb {
 
         /**
          * Encodes the specified ListRecommenderLevelDefinitionsRequest message. Does not implicitly {@link pb.ListRecommenderLevelDefinitionsRequest.verify|verify} messages.
-         * @param message ListRecommenderLevelDefinitionsRequest message or plain object to encode
-         * @param [writer] Writer to encode to
+         * @param m ListRecommenderLevelDefinitionsRequest message or plain object to encode
+         * @param [w] Writer to encode to
          * @returns Writer
          */
-        public static encode(message: pb.IListRecommenderLevelDefinitionsRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+        public static encode(m: pb.IListRecommenderLevelDefinitionsRequest, w?: $protobuf.Writer): $protobuf.Writer;
 
         /**
          * Encodes the specified ListRecommenderLevelDefinitionsRequest message, length delimited. Does not implicitly {@link pb.ListRecommenderLevelDefinitionsRequest.verify|verify} messages.
@@ -12702,13 +12043,13 @@ export namespace pb {
 
         /**
          * Decodes a ListRecommenderLevelDefinitionsRequest message from the specified reader or buffer.
-         * @param reader Reader or buffer to decode from
-         * @param [length] Message length if known beforehand
+         * @param r Reader or buffer to decode from
+         * @param [l] Message length if known beforehand
          * @returns ListRecommenderLevelDefinitionsRequest
          * @throws {Error} If the payload is not a reader or valid buffer
          * @throws {$protobuf.util.ProtocolError} If required fields are missing
          */
-        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): pb.ListRecommenderLevelDefinitionsRequest;
+        public static decode(r: ($protobuf.Reader|Uint8Array), l?: number): pb.ListRecommenderLevelDefinitionsRequest;
 
         /**
          * Decodes a ListRecommenderLevelDefinitionsRequest message from the specified reader or buffer, length delimited.
@@ -12721,38 +12062,31 @@ export namespace pb {
 
         /**
          * Verifies a ListRecommenderLevelDefinitionsRequest message.
-         * @param message Plain object to verify
+         * @param m Plain object to verify
          * @returns `null` if valid, otherwise the reason why it is not
          */
-        public static verify(message: { [k: string]: any }): (string|null);
+        public static verify(m: { [k: string]: any }): (string|null);
 
         /**
          * Creates a ListRecommenderLevelDefinitionsRequest message from a plain object. Also converts values to their respective internal types.
-         * @param object Plain object
+         * @param d Plain object
          * @returns ListRecommenderLevelDefinitionsRequest
          */
-        public static fromObject(object: { [k: string]: any }): pb.ListRecommenderLevelDefinitionsRequest;
+        public static fromObject(d: { [k: string]: any }): pb.ListRecommenderLevelDefinitionsRequest;
 
         /**
          * Creates a plain object from a ListRecommenderLevelDefinitionsRequest message. Also converts values to other types if specified.
-         * @param message ListRecommenderLevelDefinitionsRequest
-         * @param [options] Conversion options
+         * @param m ListRecommenderLevelDefinitionsRequest
+         * @param [o] Conversion options
          * @returns Plain object
          */
-        public static toObject(message: pb.ListRecommenderLevelDefinitionsRequest, options?: $protobuf.IConversionOptions): { [k: string]: any };
+        public static toObject(m: pb.ListRecommenderLevelDefinitionsRequest, o?: $protobuf.IConversionOptions): { [k: string]: any };
 
         /**
          * Converts this ListRecommenderLevelDefinitionsRequest to JSON.
          * @returns JSON object
          */
         public toJSON(): { [k: string]: any };
-
-        /**
-         * Gets the default type url for ListRecommenderLevelDefinitionsRequest
-         * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
-         * @returns The default type url
-         */
-        public static getTypeUrl(typeUrlPrefix?: string): string;
     }
 
     /** Properties of a ListRecommenderLevelDefinitionsResponse. */
@@ -12776,9 +12110,9 @@ export namespace pb {
 
         /**
          * Constructs a new ListRecommenderLevelDefinitionsResponse.
-         * @param [properties] Properties to set
+         * @param [p] Properties to set
          */
-        constructor(properties?: pb.IListRecommenderLevelDefinitionsResponse);
+        constructor(p?: pb.IListRecommenderLevelDefinitionsResponse);
 
         /** ListRecommenderLevelDefinitionsResponse code. */
         public code: number;
@@ -12801,11 +12135,11 @@ export namespace pb {
 
         /**
          * Encodes the specified ListRecommenderLevelDefinitionsResponse message. Does not implicitly {@link pb.ListRecommenderLevelDefinitionsResponse.verify|verify} messages.
-         * @param message ListRecommenderLevelDefinitionsResponse message or plain object to encode
-         * @param [writer] Writer to encode to
+         * @param m ListRecommenderLevelDefinitionsResponse message or plain object to encode
+         * @param [w] Writer to encode to
          * @returns Writer
          */
-        public static encode(message: pb.IListRecommenderLevelDefinitionsResponse, writer?: $protobuf.Writer): $protobuf.Writer;
+        public static encode(m: pb.IListRecommenderLevelDefinitionsResponse, w?: $protobuf.Writer): $protobuf.Writer;
 
         /**
          * Encodes the specified ListRecommenderLevelDefinitionsResponse message, length delimited. Does not implicitly {@link pb.ListRecommenderLevelDefinitionsResponse.verify|verify} messages.
@@ -12817,13 +12151,13 @@ export namespace pb {
 
         /**
          * Decodes a ListRecommenderLevelDefinitionsResponse message from the specified reader or buffer.
-         * @param reader Reader or buffer to decode from
-         * @param [length] Message length if known beforehand
+         * @param r Reader or buffer to decode from
+         * @param [l] Message length if known beforehand
          * @returns ListRecommenderLevelDefinitionsResponse
          * @throws {Error} If the payload is not a reader or valid buffer
          * @throws {$protobuf.util.ProtocolError} If required fields are missing
          */
-        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): pb.ListRecommenderLevelDefinitionsResponse;
+        public static decode(r: ($protobuf.Reader|Uint8Array), l?: number): pb.ListRecommenderLevelDefinitionsResponse;
 
         /**
          * Decodes a ListRecommenderLevelDefinitionsResponse message from the specified reader or buffer, length delimited.
@@ -12836,38 +12170,31 @@ export namespace pb {
 
         /**
          * Verifies a ListRecommenderLevelDefinitionsResponse message.
-         * @param message Plain object to verify
+         * @param m Plain object to verify
          * @returns `null` if valid, otherwise the reason why it is not
          */
-        public static verify(message: { [k: string]: any }): (string|null);
+        public static verify(m: { [k: string]: any }): (string|null);
 
         /**
          * Creates a ListRecommenderLevelDefinitionsResponse message from a plain object. Also converts values to their respective internal types.
-         * @param object Plain object
+         * @param d Plain object
          * @returns ListRecommenderLevelDefinitionsResponse
          */
-        public static fromObject(object: { [k: string]: any }): pb.ListRecommenderLevelDefinitionsResponse;
+        public static fromObject(d: { [k: string]: any }): pb.ListRecommenderLevelDefinitionsResponse;
 
         /**
          * Creates a plain object from a ListRecommenderLevelDefinitionsResponse message. Also converts values to other types if specified.
-         * @param message ListRecommenderLevelDefinitionsResponse
-         * @param [options] Conversion options
+         * @param m ListRecommenderLevelDefinitionsResponse
+         * @param [o] Conversion options
          * @returns Plain object
          */
-        public static toObject(message: pb.ListRecommenderLevelDefinitionsResponse, options?: $protobuf.IConversionOptions): { [k: string]: any };
+        public static toObject(m: pb.ListRecommenderLevelDefinitionsResponse, o?: $protobuf.IConversionOptions): { [k: string]: any };
 
         /**
          * Converts this ListRecommenderLevelDefinitionsResponse to JSON.
          * @returns JSON object
          */
         public toJSON(): { [k: string]: any };
-
-        /**
-         * Gets the default type url for ListRecommenderLevelDefinitionsResponse
-         * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
-         * @returns The default type url
-         */
-        public static getTypeUrl(typeUrlPrefix?: string): string;
     }
 
     /** Properties of a RecommenderAppPolicyInfo. */
@@ -12912,9 +12239,9 @@ export namespace pb {
 
         /**
          * Constructs a new RecommenderAppPolicyInfo.
-         * @param [properties] Properties to set
+         * @param [p] Properties to set
          */
-        constructor(properties?: pb.IRecommenderAppPolicyInfo);
+        constructor(p?: pb.IRecommenderAppPolicyInfo);
 
         /** RecommenderAppPolicyInfo id. */
         public id: (number|Long);
@@ -12958,11 +12285,11 @@ export namespace pb {
 
         /**
          * Encodes the specified RecommenderAppPolicyInfo message. Does not implicitly {@link pb.RecommenderAppPolicyInfo.verify|verify} messages.
-         * @param message RecommenderAppPolicyInfo message or plain object to encode
-         * @param [writer] Writer to encode to
+         * @param m RecommenderAppPolicyInfo message or plain object to encode
+         * @param [w] Writer to encode to
          * @returns Writer
          */
-        public static encode(message: pb.IRecommenderAppPolicyInfo, writer?: $protobuf.Writer): $protobuf.Writer;
+        public static encode(m: pb.IRecommenderAppPolicyInfo, w?: $protobuf.Writer): $protobuf.Writer;
 
         /**
          * Encodes the specified RecommenderAppPolicyInfo message, length delimited. Does not implicitly {@link pb.RecommenderAppPolicyInfo.verify|verify} messages.
@@ -12974,13 +12301,13 @@ export namespace pb {
 
         /**
          * Decodes a RecommenderAppPolicyInfo message from the specified reader or buffer.
-         * @param reader Reader or buffer to decode from
-         * @param [length] Message length if known beforehand
+         * @param r Reader or buffer to decode from
+         * @param [l] Message length if known beforehand
          * @returns RecommenderAppPolicyInfo
          * @throws {Error} If the payload is not a reader or valid buffer
          * @throws {$protobuf.util.ProtocolError} If required fields are missing
          */
-        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): pb.RecommenderAppPolicyInfo;
+        public static decode(r: ($protobuf.Reader|Uint8Array), l?: number): pb.RecommenderAppPolicyInfo;
 
         /**
          * Decodes a RecommenderAppPolicyInfo message from the specified reader or buffer, length delimited.
@@ -12993,38 +12320,31 @@ export namespace pb {
 
         /**
          * Verifies a RecommenderAppPolicyInfo message.
-         * @param message Plain object to verify
+         * @param m Plain object to verify
          * @returns `null` if valid, otherwise the reason why it is not
          */
-        public static verify(message: { [k: string]: any }): (string|null);
+        public static verify(m: { [k: string]: any }): (string|null);
 
         /**
          * Creates a RecommenderAppPolicyInfo message from a plain object. Also converts values to their respective internal types.
-         * @param object Plain object
+         * @param d Plain object
          * @returns RecommenderAppPolicyInfo
          */
-        public static fromObject(object: { [k: string]: any }): pb.RecommenderAppPolicyInfo;
+        public static fromObject(d: { [k: string]: any }): pb.RecommenderAppPolicyInfo;
 
         /**
          * Creates a plain object from a RecommenderAppPolicyInfo message. Also converts values to other types if specified.
-         * @param message RecommenderAppPolicyInfo
-         * @param [options] Conversion options
+         * @param m RecommenderAppPolicyInfo
+         * @param [o] Conversion options
          * @returns Plain object
          */
-        public static toObject(message: pb.RecommenderAppPolicyInfo, options?: $protobuf.IConversionOptions): { [k: string]: any };
+        public static toObject(m: pb.RecommenderAppPolicyInfo, o?: $protobuf.IConversionOptions): { [k: string]: any };
 
         /**
          * Converts this RecommenderAppPolicyInfo to JSON.
          * @returns JSON object
          */
         public toJSON(): { [k: string]: any };
-
-        /**
-         * Gets the default type url for RecommenderAppPolicyInfo
-         * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
-         * @returns The default type url
-         */
-        public static getTypeUrl(typeUrlPrefix?: string): string;
     }
 
     /** Properties of an AdminUpsertRecommenderAppPolicyRequest. */
@@ -13060,9 +12380,9 @@ export namespace pb {
 
         /**
          * Constructs a new AdminUpsertRecommenderAppPolicyRequest.
-         * @param [properties] Properties to set
+         * @param [p] Properties to set
          */
-        constructor(properties?: pb.IAdminUpsertRecommenderAppPolicyRequest);
+        constructor(p?: pb.IAdminUpsertRecommenderAppPolicyRequest);
 
         /** AdminUpsertRecommenderAppPolicyRequest serviceAppid. */
         public serviceAppid: string;
@@ -13097,11 +12417,11 @@ export namespace pb {
 
         /**
          * Encodes the specified AdminUpsertRecommenderAppPolicyRequest message. Does not implicitly {@link pb.AdminUpsertRecommenderAppPolicyRequest.verify|verify} messages.
-         * @param message AdminUpsertRecommenderAppPolicyRequest message or plain object to encode
-         * @param [writer] Writer to encode to
+         * @param m AdminUpsertRecommenderAppPolicyRequest message or plain object to encode
+         * @param [w] Writer to encode to
          * @returns Writer
          */
-        public static encode(message: pb.IAdminUpsertRecommenderAppPolicyRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+        public static encode(m: pb.IAdminUpsertRecommenderAppPolicyRequest, w?: $protobuf.Writer): $protobuf.Writer;
 
         /**
          * Encodes the specified AdminUpsertRecommenderAppPolicyRequest message, length delimited. Does not implicitly {@link pb.AdminUpsertRecommenderAppPolicyRequest.verify|verify} messages.
@@ -13113,13 +12433,13 @@ export namespace pb {
 
         /**
          * Decodes an AdminUpsertRecommenderAppPolicyRequest message from the specified reader or buffer.
-         * @param reader Reader or buffer to decode from
-         * @param [length] Message length if known beforehand
+         * @param r Reader or buffer to decode from
+         * @param [l] Message length if known beforehand
          * @returns AdminUpsertRecommenderAppPolicyRequest
          * @throws {Error} If the payload is not a reader or valid buffer
          * @throws {$protobuf.util.ProtocolError} If required fields are missing
          */
-        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): pb.AdminUpsertRecommenderAppPolicyRequest;
+        public static decode(r: ($protobuf.Reader|Uint8Array), l?: number): pb.AdminUpsertRecommenderAppPolicyRequest;
 
         /**
          * Decodes an AdminUpsertRecommenderAppPolicyRequest message from the specified reader or buffer, length delimited.
@@ -13132,38 +12452,31 @@ export namespace pb {
 
         /**
          * Verifies an AdminUpsertRecommenderAppPolicyRequest message.
-         * @param message Plain object to verify
+         * @param m Plain object to verify
          * @returns `null` if valid, otherwise the reason why it is not
          */
-        public static verify(message: { [k: string]: any }): (string|null);
+        public static verify(m: { [k: string]: any }): (string|null);
 
         /**
          * Creates an AdminUpsertRecommenderAppPolicyRequest message from a plain object. Also converts values to their respective internal types.
-         * @param object Plain object
+         * @param d Plain object
          * @returns AdminUpsertRecommenderAppPolicyRequest
          */
-        public static fromObject(object: { [k: string]: any }): pb.AdminUpsertRecommenderAppPolicyRequest;
+        public static fromObject(d: { [k: string]: any }): pb.AdminUpsertRecommenderAppPolicyRequest;
 
         /**
          * Creates a plain object from an AdminUpsertRecommenderAppPolicyRequest message. Also converts values to other types if specified.
-         * @param message AdminUpsertRecommenderAppPolicyRequest
-         * @param [options] Conversion options
+         * @param m AdminUpsertRecommenderAppPolicyRequest
+         * @param [o] Conversion options
          * @returns Plain object
          */
-        public static toObject(message: pb.AdminUpsertRecommenderAppPolicyRequest, options?: $protobuf.IConversionOptions): { [k: string]: any };
+        public static toObject(m: pb.AdminUpsertRecommenderAppPolicyRequest, o?: $protobuf.IConversionOptions): { [k: string]: any };
 
         /**
          * Converts this AdminUpsertRecommenderAppPolicyRequest to JSON.
          * @returns JSON object
          */
         public toJSON(): { [k: string]: any };
-
-        /**
-         * Gets the default type url for AdminUpsertRecommenderAppPolicyRequest
-         * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
-         * @returns The default type url
-         */
-        public static getTypeUrl(typeUrlPrefix?: string): string;
     }
 
     /** Properties of an AdminUpsertRecommenderAppPolicyResponse. */
@@ -13181,9 +12494,9 @@ export namespace pb {
 
         /**
          * Constructs a new AdminUpsertRecommenderAppPolicyResponse.
-         * @param [properties] Properties to set
+         * @param [p] Properties to set
          */
-        constructor(properties?: pb.IAdminUpsertRecommenderAppPolicyResponse);
+        constructor(p?: pb.IAdminUpsertRecommenderAppPolicyResponse);
 
         /** AdminUpsertRecommenderAppPolicyResponse code. */
         public code: number;
@@ -13200,11 +12513,11 @@ export namespace pb {
 
         /**
          * Encodes the specified AdminUpsertRecommenderAppPolicyResponse message. Does not implicitly {@link pb.AdminUpsertRecommenderAppPolicyResponse.verify|verify} messages.
-         * @param message AdminUpsertRecommenderAppPolicyResponse message or plain object to encode
-         * @param [writer] Writer to encode to
+         * @param m AdminUpsertRecommenderAppPolicyResponse message or plain object to encode
+         * @param [w] Writer to encode to
          * @returns Writer
          */
-        public static encode(message: pb.IAdminUpsertRecommenderAppPolicyResponse, writer?: $protobuf.Writer): $protobuf.Writer;
+        public static encode(m: pb.IAdminUpsertRecommenderAppPolicyResponse, w?: $protobuf.Writer): $protobuf.Writer;
 
         /**
          * Encodes the specified AdminUpsertRecommenderAppPolicyResponse message, length delimited. Does not implicitly {@link pb.AdminUpsertRecommenderAppPolicyResponse.verify|verify} messages.
@@ -13216,13 +12529,13 @@ export namespace pb {
 
         /**
          * Decodes an AdminUpsertRecommenderAppPolicyResponse message from the specified reader or buffer.
-         * @param reader Reader or buffer to decode from
-         * @param [length] Message length if known beforehand
+         * @param r Reader or buffer to decode from
+         * @param [l] Message length if known beforehand
          * @returns AdminUpsertRecommenderAppPolicyResponse
          * @throws {Error} If the payload is not a reader or valid buffer
          * @throws {$protobuf.util.ProtocolError} If required fields are missing
          */
-        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): pb.AdminUpsertRecommenderAppPolicyResponse;
+        public static decode(r: ($protobuf.Reader|Uint8Array), l?: number): pb.AdminUpsertRecommenderAppPolicyResponse;
 
         /**
          * Decodes an AdminUpsertRecommenderAppPolicyResponse message from the specified reader or buffer, length delimited.
@@ -13235,38 +12548,31 @@ export namespace pb {
 
         /**
          * Verifies an AdminUpsertRecommenderAppPolicyResponse message.
-         * @param message Plain object to verify
+         * @param m Plain object to verify
          * @returns `null` if valid, otherwise the reason why it is not
          */
-        public static verify(message: { [k: string]: any }): (string|null);
+        public static verify(m: { [k: string]: any }): (string|null);
 
         /**
          * Creates an AdminUpsertRecommenderAppPolicyResponse message from a plain object. Also converts values to their respective internal types.
-         * @param object Plain object
+         * @param d Plain object
          * @returns AdminUpsertRecommenderAppPolicyResponse
          */
-        public static fromObject(object: { [k: string]: any }): pb.AdminUpsertRecommenderAppPolicyResponse;
+        public static fromObject(d: { [k: string]: any }): pb.AdminUpsertRecommenderAppPolicyResponse;
 
         /**
          * Creates a plain object from an AdminUpsertRecommenderAppPolicyResponse message. Also converts values to other types if specified.
-         * @param message AdminUpsertRecommenderAppPolicyResponse
-         * @param [options] Conversion options
+         * @param m AdminUpsertRecommenderAppPolicyResponse
+         * @param [o] Conversion options
          * @returns Plain object
          */
-        public static toObject(message: pb.AdminUpsertRecommenderAppPolicyResponse, options?: $protobuf.IConversionOptions): { [k: string]: any };
+        public static toObject(m: pb.AdminUpsertRecommenderAppPolicyResponse, o?: $protobuf.IConversionOptions): { [k: string]: any };
 
         /**
          * Converts this AdminUpsertRecommenderAppPolicyResponse to JSON.
          * @returns JSON object
          */
         public toJSON(): { [k: string]: any };
-
-        /**
-         * Gets the default type url for AdminUpsertRecommenderAppPolicyResponse
-         * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
-         * @returns The default type url
-         */
-        public static getTypeUrl(typeUrlPrefix?: string): string;
     }
 
     /** Properties of an AdminListRecommenderAppPoliciesRequest. */
@@ -13293,9 +12599,9 @@ export namespace pb {
 
         /**
          * Constructs a new AdminListRecommenderAppPoliciesRequest.
-         * @param [properties] Properties to set
+         * @param [p] Properties to set
          */
-        constructor(properties?: pb.IAdminListRecommenderAppPoliciesRequest);
+        constructor(p?: pb.IAdminListRecommenderAppPoliciesRequest);
 
         /** AdminListRecommenderAppPoliciesRequest serviceAppid. */
         public serviceAppid: string;
@@ -13321,11 +12627,11 @@ export namespace pb {
 
         /**
          * Encodes the specified AdminListRecommenderAppPoliciesRequest message. Does not implicitly {@link pb.AdminListRecommenderAppPoliciesRequest.verify|verify} messages.
-         * @param message AdminListRecommenderAppPoliciesRequest message or plain object to encode
-         * @param [writer] Writer to encode to
+         * @param m AdminListRecommenderAppPoliciesRequest message or plain object to encode
+         * @param [w] Writer to encode to
          * @returns Writer
          */
-        public static encode(message: pb.IAdminListRecommenderAppPoliciesRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+        public static encode(m: pb.IAdminListRecommenderAppPoliciesRequest, w?: $protobuf.Writer): $protobuf.Writer;
 
         /**
          * Encodes the specified AdminListRecommenderAppPoliciesRequest message, length delimited. Does not implicitly {@link pb.AdminListRecommenderAppPoliciesRequest.verify|verify} messages.
@@ -13337,13 +12643,13 @@ export namespace pb {
 
         /**
          * Decodes an AdminListRecommenderAppPoliciesRequest message from the specified reader or buffer.
-         * @param reader Reader or buffer to decode from
-         * @param [length] Message length if known beforehand
+         * @param r Reader or buffer to decode from
+         * @param [l] Message length if known beforehand
          * @returns AdminListRecommenderAppPoliciesRequest
          * @throws {Error} If the payload is not a reader or valid buffer
          * @throws {$protobuf.util.ProtocolError} If required fields are missing
          */
-        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): pb.AdminListRecommenderAppPoliciesRequest;
+        public static decode(r: ($protobuf.Reader|Uint8Array), l?: number): pb.AdminListRecommenderAppPoliciesRequest;
 
         /**
          * Decodes an AdminListRecommenderAppPoliciesRequest message from the specified reader or buffer, length delimited.
@@ -13356,38 +12662,31 @@ export namespace pb {
 
         /**
          * Verifies an AdminListRecommenderAppPoliciesRequest message.
-         * @param message Plain object to verify
+         * @param m Plain object to verify
          * @returns `null` if valid, otherwise the reason why it is not
          */
-        public static verify(message: { [k: string]: any }): (string|null);
+        public static verify(m: { [k: string]: any }): (string|null);
 
         /**
          * Creates an AdminListRecommenderAppPoliciesRequest message from a plain object. Also converts values to their respective internal types.
-         * @param object Plain object
+         * @param d Plain object
          * @returns AdminListRecommenderAppPoliciesRequest
          */
-        public static fromObject(object: { [k: string]: any }): pb.AdminListRecommenderAppPoliciesRequest;
+        public static fromObject(d: { [k: string]: any }): pb.AdminListRecommenderAppPoliciesRequest;
 
         /**
          * Creates a plain object from an AdminListRecommenderAppPoliciesRequest message. Also converts values to other types if specified.
-         * @param message AdminListRecommenderAppPoliciesRequest
-         * @param [options] Conversion options
+         * @param m AdminListRecommenderAppPoliciesRequest
+         * @param [o] Conversion options
          * @returns Plain object
          */
-        public static toObject(message: pb.AdminListRecommenderAppPoliciesRequest, options?: $protobuf.IConversionOptions): { [k: string]: any };
+        public static toObject(m: pb.AdminListRecommenderAppPoliciesRequest, o?: $protobuf.IConversionOptions): { [k: string]: any };
 
         /**
          * Converts this AdminListRecommenderAppPoliciesRequest to JSON.
          * @returns JSON object
          */
         public toJSON(): { [k: string]: any };
-
-        /**
-         * Gets the default type url for AdminListRecommenderAppPoliciesRequest
-         * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
-         * @returns The default type url
-         */
-        public static getTypeUrl(typeUrlPrefix?: string): string;
     }
 
     /** Properties of an AdminListRecommenderAppPoliciesResponse. */
@@ -13411,9 +12710,9 @@ export namespace pb {
 
         /**
          * Constructs a new AdminListRecommenderAppPoliciesResponse.
-         * @param [properties] Properties to set
+         * @param [p] Properties to set
          */
-        constructor(properties?: pb.IAdminListRecommenderAppPoliciesResponse);
+        constructor(p?: pb.IAdminListRecommenderAppPoliciesResponse);
 
         /** AdminListRecommenderAppPoliciesResponse code. */
         public code: number;
@@ -13436,11 +12735,11 @@ export namespace pb {
 
         /**
          * Encodes the specified AdminListRecommenderAppPoliciesResponse message. Does not implicitly {@link pb.AdminListRecommenderAppPoliciesResponse.verify|verify} messages.
-         * @param message AdminListRecommenderAppPoliciesResponse message or plain object to encode
-         * @param [writer] Writer to encode to
+         * @param m AdminListRecommenderAppPoliciesResponse message or plain object to encode
+         * @param [w] Writer to encode to
          * @returns Writer
          */
-        public static encode(message: pb.IAdminListRecommenderAppPoliciesResponse, writer?: $protobuf.Writer): $protobuf.Writer;
+        public static encode(m: pb.IAdminListRecommenderAppPoliciesResponse, w?: $protobuf.Writer): $protobuf.Writer;
 
         /**
          * Encodes the specified AdminListRecommenderAppPoliciesResponse message, length delimited. Does not implicitly {@link pb.AdminListRecommenderAppPoliciesResponse.verify|verify} messages.
@@ -13452,13 +12751,13 @@ export namespace pb {
 
         /**
          * Decodes an AdminListRecommenderAppPoliciesResponse message from the specified reader or buffer.
-         * @param reader Reader or buffer to decode from
-         * @param [length] Message length if known beforehand
+         * @param r Reader or buffer to decode from
+         * @param [l] Message length if known beforehand
          * @returns AdminListRecommenderAppPoliciesResponse
          * @throws {Error} If the payload is not a reader or valid buffer
          * @throws {$protobuf.util.ProtocolError} If required fields are missing
          */
-        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): pb.AdminListRecommenderAppPoliciesResponse;
+        public static decode(r: ($protobuf.Reader|Uint8Array), l?: number): pb.AdminListRecommenderAppPoliciesResponse;
 
         /**
          * Decodes an AdminListRecommenderAppPoliciesResponse message from the specified reader or buffer, length delimited.
@@ -13471,38 +12770,31 @@ export namespace pb {
 
         /**
          * Verifies an AdminListRecommenderAppPoliciesResponse message.
-         * @param message Plain object to verify
+         * @param m Plain object to verify
          * @returns `null` if valid, otherwise the reason why it is not
          */
-        public static verify(message: { [k: string]: any }): (string|null);
+        public static verify(m: { [k: string]: any }): (string|null);
 
         /**
          * Creates an AdminListRecommenderAppPoliciesResponse message from a plain object. Also converts values to their respective internal types.
-         * @param object Plain object
+         * @param d Plain object
          * @returns AdminListRecommenderAppPoliciesResponse
          */
-        public static fromObject(object: { [k: string]: any }): pb.AdminListRecommenderAppPoliciesResponse;
+        public static fromObject(d: { [k: string]: any }): pb.AdminListRecommenderAppPoliciesResponse;
 
         /**
          * Creates a plain object from an AdminListRecommenderAppPoliciesResponse message. Also converts values to other types if specified.
-         * @param message AdminListRecommenderAppPoliciesResponse
-         * @param [options] Conversion options
+         * @param m AdminListRecommenderAppPoliciesResponse
+         * @param [o] Conversion options
          * @returns Plain object
          */
-        public static toObject(message: pb.AdminListRecommenderAppPoliciesResponse, options?: $protobuf.IConversionOptions): { [k: string]: any };
+        public static toObject(m: pb.AdminListRecommenderAppPoliciesResponse, o?: $protobuf.IConversionOptions): { [k: string]: any };
 
         /**
          * Converts this AdminListRecommenderAppPoliciesResponse to JSON.
          * @returns JSON object
          */
         public toJSON(): { [k: string]: any };
-
-        /**
-         * Gets the default type url for AdminListRecommenderAppPoliciesResponse
-         * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
-         * @returns The default type url
-         */
-        public static getTypeUrl(typeUrlPrefix?: string): string;
     }
 
     /** Properties of an AdminDeleteRecommenderAppPolicyRequest. */
@@ -13523,9 +12815,9 @@ export namespace pb {
 
         /**
          * Constructs a new AdminDeleteRecommenderAppPolicyRequest.
-         * @param [properties] Properties to set
+         * @param [p] Properties to set
          */
-        constructor(properties?: pb.IAdminDeleteRecommenderAppPolicyRequest);
+        constructor(p?: pb.IAdminDeleteRecommenderAppPolicyRequest);
 
         /** AdminDeleteRecommenderAppPolicyRequest serviceAppid. */
         public serviceAppid: string;
@@ -13545,11 +12837,11 @@ export namespace pb {
 
         /**
          * Encodes the specified AdminDeleteRecommenderAppPolicyRequest message. Does not implicitly {@link pb.AdminDeleteRecommenderAppPolicyRequest.verify|verify} messages.
-         * @param message AdminDeleteRecommenderAppPolicyRequest message or plain object to encode
-         * @param [writer] Writer to encode to
+         * @param m AdminDeleteRecommenderAppPolicyRequest message or plain object to encode
+         * @param [w] Writer to encode to
          * @returns Writer
          */
-        public static encode(message: pb.IAdminDeleteRecommenderAppPolicyRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+        public static encode(m: pb.IAdminDeleteRecommenderAppPolicyRequest, w?: $protobuf.Writer): $protobuf.Writer;
 
         /**
          * Encodes the specified AdminDeleteRecommenderAppPolicyRequest message, length delimited. Does not implicitly {@link pb.AdminDeleteRecommenderAppPolicyRequest.verify|verify} messages.
@@ -13561,13 +12853,13 @@ export namespace pb {
 
         /**
          * Decodes an AdminDeleteRecommenderAppPolicyRequest message from the specified reader or buffer.
-         * @param reader Reader or buffer to decode from
-         * @param [length] Message length if known beforehand
+         * @param r Reader or buffer to decode from
+         * @param [l] Message length if known beforehand
          * @returns AdminDeleteRecommenderAppPolicyRequest
          * @throws {Error} If the payload is not a reader or valid buffer
          * @throws {$protobuf.util.ProtocolError} If required fields are missing
          */
-        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): pb.AdminDeleteRecommenderAppPolicyRequest;
+        public static decode(r: ($protobuf.Reader|Uint8Array), l?: number): pb.AdminDeleteRecommenderAppPolicyRequest;
 
         /**
          * Decodes an AdminDeleteRecommenderAppPolicyRequest message from the specified reader or buffer, length delimited.
@@ -13580,38 +12872,31 @@ export namespace pb {
 
         /**
          * Verifies an AdminDeleteRecommenderAppPolicyRequest message.
-         * @param message Plain object to verify
+         * @param m Plain object to verify
          * @returns `null` if valid, otherwise the reason why it is not
          */
-        public static verify(message: { [k: string]: any }): (string|null);
+        public static verify(m: { [k: string]: any }): (string|null);
 
         /**
          * Creates an AdminDeleteRecommenderAppPolicyRequest message from a plain object. Also converts values to their respective internal types.
-         * @param object Plain object
+         * @param d Plain object
          * @returns AdminDeleteRecommenderAppPolicyRequest
          */
-        public static fromObject(object: { [k: string]: any }): pb.AdminDeleteRecommenderAppPolicyRequest;
+        public static fromObject(d: { [k: string]: any }): pb.AdminDeleteRecommenderAppPolicyRequest;
 
         /**
          * Creates a plain object from an AdminDeleteRecommenderAppPolicyRequest message. Also converts values to other types if specified.
-         * @param message AdminDeleteRecommenderAppPolicyRequest
-         * @param [options] Conversion options
+         * @param m AdminDeleteRecommenderAppPolicyRequest
+         * @param [o] Conversion options
          * @returns Plain object
          */
-        public static toObject(message: pb.AdminDeleteRecommenderAppPolicyRequest, options?: $protobuf.IConversionOptions): { [k: string]: any };
+        public static toObject(m: pb.AdminDeleteRecommenderAppPolicyRequest, o?: $protobuf.IConversionOptions): { [k: string]: any };
 
         /**
          * Converts this AdminDeleteRecommenderAppPolicyRequest to JSON.
          * @returns JSON object
          */
         public toJSON(): { [k: string]: any };
-
-        /**
-         * Gets the default type url for AdminDeleteRecommenderAppPolicyRequest
-         * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
-         * @returns The default type url
-         */
-        public static getTypeUrl(typeUrlPrefix?: string): string;
     }
 
     /** Properties of an AdminDeleteRecommenderAppPolicyResponse. */
@@ -13629,9 +12914,9 @@ export namespace pb {
 
         /**
          * Constructs a new AdminDeleteRecommenderAppPolicyResponse.
-         * @param [properties] Properties to set
+         * @param [p] Properties to set
          */
-        constructor(properties?: pb.IAdminDeleteRecommenderAppPolicyResponse);
+        constructor(p?: pb.IAdminDeleteRecommenderAppPolicyResponse);
 
         /** AdminDeleteRecommenderAppPolicyResponse code. */
         public code: number;
@@ -13648,11 +12933,11 @@ export namespace pb {
 
         /**
          * Encodes the specified AdminDeleteRecommenderAppPolicyResponse message. Does not implicitly {@link pb.AdminDeleteRecommenderAppPolicyResponse.verify|verify} messages.
-         * @param message AdminDeleteRecommenderAppPolicyResponse message or plain object to encode
-         * @param [writer] Writer to encode to
+         * @param m AdminDeleteRecommenderAppPolicyResponse message or plain object to encode
+         * @param [w] Writer to encode to
          * @returns Writer
          */
-        public static encode(message: pb.IAdminDeleteRecommenderAppPolicyResponse, writer?: $protobuf.Writer): $protobuf.Writer;
+        public static encode(m: pb.IAdminDeleteRecommenderAppPolicyResponse, w?: $protobuf.Writer): $protobuf.Writer;
 
         /**
          * Encodes the specified AdminDeleteRecommenderAppPolicyResponse message, length delimited. Does not implicitly {@link pb.AdminDeleteRecommenderAppPolicyResponse.verify|verify} messages.
@@ -13664,13 +12949,13 @@ export namespace pb {
 
         /**
          * Decodes an AdminDeleteRecommenderAppPolicyResponse message from the specified reader or buffer.
-         * @param reader Reader or buffer to decode from
-         * @param [length] Message length if known beforehand
+         * @param r Reader or buffer to decode from
+         * @param [l] Message length if known beforehand
          * @returns AdminDeleteRecommenderAppPolicyResponse
          * @throws {Error} If the payload is not a reader or valid buffer
          * @throws {$protobuf.util.ProtocolError} If required fields are missing
          */
-        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): pb.AdminDeleteRecommenderAppPolicyResponse;
+        public static decode(r: ($protobuf.Reader|Uint8Array), l?: number): pb.AdminDeleteRecommenderAppPolicyResponse;
 
         /**
          * Decodes an AdminDeleteRecommenderAppPolicyResponse message from the specified reader or buffer, length delimited.
@@ -13683,38 +12968,31 @@ export namespace pb {
 
         /**
          * Verifies an AdminDeleteRecommenderAppPolicyResponse message.
-         * @param message Plain object to verify
+         * @param m Plain object to verify
          * @returns `null` if valid, otherwise the reason why it is not
          */
-        public static verify(message: { [k: string]: any }): (string|null);
+        public static verify(m: { [k: string]: any }): (string|null);
 
         /**
          * Creates an AdminDeleteRecommenderAppPolicyResponse message from a plain object. Also converts values to their respective internal types.
-         * @param object Plain object
+         * @param d Plain object
          * @returns AdminDeleteRecommenderAppPolicyResponse
          */
-        public static fromObject(object: { [k: string]: any }): pb.AdminDeleteRecommenderAppPolicyResponse;
+        public static fromObject(d: { [k: string]: any }): pb.AdminDeleteRecommenderAppPolicyResponse;
 
         /**
          * Creates a plain object from an AdminDeleteRecommenderAppPolicyResponse message. Also converts values to other types if specified.
-         * @param message AdminDeleteRecommenderAppPolicyResponse
-         * @param [options] Conversion options
+         * @param m AdminDeleteRecommenderAppPolicyResponse
+         * @param [o] Conversion options
          * @returns Plain object
          */
-        public static toObject(message: pb.AdminDeleteRecommenderAppPolicyResponse, options?: $protobuf.IConversionOptions): { [k: string]: any };
+        public static toObject(m: pb.AdminDeleteRecommenderAppPolicyResponse, o?: $protobuf.IConversionOptions): { [k: string]: any };
 
         /**
          * Converts this AdminDeleteRecommenderAppPolicyResponse to JSON.
          * @returns JSON object
          */
         public toJSON(): { [k: string]: any };
-
-        /**
-         * Gets the default type url for AdminDeleteRecommenderAppPolicyResponse
-         * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
-         * @returns The default type url
-         */
-        public static getTypeUrl(typeUrlPrefix?: string): string;
     }
 
     /** Properties of a RecommenderAppManagerInfo. */
@@ -13750,9 +13028,9 @@ export namespace pb {
 
         /**
          * Constructs a new RecommenderAppManagerInfo.
-         * @param [properties] Properties to set
+         * @param [p] Properties to set
          */
-        constructor(properties?: pb.IRecommenderAppManagerInfo);
+        constructor(p?: pb.IRecommenderAppManagerInfo);
 
         /** RecommenderAppManagerInfo id. */
         public id: (number|Long);
@@ -13787,11 +13065,11 @@ export namespace pb {
 
         /**
          * Encodes the specified RecommenderAppManagerInfo message. Does not implicitly {@link pb.RecommenderAppManagerInfo.verify|verify} messages.
-         * @param message RecommenderAppManagerInfo message or plain object to encode
-         * @param [writer] Writer to encode to
+         * @param m RecommenderAppManagerInfo message or plain object to encode
+         * @param [w] Writer to encode to
          * @returns Writer
          */
-        public static encode(message: pb.IRecommenderAppManagerInfo, writer?: $protobuf.Writer): $protobuf.Writer;
+        public static encode(m: pb.IRecommenderAppManagerInfo, w?: $protobuf.Writer): $protobuf.Writer;
 
         /**
          * Encodes the specified RecommenderAppManagerInfo message, length delimited. Does not implicitly {@link pb.RecommenderAppManagerInfo.verify|verify} messages.
@@ -13803,13 +13081,13 @@ export namespace pb {
 
         /**
          * Decodes a RecommenderAppManagerInfo message from the specified reader or buffer.
-         * @param reader Reader or buffer to decode from
-         * @param [length] Message length if known beforehand
+         * @param r Reader or buffer to decode from
+         * @param [l] Message length if known beforehand
          * @returns RecommenderAppManagerInfo
          * @throws {Error} If the payload is not a reader or valid buffer
          * @throws {$protobuf.util.ProtocolError} If required fields are missing
          */
-        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): pb.RecommenderAppManagerInfo;
+        public static decode(r: ($protobuf.Reader|Uint8Array), l?: number): pb.RecommenderAppManagerInfo;
 
         /**
          * Decodes a RecommenderAppManagerInfo message from the specified reader or buffer, length delimited.
@@ -13822,38 +13100,31 @@ export namespace pb {
 
         /**
          * Verifies a RecommenderAppManagerInfo message.
-         * @param message Plain object to verify
+         * @param m Plain object to verify
          * @returns `null` if valid, otherwise the reason why it is not
          */
-        public static verify(message: { [k: string]: any }): (string|null);
+        public static verify(m: { [k: string]: any }): (string|null);
 
         /**
          * Creates a RecommenderAppManagerInfo message from a plain object. Also converts values to their respective internal types.
-         * @param object Plain object
+         * @param d Plain object
          * @returns RecommenderAppManagerInfo
          */
-        public static fromObject(object: { [k: string]: any }): pb.RecommenderAppManagerInfo;
+        public static fromObject(d: { [k: string]: any }): pb.RecommenderAppManagerInfo;
 
         /**
          * Creates a plain object from a RecommenderAppManagerInfo message. Also converts values to other types if specified.
-         * @param message RecommenderAppManagerInfo
-         * @param [options] Conversion options
+         * @param m RecommenderAppManagerInfo
+         * @param [o] Conversion options
          * @returns Plain object
          */
-        public static toObject(message: pb.RecommenderAppManagerInfo, options?: $protobuf.IConversionOptions): { [k: string]: any };
+        public static toObject(m: pb.RecommenderAppManagerInfo, o?: $protobuf.IConversionOptions): { [k: string]: any };
 
         /**
          * Converts this RecommenderAppManagerInfo to JSON.
          * @returns JSON object
          */
         public toJSON(): { [k: string]: any };
-
-        /**
-         * Gets the default type url for RecommenderAppManagerInfo
-         * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
-         * @returns The default type url
-         */
-        public static getTypeUrl(typeUrlPrefix?: string): string;
     }
 
     /** Properties of a GetRecommenderAppPolicyAccessRequest. */
@@ -13868,9 +13139,9 @@ export namespace pb {
 
         /**
          * Constructs a new GetRecommenderAppPolicyAccessRequest.
-         * @param [properties] Properties to set
+         * @param [p] Properties to set
          */
-        constructor(properties?: pb.IGetRecommenderAppPolicyAccessRequest);
+        constructor(p?: pb.IGetRecommenderAppPolicyAccessRequest);
 
         /** GetRecommenderAppPolicyAccessRequest serviceAppid. */
         public serviceAppid: string;
@@ -13884,11 +13155,11 @@ export namespace pb {
 
         /**
          * Encodes the specified GetRecommenderAppPolicyAccessRequest message. Does not implicitly {@link pb.GetRecommenderAppPolicyAccessRequest.verify|verify} messages.
-         * @param message GetRecommenderAppPolicyAccessRequest message or plain object to encode
-         * @param [writer] Writer to encode to
+         * @param m GetRecommenderAppPolicyAccessRequest message or plain object to encode
+         * @param [w] Writer to encode to
          * @returns Writer
          */
-        public static encode(message: pb.IGetRecommenderAppPolicyAccessRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+        public static encode(m: pb.IGetRecommenderAppPolicyAccessRequest, w?: $protobuf.Writer): $protobuf.Writer;
 
         /**
          * Encodes the specified GetRecommenderAppPolicyAccessRequest message, length delimited. Does not implicitly {@link pb.GetRecommenderAppPolicyAccessRequest.verify|verify} messages.
@@ -13900,13 +13171,13 @@ export namespace pb {
 
         /**
          * Decodes a GetRecommenderAppPolicyAccessRequest message from the specified reader or buffer.
-         * @param reader Reader or buffer to decode from
-         * @param [length] Message length if known beforehand
+         * @param r Reader or buffer to decode from
+         * @param [l] Message length if known beforehand
          * @returns GetRecommenderAppPolicyAccessRequest
          * @throws {Error} If the payload is not a reader or valid buffer
          * @throws {$protobuf.util.ProtocolError} If required fields are missing
          */
-        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): pb.GetRecommenderAppPolicyAccessRequest;
+        public static decode(r: ($protobuf.Reader|Uint8Array), l?: number): pb.GetRecommenderAppPolicyAccessRequest;
 
         /**
          * Decodes a GetRecommenderAppPolicyAccessRequest message from the specified reader or buffer, length delimited.
@@ -13919,38 +13190,31 @@ export namespace pb {
 
         /**
          * Verifies a GetRecommenderAppPolicyAccessRequest message.
-         * @param message Plain object to verify
+         * @param m Plain object to verify
          * @returns `null` if valid, otherwise the reason why it is not
          */
-        public static verify(message: { [k: string]: any }): (string|null);
+        public static verify(m: { [k: string]: any }): (string|null);
 
         /**
          * Creates a GetRecommenderAppPolicyAccessRequest message from a plain object. Also converts values to their respective internal types.
-         * @param object Plain object
+         * @param d Plain object
          * @returns GetRecommenderAppPolicyAccessRequest
          */
-        public static fromObject(object: { [k: string]: any }): pb.GetRecommenderAppPolicyAccessRequest;
+        public static fromObject(d: { [k: string]: any }): pb.GetRecommenderAppPolicyAccessRequest;
 
         /**
          * Creates a plain object from a GetRecommenderAppPolicyAccessRequest message. Also converts values to other types if specified.
-         * @param message GetRecommenderAppPolicyAccessRequest
-         * @param [options] Conversion options
+         * @param m GetRecommenderAppPolicyAccessRequest
+         * @param [o] Conversion options
          * @returns Plain object
          */
-        public static toObject(message: pb.GetRecommenderAppPolicyAccessRequest, options?: $protobuf.IConversionOptions): { [k: string]: any };
+        public static toObject(m: pb.GetRecommenderAppPolicyAccessRequest, o?: $protobuf.IConversionOptions): { [k: string]: any };
 
         /**
          * Converts this GetRecommenderAppPolicyAccessRequest to JSON.
          * @returns JSON object
          */
         public toJSON(): { [k: string]: any };
-
-        /**
-         * Gets the default type url for GetRecommenderAppPolicyAccessRequest
-         * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
-         * @returns The default type url
-         */
-        public static getTypeUrl(typeUrlPrefix?: string): string;
     }
 
     /** Properties of a GetRecommenderAppPolicyAccessResponse. */
@@ -13983,9 +13247,9 @@ export namespace pb {
 
         /**
          * Constructs a new GetRecommenderAppPolicyAccessResponse.
-         * @param [properties] Properties to set
+         * @param [p] Properties to set
          */
-        constructor(properties?: pb.IGetRecommenderAppPolicyAccessResponse);
+        constructor(p?: pb.IGetRecommenderAppPolicyAccessResponse);
 
         /** GetRecommenderAppPolicyAccessResponse code. */
         public code: number;
@@ -14017,11 +13281,11 @@ export namespace pb {
 
         /**
          * Encodes the specified GetRecommenderAppPolicyAccessResponse message. Does not implicitly {@link pb.GetRecommenderAppPolicyAccessResponse.verify|verify} messages.
-         * @param message GetRecommenderAppPolicyAccessResponse message or plain object to encode
-         * @param [writer] Writer to encode to
+         * @param m GetRecommenderAppPolicyAccessResponse message or plain object to encode
+         * @param [w] Writer to encode to
          * @returns Writer
          */
-        public static encode(message: pb.IGetRecommenderAppPolicyAccessResponse, writer?: $protobuf.Writer): $protobuf.Writer;
+        public static encode(m: pb.IGetRecommenderAppPolicyAccessResponse, w?: $protobuf.Writer): $protobuf.Writer;
 
         /**
          * Encodes the specified GetRecommenderAppPolicyAccessResponse message, length delimited. Does not implicitly {@link pb.GetRecommenderAppPolicyAccessResponse.verify|verify} messages.
@@ -14033,13 +13297,13 @@ export namespace pb {
 
         /**
          * Decodes a GetRecommenderAppPolicyAccessResponse message from the specified reader or buffer.
-         * @param reader Reader or buffer to decode from
-         * @param [length] Message length if known beforehand
+         * @param r Reader or buffer to decode from
+         * @param [l] Message length if known beforehand
          * @returns GetRecommenderAppPolicyAccessResponse
          * @throws {Error} If the payload is not a reader or valid buffer
          * @throws {$protobuf.util.ProtocolError} If required fields are missing
          */
-        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): pb.GetRecommenderAppPolicyAccessResponse;
+        public static decode(r: ($protobuf.Reader|Uint8Array), l?: number): pb.GetRecommenderAppPolicyAccessResponse;
 
         /**
          * Decodes a GetRecommenderAppPolicyAccessResponse message from the specified reader or buffer, length delimited.
@@ -14052,38 +13316,31 @@ export namespace pb {
 
         /**
          * Verifies a GetRecommenderAppPolicyAccessResponse message.
-         * @param message Plain object to verify
+         * @param m Plain object to verify
          * @returns `null` if valid, otherwise the reason why it is not
          */
-        public static verify(message: { [k: string]: any }): (string|null);
+        public static verify(m: { [k: string]: any }): (string|null);
 
         /**
          * Creates a GetRecommenderAppPolicyAccessResponse message from a plain object. Also converts values to their respective internal types.
-         * @param object Plain object
+         * @param d Plain object
          * @returns GetRecommenderAppPolicyAccessResponse
          */
-        public static fromObject(object: { [k: string]: any }): pb.GetRecommenderAppPolicyAccessResponse;
+        public static fromObject(d: { [k: string]: any }): pb.GetRecommenderAppPolicyAccessResponse;
 
         /**
          * Creates a plain object from a GetRecommenderAppPolicyAccessResponse message. Also converts values to other types if specified.
-         * @param message GetRecommenderAppPolicyAccessResponse
-         * @param [options] Conversion options
+         * @param m GetRecommenderAppPolicyAccessResponse
+         * @param [o] Conversion options
          * @returns Plain object
          */
-        public static toObject(message: pb.GetRecommenderAppPolicyAccessResponse, options?: $protobuf.IConversionOptions): { [k: string]: any };
+        public static toObject(m: pb.GetRecommenderAppPolicyAccessResponse, o?: $protobuf.IConversionOptions): { [k: string]: any };
 
         /**
          * Converts this GetRecommenderAppPolicyAccessResponse to JSON.
          * @returns JSON object
          */
         public toJSON(): { [k: string]: any };
-
-        /**
-         * Gets the default type url for GetRecommenderAppPolicyAccessResponse
-         * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
-         * @returns The default type url
-         */
-        public static getTypeUrl(typeUrlPrefix?: string): string;
     }
 
     /** Properties of an UpsertRecommenderAppPolicyRequest. */
@@ -14119,9 +13376,9 @@ export namespace pb {
 
         /**
          * Constructs a new UpsertRecommenderAppPolicyRequest.
-         * @param [properties] Properties to set
+         * @param [p] Properties to set
          */
-        constructor(properties?: pb.IUpsertRecommenderAppPolicyRequest);
+        constructor(p?: pb.IUpsertRecommenderAppPolicyRequest);
 
         /** UpsertRecommenderAppPolicyRequest serviceAppid. */
         public serviceAppid: string;
@@ -14156,11 +13413,11 @@ export namespace pb {
 
         /**
          * Encodes the specified UpsertRecommenderAppPolicyRequest message. Does not implicitly {@link pb.UpsertRecommenderAppPolicyRequest.verify|verify} messages.
-         * @param message UpsertRecommenderAppPolicyRequest message or plain object to encode
-         * @param [writer] Writer to encode to
+         * @param m UpsertRecommenderAppPolicyRequest message or plain object to encode
+         * @param [w] Writer to encode to
          * @returns Writer
          */
-        public static encode(message: pb.IUpsertRecommenderAppPolicyRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+        public static encode(m: pb.IUpsertRecommenderAppPolicyRequest, w?: $protobuf.Writer): $protobuf.Writer;
 
         /**
          * Encodes the specified UpsertRecommenderAppPolicyRequest message, length delimited. Does not implicitly {@link pb.UpsertRecommenderAppPolicyRequest.verify|verify} messages.
@@ -14172,13 +13429,13 @@ export namespace pb {
 
         /**
          * Decodes an UpsertRecommenderAppPolicyRequest message from the specified reader or buffer.
-         * @param reader Reader or buffer to decode from
-         * @param [length] Message length if known beforehand
+         * @param r Reader or buffer to decode from
+         * @param [l] Message length if known beforehand
          * @returns UpsertRecommenderAppPolicyRequest
          * @throws {Error} If the payload is not a reader or valid buffer
          * @throws {$protobuf.util.ProtocolError} If required fields are missing
          */
-        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): pb.UpsertRecommenderAppPolicyRequest;
+        public static decode(r: ($protobuf.Reader|Uint8Array), l?: number): pb.UpsertRecommenderAppPolicyRequest;
 
         /**
          * Decodes an UpsertRecommenderAppPolicyRequest message from the specified reader or buffer, length delimited.
@@ -14191,38 +13448,31 @@ export namespace pb {
 
         /**
          * Verifies an UpsertRecommenderAppPolicyRequest message.
-         * @param message Plain object to verify
+         * @param m Plain object to verify
          * @returns `null` if valid, otherwise the reason why it is not
          */
-        public static verify(message: { [k: string]: any }): (string|null);
+        public static verify(m: { [k: string]: any }): (string|null);
 
         /**
          * Creates an UpsertRecommenderAppPolicyRequest message from a plain object. Also converts values to their respective internal types.
-         * @param object Plain object
+         * @param d Plain object
          * @returns UpsertRecommenderAppPolicyRequest
          */
-        public static fromObject(object: { [k: string]: any }): pb.UpsertRecommenderAppPolicyRequest;
+        public static fromObject(d: { [k: string]: any }): pb.UpsertRecommenderAppPolicyRequest;
 
         /**
          * Creates a plain object from an UpsertRecommenderAppPolicyRequest message. Also converts values to other types if specified.
-         * @param message UpsertRecommenderAppPolicyRequest
-         * @param [options] Conversion options
+         * @param m UpsertRecommenderAppPolicyRequest
+         * @param [o] Conversion options
          * @returns Plain object
          */
-        public static toObject(message: pb.UpsertRecommenderAppPolicyRequest, options?: $protobuf.IConversionOptions): { [k: string]: any };
+        public static toObject(m: pb.UpsertRecommenderAppPolicyRequest, o?: $protobuf.IConversionOptions): { [k: string]: any };
 
         /**
          * Converts this UpsertRecommenderAppPolicyRequest to JSON.
          * @returns JSON object
          */
         public toJSON(): { [k: string]: any };
-
-        /**
-         * Gets the default type url for UpsertRecommenderAppPolicyRequest
-         * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
-         * @returns The default type url
-         */
-        public static getTypeUrl(typeUrlPrefix?: string): string;
     }
 
     /** Properties of a ListRecommenderAppPoliciesRequest. */
@@ -14249,9 +13499,9 @@ export namespace pb {
 
         /**
          * Constructs a new ListRecommenderAppPoliciesRequest.
-         * @param [properties] Properties to set
+         * @param [p] Properties to set
          */
-        constructor(properties?: pb.IListRecommenderAppPoliciesRequest);
+        constructor(p?: pb.IListRecommenderAppPoliciesRequest);
 
         /** ListRecommenderAppPoliciesRequest serviceAppid. */
         public serviceAppid: string;
@@ -14277,11 +13527,11 @@ export namespace pb {
 
         /**
          * Encodes the specified ListRecommenderAppPoliciesRequest message. Does not implicitly {@link pb.ListRecommenderAppPoliciesRequest.verify|verify} messages.
-         * @param message ListRecommenderAppPoliciesRequest message or plain object to encode
-         * @param [writer] Writer to encode to
+         * @param m ListRecommenderAppPoliciesRequest message or plain object to encode
+         * @param [w] Writer to encode to
          * @returns Writer
          */
-        public static encode(message: pb.IListRecommenderAppPoliciesRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+        public static encode(m: pb.IListRecommenderAppPoliciesRequest, w?: $protobuf.Writer): $protobuf.Writer;
 
         /**
          * Encodes the specified ListRecommenderAppPoliciesRequest message, length delimited. Does not implicitly {@link pb.ListRecommenderAppPoliciesRequest.verify|verify} messages.
@@ -14293,13 +13543,13 @@ export namespace pb {
 
         /**
          * Decodes a ListRecommenderAppPoliciesRequest message from the specified reader or buffer.
-         * @param reader Reader or buffer to decode from
-         * @param [length] Message length if known beforehand
+         * @param r Reader or buffer to decode from
+         * @param [l] Message length if known beforehand
          * @returns ListRecommenderAppPoliciesRequest
          * @throws {Error} If the payload is not a reader or valid buffer
          * @throws {$protobuf.util.ProtocolError} If required fields are missing
          */
-        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): pb.ListRecommenderAppPoliciesRequest;
+        public static decode(r: ($protobuf.Reader|Uint8Array), l?: number): pb.ListRecommenderAppPoliciesRequest;
 
         /**
          * Decodes a ListRecommenderAppPoliciesRequest message from the specified reader or buffer, length delimited.
@@ -14312,38 +13562,31 @@ export namespace pb {
 
         /**
          * Verifies a ListRecommenderAppPoliciesRequest message.
-         * @param message Plain object to verify
+         * @param m Plain object to verify
          * @returns `null` if valid, otherwise the reason why it is not
          */
-        public static verify(message: { [k: string]: any }): (string|null);
+        public static verify(m: { [k: string]: any }): (string|null);
 
         /**
          * Creates a ListRecommenderAppPoliciesRequest message from a plain object. Also converts values to their respective internal types.
-         * @param object Plain object
+         * @param d Plain object
          * @returns ListRecommenderAppPoliciesRequest
          */
-        public static fromObject(object: { [k: string]: any }): pb.ListRecommenderAppPoliciesRequest;
+        public static fromObject(d: { [k: string]: any }): pb.ListRecommenderAppPoliciesRequest;
 
         /**
          * Creates a plain object from a ListRecommenderAppPoliciesRequest message. Also converts values to other types if specified.
-         * @param message ListRecommenderAppPoliciesRequest
-         * @param [options] Conversion options
+         * @param m ListRecommenderAppPoliciesRequest
+         * @param [o] Conversion options
          * @returns Plain object
          */
-        public static toObject(message: pb.ListRecommenderAppPoliciesRequest, options?: $protobuf.IConversionOptions): { [k: string]: any };
+        public static toObject(m: pb.ListRecommenderAppPoliciesRequest, o?: $protobuf.IConversionOptions): { [k: string]: any };
 
         /**
          * Converts this ListRecommenderAppPoliciesRequest to JSON.
          * @returns JSON object
          */
         public toJSON(): { [k: string]: any };
-
-        /**
-         * Gets the default type url for ListRecommenderAppPoliciesRequest
-         * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
-         * @returns The default type url
-         */
-        public static getTypeUrl(typeUrlPrefix?: string): string;
     }
 
     /** Properties of a ListRecommenderAppPoliciesResponse. */
@@ -14367,9 +13610,9 @@ export namespace pb {
 
         /**
          * Constructs a new ListRecommenderAppPoliciesResponse.
-         * @param [properties] Properties to set
+         * @param [p] Properties to set
          */
-        constructor(properties?: pb.IListRecommenderAppPoliciesResponse);
+        constructor(p?: pb.IListRecommenderAppPoliciesResponse);
 
         /** ListRecommenderAppPoliciesResponse code. */
         public code: number;
@@ -14392,11 +13635,11 @@ export namespace pb {
 
         /**
          * Encodes the specified ListRecommenderAppPoliciesResponse message. Does not implicitly {@link pb.ListRecommenderAppPoliciesResponse.verify|verify} messages.
-         * @param message ListRecommenderAppPoliciesResponse message or plain object to encode
-         * @param [writer] Writer to encode to
+         * @param m ListRecommenderAppPoliciesResponse message or plain object to encode
+         * @param [w] Writer to encode to
          * @returns Writer
          */
-        public static encode(message: pb.IListRecommenderAppPoliciesResponse, writer?: $protobuf.Writer): $protobuf.Writer;
+        public static encode(m: pb.IListRecommenderAppPoliciesResponse, w?: $protobuf.Writer): $protobuf.Writer;
 
         /**
          * Encodes the specified ListRecommenderAppPoliciesResponse message, length delimited. Does not implicitly {@link pb.ListRecommenderAppPoliciesResponse.verify|verify} messages.
@@ -14408,13 +13651,13 @@ export namespace pb {
 
         /**
          * Decodes a ListRecommenderAppPoliciesResponse message from the specified reader or buffer.
-         * @param reader Reader or buffer to decode from
-         * @param [length] Message length if known beforehand
+         * @param r Reader or buffer to decode from
+         * @param [l] Message length if known beforehand
          * @returns ListRecommenderAppPoliciesResponse
          * @throws {Error} If the payload is not a reader or valid buffer
          * @throws {$protobuf.util.ProtocolError} If required fields are missing
          */
-        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): pb.ListRecommenderAppPoliciesResponse;
+        public static decode(r: ($protobuf.Reader|Uint8Array), l?: number): pb.ListRecommenderAppPoliciesResponse;
 
         /**
          * Decodes a ListRecommenderAppPoliciesResponse message from the specified reader or buffer, length delimited.
@@ -14427,38 +13670,31 @@ export namespace pb {
 
         /**
          * Verifies a ListRecommenderAppPoliciesResponse message.
-         * @param message Plain object to verify
+         * @param m Plain object to verify
          * @returns `null` if valid, otherwise the reason why it is not
          */
-        public static verify(message: { [k: string]: any }): (string|null);
+        public static verify(m: { [k: string]: any }): (string|null);
 
         /**
          * Creates a ListRecommenderAppPoliciesResponse message from a plain object. Also converts values to their respective internal types.
-         * @param object Plain object
+         * @param d Plain object
          * @returns ListRecommenderAppPoliciesResponse
          */
-        public static fromObject(object: { [k: string]: any }): pb.ListRecommenderAppPoliciesResponse;
+        public static fromObject(d: { [k: string]: any }): pb.ListRecommenderAppPoliciesResponse;
 
         /**
          * Creates a plain object from a ListRecommenderAppPoliciesResponse message. Also converts values to other types if specified.
-         * @param message ListRecommenderAppPoliciesResponse
-         * @param [options] Conversion options
+         * @param m ListRecommenderAppPoliciesResponse
+         * @param [o] Conversion options
          * @returns Plain object
          */
-        public static toObject(message: pb.ListRecommenderAppPoliciesResponse, options?: $protobuf.IConversionOptions): { [k: string]: any };
+        public static toObject(m: pb.ListRecommenderAppPoliciesResponse, o?: $protobuf.IConversionOptions): { [k: string]: any };
 
         /**
          * Converts this ListRecommenderAppPoliciesResponse to JSON.
          * @returns JSON object
          */
         public toJSON(): { [k: string]: any };
-
-        /**
-         * Gets the default type url for ListRecommenderAppPoliciesResponse
-         * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
-         * @returns The default type url
-         */
-        public static getTypeUrl(typeUrlPrefix?: string): string;
     }
 
     /** Properties of a DeleteRecommenderAppPolicyRequest. */
@@ -14479,9 +13715,9 @@ export namespace pb {
 
         /**
          * Constructs a new DeleteRecommenderAppPolicyRequest.
-         * @param [properties] Properties to set
+         * @param [p] Properties to set
          */
-        constructor(properties?: pb.IDeleteRecommenderAppPolicyRequest);
+        constructor(p?: pb.IDeleteRecommenderAppPolicyRequest);
 
         /** DeleteRecommenderAppPolicyRequest serviceAppid. */
         public serviceAppid: string;
@@ -14501,11 +13737,11 @@ export namespace pb {
 
         /**
          * Encodes the specified DeleteRecommenderAppPolicyRequest message. Does not implicitly {@link pb.DeleteRecommenderAppPolicyRequest.verify|verify} messages.
-         * @param message DeleteRecommenderAppPolicyRequest message or plain object to encode
-         * @param [writer] Writer to encode to
+         * @param m DeleteRecommenderAppPolicyRequest message or plain object to encode
+         * @param [w] Writer to encode to
          * @returns Writer
          */
-        public static encode(message: pb.IDeleteRecommenderAppPolicyRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+        public static encode(m: pb.IDeleteRecommenderAppPolicyRequest, w?: $protobuf.Writer): $protobuf.Writer;
 
         /**
          * Encodes the specified DeleteRecommenderAppPolicyRequest message, length delimited. Does not implicitly {@link pb.DeleteRecommenderAppPolicyRequest.verify|verify} messages.
@@ -14517,13 +13753,13 @@ export namespace pb {
 
         /**
          * Decodes a DeleteRecommenderAppPolicyRequest message from the specified reader or buffer.
-         * @param reader Reader or buffer to decode from
-         * @param [length] Message length if known beforehand
+         * @param r Reader or buffer to decode from
+         * @param [l] Message length if known beforehand
          * @returns DeleteRecommenderAppPolicyRequest
          * @throws {Error} If the payload is not a reader or valid buffer
          * @throws {$protobuf.util.ProtocolError} If required fields are missing
          */
-        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): pb.DeleteRecommenderAppPolicyRequest;
+        public static decode(r: ($protobuf.Reader|Uint8Array), l?: number): pb.DeleteRecommenderAppPolicyRequest;
 
         /**
          * Decodes a DeleteRecommenderAppPolicyRequest message from the specified reader or buffer, length delimited.
@@ -14536,38 +13772,31 @@ export namespace pb {
 
         /**
          * Verifies a DeleteRecommenderAppPolicyRequest message.
-         * @param message Plain object to verify
+         * @param m Plain object to verify
          * @returns `null` if valid, otherwise the reason why it is not
          */
-        public static verify(message: { [k: string]: any }): (string|null);
+        public static verify(m: { [k: string]: any }): (string|null);
 
         /**
          * Creates a DeleteRecommenderAppPolicyRequest message from a plain object. Also converts values to their respective internal types.
-         * @param object Plain object
+         * @param d Plain object
          * @returns DeleteRecommenderAppPolicyRequest
          */
-        public static fromObject(object: { [k: string]: any }): pb.DeleteRecommenderAppPolicyRequest;
+        public static fromObject(d: { [k: string]: any }): pb.DeleteRecommenderAppPolicyRequest;
 
         /**
          * Creates a plain object from a DeleteRecommenderAppPolicyRequest message. Also converts values to other types if specified.
-         * @param message DeleteRecommenderAppPolicyRequest
-         * @param [options] Conversion options
+         * @param m DeleteRecommenderAppPolicyRequest
+         * @param [o] Conversion options
          * @returns Plain object
          */
-        public static toObject(message: pb.DeleteRecommenderAppPolicyRequest, options?: $protobuf.IConversionOptions): { [k: string]: any };
+        public static toObject(m: pb.DeleteRecommenderAppPolicyRequest, o?: $protobuf.IConversionOptions): { [k: string]: any };
 
         /**
          * Converts this DeleteRecommenderAppPolicyRequest to JSON.
          * @returns JSON object
          */
         public toJSON(): { [k: string]: any };
-
-        /**
-         * Gets the default type url for DeleteRecommenderAppPolicyRequest
-         * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
-         * @returns The default type url
-         */
-        public static getTypeUrl(typeUrlPrefix?: string): string;
     }
 
     /** Properties of a RecommenderAppPolicyMutationResponse. */
@@ -14585,9 +13814,9 @@ export namespace pb {
 
         /**
          * Constructs a new RecommenderAppPolicyMutationResponse.
-         * @param [properties] Properties to set
+         * @param [p] Properties to set
          */
-        constructor(properties?: pb.IRecommenderAppPolicyMutationResponse);
+        constructor(p?: pb.IRecommenderAppPolicyMutationResponse);
 
         /** RecommenderAppPolicyMutationResponse code. */
         public code: number;
@@ -14604,11 +13833,11 @@ export namespace pb {
 
         /**
          * Encodes the specified RecommenderAppPolicyMutationResponse message. Does not implicitly {@link pb.RecommenderAppPolicyMutationResponse.verify|verify} messages.
-         * @param message RecommenderAppPolicyMutationResponse message or plain object to encode
-         * @param [writer] Writer to encode to
+         * @param m RecommenderAppPolicyMutationResponse message or plain object to encode
+         * @param [w] Writer to encode to
          * @returns Writer
          */
-        public static encode(message: pb.IRecommenderAppPolicyMutationResponse, writer?: $protobuf.Writer): $protobuf.Writer;
+        public static encode(m: pb.IRecommenderAppPolicyMutationResponse, w?: $protobuf.Writer): $protobuf.Writer;
 
         /**
          * Encodes the specified RecommenderAppPolicyMutationResponse message, length delimited. Does not implicitly {@link pb.RecommenderAppPolicyMutationResponse.verify|verify} messages.
@@ -14620,13 +13849,13 @@ export namespace pb {
 
         /**
          * Decodes a RecommenderAppPolicyMutationResponse message from the specified reader or buffer.
-         * @param reader Reader or buffer to decode from
-         * @param [length] Message length if known beforehand
+         * @param r Reader or buffer to decode from
+         * @param [l] Message length if known beforehand
          * @returns RecommenderAppPolicyMutationResponse
          * @throws {Error} If the payload is not a reader or valid buffer
          * @throws {$protobuf.util.ProtocolError} If required fields are missing
          */
-        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): pb.RecommenderAppPolicyMutationResponse;
+        public static decode(r: ($protobuf.Reader|Uint8Array), l?: number): pb.RecommenderAppPolicyMutationResponse;
 
         /**
          * Decodes a RecommenderAppPolicyMutationResponse message from the specified reader or buffer, length delimited.
@@ -14639,38 +13868,31 @@ export namespace pb {
 
         /**
          * Verifies a RecommenderAppPolicyMutationResponse message.
-         * @param message Plain object to verify
+         * @param m Plain object to verify
          * @returns `null` if valid, otherwise the reason why it is not
          */
-        public static verify(message: { [k: string]: any }): (string|null);
+        public static verify(m: { [k: string]: any }): (string|null);
 
         /**
          * Creates a RecommenderAppPolicyMutationResponse message from a plain object. Also converts values to their respective internal types.
-         * @param object Plain object
+         * @param d Plain object
          * @returns RecommenderAppPolicyMutationResponse
          */
-        public static fromObject(object: { [k: string]: any }): pb.RecommenderAppPolicyMutationResponse;
+        public static fromObject(d: { [k: string]: any }): pb.RecommenderAppPolicyMutationResponse;
 
         /**
          * Creates a plain object from a RecommenderAppPolicyMutationResponse message. Also converts values to other types if specified.
-         * @param message RecommenderAppPolicyMutationResponse
-         * @param [options] Conversion options
+         * @param m RecommenderAppPolicyMutationResponse
+         * @param [o] Conversion options
          * @returns Plain object
          */
-        public static toObject(message: pb.RecommenderAppPolicyMutationResponse, options?: $protobuf.IConversionOptions): { [k: string]: any };
+        public static toObject(m: pb.RecommenderAppPolicyMutationResponse, o?: $protobuf.IConversionOptions): { [k: string]: any };
 
         /**
          * Converts this RecommenderAppPolicyMutationResponse to JSON.
          * @returns JSON object
          */
         public toJSON(): { [k: string]: any };
-
-        /**
-         * Gets the default type url for RecommenderAppPolicyMutationResponse
-         * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
-         * @returns The default type url
-         */
-        public static getTypeUrl(typeUrlPrefix?: string): string;
     }
 
     /** Properties of an UpsertRecommenderAppManagerRequest. */
@@ -14691,9 +13913,9 @@ export namespace pb {
 
         /**
          * Constructs a new UpsertRecommenderAppManagerRequest.
-         * @param [properties] Properties to set
+         * @param [p] Properties to set
          */
-        constructor(properties?: pb.IUpsertRecommenderAppManagerRequest);
+        constructor(p?: pb.IUpsertRecommenderAppManagerRequest);
 
         /** UpsertRecommenderAppManagerRequest serviceAppid. */
         public serviceAppid: string;
@@ -14713,11 +13935,11 @@ export namespace pb {
 
         /**
          * Encodes the specified UpsertRecommenderAppManagerRequest message. Does not implicitly {@link pb.UpsertRecommenderAppManagerRequest.verify|verify} messages.
-         * @param message UpsertRecommenderAppManagerRequest message or plain object to encode
-         * @param [writer] Writer to encode to
+         * @param m UpsertRecommenderAppManagerRequest message or plain object to encode
+         * @param [w] Writer to encode to
          * @returns Writer
          */
-        public static encode(message: pb.IUpsertRecommenderAppManagerRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+        public static encode(m: pb.IUpsertRecommenderAppManagerRequest, w?: $protobuf.Writer): $protobuf.Writer;
 
         /**
          * Encodes the specified UpsertRecommenderAppManagerRequest message, length delimited. Does not implicitly {@link pb.UpsertRecommenderAppManagerRequest.verify|verify} messages.
@@ -14729,13 +13951,13 @@ export namespace pb {
 
         /**
          * Decodes an UpsertRecommenderAppManagerRequest message from the specified reader or buffer.
-         * @param reader Reader or buffer to decode from
-         * @param [length] Message length if known beforehand
+         * @param r Reader or buffer to decode from
+         * @param [l] Message length if known beforehand
          * @returns UpsertRecommenderAppManagerRequest
          * @throws {Error} If the payload is not a reader or valid buffer
          * @throws {$protobuf.util.ProtocolError} If required fields are missing
          */
-        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): pb.UpsertRecommenderAppManagerRequest;
+        public static decode(r: ($protobuf.Reader|Uint8Array), l?: number): pb.UpsertRecommenderAppManagerRequest;
 
         /**
          * Decodes an UpsertRecommenderAppManagerRequest message from the specified reader or buffer, length delimited.
@@ -14748,38 +13970,31 @@ export namespace pb {
 
         /**
          * Verifies an UpsertRecommenderAppManagerRequest message.
-         * @param message Plain object to verify
+         * @param m Plain object to verify
          * @returns `null` if valid, otherwise the reason why it is not
          */
-        public static verify(message: { [k: string]: any }): (string|null);
+        public static verify(m: { [k: string]: any }): (string|null);
 
         /**
          * Creates an UpsertRecommenderAppManagerRequest message from a plain object. Also converts values to their respective internal types.
-         * @param object Plain object
+         * @param d Plain object
          * @returns UpsertRecommenderAppManagerRequest
          */
-        public static fromObject(object: { [k: string]: any }): pb.UpsertRecommenderAppManagerRequest;
+        public static fromObject(d: { [k: string]: any }): pb.UpsertRecommenderAppManagerRequest;
 
         /**
          * Creates a plain object from an UpsertRecommenderAppManagerRequest message. Also converts values to other types if specified.
-         * @param message UpsertRecommenderAppManagerRequest
-         * @param [options] Conversion options
+         * @param m UpsertRecommenderAppManagerRequest
+         * @param [o] Conversion options
          * @returns Plain object
          */
-        public static toObject(message: pb.UpsertRecommenderAppManagerRequest, options?: $protobuf.IConversionOptions): { [k: string]: any };
+        public static toObject(m: pb.UpsertRecommenderAppManagerRequest, o?: $protobuf.IConversionOptions): { [k: string]: any };
 
         /**
          * Converts this UpsertRecommenderAppManagerRequest to JSON.
          * @returns JSON object
          */
         public toJSON(): { [k: string]: any };
-
-        /**
-         * Gets the default type url for UpsertRecommenderAppManagerRequest
-         * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
-         * @returns The default type url
-         */
-        public static getTypeUrl(typeUrlPrefix?: string): string;
     }
 
     /** Properties of an AdminListRecommenderAppManagersRequest. */
@@ -14803,9 +14018,9 @@ export namespace pb {
 
         /**
          * Constructs a new AdminListRecommenderAppManagersRequest.
-         * @param [properties] Properties to set
+         * @param [p] Properties to set
          */
-        constructor(properties?: pb.IAdminListRecommenderAppManagersRequest);
+        constructor(p?: pb.IAdminListRecommenderAppManagersRequest);
 
         /** AdminListRecommenderAppManagersRequest serviceAppid. */
         public serviceAppid: string;
@@ -14828,11 +14043,11 @@ export namespace pb {
 
         /**
          * Encodes the specified AdminListRecommenderAppManagersRequest message. Does not implicitly {@link pb.AdminListRecommenderAppManagersRequest.verify|verify} messages.
-         * @param message AdminListRecommenderAppManagersRequest message or plain object to encode
-         * @param [writer] Writer to encode to
+         * @param m AdminListRecommenderAppManagersRequest message or plain object to encode
+         * @param [w] Writer to encode to
          * @returns Writer
          */
-        public static encode(message: pb.IAdminListRecommenderAppManagersRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+        public static encode(m: pb.IAdminListRecommenderAppManagersRequest, w?: $protobuf.Writer): $protobuf.Writer;
 
         /**
          * Encodes the specified AdminListRecommenderAppManagersRequest message, length delimited. Does not implicitly {@link pb.AdminListRecommenderAppManagersRequest.verify|verify} messages.
@@ -14844,13 +14059,13 @@ export namespace pb {
 
         /**
          * Decodes an AdminListRecommenderAppManagersRequest message from the specified reader or buffer.
-         * @param reader Reader or buffer to decode from
-         * @param [length] Message length if known beforehand
+         * @param r Reader or buffer to decode from
+         * @param [l] Message length if known beforehand
          * @returns AdminListRecommenderAppManagersRequest
          * @throws {Error} If the payload is not a reader or valid buffer
          * @throws {$protobuf.util.ProtocolError} If required fields are missing
          */
-        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): pb.AdminListRecommenderAppManagersRequest;
+        public static decode(r: ($protobuf.Reader|Uint8Array), l?: number): pb.AdminListRecommenderAppManagersRequest;
 
         /**
          * Decodes an AdminListRecommenderAppManagersRequest message from the specified reader or buffer, length delimited.
@@ -14863,38 +14078,31 @@ export namespace pb {
 
         /**
          * Verifies an AdminListRecommenderAppManagersRequest message.
-         * @param message Plain object to verify
+         * @param m Plain object to verify
          * @returns `null` if valid, otherwise the reason why it is not
          */
-        public static verify(message: { [k: string]: any }): (string|null);
+        public static verify(m: { [k: string]: any }): (string|null);
 
         /**
          * Creates an AdminListRecommenderAppManagersRequest message from a plain object. Also converts values to their respective internal types.
-         * @param object Plain object
+         * @param d Plain object
          * @returns AdminListRecommenderAppManagersRequest
          */
-        public static fromObject(object: { [k: string]: any }): pb.AdminListRecommenderAppManagersRequest;
+        public static fromObject(d: { [k: string]: any }): pb.AdminListRecommenderAppManagersRequest;
 
         /**
          * Creates a plain object from an AdminListRecommenderAppManagersRequest message. Also converts values to other types if specified.
-         * @param message AdminListRecommenderAppManagersRequest
-         * @param [options] Conversion options
+         * @param m AdminListRecommenderAppManagersRequest
+         * @param [o] Conversion options
          * @returns Plain object
          */
-        public static toObject(message: pb.AdminListRecommenderAppManagersRequest, options?: $protobuf.IConversionOptions): { [k: string]: any };
+        public static toObject(m: pb.AdminListRecommenderAppManagersRequest, o?: $protobuf.IConversionOptions): { [k: string]: any };
 
         /**
          * Converts this AdminListRecommenderAppManagersRequest to JSON.
          * @returns JSON object
          */
         public toJSON(): { [k: string]: any };
-
-        /**
-         * Gets the default type url for AdminListRecommenderAppManagersRequest
-         * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
-         * @returns The default type url
-         */
-        public static getTypeUrl(typeUrlPrefix?: string): string;
     }
 
     /** Properties of a ListRecommenderAppManagersRequest. */
@@ -14918,9 +14126,9 @@ export namespace pb {
 
         /**
          * Constructs a new ListRecommenderAppManagersRequest.
-         * @param [properties] Properties to set
+         * @param [p] Properties to set
          */
-        constructor(properties?: pb.IListRecommenderAppManagersRequest);
+        constructor(p?: pb.IListRecommenderAppManagersRequest);
 
         /** ListRecommenderAppManagersRequest serviceAppid. */
         public serviceAppid: string;
@@ -14943,11 +14151,11 @@ export namespace pb {
 
         /**
          * Encodes the specified ListRecommenderAppManagersRequest message. Does not implicitly {@link pb.ListRecommenderAppManagersRequest.verify|verify} messages.
-         * @param message ListRecommenderAppManagersRequest message or plain object to encode
-         * @param [writer] Writer to encode to
+         * @param m ListRecommenderAppManagersRequest message or plain object to encode
+         * @param [w] Writer to encode to
          * @returns Writer
          */
-        public static encode(message: pb.IListRecommenderAppManagersRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+        public static encode(m: pb.IListRecommenderAppManagersRequest, w?: $protobuf.Writer): $protobuf.Writer;
 
         /**
          * Encodes the specified ListRecommenderAppManagersRequest message, length delimited. Does not implicitly {@link pb.ListRecommenderAppManagersRequest.verify|verify} messages.
@@ -14959,13 +14167,13 @@ export namespace pb {
 
         /**
          * Decodes a ListRecommenderAppManagersRequest message from the specified reader or buffer.
-         * @param reader Reader or buffer to decode from
-         * @param [length] Message length if known beforehand
+         * @param r Reader or buffer to decode from
+         * @param [l] Message length if known beforehand
          * @returns ListRecommenderAppManagersRequest
          * @throws {Error} If the payload is not a reader or valid buffer
          * @throws {$protobuf.util.ProtocolError} If required fields are missing
          */
-        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): pb.ListRecommenderAppManagersRequest;
+        public static decode(r: ($protobuf.Reader|Uint8Array), l?: number): pb.ListRecommenderAppManagersRequest;
 
         /**
          * Decodes a ListRecommenderAppManagersRequest message from the specified reader or buffer, length delimited.
@@ -14978,38 +14186,31 @@ export namespace pb {
 
         /**
          * Verifies a ListRecommenderAppManagersRequest message.
-         * @param message Plain object to verify
+         * @param m Plain object to verify
          * @returns `null` if valid, otherwise the reason why it is not
          */
-        public static verify(message: { [k: string]: any }): (string|null);
+        public static verify(m: { [k: string]: any }): (string|null);
 
         /**
          * Creates a ListRecommenderAppManagersRequest message from a plain object. Also converts values to their respective internal types.
-         * @param object Plain object
+         * @param d Plain object
          * @returns ListRecommenderAppManagersRequest
          */
-        public static fromObject(object: { [k: string]: any }): pb.ListRecommenderAppManagersRequest;
+        public static fromObject(d: { [k: string]: any }): pb.ListRecommenderAppManagersRequest;
 
         /**
          * Creates a plain object from a ListRecommenderAppManagersRequest message. Also converts values to other types if specified.
-         * @param message ListRecommenderAppManagersRequest
-         * @param [options] Conversion options
+         * @param m ListRecommenderAppManagersRequest
+         * @param [o] Conversion options
          * @returns Plain object
          */
-        public static toObject(message: pb.ListRecommenderAppManagersRequest, options?: $protobuf.IConversionOptions): { [k: string]: any };
+        public static toObject(m: pb.ListRecommenderAppManagersRequest, o?: $protobuf.IConversionOptions): { [k: string]: any };
 
         /**
          * Converts this ListRecommenderAppManagersRequest to JSON.
          * @returns JSON object
          */
         public toJSON(): { [k: string]: any };
-
-        /**
-         * Gets the default type url for ListRecommenderAppManagersRequest
-         * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
-         * @returns The default type url
-         */
-        public static getTypeUrl(typeUrlPrefix?: string): string;
     }
 
     /** Properties of a ListRecommenderAppManagersResponse. */
@@ -15033,9 +14234,9 @@ export namespace pb {
 
         /**
          * Constructs a new ListRecommenderAppManagersResponse.
-         * @param [properties] Properties to set
+         * @param [p] Properties to set
          */
-        constructor(properties?: pb.IListRecommenderAppManagersResponse);
+        constructor(p?: pb.IListRecommenderAppManagersResponse);
 
         /** ListRecommenderAppManagersResponse code. */
         public code: number;
@@ -15058,11 +14259,11 @@ export namespace pb {
 
         /**
          * Encodes the specified ListRecommenderAppManagersResponse message. Does not implicitly {@link pb.ListRecommenderAppManagersResponse.verify|verify} messages.
-         * @param message ListRecommenderAppManagersResponse message or plain object to encode
-         * @param [writer] Writer to encode to
+         * @param m ListRecommenderAppManagersResponse message or plain object to encode
+         * @param [w] Writer to encode to
          * @returns Writer
          */
-        public static encode(message: pb.IListRecommenderAppManagersResponse, writer?: $protobuf.Writer): $protobuf.Writer;
+        public static encode(m: pb.IListRecommenderAppManagersResponse, w?: $protobuf.Writer): $protobuf.Writer;
 
         /**
          * Encodes the specified ListRecommenderAppManagersResponse message, length delimited. Does not implicitly {@link pb.ListRecommenderAppManagersResponse.verify|verify} messages.
@@ -15074,13 +14275,13 @@ export namespace pb {
 
         /**
          * Decodes a ListRecommenderAppManagersResponse message from the specified reader or buffer.
-         * @param reader Reader or buffer to decode from
-         * @param [length] Message length if known beforehand
+         * @param r Reader or buffer to decode from
+         * @param [l] Message length if known beforehand
          * @returns ListRecommenderAppManagersResponse
          * @throws {Error} If the payload is not a reader or valid buffer
          * @throws {$protobuf.util.ProtocolError} If required fields are missing
          */
-        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): pb.ListRecommenderAppManagersResponse;
+        public static decode(r: ($protobuf.Reader|Uint8Array), l?: number): pb.ListRecommenderAppManagersResponse;
 
         /**
          * Decodes a ListRecommenderAppManagersResponse message from the specified reader or buffer, length delimited.
@@ -15093,38 +14294,31 @@ export namespace pb {
 
         /**
          * Verifies a ListRecommenderAppManagersResponse message.
-         * @param message Plain object to verify
+         * @param m Plain object to verify
          * @returns `null` if valid, otherwise the reason why it is not
          */
-        public static verify(message: { [k: string]: any }): (string|null);
+        public static verify(m: { [k: string]: any }): (string|null);
 
         /**
          * Creates a ListRecommenderAppManagersResponse message from a plain object. Also converts values to their respective internal types.
-         * @param object Plain object
+         * @param d Plain object
          * @returns ListRecommenderAppManagersResponse
          */
-        public static fromObject(object: { [k: string]: any }): pb.ListRecommenderAppManagersResponse;
+        public static fromObject(d: { [k: string]: any }): pb.ListRecommenderAppManagersResponse;
 
         /**
          * Creates a plain object from a ListRecommenderAppManagersResponse message. Also converts values to other types if specified.
-         * @param message ListRecommenderAppManagersResponse
-         * @param [options] Conversion options
+         * @param m ListRecommenderAppManagersResponse
+         * @param [o] Conversion options
          * @returns Plain object
          */
-        public static toObject(message: pb.ListRecommenderAppManagersResponse, options?: $protobuf.IConversionOptions): { [k: string]: any };
+        public static toObject(m: pb.ListRecommenderAppManagersResponse, o?: $protobuf.IConversionOptions): { [k: string]: any };
 
         /**
          * Converts this ListRecommenderAppManagersResponse to JSON.
          * @returns JSON object
          */
         public toJSON(): { [k: string]: any };
-
-        /**
-         * Gets the default type url for ListRecommenderAppManagersResponse
-         * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
-         * @returns The default type url
-         */
-        public static getTypeUrl(typeUrlPrefix?: string): string;
     }
 
     /** Properties of a DeleteRecommenderAppManagerRequest. */
@@ -15142,9 +14336,9 @@ export namespace pb {
 
         /**
          * Constructs a new DeleteRecommenderAppManagerRequest.
-         * @param [properties] Properties to set
+         * @param [p] Properties to set
          */
-        constructor(properties?: pb.IDeleteRecommenderAppManagerRequest);
+        constructor(p?: pb.IDeleteRecommenderAppManagerRequest);
 
         /** DeleteRecommenderAppManagerRequest serviceAppid. */
         public serviceAppid: string;
@@ -15161,11 +14355,11 @@ export namespace pb {
 
         /**
          * Encodes the specified DeleteRecommenderAppManagerRequest message. Does not implicitly {@link pb.DeleteRecommenderAppManagerRequest.verify|verify} messages.
-         * @param message DeleteRecommenderAppManagerRequest message or plain object to encode
-         * @param [writer] Writer to encode to
+         * @param m DeleteRecommenderAppManagerRequest message or plain object to encode
+         * @param [w] Writer to encode to
          * @returns Writer
          */
-        public static encode(message: pb.IDeleteRecommenderAppManagerRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+        public static encode(m: pb.IDeleteRecommenderAppManagerRequest, w?: $protobuf.Writer): $protobuf.Writer;
 
         /**
          * Encodes the specified DeleteRecommenderAppManagerRequest message, length delimited. Does not implicitly {@link pb.DeleteRecommenderAppManagerRequest.verify|verify} messages.
@@ -15177,13 +14371,13 @@ export namespace pb {
 
         /**
          * Decodes a DeleteRecommenderAppManagerRequest message from the specified reader or buffer.
-         * @param reader Reader or buffer to decode from
-         * @param [length] Message length if known beforehand
+         * @param r Reader or buffer to decode from
+         * @param [l] Message length if known beforehand
          * @returns DeleteRecommenderAppManagerRequest
          * @throws {Error} If the payload is not a reader or valid buffer
          * @throws {$protobuf.util.ProtocolError} If required fields are missing
          */
-        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): pb.DeleteRecommenderAppManagerRequest;
+        public static decode(r: ($protobuf.Reader|Uint8Array), l?: number): pb.DeleteRecommenderAppManagerRequest;
 
         /**
          * Decodes a DeleteRecommenderAppManagerRequest message from the specified reader or buffer, length delimited.
@@ -15196,38 +14390,31 @@ export namespace pb {
 
         /**
          * Verifies a DeleteRecommenderAppManagerRequest message.
-         * @param message Plain object to verify
+         * @param m Plain object to verify
          * @returns `null` if valid, otherwise the reason why it is not
          */
-        public static verify(message: { [k: string]: any }): (string|null);
+        public static verify(m: { [k: string]: any }): (string|null);
 
         /**
          * Creates a DeleteRecommenderAppManagerRequest message from a plain object. Also converts values to their respective internal types.
-         * @param object Plain object
+         * @param d Plain object
          * @returns DeleteRecommenderAppManagerRequest
          */
-        public static fromObject(object: { [k: string]: any }): pb.DeleteRecommenderAppManagerRequest;
+        public static fromObject(d: { [k: string]: any }): pb.DeleteRecommenderAppManagerRequest;
 
         /**
          * Creates a plain object from a DeleteRecommenderAppManagerRequest message. Also converts values to other types if specified.
-         * @param message DeleteRecommenderAppManagerRequest
-         * @param [options] Conversion options
+         * @param m DeleteRecommenderAppManagerRequest
+         * @param [o] Conversion options
          * @returns Plain object
          */
-        public static toObject(message: pb.DeleteRecommenderAppManagerRequest, options?: $protobuf.IConversionOptions): { [k: string]: any };
+        public static toObject(m: pb.DeleteRecommenderAppManagerRequest, o?: $protobuf.IConversionOptions): { [k: string]: any };
 
         /**
          * Converts this DeleteRecommenderAppManagerRequest to JSON.
          * @returns JSON object
          */
         public toJSON(): { [k: string]: any };
-
-        /**
-         * Gets the default type url for DeleteRecommenderAppManagerRequest
-         * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
-         * @returns The default type url
-         */
-        public static getTypeUrl(typeUrlPrefix?: string): string;
     }
 
     /** Properties of a RecommenderAppManagerMutationResponse. */
@@ -15245,9 +14432,9 @@ export namespace pb {
 
         /**
          * Constructs a new RecommenderAppManagerMutationResponse.
-         * @param [properties] Properties to set
+         * @param [p] Properties to set
          */
-        constructor(properties?: pb.IRecommenderAppManagerMutationResponse);
+        constructor(p?: pb.IRecommenderAppManagerMutationResponse);
 
         /** RecommenderAppManagerMutationResponse code. */
         public code: number;
@@ -15264,11 +14451,11 @@ export namespace pb {
 
         /**
          * Encodes the specified RecommenderAppManagerMutationResponse message. Does not implicitly {@link pb.RecommenderAppManagerMutationResponse.verify|verify} messages.
-         * @param message RecommenderAppManagerMutationResponse message or plain object to encode
-         * @param [writer] Writer to encode to
+         * @param m RecommenderAppManagerMutationResponse message or plain object to encode
+         * @param [w] Writer to encode to
          * @returns Writer
          */
-        public static encode(message: pb.IRecommenderAppManagerMutationResponse, writer?: $protobuf.Writer): $protobuf.Writer;
+        public static encode(m: pb.IRecommenderAppManagerMutationResponse, w?: $protobuf.Writer): $protobuf.Writer;
 
         /**
          * Encodes the specified RecommenderAppManagerMutationResponse message, length delimited. Does not implicitly {@link pb.RecommenderAppManagerMutationResponse.verify|verify} messages.
@@ -15280,13 +14467,13 @@ export namespace pb {
 
         /**
          * Decodes a RecommenderAppManagerMutationResponse message from the specified reader or buffer.
-         * @param reader Reader or buffer to decode from
-         * @param [length] Message length if known beforehand
+         * @param r Reader or buffer to decode from
+         * @param [l] Message length if known beforehand
          * @returns RecommenderAppManagerMutationResponse
          * @throws {Error} If the payload is not a reader or valid buffer
          * @throws {$protobuf.util.ProtocolError} If required fields are missing
          */
-        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): pb.RecommenderAppManagerMutationResponse;
+        public static decode(r: ($protobuf.Reader|Uint8Array), l?: number): pb.RecommenderAppManagerMutationResponse;
 
         /**
          * Decodes a RecommenderAppManagerMutationResponse message from the specified reader or buffer, length delimited.
@@ -15299,38 +14486,31 @@ export namespace pb {
 
         /**
          * Verifies a RecommenderAppManagerMutationResponse message.
-         * @param message Plain object to verify
+         * @param m Plain object to verify
          * @returns `null` if valid, otherwise the reason why it is not
          */
-        public static verify(message: { [k: string]: any }): (string|null);
+        public static verify(m: { [k: string]: any }): (string|null);
 
         /**
          * Creates a RecommenderAppManagerMutationResponse message from a plain object. Also converts values to their respective internal types.
-         * @param object Plain object
+         * @param d Plain object
          * @returns RecommenderAppManagerMutationResponse
          */
-        public static fromObject(object: { [k: string]: any }): pb.RecommenderAppManagerMutationResponse;
+        public static fromObject(d: { [k: string]: any }): pb.RecommenderAppManagerMutationResponse;
 
         /**
          * Creates a plain object from a RecommenderAppManagerMutationResponse message. Also converts values to other types if specified.
-         * @param message RecommenderAppManagerMutationResponse
-         * @param [options] Conversion options
+         * @param m RecommenderAppManagerMutationResponse
+         * @param [o] Conversion options
          * @returns Plain object
          */
-        public static toObject(message: pb.RecommenderAppManagerMutationResponse, options?: $protobuf.IConversionOptions): { [k: string]: any };
+        public static toObject(m: pb.RecommenderAppManagerMutationResponse, o?: $protobuf.IConversionOptions): { [k: string]: any };
 
         /**
          * Converts this RecommenderAppManagerMutationResponse to JSON.
          * @returns JSON object
          */
         public toJSON(): { [k: string]: any };
-
-        /**
-         * Gets the default type url for RecommenderAppManagerMutationResponse
-         * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
-         * @returns The default type url
-         */
-        public static getTypeUrl(typeUrlPrefix?: string): string;
     }
 
     /** Properties of an AdminAuditBussPackageRequest. */
@@ -15351,9 +14531,9 @@ export namespace pb {
 
         /**
          * Constructs a new AdminAuditBussPackageRequest.
-         * @param [properties] Properties to set
+         * @param [p] Properties to set
          */
-        constructor(properties?: pb.IAdminAuditBussPackageRequest);
+        constructor(p?: pb.IAdminAuditBussPackageRequest);
 
         /** AdminAuditBussPackageRequest pkgId. */
         public pkgId: number;
@@ -15373,11 +14553,11 @@ export namespace pb {
 
         /**
          * Encodes the specified AdminAuditBussPackageRequest message. Does not implicitly {@link pb.AdminAuditBussPackageRequest.verify|verify} messages.
-         * @param message AdminAuditBussPackageRequest message or plain object to encode
-         * @param [writer] Writer to encode to
+         * @param m AdminAuditBussPackageRequest message or plain object to encode
+         * @param [w] Writer to encode to
          * @returns Writer
          */
-        public static encode(message: pb.IAdminAuditBussPackageRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+        public static encode(m: pb.IAdminAuditBussPackageRequest, w?: $protobuf.Writer): $protobuf.Writer;
 
         /**
          * Encodes the specified AdminAuditBussPackageRequest message, length delimited. Does not implicitly {@link pb.AdminAuditBussPackageRequest.verify|verify} messages.
@@ -15389,13 +14569,13 @@ export namespace pb {
 
         /**
          * Decodes an AdminAuditBussPackageRequest message from the specified reader or buffer.
-         * @param reader Reader or buffer to decode from
-         * @param [length] Message length if known beforehand
+         * @param r Reader or buffer to decode from
+         * @param [l] Message length if known beforehand
          * @returns AdminAuditBussPackageRequest
          * @throws {Error} If the payload is not a reader or valid buffer
          * @throws {$protobuf.util.ProtocolError} If required fields are missing
          */
-        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): pb.AdminAuditBussPackageRequest;
+        public static decode(r: ($protobuf.Reader|Uint8Array), l?: number): pb.AdminAuditBussPackageRequest;
 
         /**
          * Decodes an AdminAuditBussPackageRequest message from the specified reader or buffer, length delimited.
@@ -15408,38 +14588,31 @@ export namespace pb {
 
         /**
          * Verifies an AdminAuditBussPackageRequest message.
-         * @param message Plain object to verify
+         * @param m Plain object to verify
          * @returns `null` if valid, otherwise the reason why it is not
          */
-        public static verify(message: { [k: string]: any }): (string|null);
+        public static verify(m: { [k: string]: any }): (string|null);
 
         /**
          * Creates an AdminAuditBussPackageRequest message from a plain object. Also converts values to their respective internal types.
-         * @param object Plain object
+         * @param d Plain object
          * @returns AdminAuditBussPackageRequest
          */
-        public static fromObject(object: { [k: string]: any }): pb.AdminAuditBussPackageRequest;
+        public static fromObject(d: { [k: string]: any }): pb.AdminAuditBussPackageRequest;
 
         /**
          * Creates a plain object from an AdminAuditBussPackageRequest message. Also converts values to other types if specified.
-         * @param message AdminAuditBussPackageRequest
-         * @param [options] Conversion options
+         * @param m AdminAuditBussPackageRequest
+         * @param [o] Conversion options
          * @returns Plain object
          */
-        public static toObject(message: pb.AdminAuditBussPackageRequest, options?: $protobuf.IConversionOptions): { [k: string]: any };
+        public static toObject(m: pb.AdminAuditBussPackageRequest, o?: $protobuf.IConversionOptions): { [k: string]: any };
 
         /**
          * Converts this AdminAuditBussPackageRequest to JSON.
          * @returns JSON object
          */
         public toJSON(): { [k: string]: any };
-
-        /**
-         * Gets the default type url for AdminAuditBussPackageRequest
-         * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
-         * @returns The default type url
-         */
-        public static getTypeUrl(typeUrlPrefix?: string): string;
     }
 
     /** Properties of an AdminLoginRequest. */
@@ -15457,9 +14630,9 @@ export namespace pb {
 
         /**
          * Constructs a new AdminLoginRequest.
-         * @param [properties] Properties to set
+         * @param [p] Properties to set
          */
-        constructor(properties?: pb.IAdminLoginRequest);
+        constructor(p?: pb.IAdminLoginRequest);
 
         /** AdminLoginRequest account. */
         public account: string;
@@ -15476,11 +14649,11 @@ export namespace pb {
 
         /**
          * Encodes the specified AdminLoginRequest message. Does not implicitly {@link pb.AdminLoginRequest.verify|verify} messages.
-         * @param message AdminLoginRequest message or plain object to encode
-         * @param [writer] Writer to encode to
+         * @param m AdminLoginRequest message or plain object to encode
+         * @param [w] Writer to encode to
          * @returns Writer
          */
-        public static encode(message: pb.IAdminLoginRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+        public static encode(m: pb.IAdminLoginRequest, w?: $protobuf.Writer): $protobuf.Writer;
 
         /**
          * Encodes the specified AdminLoginRequest message, length delimited. Does not implicitly {@link pb.AdminLoginRequest.verify|verify} messages.
@@ -15492,13 +14665,13 @@ export namespace pb {
 
         /**
          * Decodes an AdminLoginRequest message from the specified reader or buffer.
-         * @param reader Reader or buffer to decode from
-         * @param [length] Message length if known beforehand
+         * @param r Reader or buffer to decode from
+         * @param [l] Message length if known beforehand
          * @returns AdminLoginRequest
          * @throws {Error} If the payload is not a reader or valid buffer
          * @throws {$protobuf.util.ProtocolError} If required fields are missing
          */
-        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): pb.AdminLoginRequest;
+        public static decode(r: ($protobuf.Reader|Uint8Array), l?: number): pb.AdminLoginRequest;
 
         /**
          * Decodes an AdminLoginRequest message from the specified reader or buffer, length delimited.
@@ -15511,38 +14684,31 @@ export namespace pb {
 
         /**
          * Verifies an AdminLoginRequest message.
-         * @param message Plain object to verify
+         * @param m Plain object to verify
          * @returns `null` if valid, otherwise the reason why it is not
          */
-        public static verify(message: { [k: string]: any }): (string|null);
+        public static verify(m: { [k: string]: any }): (string|null);
 
         /**
          * Creates an AdminLoginRequest message from a plain object. Also converts values to their respective internal types.
-         * @param object Plain object
+         * @param d Plain object
          * @returns AdminLoginRequest
          */
-        public static fromObject(object: { [k: string]: any }): pb.AdminLoginRequest;
+        public static fromObject(d: { [k: string]: any }): pb.AdminLoginRequest;
 
         /**
          * Creates a plain object from an AdminLoginRequest message. Also converts values to other types if specified.
-         * @param message AdminLoginRequest
-         * @param [options] Conversion options
+         * @param m AdminLoginRequest
+         * @param [o] Conversion options
          * @returns Plain object
          */
-        public static toObject(message: pb.AdminLoginRequest, options?: $protobuf.IConversionOptions): { [k: string]: any };
+        public static toObject(m: pb.AdminLoginRequest, o?: $protobuf.IConversionOptions): { [k: string]: any };
 
         /**
          * Converts this AdminLoginRequest to JSON.
          * @returns JSON object
          */
         public toJSON(): { [k: string]: any };
-
-        /**
-         * Gets the default type url for AdminLoginRequest
-         * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
-         * @returns The default type url
-         */
-        public static getTypeUrl(typeUrlPrefix?: string): string;
     }
 
     /** Properties of an AdminLoginUserInfo. */
@@ -15563,9 +14729,9 @@ export namespace pb {
 
         /**
          * Constructs a new AdminLoginUserInfo.
-         * @param [properties] Properties to set
+         * @param [p] Properties to set
          */
-        constructor(properties?: pb.IAdminLoginUserInfo);
+        constructor(p?: pb.IAdminLoginUserInfo);
 
         /** AdminLoginUserInfo userId. */
         public userId: (number|Long);
@@ -15585,11 +14751,11 @@ export namespace pb {
 
         /**
          * Encodes the specified AdminLoginUserInfo message. Does not implicitly {@link pb.AdminLoginUserInfo.verify|verify} messages.
-         * @param message AdminLoginUserInfo message or plain object to encode
-         * @param [writer] Writer to encode to
+         * @param m AdminLoginUserInfo message or plain object to encode
+         * @param [w] Writer to encode to
          * @returns Writer
          */
-        public static encode(message: pb.IAdminLoginUserInfo, writer?: $protobuf.Writer): $protobuf.Writer;
+        public static encode(m: pb.IAdminLoginUserInfo, w?: $protobuf.Writer): $protobuf.Writer;
 
         /**
          * Encodes the specified AdminLoginUserInfo message, length delimited. Does not implicitly {@link pb.AdminLoginUserInfo.verify|verify} messages.
@@ -15601,13 +14767,13 @@ export namespace pb {
 
         /**
          * Decodes an AdminLoginUserInfo message from the specified reader or buffer.
-         * @param reader Reader or buffer to decode from
-         * @param [length] Message length if known beforehand
+         * @param r Reader or buffer to decode from
+         * @param [l] Message length if known beforehand
          * @returns AdminLoginUserInfo
          * @throws {Error} If the payload is not a reader or valid buffer
          * @throws {$protobuf.util.ProtocolError} If required fields are missing
          */
-        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): pb.AdminLoginUserInfo;
+        public static decode(r: ($protobuf.Reader|Uint8Array), l?: number): pb.AdminLoginUserInfo;
 
         /**
          * Decodes an AdminLoginUserInfo message from the specified reader or buffer, length delimited.
@@ -15620,38 +14786,31 @@ export namespace pb {
 
         /**
          * Verifies an AdminLoginUserInfo message.
-         * @param message Plain object to verify
+         * @param m Plain object to verify
          * @returns `null` if valid, otherwise the reason why it is not
          */
-        public static verify(message: { [k: string]: any }): (string|null);
+        public static verify(m: { [k: string]: any }): (string|null);
 
         /**
          * Creates an AdminLoginUserInfo message from a plain object. Also converts values to their respective internal types.
-         * @param object Plain object
+         * @param d Plain object
          * @returns AdminLoginUserInfo
          */
-        public static fromObject(object: { [k: string]: any }): pb.AdminLoginUserInfo;
+        public static fromObject(d: { [k: string]: any }): pb.AdminLoginUserInfo;
 
         /**
          * Creates a plain object from an AdminLoginUserInfo message. Also converts values to other types if specified.
-         * @param message AdminLoginUserInfo
-         * @param [options] Conversion options
+         * @param m AdminLoginUserInfo
+         * @param [o] Conversion options
          * @returns Plain object
          */
-        public static toObject(message: pb.AdminLoginUserInfo, options?: $protobuf.IConversionOptions): { [k: string]: any };
+        public static toObject(m: pb.AdminLoginUserInfo, o?: $protobuf.IConversionOptions): { [k: string]: any };
 
         /**
          * Converts this AdminLoginUserInfo to JSON.
          * @returns JSON object
          */
         public toJSON(): { [k: string]: any };
-
-        /**
-         * Gets the default type url for AdminLoginUserInfo
-         * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
-         * @returns The default type url
-         */
-        public static getTypeUrl(typeUrlPrefix?: string): string;
     }
 
     /** Properties of an AdminLoginResponse. */
@@ -15675,9 +14834,9 @@ export namespace pb {
 
         /**
          * Constructs a new AdminLoginResponse.
-         * @param [properties] Properties to set
+         * @param [p] Properties to set
          */
-        constructor(properties?: pb.IAdminLoginResponse);
+        constructor(p?: pb.IAdminLoginResponse);
 
         /** AdminLoginResponse code. */
         public code: number;
@@ -15700,11 +14859,11 @@ export namespace pb {
 
         /**
          * Encodes the specified AdminLoginResponse message. Does not implicitly {@link pb.AdminLoginResponse.verify|verify} messages.
-         * @param message AdminLoginResponse message or plain object to encode
-         * @param [writer] Writer to encode to
+         * @param m AdminLoginResponse message or plain object to encode
+         * @param [w] Writer to encode to
          * @returns Writer
          */
-        public static encode(message: pb.IAdminLoginResponse, writer?: $protobuf.Writer): $protobuf.Writer;
+        public static encode(m: pb.IAdminLoginResponse, w?: $protobuf.Writer): $protobuf.Writer;
 
         /**
          * Encodes the specified AdminLoginResponse message, length delimited. Does not implicitly {@link pb.AdminLoginResponse.verify|verify} messages.
@@ -15716,13 +14875,13 @@ export namespace pb {
 
         /**
          * Decodes an AdminLoginResponse message from the specified reader or buffer.
-         * @param reader Reader or buffer to decode from
-         * @param [length] Message length if known beforehand
+         * @param r Reader or buffer to decode from
+         * @param [l] Message length if known beforehand
          * @returns AdminLoginResponse
          * @throws {Error} If the payload is not a reader or valid buffer
          * @throws {$protobuf.util.ProtocolError} If required fields are missing
          */
-        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): pb.AdminLoginResponse;
+        public static decode(r: ($protobuf.Reader|Uint8Array), l?: number): pb.AdminLoginResponse;
 
         /**
          * Decodes an AdminLoginResponse message from the specified reader or buffer, length delimited.
@@ -15735,38 +14894,31 @@ export namespace pb {
 
         /**
          * Verifies an AdminLoginResponse message.
-         * @param message Plain object to verify
+         * @param m Plain object to verify
          * @returns `null` if valid, otherwise the reason why it is not
          */
-        public static verify(message: { [k: string]: any }): (string|null);
+        public static verify(m: { [k: string]: any }): (string|null);
 
         /**
          * Creates an AdminLoginResponse message from a plain object. Also converts values to their respective internal types.
-         * @param object Plain object
+         * @param d Plain object
          * @returns AdminLoginResponse
          */
-        public static fromObject(object: { [k: string]: any }): pb.AdminLoginResponse;
+        public static fromObject(d: { [k: string]: any }): pb.AdminLoginResponse;
 
         /**
          * Creates a plain object from an AdminLoginResponse message. Also converts values to other types if specified.
-         * @param message AdminLoginResponse
-         * @param [options] Conversion options
+         * @param m AdminLoginResponse
+         * @param [o] Conversion options
          * @returns Plain object
          */
-        public static toObject(message: pb.AdminLoginResponse, options?: $protobuf.IConversionOptions): { [k: string]: any };
+        public static toObject(m: pb.AdminLoginResponse, o?: $protobuf.IConversionOptions): { [k: string]: any };
 
         /**
          * Converts this AdminLoginResponse to JSON.
          * @returns JSON object
          */
         public toJSON(): { [k: string]: any };
-
-        /**
-         * Gets the default type url for AdminLoginResponse
-         * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
-         * @returns The default type url
-         */
-        public static getTypeUrl(typeUrlPrefix?: string): string;
     }
 
     /** Properties of an AdminChangePasswordRequest. */
@@ -15784,9 +14936,9 @@ export namespace pb {
 
         /**
          * Constructs a new AdminChangePasswordRequest.
-         * @param [properties] Properties to set
+         * @param [p] Properties to set
          */
-        constructor(properties?: pb.IAdminChangePasswordRequest);
+        constructor(p?: pb.IAdminChangePasswordRequest);
 
         /** AdminChangePasswordRequest oldPassword. */
         public oldPassword: string;
@@ -15803,11 +14955,11 @@ export namespace pb {
 
         /**
          * Encodes the specified AdminChangePasswordRequest message. Does not implicitly {@link pb.AdminChangePasswordRequest.verify|verify} messages.
-         * @param message AdminChangePasswordRequest message or plain object to encode
-         * @param [writer] Writer to encode to
+         * @param m AdminChangePasswordRequest message or plain object to encode
+         * @param [w] Writer to encode to
          * @returns Writer
          */
-        public static encode(message: pb.IAdminChangePasswordRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+        public static encode(m: pb.IAdminChangePasswordRequest, w?: $protobuf.Writer): $protobuf.Writer;
 
         /**
          * Encodes the specified AdminChangePasswordRequest message, length delimited. Does not implicitly {@link pb.AdminChangePasswordRequest.verify|verify} messages.
@@ -15819,13 +14971,13 @@ export namespace pb {
 
         /**
          * Decodes an AdminChangePasswordRequest message from the specified reader or buffer.
-         * @param reader Reader or buffer to decode from
-         * @param [length] Message length if known beforehand
+         * @param r Reader or buffer to decode from
+         * @param [l] Message length if known beforehand
          * @returns AdminChangePasswordRequest
          * @throws {Error} If the payload is not a reader or valid buffer
          * @throws {$protobuf.util.ProtocolError} If required fields are missing
          */
-        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): pb.AdminChangePasswordRequest;
+        public static decode(r: ($protobuf.Reader|Uint8Array), l?: number): pb.AdminChangePasswordRequest;
 
         /**
          * Decodes an AdminChangePasswordRequest message from the specified reader or buffer, length delimited.
@@ -15838,38 +14990,31 @@ export namespace pb {
 
         /**
          * Verifies an AdminChangePasswordRequest message.
-         * @param message Plain object to verify
+         * @param m Plain object to verify
          * @returns `null` if valid, otherwise the reason why it is not
          */
-        public static verify(message: { [k: string]: any }): (string|null);
+        public static verify(m: { [k: string]: any }): (string|null);
 
         /**
          * Creates an AdminChangePasswordRequest message from a plain object. Also converts values to their respective internal types.
-         * @param object Plain object
+         * @param d Plain object
          * @returns AdminChangePasswordRequest
          */
-        public static fromObject(object: { [k: string]: any }): pb.AdminChangePasswordRequest;
+        public static fromObject(d: { [k: string]: any }): pb.AdminChangePasswordRequest;
 
         /**
          * Creates a plain object from an AdminChangePasswordRequest message. Also converts values to other types if specified.
-         * @param message AdminChangePasswordRequest
-         * @param [options] Conversion options
+         * @param m AdminChangePasswordRequest
+         * @param [o] Conversion options
          * @returns Plain object
          */
-        public static toObject(message: pb.AdminChangePasswordRequest, options?: $protobuf.IConversionOptions): { [k: string]: any };
+        public static toObject(m: pb.AdminChangePasswordRequest, o?: $protobuf.IConversionOptions): { [k: string]: any };
 
         /**
          * Converts this AdminChangePasswordRequest to JSON.
          * @returns JSON object
          */
         public toJSON(): { [k: string]: any };
-
-        /**
-         * Gets the default type url for AdminChangePasswordRequest
-         * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
-         * @returns The default type url
-         */
-        public static getTypeUrl(typeUrlPrefix?: string): string;
     }
 
     /** Properties of an AdminChangePasswordResponse. */
@@ -15887,9 +15032,9 @@ export namespace pb {
 
         /**
          * Constructs a new AdminChangePasswordResponse.
-         * @param [properties] Properties to set
+         * @param [p] Properties to set
          */
-        constructor(properties?: pb.IAdminChangePasswordResponse);
+        constructor(p?: pb.IAdminChangePasswordResponse);
 
         /** AdminChangePasswordResponse code. */
         public code: number;
@@ -15906,11 +15051,11 @@ export namespace pb {
 
         /**
          * Encodes the specified AdminChangePasswordResponse message. Does not implicitly {@link pb.AdminChangePasswordResponse.verify|verify} messages.
-         * @param message AdminChangePasswordResponse message or plain object to encode
-         * @param [writer] Writer to encode to
+         * @param m AdminChangePasswordResponse message or plain object to encode
+         * @param [w] Writer to encode to
          * @returns Writer
          */
-        public static encode(message: pb.IAdminChangePasswordResponse, writer?: $protobuf.Writer): $protobuf.Writer;
+        public static encode(m: pb.IAdminChangePasswordResponse, w?: $protobuf.Writer): $protobuf.Writer;
 
         /**
          * Encodes the specified AdminChangePasswordResponse message, length delimited. Does not implicitly {@link pb.AdminChangePasswordResponse.verify|verify} messages.
@@ -15922,13 +15067,13 @@ export namespace pb {
 
         /**
          * Decodes an AdminChangePasswordResponse message from the specified reader or buffer.
-         * @param reader Reader or buffer to decode from
-         * @param [length] Message length if known beforehand
+         * @param r Reader or buffer to decode from
+         * @param [l] Message length if known beforehand
          * @returns AdminChangePasswordResponse
          * @throws {Error} If the payload is not a reader or valid buffer
          * @throws {$protobuf.util.ProtocolError} If required fields are missing
          */
-        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): pb.AdminChangePasswordResponse;
+        public static decode(r: ($protobuf.Reader|Uint8Array), l?: number): pb.AdminChangePasswordResponse;
 
         /**
          * Decodes an AdminChangePasswordResponse message from the specified reader or buffer, length delimited.
@@ -15941,37 +15086,222 @@ export namespace pb {
 
         /**
          * Verifies an AdminChangePasswordResponse message.
-         * @param message Plain object to verify
+         * @param m Plain object to verify
          * @returns `null` if valid, otherwise the reason why it is not
          */
-        public static verify(message: { [k: string]: any }): (string|null);
+        public static verify(m: { [k: string]: any }): (string|null);
 
         /**
          * Creates an AdminChangePasswordResponse message from a plain object. Also converts values to their respective internal types.
-         * @param object Plain object
+         * @param d Plain object
          * @returns AdminChangePasswordResponse
          */
-        public static fromObject(object: { [k: string]: any }): pb.AdminChangePasswordResponse;
+        public static fromObject(d: { [k: string]: any }): pb.AdminChangePasswordResponse;
 
         /**
          * Creates a plain object from an AdminChangePasswordResponse message. Also converts values to other types if specified.
-         * @param message AdminChangePasswordResponse
-         * @param [options] Conversion options
+         * @param m AdminChangePasswordResponse
+         * @param [o] Conversion options
          * @returns Plain object
          */
-        public static toObject(message: pb.AdminChangePasswordResponse, options?: $protobuf.IConversionOptions): { [k: string]: any };
+        public static toObject(m: pb.AdminChangePasswordResponse, o?: $protobuf.IConversionOptions): { [k: string]: any };
 
         /**
          * Converts this AdminChangePasswordResponse to JSON.
          * @returns JSON object
          */
         public toJSON(): { [k: string]: any };
+    }
+
+    /** Properties of a GetPaymentLedgerWriterRequest. */
+    interface IGetPaymentLedgerWriterRequest {
+    }
+
+    /** Represents a GetPaymentLedgerWriterRequest. */
+    class GetPaymentLedgerWriterRequest implements IGetPaymentLedgerWriterRequest {
 
         /**
-         * Gets the default type url for AdminChangePasswordResponse
-         * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
-         * @returns The default type url
+         * Constructs a new GetPaymentLedgerWriterRequest.
+         * @param [p] Properties to set
          */
-        public static getTypeUrl(typeUrlPrefix?: string): string;
+        constructor(p?: pb.IGetPaymentLedgerWriterRequest);
+
+        /**
+         * Creates a new GetPaymentLedgerWriterRequest instance using the specified properties.
+         * @param [properties] Properties to set
+         * @returns GetPaymentLedgerWriterRequest instance
+         */
+        public static create(properties?: pb.IGetPaymentLedgerWriterRequest): pb.GetPaymentLedgerWriterRequest;
+
+        /**
+         * Encodes the specified GetPaymentLedgerWriterRequest message. Does not implicitly {@link pb.GetPaymentLedgerWriterRequest.verify|verify} messages.
+         * @param m GetPaymentLedgerWriterRequest message or plain object to encode
+         * @param [w] Writer to encode to
+         * @returns Writer
+         */
+        public static encode(m: pb.IGetPaymentLedgerWriterRequest, w?: $protobuf.Writer): $protobuf.Writer;
+
+        /**
+         * Encodes the specified GetPaymentLedgerWriterRequest message, length delimited. Does not implicitly {@link pb.GetPaymentLedgerWriterRequest.verify|verify} messages.
+         * @param message GetPaymentLedgerWriterRequest message or plain object to encode
+         * @param [writer] Writer to encode to
+         * @returns Writer
+         */
+        public static encodeDelimited(message: pb.IGetPaymentLedgerWriterRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+        /**
+         * Decodes a GetPaymentLedgerWriterRequest message from the specified reader or buffer.
+         * @param r Reader or buffer to decode from
+         * @param [l] Message length if known beforehand
+         * @returns GetPaymentLedgerWriterRequest
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        public static decode(r: ($protobuf.Reader|Uint8Array), l?: number): pb.GetPaymentLedgerWriterRequest;
+
+        /**
+         * Decodes a GetPaymentLedgerWriterRequest message from the specified reader or buffer, length delimited.
+         * @param reader Reader or buffer to decode from
+         * @returns GetPaymentLedgerWriterRequest
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): pb.GetPaymentLedgerWriterRequest;
+
+        /**
+         * Verifies a GetPaymentLedgerWriterRequest message.
+         * @param m Plain object to verify
+         * @returns `null` if valid, otherwise the reason why it is not
+         */
+        public static verify(m: { [k: string]: any }): (string|null);
+
+        /**
+         * Creates a GetPaymentLedgerWriterRequest message from a plain object. Also converts values to their respective internal types.
+         * @param d Plain object
+         * @returns GetPaymentLedgerWriterRequest
+         */
+        public static fromObject(d: { [k: string]: any }): pb.GetPaymentLedgerWriterRequest;
+
+        /**
+         * Creates a plain object from a GetPaymentLedgerWriterRequest message. Also converts values to other types if specified.
+         * @param m GetPaymentLedgerWriterRequest
+         * @param [o] Conversion options
+         * @returns Plain object
+         */
+        public static toObject(m: pb.GetPaymentLedgerWriterRequest, o?: $protobuf.IConversionOptions): { [k: string]: any };
+
+        /**
+         * Converts this GetPaymentLedgerWriterRequest to JSON.
+         * @returns JSON object
+         */
+        public toJSON(): { [k: string]: any };
+    }
+
+    /** Properties of a GetPaymentLedgerWriterResponse. */
+    interface IGetPaymentLedgerWriterResponse {
+
+        /** GetPaymentLedgerWriterResponse code */
+        code?: (number|null);
+
+        /** GetPaymentLedgerWriterResponse msg */
+        msg?: (string|null);
+
+        /** GetPaymentLedgerWriterResponse theme */
+        theme?: (string|null);
+
+        /** GetPaymentLedgerWriterResponse writerPubkey */
+        writerPubkey?: (string|null);
+    }
+
+    /** Represents a GetPaymentLedgerWriterResponse. */
+    class GetPaymentLedgerWriterResponse implements IGetPaymentLedgerWriterResponse {
+
+        /**
+         * Constructs a new GetPaymentLedgerWriterResponse.
+         * @param [p] Properties to set
+         */
+        constructor(p?: pb.IGetPaymentLedgerWriterResponse);
+
+        /** GetPaymentLedgerWriterResponse code. */
+        public code: number;
+
+        /** GetPaymentLedgerWriterResponse msg. */
+        public msg: string;
+
+        /** GetPaymentLedgerWriterResponse theme. */
+        public theme: string;
+
+        /** GetPaymentLedgerWriterResponse writerPubkey. */
+        public writerPubkey: string;
+
+        /**
+         * Creates a new GetPaymentLedgerWriterResponse instance using the specified properties.
+         * @param [properties] Properties to set
+         * @returns GetPaymentLedgerWriterResponse instance
+         */
+        public static create(properties?: pb.IGetPaymentLedgerWriterResponse): pb.GetPaymentLedgerWriterResponse;
+
+        /**
+         * Encodes the specified GetPaymentLedgerWriterResponse message. Does not implicitly {@link pb.GetPaymentLedgerWriterResponse.verify|verify} messages.
+         * @param m GetPaymentLedgerWriterResponse message or plain object to encode
+         * @param [w] Writer to encode to
+         * @returns Writer
+         */
+        public static encode(m: pb.IGetPaymentLedgerWriterResponse, w?: $protobuf.Writer): $protobuf.Writer;
+
+        /**
+         * Encodes the specified GetPaymentLedgerWriterResponse message, length delimited. Does not implicitly {@link pb.GetPaymentLedgerWriterResponse.verify|verify} messages.
+         * @param message GetPaymentLedgerWriterResponse message or plain object to encode
+         * @param [writer] Writer to encode to
+         * @returns Writer
+         */
+        public static encodeDelimited(message: pb.IGetPaymentLedgerWriterResponse, writer?: $protobuf.Writer): $protobuf.Writer;
+
+        /**
+         * Decodes a GetPaymentLedgerWriterResponse message from the specified reader or buffer.
+         * @param r Reader or buffer to decode from
+         * @param [l] Message length if known beforehand
+         * @returns GetPaymentLedgerWriterResponse
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        public static decode(r: ($protobuf.Reader|Uint8Array), l?: number): pb.GetPaymentLedgerWriterResponse;
+
+        /**
+         * Decodes a GetPaymentLedgerWriterResponse message from the specified reader or buffer, length delimited.
+         * @param reader Reader or buffer to decode from
+         * @returns GetPaymentLedgerWriterResponse
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): pb.GetPaymentLedgerWriterResponse;
+
+        /**
+         * Verifies a GetPaymentLedgerWriterResponse message.
+         * @param m Plain object to verify
+         * @returns `null` if valid, otherwise the reason why it is not
+         */
+        public static verify(m: { [k: string]: any }): (string|null);
+
+        /**
+         * Creates a GetPaymentLedgerWriterResponse message from a plain object. Also converts values to their respective internal types.
+         * @param d Plain object
+         * @returns GetPaymentLedgerWriterResponse
+         */
+        public static fromObject(d: { [k: string]: any }): pb.GetPaymentLedgerWriterResponse;
+
+        /**
+         * Creates a plain object from a GetPaymentLedgerWriterResponse message. Also converts values to other types if specified.
+         * @param m GetPaymentLedgerWriterResponse
+         * @param [o] Conversion options
+         * @returns Plain object
+         */
+        public static toObject(m: pb.GetPaymentLedgerWriterResponse, o?: $protobuf.IConversionOptions): { [k: string]: any };
+
+        /**
+         * Converts this GetPaymentLedgerWriterResponse to JSON.
+         * @returns JSON object
+         */
+        public toJSON(): { [k: string]: any };
     }
 }

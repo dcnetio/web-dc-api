@@ -11,6 +11,7 @@ import {
   PaymentGatewayScene,
   IPendingGatewayPayment,
   IPaymentOrderRecord,
+  IPaymentLedgerWriterConfig,
   IPackageApplyRequest,
   IPackageConfigFilter,
   IPackageConfigListResult,
@@ -943,6 +944,36 @@ export class PayModule implements DCModule, IPayOperations {
       authToken || "",
       payProtocol,
     );
+  }
+
+  /**
+   * 获取支付网关订单账本写入者配置。
+   * 该发现流程只使用 libp2p gRPC，不依赖浏览器 HTTP/CORS。
+   */
+  async getPaymentLedgerWriter(): Promise<IPaymentLedgerWriterConfig> {
+    const grpcClient = await this.getPayGrpcClient();
+    const request = pb.GetPaymentLedgerWriterRequest.create({});
+    const requestBytes = pb.GetPaymentLedgerWriterRequest.encode(request).finish();
+    const responseBytes = await grpcClient.unaryCall(
+      "/pb.PayService/GetPaymentLedgerWriter",
+      requestBytes,
+      15000,
+    );
+    const response = pb.GetPaymentLedgerWriterResponse.decode(responseBytes);
+    if (Number(response?.code || 0) !== 0) {
+      throw new Error(response?.msg || "获取支付订单账本写入者配置失败");
+    }
+
+    const theme = String(response?.theme || "").trim();
+    const writerPubkey = String(response?.writerPubkey || "").trim();
+    if (!theme || !writerPubkey) {
+      throw new Error("支付网关返回的订单账本写入者配置不完整");
+    }
+
+    return {
+      theme,
+      writerPubkey,
+    };
   }
 
   private async getPackagesFromPayPeer(

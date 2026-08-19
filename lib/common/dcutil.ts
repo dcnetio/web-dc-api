@@ -70,7 +70,9 @@ import {
   transfer_stream_first_chunk_timeout,
   transfer_stream_idle_timeout,
   transfer_stream_open_timeout,
+  transfer_stream_close_timeout,
   transfer_stream_write_timeout,
+  transfer_gate_wait_timeout,
 } from "./define";
 
 const controller = new AbortController();
@@ -104,12 +106,145 @@ const withTransferTimeout = async <T>(
   }
 };
 
+/**
+ * libp2p 3.x 的 MessageStream 通过 onDrain() 暴露背压等待，而不是保证会派发
+ * TypedEventTarget 的旧式 drain 事件。兼容旧实现的事件回退仍保留，但新实现优先
+ * 使用可取消的 onDrain，避免公网发布后等待永远不会到来的 drain 事件。
+ */
+const waitForTransferDrain = async (stream: Stream): Promise<void> => {
+  const candidate = stream as Stream & {
+    onDrain?: (options?: { signal?: AbortSignal }) => Promise<void>;
+  };
+  if (typeof candidate.onDrain === "function") {
+    const controller = new AbortController();
+    const timer = setTimeout(
+      () => controller.abort(),
+      transfer_stream_write_timeout,
+    );
+    try {
+      await candidate.onDrain({ signal: controller.signal });
+    } catch (error) {
+      if (controller.signal.aborted) {
+        throw new Error("Stream drain timeout");
+      }
+      throw error;
+    } finally {
+      clearTimeout(timer);
+    }
+    return;
+  }
+
+  await withTransferTimeout(
+    new Promise<void>((resolve, reject) => {
+      const eventStream = stream as Stream & {
+        addEventListener?: (
+          type: string,
+          listener: (...args: any[]) => void,
+        ) => void;
+        removeEventListener?: (
+          type: string,
+          listener: (...args: any[]) => void,
+        ) => void;
+      };
+      const onDrain = () => {
+        cleanup();
+        resolve();
+      };
+      const onClose = () => {
+        cleanup();
+        reject(new Error("Stream closed"));
+      };
+      const cleanup = () => {
+        eventStream.removeEventListener?.("drain", onDrain);
+        eventStream.removeEventListener?.("close", onClose);
+      };
+      eventStream.addEventListener?.("drain", onDrain);
+      eventStream.addEventListener?.("close", onClose);
+    }),
+    transfer_stream_write_timeout,
+    "Stream drain timeout",
+  );
+};
+
+/**
+ * 上层主动取消回推流时抛出的错误。
+ * 回推流是后台流，正常退出只有三种：对端发 Close、首包/空闲超时。上层（如构建）
+ * 结束后没有任何信号能让它提前退出，只能停在读循环里等 30s 写超时或 60s 空闲超时，
+ * 期间既占着 muxer 流槽，也会在连接被重建时以 "Write timeout / Blocks sent: 0"
+ * 的形式报错。取消是预期路径，不能按传输故障打日志。
+ */
+const TRANSFER_CANCELLED_MESSAGE = "Transfer stream cancelled";
+const createTransferCancelledError = (): Error =>
+  new Error(TRANSFER_CANCELLED_MESSAGE);
+export const isTransferCancelledError = (error: unknown): boolean =>
+  error instanceof Error && error.message === TRANSFER_CANCELLED_MESSAGE;
+
+/**
+ * 让一次读/写与取消信号赛跑。
+ * 不用 AbortSignal.any：目标浏览器包含微信 X5（Chrome 53~86），那里没有该 API。
+ */
+const withTransferCancel = async <T>(
+  operation: Promise<T>,
+  signal?: AbortSignal,
+): Promise<T> => {
+  if (!signal) return operation;
+  if (signal.aborted) throw createTransferCancelledError();
+  let onAbort: (() => void) | undefined;
+  try {
+    return await Promise.race([
+      operation,
+      new Promise<T>((_, reject) => {
+        onAbort = () => reject(createTransferCancelledError());
+        signal.addEventListener("abort", onAbort);
+      }),
+    ]);
+  } finally {
+    if (onAbort) signal.removeEventListener("abort", onAbort);
+  }
+};
+
+/** 关闭可能处于半开状态的流，绝不让清理动作把上层请求再次挂住。 */
+const closeTransferStream = async (stream: Stream, abortReason?: unknown) => {
+  const candidate = stream as Stream & {
+    close?: (options?: { signal?: AbortSignal }) => Promise<void>;
+    abort?: (error?: Error) => void;
+  };
+  try {
+    if (typeof candidate.close === "function") {
+      await withTransferTimeout(
+        Promise.resolve(candidate.close()),
+        transfer_stream_close_timeout,
+        "Transfer stream close timeout",
+      );
+    }
+  } catch {
+    try {
+      candidate.abort?.(
+        abortReason instanceof Error
+          ? abortReason
+          : new Error(String(abortReason || "transfer stream cleanup")),
+      );
+    } catch {
+      // 流已经关闭或 muxer 已经销毁，忽略二次清理错误。
+    }
+  }
+};
+
 // import {uPnPNAT} from '@libp2p/upnp-nat'
 export class DcUtil {
   dcChain: ChainUtil;
   connectLength: number;
   dcNodeClient: Helia<Libp2p> | undefined; // 什么类型？dc node 对象，主要用于建立连接
   defaultPeerId: string | undefined; // 默认 peerId
+  // 前台 AI 请求和后台 ThreadDB/文件传输共用 libp2p muxer。发布环境中，
+  // 后台回推若与 AI 同时开流，半死连接会把两类流一起拖入 signal timed out。
+  // 用一个轻量的读写闸门让两类传输互斥：前台优先，后台等待前台结束。
+  private foregroundTransportCount = 0;
+  private backgroundTransportCount = 0;
+  private transportWaiters: Array<{
+    timer: ReturnType<typeof setTimeout>;
+    resolve: (ok: boolean) => void;
+  }> = [];
   private readonly peerConnectionTasks = new Map<
     string,
     { forceReconnect: boolean; promise: Promise<Multiaddr> }
@@ -118,6 +253,135 @@ export class DcUtil {
   constructor(dcChain: ChainUtil) {
     this.dcChain = dcChain;
     this.connectLength = 5;
+  }
+
+  private notifyTransportWaiters(): void {
+    if (this.foregroundTransportCount > 0 || this.backgroundTransportCount > 0) {
+      return;
+    }
+    const waiters = this.transportWaiters.splice(0);
+    for (const waiter of waiters) {
+      clearTimeout(waiter.timer);
+      waiter.resolve(true);
+    }
+  }
+
+  /**
+   * 等待共享传输闸门空闲（前台和后台计数都为 0）。
+   *
+   * 返回 true 表示闸门已空闲可继续；返回 false 表示等待超过 boundMs 或
+   * 上层 signal 已取消，调用方此时应放弃等待（但绝不能死锁——闸门本身上层
+   * 的回推/拉取绝不能因为另一个方向的长流而无限期卡住，见下文 acquire*）。
+   */
+  private waitForTransportIdle(
+    boundMs: number,
+    signal?: AbortSignal,
+  ): Promise<boolean> {
+    if (this.foregroundTransportCount === 0 && this.backgroundTransportCount === 0) {
+      return Promise.resolve(true);
+    }
+    if (boundMs <= 0 || signal?.aborted) {
+      return Promise.resolve(false);
+    }
+    return new Promise<boolean>((resolve) => {
+      const waiter: {
+        timer: ReturnType<typeof setTimeout>;
+        resolve: (ok: boolean) => void;
+      } = {
+        timer: 0 as unknown as ReturnType<typeof setTimeout>,
+        resolve,
+      };
+      this.transportWaiters.push(waiter);
+      const fail = () => {
+        const idx = this.transportWaiters.indexOf(waiter);
+        if (idx >= 0) this.transportWaiters.splice(idx, 1);
+        clearTimeout(waiter.timer);
+        if (signal) signal.removeEventListener("abort", fail);
+        resolve(false);
+      };
+      waiter.timer = setTimeout(fail, boundMs);
+      if (signal && !signal.aborted) signal.addEventListener("abort", fail, { once: true });
+    });
+  }
+
+  /**
+   * 标记一个前台长连接（AI/蓝图）开始。前台请求会等待已经在进行的
+   * 后台传输完成；同一 DC 实例上的多个前台请求可以并行共享 muxer。
+   *
+   * 等待有界（transfer_gate_wait_timeout）：超过后宁可让前台与后台短暂
+   * 重叠，也不能让前台 AI 流在后台闸门占住时永远得不到执行。
+   */
+  async acquireForegroundTransport(signal?: AbortSignal): Promise<() => void> {
+    while (this.backgroundTransportCount > 0) {
+      const idle = await this.waitForTransportIdle(
+        transfer_gate_wait_timeout,
+        signal,
+      );
+      if (!idle) {
+        if (signal?.aborted) {
+          throw new Error("acquireForegroundTransport cancelled");
+        }
+        console.warn("传输闸门等待后台释放超时，前台流提前开始");
+        break;
+      }
+    }
+    this.foregroundTransportCount += 1;
+    let released = false;
+    return () => {
+      if (released) return;
+      released = true;
+      this.foregroundTransportCount = Math.max(
+        0,
+        this.foregroundTransportCount - 1,
+      );
+      this.notifyTransportWaiters();
+    };
+  }
+
+  /**
+   * 标记一个后台传输（ThreadDB/文件/区块/构建源码回推）开始。后台传输不会
+   * 插队到前台 AI 流中，避免回推流的背压把 AI 的 gRPC 开流一起拖死。
+   *
+   * 等待有界（transfer_gate_wait_timeout）：前台 AI 流（/proxy 的
+   * DoAIProxyCall）是分钟级长流，若它卡住/很长，后台拉取绝不能无限期等它。
+   * 超时后强制开始，宁可短暂重叠，也不能让“拉取内容 / 源码回推”卡死。
+   */
+  async acquireBackgroundTransport(signal?: AbortSignal): Promise<() => void> {
+    while (this.foregroundTransportCount > 0) {
+      const idle = await this.waitForTransportIdle(
+        transfer_gate_wait_timeout,
+        signal,
+      );
+      if (!idle) {
+        if (signal?.aborted) {
+          throw new Error("acquireBackgroundTransport cancelled");
+        }
+        console.warn("传输闸门等待前台释放超时，后台传输提前开始");
+        break;
+      }
+    }
+    this.backgroundTransportCount += 1;
+    let released = false;
+    return () => {
+      if (released) return;
+      released = true;
+      this.backgroundTransportCount = Math.max(
+        0,
+        this.backgroundTransportCount - 1,
+      );
+      this.notifyTransportWaiters();
+    };
+  }
+
+  /** 有界地等待当前前台流结束，用于已创建的后台任务在真正开流前让路。 */
+  async waitForForegroundTransport(signal?: AbortSignal): Promise<void> {
+    while (this.foregroundTransportCount > 0) {
+      const idle = await this.waitForTransportIdle(
+        transfer_gate_wait_timeout,
+        signal,
+      );
+      if (!idle) break;
+    }
   }
   // 连接到所有文件存储节点
   _connectToObjNodes = async (
@@ -880,13 +1144,50 @@ export class DcUtil {
   };
 
   //创建主动上报流处理,type:1-文件或文件夹假Cid,2-threaddb threadid,3-threaddb recordid
+  // signal：上层任务（如一次构建）结束后用它主动收流，见 TRANSFER_CANCELLED_MESSAGE。
   async createTransferStream(
     libp2p: Libp2p,
     blockstore: Blocks,
     nodeAddr: Multiaddr,
     type: number,
     oid: string,
-  ) {
+    options?: { signal?: AbortSignal },
+  ): Promise<void> {
+    const signal = options?.signal;
+    if (signal?.aborted) return;
+    // 文件/区块上报属于后台传输。统一登记到闸门，保证它不会在 AI/蓝图
+    // 长流占用账号节点时再打开新的 muxer 流。排队等闸门期间若上层已
+    // 取消（signal aborted），则让 gate 提前放弃，避免 cancel 卡在排队上。
+    try {
+      const releaseTransport = await this.acquireBackgroundTransport(signal);
+      try {
+        // 排队等闸门期间上层可能已经结束，此时不必再开流。
+        if (signal?.aborted) return;
+        await this.createTransferStreamInternal(
+          libp2p,
+          blockstore,
+          nodeAddr,
+          type,
+          oid,
+          signal,
+        );
+      } finally {
+        releaseTransport();
+      }
+    } catch (error) {
+      if (signal?.aborted) return; // 排队期间被上层取消，静默结束。
+      throw error;
+    }
+  }
+
+  private async createTransferStreamInternal(
+    libp2p: Libp2p,
+    blockstore: Blocks,
+    nodeAddr: Multiaddr,
+    type: number,
+    oid: string,
+    signal?: AbortSignal,
+  ): Promise<void> {
     let nodeConn: any;
     const peerIdStr = getPeerIdString(nodeAddr);
     if (peerIdStr) {
@@ -905,13 +1206,26 @@ export class DcUtil {
     }
 
     if (!nodeConn) {
-      nodeConn = await libp2p.dial(nodeAddr, {
-        signal: AbortSignal.timeout(dial_timeout),
-      });
+      nodeConn = await withTransferCancel(
+        libp2p.dial(nodeAddr, {
+          signal: AbortSignal.timeout(dial_timeout),
+        }),
+        signal,
+      );
     }
-    const stream = await nodeConn.newStream("/dc/transfer/1.0.0", {
-      signal: AbortSignal.timeout(transfer_stream_open_timeout),
-    });
+    const stream = await withTransferCancel<Stream>(
+      nodeConn.newStream("/dc/transfer/1.0.0", {
+        signal: AbortSignal.timeout(transfer_stream_open_timeout),
+      }),
+      signal,
+    );
+    let closePromise: Promise<void> | undefined;
+    const closeOnce = (abortReason?: unknown): Promise<void> => {
+      if (!closePromise) {
+        closePromise = closeTransferStream(stream, abortReason);
+      }
+      return closePromise;
+    };
 
     // 使用新版 Stream 接口: stream.send / stream.close
     const streamSink = async (source: AsyncIterable<Uint8Array>) => {
@@ -920,35 +1234,7 @@ export class DcUtil {
           const data =
             chunk instanceof Uint8Array ? chunk : (chunk as any).subarray();
           if (!stream.send(data)) {
-            let cleanup = () => {};
-            const drainPromise = new Promise<void>((resolve, reject) => {
-              const removeListeners = () => {
-                stream.removeEventListener("drain", onDrain);
-                stream.removeEventListener("close", onClose);
-              };
-              const onDrain = () => {
-                removeListeners();
-                resolve();
-              };
-              const onClose = () => {
-                removeListeners();
-                reject(new Error("Stream closed"));
-              };
-
-              cleanup = removeListeners;
-
-              stream.addEventListener("drain", onDrain);
-              stream.addEventListener("close", onClose);
-            });
-            try {
-              await withTransferTimeout(
-                drainPromise,
-                transfer_stream_write_timeout,
-                "Stream drain timeout",
-              );
-            } finally {
-              cleanup();
-            }
+            await waitForTransferDrain(stream);
           }
         }
       } catch (err) {
@@ -961,7 +1247,7 @@ export class DcUtil {
         stream.abort(err as Error);
         throw err;
       } finally {
-        await stream.close();
+        await closeOnce();
       }
     };
 
@@ -985,15 +1271,21 @@ export class DcUtil {
       const IDLE_TIMEOUT = transfer_stream_idle_timeout;
 
       while (true) {
+        if (signal?.aborted) {
+          throw createTransferCancelledError();
+        }
         let iteratorResult: IteratorResult<Uint8Array>;
         if (waitingForFirstChunk) {
           const firstChunkTimeoutMessage =
             `Transfer stream: First chunk timed out after ${transfer_stream_first_chunk_timeout / 1000}s`;
           try {
-            iteratorResult = await withTransferTimeout(
-              chunkIterable.next(),
-              transfer_stream_first_chunk_timeout,
-              firstChunkTimeoutMessage,
+            iteratorResult = await withTransferCancel(
+              withTransferTimeout(
+                chunkIterable.next(),
+                transfer_stream_first_chunk_timeout,
+                firstChunkTimeoutMessage,
+              ),
+              signal,
             );
           } catch (err) {
             if ((err as Error).message === firstChunkTimeoutMessage) {
@@ -1005,10 +1297,13 @@ export class DcUtil {
           waitingForFirstChunk = false;
         } else {
           try {
-            iteratorResult = await withTransferTimeout(
-              chunkIterable.next(),
-              IDLE_TIMEOUT,
-              `Read timeout after ${transfer_stream_idle_timeout / 1000}s`,
+            iteratorResult = await withTransferCancel(
+              withTransferTimeout(
+                chunkIterable.next(),
+                IDLE_TIMEOUT,
+                `Read timeout after ${transfer_stream_idle_timeout / 1000}s`,
+              ),
+              signal,
             );
           } catch (err) {
             if (
@@ -1075,10 +1370,13 @@ export class DcUtil {
                 payload: initReplyBytes,
               }) as any;
 
-              await withTransferTimeout(
-                writer.write(replyData),
-                transfer_stream_write_timeout,
-                "Write timeout",
+              await withTransferCancel(
+                withTransferTimeout(
+                  writer.write(replyData),
+                  transfer_stream_write_timeout,
+                  "Write timeout",
+                ),
+                signal,
               );
               handshakeFlag = true;
             } else if (
@@ -1110,15 +1408,20 @@ export class DcUtil {
                   payload: fetchReplyBytes,
                 }) as any;
 
-                await withTransferTimeout(
-                  writer.write(responseData),
-                  transfer_stream_write_timeout,
-                  "Write timeout",
+                await withTransferCancel(
+                  withTransferTimeout(
+                    writer.write(responseData),
+                    transfer_stream_write_timeout,
+                    "Write timeout",
+                  ),
+                  signal,
                 );
                 blocksSent++;
                 bytesSent += responseData.length;
               } catch (error) {
-                console.warn("Error retrieving/sending block:", error);
+                if (!isTransferCancelledError(error)) {
+                  console.warn("Error retrieving/sending block:", error);
+                }
                 throw error;
               }
             }
@@ -1132,6 +1435,11 @@ export class DcUtil {
         }
       }
     } catch (err) {
+      // 上层主动收流是预期路径：把它当传输故障打日志，只会在控制台留下
+      // 一串与真实故障无法区分的 Write timeout / Blocks sent: 0。
+      if (isTransferCancelledError(err)) {
+        return;
+      }
       console.warn(
         "Transfer stream error:",
         err,
@@ -1139,11 +1447,7 @@ export class DcUtil {
       );
       throw err;
     } finally {
-      try {
-        stream.close();
-      } catch (closeErr) {
-        console.warn("Error closing stream:", closeErr);
-      }
+      await closeOnce();
     }
   }
 

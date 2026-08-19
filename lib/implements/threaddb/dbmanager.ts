@@ -1597,12 +1597,15 @@ export class DBManager {
     threadId: string,
     multiPeersFlag: boolean = true,
   ): Promise<Error | null> {
+    const releaseTransport = await this.dc.acquireBackgroundTransport();
     try {
       const tId = await this.decodeThreadId(threadId);
       await this.network.pullThread(tId, 600, { multiPeersFlag });
       return null;
     } catch (error) {
       return error as Error;
+    } finally {
+      releaseTransport();
     }
   }
 
@@ -1610,12 +1613,15 @@ export class DBManager {
     if (!this.network) {
       return Errors.ErrP2pNetworkNotInit;
     }
+    const releaseTransport = await this.dc.acquireBackgroundTransport();
     try {
       const tId = await this.decodeThreadId(threadId);
       await this.network.exchange(tId);
       return null;
     } catch (error) {
       return error as Error;
+    } finally {
+      releaseTransport();
     }
   }
 
