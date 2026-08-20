@@ -27,9 +27,10 @@ import { publicKeyFromRaw } from "@libp2p/crypto/keys";
 import { Ed25519PubKey } from "../../common/dc-key/ed25519";
 import { CommentType, Direction } from "../../common/define";
 import { Libp2p } from "@libp2p/interface";
+import { createAbortController } from "../../common/abort";
 
 // 创建一个可以取消的信号
-const controller = new AbortController();
+const controller = createAbortController();
 const { signal } = controller;
 
 // 错误定义
@@ -279,10 +280,18 @@ export class CommentManager {
   async isThemeExist(
     appId: string,
     theme: string,
-    themeAuthor: string
+    themeAuthor: string,
+    signal?: AbortSignal,
   ): Promise<[boolean | null, Error | null]> {
     let clients: any[] = [];
     try {
+      if (signal?.aborted) {
+        const reason = signal.reason;
+        return [
+          null,
+          reason instanceof Error ? reason : new Error("Operation aborted"),
+        ];
+      }
       if (!this.connectedDc?.client) {
         return [null, Errors.ErrNoDcPeerConnected];
       }
@@ -296,14 +305,20 @@ export class CommentManager {
 
       if (!this.context.AccountBackupDc?.client || isFetchingOthersTheme) {
         const authorPublicKey: Ed25519PubKey = Ed25519PubKey.edPubkeyFromStr(themeAuthor);
-        const allClients = await this.dc.connectToUserAllDcPeers(authorPublicKey.raw);
+        const allClients = await this.dc.connectToUserAllDcPeers(
+          authorPublicKey.raw,
+          signal,
+        );
         if (allClients && allClients.length > 0) {
           clients = allClients;
         } else {
           return [null, Errors.ErrNoPeerIdIsNull];
         }
       } else {
-        const allClients = await this.dc.connectToUserAllDcPeers(this.context.publicKey!.raw);
+        const allClients = await this.dc.connectToUserAllDcPeers(
+          this.context.publicKey!.raw,
+          signal,
+        );
         if (allClients && allClients.length > 0) {
           clients = allClients;
         } else if (this.context.AccountBackupDc?.client) {
@@ -315,13 +330,22 @@ export class CommentManager {
       
       let lastError: Error | null = null;
       for (const client of clients) {
+        if (signal?.aborted) {
+          const reason = signal.reason;
+          return [
+            null,
+            reason instanceof Error ? reason : new Error("Operation aborted"),
+          ];
+        }
         if (!client || !client.peerAddr) continue;
         try {
           if (client.token == "" && this.context.publicKey) {
             await client.GetToken(
               appId,
               this.context.publicKey.string(),
-              this.context.sign
+              this.context.sign,
+              undefined,
+              signal,
             );
           }
           const commentClient = new CommentClient(
@@ -329,10 +353,18 @@ export class CommentManager {
             this.dcNodeClient,
             this.context
           );
-          const res = await commentClient.isThemeExist(appId, theme, themeAuthor);
+          const res = await commentClient.isThemeExist(
+            appId,
+            theme,
+            themeAuthor,
+            signal,
+          );
           return [res, null];
         } catch (e: any) {
           lastError = e instanceof Error ? e : new Error(String(e));
+          if (signal?.aborted) {
+            return [null, lastError];
+          }
         }
       }
       return [null, lastError || new Error("ErrConnectToAccountPeersFail")];

@@ -2,11 +2,43 @@ import type { Libp2p } from "libp2p";
 import type { Multiaddr } from "@multiformats/multiaddr";
 
 import { DCGrpcClient } from "./grpc-dc";
+import { createAbortController } from "./abort";
 
 import { keys } from "@libp2p/crypto";
 import { sha256, getRandomBytes, concatenateUint8Arrays } from "../util/utils";
 import { Blocks } from "helia";
 
+function getAbortError(signal?: AbortSignal): Error {
+  const reason = signal?.reason;
+  return reason instanceof Error ? reason : new Error("Operation aborted");
+}
+
+function awaitWithAbort<T>(operation: Promise<T>, signal?: AbortSignal): Promise<T> {
+  if (!signal) return operation;
+  if (signal.aborted) return Promise.reject(getAbortError(signal));
+
+  return new Promise<T>((resolve, reject) => {
+    const onAbort = () => reject(getAbortError(signal));
+    signal.addEventListener("abort", onAbort, { once: true });
+    operation.then(
+      (value) => {
+        signal.removeEventListener("abort", onAbort);
+        resolve(value);
+      },
+      (error) => {
+        signal.removeEventListener("abort", onAbort);
+        reject(error);
+      },
+    );
+  });
+}
+
+interface SharedTokenRequest {
+  promise: Promise<string>;
+  controller: AbortController;
+  subscribers: number;
+  settled: boolean;
+}
 
 
 
@@ -16,13 +48,13 @@ export class Client {
     string,
     { token: string; expiresAt: number }
   >();
-  private static sharedTokenRequests = new Map<string, Promise<string>>();
+  private static sharedTokenRequests = new Map<string, SharedTokenRequest>();
   readonly protocol: string;
   p2pNode: Libp2p;
   blockstore: Blocks;
   peerAddr: Multiaddr;
   token: string;
-  private tokenRequest: Promise<string> | null = null;
+  private tokenRequest: SharedTokenRequest | null = null;
   private tokenRequestIdentity: string | null = null;
   private tokenCacheKey: string | null = null;
   private tokenGeneration = 0;
@@ -40,8 +72,12 @@ export class Client {
     appId: string,
     pubkey: string,
     signCallback: (payload: Uint8Array) =>  Promise<Uint8Array> ,
-    peerAddr?: Multiaddr
+    peerAddr?: Multiaddr,
+    signal?: AbortSignal,
   ): Promise<string> {
+    if (signal?.aborted) {
+      throw getAbortError(signal);
+    }
     if (!pubkey || pubkey.length == 0) {
       throw new Error("pubkey is empty");
     }
@@ -57,7 +93,13 @@ export class Client {
       return this.token;
     }
     if (this.tokenRequest) {
-      return this.tokenRequest;
+      // 上一次调用可能已经是唯一订阅者并取消，控制器已在异步清理中。不要让
+      // 新调用加入一个必然返回空 token 的已取消请求，直接重新发起即可。
+      if (!this.tokenRequest.controller.signal.aborted) {
+        return this.waitForSharedTokenRequest(this.tokenRequest, signal);
+      }
+      this.tokenRequest = null;
+      this.tokenRequestIdentity = null;
     }
 
     const cacheKey = tokenIdentity;
@@ -74,11 +116,14 @@ export class Client {
     }
 
     const inFlightRequest = Client.sharedTokenRequests.get(cacheKey);
-    if (inFlightRequest) {
+    if (inFlightRequest && !inFlightRequest.controller.signal.aborted) {
       this.tokenRequest = inFlightRequest;
       this.tokenRequestIdentity = tokenIdentity;
       try {
-        const token = await inFlightRequest;
+        const token = await this.waitForSharedTokenRequest(
+          inFlightRequest,
+          signal,
+        );
         if (tokenGeneration === this.tokenGeneration) {
           this.token = token;
           this.tokenIdentity = tokenIdentity;
@@ -91,9 +136,18 @@ export class Client {
         }
       }
     }
+    if (inFlightRequest?.controller.signal.aborted) {
+      Client.sharedTokenRequests.delete(cacheKey);
+    }
 
-    let request: Promise<string> | null = null;
-    request = (async () => {
+    const requestController = createAbortController();
+    const sharedRequest: SharedTokenRequest = {
+      promise: Promise.resolve(""),
+      controller: requestController,
+      subscribers: 0,
+      settled: false,
+    };
+    const request = (async () => {
       if (this.p2pNode == null) {
         throw new Error("p2pNode is null");
       }
@@ -106,15 +160,19 @@ export class Client {
         this.token,
         this.protocol
       );
-      const token = await grpcClient.GetToken(appId, pubkey, signCallback);
+      const token = await grpcClient.GetToken(
+        appId,
+        pubkey,
+        signCallback,
+        requestController.signal,
+      );
       if (tokenGeneration === this.tokenGeneration) {
         this.token = token;
         this.tokenIdentity = tokenIdentity;
       }
       if (
         token &&
-        request &&
-        Client.sharedTokenRequests.get(cacheKey) === request
+        Client.sharedTokenRequests.get(cacheKey) === sharedRequest
       ) {
         Client.sharedTokens.set(cacheKey, {
           token,
@@ -125,19 +183,43 @@ export class Client {
     })().catch(() => {
       return "";
     });
-    this.tokenRequest = request;
+    sharedRequest.promise = request;
+    this.tokenRequest = sharedRequest;
     this.tokenRequestIdentity = tokenIdentity;
-    Client.sharedTokenRequests.set(cacheKey, request);
-
-    try {
-      return await request;
-    } finally {
-      if (Client.sharedTokenRequests.get(cacheKey) === request) {
+    Client.sharedTokenRequests.set(cacheKey, sharedRequest);
+    void request.finally(() => {
+      sharedRequest.settled = true;
+      if (Client.sharedTokenRequests.get(cacheKey) === sharedRequest) {
         Client.sharedTokenRequests.delete(cacheKey);
       }
-      if (this.tokenRequest === request) {
+    });
+
+    try {
+      return await this.waitForSharedTokenRequest(sharedRequest, signal);
+    } finally {
+      if (this.tokenRequest === sharedRequest) {
         this.tokenRequest = null;
         this.tokenRequestIdentity = null;
+      }
+    }
+  }
+
+  /**
+   * 共享 token 请求必须与某个调用方的 AbortSignal 解耦。否则第一个市场扫描
+   * 超时会直接取消整个共享请求，误伤随后加入的前台调用；反过来，若所有订阅者
+   * 都已离开，则应立即终止底层双向流，不能把它留到 30 秒 RPC 超时。
+   */
+  private async waitForSharedTokenRequest(
+    request: SharedTokenRequest,
+    signal?: AbortSignal,
+  ): Promise<string> {
+    request.subscribers += 1;
+    try {
+      return await awaitWithAbort(request.promise, signal);
+    } finally {
+      request.subscribers = Math.max(0, request.subscribers - 1);
+      if (!request.settled && request.subscribers === 0) {
+        request.controller.abort(new Error("Token request has no subscribers"));
       }
     }
   }

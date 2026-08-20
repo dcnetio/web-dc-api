@@ -17,6 +17,13 @@ import {
 } from "../common/types/types";
 import { AIProxyUserPermission } from "../common/constants";
 
+export interface AIProxyConfigReadOptions {
+  /** Cancels optional config reads while network discovery or gRPC is pending. */
+  signal?: AbortSignal;
+  /** Per-RPC deadline in milliseconds; defaults to the historical 30 seconds. */
+  timeoutMs?: number;
+}
+
 /**
  * AI代理操作接口
  * 提供AI代理的配置和调用功能
@@ -92,13 +99,15 @@ export interface IAIProxyOperations {
    * @param themeAuthor 主题作者的公钥
    * @param configTheme 配置主题
    * @param vaccount 虚拟账户(可选)
+   * @param options 可选的取消信号与 RPC 超时
    * @returns [用户授权配置列表(前50条), AI代理配置列表, 授权用户总数, 下一页游标(非空时可传给 GetThemeAuthList 获取更多), 错误信息]
    */
   GetAIProxyConfig(
     appId: string,
     themeAuthor: string,
     configTheme: string,
-    vaccount?: string
+    vaccount?: string,
+    options?: AIProxyConfigReadOptions,
   ): Promise<
     [UserProxyCallConfig[] | null, AIProxyConfig[] | null, number, Uint8Array | null, Error | null]
   >;

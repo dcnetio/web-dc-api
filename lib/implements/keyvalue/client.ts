@@ -453,7 +453,7 @@ export class KeyValueClient {
     }
   }
 
-   async getValuesWithIndex(
+  async getValuesWithIndex(
     appId: string,
     themeAuthor: string,
     theme: string,
@@ -463,7 +463,8 @@ export class KeyValueClient {
     direction: Direction = Direction.Forward,
     offset: number,
     limit: number,
-    vaccount?: string
+    vaccount?: string,
+    signal?: AbortSignal,
   ): Promise<Uint8Array|null> {
     const message = new dcnet.pb.GetValuesWithIndexRequest({});
     message.appId = new TextEncoder().encode(appId);
@@ -489,7 +490,8 @@ export class KeyValueClient {
       const reply = await grpcClient.unaryCall(
         "/dcnet.pb.Service/GetValuesWithIndex",
         messageBytes,
-        30000
+        30000,
+        signal,
       );
       // console.log("getValuesWithIndex reply", reply);
       const decoded = dcnet.pb.GetValuesWithIndexReply.decode(reply);
@@ -506,7 +508,9 @@ export class KeyValueClient {
           this.context.getPublicKey().string(),
           (payload: Uint8Array): Promise<Uint8Array> => {
             return this.context.sign(payload);
-          }
+          },
+          undefined,
+          signal,
         );
         if (!token) {
           throw new Error(Errors.INVALID_TOKEN.message);
@@ -514,7 +518,8 @@ export class KeyValueClient {
         const reply = await grpcClient.unaryCall(
           "/dcnet.pb.Service/GetValuesWithIndex",
           messageBytes,
-          30000
+          30000,
+          signal,
         );
         console.log("GetValuesWithIndex reply", reply);
         const decoded = dcnet.pb.GetValuesWithIndexReply.decode(reply);

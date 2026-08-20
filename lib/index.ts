@@ -1,6 +1,12 @@
 // index.ts
 // 导出主要类和功能
 // 在您库的入口文件开头添加
+import {
+  createAbortController,
+  createAbortError,
+  ensureAbortController,
+  getRuntimeGlobal,
+} from "./common/abort";
 
 declare global {
   interface PromiseConstructor {
@@ -62,6 +68,8 @@ declare global {
   function queueMicrotask(callback: () => void): void;
 }
 
+ensureAbortController();
+
 if (typeof Promise !== "undefined" && !Promise.withResolvers) {
   Promise.withResolvers = function <T = any>() {
     let resolve!: (value: T | PromiseLike<T>) => void;
@@ -85,9 +93,8 @@ if (typeof AggregateError === "undefined") {
     }
   }
 
-  (
-    globalThis as unknown as { AggregateError: typeof AggregateErrorPolyfill }
-  ).AggregateError = AggregateErrorPolyfill;
+  getRuntimeGlobal().AggregateError =
+    AggregateErrorPolyfill as unknown as typeof AggregateError;
 }
 
 if (typeof Promise !== "undefined" && !Promise.allSettled) {
@@ -158,7 +165,7 @@ if (
     }
 
     if (typeof DOMException !== "undefined") {
-      throw new DOMException("Aborted", "AbortError");
+      throw createAbortError("Aborted", "AbortError");
     }
 
     throw new Error("Aborted");
@@ -171,10 +178,10 @@ if (
   !AbortSignal.timeout
 ) {
   AbortSignal.timeout = function (milliseconds: number): AbortSignal {
-    const controller = new AbortController();
+    const controller = createAbortController();
     const timerId = setTimeout(() => {
       try {
-        controller.abort(new DOMException("Aborted", "AbortError"));
+        controller.abort(createAbortError("Aborted", "AbortError"));
       } catch {
         controller.abort();
       }
@@ -403,9 +410,7 @@ if (!Object.hasOwn) {
 }
 
 if (typeof queueMicrotask !== "function") {
-  (
-    globalThis as unknown as { queueMicrotask: (callback: () => void) => void }
-  ).queueMicrotask = (callback) => {
+  getRuntimeGlobal().queueMicrotask = (callback) => {
     Promise.resolve()
       .then(callback)
       .catch((error) => {

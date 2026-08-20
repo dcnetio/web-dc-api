@@ -35,6 +35,7 @@ import { AccountClient } from "../account/client";
 import { DCContext } from "../../../lib/interfaces/DCContext";
 import { multiaddr, Multiaddr } from "@multiformats/multiaddr";
 import * as dagPb from "@ipld/dag-pb";
+import { createAbortController } from "../../common/abort";
 
 const NonceBytes = 12;
 const TagBytes = 16;
@@ -56,7 +57,7 @@ const dagChildAttempts = 3;
 // 不退避的话几次重试会在同一毫秒内烧完，等于没重试。
 const dagRetryBackoffMs = 600;
 // 创建一个可以取消的信号
-const controller = new AbortController();
+const controller = createAbortController();
 const { signal } = controller;
 
 // 错误定义
@@ -138,6 +139,7 @@ export class FileManager {
           nodeAddr,
           type,
           oid,
+          { signal },
         );
         return;
       } catch (error) {
@@ -148,8 +150,11 @@ export class FileManager {
         }
 
         try {
-          await this.dc.connectToPeerWithAddr(nodeAddr.toString());
+          await this.dc.connectToPeerWithAddr(nodeAddr.toString(), { signal });
         } catch (reconnectError) {
+          if (signal?.aborted) {
+            throwIfAborted(signal);
+          }
           console.warn("createTransferStream reconnect failed:", reconnectError);
         }
       }
@@ -1387,13 +1392,21 @@ export class FileManager {
       try {
         const nodeAddr = await this.dc?.connectToPeerWithAddr(peerAddr, {
           forceReconnect: options?.forceReconnect,
+          signal: options?.signal,
         });
         if (!nodeAddr) {
           return [null, Errors.ErrBuildServerConnect];
         }
       } catch (error) {
-        console.warn("Error connecting to build server:", error);
-        return [null, Errors.ErrBuildServerConnect];
+        if (!options?.signal?.aborted) {
+          console.warn("Error connecting to build server:", error);
+        }
+        return [
+          null,
+          options?.signal?.aborted
+            ? new FileError("get file from dc aborted")
+            : Errors.ErrBuildServerConnect,
+        ];
       }
       // 走会抛错的实现：调用方需要区分「块拉不到」「超时」「主动取消」，
       // 老的 getFileFromDcContent 会把它们都吞成 null，返回 [null, null]。

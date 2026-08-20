@@ -27,8 +27,13 @@ export class DCGrpcClient {
   async GetToken(
     appId: string,
     pubkey: string,
-    signCallback: (payload: Uint8Array) => Promise<Uint8Array>
+    signCallback: (payload: Uint8Array) => Promise<Uint8Array>,
+    signal?: AbortSignal,
   ): Promise<string> {
+    if (signal?.aborted) {
+      const reason = signal.reason;
+      throw reason instanceof Error ? reason : new Error("Operation aborted");
+    }
     let token: string = "";
     let error: Error | null = null;
     const signatureDataSource = new DataSource();
@@ -75,16 +80,27 @@ export class DCGrpcClient {
       error = err instanceof Error ? err : new Error(String(err));
       signatureDataSource.close();
     };
-    await this.grpcClient.Call(
-      "/dcnet.pb.Service/GetToken",
-      messageBytes,
-      30000,
-      "bidirectional",
-      onDataCallback,
-      dataSourceCallback,
-      onEndCallback,
-      onErrorCallback
-    );
+    const closeOnAbort = () => {
+      const reason = signal?.reason;
+      error = reason instanceof Error ? reason : new Error("Operation aborted");
+      signatureDataSource.close();
+    };
+    signal?.addEventListener("abort", closeOnAbort, { once: true });
+    try {
+      await this.grpcClient.Call(
+        "/dcnet.pb.Service/GetToken",
+        messageBytes,
+        30000,
+        "bidirectional",
+        onDataCallback,
+        dataSourceCallback,
+        onEndCallback,
+        onErrorCallback,
+        { signal },
+      );
+    } finally {
+      signal?.removeEventListener("abort", closeOnAbort);
+    }
     if (error) {
       throw error;
     }

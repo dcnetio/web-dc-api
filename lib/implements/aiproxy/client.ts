@@ -14,6 +14,7 @@ import {
   ProxyCallConfig,
 } from "../../common/types/types";
 import { error } from "ajv/dist/vocabularies/applicator/dependencies";
+import type { AIProxyConfigReadOptions } from "../../../lib/interfaces/aiproxy-interface";
 
 export class AIProxyClient {
   client: Client;
@@ -27,7 +28,8 @@ export class AIProxyClient {
   async GetAIProxyConfig(
     appId: string,
     themeAuthor: string,
-    configTheme: string
+    configTheme: string,
+    options?: AIProxyConfigReadOptions,
   ): Promise<[configData: string, userCount: number, nextSeekKey: Uint8Array | null, error: Error | null]> {
     const message = new dcnet.pb.GetAIProxyConfigRequest({});
     message.appId = new TextEncoder().encode(appId);
@@ -57,7 +59,8 @@ export class AIProxyClient {
       const reply = await grpcClient.unaryCall(
         "/dcnet.pb.Service/GetAIProxyConfig",
         messageBytes,
-        30000
+        options?.timeoutMs ?? 30000,
+        options?.signal,
       );
       const [configData, userCount, nextSeekKey] = decodeReply(reply);
       return [configData, userCount, nextSeekKey, null];
@@ -75,7 +78,9 @@ export class AIProxyClient {
           this.context.getPublicKey().string(),
           (payload: Uint8Array): Promise<Uint8Array> => {
             return this.context.sign(payload);
-          }
+          },
+          undefined,
+          options?.signal,
         );
         if (!token) {
           throw new Error(Errors.INVALID_TOKEN.message);
@@ -83,7 +88,8 @@ export class AIProxyClient {
         const reply = await grpcClient.unaryCall(
           "/dcnet.pb.Service/GetAIProxyConfig",
           messageBytes,
-          30000
+          options?.timeoutMs ?? 30000,
+          options?.signal,
         );
         const [configData, userCount, nextSeekKey] = decodeReply(reply);
         return [configData, userCount, nextSeekKey, null];

@@ -49,7 +49,12 @@ export interface IKeyValueOperations {
    * @param themeAuthor 数据库创建者的公钥
    * @returns keyvalue数据库实例
    */
-  getStore(appId: string, theme: string, themeAuthor: string): Promise<[KeyValueDB|null, Error | null]> ;
+  getStore(
+    appId: string,
+    theme: string,
+    themeAuthor: string,
+    options?: { signal?: AbortSignal },
+  ): Promise<[KeyValueDB|null, Error | null]> ;
 
   /**
    * 配置主题的授权信息
@@ -248,7 +253,13 @@ export interface IKeyValueOperations {
   getValues(
     kvdb: KeyValueDB,
     key: string,
-    options: { limit?: number; seekKey?: string; direction?: Direction; offset?: number } ,
+    options: {
+      limit?: number;
+      seekKey?: string;
+      direction?: Direction;
+      offset?: number;
+      signal?: AbortSignal;
+    } ,
     vaccount?: string
   ): Promise<[string | null, Error | null]>;
 
@@ -306,7 +317,6 @@ export interface IKeyValueOperations {
     vaccount?: string
   ): Promise<[string | null, Error | null]> ;
 }
-
 
 
 

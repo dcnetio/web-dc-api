@@ -119,7 +119,8 @@ export class KeyValueModule implements DCModule, IKeyValueOperations {
   async getStore(
     appId: string,
     theme: string,
-    themeAuthor: string
+    themeAuthor: string,
+    options?: { signal?: AbortSignal },
   ): Promise<[KeyValueDB|null, Error | null]> {
     const err = this.assertInitialized();
     if (err) {
@@ -129,7 +130,8 @@ export class KeyValueModule implements DCModule, IKeyValueOperations {
       return await this.keyValueManager.getKeyValueDB(
         appId,
         theme,
-        themeAuthor
+        themeAuthor,
+        options?.signal,
       );
     } catch (error) {
       return [null, error instanceof Error ? error : new Error(String(error))];
@@ -422,7 +424,13 @@ export class KeyValueModule implements DCModule, IKeyValueOperations {
   async getValues(
     kvdb: KeyValueDB,
     key: string,
-    options: { limit?: number; seekKey?: string; direction?: Direction; offset?: number } ,
+    options: {
+      limit?: number;
+      seekKey?: string;
+      direction?: Direction;
+      offset?: number;
+      signal?: AbortSignal;
+    } ,
     vaccount?: string
   ): Promise<[string | null, Error | null]> {
      const err = this.assertInitialized();
@@ -434,7 +442,16 @@ export class KeyValueModule implements DCModule, IKeyValueOperations {
     const direction = options.direction || Direction.Forward;
     const offset = options.offset || 0;
     try {
-      return await kvdb.getWithIndex(indexkey_dckv, key, limit, seekKey, direction, offset, vaccount);
+      return await kvdb.getWithIndex(
+        indexkey_dckv,
+        key,
+        limit,
+        seekKey,
+        direction,
+        offset,
+        vaccount,
+        options.signal,
+      );
   
     } catch (error) {
       return [null, error instanceof Error ? error : new Error(String(error))];

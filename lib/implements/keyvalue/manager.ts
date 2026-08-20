@@ -183,7 +183,8 @@ export class KeyValueDB {
     seekKey: string = "",
     direction: Direction = Direction.Forward,
     offset: number = 0,
-    vaccount: string = ""
+    vaccount: string = "",
+    signal?: AbortSignal,
   ): Promise<[string | null, Error | null]> {
     return this.manager.getWithIndex(
       this.appId,
@@ -195,7 +196,8 @@ export class KeyValueDB {
       direction,
       offset,
       limit,
-      vaccount
+      vaccount,
+      signal,
     );
   }
 
@@ -345,7 +347,8 @@ export class KeyValueManager {
   async getKeyValueDB(
     appId: string,
     theme: string,
-    ThemeAuthor: string
+    ThemeAuthor: string,
+    signal?: AbortSignal,
   ): Promise<[KeyValueDB | null, Error | null]> {
       const commentManager = new CommentManager(this.context);
     // Ensure theme starts with "keyvalue_"
@@ -353,7 +356,12 @@ export class KeyValueManager {
       theme = "keyvalue_" + theme;
     }
     //先判断主题是否存在,不存在就报错
-    const [flag,err] =  await commentManager.isThemeExist(appId, theme, ThemeAuthor);
+    const [flag,err] =  await commentManager.isThemeExist(
+      appId,
+      theme,
+      ThemeAuthor,
+      signal,
+    );
     if(err){
       return [null, err];
     }
@@ -918,8 +926,16 @@ export class KeyValueManager {
     direction: Direction = Direction.Forward,
     offset: number,
     limit: number,
-    vaccount?: string
+    vaccount?: string,
+    signal?: AbortSignal,
   ): Promise<[string | null, Error | null]> {
+    if (signal?.aborted) {
+      const reason = signal.reason;
+      return [
+        null,
+        reason instanceof Error ? reason : new Error("Operation aborted"),
+      ];
+    }
     if(!this.context.publicKey){
       return [null, Errors.ErrPublicKeyIsNull];
     }
@@ -931,12 +947,18 @@ export class KeyValueManager {
       //查询他人主题评论
       const authorPublicKey: Ed25519PubKey =
         Ed25519PubKey.edPubkeyFromStr(themeAuthor);
-      client = await this.dc.connectToUserDcPeer(authorPublicKey.raw);
+      client = await this.dc.connectToUserDcPeer(authorPublicKey.raw, signal);
       if (!client) {
         return [null, Errors.ErrNoDcPeerConnected];
       }
       //获取token
-      await client.GetToken(appId, this.context.publicKey.string(), this.context.sign);
+      await client.GetToken(
+        appId,
+        this.context.publicKey.string(),
+        this.context.sign,
+        undefined,
+        signal,
+      );
     }
     if (client === null) {
       return [null, new Error("ErrConnectToAccountPeersFail")];
@@ -946,7 +968,13 @@ export class KeyValueManager {
       return [null, new Error("ErrConnectToAccountPeersFail")];
     }
     if (client.token == "") {
-      await client.GetToken(appId, this.context.publicKey.string(), this.context.sign);
+      await client.GetToken(
+        appId,
+        this.context.publicKey.string(),
+        this.context.sign,
+        undefined,
+        signal,
+      );
     }
 
     const keyValueClient = new KeyValueClient(client, this.context);
@@ -961,7 +989,8 @@ export class KeyValueManager {
         direction,
         offset,
         limit,
-        vaccount
+        vaccount,
+        signal,
       );
 
       if (res == null) {

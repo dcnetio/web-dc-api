@@ -40,7 +40,10 @@ const REALTIME_AUTH_MARKER_HEADER = "X-DC-Realtime-Auth";
 const REALTIME_AUTH_MARKER_VALUE = "1";
 
 import { IAICallConfig } from "../common/types/types";
-import { IAIProxyOperations } from "../../lib/interfaces/aiproxy-interface";
+import type {
+  AIProxyConfigReadOptions,
+  IAIProxyOperations,
+} from "../../lib/interfaces/aiproxy-interface";
 
 type ResolvedAICallConfig = {
   appId: string;
@@ -255,7 +258,8 @@ export class AIProxyModule implements DCModule, IAIProxyOperations {
     appId: string,
     themeAuthor: string,
     configTheme: string,
-    vaccount?: string
+    vaccount?: string,
+    options?: AIProxyConfigReadOptions,
   ): Promise<
     [UserProxyCallConfig[] | null, AIProxyConfig[] | null, number, Uint8Array | null, Error | null]
   > {
@@ -265,7 +269,8 @@ export class AIProxyModule implements DCModule, IAIProxyOperations {
         appId,
         themeAuthor,
         configTheme,
-        vaccount
+        vaccount,
+        options,
       );
     } catch (error) {
       return Promise.resolve([null, null, 0, null, error as Error]);

@@ -764,7 +764,8 @@ export class CommentClient {
   async isThemeExist(
     appId: string,
     theme: string,
-    themeAuthor: string
+    themeAuthor: string,
+    signal?: AbortSignal,
   ): Promise<boolean> {
     const message = new dcnet.pb.IsThemeExistRequest({});
     message.appId = new TextEncoder().encode(appId);
@@ -782,7 +783,8 @@ export class CommentClient {
       const reply = await grpcClient.unaryCall(
         "/dcnet.pb.Service/IsThemeExist",
         messageBytes,
-        30000
+        30000,
+        signal,
       );
       // console.log("IsThemeExist reply", reply);
       const decoded = dcnet.pb.IsThemeExistReply.decode(reply);

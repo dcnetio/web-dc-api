@@ -22,6 +22,7 @@ import { AIProxyClient } from "./client";
 import { BrowserLineReader, readLine } from "../../util/BrowserLineReader";
 import { KeyValueClient } from "../keyvalue/client";
 import { Libp2p } from "@libp2p/interface";
+import type { AIProxyConfigReadOptions } from "../../../lib/interfaces/aiproxy-interface";
 
 // 错误定义
 export class AIProxyError extends Error {
@@ -356,6 +357,7 @@ export class AIProxyManager {
     themeAuthor: string,
     configTheme: string,
     vaccount?: string,
+    options?: AIProxyConfigReadOptions,
   ): Promise<
     [
       UserProxyCallConfig[] | null,
@@ -365,6 +367,16 @@ export class AIProxyManager {
       Error | null,
     ]
   > {
+    if (options?.signal?.aborted) {
+      const reason = options.signal.reason;
+      return [
+        null,
+        null,
+        0,
+        null,
+        reason instanceof Error ? reason : new Error("Operation aborted"),
+      ];
+    }
     if (!this.context.publicKey) {
       return [null, null, 0, null, Errors.ErrAccountPublicKeyIsNull];
     }
@@ -377,7 +389,10 @@ export class AIProxyManager {
       //查询他人主题评论
       const authorPublicKey: Ed25519PubKey =
         Ed25519PubKey.edPubkeyFromStr(themeAuthor);
-      client = await this.dc.connectToUserDcPeer(authorPublicKey.raw);
+      client = await this.dc.connectToUserDcPeer(
+        authorPublicKey.raw,
+        options?.signal,
+      );
       if (!client) {
         return [null, null, 0, null, Errors.ErrNoDcPeerConnected];
       }
@@ -394,12 +409,19 @@ export class AIProxyManager {
         this.context.appInfo.appId || "",
         this.context.publicKey.string(),
         this.context.sign,
+        undefined,
+        options?.signal,
       );
     }
     try {
       const aiProxyClient = new AIProxyClient(client, this.context);
       const [configData, userCount, nextSeekKey, error] =
-        await aiProxyClient.GetAIProxyConfig(appId, themeAuthor, configTheme);
+        await aiProxyClient.GetAIProxyConfig(
+          appId,
+          themeAuthor,
+          configTheme,
+          options,
+        );
       if (error) {
         return [null, null, 0, null, error];
       }

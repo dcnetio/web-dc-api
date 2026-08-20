@@ -58,6 +58,7 @@ import { autoNAT } from "@libp2p/autonat";
 import { dcutr } from "@libp2p/dcutr";
 import { bitswap } from "@helia/block-brokers";
 import { Client } from "./dcapi";
+import { createAbortController } from "./abort";
 import {
   connection_monitor_max_timeout,
   connection_monitor_min_timeout,
@@ -75,9 +76,37 @@ import {
   transfer_gate_wait_timeout,
 } from "./define";
 
-const controller = new AbortController();
+const controller = createAbortController();
 const { signal } = controller;
 const peer_close_timeout = 5000;
+
+const getAbortError = (abortSignal?: AbortSignal): Error => {
+  const reason = abortSignal?.reason;
+  return reason instanceof Error ? reason : new Error("Operation aborted");
+};
+
+const awaitWithAbort = <T>(
+  operation: Promise<T>,
+  abortSignal?: AbortSignal,
+): Promise<T> => {
+  if (!abortSignal) return operation;
+  if (abortSignal.aborted) return Promise.reject(getAbortError(abortSignal));
+
+  return new Promise<T>((resolve, reject) => {
+    const onAbort = () => reject(getAbortError(abortSignal));
+    abortSignal.addEventListener("abort", onAbort, { once: true });
+    operation.then(
+      (value) => {
+        abortSignal.removeEventListener("abort", onAbort);
+        resolve(value);
+      },
+      (error) => {
+        abortSignal.removeEventListener("abort", onAbort);
+        reject(error);
+      },
+    );
+  });
+};
 
 /**
  * Race an async transfer operation against a timeout and clear the timer as
@@ -116,7 +145,7 @@ const waitForTransferDrain = async (stream: Stream): Promise<void> => {
     onDrain?: (options?: { signal?: AbortSignal }) => Promise<void>;
   };
   if (typeof candidate.onDrain === "function") {
-    const controller = new AbortController();
+    const controller = createAbortController();
     const timer = setTimeout(
       () => controller.abort(),
       transfer_stream_write_timeout,
@@ -209,6 +238,18 @@ const closeTransferStream = async (stream: Stream, abortReason?: unknown) => {
     close?: (options?: { signal?: AbortSignal }) => Promise<void>;
     abort?: (error?: Error) => void;
   };
+  if (abortReason !== undefined) {
+    try {
+      candidate.abort?.(
+        abortReason instanceof Error
+          ? abortReason
+          : new Error(String(abortReason)),
+      );
+    } catch {
+      // 流已经关闭或 muxer 已经销毁，忽略二次中止错误。
+    }
+    return;
+  }
   try {
     if (typeof candidate.close === "function") {
       await withTransferTimeout(
@@ -219,11 +260,7 @@ const closeTransferStream = async (stream: Stream, abortReason?: unknown) => {
     }
   } catch {
     try {
-      candidate.abort?.(
-        abortReason instanceof Error
-          ? abortReason
-          : new Error(String(abortReason || "transfer stream cleanup")),
-      );
+      candidate.abort?.(new Error("transfer stream cleanup"));
     } catch {
       // 流已经关闭或 muxer 已经销毁，忽略二次清理错误。
     }
@@ -425,8 +462,15 @@ export class DcUtil {
 
   connectToPeerWithAddr = async (
     peerAddr: string,
-    options?: { forceReconnect?: boolean; timeout?: number },
+    options?: {
+      forceReconnect?: boolean;
+      timeout?: number;
+      signal?: AbortSignal;
+    },
   ): Promise<Multiaddr> => {
+    if (options?.signal?.aborted) {
+      throw getAbortError(options.signal);
+    }
     // 直接使用传入的地址拨号，不走链上查询
     let addr: Multiaddr;
     try {
@@ -449,11 +493,11 @@ export class DcUtil {
       // 普通连接请求可以复用任何正在进行的连接操作；强制重连只可复用另一个
       // 强制重连。这样同一 peer 不会并发 ping、hangUp 或 dial。
       if (!options?.forceReconnect || runningTask.forceReconnect) {
-        return runningTask.promise;
+        return awaitWithAbort(runningTask.promise, options?.signal);
       }
 
       try {
-        await runningTask.promise;
+        await awaitWithAbort(runningTask.promise, options?.signal);
       } catch {
         // 无论前一个普通连接检查是否成功，当前强制重连仍需继续执行。
       }
@@ -467,13 +511,17 @@ export class DcUtil {
     };
     this.peerConnectionTasks.set(peerIdStr, taskState);
 
-    try {
-      return await task;
-    } finally {
+    // 单个文件拉取被取消不能终止共享的连接任务：其它前台请求可能正在复用它。
+    // 任务自行按 dialTimeout 结束；这里仅让取消者立即返回，避免继续创建传输流。
+    void task
+      .finally(() => {
       if (this.peerConnectionTasks.get(peerIdStr) === taskState) {
         this.peerConnectionTasks.delete(peerIdStr);
       }
-    }
+      })
+      .catch(() => undefined);
+
+    return awaitWithAbort(task, options?.signal);
   };
 
   private connectToPeerWithAddrInternal = async (
@@ -681,24 +729,44 @@ export class DcUtil {
     return await this._connectPeers([peerIdStr]);
   };
 
-  _connectPeers = (peerListJson: string[]): Promise<Multiaddr> => {
+  _connectPeers = (
+    peerListJson: string[],
+    abortSignal?: AbortSignal,
+  ): Promise<Multiaddr> => {
+    if (abortSignal?.aborted) {
+      return Promise.reject(getAbortError(abortSignal));
+    }
     return new Promise((reslove, reject) => {
       const _this = this;
       const len = peerListJson.length;
+      let settled = false;
+      const finish = (callback: (value: any) => void, value: any) => {
+        if (settled) return;
+        settled = true;
+        abortSignal?.removeEventListener("abort", onAbort);
+        callback(value);
+      };
+      const resolveOnce = (value: Multiaddr) => finish(reslove, value);
+      const rejectOnce = (error: unknown) => finish(reject, error);
+      const onAbort = () => rejectOnce(getAbortError(abortSignal));
+      abortSignal?.addEventListener("abort", onAbort, { once: true });
 
       if (len === 0) {
-        reject(new Error("peer list is empty"));
+        rejectOnce(new Error("peer list is empty"));
         return;
       }
 
       let num = 0;
+      const recordFailure = (error: unknown) => {
+        if (settled || abortSignal?.aborted) return;
+        num += 1;
+        if (num >= len) rejectOnce(error);
+      };
 
       async function dialNodeAddr(i: number) {
+        if (settled || abortSignal?.aborted) return;
         if (!peerListJson[i]) {
-          num++;
-          if (num >= len) {
-            reject(new Error("peer list contains no valid peer"));
-          }
+          recordFailure(new Error("peer list contains no valid peer"));
           return;
         }
 
@@ -708,39 +776,55 @@ export class DcUtil {
           const connections = _this.dcNodeClient?.libp2p.getConnections(peerId);
           if (connections && connections.length > 0) {
             if (connections[0].status === "open") {
-              reslove(connections[0].remoteAddr);
+              resolveOnce(connections[0].remoteAddr);
               return;
             }
           }
         } catch (e) {
         }
 
-        const [nodeAddr, _] = await _this.dcChain.getDcNodeWebrtcDirectAddr(
-          peerListJson[i],
-        );
+        let nodeAddr: Multiaddr | null;
+        try {
+          [nodeAddr] = await awaitWithAbort(
+            _this.dcChain.getDcNodeWebrtcDirectAddr(peerListJson[i]),
+            abortSignal,
+          );
+        } catch (error) {
+          recordFailure(error);
+          return;
+        }
         if (!nodeAddr) {
-          num++;
-          if (num >= len) {
-            reject("no nodeAddr return");
-          }
+          recordFailure(new Error("no nodeAddr return"));
           return;
         }
 
         try {
           if (_this.dcNodeClient?.libp2p) {
-            const resCon = await _this.dcNodeClient?.libp2p.dial(nodeAddr, {
-              signal: AbortSignal.timeout(dial_timeout),
-            });
+            const dialController = createAbortController();
+            const dialTimer = setTimeout(
+              () => dialController.abort(new Error("Dial timed out")),
+              dial_timeout,
+            );
+            const abortDial = () =>
+              dialController.abort(getAbortError(abortSignal));
+            abortSignal?.addEventListener("abort", abortDial, { once: true });
+            let resCon;
+            try {
+              resCon = await _this.dcNodeClient.libp2p.dial(nodeAddr, {
+                signal: dialController.signal,
+              });
+            } finally {
+              clearTimeout(dialTimer);
+              abortSignal?.removeEventListener("abort", abortDial);
+            }
             if (resCon) {
-              reslove(nodeAddr);
+              resolveOnce(nodeAddr);
             } else {
-              num++;
-              if (num >= len) {
-                reject("dial nodeAddr failed");
-              }
+              recordFailure(new Error("dial nodeAddr failed"));
             }
           }
         } catch (error) {
+          if (abortSignal?.aborted) return;
           // 如果出现 TooManyOutboundProtocolStreamsError，说明可能已经存在连接流，再次检查连接状态
           if (
             error &&
@@ -760,7 +844,7 @@ export class DcUtil {
                 connections.length > 0 &&
                 connections[0].status === "open"
               ) {
-                reslove(connections[0].remoteAddr);
+                resolveOnce(connections[0].remoteAddr);
                 return;
               }
             } catch (e) {
@@ -769,20 +853,18 @@ export class DcUtil {
           }
 
           if (error && typeof error === "object" && "message" in error) {
-            num++;
-            if (num >= len) {
+            if (!settled && num + 1 >= len) {
               console.warn(
                 "dial nodeAddr error,error:%s",
                 (error as any).message,
               );
-              reject((error as any).message);
             }
+            recordFailure((error as any).message);
           } else {
-            num++;
-            if (num >= len) {
+            if (!settled && num + 1 >= len) {
               console.warn("dial nodeAddr error,error:", error);
-              reject(error);
             }
+            recordFailure(error);
           }
         }
       }
@@ -793,8 +875,14 @@ export class DcUtil {
       }
     });
   };
-  connectToUserDcPeer = async (account: Uint8Array): Promise<Client | null> => {
-    const peerAddrs = await this.dcChain.getAccountPeers(account);
+  connectToUserDcPeer = async (
+    account: Uint8Array,
+    abortSignal?: AbortSignal,
+  ): Promise<Client | null> => {
+    const peerAddrs = await awaitWithAbort(
+      this.dcChain.getAccountPeers(account),
+      abortSignal,
+    );
     if (!peerAddrs || peerAddrs.length == 0) {
       return null;
     }
@@ -802,7 +890,7 @@ export class DcUtil {
     if (!this.dcNodeClient || !this.dcNodeClient?.libp2p) {
       return null;
     }
-    const nodeAddr = await this._connectPeers(peerAddrs);
+    const nodeAddr = await this._connectPeers(peerAddrs, abortSignal);
     if (!nodeAddr) {
       return null;
     }
@@ -849,8 +937,12 @@ export class DcUtil {
   // 连接节点列表
   connectToUserAllDcPeers = async (
     account: Uint8Array,
+    abortSignal?: AbortSignal,
   ): Promise<Client[] | null> => {
-    const peerAddrs = await this.dcChain.getAccountPeers(account);
+    const peerAddrs = await awaitWithAbort(
+      this.dcChain.getAccountPeers(account),
+      abortSignal,
+    );
     if (!peerAddrs || peerAddrs.length == 0) {
       return null;
     }
@@ -858,13 +950,14 @@ export class DcUtil {
     let clients: Client[] = [];
     // 连接节点
     for (let i = 0; i < peerAddrs.length; i++) {
+      if (abortSignal?.aborted) throw getAbortError(abortSignal);
       const item = peerAddrs[i];
       if (item) {
         try {
           if (!this.dcNodeClient || !this.dcNodeClient?.libp2p) {
             return null;
           }
-          const nodeAddr = await this._connectPeers([item]);
+          const nodeAddr = await this._connectPeers([item], abortSignal);
           if (!nodeAddr) {
             return null;
           }
@@ -876,6 +969,9 @@ export class DcUtil {
           );
           clients.push(client);
         } catch (error) {
+          if (abortSignal?.aborted) {
+            throw getAbortError(abortSignal);
+          }
           console.warn("connectToUserAllDcPeers error", error);
         }
       }
@@ -1232,11 +1328,23 @@ export class DcUtil {
       signal,
     );
     let closePromise: Promise<void> | undefined;
+    let terminalAbortReason: Error | undefined;
     const closeOnce = (abortReason?: unknown): Promise<void> => {
       if (!closePromise) {
-        closePromise = closeTransferStream(stream, abortReason);
+        closePromise = closeTransferStream(
+          stream,
+          abortReason ?? terminalAbortReason,
+        );
       }
       return closePromise;
+    };
+    const abortStream = (reason: Error) => {
+      terminalAbortReason = reason;
+      try {
+        stream.abort(reason);
+      } catch {
+        // 流已经关闭，finally 仍会收敛其本地资源。
+      }
     };
 
     // 使用新版 Stream 接口: stream.send / stream.close
@@ -1250,6 +1358,9 @@ export class DcUtil {
           }
         }
       } catch (err) {
+        if (terminalAbortReason || signal?.aborted) {
+          return;
+        }
         if (
           (err as Error).message !== "Stream closed" &&
           (err as Error).message !== "Stream aborted"
@@ -1278,7 +1389,10 @@ export class DcUtil {
       let data: Uint8Array;
       let handshakeFlag = false;
 
-      const chunkIterable = this.chunkGenerator(stream);
+      const chunkIterable = this.chunkGenerator(
+        stream,
+        () => Boolean(terminalAbortReason || signal?.aborted),
+      );
       let waitingForFirstChunk = true;
       const IDLE_TIMEOUT = transfer_stream_idle_timeout;
 
@@ -1302,6 +1416,7 @@ export class DcUtil {
           } catch (err) {
             if ((err as Error).message === firstChunkTimeoutMessage) {
               console.warn(firstChunkTimeoutMessage);
+              abortStream(new Error(firstChunkTimeoutMessage));
               break;
             }
             throw err;
@@ -1324,6 +1439,11 @@ export class DcUtil {
             ) {
               console.warn(
                 `Stream read timeout after ${transfer_stream_idle_timeout / 1000}s idle`,
+              );
+              abortStream(
+                new Error(
+                  `Transfer stream idle timeout after ${transfer_stream_idle_timeout / 1000}s`,
+                ),
               );
               break;
             }
@@ -1459,11 +1579,14 @@ export class DcUtil {
       );
       throw err;
     } finally {
-      await closeOnce();
+      await closeOnce(terminalAbortReason);
     }
   }
 
-  private async *chunkGenerator(stream: Stream): AsyncGenerator<Uint8Array> {
+  private async *chunkGenerator(
+    stream: Stream,
+    isExpectedAbort?: () => boolean,
+  ): AsyncGenerator<Uint8Array> {
     const iterator = stream[Symbol.asyncIterator]();
     while (true) {
       try {
@@ -1477,7 +1600,9 @@ export class DcUtil {
             : (value as Uint8Array);
         yield res;
       } catch (err) {
-        console.warn("Stream chunk error:", err);
+        if (!isExpectedAbort?.()) {
+          console.warn("Stream chunk error:", err);
+        }
         break;
       }
     }
