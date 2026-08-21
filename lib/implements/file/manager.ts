@@ -1388,6 +1388,7 @@ export class FileManager {
     options?: { signal?: AbortSignal; forceReconnect?: boolean },
   ): Promise<[Uint8Array | null, Error | null]> => {
     let releaseTransport: (() => void) | undefined;
+    let providerAddr: Multiaddr | undefined;
     try {
       // 构建产物拉取直接影响当前预览，按前台传输登记。否则 production 中更快的
       // effect/worker 会让它与 ThreadDB push、区块回推同时挤同一个 Helia/libp2p
@@ -1404,6 +1405,7 @@ export class FileManager {
         if (!nodeAddr) {
           return [null, Errors.ErrBuildServerConnect];
         }
+        providerAddr = nodeAddr;
       } catch (error) {
         if (!options?.signal?.aborted) {
           console.warn("Error connecting to build server:", error);
@@ -1422,6 +1424,7 @@ export class FileManager {
         decryptKey,
         false,
         options?.signal,
+        providerAddr,
       );
       return [fileContent, null];
     } catch (error: any) {
@@ -1482,6 +1485,7 @@ export class FileManager {
     rootCid: CID,
     signal: AbortSignal,
     onProgress?: () => void,
+    providerAddr?: Multiaddr,
   ): Promise<void> {
     const blockstore = this.dcNodeClient?.blockstore;
     if (!blockstore) {
@@ -1530,12 +1534,29 @@ export class FileManager {
       abortSignal: AbortSignal,
     ): Promise<Uint8Array> => {
       // blockstore.get 返回的是 AwaitIterable（块可能分片产出），要先收拢成字节。
-      const readBlock = (blockSignal: AbortSignal): Promise<Uint8Array> =>
-        iterableToUint8Array(
-          blockstore.get(target, {
-            signal: blockSignal,
-          }) as AsyncIterable<Uint8Array>,
-        );
+      const readBlock = async (
+        blockSignal: AbortSignal,
+        useProviderSession: boolean,
+      ): Promise<Uint8Array> => {
+        const sessionBlockstore =
+          useProviderSession && providerAddr
+            ? blockstore.createSession(target, {
+                providers: [providerAddr],
+                minProviders: 1,
+                maxProviders: 1,
+                signal: blockSignal,
+              })
+            : undefined;
+        try {
+          return await iterableToUint8Array(
+            (sessionBlockstore ?? blockstore).get(target, {
+              signal: blockSignal,
+            }) as AsyncIterable<Uint8Array>,
+          );
+        } finally {
+          sessionBlockstore?.close();
+        }
+      };
 
       // 已经落到本地的块直接读：上一次失败留下的进度就是在这里被复用的，
       // 「只重拉没成功的那块」靠的是这一步，不必再走超时/重试那套。
@@ -1547,7 +1568,7 @@ export class FileManager {
       }
       if (isLocal) {
         try {
-          const block = await readBlock(abortSignal);
+          const block = await readBlock(abortSignal, false);
           reused += 1;
           return block;
         } catch (localError) {
@@ -1559,6 +1580,17 @@ export class FileManager {
             "error:",
             localError,
           );
+          try {
+            await blockstore.delete(target, { signal: abortSignal });
+          } catch (deleteError) {
+            console.warn(
+              "prefetchFileDag: failed to remove unreadable local block",
+              "cid:",
+              target.toString(),
+              "error:",
+              deleteError,
+            );
+          }
         }
       }
 
@@ -1572,7 +1604,7 @@ export class FileManager {
         const detachAttempt = linkAbort(abortSignal, attemptController);
         const timer = setTimeout(() => attemptController.abort(), timeoutMs);
         try {
-          const block = await readBlock(attemptController.signal);
+          const block = await readBlock(attemptController.signal, true);
           // 有进展就给上层的空闲计时器续期，避免慢但在动的传输被误判超时。
           fetched += 1;
           onProgress?.();
@@ -1723,6 +1755,7 @@ export class FileManager {
     decryptKey: string,
     folderFlag?: boolean,
     externalSignal?: AbortSignal,
+    providerAddr?: Multiaddr,
   ): Promise<Uint8Array> => {
     // 1. 验证 dcNodeClient
     if (!this.dcNodeClient) {
@@ -1821,7 +1854,12 @@ export class FileManager {
       resetTimeout();
       // 先把整棵 DAG 搬到本地（根块短超时快重试 + 子块有界并发 + 逐块重试），
       // 之后 fs.cat 读到的全是本地块。
-      await this.prefetchFileDag(cidObj, controller.signal, resetTimeout);
+      await this.prefetchFileDag(
+        cidObj,
+        controller.signal,
+        resetTimeout,
+        providerAddr,
+      );
     } catch (prefetchError) {
       clearTimeout(timeoutId);
       detachExternalAbort();
