@@ -40,7 +40,8 @@ async function* normalizeInboundStream(source: AsyncIterable<unknown>) {
     // the remote side goes away. End them normally so the parser can clean up
     // without producing an unhandled rejection in the host application.
     if (isExpectedInboundStreamClosure(error)) {
-      console.warn("Inbound DC stream closed:", error);
+      const message = error instanceof Error ? error.message : String(error);
+      console.debug("Inbound DC stream closed:", message);
       return;
     }
     throw error;

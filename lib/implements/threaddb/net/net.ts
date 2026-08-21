@@ -113,6 +113,8 @@ export class Network implements Net {
     lid: PeerId;
     rec: IRecord;
     counter: number;
+    attempts: number;
+    nextAttemptAt: number;
   }> = [];
   private pushWorkerStarted = false;
 
@@ -2106,7 +2108,26 @@ export class Network implements Net {
             if (this.pushQueue.length === 0) continue;
           }
 
-          const item = this.pushQueue.shift();
+          const now = Date.now();
+          const readyIndex = this.pushQueue.findIndex(
+            (queued) =>
+              queued.nextAttemptAt <= now &&
+              !this.pushQueue.some(
+                (other) =>
+                  other !== queued &&
+                  other.tid.toString() === queued.tid.toString() &&
+                  other.lid.toString() === queued.lid.toString() &&
+                  other.counter < queued.counter,
+              ),
+          );
+          if (readyIndex < 0) {
+            const nextAttemptAt = Math.min(
+              ...this.pushQueue.map((queued) => queued.nextAttemptAt),
+            );
+            await sleep(Math.min(1000, Math.max(1, nextAttemptAt - now)));
+            continue;
+          }
+          const [item] = this.pushQueue.splice(readyIndex, 1);
           if (!item) continue;
 
           try {
@@ -2125,9 +2146,18 @@ export class Network implements Net {
               item.counter,
             );
           } catch (err) {
-            console.warn("pushRecord failed:", err);
-            // 失败后简单等待一下
-            await sleep(200);
+            item.attempts += 1;
+            if (item.attempts < 6) {
+              const retryDelay = Math.min(30_000, 500 * 2 ** (item.attempts - 1));
+              item.nextAttemptAt = Date.now() + retryDelay;
+              this.pushQueue.push(item);
+              console.warn(
+                `pushRecord failed, retry ${item.attempts}/5 in ${retryDelay}ms:`,
+                err,
+              );
+            } else {
+              console.warn("pushRecord failed after 5 retries:", err);
+            }
           }
         } catch (err) {
           console.warn("push worker crashed:", err);
@@ -2161,6 +2191,8 @@ export class Network implements Net {
       }
       const peers = await this.getPeers(tid);
       if (!peers) throw new Error(`No peers for thread ${tid}`);
+      let lastError: unknown = null;
+      let pushed = false;
       for (const p of peers) {
         if (!p || p.toString() === "") continue;
         let dbClient: DBClient | null = null;
@@ -2169,8 +2201,10 @@ export class Network implements Net {
           if (!client) continue;
           dbClient = new DBClient(client, this.dc, this, this.logstore);
           await dbClient.pushRecordToPeer(tid, lid, rec, counter);
+          pushed = true;
           break; // 推送成功，退出循环
         } catch (err) {
+          lastError = err;
           if (
             err instanceof Error &&
             dbClient &&
@@ -2186,14 +2220,19 @@ export class Network implements Net {
                 );
               } else {
                 await dbClient.pushRecordToPeer(tid, lid, rec, counter);
+                pushed = true;
                 break; // 推送成功，退出循环
               }
             } catch (err) {
+              lastError = err;
               console.warn(
                 "Failed to create transfer stream for pushing log:", err);
             }
           }
         }
+      }
+      if (!pushed) {
+        throw lastError || new Error(`No reachable peers for thread ${tid}`);
       }
     } catch (err) {
       throw new Error(
@@ -2217,7 +2256,14 @@ export class Network implements Net {
     rec: IRecord,
     counter: number,
   ): Promise<void> {
-    this.pushQueue.push({ tid, lid, rec, counter });
+    this.pushQueue.push({
+      tid,
+      lid,
+      rec,
+      counter,
+      attempts: 0,
+      nextAttemptAt: 0,
+    });
     this.startPushWorker();
   }
 

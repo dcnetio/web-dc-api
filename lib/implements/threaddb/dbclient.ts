@@ -84,7 +84,12 @@ export class DBClient {
         throw new Error("p2pNode is null");
       }
       const grpcClient = new DBGrpcClient(this.client, this.net);
-      await grpcClient.pushRecordToPeer(tid, lid, rec, counter, this.logstore);
+      const releaseTransport = await this.dc.acquireBackgroundTransport();
+      try {
+        await grpcClient.pushRecordToPeer(tid, lid, rec, counter, this.logstore);
+      } finally {
+        releaseTransport();
+      }
       //开启threaddb的block记录上报流
       await this.dc.createTransferStream(
         this.client.p2pNode,

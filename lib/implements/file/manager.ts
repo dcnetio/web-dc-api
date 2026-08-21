@@ -43,7 +43,7 @@ const dcFileHead = "$$dcfile$$";
 const chunkSize = 3 * 1024 * 1024; // 3MB chunks
 
 // DAG 预取参数，见 prefetchFileDag 的说明。
-const dagBlockConcurrency = 6;
+const dagBlockConcurrency = 3;
 // 根块单独用短超时：根块没到什么都开始不了，没必要陪着它等满空闲超时。
 const dagRootTimeoutMs = 5000;
 const dagRootAttempts = 4;
@@ -1387,7 +1387,14 @@ export class FileManager {
     peerAddr: string,
     options?: { signal?: AbortSignal; forceReconnect?: boolean },
   ): Promise<[Uint8Array | null, Error | null]> => {
+    let releaseTransport: (() => void) | undefined;
     try {
+      // 构建产物拉取直接影响当前预览，按前台传输登记。否则 production 中更快的
+      // effect/worker 会让它与 ThreadDB push、区块回推同时挤同一个 Helia/libp2p
+      // 节点；连续 abort Bitswap 请求后往往只有整页刷新重建 Helia 才恢复。
+      releaseTransport = await this.dc.acquireForegroundTransport(
+        options?.signal,
+      );
       // 建立链接：连接失败必须快速失败，不能带着未连接状态去拉取
       try {
         const nodeAddr = await this.dc?.connectToPeerWithAddr(peerAddr, {
@@ -1429,6 +1436,8 @@ export class FileManager {
           ? error
           : new FileError(`get file from dc failed: ${String(error)}`),
       ];
+    } finally {
+      releaseTransport?.();
     }
   };
 
@@ -1657,15 +1666,10 @@ export class FileManager {
       const currentLevel = level;
       const nextLevel: CID[] = [];
       let cursor = 0;
-      let failure: unknown;
-
-      // 某一块彻底失败后，同层其他块没必要再把自己的重试跑完（最多 45s），
-      // 直接取消整层，让错误尽快回到上层。
-      const levelController = new AbortController();
-      const detachLevel = linkAbort(signal, levelController);
+      const failures: unknown[] = [];
 
       const worker = async (): Promise<void> => {
-        while (cursor < currentLevel.length && failure === undefined) {
+        while (cursor < currentLevel.length && !signal.aborted) {
           const childCid = currentLevel[cursor];
           cursor += 1;
           if (!childCid) {
@@ -1677,31 +1681,23 @@ export class FileManager {
               dagChildTimeoutMs,
               dagChildAttempts,
               "child",
-              levelController.signal,
+              signal,
             );
             collectLinks(linksOf(childCid, block), nextLevel);
           } catch (error) {
-            // 保留第一个真实错误：取消整层后其他 worker 抛出的都是派生的取消错误。
-            if (failure === undefined) {
-              failure = error;
-            }
-            levelController.abort();
+            failures.push(error);
           }
         }
       };
 
-      try {
-        await Promise.all(
-          Array.from(
-            { length: Math.min(dagBlockConcurrency, currentLevel.length) },
-            () => worker(),
-          ),
-        );
-      } finally {
-        detachLevel();
-      }
-      if (failure !== undefined) {
-        throw failure;
+      await Promise.all(
+        Array.from(
+          { length: Math.min(dagBlockConcurrency, currentLevel.length) },
+          () => worker(),
+        ),
+      );
+      if (failures.length > 0) {
+        throw failures[0];
       }
       level = nextLevel;
     }
