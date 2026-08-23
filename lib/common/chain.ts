@@ -10,6 +10,37 @@ import { IAppInfo, User, PeerStatus } from "./types/types";
 
 import { base32 } from "multiformats/bases/base32";
 import { Ed25519PubKey } from "./dc-key/ed25519";
+import {
+  AppDailyLoginStats,
+  AppLoginMonthComparison,
+  AppLoginMonthComparisonOptions,
+  AppLoginDailyStatsOptions,
+  AppLoginStats,
+  AppLoginStatsSnapshotLoader,
+  AppLoginYearComparison,
+  AppLoginYearComparisonOptions,
+  buildSimulatedDayBoundaries,
+  buildSimulatedMonthBoundaries,
+  buildSimulatedYearBoundaries,
+  createAppLoginStatsSnapshotLoader,
+  createPersistentAppLoginStatsSnapshotLoader,
+  loadAppLoginCalendarBoundary,
+  calculateAppLoginPeriod,
+  calculateAppLoginIntervals,
+  codecDecimal,
+  findAppLoginInfo,
+} from "./app-login-stats";
+
+export type {
+  AppDailyLoginStats,
+  AppLoginMonthComparison,
+  AppLoginMonthComparisonOptions,
+  AppLoginDailyStatsOptions,
+  AppLoginStats,
+  AppLoginStatsSnapshotLoader,
+  AppLoginYearComparison,
+  AppLoginYearComparisonOptions,
+} from "./app-login-stats";
 
 const _hexMap: Record<string, number> = {
   0: 0, 1: 1, 2: 2, 3: 3, 4: 4, 5: 5, 6: 6, 7: 7, 8: 8, 9: 9,
@@ -65,6 +96,7 @@ export class ChainUtil {
   dcchainapi: ApiPromise | undefined;
   private blockChainAddr: string = "";
   private isReconnecting: boolean = false;
+  private chainIdentity: string = "";
 
   // 连接链节点
   create = async (blockChainAddr: string) => {
@@ -101,6 +133,12 @@ export class ChainUtil {
 
     if (!this.dcchainapi) {
       return false;
+    }
+
+    try {
+      this.chainIdentity = (await this.dcchainapi.rpc.chain.getBlockHash(0)).toHex();
+    } catch (_) {
+      this.chainIdentity = blockChainAddr;
     }
 
     return true;
@@ -152,6 +190,320 @@ export class ChainUtil {
     const lastBlock = await this.dcchainapi?.rpc.chain.getBlock();
     const blockHeight = lastBlock?.block.header.number.toNumber();
     return blockHeight || 0;
+  }
+
+  // 获取应用累计登录上报数；指定区块高度时需要连接归档节点。
+  async getAppLoginStats(
+    appId: string,
+    blockHeight?: number,
+  ): Promise<AppLoginStats> {
+    if (!this.dcchainapi || !this.dcchainapi.isReady) {
+      throw new Error("dcchainapi is not initialized");
+    }
+
+    const blockHash = blockHeight === undefined
+      ? await this.dcchainapi.rpc.chain.getFinalizedHead()
+      : await this.dcchainapi.rpc.chain.getBlockHash(blockHeight);
+    const targetHeight = blockHeight ?? (
+      await this.dcchainapi.rpc.chain.getHeader(blockHash)
+    ).number.toNumber();
+    const queryApi = await this.dcchainapi.at(blockHash);
+    const codec = await (queryApi.query as any).dcNode.appsAccountLoginTimes();
+    const info = findAppLoginInfo(codec, appId);
+
+    return {
+      appId,
+      loginTimes: codecDecimal(info?.loginTimes ?? info?.login_times),
+      rewardedStash: info?.rewardedStash ?? info?.rewarded_stash ?? null,
+      blockHeight: targetHeight,
+    };
+  }
+
+  // 相邻区块快照做差，表示该区间新增的链上登录上报，不等同于页面访问次数。
+  async getAppDailyLoginStats(
+    appId: string,
+    days: number = 7,
+    blocksPerDay: number = 14400,
+    currentStats?: AppLoginStats,
+    now: Date = new Date(),
+    loadSnapshot?: AppLoginStatsSnapshotLoader,
+    options: AppLoginDailyStatsOptions = {},
+  ): Promise<AppDailyLoginStats[]> {
+    if (!Number.isSafeInteger(days) || days < 1) {
+      throw new RangeError("days must be a positive safe integer");
+    }
+    if (!Number.isSafeInteger(blocksPerDay) || blocksPerDay < 1) {
+      throw new RangeError("blocksPerDay must be a positive safe integer");
+    }
+    const safeDays = Math.min(31, days);
+    const current = currentStats ?? await this.getAppLoginStats(appId);
+    const boundaryNow = options.endDate ?? now;
+    if (Number.isNaN(boundaryNow.getTime())) {
+      throw new RangeError("endDate must be a valid date");
+    }
+    const currentMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const targetMidnight = new Date(boundaryNow.getFullYear(), boundaryNow.getMonth(), boundaryNow.getDate());
+    const dayOffset = Math.round(
+      (currentMidnight.getTime() - targetMidnight.getTime()) / 86400000,
+    );
+    const currentDayBoundaries = buildSimulatedDayBoundaries(
+      current.blockHeight,
+      blocksPerDay,
+      1,
+      now,
+    );
+    const windowEndBlock = Math.max(
+      0,
+      currentDayBoundaries.todayStartBlock - dayOffset * blocksPerDay,
+    );
+    const boundaries = buildSimulatedDayBoundaries(
+      windowEndBlock,
+      blocksPerDay,
+      safeDays,
+      boundaryNow,
+    );
+    const getSnapshot = loadSnapshot ?? ((height: number) =>
+      this.getAppLoginStats(appId, height)
+    );
+    const boundaryDates = boundaries.boundaries.slice(0, -1).map((_, index) =>
+      new Date(boundaryNow.getFullYear(), boundaryNow.getMonth(), boundaryNow.getDate() - (safeDays - 1 - index))
+    );
+    const isCurrentWindow = !options.endDate
+      || targetMidnight.getTime() === currentMidnight.getTime();
+    const dates = isCurrentWindow
+      ? boundaryDates
+      : [...boundaryDates, targetMidnight];
+    const historicalSnapshots: AppLoginStats[] = [];
+    for (let index = 0; index < dates.length; index += 2) {
+      historicalSnapshots.push(...await Promise.all(
+        dates.slice(index, index + 2).map((date, offset) =>
+          loadAppLoginCalendarBoundary(
+            getSnapshot,
+            date,
+            boundaries.boundaries[index + offset],
+          )
+        )
+      ));
+    }
+    return calculateAppLoginIntervals(isCurrentWindow
+      ? [...historicalSnapshots, current]
+      : historicalSnapshots);
+  }
+
+  // 使用少量累计快照模拟自然月统计；月边界按本地日期和固定块数近似投影。
+  async getAppLoginMonthComparison(
+    appId: string,
+    options: AppLoginMonthComparisonOptions = {},
+  ): Promise<AppLoginMonthComparison> {
+    const blocksPerDay = options.blocksPerDay ?? 14400;
+    const now = options.now ?? new Date();
+    const latest = options.currentStats ?? await this.getAppLoginStats(appId);
+    const targetDate = options.endDate ?? now;
+    let current = latest;
+    if (options.endDate) {
+      const latestMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      const targetMidnight = new Date(targetDate.getFullYear(), targetDate.getMonth(), targetDate.getDate());
+      const dayOffset = Math.max(0, Math.round((latestMidnight.getTime() - targetMidnight.getTime()) / 86400000));
+      const latestDay = buildSimulatedDayBoundaries(latest.blockHeight, blocksPerDay, 1, now);
+      const estimatedHeight = Math.max(0, latestDay.todayStartBlock - dayOffset * blocksPerDay);
+      const getSnapshot = options.loadSnapshot ?? ((height: number) => this.getAppLoginStats(appId, height));
+      current = await loadAppLoginCalendarBoundary(
+        getSnapshot,
+        targetMidnight,
+        estimatedHeight,
+      );
+    }
+    const boundaries = buildSimulatedMonthBoundaries(
+      current.blockHeight,
+      blocksPerDay,
+      targetDate,
+      options.historyMonths ?? 6,
+    );
+    const requiredHeights = Array.from(new Set([
+      boundaries.previousMonthStartBlock,
+      boundaries.previousComparableEndBlock,
+      boundaries.currentMonthStartBlock,
+      ...boundaries.recentMonths.flatMap((month) => [month.startBlock, month.endBlock]),
+    ])).filter((height) => height !== current.blockHeight);
+    const getSnapshot = options.loadSnapshot ?? ((height: number) =>
+      this.getAppLoginStats(appId, height)
+    );
+    const monthStartDates = boundaries.recentMonths.flatMap((month) => {
+      const [year, monthNumber] = month.monthLabel.split("-").map(Number);
+      return [
+        [month.startBlock, new Date(year, monthNumber - 1, 1)] as const,
+        [month.endBlock, new Date(year, monthNumber, 1)] as const,
+      ];
+    });
+    const previousComparableDate = new Date(
+      targetDate.getFullYear(),
+      targetDate.getMonth() - 1,
+      boundaries.comparableDays,
+    );
+    const boundaryDateByHeight = new Map<number, Date>(monthStartDates);
+    boundaryDateByHeight.set(boundaries.previousComparableEndBlock, previousComparableDate);
+    const snapshots = new Map<number, AppLoginStats>([[current.blockHeight, current]]);
+    for (let index = 0; index < requiredHeights.length; index += 2) {
+      const batch = await Promise.all(
+        requiredHeights.slice(index, index + 2).map((height) =>
+          loadAppLoginCalendarBoundary(
+            getSnapshot,
+            boundaryDateByHeight.get(height) || new Date(now),
+            height,
+          )
+        )
+      );
+      batch.forEach((snapshot, offset) => {
+        snapshots.set(requiredHeights[index + offset], snapshot);
+      });
+    }
+    const snapshotAt = (height: number) => {
+      const snapshot = snapshots.get(height);
+      if (!snapshot) throw new Error(`Missing app login snapshot at block ${height}`);
+      return snapshot;
+    };
+
+    return {
+      appId,
+      asOfBlock: current.blockHeight,
+      blocksPerDay,
+      asOfLocalDate: boundaries.asOfLocalDate,
+      currentMonthLabel: boundaries.currentMonthLabel,
+      previousMonthLabel: boundaries.previousMonthLabel,
+      comparableDays: boundaries.comparableDays,
+      currentMonthToDate: calculateAppLoginPeriod(
+        snapshotAt(boundaries.currentMonthStartBlock),
+        current,
+      ),
+      previousMonthToDate: calculateAppLoginPeriod(
+        snapshotAt(boundaries.previousMonthStartBlock),
+        snapshotAt(boundaries.previousComparableEndBlock),
+      ),
+      previousFullMonth: calculateAppLoginPeriod(
+        snapshotAt(boundaries.previousMonthStartBlock),
+        snapshotAt(boundaries.currentMonthStartBlock),
+      ),
+      recentMonths: boundaries.recentMonths.map((month) => ({
+        monthLabel: month.monthLabel,
+        partial: month.partial,
+        incomplete: month.incomplete,
+        ...calculateAppLoginPeriod(
+          snapshotAt(month.startBlock),
+          snapshotAt(month.endBlock),
+        ),
+      })),
+      calendarBasis: "simulated-local-calendar",
+      boundaryAccuracy: "approximate",
+    };
+  }
+
+  // 使用年度边界累计快照模拟自然年统计，避免按 365 天逐日查询。
+  async getAppLoginYearComparison(
+    appId: string,
+    options: AppLoginYearComparisonOptions = {},
+  ): Promise<AppLoginYearComparison> {
+    const blocksPerDay = options.blocksPerDay ?? 14400;
+    const now = options.now ?? new Date();
+    const current = options.currentStats ?? await this.getAppLoginStats(appId);
+    const boundaries = buildSimulatedYearBoundaries(
+      current.blockHeight,
+      blocksPerDay,
+      now,
+    );
+    const requiredHeights = Array.from(new Set([
+      boundaries.previousYearStartBlock,
+      boundaries.previousComparableEndBlock,
+      boundaries.currentYearStartBlock,
+      ...boundaries.recentYears.flatMap((year) => [year.startBlock, year.endBlock]),
+    ])).filter((height) => height !== current.blockHeight);
+    const getSnapshot = options.loadSnapshot ?? ((height: number) =>
+      this.getAppLoginStats(appId, height)
+    );
+    const yearStartDates = boundaries.recentYears.flatMap((year) => [
+      [year.startBlock, new Date(Number(year.yearLabel), 0, 1)] as const,
+      [year.endBlock, new Date(Number(year.yearLabel) + 1, 0, 1)] as const,
+    ]);
+    const previousComparableDate = new Date(
+      now.getFullYear() - 1,
+      now.getMonth(),
+      Math.min(
+        now.getDate(),
+        new Date(now.getFullYear() - 1, now.getMonth() + 1, 0).getDate(),
+      ),
+    );
+    const boundaryDateByHeight = new Map<number, Date>(yearStartDates);
+    boundaryDateByHeight.set(boundaries.previousComparableEndBlock, previousComparableDate);
+    const snapshots = new Map<number, AppLoginStats>([[current.blockHeight, current]]);
+    for (let index = 0; index < requiredHeights.length; index += 2) {
+      const batch = await Promise.all(
+        requiredHeights.slice(index, index + 2).map((height) =>
+          loadAppLoginCalendarBoundary(
+            getSnapshot,
+            boundaryDateByHeight.get(height) || new Date(now),
+            height,
+          )
+        )
+      );
+      batch.forEach((snapshot, offset) => {
+        snapshots.set(requiredHeights[index + offset], snapshot);
+      });
+    }
+    const snapshotAt = (height: number) => {
+      const snapshot = snapshots.get(height);
+      if (!snapshot) throw new Error(`Missing app login snapshot at block ${height}`);
+      return snapshot;
+    };
+
+    return {
+      appId,
+      asOfBlock: current.blockHeight,
+      blocksPerDay,
+      asOfLocalDate: boundaries.asOfLocalDate,
+      currentYearLabel: boundaries.currentYearLabel,
+      previousYearLabel: boundaries.previousYearLabel,
+      comparableDays: boundaries.comparableDays,
+      currentYearToDate: calculateAppLoginPeriod(
+        snapshotAt(boundaries.currentYearStartBlock),
+        current,
+      ),
+      previousYearToDate: calculateAppLoginPeriod(
+        snapshotAt(boundaries.previousYearStartBlock),
+        snapshotAt(boundaries.previousComparableEndBlock),
+      ),
+      previousFullYear: calculateAppLoginPeriod(
+        snapshotAt(boundaries.previousYearStartBlock),
+        snapshotAt(boundaries.currentYearStartBlock),
+      ),
+      recentYears: boundaries.recentYears.map((year) => ({
+        yearLabel: year.yearLabel,
+        partial: year.partial,
+        incomplete: year.incomplete,
+        ...calculateAppLoginPeriod(
+          snapshotAt(year.startBlock),
+          snapshotAt(year.endBlock),
+        ),
+      })),
+      calendarBasis: "simulated-local-calendar",
+      boundaryAccuracy: "approximate",
+    };
+  }
+
+  createAppLoginStatsSnapshotLoader(
+    appId: string,
+    currentStats: AppLoginStats,
+  ): AppLoginStatsSnapshotLoader {
+    const fetchSnapshot = (targetAppId: string, blockHeight: number) =>
+      this.getAppLoginStats(targetAppId, blockHeight);
+    if (typeof localStorage === "undefined") {
+      return createAppLoginStatsSnapshotLoader(appId, currentStats, fetchSnapshot);
+    }
+    return createPersistentAppLoginStatsSnapshotLoader(
+      this.chainIdentity || this.blockChainAddr,
+      appId,
+      currentStats,
+      fetchSnapshot,
+      localStorage,
+    );
   }
   // 获取用户钱包信息
   async getUserInfoWithAccount(account: string): Promise<User> {
