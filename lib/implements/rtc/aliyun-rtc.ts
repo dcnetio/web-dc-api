@@ -818,7 +818,7 @@ export class AliyunRTCOperations implements IRTCOperations {
     if (typeof this.rtmClient.publish === 'function' && this.rtmClient.publish.length > 1) {
       const channelId = this.authInfo?.channelId || 'default';
       const clientToUse = this.rtmClient;
-      if (clientToUse) clientToUse.publish(channelId, encodedMsg);
+      if (clientToUse) await clientToUse.publish(channelId, encodedMsg);
     } else {
       const clientToUse = this.rtmClient;
       if (clientToUse) await clientToUse.publish({

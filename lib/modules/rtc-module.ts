@@ -544,7 +544,11 @@ export class RTCModule implements DCModule, IRTCOperations {
         // 开启首个计费区间：自此时刻起按实际用量结算。
         this.lastBilledAt = Date.now();
       } else {
-        throw new Error('Failed to fetch token for new room');
+        const roomTokenError = new Error(
+          `[RTC] Failed to fetch token for room: ${err?.message || 'empty response'}`,
+        );
+        if (err) (roomTokenError as any).cause = err;
+        throw roomTokenError;
       }
     }
 
