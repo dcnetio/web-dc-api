@@ -53,6 +53,7 @@ import { FileManager } from "../file/manager";
 import { newIterator } from "./db/collection";
 import { Query } from "./db/query";
 import { DCContext } from "../../interfaces";
+import { isExpectedThreadDBAbsence } from "./db-absence";
 
 export const ThreadProtocol = "/dc/" + Protocol.name + "/" + Protocol.version;
 
@@ -261,7 +262,11 @@ export class DBManager {
           // Add to map of databases
           this.dbs.set(id.toString(), db);
         } catch (err: any) {
-      console.error(`🚨 Fatal error during database preload: ${err instanceof Error ? err.message : err}`);
+          if (isExpectedThreadDBAbsence(err)) {
+            console.debug(`Skipping stale local database metadata: ${err.message}`);
+          } else {
+            console.error(`🚨 Fatal error during database preload: ${err instanceof Error ? err.message : err}`);
+          }
           console.warn(
             `Error loading database: ${
               err instanceof Error ? err.message : String(err)
@@ -1734,7 +1739,11 @@ export class DBManager {
         throw new Error(`No info available for db ${id}`);
       }
     } catch (err: any) {
-      console.error(`🚨 Fatal error during database preload: ${err instanceof Error ? err.message : err}`);
+      if (isExpectedThreadDBAbsence(err)) {
+        console.debug(`Local database ${id} is absent; network recovery may follow`);
+      } else {
+        console.error(`🚨 Fatal error during database preload: ${err instanceof Error ? err.message : err}`);
+      }
       return [null, err as Error];
     }
     return [dbInfo, null];
@@ -1753,7 +1762,11 @@ export class DBManager {
       await this.network.getThread(id, { token: opts?.token });
       console.debug(`manager: got thread ${id} from net`);
     } catch (err: any) {
-      console.error(`🚨 Fatal error during database preload: ${err instanceof Error ? err.message : err}`);
+      if (isExpectedThreadDBAbsence(err)) {
+        console.debug(`Thread ${id} is absent during delete probe; recovery will continue`);
+      } else {
+        console.error(`🚨 Fatal error during database preload: ${err instanceof Error ? err.message : err}`);
+      }
       throw err;
     }
 
