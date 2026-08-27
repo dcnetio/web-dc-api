@@ -10,6 +10,7 @@ import { BrowserLineReader, readLine } from "../../lib/util/BrowserLineReader.ts
 import { base64Decode, base64Encode } from "../../lib/util/base64.ts";
 import { BaseEntity } from "../../lib/serverless/base_entity.ts";
 import { isExpectedThreadDBAbsence } from "../../lib/implements/threaddb/db-absence.ts";
+import { subscribeRoomTopicWithRetry } from "../../lib/implements/rtc/rtm-topic-subscription.ts";
 import {
   buildSimulatedDayBoundaries,
   buildSimulatedMonthBoundaries,
@@ -64,6 +65,52 @@ test("parseRangeHeader parses, bounds, and rejects HTTP byte ranges", () => {
   }
   assert.equal(parseRangeHeader("bytes=0-1", 0, 8), null);
   assert.equal(parseRangeHeader("bytes=0-1", 100, 0), null);
+});
+
+test("RTC room topic subscription retries transient failures", async () => {
+  const calls = [];
+  const delays = [];
+  const client = {
+    async subscribe(options) {
+      calls.push(options);
+      if (calls.length < 3) throw new Error("temporary topic failure");
+    },
+  };
+
+  await subscribeRoomTopicWithRetry(client, "room-1", {
+    attempts: 3,
+    retryDelayMs: 25,
+    delay: async (delayMs) => delays.push(delayMs),
+  });
+
+  assert.deepEqual(calls, [
+    { topic: "room-1" },
+    { topic: "room-1" },
+    { topic: "room-1" },
+  ]);
+  assert.deepEqual(delays, [25, 25]);
+});
+
+test("RTC room topic subscription rejects after its bounded retry budget", async () => {
+  let attempts = 0;
+  await assert.rejects(
+    subscribeRoomTopicWithRetry(
+      {
+        async subscribe() {
+          attempts += 1;
+          throw new Error("room topic unavailable");
+        },
+      },
+      "room-2",
+      { attempts: 2, retryDelayMs: 0 },
+    ),
+    /room topic unavailable/,
+  );
+  assert.equal(attempts, 2);
+  await assert.rejects(
+    subscribeRoomTopicWithRetry({ subscribe: async () => {} }, "  "),
+    /topic is empty/,
+  );
 });
 
 test("file cache paths preserve CID targets and decode directory paths", () => {

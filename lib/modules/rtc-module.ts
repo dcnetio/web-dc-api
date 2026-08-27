@@ -267,7 +267,13 @@ export class RTCModule implements DCModule, IRTCOperations {
       this.authInfo!.rtcAppId = newRtcAppId;
       this.mainTokenExpireAt = newExpireAt;
       if (typeof (this.rtcOps as any).renewToken === 'function') {
-        (this.rtcOps as any).renewToken(this.authInfo!.token);
+        try {
+          await (this.rtcOps as any).renewToken(this.authInfo!.token);
+        } catch (error) {
+          this.hasJoinedChannel = false;
+          this.syncActiveMediaRefreshTask();
+          throw error;
+        }
       } else {
         console.warn('The underlying RTC SDK driver does not support dynamic token renewal via renewToken');
       }
@@ -553,7 +559,7 @@ export class RTCModule implements DCModule, IRTCOperations {
     }
 
     if (!this.isP2PTransport() && this.rtcOps && typeof (this.rtcOps as any).renewToken === 'function' && this.authInfo.token) {
-      (this.rtcOps as any).renewToken(this.authInfo.token);
+      await (this.rtcOps as any).renewToken(this.authInfo.token);
     } else if (!this.isP2PTransport() && this.rtcOps) {
       console.warn('The RTC provider does not explicitly implement renewToken, hoping SDK accepts token in join()');
     }

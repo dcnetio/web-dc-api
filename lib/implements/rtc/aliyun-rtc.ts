@@ -2,6 +2,7 @@ import { IRTCOperations, IRTCAuthInfo, IRTCJoinRoomOptions, IRTCMember, IRTCStre
 import DingRTC from 'dingrtc';
 import RTM from '@dingrtc/rtm';
 import { blockAliyunLogRequests } from '../util/aliyun-log-block';
+import { subscribeRoomTopicWithRetry } from './rtm-topic-subscription';
 
 type RTCRemoteUserLike = {
   userId: string;
@@ -169,7 +170,7 @@ export class AliyunRTCOperations implements IRTCOperations {
 
 
 
-  public renewToken(token: string): void {
+  public async renewToken(token: string): Promise<void> {
     this.currentToken = token;
     if (this.authInfo) {
       this.authInfo.token = token;
@@ -181,11 +182,18 @@ export class AliyunRTCOperations implements IRTCOperations {
     }
 
     // 原生不支持直接 renewToken，采用 leave 后重新 join 的方式刷新
-    this.leaveChannel().then(() => {
-      return this.joinChannel();
-    }).catch(err => {
+    try {
+      await this.leaveChannel();
+      await this.joinChannel();
+      this.emit('onRoomRejoined', { channelId: this.authInfo?.channelId || '' });
+    } catch (err) {
       console.error('Failed to renew token via leave and join:', err);
-    });
+      this.emit('onRoomRejoinFailed', {
+        channelId: this.authInfo?.channelId || '',
+        error: String((err as any)?.message || err),
+      });
+      throw err;
+    }
   }
 
   public async joinRoom(channelId: string, options?: IRTCJoinRoomOptions): Promise<void> {
@@ -213,6 +221,7 @@ export class AliyunRTCOperations implements IRTCOperations {
       this.currentToken = this.authInfo.token || '';
 
       const { channelId, userId,  rtcAppId } = this.authInfo;
+      if (!userId) throw new Error('RTC userId is missing');
       
       const joinResponse = await this.rtcClient.join({
       appId: rtcAppId,
@@ -227,19 +236,21 @@ export class AliyunRTCOperations implements IRTCOperations {
     if (this.rtmClient && this.authInfo.enableRTM) {
       try {
         if (typeof this.rtmClient.subscribe === 'function') {
-          // If we subscribe, we subscribe to both.
-          // 任一 topic 订阅成功即标记，确保后续 _doLeaveChannel 能正确退订（含个人 topic 已订阅但公共 topic 失败的部分订阅场景）。
-          try { await this.rtmClient.subscribe({ topic: userId }); this.isRtmSubscribed = true; } catch(e){}
-
-          await this.rtmClient.subscribe({ topic: channelId });
+          // 个人 topic 承载 sendMessageToPeer / 快照 / 定向握手，房间 topic 承载广播；
+          // 两者缺一都会形成“看似进房、实际部分消息收不到”的半连接。
+          await subscribeRoomTopicWithRetry(this.rtmClient, userId);
           this.isRtmSubscribed = true;
+          await subscribeRoomTopicWithRetry(this.rtmClient, channelId);
         } else if (typeof this.rtmClient.joinSession === 'function') {
           // Aliyun RTM V2: A client can only join one session at a time in joinSession() mode.
           await this.rtmClient.joinSession(channelId);
           this.isRtmSubscribed = true;
         }
       } catch (err) {
-        console.warn('Aliyun RTM: Failed to subscribe primary topics', err);
+        try { await this.leaveChannel(); } catch { /* join 失败后的清理不覆盖原错误 */ }
+        throw new Error(
+          `Aliyun RTM: Failed to subscribe room topic ${channelId}: ${String((err as any)?.message || err)}`,
+        );
       }
     }
     
