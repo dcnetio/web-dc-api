@@ -421,6 +421,10 @@ if (typeof queueMicrotask !== "function") {
   };
 }
 export { DC } from "./dc";
+export {
+  VirtualAccountInitializationError,
+  type VirtualAccountInitializationStage,
+} from "./common/virtual-account";
 export { pb } from "./proto/pay_server_proto";
 export { BaseEntity } from "./serverless/base_entity";
 export {

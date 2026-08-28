@@ -318,7 +318,8 @@ async addUserOffChainOpTimes(
     offset?: number,
     limit?: number,
     seekKey?: string,
-    appId?: string
+    appId?: string,
+    vaccount?: string,
   ): Promise<[ThemeComment[] | null, Error | null]> {
     
     
@@ -332,7 +333,8 @@ async addUserOffChainOpTimes(
         direction || 0,
         offset || 0,
         limit || 100,
-        seekKey || ""
+        seekKey || "",
+        vaccount,
       );
       if(!res[1]){
         logger.info(`获取主题 ${theme} 的评论列表成功`);

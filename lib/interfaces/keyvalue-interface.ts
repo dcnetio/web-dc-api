@@ -22,6 +22,16 @@ export interface IKeyValueOperations {
    */
   createStore(appId: string,theme: string, space: number, type: KeyValueStoreType): Promise<[KeyValueDB|null, Error | null]>;
 
+  /** 创建由虚拟账号持有的 key-value 存储库。 */
+  createStoreForVAccount(
+    appId: string,
+    themeAuthor: string,
+    theme: string,
+    space: number,
+    type: KeyValueStoreType,
+    vaccount: string,
+  ): Promise<[KeyValueDB | null, Error | null]>;
+
   /**
    * 创建共享型 key-value 存储库：同一个 key 全局只保留唯一最新值，按时间戳后写覆盖。
    * 内部自动把主题名规范化为 `keyvalue_shared_` 前缀，调用方无需关心命名约定。

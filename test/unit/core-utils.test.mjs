@@ -11,7 +11,12 @@ import { base64Decode, base64Encode } from "../../lib/util/base64.ts";
 import { BaseEntity } from "../../lib/serverless/base_entity.ts";
 import { isExpectedThreadDBAbsence } from "../../lib/implements/threaddb/db-absence.ts";
 import { subscribeRoomTopicWithRetry } from "../../lib/implements/rtc/rtm-topic-subscription.ts";
-import { generateVirtualAccountRaw } from "../../lib/common/virtual-account.ts";
+import {
+  encodeRuntimeBytes,
+  generateVirtualAccountRaw,
+  hashEthExtrinsicPayload,
+} from "../../lib/common/virtual-account.ts";
+import { keccak_256 } from "@noble/hashes/sha3.js";
 import {
   buildSimulatedDayBoundaries,
   buildSimulatedMonthBoundaries,
@@ -31,6 +36,15 @@ test("virtual accounts use the dcsdk-compatible raw key format", () => {
   assert.equal(first.length, 32);
   assert.equal(new TextDecoder().decode(first.subarray(0, 5)), "$vir$");
   assert.notDeepEqual(first, second);
+});
+
+test("virtual account runtime Bytes use UTF-8 hex encoding", () => {
+  assert.equal(encodeRuntimeBytes("asset-测试"), "0x61737365742de6b58be8af95");
+});
+
+test("Ethereum extrinsic payloads are directly Keccak hashed at any length", () => {
+  const payload = Uint8Array.from({ length: 300 }, (_, index) => index & 0xff);
+  assert.deepEqual(hashEthExtrinsicPayload(payload), keccak_256(payload));
 });
 
 test("ThreadDB absence classifier only matches expected recovery probes", () => {

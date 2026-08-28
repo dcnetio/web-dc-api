@@ -121,7 +121,8 @@ export interface ICommentOperations {
     offset?: number,
     limit?: number,
     seekKey?: string,
-    appId?: string
+    appId?: string,
+    vaccount?: string,
   ): Promise<[ThemeComment[] | null, Error | null]>;
 
 

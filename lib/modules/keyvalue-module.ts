@@ -96,14 +96,27 @@ export class KeyValueModule implements DCModule, IKeyValueOperations {
     if (err) {
       return [null, err];
     }
+    if (!themeAuthor || themeAuthor !== vaccount) {
+      return [null, new Error("虚拟账号主题作者必须与操作虚拟账号一致")];
+    }
+    if (!theme.startsWith("keyvalue_") && !theme.startsWith("auth_")) {
+      return [null, new Error("虚拟账号主题必须以 'keyvalue_' 或 'auth_' 开头")];
+    }
+    if (type !== KeyValueStoreType.Auth && type !== KeyValueStoreType.Public) {
+      type = KeyValueStoreType.Public;
+    }
+    if (type === KeyValueStoreType.Public && !theme.endsWith("_pub")) {
+      return [null, new Error("公共虚拟账号主题必须以 '_pub' 结尾")];
+    }
     try {
       return await this.keyValueManager.createStore(
         appId,
         theme,
-        space,
+        Math.max(space, 1 << 30),
         type,
         themeAuthor,
         vaccount,
+        true,
       );
     } catch (error) {
       return [null, error instanceof Error ? error : new Error(String(error))];

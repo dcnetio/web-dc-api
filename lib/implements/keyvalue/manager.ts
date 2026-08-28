@@ -272,6 +272,7 @@ export class KeyValueManager {
     type: KeyValueStoreType,
     themeAuthor?: string,
     vaccount?: string,
+    preserveThemeName: boolean = false,
   ): Promise<[KeyValueDB | null, Error | null]> {
     if(!this.context.publicKey){
       return [null, Errors.ErrPublicKeyIsNull];
@@ -284,7 +285,7 @@ export class KeyValueManager {
     // Set minimum space (100M)
     space = Math.max(space, 100 << 20)
     // Theme must start with "keyvalue_"
-    if (!theme.startsWith("keyvalue_")) {
+    if (!preserveThemeName && !theme.startsWith("keyvalue_")) {
       theme = "keyvalue_" + theme;
     }
     // NOTE: There seems to be a logical error in the original code:
