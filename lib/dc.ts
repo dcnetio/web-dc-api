@@ -42,6 +42,8 @@ import { sha256, uint8ArrayToHex } from "./util/utils";
 import { bytesToHex, hexToBytes } from "@noble/hashes/utils.js";
 import { blake2b } from "@noble/hashes/blake2.js";
 import { keccak_256 } from "@noble/hashes/sha3.js";
+import { base32 } from "multiformats/bases/base32";
+import { generateVirtualAccountRaw } from "./common/virtual-account";
 
 const logger = createLogger("DC");
 
@@ -327,10 +329,13 @@ export class DC implements DCContext {
   async Bc_SubscribeStorage(packageId: number): Promise<void> {
     const targetAccount = this.getStorageOwnerAddress();
     const storagePackage = await this.getStoragePackage(packageId);
-    await this.submitStoragePurchase(
-      targetAccount,
-      packageId,
-      storagePackage.price,
+    const chainApi = this.getChainApi();
+    await this.submitChainTransaction(
+      (chainApi.tx as any).dcNode.purchaseStorage(
+        targetAccount,
+        packageId,
+        storagePackage.price,
+      ),
     );
   }
 
@@ -356,11 +361,234 @@ export class DC implements DCContext {
     }
 
     const storagePackage = await this.getStoragePackage(packageId);
-    await this.submitStoragePurchase(
-      resolvedAccount.toString(),
-      packageId,
-      storagePackage.price,
+    await this.submitChainTransaction(
+      (chainApi.tx as any).dcNode.purchaseStorage(
+        resolvedAccount.toString(),
+        packageId,
+        storagePackage.price,
+      ),
     );
+  }
+
+  Dc_GeneratevirAccount(): string {
+    return new Ed25519PubKey(generateVirtualAccountRaw()).string();
+  }
+
+  async Bc_BindVirAccount(virAccount: string): Promise<void> {
+    if (!this.privateKey || !this.publicKey) {
+      throw new Error("请先登录后绑定虚拟账号");
+    }
+    const virAccountRaw = Ed25519PubKey.unmarshalString(virAccount).raw;
+    const signature = await this.privateKey.sign(virAccountRaw);
+    const chainApi = this.getChainApi();
+    await this.submitChainTransaction(
+      (chainApi.tx as any).dcNode.bindVirtualAccount(
+        `0x${uint8ArrayToHex(virAccountRaw)}`,
+        `0x${uint8ArrayToHex(this.publicKey.raw)}`,
+        `0x${uint8ArrayToHex(signature)}`,
+      ),
+    );
+  }
+
+  async Bc_GetVirAccountInfo(virAccount: string): Promise<Record<string, unknown>> {
+    const raw = Ed25519PubKey.unmarshalString(virAccount).raw;
+    const value = await (this.getChainApi().query as any).dcNode.virtualAccounts(
+      `0x${uint8ArrayToHex(raw)}`,
+    );
+    const info = value?.toJSON?.();
+    if (info === null || info === undefined) {
+      throw new Error("虚拟账号不存在");
+    }
+    return info as Record<string, unknown>;
+  }
+
+  async Bc_SetVirAccountXChainInfo(
+    virAccount: string,
+    chainId: number,
+    chainAccount: string,
+    signType: number,
+    assetId: string,
+    signature: string,
+  ): Promise<void> {
+    const chainApi = this.getChainApi();
+    const chainAccountValue = chainAccount.startsWith("0x")
+      ? chainAccount
+      : `0x${uint8ArrayToHex(new TextEncoder().encode(chainAccount))}`;
+    await this.submitChainTransaction(
+      (chainApi.tx as any).dcNode.setVirtualAccountCrossInfo(
+        this.virtualAccountId(virAccount),
+        chainId,
+        chainAccountValue,
+        signType,
+        new TextEncoder().encode(assetId),
+        this.normalizeHex(signature),
+      ),
+    );
+  }
+
+  async Bc_LockVirAccountForXChain(
+    virAccount: string,
+    toAccount: string,
+    unlockHeight: number,
+    extra: string,
+    lockSignature: string,
+  ): Promise<void> {
+    const chainApi = this.getChainApi();
+    await this.submitChainTransaction(
+      (chainApi.tx as any).dcNode.lockVirtualAccountTransferInfo(
+        this.virtualAccountId(virAccount),
+        this.virtualAccountId(toAccount),
+        unlockHeight,
+        new TextEncoder().encode(extra),
+        this.normalizeHex(lockSignature),
+      ),
+    );
+  }
+
+  async Bc_ApplyReceiveVirAccount(
+    virAccount: string,
+    receiver: string,
+    signatureForAssetId: string,
+  ): Promise<void> {
+    const chainApi = this.getChainApi();
+    await this.submitChainTransaction(
+      (chainApi.tx as any).dcNode.applyReceiveVirtualAccount(
+        this.virtualAccountId(virAccount),
+        this.virtualAccountId(receiver),
+        this.normalizeHex(signatureForAssetId),
+      ),
+    );
+  }
+
+  async Bc_ApplyTransferVirAccount(
+    virAccount: string,
+    toPubkey: string,
+    blockheight: number,
+    transferSignature: string,
+  ): Promise<void> {
+    const chainApi = this.getChainApi();
+    await this.submitChainTransaction(
+      (chainApi.tx as any).dcNode.applyTransferVirtualAccount(
+        this.virtualAccountId(virAccount),
+        this.virtualAccountId(toPubkey),
+        blockheight,
+        this.normalizeHex(transferSignature),
+      ),
+    );
+  }
+
+  async Bc_ChangeVirtualControlAccount(
+    virAccount: string,
+    controlAccount: string,
+    blockheight: number,
+    signature: string,
+  ): Promise<void> {
+    const chainApi = this.getChainApi();
+    await this.submitChainTransaction(
+      (chainApi.tx as any).dcNode.changeVirtualControlAccount(
+        this.virtualAccountId(virAccount),
+        this.virtualAccountId(controlAccount),
+        blockheight,
+        this.normalizeHex(signature),
+      ),
+    );
+  }
+
+  async InitvirAccount(timeoutSeconds: number): Promise<string> {
+    if (!Number.isFinite(timeoutSeconds) || timeoutSeconds <= 0) {
+      throw new Error("超时时间必须大于 0 秒");
+    }
+    if (!this.publicKey) {
+      throw new Error("请先登录后初始化虚拟账号");
+    }
+
+    const deadline = Date.now() + timeoutSeconds * 1000;
+    const virAccount = this.Dc_GeneratevirAccount();
+    await this.Bc_BindVirAccount(virAccount);
+    const ownerHex = uint8ArrayToHex(this.publicKey.raw).toLowerCase();
+
+    await this.waitUntil(deadline, async () => {
+      try {
+        const info = await this.Bc_GetVirAccountInfo(virAccount);
+        const owner = info.dcOwnerAccount ?? info.dc_owner_account;
+        return this.accountIdHex(owner) === ownerHex;
+      } catch {
+        return false;
+      }
+    }, "等待虚拟账号绑定超时");
+
+    const passwordBytes = crypto.getRandomValues(new Uint8Array(32));
+    const password = base32.encode(passwordBytes);
+    const auth = this.auth;
+    if (!auth) {
+      throw new Error("账号模块未启用");
+    }
+    const [bindStatus, bindError] = await auth.bindNFTAccountForVAccount(
+      virAccount,
+      password,
+      "000000",
+      virAccount,
+    );
+    if (bindError || bindStatus !== 0) {
+      throw bindError || new Error(`绑定虚拟账号存储身份失败: ${bindStatus}`);
+    }
+
+    await this.waitUntil(deadline, async () => {
+      try {
+        const userInfo = await this.dcChain.getUserInfoWithAccount(
+          this.virtualAccountId(virAccount),
+        );
+        return Boolean(userInfo.encNftAccount);
+      } catch {
+        return false;
+      }
+    }, "等待虚拟账号存储身份绑定超时");
+
+    const comment = this.comment;
+    if (!comment) {
+      throw new Error("评论模块未启用");
+    }
+    const [spaceAdded, spaceError] = await comment.addUserOffChainSpace(virAccount);
+    if (spaceError || !spaceAdded) {
+      throw spaceError || new Error("初始化虚拟账号存储空间失败");
+    }
+    return virAccount;
+  }
+
+  private async waitUntil(
+    deadline: number,
+    predicate: () => Promise<boolean>,
+    timeoutMessage: string,
+  ): Promise<void> {
+    while (Date.now() < deadline) {
+      if (await predicate()) {
+        return;
+      }
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+    }
+    throw new Error(timeoutMessage);
+  }
+
+  private accountIdHex(value: unknown): string {
+    if (typeof value === "string") {
+      return value.replace(/^0x/, "").toLowerCase();
+    }
+    if (Array.isArray(value)) {
+      return uint8ArrayToHex(Uint8Array.from(value as number[])).toLowerCase();
+    }
+    return "";
+  }
+
+  private virtualAccountId(account: string): string {
+    return `0x${uint8ArrayToHex(Ed25519PubKey.unmarshalString(account).raw)}`;
+  }
+
+  private normalizeHex(value: string): string {
+    const normalized = value.startsWith("0x") ? value : `0x${value}`;
+    if (!/^0x(?:[0-9a-fA-F]{2})+$/.test(normalized)) {
+      throw new Error("签名必须是十六进制字节串");
+    }
+    return normalized;
   }
 
   private getChainApi() {
@@ -440,18 +668,9 @@ export class DC implements DCContext {
     return dispatchError?.toString?.() || "链上交易执行失败";
   }
 
-  private async submitStoragePurchase(
-    targetAccount: string,
-    packageId: number,
-    price: string,
-  ): Promise<void> {
+  private async submitChainTransaction(transaction: any): Promise<void> {
     const chainApi = this.getChainApi();
     const signerAddress = await this.getChainSignerAddress();
-    const transaction = (chainApi.tx as any).dcNode.purchaseStorage(
-      targetAccount,
-      packageId,
-      price,
-    );
     const nonce = await this.reserveStoragePurchaseNonce(chainApi, signerAddress);
     const runtimeVersion = await chainApi.rpc.state.getRuntimeVersion();
     const genesisHash = await chainApi.rpc.chain.getBlockHash(0);

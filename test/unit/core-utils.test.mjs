@@ -11,6 +11,7 @@ import { base64Decode, base64Encode } from "../../lib/util/base64.ts";
 import { BaseEntity } from "../../lib/serverless/base_entity.ts";
 import { isExpectedThreadDBAbsence } from "../../lib/implements/threaddb/db-absence.ts";
 import { subscribeRoomTopicWithRetry } from "../../lib/implements/rtc/rtm-topic-subscription.ts";
+import { generateVirtualAccountRaw } from "../../lib/common/virtual-account.ts";
 import {
   buildSimulatedDayBoundaries,
   buildSimulatedMonthBoundaries,
@@ -22,6 +23,15 @@ import {
   createPersistentAppLoginStatsSnapshotLoader,
   findAppLoginInfo,
 } from "../../lib/common/app-login-stats.ts";
+
+test("virtual accounts use the dcsdk-compatible raw key format", () => {
+  const first = generateVirtualAccountRaw();
+  const second = generateVirtualAccountRaw();
+
+  assert.equal(first.length, 32);
+  assert.equal(new TextDecoder().decode(first.subarray(0, 5)), "$vir$");
+  assert.notDeepEqual(first, second);
+});
 
 test("ThreadDB absence classifier only matches expected recovery probes", () => {
   assert.equal(isExpectedThreadDBAbsence(new Error("db not found")), true);

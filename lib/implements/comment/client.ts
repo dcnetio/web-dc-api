@@ -29,13 +29,17 @@ export class CommentClient {
     pubkey: string,
     blockheight: number,
     peerid: string,
-    signature: Uint8Array
+    signature: Uint8Array,
+    vaccount?: string,
   ): Promise<boolean> {
     const message = new dcnet.pb.AddUserOffChainSpaceRequest({});
     message.userPubkey = new TextEncoder().encode(pubkey);
     message.blockheight = blockheight;
     message.peerid = new TextEncoder().encode(peerid);
     message.signature = signature;
+    if (vaccount) {
+      message.vaccount = new TextEncoder().encode(vaccount);
+    }
     const messageBytes =
       dcnet.pb.AddUserOffChainSpaceRequest.encode(message).finish();
 
@@ -208,7 +212,8 @@ export class CommentClient {
     commentSpace: number,
     userPubkey: string,
     openFlag: number,
-    signature: Uint8Array
+    signature: Uint8Array,
+    vaccount?: string,
   ): Promise<number> {
     const message = new dcnet.pb.AddThemeObjRequest({});
     message.theme = new TextEncoder().encode(theme);
@@ -218,6 +223,9 @@ export class CommentClient {
     message.userPubkey = new TextEncoder().encode(userPubkey);
     message.openFlag = openFlag;
     message.signature = signature;
+    if (vaccount) {
+      message.vaccount = new TextEncoder().encode(vaccount);
+    }
     const messageBytes = dcnet.pb.AddThemeObjRequest.encode(message).finish();
     try {
       const grpcClient = new Libp2pGrpcClient(

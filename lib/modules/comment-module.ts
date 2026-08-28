@@ -50,10 +50,10 @@ export class CommentModule implements DCModule, ICommentOperations {
   /**
    * 添加用户评论空间
    */
-  async addUserOffChainSpace(): Promise<[boolean | null, Error | null]> {
+  async addUserOffChainSpace(vaccount?: string): Promise<[boolean | null, Error | null]> {
     try {
       this.assertInitialized();
-      const res = await this.commentManager.addUserOffChainSpace();
+      const res = await this.commentManager.addUserOffChainSpace(vaccount);
       if(!res[1]){
         logger.info("添加用户评论空间成功");
       }

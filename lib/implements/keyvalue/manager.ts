@@ -269,7 +269,9 @@ export class KeyValueManager {
     appId: string,
     theme: string,
     space: number,
-    type: KeyValueStoreType
+    type: KeyValueStoreType,
+    themeAuthor?: string,
+    vaccount?: string,
   ): Promise<[KeyValueDB | null, Error | null]> {
     if(!this.context.publicKey){
       return [null, Errors.ErrPublicKeyIsNull];
@@ -308,7 +310,8 @@ export class KeyValueManager {
         appId,
         theme,
         OpenFlag.AUTH,
-        space || 50 * 1024 * 1024 // 50M
+        space || 50 * 1024 * 1024,
+        vaccount,
       );
       if (res[0] !== 0 || res[1] !== null) {
         return [null, new Error(`vaCreateStoreTheme failed, resFlag: ${res}`)];
@@ -317,7 +320,7 @@ export class KeyValueManager {
       const keyValueDB = new KeyValueDB(
         appId,
         theme,
-        this.context.publicKey.string(),
+        themeAuthor || this.context.publicKey.string(),
         this
       );
       return [keyValueDB, null];

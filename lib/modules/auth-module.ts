@@ -613,6 +613,28 @@ export class AuthModule implements DCModule, IAuthOperations {
     }
   }
 
+  async bindNFTAccountForVAccount(
+    account: string,
+    password: string,
+    seccode: string,
+    vaccount: string,
+  ): Promise<[NFTBindStatus | null, Error | null]> {
+    try {
+      this.assertInitialized();
+      const accountManager = new AccountManager(this.context);
+      return await accountManager.bindNFTAccount(
+        account,
+        password,
+        seccode,
+        false,
+        undefined,
+        vaccount,
+      );
+    } catch (error) {
+      return [null, error as Error];
+    }
+  }
+
   /**
    * 创建子账号，只有带有助记词的用户才能创建子账号
    * 子账号创建后，用助记词登陆子账号App，与调用登陆了主账号的App进行授权登陆，是同一个用户

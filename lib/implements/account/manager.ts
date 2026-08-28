@@ -133,7 +133,8 @@ export class AccountManager {
     password: string,
     seccode: string,
     isParent: boolean,
-    mnemonic?: string
+    mnemonic?: string,
+    vaccount?: string,
   ): Promise<[NFTBindStatus, Error | null]> {
     // 检查节点连接
     if (!this.context.connectedDc.client) {
@@ -156,7 +157,8 @@ export class AccountManager {
         seccode,
         connectedPeerId,
         isParent,
-        mnemonic
+        mnemonic,
+        vaccount,
       );
 
       if (status !== NFTBindStatus.Success) {
@@ -223,7 +225,8 @@ export class AccountManager {
     seccode: string,
     serverPid: PeerId,
     isParent: boolean,
-    mnemonic?: string
+    mnemonic?: string,
+    vaccount?: string,
   ): Promise<
     [
       {
@@ -234,6 +237,7 @@ export class AccountManager {
         loginkeyrandencrypt: Uint8Array;
         peerid: Uint8Array;
         signature: Uint8Array;
+        vaccount?: Uint8Array;
       } | null,
       NFTBindStatus
     ]
@@ -404,6 +408,9 @@ export class AccountManager {
         loginkeyrandencrypt: loginkeyRandEncrypt,
         peerid: serverPidBytes,
         signature: signature,
+        vaccount: vaccount
+          ? new TextEncoder().encode(vaccount)
+          : undefined,
       };
 
       return [req, NFTBindStatus.Success];

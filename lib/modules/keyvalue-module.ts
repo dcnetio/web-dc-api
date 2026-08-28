@@ -84,6 +84,32 @@ export class KeyValueModule implements DCModule, IKeyValueOperations {
     }
   }
 
+  async createStoreForVAccount(
+    appId: string,
+    themeAuthor: string,
+    theme: string,
+    space: number,
+    type: KeyValueStoreType,
+    vaccount: string,
+  ): Promise<[KeyValueDB | null, Error | null]> {
+    const err = this.assertInitialized();
+    if (err) {
+      return [null, err];
+    }
+    try {
+      return await this.keyValueManager.createStore(
+        appId,
+        theme,
+        space,
+        type,
+        themeAuthor,
+        vaccount,
+      );
+    } catch (error) {
+      return [null, error instanceof Error ? error : new Error(String(error))];
+    }
+  }
+
   /**
    * 创建共享型存储主题(同一个 key 全局只保留唯一最新值)
    * 内部自动把主题名规范化为 keyvalue_shared_ 前缀，其余行为与 createStore 一致

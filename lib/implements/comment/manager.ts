@@ -72,7 +72,7 @@ export class CommentManager {
   }
 
   // 配置或增加用户自身的评论空间 0:成功  1:失败
-  async addUserOffChainSpace(): Promise<[boolean | null, Error | null]> {
+  async addUserOffChainSpace(vaccount?: string): Promise<[boolean | null, Error | null]> {
     try {
       if (!this.context.AccountBackupDc?.client) {
         return [null, Errors.ErrNoDcPeerConnected];
@@ -107,7 +107,8 @@ export class CommentManager {
         userPubkey.string(),
         blockHeight || 0,
         peerId.toString(),
-        signature
+        signature,
+        vaccount,
       );
       return [true, null];
     } catch (err) {
@@ -120,7 +121,8 @@ export class CommentManager {
     appId: string,
     theme: string,
     openFlag: number,
-    commentSpace: number
+    commentSpace: number,
+    vaccount?: string,
   ): Promise<[number | null, Error | null]> {
     try {
       if (!this.context.AccountBackupDc?.client) {
@@ -153,7 +155,7 @@ export class CommentManager {
         ...statusValue,
       ]);
       const signature = await this.context.sign(preSign);
-      const userPubkey = this.context.getPublicKey();
+      const userPubkey = this.context.getPublicKey().string();
       const commentClient = new CommentClient(
         this.context.AccountBackupDc.client,
         this.dcNodeClient,
@@ -164,9 +166,10 @@ export class CommentManager {
         theme,
         blockHeight || 0,
         commentSpace,
-        userPubkey.string(),
+        userPubkey,
         openFlag,
-        signature
+        signature,
+        vaccount,
       );
       // res 0:成功 1:评论空间没有配置 2:评论空间不足 3:评论数据同步中
       if (res === 0) {
@@ -178,16 +181,17 @@ export class CommentManager {
       // }
       if (res == 1 || res === 2) {
         // 添加空间
-        await this.addUserOffChainSpace();
+        await this.addUserOffChainSpace(vaccount);
         // 继续调用
         res = await commentClient.addThemeObj(
           appId,
           theme,
           blockHeight || 0,
           commentSpace,
-          userPubkey.string(),
+          userPubkey,
           openFlag,
-          signature
+          signature,
+          vaccount,
         );
         if (res === 0) {
           return [res, null];

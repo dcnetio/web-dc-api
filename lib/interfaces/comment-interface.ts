@@ -20,7 +20,7 @@ export interface ICommentOperations {
    * 添加用户链下评论空间,DC为了提升性能,用户发布评论等操作,无需上链,有DC节点在TEE环境维护用户的评论空间使用情况,新用户在发布评论前需要先添加评论空间,每次调用会分配50MB的链下空间,用于发布评论等链下操作
    * @returns 添加结果 true:成功  false:失败
    */
-  addUserOffChainSpace(): Promise<[boolean | null, Error | null]>
+  addUserOffChainSpace(vaccount?: string): Promise<[boolean | null, Error | null]>
   
   /**
    * 为用户添加链下操作次数,DC为了提升性能,用户发布评论等操作,无需上链,用于发布评论等链下操作次数,

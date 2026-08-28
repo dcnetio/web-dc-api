@@ -66,6 +66,9 @@ export class AccountClient {
     message.loginkeyrandencrypt = buildedReq.loginkeyrandencrypt;
     message.peerid = buildedReq.peerid;
     message.signature = buildedReq.signature;
+    if (buildedReq.vaccount) {
+      message.vaccount = buildedReq.vaccount;
+    }
     const messageBytes = dcnet.pb.AccountDealRequest.encode(message).finish();
     // try to get token
     // 生成
