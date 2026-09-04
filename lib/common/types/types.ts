@@ -969,6 +969,8 @@ export interface AIMessageMediaSource {
   url?: string;
   type?: string;
   name?: string;
+  mediaType?: string;
+  data?: string;
 }
 
 export interface AIMessageContent {
