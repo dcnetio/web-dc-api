@@ -3,6 +3,7 @@ import {
   AIProxyAliyunRealtimeVoiceSessionOptions,
   AIProxyConfig,
   AIProxyCallContext,
+  AIProxyMediaCallOptions,
   AIServiceUsage,
   AIProxyRealtimeAudioSessionOptions,
   AIProxyRealtimeVoiceSessionOptions,
@@ -243,6 +244,17 @@ export interface IAIProxyOperations {
       onTaskSubmitted?: (taskId: string, initialResult: any) => void;
       onPollTick?: (pollResult: any) => void; 
     }
+  ): Promise<[any, Error | null]>;
+
+  /**
+   * Generate a media resource from structured input.
+   * The SDK validates and adapts provider-specific request bodies, including
+   * converting browser-local image sources before they leave the browser.
+   */
+  GenerateAndPollMediaResource(
+    context: { signal?: AbortSignal },
+    options: AIProxyMediaCallOptions,
+    forceRefresh?: boolean,
   ): Promise<[any, Error | null]>;
 
   /**

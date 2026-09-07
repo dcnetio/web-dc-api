@@ -328,6 +328,7 @@ export interface AIProxyConfig {
   modelConfig: ModelConfig; // 模型配置
   remark: string;
   inputRequirements?: any[]; // 输入侧上传文件要求约束等
+  mediaInput?: AIProxyMediaInputPolicy; // 媒体输入传输/数量/压缩策略，子主题调用继承父服务配置
   dataFormat?: string; // 模型数据格式的key
   reqMethod?: string;
   isAsync?: boolean;
@@ -986,6 +987,65 @@ export interface AIChatMessage {
 
 export interface AIChatMessageRequest {
   chatMessages: AIChatMessage[];
+}
+
+export type AIProxyMediaProtocol = "dashscope_media";
+
+export type AIProxyMediaRequestAdapter = "dashscope_messages_media";
+
+export type AIProxyMediaInputSource = string | Blob;
+
+export interface AIProxyMediaInput {
+  prompt: string;
+  images: AIProxyMediaInputSource[];
+}
+
+export interface AIProxyMediaInputPolicy {
+  /** Explicit request-body adapter; apiType alone does not determine the provider JSON schema. */
+  requestAdapter?: AIProxyMediaRequestAdapter;
+  /** Maximum number of images accepted by the configured service. */
+  maxImages?: number;
+  /** Provider-supported image transport. Defaults to remote HTTPS URLs. */
+  transport?: "https_url" | "data_uri" | "either";
+  /** Convert browser-local blob URLs and Blob objects to a remote-safe data URI. */
+  normalizeLocalImages?: boolean;
+  /** Longest edge used when normalizing browser-local images. */
+  maxImageDimension?: number;
+  /** JPEG quality used when normalizing browser-local images. */
+  imageQuality?: number;
+  /** Whether ordinary HTTP(S) image URLs may be sent to the provider. */
+  allowRemoteUrls?: boolean;
+  /** Whether data URIs may be sent to the provider. */
+  allowDataUris?: boolean;
+}
+
+export interface AIProxyMediaCallOptions {
+  protocol: AIProxyMediaProtocol;
+  requestAdapter: AIProxyMediaRequestAdapter;
+  input: AIProxyMediaInput;
+  inputPolicy?: AIProxyMediaInputPolicy;
+  parameters?: Record<string, unknown>;
+  appId?: string;
+  themeAuthor?: string;
+  configTheme?: string;
+  serviceName?: string;
+  headers?: Record<string, string>;
+  path?: string;
+  model?: string;
+  isAsync?: boolean;
+  pollServiceName?: string;
+  pollHeaders?: Record<string, string>;
+  pollPath?: string;
+  pollModel?: string;
+  pollIntervalMs?: number;
+  pollTimeoutMs?: number;
+  taskIdField?: string;
+  existingTaskId?: string;
+  expectedMediaType?: "image" | "video" | "audio" | "doc";
+  buildPollReqBody?: (taskId: string) => string;
+  buildPollPath?: (taskId: string) => string;
+  onTaskSubmitted?: (taskId: string, initialResult: unknown) => void;
+  onPollTick?: (pollResult: unknown) => void;
 }
 
 export interface IAppInfo {

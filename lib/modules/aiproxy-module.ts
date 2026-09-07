@@ -9,6 +9,7 @@ import {
   AIProxyCallContext,
   AIProxyAliyunRealtimeVoiceSessionOptions,
   AIProxyConfig,
+  AIProxyMediaCallOptions,
   AIProxyRealtimeConfig,
   AIServiceUsage,
   AIProxyRealtimeAudioAuthInfo,
@@ -34,6 +35,10 @@ import {
   resolveRealtimeVoiceRuntime,
 } from "../implements/aiproxy/realtime-voice-session";
 import { AIProxyUserPermission } from "../common/constants";
+import {
+  buildDashScopeMediaRequestBody,
+  normalizeAIProxyMediaSource,
+} from "../implements/aiproxy/media-request";
 
 const logger = createLogger("KeyValueModule");
 const REALTIME_AUTH_MARKER_HEADER = "X-DC-Realtime-Auth";
@@ -1042,6 +1047,62 @@ export class AIProxyModule implements DCModule, IAIProxyOperations {
          if (err) safeResolve([null, err]); // 立刻挂掉
       });
     });
+  }
+
+  async GenerateAndPollMediaResource(
+    context: { signal?: AbortSignal },
+    options: AIProxyMediaCallOptions,
+    forceRefresh = false,
+  ): Promise<[any, Error | null]> {
+    try {
+      if (options.protocol !== "dashscope_media") {
+        return [null, new Error(`Unsupported AI media protocol: ${String(options.protocol)}`)];
+      }
+      if (options.requestAdapter !== "dashscope_messages_media") {
+        return [null, new Error(`Unsupported AI media request adapter: ${String(options.requestAdapter)}`)];
+      }
+      const maxImages = Math.max(1, options.inputPolicy?.maxImages ?? 5);
+      if (!Array.isArray(options.input.images) || options.input.images.length === 0) {
+        return [null, new Error("DashScope Media requires at least one image")];
+      }
+      if (options.input.images.length > maxImages) {
+        return [null, new Error(`DashScope Media accepts at most ${maxImages} images`)] ;
+      }
+
+      const imageSources = await Promise.all(
+        options.input.images.map((source) => normalizeAIProxyMediaSource(source, options.inputPolicy)),
+      );
+      const reqBody = buildDashScopeMediaRequestBody(
+        options.input.prompt,
+        imageSources,
+        options.parameters,
+      );
+      return this.GenerateAndPollAIResource(context, reqBody, forceRefresh, {
+        appId: options.appId,
+        themeAuthor: options.themeAuthor,
+        configTheme: options.configTheme,
+        submitServiceName: options.serviceName,
+        submitHeaders: options.headers,
+        submitPath: options.path,
+        submitModel: options.model,
+        isAsync: options.isAsync,
+        pollServiceName: options.pollServiceName || options.serviceName,
+        pollHeaders: options.pollHeaders,
+        pollPath: options.pollPath,
+        pollModel: options.pollModel,
+        pollIntervalMs: options.pollIntervalMs,
+        pollTimeoutMs: options.pollTimeoutMs,
+        taskIdField: options.taskIdField,
+        existingTaskId: options.existingTaskId,
+        expectedMediaType: options.expectedMediaType || "image",
+        buildPollReqBody: options.buildPollReqBody,
+        buildPollPath: options.buildPollPath,
+        onTaskSubmitted: options.onTaskSubmitted,
+        onPollTick: options.onPollTick,
+      });
+    } catch (error) {
+      return [null, error instanceof Error ? error : new Error(String(error))];
+    }
   }
 
   /* 已删除 DoAIResourceGenerateAndEdit 接口 */
