@@ -260,7 +260,7 @@ export class ChainUtil {
       windowEndBlock,
       blocksPerDay,
       safeDays,
-      boundaryNow,
+      targetMidnight,
     );
     const getSnapshot = loadSnapshot ?? ((height: number) =>
       this.getAppLoginStats(appId, height)
