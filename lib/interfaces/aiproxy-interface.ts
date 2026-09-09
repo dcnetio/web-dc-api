@@ -4,6 +4,7 @@ import {
   AIProxyConfig,
   AIProxyCallContext,
   AIProxyMediaCallOptions,
+  AIProxyUsageResult,
   AIServiceUsage,
   AIProxyRealtimeAudioSessionOptions,
   AIProxyRealtimeVoiceSessionOptions,
@@ -133,7 +134,7 @@ export interface IAIProxyOperations {
     appId: string,
     themeAuthor: string,
     configTheme: string
-  ): Promise<[Record<string, AIServiceUsage> | null, Error | null]>;
+  ): Promise<[AIProxyUsageResult | null, Error | null]>;
 
   /**
    * 执行AI代理调用

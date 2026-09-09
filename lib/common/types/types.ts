@@ -121,6 +121,12 @@ export interface AIServiceUsage {
   ylim?: number; //年积分上限（全局桶用）
 }
 
+export interface AIProxyUsageResult {
+  usageServices: Record<string, AIServiceUsage>;
+  /** key=套餐 No，每个套餐独立的积分用量 */
+  planUsage?: Record<string, AIServiceUsage>;
+}
+
 /** GetUserAIProxyAuth 返回值 */
 export interface UserAIProxyAuthResult {
   authConfig: ProxyCallConfig[]; //订阅配置列表

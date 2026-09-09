@@ -11,6 +11,7 @@ import {
   AIProxyConfig,
   AIProxyMediaCallOptions,
   AIProxyRealtimeConfig,
+  AIProxyUsageResult,
   AIServiceUsage,
   AIProxyRealtimeAudioAuthInfo,
   AIProxyRealtimeAudioSessionOptions,
@@ -303,7 +304,7 @@ export class AIProxyModule implements DCModule, IAIProxyOperations {
     appId: string,
     themeAuthor: string,
     configTheme: string
-  ): Promise<[usageServices: Record<string, AIServiceUsage> | null, error: Error | null]> {
+  ): Promise<[usage: AIProxyUsageResult | null, error: Error | null]> {
     try {
       this.assertInitialized();
       return this.aiProxyManager.GetUserOwnAIProxyUsage(

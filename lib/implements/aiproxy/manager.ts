@@ -1,6 +1,7 @@
 import {
   AIProxyConfig,
   AIProxyCallContext,
+  AIProxyUsageResult,
   AIServiceUsage,
   GetUserAIProxyAuthParams,
   OnStreamResponseType,
@@ -677,7 +678,7 @@ export class AIProxyManager {
     themeAuthor: string,
     configTheme: string,
   ): Promise<
-    [usageServices: Record<string, AIServiceUsage> | null, error: Error | null]
+    [usage: AIProxyUsageResult | null, error: Error | null]
   > {
     if (!this.context.publicKey) {
       return [null, new Error("ErrConnectToAccountPeersFail")];
@@ -738,12 +739,21 @@ export class AIProxyManager {
     try {
       const parsed = JSON.parse(this.extractLikelyJSON(usageInfo));
       if (parsed && typeof parsed === "object" && "usageServices" in parsed) {
-        return [parsed.usageServices ?? {}, null];
+        return [
+          {
+            usageServices: parsed.usageServices ?? {},
+            planUsage: parsed.planUsage ?? {},
+          },
+          null,
+        ];
       }
       if (parsed && typeof parsed === "object") {
-        return [parsed as Record<string, AIServiceUsage>, null];
+        return [
+          { usageServices: parsed as Record<string, AIServiceUsage> },
+          null,
+        ];
       }
-      return [{}, null];
+      return [{ usageServices: {} }, null];
     } catch (err: any) {
       return [null, err];
     }
