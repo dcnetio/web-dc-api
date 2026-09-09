@@ -44,6 +44,35 @@ import {
 const logger = createLogger("KeyValueModule");
 const REALTIME_AUTH_MARKER_HEADER = "X-DC-Realtime-Auth";
 const REALTIME_AUTH_MARKER_VALUE = "1";
+const REALTIME_TOKEN_RETRY_DELAYS_MS = [250, 500, 1000, 2000];
+
+const isTransientAccountPeerError = (error: unknown): boolean =>
+  /ErrConnectToAccountPeersFail|ErrNoDcPeerConnected/i.test(
+    String((error as any)?.message || error || ""),
+  );
+
+const realtimeTokenRequestKey = (params: {
+  channelId?: string;
+  userId?: string;
+  reqBody?: Record<string, any>;
+  forceRefresh?: boolean;
+  appId?: string;
+  themeAuthor?: string;
+  configTheme?: string;
+  serviceName?: string;
+  headers?: Record<string, string>;
+}): string =>
+  JSON.stringify({
+    channelId: params.channelId || "",
+    userId: params.userId || "",
+    reqBody: params.reqBody || {},
+    forceRefresh: Boolean(params.forceRefresh),
+    appId: params.appId || "",
+    themeAuthor: params.themeAuthor || "",
+    configTheme: params.configTheme || "",
+    serviceName: params.serviceName || "",
+    headers: params.headers || {},
+  });
 
 import { IAICallConfig } from "../common/types/types";
 import type {
@@ -154,6 +183,7 @@ export class AIProxyModule implements DCModule, IAIProxyOperations {
   private aiProxyManager!: AIProxyManager;
   private initialized: boolean = false;
   private aiCallConfig: IAICallConfig | null = null;
+  private realtimeTokenRequests = new Map<string, Promise<any>>();
 
   /**
    * 初始化AI代理模块
@@ -1109,6 +1139,55 @@ export class AIProxyModule implements DCModule, IAIProxyOperations {
   /* 已删除 DoAIResourceGenerateAndEdit 接口 */
 
   async GetAliyunV3Token(params: {
+    channelId?: string;
+    userId?: string;
+    reqBody?: Record<string, any>;
+    forceRefresh?: boolean;
+    appId?: string;
+    themeAuthor?: string;
+    configTheme?: string;
+    serviceName?: string;
+    headers?: Record<string, string>;
+  }): Promise<[ { token: string,serviceAppId?: string, expiresAt?: number, expiresIn?: number } | null, Error | null ]> {
+    const requestKey = realtimeTokenRequestKey(params);
+    const existingRequest = this.realtimeTokenRequests.get(requestKey);
+    if (existingRequest) return existingRequest;
+
+    const request = (async () => {
+      for (let attempt = 0; ; attempt++) {
+        const result = await this.getAliyunV3TokenOnce(params);
+        const error = result[1];
+        const retryDelay = REALTIME_TOKEN_RETRY_DELAYS_MS[attempt];
+        if (
+          !error ||
+          !isTransientAccountPeerError(error) ||
+          retryDelay === undefined
+        ) {
+          return result;
+        }
+        logger.warn(
+          `实时 token 请求遇到账号节点暂不可用，${retryDelay}ms 后重试（${attempt + 1}/${REALTIME_TOKEN_RETRY_DELAYS_MS.length}）`,
+        );
+        await new Promise((resolve) => setTimeout(resolve, retryDelay));
+      }
+    })();
+    this.realtimeTokenRequests.set(requestKey, request);
+    void request.then(
+      () => {
+        if (this.realtimeTokenRequests.get(requestKey) === request) {
+          this.realtimeTokenRequests.delete(requestKey);
+        }
+      },
+      () => {
+        if (this.realtimeTokenRequests.get(requestKey) === request) {
+          this.realtimeTokenRequests.delete(requestKey);
+        }
+      },
+    );
+    return request;
+  }
+
+  private async getAliyunV3TokenOnce(params: {
     channelId?: string;
     userId?: string;
     reqBody?: Record<string, any>;
