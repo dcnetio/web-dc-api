@@ -44,10 +44,10 @@ import {
 const logger = createLogger("KeyValueModule");
 const REALTIME_AUTH_MARKER_HEADER = "X-DC-Realtime-Auth";
 const REALTIME_AUTH_MARKER_VALUE = "1";
-const REALTIME_TOKEN_RETRY_DELAYS_MS = [250, 500, 1000, 2000];
+const REALTIME_TOKEN_RETRY_DELAYS_MS = [500, 1000, 2000, 4000, 8000];
 
 const isTransientAccountPeerError = (error: unknown): boolean =>
-  /ErrConnectToAccountPeersFail|ErrNoDcPeerConnected/i.test(
+  /ErrConnectToAccountPeersFail|ErrNoDcPeerConnected|insufficient number of off-chain operations/i.test(
     String((error as any)?.message || error || ""),
   );
 
