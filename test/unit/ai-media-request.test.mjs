@@ -5,6 +5,27 @@ import {
   buildDashScopeMediaRequestBody,
   normalizeAIProxyMediaSource,
 } from "../../lib/implements/aiproxy/media-request.ts";
+import { getAITaskStatusState } from "../../lib/modules/aiproxy/task-status.ts";
+
+test("async task polling keeps pending responses pending even when they echo a media URL", () => {
+  assert.equal(
+    getAITaskStatusState({
+      output: {
+        task_status: "PENDING",
+        video_url: "https://example.com/video.mp4",
+      },
+    }),
+    "pending",
+  );
+  assert.equal(
+    getAITaskStatusState({ output: { task_status: "SUCCEEDED" } }),
+    "success",
+  );
+  assert.equal(
+    getAITaskStatusState({ output: { task_status: "FAILED" } }),
+    "failed",
+  );
+});
 
 test("DashScope media adapter builds input.messages from semantic input", () => {
   const body = JSON.parse(

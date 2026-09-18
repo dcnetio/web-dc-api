@@ -27,6 +27,7 @@ import {
 } from "../common/types/types";
 import { AIProxyManager } from "../implements/aiproxy/manager";
 import { AIProxyRealtimeAudioSession } from "../implements/aiproxy/realtime-audio-session";
+import { getAITaskStatusState } from "./aiproxy/task-status";
 import {
   AIProxyRealtimeVoiceSession,
   createAliyunRealtimeVoiceProtocolAdapter,
@@ -415,7 +416,13 @@ export class AIProxyModule implements DCModule, IAIProxyOperations {
       
       if (parsedObj !== null && typeof parsedObj === 'object') {
         const extractId = (obj: any) => {
-          if (taskIdField && obj[taskIdField] != null) return obj[taskIdField];
+          if (taskIdField) {
+            const configuredValue = taskIdField.split(".").reduce(
+              (value: any, key: string) => value?.[key],
+              obj,
+            );
+            if (configuredValue != null) return configuredValue;
+          }
           return obj.task_id ?? obj.taskId ?? obj.taskid ?? obj.job_id ?? obj.jobId ?? obj.id;
         };
 
@@ -426,6 +433,9 @@ export class AIProxyModule implements DCModule, IAIProxyOperations {
         }
         if (possibleTaskId == null && parsedObj.result != null && typeof parsedObj.result === 'object') {
             possibleTaskId = extractId(parsedObj.result);
+        }
+        if (possibleTaskId == null && parsedObj.output != null && typeof parsedObj.output === 'object') {
+          possibleTaskId = extractId(parsedObj.output);
         }
         if (possibleTaskId == null && Array.isArray(parsedObj.items) && parsedObj.items.length > 0 && typeof parsedObj.items[0] === 'object') {
             possibleTaskId = extractId(parsedObj.items[0]);
@@ -911,6 +921,14 @@ export class AIProxyModule implements DCModule, IAIProxyOperations {
                          options.onPollTick(pollResult.origin_result);
                      }
 
+                       const origin = pollResult.origin_result;
+                     const taskStatusState = getAITaskStatusState(origin);
+
+                     if (taskStatusState === "pending") {
+                       // 任务仍在排队/处理中，即使响应里回显了 URL 也不能提前取结果。
+                       return;
+                     }
+
                      // 完成检测核心逻辑：一旦检测到图片、视频或文档资源被成功提取出，则视为完成
                      // 注：audiolist 不参与完成判定（音频输入类任务可能在进行中回显输入音频 URL），
                      // 仅在下方内容下载触发条件中单独检查
@@ -920,7 +938,6 @@ export class AIProxyModule implements DCModule, IAIProxyOperations {
                           (pollResult.doclist && pollResult.doclist.length > 0);
 
                      // 辅助保障：某些接口提取不出URL，但显式声明成功
-                     const origin = pollResult.origin_result;
                      let isExplicitFinished = false;
                      let isExplicitFailed = false;
                      if (origin && typeof origin === 'object') {
