@@ -503,6 +503,13 @@ export class AIProxyModule implements DCModule, IAIProxyOperations {
       } else if (Array.isArray(node)) {
         node.forEach((item, index) => traverse(item, `${pathStr}[${index}]`));
       } else if (node !== null && typeof node === 'object') {
+        if (typeof node.b64_json === 'string' && node.b64_json.length > 0) {
+          const format = String(node.output_format ?? parsedObj?.output_format ?? '').toLowerCase();
+          const mime = format === 'jpeg' || format === 'jpg' || node.b64_json.startsWith('/9j/')
+            ? 'image/jpeg' : format === 'webp' || node.b64_json.startsWith('UklGR')
+              ? 'image/webp' : 'image/png';
+          result.imagelist.push({ [pathStr ? `${pathStr}.b64_json` : 'b64_json']: `data:${mime};base64,${node.b64_json}` });
+        }
         // Gemini / 多模态内联数据结构：{ inlineData: { mimeType, data } }
         // 或 snake_case { inline_data: { mime_type, data } }。
         // 生成的图片/视频/音频以「纯 base64」放在 data 字段（无 data: 前缀、无 http URL），
