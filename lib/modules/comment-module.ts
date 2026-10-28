@@ -1,15 +1,17 @@
 // modules/comment-module.ts
 // 评论功能模块
 
-import {  ICommentOperations } from "../interfaces/comment-interface";
+import { ICommentOperations } from "../interfaces/comment-interface";
 import { DCContext } from "../../lib/interfaces/DCContext";
 import { DCModule, CoreModuleName } from "../common/module-system";
 import { CommentManager } from "../implements/comment/manager";
 import { createLogger } from "../util/logger";
 import { ThemePermission } from "../common/constants";
 import { ThemeAuthInfo, ThemeComment, ThemeObj } from "../common/types/types";
+import { dcnet } from "../proto/dcnet_proto";
+import { Ed25519PrivKey } from "../common/dc-key/ed25519";
 
-const logger = createLogger('CommentModule');
+const logger = createLogger("CommentModule");
 
 /**
  * 评论模块
@@ -20,7 +22,7 @@ export class CommentModule implements DCModule, ICommentOperations {
   private context!: DCContext;
   private commentManager!: CommentManager;
   private initialized: boolean = false;
-  
+
   /**
    * 初始化评论模块
    * @param context DC上下文
@@ -29,9 +31,7 @@ export class CommentModule implements DCModule, ICommentOperations {
   async initialize(context: DCContext): Promise<boolean> {
     try {
       this.context = context;
-      this.commentManager = new CommentManager(
-        context
-      );
+      this.commentManager = new CommentManager(context);
       this.initialized = true;
       return true;
     } catch (error) {
@@ -39,22 +39,24 @@ export class CommentModule implements DCModule, ICommentOperations {
       return false;
     }
   }
-  
+
   /**
    * 关闭评论模块
    */
   async shutdown(): Promise<void> {
     this.initialized = false;
   }
-  
+
   /**
    * 添加用户评论空间
    */
-  async addUserOffChainSpace(vaccount?: string): Promise<[boolean | null, Error | null]> {
+  async addUserOffChainSpace(
+    vaccount?: string,
+  ): Promise<[boolean | null, Error | null]> {
     try {
       this.assertInitialized();
       const res = await this.commentManager.addUserOffChainSpace(vaccount);
-      if(!res[1]){
+      if (!res[1]) {
         logger.info("添加用户评论空间成功");
       }
       return res;
@@ -64,45 +66,197 @@ export class CommentModule implements DCModule, ICommentOperations {
     }
   }
 
-/**
- * 添加用户链下操作次数
- */
-async addUserOffChainOpTimes(
-  times: number,
-  vaccount?: string
-): Promise<[boolean | null, Error | null]> {
-  
-  
-  try {
-    this.assertInitialized();
-    const res = await this.commentManager.addUserOffChainOpTimes(times, vaccount);
-    if(!res[1]){
-      logger.info("添加用户操作次数成功");
+  /**
+   * 添加用户链下操作次数
+   */
+  async addUserOffChainOpTimes(
+    times: number,
+    vaccount?: string,
+  ): Promise<[boolean | null, Error | null]> {
+    try {
+      this.assertInitialized();
+      const res = await this.commentManager.addUserOffChainOpTimes(
+        times,
+        vaccount,
+      );
+      if (!res[1]) {
+        logger.info("添加用户操作次数成功");
+      }
+      return res;
+    } catch (error) {
+      logger.error("添加用户操作次数失败:", error);
+      return [null, error as Error];
     }
-    return res;
-  } catch (error) {
-    logger.error("添加用户操作次数失败:", error);
-    return [null, error as Error];
   }
-}
 
-  
+  /**
+   * 获取当前用户链下资源使用信息
+   * @param vaccount 可选，关联的虚拟账号
+   * @returns [链下资源使用信息, 错误信息]
+   */
+  async getUserOffChainUsedInfo(
+    vaccount?: string,
+  ): Promise<[dcnet.pb.GetUserOffChainUsedInfoReply | null, Error | null]> {
+    try {
+      this.assertInitialized();
+      const res = await this.commentManager.getUserOffChainUsedInfo(
+        vaccount || "",
+      );
+      if (!res[1]) {
+        logger.info("获取用户链下资源使用信息成功");
+      }
+      return res;
+    } catch (error) {
+      logger.error("获取用户链下资源使用信息失败:", error);
+      return [null, error as Error];
+    }
+  }
+
+  /**
+   * 根据 appId 获取该应用账号的链下资源使用信息
+   * @param appId 应用ID
+   * @param privateKey 该 appId 账号的私钥（前端解密助记词后派生）
+   * @param vaccount 可选，关联的虚拟账号
+   * @returns [链下资源使用信息, 错误信息]
+   */
+  async getUserOffChainUsedInfoByAppId(
+    appId: string,
+    privateKey: string | Ed25519PrivKey,
+    vaccount?: string,
+  ): Promise<[dcnet.pb.GetUserOffChainUsedInfoReply | null, Error | null]> {
+    try {
+      this.assertInitialized();
+      const res = await this.commentManager.getUserOffChainUsedInfoByAppId(
+        appId,
+        privateKey,
+        vaccount || "",
+      );
+      if (!res[1]) {
+        logger.info(`获取应用 ${appId} 的链下资源使用信息成功`);
+      }
+      return res;
+    } catch (error) {
+      logger.error(`获取应用 ${appId} 的链下资源使用信息失败:`, error);
+      return [null, error as Error];
+    }
+  }
+
+  /**
+   * 根据 appId 为该应用账号添加链下评论空间
+   * @param appId 应用ID
+   * @param privateKey 该 appId 账号的私钥（前端解密助记词后派生）
+   * @param vaccount 可选，关联的虚拟账号
+   * @returns [是否成功, 错误信息]
+   */
+  async addUserOffChainSpaceByAppId(
+    appId: string,
+    privateKey: string | Ed25519PrivKey,
+    vaccount?: string,
+  ): Promise<[boolean | null, Error | null]> {
+    try {
+      this.assertInitialized();
+      const res = await this.commentManager.addUserOffChainSpaceByAppId(
+        appId,
+        privateKey,
+        vaccount,
+      );
+      if (!res[1]) {
+        logger.info(`为应用 ${appId} 添加链下评论空间成功`);
+      }
+      return res;
+    } catch (error) {
+      logger.error(`为应用 ${appId} 添加链下评论空间失败:`, error);
+      return [null, error as Error];
+    }
+  }
+
+  /**
+   * 根据 appId 为该应用账号添加链下操作次数
+   * @param appId 应用ID
+   * @param privateKey 该 appId 账号的私钥（前端解密助记词后派生）
+   * @param times 操作次数
+   * @param vaccount 可选，关联的虚拟账号
+   * @returns [是否成功, 错误信息]
+   */
+  async addUserOffChainOpTimesByAppId(
+    appId: string,
+    privateKey: string | Ed25519PrivKey,
+    times: number,
+    vaccount?: string,
+  ): Promise<[boolean | null, Error | null]> {
+    try {
+      this.assertInitialized();
+      const res = await this.commentManager.addUserOffChainOpTimesByAppId(
+        appId,
+        privateKey,
+        times,
+        vaccount,
+      );
+      if (!res[1]) {
+        logger.info(`为应用 ${appId} 添加链下操作次数成功`);
+      }
+      return res;
+    } catch (error) {
+      logger.error(`为应用 ${appId} 添加链下操作次数失败:`, error);
+      return [null, error as Error];
+    }
+  }
+
+  /**
+   * 根据 appId 为已开通评论的主题增加评论空间
+   * @param appId 应用ID
+   * @param privateKey 该 appId 账号的私钥（前端解密助记词后派生）
+   * @param theme 主题/对象标识符
+   * @param addSpace 要增加的空间大小(字节)
+   * @returns [操作结果, 错误信息]
+   */
+  async addThemeSpaceByAppId(
+    appId: string,
+    privateKey: string | Ed25519PrivKey,
+    theme: string,
+    addSpace: number,
+  ): Promise<[number | null, Error | null]> {
+    try {
+      this.assertInitialized();
+      const res = await this.commentManager.addThemeSpaceByAppId(
+        appId,
+        privateKey,
+        theme,
+        addSpace,
+      );
+      if (!res[1]) {
+        logger.info(
+          `为应用 ${appId} 的主题 ${theme} 增加 ${addSpace} 字节评论空间成功`,
+        );
+      }
+      return res;
+    } catch (error) {
+      logger.error(`为应用 ${appId} 的主题 ${theme} 增加评论空间失败:`, error);
+      return [null, error as Error];
+    }
+  }
+
   /**
    * 为指定对象开通评论功能
    * @param theme 主题
    * @param openFlag 开放标志
    * @param commentSpace 评论空间大小
    */
-  async addThemeObj(theme: string, openFlag: number, commentSpace?: number, appId?: string): Promise<[number | null, Error | null]> {
+  async addThemeObj(
+    theme: string,
+    openFlag: number,
+    commentSpace?: number,
+    appId?: string,
+  ): Promise<[number | null, Error | null]> {
     try {
       this.assertInitialized();
       const res = await this.commentManager.addThemeObj(
         appId || this.context.appInfo?.appId || "",
         theme,
         openFlag,
-        commentSpace || 50 * 1024 * 1024 // 50M
+        commentSpace || 50 * 1024 * 1024, // 50M
       );
-      if(!res[1]){
+      if (!res[1]) {
         logger.info(`为主题 ${theme} 开通评论功能成功`);
       }
       return res;
@@ -118,10 +272,10 @@ async addUserOffChainOpTimes(
   ): Promise<[boolean | null, Error | null]> {
     try {
       this.assertInitialized();
-      const res =  await this.commentManager.isThemeExist(
+      const res = await this.commentManager.isThemeExist(
         appId,
         theme,
-        themeAuthor
+        themeAuthor,
       );
       return res;
     } catch (error) {
@@ -130,25 +284,23 @@ async addUserOffChainOpTimes(
     }
   }
 
-
-
-  
   /**
    * 为开通评论的对象增加评论空间
    * @param theme 主题
    * @param addSpace 增加的空间大小
    */
-  async addThemeSpace(theme: string, addSpace: number): Promise<[number | null, Error | null]> {
-    
-    
+  async addThemeSpace(
+    theme: string,
+    addSpace: number,
+  ): Promise<[number | null, Error | null]> {
     try {
       this.assertInitialized();
       const res = await this.commentManager.addThemeSpace(
         this.context.appInfo?.appId || "",
         theme,
-        addSpace
+        addSpace,
       );
-      if(!res[1]){
+      if (!res[1]) {
         logger.info(`为主题 ${theme} 增加 ${addSpace} 字节评论空间成功`);
       }
       return res;
@@ -157,7 +309,7 @@ async addUserOffChainOpTimes(
       return [null, error as Error];
     }
   }
-  
+
   /**
    * 发布评论
    * @param theme 主题
@@ -174,12 +326,10 @@ async addUserOffChainOpTimes(
     comment: string,
     openFlag?: number,
     refercommentkey?: string,
-    appId?: string
+    appId?: string,
   ): Promise<[string | null, Error | null]> {
-   
-    
     try {
-       this.assertInitialized();
+      this.assertInitialized();
       const res = await this.commentManager.publishCommentToTheme(
         appId || this.context.appInfo?.appId || "",
         theme,
@@ -187,9 +337,9 @@ async addUserOffChainOpTimes(
         commentType,
         comment,
         refercommentkey || "",
-        openFlag
+        openFlag,
       );
-      if(!res[1]){
+      if (!res[1]) {
         logger.info(`发布评论到主题 ${theme} 成功`);
       }
       return res;
@@ -198,7 +348,7 @@ async addUserOffChainOpTimes(
       return [null, error as Error];
     }
   }
-  
+
   /**
    * 删除评论
    * @param theme 主题
@@ -208,19 +358,17 @@ async addUserOffChainOpTimes(
   async deleteSelfComment(
     theme: string,
     themeAuthor: string,
-    commentKey: string
+    commentKey: string,
   ): Promise<[number | null, Error | null]> {
-   
-    
     try {
       this.assertInitialized();
       const res = await this.commentManager.deleteSelfComment(
         this.context.appInfo?.appId || "",
         theme,
         themeAuthor,
-        commentKey
+        commentKey,
       );
-      if(!res[1]){
+      if (!res[1]) {
         logger.info(`删除评论 ${commentKey} 成功`);
       }
       return res;
@@ -229,7 +377,7 @@ async addUserOffChainOpTimes(
       return [null, error as Error];
     }
   }
-  
+
   /**
    * 将某条评论精选公开(仅评论对象/主题的拥有者可调用)
    * @param theme 主题
@@ -240,7 +388,7 @@ async addUserOffChainOpTimes(
     theme: string,
     themeAuthor: string,
     commentKey: string,
-    appId?: string
+    appId?: string,
   ): Promise<[number | null, Error | null]> {
     try {
       this.assertInitialized();
@@ -248,7 +396,7 @@ async addUserOffChainOpTimes(
         appId || this.context.appInfo?.appId || "",
         theme,
         themeAuthor,
-        commentKey
+        commentKey,
       );
       if (!res[1]) {
         logger.info(`精选公开评论 ${commentKey} 成功`);
@@ -259,7 +407,7 @@ async addUserOffChainOpTimes(
       return [null, error as Error];
     }
   }
-  
+
   /**
    * 获取评论对象列表
    * @param themeAuthor 主题作者
@@ -275,10 +423,8 @@ async addUserOffChainOpTimes(
     direction?: number,
     offset?: number,
     limit?: number,
-    seekKey?: string 
+    seekKey?: string,
   ): Promise<[ThemeObj[] | null, Error | null]> {
-    
-    
     try {
       this.assertInitialized();
       const res = await this.commentManager.getThemeObj(
@@ -288,9 +434,9 @@ async addUserOffChainOpTimes(
         direction || 0,
         offset || 0,
         limit || 100,
-        seekKey || ""
+        seekKey || "",
       );
-      if(!res[1]){
+      if (!res[1]) {
         logger.info(`获取作者 ${themeAuthor} 的主题对象列表成功`);
       }
       return res;
@@ -299,7 +445,7 @@ async addUserOffChainOpTimes(
       return [null, error as Error];
     }
   }
-  
+
   /**
    * 获取主题评论列表
    * @param theme 主题
@@ -321,8 +467,6 @@ async addUserOffChainOpTimes(
     appId?: string,
     vaccount?: string,
   ): Promise<[ThemeComment[] | null, Error | null]> {
-    
-    
     try {
       this.assertInitialized();
       const res = await this.commentManager.getThemeComments(
@@ -336,7 +480,7 @@ async addUserOffChainOpTimes(
         seekKey || "",
         vaccount,
       );
-      if(!res[1]){
+      if (!res[1]) {
         logger.info(`获取主题 ${theme} 的评论列表成功`);
       }
       return res;
@@ -357,7 +501,7 @@ async addUserOffChainOpTimes(
     offset?: number,
     limit?: number,
     seekKey?: string,
-    vaccount?: string
+    vaccount?: string,
   ): Promise<[ThemeComment[] | null, number, string, Error | null]> {
     try {
       this.assertInitialized();
@@ -370,7 +514,7 @@ async addUserOffChainOpTimes(
         offset || 0,
         limit || 100,
         seekKey || "",
-        vaccount
+        vaccount,
       );
       if (!res[3]) {
         logger.info(`获取主题 ${theme} 的权限列表成功`);
@@ -383,69 +527,65 @@ async addUserOffChainOpTimes(
   }
 
   /**
-     * 配置主题的授权信息
-     * @param themeAuthor 主题作者的公钥
-     * @param theme 主题名称
-     * @param authPubkey 被授权者的公钥
-     * @param permission 权限级别
-     * @param remark 备注信息
-     * @param vaccount 可选的虚拟账户
-     * @returns [授权状态码, 错误信息]
-     */
-   async configAuth(
-      themeAuthor: string,
-      theme: string,
-      authPubkey: string,
-      permission: ThemePermission,
-      remark: string,
-      vaccount?: string
-    ): Promise<[number | null, Error | null]> {
-      try{
-        this.assertInitialized();
-              return await this.commentManager.configAuth(
-                this.context.appInfo?.appId || "",
-                themeAuthor,
-                theme,
-                authPubkey,
-                permission,
-                remark,
-                vaccount
+   * 配置主题的授权信息
+   * @param themeAuthor 主题作者的公钥
+   * @param theme 主题名称
+   * @param authPubkey 被授权者的公钥
+   * @param permission 权限级别
+   * @param remark 备注信息
+   * @param vaccount 可选的虚拟账户
+   * @returns [授权状态码, 错误信息]
+   */
+  async configAuth(
+    themeAuthor: string,
+    theme: string,
+    authPubkey: string,
+    permission: ThemePermission,
+    remark: string,
+    vaccount?: string,
+  ): Promise<[number | null, Error | null]> {
+    try {
+      this.assertInitialized();
+      return await this.commentManager.configAuth(
+        this.context.appInfo?.appId || "",
+        themeAuthor,
+        theme,
+        authPubkey,
+        permission,
+        remark,
+        vaccount,
       );
-      }catch(error){
-        logger.error(`配置主题 ${theme} 的授权信息失败:`, error);
-        return [null, error as Error];
-      }
-     
+    } catch (error) {
+      logger.error(`配置主题 ${theme} 的授权信息失败:`, error);
+      return [null, error as Error];
     }
+  }
 
-
- /**
+  /**
    * 获取指定主题的授权列表,
    * @param themeAuthor 主题作者的公钥
    * @param theme 主题/对象标识符
    * @param vaccount 可选，虚拟账户
    * @returns [授权列表, 评论列表, 错误信息]
    */
- async getAuthList(
-      themeAuthor: string,
-      theme: string,
-      vaccount?: string
-    ): Promise<[ThemeAuthInfo[]|null,ThemeComment[] | null, Error | null]> {
-      try{
-        this.assertInitialized();
-            return await this.commentManager.getAuthList(
-              this.context.appInfo?.appId || "",
-              themeAuthor,
-              theme,
-              vaccount
-            );
-      } catch (error) {
-        logger.error(`获取主题 ${theme} 的授权列表失败:`, error);
-        return [null, null, error as Error];
-      }
-   
+  async getAuthList(
+    themeAuthor: string,
+    theme: string,
+    vaccount?: string,
+  ): Promise<[ThemeAuthInfo[] | null, ThemeComment[] | null, Error | null]> {
+    try {
+      this.assertInitialized();
+      return await this.commentManager.getAuthList(
+        this.context.appInfo?.appId || "",
+        themeAuthor,
+        theme,
+        vaccount,
+      );
+    } catch (error) {
+      logger.error(`获取主题 ${theme} 的授权列表失败:`, error);
+      return [null, null, error as Error];
+    }
   }
-
 
   /**
    * 获取用户评论列表
@@ -462,10 +602,8 @@ async addUserOffChainOpTimes(
     direction?: number,
     offset?: number,
     limit?: number,
-    seekKey?: string
+    seekKey?: string,
   ): Promise<[ThemeComment[] | null, Error | null]> {
-    
-    
     try {
       this.assertInitialized();
       const res = await this.commentManager.getUserComments(
@@ -475,9 +613,9 @@ async addUserOffChainOpTimes(
         direction || 0,
         offset || 0,
         limit || 100,
-        seekKey || ""
+        seekKey || "",
       );
-      if(!res[1]){
+      if (!res[1]) {
         logger.info(`获取用户 ${userPubkey} 的评论列表成功`);
       }
       return res;
@@ -486,7 +624,7 @@ async addUserOffChainOpTimes(
       return [null, error as Error];
     }
   }
-  
+
   /**
    * 断言模块已初始化
    */
@@ -506,7 +644,7 @@ async addUserOffChainOpTimes(
   async getAuthListUserCount(
     themeAuthor: string,
     theme: string,
-    vaccount?: string
+    vaccount?: string,
   ): Promise<[number | null, Error | null]> {
     try {
       this.assertInitialized();
@@ -514,7 +652,7 @@ async addUserOffChainOpTimes(
         this.context.appInfo?.appId || "",
         themeAuthor,
         theme,
-        vaccount
+        vaccount,
       );
     } catch (error) {
       return [null, error instanceof Error ? error : new Error(String(error))];

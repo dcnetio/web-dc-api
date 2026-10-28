@@ -1,4 +1,5 @@
 import {
+  APPInfo,
   DCConnectInfo,
   ThemeAuthInfo,
   ThemeComment,
@@ -9,6 +10,7 @@ import { ChainUtil } from "../../common/chain";
 import { base32 } from "multiformats/bases/base32";
 
 import { DcUtil } from "../../common/dcutil";
+import type { Client } from "../../common/dcapi";
 import { extractPeerIdFromMultiaddr } from "../../common/dc-key/keyManager";
 import { Multiaddr } from "@multiformats/multiaddr";
 import { CommentClient } from "./client";
@@ -24,7 +26,7 @@ import { BrowserLineReader, readLine } from "../../util/BrowserLineReader";
 import { dcnet } from "../../proto/dcnet_proto";
 import { DCContext } from "../../../lib/interfaces/DCContext";
 import { publicKeyFromRaw } from "@libp2p/crypto/keys";
-import { Ed25519PubKey } from "../../common/dc-key/ed25519";
+import { Ed25519PrivKey, Ed25519PubKey } from "../../common/dc-key/ed25519";
 import { CommentType, Direction } from "../../common/define";
 import { Libp2p } from "@libp2p/interface";
 import { createAbortController } from "../../common/abort";
@@ -55,6 +57,8 @@ export const Errors = {
   // publickey is null
   ErrPublicKeyIsNull: new CommentError("publickey is null"),
   ErrCommentKeyInvalid: new CommentError("comment key invalid"),
+  // appId 对应的私钥无效或无法解析
+  ErrAppPrivateKeyInvalid: new CommentError("invalid app private key"),
 };
 
 export class CommentManager {
@@ -72,7 +76,9 @@ export class CommentManager {
   }
 
   // 配置或增加用户自身的评论空间 0:成功  1:失败
-  async addUserOffChainSpace(vaccount?: string): Promise<[boolean | null, Error | null]> {
+  async addUserOffChainSpace(
+    vaccount?: string,
+  ): Promise<[boolean | null, Error | null]> {
     try {
       if (!this.context.AccountBackupDc?.client) {
         return [null, Errors.ErrNoDcPeerConnected];
@@ -85,10 +91,10 @@ export class CommentManager {
 
       const blockHeight = (await this.chainUtil.getBlockHeight()) || 0;
       const hValue: Uint8Array = uint32ToLittleEndianBytes(
-        blockHeight ? blockHeight : 0
+        blockHeight ? blockHeight : 0,
       );
       const peerIdValue: Uint8Array = new TextEncoder().encode(
-        peerId.toString()
+        peerId.toString(),
       );
 
       // 将 hValue 和 peerIdValue 连接起来
@@ -101,7 +107,7 @@ export class CommentManager {
       const commentClient = new CommentClient(
         this.context.AccountBackupDc.client,
         this.dcNodeClient,
-        this.context
+        this.context,
       );
       const res = await commentClient.addUserOffChainSpace(
         userPubkey.string(),
@@ -135,12 +141,12 @@ export class CommentManager {
         await this.context.AccountBackupDc.client.GetToken(
           appId,
           this.context.publicKey.string(),
-          this.context.sign
+          this.context.sign,
         );
       }
       const blockHeight = (await this.chainUtil.getBlockHeight()) || 0;
       const hValue: Uint8Array = uint32ToLittleEndianBytes(
-        blockHeight ? blockHeight : 0
+        blockHeight ? blockHeight : 0,
       );
       const spaceValue: Uint8Array = uint32ToLittleEndianBytes(commentSpace);
       const statusValue: Uint8Array = uint32ToLittleEndianBytes(openFlag);
@@ -159,7 +165,7 @@ export class CommentManager {
       const commentClient = new CommentClient(
         this.context.AccountBackupDc.client,
         this.dcNodeClient,
-        this.context
+        this.context,
       );
       let res = await commentClient.addThemeObj(
         appId,
@@ -209,7 +215,7 @@ export class CommentManager {
 
   async deleteThemeObj(
     appId: string,
-    theme: string
+    theme: string,
   ): Promise<[number | null, Error | null]> {
     try {
       if (!this.context.AccountBackupDc?.client) {
@@ -222,12 +228,12 @@ export class CommentManager {
         await this.context.AccountBackupDc.client.GetToken(
           appId,
           this.context.publicKey.string(),
-          this.context.sign
+          this.context.sign,
         );
       }
       const blockHeight = (await this.chainUtil.getBlockHeight()) || 0;
       const hValue: Uint8Array = uint32ToLittleEndianBytes(
-        blockHeight ? blockHeight : 0
+        blockHeight ? blockHeight : 0,
       );
 
       const themeValue: Uint8Array = new TextEncoder().encode(theme);
@@ -238,14 +244,14 @@ export class CommentManager {
       const commentClient = new CommentClient(
         this.context.AccountBackupDc.client,
         this.dcNodeClient,
-        this.context
+        this.context,
       );
       let res = await commentClient.deleteThemeObj(
         appId,
         theme,
         blockHeight || 0,
         userPubkey.string(),
-        signature
+        signature,
       );
       // res 0:成功 1:评论空间没有配置 2:评论空间不足 3:评论数据同步中
       if (res === 0) {
@@ -264,7 +270,7 @@ export class CommentManager {
           theme,
           blockHeight || 0,
           userPubkey.string(),
-          signature
+          signature,
         );
         if (res === 0) {
           return [res, null];
@@ -308,7 +314,8 @@ export class CommentManager {
       }
 
       if (!this.context.AccountBackupDc?.client || isFetchingOthersTheme) {
-        const authorPublicKey: Ed25519PubKey = Ed25519PubKey.edPubkeyFromStr(themeAuthor);
+        const authorPublicKey: Ed25519PubKey =
+          Ed25519PubKey.edPubkeyFromStr(themeAuthor);
         const allClients = await this.dc.connectToUserAllDcPeers(
           authorPublicKey.raw,
           signal,
@@ -331,7 +338,7 @@ export class CommentManager {
           return [null, Errors.ErrNoPeerIdIsNull];
         }
       }
-      
+
       let lastError: Error | null = null;
       for (const client of clients) {
         if (signal?.aborted) {
@@ -355,7 +362,7 @@ export class CommentManager {
           const commentClient = new CommentClient(
             client,
             this.dcNodeClient,
-            this.context
+            this.context,
           );
           const res = await commentClient.isThemeExist(
             appId,
@@ -378,7 +385,7 @@ export class CommentManager {
   }
 
   async getUserOffChainUsedInfo(
-    vaccount: string = ""
+    vaccount: string = "",
   ): Promise<[dcnet.pb.GetUserOffChainUsedInfoReply | null, Error | null]> {
     try {
       if (!this.context.AccountBackupDc?.client) {
@@ -390,7 +397,7 @@ export class CommentManager {
       const commentClient = new CommentClient(
         this.context.AccountBackupDc.client,
         this.dcNodeClient,
-        this.context
+        this.context,
       );
       const res = await commentClient.getUserOffChainUsedInfo(vaccount);
       return [res, null];
@@ -399,9 +406,343 @@ export class CommentManager {
     }
   }
 
+  /**
+   * 根据 appId 查询该应用账号的链下资源使用信息
+   *
+   * 实现方式参考 MessageManager.sendMsgToUserBox：
+   * 1. 使用调用方传入的 appId 对应账号私钥（由前端解密助记词后派生）；
+   * 2. 以该账号公钥重新连接其所属 DC 节点；
+   * 3. 使用该 appId + 账号私钥获取 token；
+   * 4. 用该私钥构造新的 context 并创建 CommentClient，调用 getUserOffChainUsedInfo。
+   *
+   * @param appId 应用ID
+   * @param privateKey 该 appId 账号的私钥，支持 Ed25519PrivKey 对象或其 base32/hex 字符串
+   * @param vaccount 可选，关联的虚拟账号
+   * @returns [链下资源使用信息, 错误信息]
+   */
+  async getUserOffChainUsedInfoByAppId(
+    appId: string,
+    privateKey: string | Ed25519PrivKey,
+    vaccount: string = "",
+  ): Promise<[dcnet.pb.GetUserOffChainUsedInfoReply | null, Error | null]> {
+    try {
+      const targetAppId = (appId || "").trim();
+      if (!targetAppId) {
+        return [null, new CommentError("appId is empty")];
+      }
+      const { client, context } = await this.prepareAppAccount(
+        targetAppId,
+        privateKey,
+      );
+      const commentClient = new CommentClient(
+        client,
+        this.dcNodeClient,
+        context,
+      );
+      const res = await commentClient.getUserOffChainUsedInfo(vaccount);
+      return [res, null];
+    } catch (err) {
+      console.warn("GetUserOffChainUsedInfoByAppId error:", err);
+      return [null, err as Error];
+    }
+  }
+
+  /**
+   * 按 appId 为该应用账号添加链下评论空间（每次分配 50MB）
+   * 参考 addUserOffChainSpace，但使用 appId 对应账号的私钥连接节点、获取 token 并签名
+   *
+   * @param appId 应用ID
+   * @param privateKey 该 appId 账号的私钥，支持 Ed25519PrivKey 对象或其 base32/hex 字符串
+   * @param vaccount 可选，关联的虚拟账号
+   * @returns [是否成功, 错误信息]
+   */
+  async addUserOffChainSpaceByAppId(
+    appId: string,
+    privateKey: string | Ed25519PrivKey,
+    vaccount?: string,
+  ): Promise<[boolean | null, Error | null]> {
+    try {
+      const targetAppId = (appId || "").trim();
+      if (!targetAppId) {
+        return [null, new CommentError("appId is empty")];
+      }
+      const {
+        client,
+        context,
+        privateKey: appPrivateKey,
+        peerId,
+      } = await this.prepareAppAccount(targetAppId, privateKey);
+      if (!peerId) {
+        return [null, Errors.ErrNoPeerIdIsNull];
+      }
+
+      const blockHeight = (await this.chainUtil.getBlockHeight()) || 0;
+      const hValue = uint32ToLittleEndianBytes(blockHeight);
+      const peerIdValue = new TextEncoder().encode(peerId);
+      const preSign = new Uint8Array([...peerIdValue, ...hValue]);
+      const signature = appPrivateKey.sign(preSign);
+      const userPubkey = appPrivateKey.publicKey;
+
+      const commentClient = new CommentClient(
+        client,
+        this.dcNodeClient,
+        context,
+      );
+      await commentClient.addUserOffChainSpace(
+        userPubkey.string(),
+        blockHeight,
+        peerId,
+        signature,
+        vaccount,
+      );
+      return [true, null];
+    } catch (err) {
+      console.warn("AddUserOffChainSpaceByAppId error:", err);
+      return [false, err as Error];
+    }
+  }
+
+  /**
+   * 按 appId 为该应用账号添加链下操作次数
+   * 参考 addUserOffChainOpTimes，但使用 appId 对应账号的私钥连接节点、获取 token 并签名
+   *
+   * @param appId 应用ID
+   * @param privateKey 该 appId 账号的私钥，支持 Ed25519PrivKey 对象或其 base32/hex 字符串
+   * @param times 操作次数
+   * @param vaccount 可选，关联的虚拟账号
+   * @returns [是否成功, 错误信息]
+   */
+  async addUserOffChainOpTimesByAppId(
+    appId: string,
+    privateKey: string | Ed25519PrivKey,
+    times: number,
+    vaccount?: string,
+  ): Promise<[boolean | null, Error | null]> {
+    try {
+      const targetAppId = (appId || "").trim();
+      if (!targetAppId) {
+        return [null, new CommentError("appId is empty")];
+      }
+      if (!Number.isInteger(times) || times <= 0 || times > 0xffffffff) {
+        return [
+          null,
+          new CommentError("times must be an integer between 1 and 4294967295"),
+        ];
+      }
+      const {
+        client,
+        context,
+        privateKey: appPrivateKey,
+        peerId,
+      } = await this.prepareAppAccount(targetAppId, privateKey);
+      if (!peerId) {
+        return [null, Errors.ErrNoPeerIdIsNull];
+      }
+
+      const blockHeight = (await this.chainUtil.getBlockHeight()) || 0;
+      const hValue = uint32ToLittleEndianBytes(blockHeight);
+      const tValue = uint32ToLittleEndianBytes(times);
+      const peerIdBytes = new TextEncoder().encode(peerId);
+      const preSign = new Uint8Array([...peerIdBytes, ...tValue, ...hValue]);
+      const signature = appPrivateKey.sign(preSign);
+      const userPubkey = appPrivateKey.publicKey;
+
+      const commentClient = new CommentClient(
+        client,
+        this.dcNodeClient,
+        context,
+      );
+      const res = await commentClient.addUserOffChainOpTimes(
+        userPubkey.string(),
+        blockHeight,
+        peerId,
+        times,
+        signature,
+        vaccount || "",
+      );
+      return [res, null];
+    } catch (err) {
+      console.warn("AddUserOffChainOpTimesByAppId error:", err);
+      return [false, err as Error];
+    }
+  }
+
+  /**
+   * 按 appId 为已开通评论的主题增加评论空间
+   * 参考 addThemeSpace，但使用 appId 对应账号的私钥连接节点、获取 token 并签名
+   *
+   * @param appId 应用ID
+   * @param privateKey 该 appId 账号的私钥，支持 Ed25519PrivKey 对象或其 base32/hex 字符串
+   * @param theme 主题/对象标识符
+   * @param addSpace 要增加的空间大小(字节)
+   * @returns [操作结果 0:成功 其它:失败, 错误信息]
+   */
+  async addThemeSpaceByAppId(
+    appId: string,
+    privateKey: string | Ed25519PrivKey,
+    theme: string,
+    addSpace: number,
+  ): Promise<[number | null, Error | null]> {
+    try {
+      const targetAppId = (appId || "").trim();
+      if (!targetAppId) {
+        return [null, new CommentError("appId is empty")];
+      }
+      const {
+        client,
+        context,
+        privateKey: appPrivateKey,
+      } = await this.prepareAppAccount(targetAppId, privateKey);
+
+      const blockHeight = (await this.chainUtil.getBlockHeight()) || 0;
+      const hValue = uint32ToLittleEndianBytes(blockHeight);
+      const spaceValue = uint32ToLittleEndianBytes(addSpace);
+      const themeValue = new TextEncoder().encode(theme);
+      const appIdValue = new TextEncoder().encode(targetAppId);
+      const preSign = new Uint8Array([
+        ...themeValue,
+        ...appIdValue,
+        ...hValue,
+        ...spaceValue,
+      ]);
+      const signature = appPrivateKey.sign(preSign);
+      const userPubkey = appPrivateKey.publicKey;
+
+      const commentClient = new CommentClient(
+        client,
+        this.dcNodeClient,
+        context,
+      );
+      const res = await commentClient.addThemeSpace(
+        targetAppId,
+        theme,
+        blockHeight,
+        addSpace,
+        userPubkey.string(),
+        signature,
+      );
+      return [res, null];
+    } catch (err) {
+      console.warn("AddThemeSpaceByAppId error:", err);
+      return [null, err as Error];
+    }
+  }
+
+  /**
+   * 按 appId 与账号私钥准备调用节点所需的连接/token/context
+   * 与 MessageManager.sendMsgToUserBox 一致：重新连接该账号所属节点、获取 token，
+   * 并用该私钥构造使用该账号身份签名的新 context
+   */
+  private async prepareAppAccount(
+    appId: string,
+    privateKey: string | Ed25519PrivKey,
+  ): Promise<{
+    client: Client;
+    context: DCContext;
+    privateKey: Ed25519PrivKey;
+    peerId: string;
+  }> {
+    const appPrivateKey = this.parsePrivateKey(privateKey);
+    if (!appPrivateKey) {
+      throw Errors.ErrAppPrivateKeyInvalid;
+    }
+    const publicKey = appPrivateKey.publicKey;
+
+    // 连接该 appId 账号所属的 DC 节点
+    let client = await this.dc.connectToUserDcPeer(publicKey.raw);
+    if (!client) {
+      // 与 getMsgFromUserBox 一致：单节点连接失败时尝试该账号的全部节点
+      const clients = await this.dc.connectToUserAllDcPeers(publicKey.raw);
+      client = clients && clients.length > 0 ? clients[0] : null;
+    }
+    if (!client) {
+      throw Errors.ErrNoDcPeerConnected;
+    }
+
+    // 获取 token（使用该 appId + 该账号公钥签名）
+    if (!client.token) {
+      const token = await client.GetToken(
+        appId,
+        publicKey.string(),
+        async (payload: Uint8Array): Promise<Uint8Array> => {
+          return appPrivateKey.sign(payload);
+        },
+      );
+      if (!token) {
+        throw new CommentError("get token failed");
+      }
+    }
+
+    return {
+      client,
+      context: this.buildAppContext(appId, appPrivateKey),
+      privateKey: appPrivateKey,
+      peerId: getPeerIdString(client.peerAddr) || "",
+    };
+  }
+
+  /**
+   * 解析私钥：支持 Ed25519PrivKey 对象、base32 字符串（Ed25519PrivKey.string()）与 hex 字符串
+   */
+  private parsePrivateKey(
+    privateKey: string | Ed25519PrivKey,
+  ): Ed25519PrivKey | null {
+    if (!privateKey) {
+      return null;
+    }
+    if (privateKey instanceof Ed25519PrivKey) {
+      return privateKey;
+    }
+    // 兼容由另一个模块副本（如打包产生的重复副本）创建的 Ed25519PrivKey 实例
+    if (
+      typeof privateKey === "object" &&
+      privateKey !== null &&
+      typeof (privateKey as Ed25519PrivKey).sign === "function" &&
+      !!((privateKey as Ed25519PrivKey).publicKey as Ed25519PubKey | undefined)
+        ?.string
+    ) {
+      return privateKey as Ed25519PrivKey;
+    }
+    const keyStr = String(privateKey).trim();
+    if (!keyStr) {
+      return null;
+    }
+    try {
+      return Ed25519PrivKey.unmarshalString(keyStr);
+    } catch {
+      try {
+        return Ed25519PrivKey.fromString(keyStr.replace(/^0x/, ""));
+      } catch {
+        return null;
+      }
+    }
+  }
+
+  /**
+   * 基于指定 appId 的账号私钥，构造一个使用该账号身份签名的新 context
+   * 保留当前上下文的节点/链/工具实例，仅替换 appId 与签名身份
+   */
+  private buildAppContext(
+    appId: string,
+    privateKey: Ed25519PrivKey,
+  ): DCContext {
+    const publicKey = privateKey.publicKey;
+    return {
+      ...this.context,
+      appInfo: { ...(this.context.appInfo || {}), appId } as APPInfo,
+      publicKey,
+      privateKey,
+      sign: async (payload: Uint8Array): Promise<Uint8Array> => {
+        return privateKey.sign(payload);
+      },
+      getPublicKey: () => publicKey,
+      getPubkeyRaw: () => publicKey.raw,
+    };
+  }
+
   async addUserOffChainOpTimes(
     times: number,
-    vaccount: string = ""
+    vaccount: string = "",
   ): Promise<[boolean | null, Error | null]> {
     try {
       // 检查连接
@@ -420,7 +761,7 @@ export class CommentManager {
         await this.context.AccountBackupDc.client.GetToken(
           this.context.appInfo.appId || "",
           this.context.publicKey.string(),
-          this.context.sign
+          this.context.sign,
         );
       }
 
@@ -430,7 +771,8 @@ export class CommentManager {
       // 准备签名数据
       const hValue = uint32ToLittleEndianBytes(blockHeight);
       const tValue = uint32ToLittleEndianBytes(times);
-      const peerId = getPeerIdString(this.context.AccountBackupDc?.nodeAddr) || "";
+      const peerId =
+        getPeerIdString(this.context.AccountBackupDc?.nodeAddr) || "";
       const peerIdBytes = new TextEncoder().encode(peerId);
       const preSign = new Uint8Array([...peerIdBytes, ...tValue, ...hValue]);
 
@@ -441,7 +783,7 @@ export class CommentManager {
       const client = new CommentClient(
         this.context.AccountBackupDc.client,
         this.dcNodeClient,
-        this.context
+        this.context,
       );
 
       try {
@@ -452,7 +794,7 @@ export class CommentManager {
           peerId,
           times,
           signature,
-          vaccount
+          vaccount,
         );
         return [res, null];
       } catch (err: any) {
@@ -467,7 +809,7 @@ export class CommentManager {
   async addThemeSpace(
     appId: string,
     theme: string,
-    addSpace: number
+    addSpace: number,
   ): Promise<[number | null, Error | null]> {
     try {
       if (!this.context.AccountBackupDc?.client) {
@@ -480,12 +822,12 @@ export class CommentManager {
         await this.context.AccountBackupDc.client.GetToken(
           appId,
           this.context.publicKey.string(),
-          this.context.sign
+          this.context.sign,
         );
       }
       const blockHeight = (await this.chainUtil.getBlockHeight()) || 0;
       const hValue: Uint8Array = uint32ToLittleEndianBytes(
-        blockHeight ? blockHeight : 0
+        blockHeight ? blockHeight : 0,
       );
       const spaceValue: Uint8Array = uint32ToLittleEndianBytes(addSpace);
 
@@ -502,7 +844,7 @@ export class CommentManager {
       const commentClient = new CommentClient(
         this.context.AccountBackupDc.client,
         this.dcNodeClient,
-        this.context
+        this.context,
       );
       const res = await commentClient.addThemeSpace(
         appId,
@@ -510,7 +852,7 @@ export class CommentManager {
         blockHeight || 0,
         addSpace,
         userPubkey.string(),
-        signature
+        signature,
       );
       return [res, null];
     } catch (err) {
@@ -526,7 +868,7 @@ export class CommentManager {
     commentType: number,
     comment: string,
     refercommentkey: string,
-    openFlag?: number
+    openFlag?: number,
   ): Promise<[string | null, Error | null]> {
     try {
       if (!this.context.AccountBackupDc?.client) {
@@ -539,12 +881,12 @@ export class CommentManager {
         await this.context.AccountBackupDc.client.GetToken(
           appId,
           this.context.publicKey.string(),
-          this.context.sign
+          this.context.sign,
         );
       }
       const blockHeight = (await this.chainUtil.getBlockHeight()) || 0;
       const hValue: Uint8Array = uint32ToLittleEndianBytes(
-        blockHeight ? blockHeight : 0
+        blockHeight ? blockHeight : 0,
       );
       const typeValue: Uint8Array = uint32ToLittleEndianBytes(commentType);
 
@@ -571,7 +913,7 @@ export class CommentManager {
       const commentClient = new CommentClient(
         this.context.AccountBackupDc.client,
         this.dcNodeClient,
-        this.context
+        this.context,
       );
       let res = await commentClient.publishCommentToTheme(
         appId,
@@ -584,7 +926,7 @@ export class CommentManager {
         comment,
         refercommentkey,
         signature,
-        openFlag
+        openFlag,
       );
       // res 0:成功 1:评论空间没有配置 2:评论空间不足
       if (res === 0) {
@@ -612,7 +954,7 @@ export class CommentManager {
           comment,
           refercommentkey,
           signature,
-          openFlag
+          openFlag,
         );
         if (res === 0) {
           const commentKey = `${blockHeight}/${commentCidBase32}`;
@@ -630,7 +972,7 @@ export class CommentManager {
     appId: string,
     theme: string,
     themeAuthor: string,
-    commentKey: string
+    commentKey: string,
   ): Promise<[number | null, Error | null]> {
     try {
       if (!this.context.AccountBackupDc?.client) {
@@ -643,7 +985,7 @@ export class CommentManager {
         await this.context.AccountBackupDc.client.GetToken(
           appId,
           this.context.publicKey.string(),
-          this.context.sign
+          this.context.sign,
         );
       }
       const parts = commentKey.split("/");
@@ -656,7 +998,7 @@ export class CommentManager {
       // commentBlockHeight 转32位无符号整数
       const commentBlockHeightUint32 = parseUint32(commentBlockHeight);
       const hValue: Uint8Array = uint32ToLittleEndianBytes(
-        blockHeight ? blockHeight : 0
+        blockHeight ? blockHeight : 0,
       );
       const themeValue: Uint8Array = new TextEncoder().encode(theme);
       const appIdValue: Uint8Array = new TextEncoder().encode(appId);
@@ -674,7 +1016,7 @@ export class CommentManager {
       const commentClient = new CommentClient(
         this.context.AccountBackupDc.client,
         this.dcNodeClient,
-        this.context
+        this.context,
       );
       let delSelfRes: number = -1;
       let delObjRes: number = -1;
@@ -689,11 +1031,11 @@ export class CommentManager {
           userPubkey.string(),
           commentCid,
           commentBlockHeightUint32,
-          signature
+          signature,
         );
       } catch (error: any) {
         delSelfError = new CommentError(
-          "deleteSelfComment error" + (error && error.message)
+          "deleteSelfComment error" + (error && error.message),
         );
       }
       try {
@@ -705,11 +1047,11 @@ export class CommentManager {
           userPubkey.string(),
           commentCid,
           commentBlockHeightUint32,
-          signature
+          signature,
         );
       } catch (error: any) {
         delObjError = new CommentError(
-          "deleteCommentToObj error" + (error && error.message)
+          "deleteCommentToObj error" + (error && error.message),
         );
       }
 
@@ -736,7 +1078,7 @@ export class CommentManager {
     appId: string,
     theme: string,
     themeAuthor: string,
-    commentKey: string
+    commentKey: string,
   ): Promise<[number | null, Error | null]> {
     try {
       if (!this.context.AccountBackupDc?.client) {
@@ -749,7 +1091,7 @@ export class CommentManager {
         await this.context.AccountBackupDc.client.GetToken(
           appId,
           this.context.publicKey.string(),
-          this.context.sign
+          this.context.sign,
         );
       }
       const parts = commentKey.split("/");
@@ -762,7 +1104,7 @@ export class CommentManager {
       // commentBlockHeight 转32位无符号整数
       const commentBlockHeightUint32 = parseUint32(commentBlockHeight);
       const hValue: Uint8Array = uint32ToLittleEndianBytes(
-        blockHeight ? blockHeight : 0
+        blockHeight ? blockHeight : 0,
       );
       const themeValue: Uint8Array = new TextEncoder().encode(theme);
       const appIdValue: Uint8Array = new TextEncoder().encode(appId);
@@ -780,7 +1122,7 @@ export class CommentManager {
       const commentClient = new CommentClient(
         this.context.AccountBackupDc.client,
         this.dcNodeClient,
-        this.context
+        this.context,
       );
       const res = await commentClient.setObjCommentPublic(
         appId,
@@ -790,7 +1132,7 @@ export class CommentManager {
         userPubkey.string(),
         commentCid,
         commentBlockHeightUint32,
-        signature
+        signature,
       );
       if (res !== 0) {
         return [res, new CommentError("setObjCommentPublic error")];
@@ -809,7 +1151,7 @@ export class CommentManager {
     direction: number,
     offset: number,
     limit: number,
-    seekKey: string
+    seekKey: string,
   ): Promise<[ThemeObj[] | null, Error | null]> {
     let client = this.context.AccountBackupDc.client;
     let shouldCloseClient = false;
@@ -825,7 +1167,7 @@ export class CommentManager {
         const authorPublicKey: Ed25519PubKey =
           Ed25519PubKey.edPubkeyFromStr(themeAuthor);
         const connectedClient = await this.dc.connectToUserDcPeer(
-          authorPublicKey.raw
+          authorPublicKey.raw,
         );
         if (!connectedClient) {
           return [null, Errors.ErrNoPeerIdIsNull];
@@ -837,13 +1179,13 @@ export class CommentManager {
         await client.GetToken(
           appId,
           this.context.publicKey.string(),
-          this.context.sign
+          this.context.sign,
         );
       }
       const commentClient = new CommentClient(
         client,
         this.dcNodeClient,
-        this.context
+        this.context,
       );
 
       const res = await commentClient.getThemeObj(
@@ -853,7 +1195,7 @@ export class CommentManager {
         direction || 0,
         offset || 0,
         limit || 0,
-        seekKey || ""
+        seekKey || "",
       );
       if (!res) {
         return [[], null];
@@ -877,7 +1219,7 @@ export class CommentManager {
     offset: number,
     limit: number,
     seekKey: string,
-    vaccount?: string
+    vaccount?: string,
   ): Promise<[ThemeComment[] | null, Error | null]> {
     let client = this.context.AccountBackupDc.client;
     let shouldCloseClient = false;
@@ -893,7 +1235,7 @@ export class CommentManager {
         const authorPublicKey: Ed25519PubKey =
           Ed25519PubKey.edPubkeyFromStr(themeAuthor);
         const connectedClient = await this.dc.connectToUserDcPeer(
-          authorPublicKey.raw
+          authorPublicKey.raw,
         );
         if (!connectedClient) {
           return [null, Errors.ErrNoPeerIdIsNull];
@@ -905,13 +1247,13 @@ export class CommentManager {
         await client.GetToken(
           appId,
           this.context.publicKey.string(),
-          this.context.sign
+          this.context.sign,
         );
       }
       const commentClient = new CommentClient(
         client,
         this.dcNodeClient,
-        this.context
+        this.context,
       );
       const res = await commentClient.getThemeComments(
         appId,
@@ -923,7 +1265,7 @@ export class CommentManager {
         limit || 0,
         seekKey || "",
         "",
-        vaccount
+        vaccount,
       );
       if (!res) {
         return [[], null];
@@ -947,7 +1289,7 @@ export class CommentManager {
     offset: number,
     limit: number,
     seekKey: string,
-    vaccount?: string
+    vaccount?: string,
   ): Promise<[ThemeComment[] | null, number, string, Error | null]> {
     let client = this.context.AccountBackupDc.client;
     let shouldCloseClient = false;
@@ -962,7 +1304,7 @@ export class CommentManager {
         const authorPublicKey: Ed25519PubKey =
           Ed25519PubKey.edPubkeyFromStr(themeAuthor);
         const connectedClient = await this.dc.connectToUserDcPeer(
-          authorPublicKey.raw
+          authorPublicKey.raw,
         );
         if (!connectedClient) {
           return [null, 0, "", Errors.ErrNoPeerIdIsNull];
@@ -974,13 +1316,13 @@ export class CommentManager {
         await client.GetToken(
           appId,
           this.context.publicKey.string(),
-          this.context.sign
+          this.context.sign,
         );
       }
       const commentClient = new CommentClient(
         client,
         this.dcNodeClient,
-        this.context
+        this.context,
       );
       const [authListData, userCount, nextSeekKey] =
         await commentClient.getThemeAuthList(
@@ -992,7 +1334,7 @@ export class CommentManager {
           offset || 0,
           limit || 0,
           seekKey || "",
-          vaccount
+          vaccount,
         );
       if (!authListData) {
         return [[], userCount, nextSeekKey, null];
@@ -1014,7 +1356,7 @@ export class CommentManager {
     authPubkey: string,
     permission: number,
     remark: string,
-    vaccount?: string
+    vaccount?: string,
   ): Promise<[number | null, Error | null]> {
     if (!theme.endsWith("_authlist")) {
       theme = theme + "_authlist";
@@ -1034,7 +1376,7 @@ export class CommentManager {
         const authorPublicKey: Ed25519PubKey =
           Ed25519PubKey.edPubkeyFromStr(themeAuthor);
         const connectedClient = await this.dc.connectToUserDcPeer(
-          authorPublicKey.raw
+          authorPublicKey.raw,
         );
         if (!connectedClient) {
           return [null, Errors.ErrNoPeerIdIsNull];
@@ -1053,7 +1395,7 @@ export class CommentManager {
         await client.GetToken(
           appId,
           this.context.publicKey.string(),
-          this.context.sign
+          this.context.sign,
         );
       }
       const themeAuthorPubkey: Ed25519PubKey =
@@ -1086,17 +1428,17 @@ export class CommentManager {
 
       // Create binary representation of blockHeight (little endian)
       const hValue: Uint8Array = uint32ToLittleEndianBytes(
-        blockHeight ? blockHeight : 0
+        blockHeight ? blockHeight : 0,
       );
       // Create binary representation of type (little endian)
       const typeValue: Uint8Array = uint32ToLittleEndianBytes(
-        CommentType.Comment
+        CommentType.Comment,
       );
       // sign(Theme+appId+objAuthor+blockheight+contentCid)
       const themeValue: Uint8Array = new TextEncoder().encode(theme);
       const appIdValue: Uint8Array = new TextEncoder().encode(appId);
       const themeAuthorValue: Uint8Array = new TextEncoder().encode(
-        themeAuthorPubkey.string()
+        themeAuthorPubkey.string(),
       );
       const contentCidValue: Uint8Array = new TextEncoder().encode(contentCid);
       let preSign = new Uint8Array([
@@ -1113,7 +1455,7 @@ export class CommentManager {
       const commentClient = new CommentClient(
         client,
         this.dcNodeClient,
-        this.context
+        this.context,
       );
       try {
         const res = await commentClient.configThemeObjAuth(
@@ -1127,7 +1469,7 @@ export class CommentManager {
           contentSize,
           CommentType.Comment,
           signature,
-          vaccount
+          vaccount,
         );
 
         if (res !== 0) {
@@ -1147,7 +1489,7 @@ export class CommentManager {
     appId: string,
     themeAuthor: string,
     theme: string,
-    vaccount?: string
+    vaccount?: string,
   ): Promise<[ThemeAuthInfo[] | null, ThemeComment[] | null, Error | null]> {
     if (!theme.endsWith("_authlist")) {
       theme = theme + "_authlist";
@@ -1167,7 +1509,7 @@ export class CommentManager {
           0,
           1000,
           seekKey || "",
-          vaccount
+          vaccount,
         );
         if (res[0] && res[0].length == 0) {
           return [authList, originAuthList, null];
@@ -1187,7 +1529,7 @@ export class CommentManager {
           const authPubkey = parts[0]!;
           const permission = parseInt(parts[1]!);
           const remark = content.substring(
-            authPubkey.length + parts[1]!.length + 2
+            authPubkey.length + parts[1]!.length + 2,
           );
           authList.push({
             pubkey: authPubkey,
@@ -1215,7 +1557,7 @@ export class CommentManager {
     direction: number,
     offset: number,
     limit: number,
-    seekKey: string
+    seekKey: string,
   ): Promise<[ThemeComment[] | null, Error | null]> {
     let client = this.context.AccountBackupDc.client;
     let shouldCloseClient = false;
@@ -1230,7 +1572,7 @@ export class CommentManager {
         await this.connectedDc.client.GetToken(
           appId,
           this.context.publicKey.string(),
-          this.context.sign
+          this.context.sign,
         );
       }
       if (userPubkey != this.context.publicKey.string()) {
@@ -1238,7 +1580,7 @@ export class CommentManager {
         const userPublicKey: Ed25519PubKey =
           Ed25519PubKey.edPubkeyFromStr(userPubkey);
         const connectedClient = await this.dc.connectToUserDcPeer(
-          userPublicKey.raw
+          userPublicKey.raw,
         );
         if (!connectedClient) {
           return [null, Errors.ErrNoPeerIdIsNull];
@@ -1253,14 +1595,14 @@ export class CommentManager {
         await client.GetToken(
           appId,
           this.context.publicKey.string(),
-          this.context.sign
+          this.context.sign,
         );
       }
 
       const commentClient = new CommentClient(
         client,
         this.dcNodeClient,
-        this.context
+        this.context,
       );
       const res = await commentClient.getUserComments(
         appId,
@@ -1270,7 +1612,7 @@ export class CommentManager {
         offset || 0,
         limit || 0,
         seekKey || "",
-        ""
+        "",
       );
       if (!res) {
         return [[], null];
@@ -1287,7 +1629,7 @@ export class CommentManager {
 
   private closeTemporaryClient = async (
     client: { peerAddr?: Multiaddr | null } | null | undefined,
-    shouldCloseClient: boolean
+    shouldCloseClient: boolean,
   ): Promise<void> => {
     if (!shouldCloseClient || !client?.peerAddr || !this.dcNodeClient?.libp2p) {
       return;
@@ -1295,7 +1637,7 @@ export class CommentManager {
 
     const isSamePeer = (
       left?: Multiaddr | null,
-      right?: Multiaddr | null
+      right?: Multiaddr | null,
     ): boolean => {
       if (!left || !right) {
         return false;
@@ -1328,7 +1670,7 @@ export class CommentManager {
   };
 
   private handleThemeObj = async (
-    fileContentString: string
+    fileContentString: string,
   ): Promise<ThemeObj[]> => {
     const reader = new BrowserLineReader(fileContentString);
 
@@ -1355,7 +1697,7 @@ export class CommentManager {
     return allContent;
   };
   private handleThemeComments = async (
-    fileContentString: string
+    fileContentString: string,
   ): Promise<ThemeComment[]> => {
     const reader = new BrowserLineReader(fileContentString);
     let allContent: Array<ThemeComment> = [];
@@ -1398,7 +1740,9 @@ export class CommentManager {
       return this.mapThemeObj(dcnet.pb.AddThemeObjRequest.decode(decodedLine));
     } catch {
       try {
-        const parsed = JSON.parse(new TextDecoder().decode(decodedLine)) as ThemeObj;
+        const parsed = JSON.parse(
+          new TextDecoder().decode(decodedLine),
+        ) as ThemeObj;
         return parsed;
       } catch {
         console.warn("skip invalid theme obj line");
@@ -1418,7 +1762,7 @@ export class CommentManager {
 
     try {
       return this.mapThemeComment(
-        dcnet.pb.PublishCommentToThemeRequest.decode(decodedLine)
+        dcnet.pb.PublishCommentToThemeRequest.decode(decodedLine),
       );
     } catch {
       try {
@@ -1450,7 +1794,7 @@ export class CommentManager {
   }
 
   private mapThemeComment(
-    content: dcnet.pb.PublishCommentToThemeRequest
+    content: dcnet.pb.PublishCommentToThemeRequest,
   ): ThemeComment {
     return {
       theme: uint8ArrayToString(content.theme),
@@ -1477,7 +1821,7 @@ export class CommentManager {
     appId: string,
     themeAuthor: string,
     theme: string,
-    vaccount?: string
+    vaccount?: string,
   ): Promise<[number | null, Error | null]> {
     let client = this.context.AccountBackupDc.client;
     let shouldCloseClient = false;
@@ -1489,8 +1833,11 @@ export class CommentManager {
         return [null, Errors.ErrPublicKeyIsNull];
       }
       if (!client || themeAuthor != this.context.publicKey.string()) {
-        const authorPublicKey: Ed25519PubKey = Ed25519PubKey.edPubkeyFromStr(themeAuthor);
-        const connectedClient = await this.dc.connectToUserDcPeer(authorPublicKey.raw);
+        const authorPublicKey: Ed25519PubKey =
+          Ed25519PubKey.edPubkeyFromStr(themeAuthor);
+        const connectedClient = await this.dc.connectToUserDcPeer(
+          authorPublicKey.raw,
+        );
         if (!connectedClient) {
           return [null, Errors.ErrNoPeerIdIsNull];
         }
@@ -1498,10 +1845,23 @@ export class CommentManager {
         shouldCloseClient = true;
       }
       if (client.token == "") {
-        await client.GetToken(appId, this.context.publicKey.string(), this.context.sign);
+        await client.GetToken(
+          appId,
+          this.context.publicKey.string(),
+          this.context.sign,
+        );
       }
-      const commentClient = new CommentClient(client, this.dcNodeClient, this.context);
-      const [count, err] = await commentClient.getAuthListUserCount(appId, themeAuthor, theme, vaccount);
+      const commentClient = new CommentClient(
+        client,
+        this.dcNodeClient,
+        this.context,
+      );
+      const [count, err] = await commentClient.getAuthListUserCount(
+        appId,
+        themeAuthor,
+        theme,
+        vaccount,
+      );
       if (err) {
         return [null, err];
       }
